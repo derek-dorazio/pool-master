@@ -354,17 +354,4 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
     preHandler: requireContestCommissioner,
     handler: overrides.extendDeadline,
   });
-  fastify.post('/:contestId/update-lock', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Update the contest lock time',
-      description:
-        'Changes the contest lock time that governs when picks or entries stop being editable.',
-      operationId: 'updateContestLockTime',
-      body: schemaRef('UpdateContestLockTimeRequest'),
-      response: { 200: schemaRef('ContestResponse') },
-    },
-    preHandler: requireContestCommissioner,
-    handler: overrides.updateLockTime,
-  });
 }

@@ -73,7 +73,6 @@ export interface UpdateContestInput {
   name?: string;
   startsAt?: Date;
   endsAt?: Date;
-  lockAt?: Date;
   isExclusive?: boolean;
 }
 

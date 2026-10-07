@@ -82,7 +82,6 @@ export const UpdateContestRequestSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
-  lockAt: z.string().datetime().optional(),
   isExclusive: z.boolean().optional().describe('Whether the contest should continue to enforce exclusive picks.'),
 }).describe('Patch payload for updating editable contest metadata.');
 export type UpdateContestRequest = z.infer<typeof UpdateContestRequestSchema>;
@@ -99,11 +98,6 @@ export const ExtendContestDeadlineRequestSchema = z.object({
   newEnd: z.string().datetime().describe('Replacement contest end timestamp.'),
 }).describe('Request payload for extending a contest end time.');
 export type ExtendContestDeadlineRequest = z.infer<typeof ExtendContestDeadlineRequestSchema>;
-
-export const UpdateContestLockTimeRequestSchema = z.object({
-  newLock: z.string().datetime().describe('Replacement contest lock timestamp.'),
-}).describe('Request payload for updating a contest lock time.');
-export type UpdateContestLockTimeRequest = z.infer<typeof UpdateContestLockTimeRequestSchema>;
 
 // --- Response Sub-schemas ---
 
@@ -143,7 +137,6 @@ export const ContestDtoSchema = z.object({
   entryCount: z.number().optional().describe('Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.'),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
-  lockAt: z.string().datetime().nullable().optional().describe('When entries lock.'),
   isExclusive: z.boolean().describe('Whether a participant may be picked by only one entry in the contest.'),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
@@ -289,7 +282,6 @@ const nullablePositiveIntSchema = z
   .describe('Maximum entries a Team may create. Null means unlimited.');
 
 export const ContestConfigurationDetailDtoSchema = ContestCrudConfigurationRequestSchema.extend({
-  locksAt: z.string().datetime().nullable().optional().describe('Contest entry lock timestamp stored on the contest configuration record.'),
   maxEntriesPerSquad: nullablePositiveIntSchema,
   countedScores: z.number().int().optional().describe('How many roster scores count toward the entry total in managed golf contests.'),
   tierSource: z.string().optional().describe('Tier source used for managed golf contests.'),
@@ -365,7 +357,6 @@ registerSchema('CreateContestRequest', CreateContestRequestSchema);
 registerSchema('UpdateContestRequest', UpdateContestRequestSchema);
 registerSchema('UpdateContestEntryRequest', UpdateContestEntryRequestSchema);
 registerSchema('ExtendContestDeadlineRequest', ExtendContestDeadlineRequestSchema);
-registerSchema('UpdateContestLockTimeRequest', UpdateContestLockTimeRequestSchema);
 registerSchema('ContestDto', ContestDtoSchema);
 registerSchema('ContestEntryDto', ContestEntryDtoSchema);
 registerSchema('ContestEntryPickDto', ContestEntryPickDtoSchema);

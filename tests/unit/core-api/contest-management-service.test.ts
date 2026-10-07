@@ -70,12 +70,10 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
     templateVersion: null,
     selectionType: 'TIERED',
     configJson: {
-      locksAt: '2026-04-10T12:00:00.000Z',
       maxEntriesPerSquad: 1,
       rosterSize: 6,
       countedScores: 4,
     },
-    locksAt: new Date('2026-04-10T12:00:00.000Z'),
     maxEntriesPerSquad: 1,
     rosterSize: 6,
     pickCount: 1,
@@ -125,7 +123,6 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
     isDefault: true,
     active: true,
     configJson: {
-      locksAt: '2026-04-10T12:00:00.000Z',
       maxEntriesPerSquad: 1,
       rosterSize: 6,
       countedScores: 4,
@@ -262,7 +259,6 @@ describe('ContestManagementService', () => {
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         configuration: {
-          locksAt: '2026-04-10T12:00:00.000Z',
           maxEntriesPerSquad: 3,
           rosterSize: 6,
           countedScores: 4,
@@ -331,7 +327,6 @@ describe('ContestManagementService', () => {
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
           configuration: {
-            locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
             rosterSize: 5,
             countedScores: 4,
@@ -369,7 +364,6 @@ describe('ContestManagementService', () => {
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
           configuration: {
-            locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
             rosterSize: 4,
             countedScores: 6,
@@ -404,7 +398,6 @@ describe('ContestManagementService', () => {
           contestFormat: ContestFormat.BRACKET,
           selectionType: 'TIERED',
           configuration: {
-            locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
             rosterSize: 4,
             countedScores: 4,
@@ -464,7 +457,6 @@ describe('ContestManagementService', () => {
           contestFormat: ContestFormat.BRACKET,
           selectionType: 'TIERED',
           configuration: {
-            locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
             rosterSize: 4,
             countedScores: 4,
@@ -524,7 +516,6 @@ describe('ContestManagementService', () => {
           contestFormat: ContestFormat.ROSTER,
           selectionType: 'TIERED',
           configuration: {
-            locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
             rosterSize: 4,
             countedScores: 4,
@@ -700,18 +691,16 @@ describe('ContestManagementService', () => {
     );
 
     const result = await service.updateContestConfiguration('contest-1', {
-      locksAt: '2026-04-11T12:00:00.000Z',
       maxEntriesPerSquad: 2,
       rosterSize: 8,
       countedScores: 5,
     });
 
-    // configJson stores the whole request, so it carries locksAt and maxEntriesPerSquad
+    // configJson stores the whole request, so it carries maxEntriesPerSquad
     // beyond GolfContestConfig's two fields. A variable, not an inline literal, lets the
     // exact stored value through Jest 30's typed toHaveBeenCalledWith.
     const storedConfigJson = {
       countedScores: 5,
-      locksAt: '2026-04-11T12:00:00.000Z',
       maxEntriesPerSquad: 2,
       rosterSize: 8,
     };
@@ -719,7 +708,6 @@ describe('ContestManagementService', () => {
     // mapSelectionType echo that re-derived it on every save is gone.
     expect(contestConfigurationRepo.update).toHaveBeenCalledWith('config-1', {
       configJson: storedConfigJson,
-      locksAt: new Date('2026-04-11T12:00:00.000Z'),
       maxEntriesPerSquad: 2,
       pickCount: 8,
       rosterSize: 8,
@@ -752,7 +740,6 @@ describe('ContestManagementService', () => {
 
     await expect(
       service.updateContestConfiguration('contest-1', {
-        locksAt: '2026-04-11T12:00:00.000Z',
         maxEntriesPerSquad: 2,
         rosterSize: 5,
         countedScores: 4,
@@ -1067,7 +1054,6 @@ describe('ContestManagementService', () => {
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         configuration: {
-          locksAt: '2026-04-10T12:00:00.000Z',
           maxEntriesPerSquad: 3,
           rosterSize: 6,
           countedScores: 4,
@@ -1119,7 +1105,6 @@ describe('ContestManagementService', () => {
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         configuration: {
-          locksAt: '2026-04-10T12:00:00.000Z',
           maxEntriesPerSquad: 3,
           rosterSize: 6,
           countedScores: 4,

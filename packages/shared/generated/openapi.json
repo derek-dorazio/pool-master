@@ -6749,14 +6749,6 @@
           "configuration": {
             "type": "object",
             "properties": {
-              "locksAt": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "date-time",
-                "description": "Contest entry lock timestamp."
-              },
               "maxEntriesPerSquad": {
                 "type": [
                   "integer",
@@ -6809,10 +6801,6 @@
             "type": "string",
             "format": "date-time"
           },
-          "lockAt": {
-            "type": "string",
-            "format": "date-time"
-          },
           "isExclusive": {
             "type": "boolean",
             "description": "Whether the contest should continue to enforce exclusive picks."
@@ -6855,21 +6843,6 @@
         ],
         "additionalProperties": false,
         "description": "Request payload for extending a contest end time."
-      },
-      "UpdateContestLockTimeRequest": {
-        "type": "object",
-        "properties": {
-          "newLock": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Replacement contest lock timestamp."
-          }
-        },
-        "required": [
-          "newLock"
-        ],
-        "additionalProperties": false,
-        "description": "Request payload for updating a contest lock time."
       },
       "ContestDto": {
         "type": "object",
@@ -6957,14 +6930,6 @@
               "null"
             ],
             "format": "date-time"
-          },
-          "lockAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "description": "When entries lock."
           },
           "isExclusive": {
             "type": "boolean",
@@ -8300,14 +8265,6 @@
           "captainMultiplier": {
             "type": "number"
           },
-          "locksAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "description": "Contest entry lock timestamp stored on the contest configuration record."
-          },
           "maxEntriesPerSquad": {
             "type": [
               "integer",
@@ -8560,14 +8517,6 @@
                 ],
                 "format": "date-time"
               },
-              "lockAt": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "date-time",
-                "description": "When entries lock."
-              },
               "isExclusive": {
                 "type": "boolean",
                 "description": "Whether a participant may be picked by only one entry in the contest."
@@ -8719,14 +8668,6 @@
               },
               "captainMultiplier": {
                 "type": "number"
-              },
-              "locksAt": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "date-time",
-                "description": "Contest entry lock timestamp stored on the contest configuration record."
               },
               "maxEntriesPerSquad": {
                 "type": [
@@ -8988,14 +8929,6 @@
                     "null"
                   ],
                   "format": "date-time"
-                },
-                "lockAt": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "date-time",
-                  "description": "When entries lock."
                 },
                 "isExclusive": {
                   "type": "boolean",
@@ -11843,8 +11776,7 @@
             "enum": [
               "DRAFT_START",
               "CONTEST_START",
-              "CONTEST_END",
-              "LOCK_TIME"
+              "CONTEST_END"
             ],
             "description": "Upcoming event category."
           }
@@ -13328,14 +13260,6 @@
                   ],
                   "format": "date-time"
                 },
-                "lockAt": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "date-time",
-                  "description": "When entries lock."
-                },
                 "isExclusive": {
                   "type": "boolean",
                   "description": "Whether a participant may be picked by only one entry in the contest."
@@ -13430,8 +13354,7 @@
                   "enum": [
                     "DRAFT_START",
                     "CONTEST_START",
-                    "CONTEST_END",
-                    "LOCK_TIME"
+                    "CONTEST_END"
                   ],
                   "description": "Upcoming event category."
                 }
@@ -26001,14 +25924,6 @@
                         "configuration": {
                           "type": "object",
                           "properties": {
-                            "locksAt": {
-                              "type": [
-                                "string",
-                                "null"
-                              ],
-                              "format": "date-time",
-                              "description": "Contest entry lock timestamp."
-                            },
                             "maxEntriesPerSquad": {
                               "type": [
                                 "integer",
@@ -26342,14 +26257,6 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "locksAt": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "date-time",
-                    "description": "Contest entry lock timestamp."
-                  },
                   "maxEntriesPerSquad": {
                     "type": [
                       "integer",
@@ -26440,14 +26347,6 @@
                         "configuration": {
                           "type": "object",
                           "properties": {
-                            "locksAt": {
-                              "type": [
-                                "string",
-                                "null"
-                              ],
-                              "format": "date-time",
-                              "description": "Contest entry lock timestamp."
-                            },
                             "maxEntriesPerSquad": {
                               "type": [
                                 "integer",
@@ -26912,14 +26811,6 @@
                         "configuration": {
                           "type": "object",
                           "properties": {
-                            "locksAt": {
-                              "type": [
-                                "string",
-                                "null"
-                              ],
-                              "format": "date-time",
-                              "description": "Contest entry lock timestamp."
-                            },
                             "maxEntriesPerSquad": {
                               "type": [
                                 "integer",
@@ -29148,48 +29039,6 @@
         }
       }
     },
-    "/api/v1/contests/{contestId}/update-lock": {
-      "post": {
-        "operationId": "updateContestLockTime",
-        "summary": "Update the contest lock time",
-        "tags": [
-          "Contests"
-        ],
-        "description": "Changes the contest lock time that governs when picks or entries stop being editable.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateContestLockTimeRequest"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Single-contest response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ContestResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/contest-config-templates/": {
       "get": {
         "operationId": "listContestConfigTemplates",
@@ -29358,14 +29207,6 @@
                           "configuration": {
                             "type": "object",
                             "properties": {
-                              "locksAt": {
-                                "type": [
-                                  "string",
-                                  "null"
-                                ],
-                                "format": "date-time",
-                                "description": "Contest entry lock timestamp."
-                              },
                               "maxEntriesPerSquad": {
                                 "type": [
                                   "integer",
@@ -29546,14 +29387,6 @@
                   "configuration": {
                     "type": "object",
                     "properties": {
-                      "locksAt": {
-                        "type": [
-                          "string",
-                          "null"
-                        ],
-                        "format": "date-time",
-                        "description": "Contest entry lock timestamp."
-                      },
                       "maxEntriesPerSquad": {
                         "type": [
                           "integer",
@@ -29695,14 +29528,6 @@
                         "configuration": {
                           "type": "object",
                           "properties": {
-                            "locksAt": {
-                              "type": [
-                                "string",
-                                "null"
-                              ],
-                              "format": "date-time",
-                              "description": "Contest entry lock timestamp."
-                            },
                             "maxEntriesPerSquad": {
                               "type": [
                                 "integer",

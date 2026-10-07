@@ -1284,26 +1284,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/contests/{contestId}/update-lock": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Update the contest lock time
-         * @description Changes the contest lock time that governs when picks or entries stop being editable.
-         */
-        post: operations["updateContestLockTime"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/contest-config-templates/": {
         parameters: {
             query?: never;
@@ -5071,11 +5051,6 @@ export interface components {
             templateId?: string;
             /** @description The contest configuration. With a template, replaces the template's configuration; without one, is the configuration. */
             configuration?: {
-                /**
-                 * Format: date-time
-                 * @description Contest entry lock timestamp.
-                 */
-                locksAt?: string | null;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description How many golfers each Team entry must pick. */
@@ -5091,8 +5066,6 @@ export interface components {
             startsAt?: string;
             /** Format: date-time */
             endsAt?: string;
-            /** Format: date-time */
-            lockAt?: string;
             /** @description Whether the contest should continue to enforce exclusive picks. */
             isExclusive?: boolean;
         };
@@ -5110,14 +5083,6 @@ export interface components {
              * @description Replacement contest end timestamp.
              */
             newEnd: string;
-        };
-        /** @description Request payload for updating a contest lock time. */
-        UpdateContestLockTimeRequest: {
-            /**
-             * Format: date-time
-             * @description Replacement contest lock timestamp.
-             */
-            newLock: string;
         };
         /** @description A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields). */
         ContestDto: {
@@ -5140,11 +5105,6 @@ export interface components {
             startsAt?: string | null;
             /** Format: date-time */
             endsAt?: string | null;
-            /**
-             * Format: date-time
-             * @description When entries lock.
-             */
-            lockAt?: string | null;
             /** @description Whether a participant may be picked by only one entry in the contest. */
             isExclusive: boolean;
             /** Format: date-time */
@@ -5624,11 +5584,6 @@ export interface components {
             missedCutPenalty?: number;
             captainSlot?: boolean;
             captainMultiplier?: number;
-            /**
-             * Format: date-time
-             * @description Contest entry lock timestamp stored on the contest configuration record.
-             */
-            locksAt?: string | null;
             /** @description Maximum entries a Team may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
             /** @description How many roster scores count toward the entry total in managed golf contests. */
@@ -5701,11 +5656,6 @@ export interface components {
                 startsAt?: string | null;
                 /** Format: date-time */
                 endsAt?: string | null;
-                /**
-                 * Format: date-time
-                 * @description When entries lock.
-                 */
-                lockAt?: string | null;
                 /** @description Whether a participant may be picked by only one entry in the contest. */
                 isExclusive: boolean;
                 /** Format: date-time */
@@ -5754,11 +5704,6 @@ export interface components {
                 missedCutPenalty?: number;
                 captainSlot?: boolean;
                 captainMultiplier?: number;
-                /**
-                 * Format: date-time
-                 * @description Contest entry lock timestamp stored on the contest configuration record.
-                 */
-                locksAt?: string | null;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description How many roster scores count toward the entry total in managed golf contests. */
@@ -5831,11 +5776,6 @@ export interface components {
                 startsAt?: string | null;
                 /** Format: date-time */
                 endsAt?: string | null;
-                /**
-                 * Format: date-time
-                 * @description When entries lock.
-                 */
-                lockAt?: string | null;
                 /** @description Whether a participant may be picked by only one entry in the contest. */
                 isExclusive: boolean;
                 /** Format: date-time */
@@ -6842,7 +6782,7 @@ export interface components {
              * @description Upcoming event category.
              * @enum {string}
              */
-            eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END" | "LOCK_TIME";
+            eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END";
         };
         /** @description Single-league response. */
         LeagueResponse: {
@@ -7488,11 +7428,6 @@ export interface components {
                 startsAt?: string | null;
                 /** Format: date-time */
                 endsAt?: string | null;
-                /**
-                 * Format: date-time
-                 * @description When entries lock.
-                 */
-                lockAt?: string | null;
                 /** @description Whether a participant may be picked by only one entry in the contest. */
                 isExclusive: boolean;
                 /** Format: date-time */
@@ -7533,7 +7468,7 @@ export interface components {
                  * @description Upcoming event category.
                  * @enum {string}
                  */
-                eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END" | "LOCK_TIME";
+                eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END";
             }[];
         };
         /** @description Arbitrary JSON object payload. */
@@ -13206,11 +13141,6 @@ export interface operations {
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @description Current commissioner-managed contest configuration. */
                             configuration: {
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
                                 /** @description Maximum entries a Team may create. Null means unlimited. */
                                 maxEntriesPerSquad?: number | null;
                                 /** @description How many golfers each Team entry must pick. */
@@ -13357,11 +13287,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /**
-                     * Format: date-time
-                     * @description Contest entry lock timestamp.
-                     */
-                    locksAt?: string | null;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description How many golfers each Team entry must pick. */
@@ -13393,11 +13318,6 @@ export interface operations {
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @description Current commissioner-managed contest configuration. */
                             configuration: {
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
                                 /** @description Maximum entries a Team may create. Null means unlimited. */
                                 maxEntriesPerSquad?: number | null;
                                 /** @description How many golfers each Team entry must pick. */
@@ -13601,11 +13521,6 @@ export interface operations {
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @description Current commissioner-managed contest configuration. */
                             configuration: {
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
                                 /** @description Maximum entries a Team may create. Null means unlimited. */
                                 maxEntriesPerSquad?: number | null;
                                 /** @description How many golfers each Team entry must pick. */
@@ -14747,32 +14662,6 @@ export interface operations {
             };
         };
     };
-    updateContestLockTime: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateContestLockTimeRequest"];
-            };
-        };
-        responses: {
-            /** @description Single-contest response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ContestResponse"];
-                };
-            };
-        };
-    };
     listContestConfigTemplates: {
         parameters: {
             query?: {
@@ -14837,11 +14726,6 @@ export interface operations {
                             schemaVersion: number;
                             /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
                             configuration: {
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
                                 /** @description Maximum entries a Team may create. Null means unlimited. */
                                 maxEntriesPerSquad?: number | null;
                                 /** @description How many golfers each Team entry must pick. */
@@ -14918,11 +14802,6 @@ export interface operations {
                     active?: boolean;
                     /** @description Updated persisted configuration payload copied into future contests when this template is selected. */
                     configuration?: {
-                        /**
-                         * Format: date-time
-                         * @description Contest entry lock timestamp.
-                         */
-                        locksAt?: string | null;
                         /** @description Maximum entries a Team may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
                         /** @description How many golfers each Team entry must pick. */
@@ -14981,11 +14860,6 @@ export interface operations {
                             schemaVersion: number;
                             /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
                             configuration: {
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
                                 /** @description Maximum entries a Team may create. Null means unlimited. */
                                 maxEntriesPerSquad?: number | null;
                                 /** @description How many golfers each Team entry must pick. */

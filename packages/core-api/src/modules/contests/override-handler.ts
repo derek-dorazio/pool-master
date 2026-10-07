@@ -13,7 +13,6 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     reopenContest,
     closeContest,
     extendDeadline,
-    updateLockTime,
   };
 
   function handleOverrideError(err: unknown, reply: FastifyReply): void {
@@ -74,23 +73,4 @@ export function createOverrideHandlers(overrideService: OverrideService) {
       handleOverrideError(err, reply);
     }
   }
-
-  async function updateLockTime(
-    request: FastifyRequest<{
-      Params: { contestId: string };
-      Body: { newLock: string };
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    try {
-      const contest = await overrideService.updateLockTime(
-        request.params.contestId,
-        new Date(request.body.newLock),
-      );
-      return reply.send(toContestResponse(contest, null));
-    } catch (err) {
-      handleOverrideError(err, reply);
-    }
-  }
-
 }

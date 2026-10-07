@@ -96,7 +96,6 @@ export class PrismaContestRepository implements ContestRepository {
         ...(updates.sportEventId !== undefined && { sportEventId: updates.sportEventId }),
         ...(updates.startsAt !== undefined && { startsAt: updates.startsAt }),
         ...(updates.endsAt !== undefined && { endsAt: updates.endsAt }),
-        ...(updates.lockAt !== undefined && { lockAt: updates.lockAt }),
         ...(updates.isExclusive !== undefined && { isExclusive: updates.isExclusive }),
       },
     });
@@ -136,7 +135,6 @@ function mapToContest(row: {
   scoringStopsOnElimination: boolean;
   startsAt: Date | null;
   endsAt: Date | null;
-  lockAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }): Contest {
@@ -154,7 +152,6 @@ function mapToContest(row: {
     scoringStopsOnElimination: row.scoringStopsOnElimination,
     startsAt: row.startsAt ?? undefined,
     endsAt: row.endsAt ?? undefined,
-    lockAt: row.lockAt ?? undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

@@ -64,18 +64,6 @@ export class OverrideService {
     }
     return this.contestRepo.update(contestId, { endsAt: newEnd } as Partial<Contest>);
   }
-
-  /** Updates the lock time for a contest. */
-  async updateLockTime(
-    contestId: string,
-    newLock: Date,
-  ): Promise<Contest> {
-    const contest = await this.contestRepo.findById(contestId);
-    if (!contest) {
-      throw new OverrideError('Contest not found', 'CONTEST_NOT_FOUND');
-    }
-    return this.contestRepo.update(contestId, { lockAt: newLock } as Partial<Contest>);
-  }
 }
 
 export class OverrideError extends Error {

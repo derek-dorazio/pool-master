@@ -143,9 +143,6 @@ export class ContestManagementService {
       templateVersion: resolvedConfiguration.template?.schemaVersion,
       selectionType,
       configJson: resolvedConfiguration.configuration,
-      locksAt: resolvedConfiguration.configuration.locksAt
-        ? new Date(resolvedConfiguration.configuration.locksAt)
-        : undefined,
       maxEntriesPerSquad:
         resolvedConfiguration.configuration.maxEntriesPerSquad === null
           ? null
@@ -238,10 +235,7 @@ export class ContestManagementService {
     contestId: string,
     input: UpdateContestConfigurationRequest,
   ): Promise<ContestManagementDetailDto> {
-    this.logger.debug({
-      contestId,
-      hasLockAt: Boolean(input.locksAt),
-    }, 'contest management update configuration start');
+    this.logger.debug({ contestId }, 'contest management update configuration start');
     const configuration = await this.contestConfigurationRepo.findByContest(
       contestId,
     );
@@ -270,7 +264,6 @@ export class ContestManagementService {
 
     await this.contestConfigurationRepo.update(configuration.id, {
       configJson: input,
-      locksAt: input.locksAt ? new Date(input.locksAt) : undefined,
       maxEntriesPerSquad:
         input.maxEntriesPerSquad === null ? null : input.maxEntriesPerSquad,
       ...deriveLegacyPersistenceFields(input),
@@ -600,7 +593,6 @@ function buildContestManagementDetail(
     templateId?: string | null;
     templateVersion?: number | null;
     configJson?: GolfContestConfig;
-    locksAt?: Date | null;
     maxEntriesPerSquad?: number | null;
     selectionType: string;
     rosterSize?: number;
@@ -634,20 +626,17 @@ function buildContestManagementDetail(
 
 function ensureTypedConfiguration(configuration: {
   configJson?: GolfContestConfig;
-  locksAt?: Date | null;
   maxEntriesPerSquad?: number | null;
   selectionType: string;
   rosterSize?: number;
   pickCount?: number;
   tierConfig?: unknown;
 }): GolfContestConfig & {
-  locksAt?: string | null;
   maxEntriesPerSquad?: number | null;
 } {
   if (configuration.configJson) {
     return {
       ...configuration.configJson,
-      locksAt: configuration.locksAt?.toISOString() ?? null,
       maxEntriesPerSquad: configuration.maxEntriesPerSquad ?? null,
     };
   }
@@ -659,7 +648,6 @@ function ensureTypedConfiguration(configuration: {
     // created through the legacy tierConfig-based create path) only needs
     // to synthesize the trimmed { rosterSize, countedScores } shape.
     return {
-      locksAt: configuration.locksAt?.toISOString() ?? null,
       maxEntriesPerSquad: configuration.maxEntriesPerSquad ?? null,
       rosterSize: configuration.rosterSize ?? configuration.pickCount ?? 6,
       countedScores: Math.min(
