@@ -185,6 +185,29 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
     expect(refresh).toHaveTextContent('Load Participant Field');
   });
 
+  it('warns that grid-edited rankings and odds are replaced before refreshing a loaded field, and refreshes only on confirm', async () => {
+    seed({ tournament: { syncScope: 'SCORES_ONLY' } });
+    refreshEventParticipantsMock.mockResolvedValue({ data: { syncRuns: [] } });
+    renderPage();
+
+    const refresh = await screen.findByTestId('root-admin-golf-field-refresh');
+    expect(refresh).toHaveTextContent('Refresh Participant Field');
+    await userEvent.click(refresh);
+
+    const modal = await screen.findByTestId('root-admin-golf-field-refresh-modal');
+    expect(modal).toHaveTextContent(
+      "Rankings and odds you edited in the field grid or by bulk upload are replaced with the provider's values",
+    );
+    expect(refreshEventParticipantsMock).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByTestId('root-admin-golf-field-refresh-confirm'));
+    await waitFor(() =>
+      expect(refreshEventParticipantsMock).toHaveBeenCalledWith({
+        path: { eventId: 'evt-1' },
+      }),
+    );
+  });
+
   it('pool-master-za4 surfaces the tournament load error', async () => {
     getEventMock.mockResolvedValue({
       error: { code: 'NOT_FOUND', message: 'No such tournament' },
