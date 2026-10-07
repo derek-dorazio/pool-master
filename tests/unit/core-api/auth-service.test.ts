@@ -143,6 +143,21 @@ describe('AuthService', () => {
       expect(users.findByIdentifier).toHaveBeenCalledWith('user@example.com');
     });
 
+    it('signs in with a password hash bcryptjs 2.x stored before the upgrade to 3', async () => {
+      // Generated once with bcryptjs 2.4.3 (cost 10) for 'Password123!'. bcryptjs 3 writes
+      // $2b$ hashes; every row created before #138's upgrade holds a $2a$ one like this, and
+      // those users must still be able to sign in.
+      const legacyHash = '$2a$10$j426yAoe9I2O0y4PPGTFluzmby6twgj1o8GZOQz0bppD755D5DYKe';
+      const users = fakeUserRepo({ findByIdentifier: jest.fn().mockResolvedValue(buildUser()) });
+      const service = new AuthService(users, asPrismaClient(createPrismaMock(legacyHash)));
+
+      await expect(service.login('userone', 'Password123!'))
+        .resolves.toMatchObject({ user: { id: 'user-1' } });
+      await expect(service.login('userone', 'WrongPassword123!')).rejects.toMatchObject({
+        code: 'INVALID_CREDENTIALS',
+      } satisfies Partial<AuthError>);
+    });
+
     it('rejects an inactive account with a distinct code, not INVALID_CREDENTIALS', async () => {
       const passwordHash = await bcrypt.hash('Password123!', 10);
       const users = fakeUserRepo({
