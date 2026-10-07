@@ -4,6 +4,7 @@ import {
   createContest,
   enterContest,
   listContestConfigTemplates,
+  openContest,
   sendLeagueInvitations,
   submitContestSelection,
   transitionEvent,
@@ -200,6 +201,8 @@ describe('SDK Functional: system emails', () => {
     });
     expect(created.response.status).toBe(201);
     const contestId = created.data?.contest.id as string;
+    const opened = await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
+    expect(opened.data?.contest.status).toBe('OPEN');
 
     const entered = await enterContest({ client: member.client, path: { contestId } });
     const entryId = entered.data?.entry.id as string;
