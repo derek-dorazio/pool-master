@@ -1625,6 +1625,148 @@ describe('Team Home use cases', () => {
     expect(screen.queryByTestId('league-route-destination')).not.toBeInTheDocument();
   });
 
+  const coOwner = {
+    id: 'membership-2',
+    squadId: 'team-1',
+    leagueId: 'league-1',
+    userId: 'user-2',
+    user: { ...VIEWER_USER, id: 'user-2', email: 'jordan@example.com', username: 'jordan@example.com', firstName: 'Jordan', lastName: 'Rivers' },
+    status: 'ACTIVE',
+    joinedAt: '2026-04-15T00:00:00.000Z',
+    createdAt: '2026-04-15T00:00:00.000Z',
+    updatedAt: '2026-04-15T00:00:00.000Z',
+  };
+
+  const pendingOwnerInvite = {
+    id: 'owner-invite-1',
+    leagueId: 'league-1',
+    squadId: 'team-1',
+    email: 'pending@example.com',
+    status: 'PENDING',
+    replacementForUserId: null,
+    invitedBy: 'user-1',
+    inviteCode: 'owner-code-1',
+    expiresAt: '2026-11-01T00:00:00.000Z',
+    createdAt: '2026-10-01T00:00:00.000Z',
+    updatedAt: '2026-10-01T00:00:00.000Z',
+  };
+
+  async function openManageOwners() {
+    fireEvent.click(await screen.findByRole('button', { name: /^Manage owners/ }));
+    await screen.findByRole('dialog', { name: 'Manage owners' });
+  }
+
+  it('does not offer to create a team while the viewer\'s team is still loading', async () => {
+    primeTeamHome();
+    listLeagueSquadsMock.mockReturnValue(new Promise(() => undefined));
+
+    renderMyTeamPage();
+
+    await waitFor(() => expect(listLeagueSquadsMock).toHaveBeenCalled());
+    expect(screen.getByText('Loading your team...')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create team' })).not.toBeInTheDocument();
+  });
+
+  it('shows an error instead of the create-team form when the team list fails to load', async () => {
+    primeTeamHome();
+    listLeagueSquadsMock.mockResolvedValue({
+      error: { code: 'INTERNAL_ERROR', message: 'Teams are unavailable right now.' },
+      status: 500,
+    });
+
+    renderMyTeamPage();
+
+    expect(await screen.findByText('Teams are unavailable right now.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create team' })).not.toBeInTheDocument();
+  });
+
+  it('invites a co-owner by email, confirms it, and clears the field', async () => {
+    primeTeamHome();
+    createSquadOwnerInvitationMock.mockResolvedValue({ data: { invitation: { ...pendingOwnerInvite, email: 'friend@example.com' } } });
+
+    renderMyTeamPage();
+    await openManageOwners();
+    const emailField = screen.getByRole('textbox', { name: 'Co-owner email' });
+    fireEvent.change(emailField, { target: { value: ' friend@example.com ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Invite' }));
+
+    expect(await screen.findByText('Co-owner invite created.')).toBeInTheDocument();
+    expect(createSquadOwnerInvitationMock).toHaveBeenCalledWith({
+      path: { id: 'league-1', squadId: 'team-1' },
+      body: { email: 'friend@example.com' },
+    });
+    expect(emailField).toHaveValue('');
+  });
+
+  it('shows the reason and keeps the email when a co-owner invite is rejected', async () => {
+    primeTeamHome();
+    createSquadOwnerInvitationMock.mockResolvedValue({
+      error: { code: 'SQUAD_OWNER_INVITATION_MEMBER_EXISTS', message: 'That person already belongs to this league.' },
+    });
+
+    renderMyTeamPage();
+    await openManageOwners();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Co-owner email' }), { target: { value: 'member@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Invite' }));
+
+    expect(await screen.findByText('That person already belongs to this league.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Co-owner email' })).toHaveValue('member@example.com');
+  });
+
+  it('replaces another owner with an invitation to the replacement email, but never offers to replace the viewer', async () => {
+    primeTeamHome({ squads: [buildTeamSummary({ members: [buildTeamSummary().members[0], coOwner], memberCount: 2 })] });
+    replaceSquadOwnerMock.mockResolvedValue({
+      data: { invitation: { ...pendingOwnerInvite, email: 'new@example.com', replacementForUserId: 'user-2' } },
+    });
+
+    renderMyTeamPage();
+    await openManageOwners();
+    expect(screen.getAllByRole('button', { name: 'Replace owner' })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Replace owner' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement owner email' }), { target: { value: 'new@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Replace' }));
+
+    await waitFor(() => expect(replaceSquadOwnerMock).toHaveBeenCalledWith({
+      path: { id: 'league-1', squadId: 'team-1', userId: 'user-2' },
+      body: { email: 'new@example.com' },
+    }));
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Replacement owner email' })).not.toBeInTheDocument());
+  });
+
+  it('shows the reason and keeps the replace form open when replacing an owner fails', async () => {
+    primeTeamHome({ squads: [buildTeamSummary({ members: [buildTeamSummary().members[0], coOwner], memberCount: 2 })] });
+    replaceSquadOwnerMock.mockResolvedValue({
+      error: { code: 'SQUAD_OWNER_INVITATION_EMAIL_INVALID', message: 'That email cannot be invited.' },
+    });
+
+    renderMyTeamPage();
+    await openManageOwners();
+    fireEvent.click(screen.getByRole('button', { name: 'Replace owner' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement owner email' }), { target: { value: 'bad@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Replace' }));
+
+    expect(await screen.findByText('That email cannot be invited.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Replacement owner email' })).toHaveValue('bad@example.com');
+  });
+
+  it('shows the reason when revoking a pending owner invite fails', async () => {
+    primeTeamHome();
+    listSquadOwnerInvitationsMock.mockResolvedValue({ data: { invitations: [pendingOwnerInvite] } });
+    revokeSquadOwnerInvitationMock.mockResolvedValue({
+      error: { code: 'SQUAD_OWNER_INVITATION_NOT_PENDING', message: 'That invite was already accepted.' },
+    });
+
+    renderMyTeamPage();
+    await openManageOwners();
+    expect(await screen.findByText('pending@example.com')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Revoke' }));
+
+    expect(await screen.findByText('That invite was already accepted.')).toBeInTheDocument();
+    expect(revokeSquadOwnerInvitationMock).toHaveBeenCalledWith({
+      path: { id: 'league-1', invitationId: 'owner-invite-1' },
+    });
+  });
+
   it('shows the load-error copy with a way back to welcome when the league cannot be loaded', async () => {
     primeTeamHome();
     getLeagueByCodeMock.mockResolvedValue({
