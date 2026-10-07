@@ -1407,6 +1407,115 @@
         "additionalProperties": false,
         "description": "Single-participant detail response."
       },
+      "UpdateParticipantRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "Primary participant display name."
+          },
+          "firstName": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "First name when the participant is a person."
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Last name when the participant is a person."
+          },
+          "shortName": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Short-form display name for compact UI surfaces."
+          },
+          "nationality": {
+            "type": "string",
+            "maxLength": 10,
+            "description": "Participant nationality or country code."
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 50,
+            "description": "Playing role (\"GOLFER\", \"QB\")."
+          },
+          "teamAffiliation": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Current team affiliation."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "RETIRED",
+              "SUSPENDED"
+            ],
+            "description": "Participant lifecycle or availability status."
+          },
+          "injuryStatus": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "HEALTHY",
+                  "QUESTIONABLE",
+                  "DOUBTFUL",
+                  "OUT",
+                  "WITHDRAWN",
+                  "SUSPENDED",
+                  "SCRATCHED"
+                ],
+                "description": "Current injury or availability status code."
+              },
+              "detail": {
+                "type": "string",
+                "description": "Optional injury-status detail or summary."
+              },
+              "expectedReturn": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Expected return timestamp when known."
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Expected return timestamp when known."
+              },
+              "source": {
+                "type": "string",
+                "description": "Source that provided the injury-status update."
+              }
+            },
+            "required": [
+              "status"
+            ],
+            "additionalProperties": false,
+            "description": "Normalized participant injury or availability state."
+          },
+          "photoUrl": {
+            "type": "string",
+            "description": "Participant image URL."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Primary provider identifier."
+          },
+          "externalIds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Map of provider identifiers keyed by provider code."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Fields to change on a participant. Omitted fields keep their current values."
+      },
       "SportDto": {
         "type": "object",
         "properties": {
@@ -37374,59 +37483,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 500
-                  },
-                  "firstName": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "lastName": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "shortName": {
-                    "type": "string",
-                    "maxLength": 100
-                  },
-                  "nationality": {
-                    "type": "string",
-                    "maxLength": 10
-                  },
-                  "role": {
-                    "type": "string",
-                    "maxLength": 50
-                  },
-                  "teamAffiliation": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "ACTIVE",
-                      "INACTIVE",
-                      "RETIRED",
-                      "SUSPENDED"
-                    ]
-                  },
-                  "injuryStatus": {
-                    "type": "object"
-                  },
-                  "photoUrl": {
-                    "type": "string"
-                  },
-                  "externalId": {
-                    "type": "string"
-                  },
-                  "externalIds": {
-                    "type": "object"
-                  }
-                }
+                "$ref": "#/components/schemas/UpdateParticipantRequest"
               }
             }
           }

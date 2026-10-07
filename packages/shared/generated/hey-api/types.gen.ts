@@ -889,6 +889,83 @@ export type ParticipantResponse = {
 };
 
 /**
+ * Fields to change on a participant. Omitted fields keep their current values.
+ */
+export type UpdateParticipantRequest = {
+    /**
+     * Primary participant display name.
+     */
+    name?: string;
+    /**
+     * First name when the participant is a person.
+     */
+    firstName?: string;
+    /**
+     * Last name when the participant is a person.
+     */
+    lastName?: string;
+    /**
+     * Short-form display name for compact UI surfaces.
+     */
+    shortName?: string;
+    /**
+     * Participant nationality or country code.
+     */
+    nationality?: string;
+    /**
+     * Playing role ("GOLFER", "QB").
+     */
+    role?: string;
+    /**
+     * Current team affiliation.
+     */
+    teamAffiliation?: string;
+    /**
+     * Participant lifecycle or availability status.
+     */
+    status?: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+    /**
+     * Normalized participant injury or availability state.
+     */
+    injuryStatus?: {
+        /**
+         * Current injury or availability status code.
+         */
+        status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
+        /**
+         * Optional injury-status detail or summary.
+         */
+        detail?: string;
+        /**
+         * Expected return timestamp when known.
+         */
+        expectedReturn?: string;
+        /**
+         * Expected return timestamp when known.
+         */
+        updatedAt?: string;
+        /**
+         * Source that provided the injury-status update.
+         */
+        source?: string;
+    };
+    /**
+     * Participant image URL.
+     */
+    photoUrl?: string;
+    /**
+     * Primary provider identifier.
+     */
+    externalId?: string;
+    /**
+     * Map of provider identifiers keyed by provider code.
+     */
+    externalIds?: {
+        [key: string]: string;
+    };
+};
+
+/**
  * A sport the platform runs contests on.
  */
 export type SportDto = {
@@ -19778,24 +19855,7 @@ export type GetParticipantResponses = {
 export type GetParticipantResponse = GetParticipantResponses[keyof GetParticipantResponses];
 
 export type UpdateParticipantData = {
-    body: {
-        name?: string;
-        firstName?: string;
-        lastName?: string;
-        shortName?: string;
-        nationality?: string;
-        role?: string;
-        teamAffiliation?: string;
-        status?: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
-        injuryStatus?: {
-            [key: string]: unknown;
-        };
-        photoUrl?: string;
-        externalId?: string;
-        externalIds?: {
-            [key: string]: unknown;
-        };
-    };
+    body: UpdateParticipantRequest;
     path: {
         id: string;
     };

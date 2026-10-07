@@ -2969,6 +2969,58 @@ export interface components {
                 updatedAt: string;
             };
         };
+        /** @description Fields to change on a participant. Omitted fields keep their current values. */
+        UpdateParticipantRequest: {
+            /** @description Primary participant display name. */
+            name?: string;
+            /** @description First name when the participant is a person. */
+            firstName?: string;
+            /** @description Last name when the participant is a person. */
+            lastName?: string;
+            /** @description Short-form display name for compact UI surfaces. */
+            shortName?: string;
+            /** @description Participant nationality or country code. */
+            nationality?: string;
+            /** @description Playing role ("GOLFER", "QB"). */
+            role?: string;
+            /** @description Current team affiliation. */
+            teamAffiliation?: string;
+            /**
+             * @description Participant lifecycle or availability status.
+             * @enum {string}
+             */
+            status?: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
+            /** @description Normalized participant injury or availability state. */
+            injuryStatus?: {
+                /**
+                 * @description Current injury or availability status code.
+                 * @enum {string}
+                 */
+                status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
+                /** @description Optional injury-status detail or summary. */
+                detail?: string;
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                expectedReturn?: string;
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                updatedAt?: string;
+                /** @description Source that provided the injury-status update. */
+                source?: string;
+            };
+            /** @description Participant image URL. */
+            photoUrl?: string;
+            /** @description Primary provider identifier. */
+            externalId?: string;
+            /** @description Map of provider identifiers keyed by provider code. */
+            externalIds?: {
+                [key: string]: string;
+            };
+        };
         /** @description A sport the platform runs contests on. */
         SportDto: {
             /**
@@ -18934,21 +18986,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    name?: string;
-                    firstName?: string;
-                    lastName?: string;
-                    shortName?: string;
-                    nationality?: string;
-                    role?: string;
-                    teamAffiliation?: string;
-                    /** @enum {string} */
-                    status?: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
-                    injuryStatus?: Record<string, never>;
-                    photoUrl?: string;
-                    externalId?: string;
-                    externalIds?: Record<string, never>;
-                };
+                "application/json": components["schemas"]["UpdateParticipantRequest"];
             };
         };
         responses: {

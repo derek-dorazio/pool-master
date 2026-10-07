@@ -24,11 +24,13 @@ import {
   buildPayloadSummary,
   buildStatsSummary,
   formatRequestedFeed,
+  getPayloadOutcome,
   getPayloadSection,
   getPayloadWarnings,
   getProviderName,
   type ProviderSummary,
   type ProviderSyncRun,
+  type ProviderSyncRunPayload,
   formatJsonPayload,
 } from './root-admin-sync-utils';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -110,20 +112,8 @@ function getRunStatusLabel(run: ProviderSyncRun) {
   return run.status;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function getPayloadSeverity(payload: Record<string, unknown>) {
-  const outcome = payload.outcome;
-  if (!isRecord(outcome)) {
-    return null;
-  }
-
-  const severity = outcome.severity;
-  return severity === 'SUCCESS' || severity === 'WARNING' || severity === 'ERROR'
-    ? severity
-    : null;
+function getPayloadSeverity(payload: ProviderSyncRunPayload) {
+  return getPayloadOutcome(payload)?.severity ?? null;
 }
 
 function buildRunEvidenceRows(run: ProviderSyncRun | null): SyncRunEvidenceRow[] {
