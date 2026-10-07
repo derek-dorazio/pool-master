@@ -26391,7 +26391,7 @@
         "tags": [
           "Contest Management"
         ],
-        "description": "Updates an existing contest's configuration and returns it as getContestConfiguration does. Commissioner only. Refused with 409 CONTEST_CONFIGURATION_SETTLED while the contest is COMPLETED: its result is frozen against the configuration it settled under, and reopening the contest is the path back.",
+        "description": "Updates a draft contest's configuration and returns it as getContestConfiguration does. Commissioner only. Refused with 409 CONTEST_CONFIGURATION_LOCKED once the contest is no longer DRAFT: opening it to the league locks its settings for good.",
         "requestBody": {
           "required": true,
           "content": {
@@ -26821,7 +26821,7 @@
             }
           },
           "409": {
-            "description": "CONTEST_CONFIGURATION_SETTLED — the contest is COMPLETED; reopen it before changing its configuration.",
+            "description": "CONTEST_CONFIGURATION_LOCKED — the contest has been opened to the league (it is not DRAFT), so its configuration can no longer change.",
             "content": {
               "application/json": {
                 "schema": {
@@ -26854,7 +26854,7 @@
                     "error"
                   ],
                   "additionalProperties": false,
-                  "description": "CONTEST_CONFIGURATION_SETTLED — the contest is COMPLETED; reopen it before changing its configuration."
+                  "description": "CONTEST_CONFIGURATION_LOCKED — the contest has been opened to the league (it is not DRAFT), so its configuration can no longer change."
                 }
               }
             }
@@ -26894,6 +26894,478 @@
                   ],
                   "additionalProperties": false,
                   "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}/open": {
+      "post": {
+        "operationId": "openContest",
+        "summary": "Open a draft contest to the league",
+        "tags": [
+          "Contest Management"
+        ],
+        "description": "Moves a DRAFT contest to OPEN so league members can see and enter it, and returns it as getContestConfiguration does. Commissioner only. There is no undo: from here its name, configuration and existence are locked. The event's field need not be ready; entries wait on it.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Managed-contest detail response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contest": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Contest identifier."
+                        },
+                        "leagueId": {
+                          "type": "string",
+                          "description": "League that owns the contest."
+                        },
+                        "sportEventId": {
+                          "type": "string",
+                          "description": "Sport event attached to the contest."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Contest display name."
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "DRAFT",
+                            "OPEN",
+                            "DRAFTING",
+                            "LOCKED",
+                            "ACTIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                          ]
+                        },
+                        "configuration": {
+                          "type": "object",
+                          "properties": {
+                            "locksAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "date-time",
+                              "description": "Contest entry lock timestamp."
+                            },
+                            "maxEntriesPerSquad": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 1,
+                              "description": "Maximum entries a Team may create. Null means unlimited."
+                            },
+                            "rosterSize": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How many golfers each Team entry must pick."
+                            },
+                            "countedScores": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How many golfer scores count toward the Team total."
+                            },
+                            "id": {
+                              "type": "string",
+                              "description": "Contest-configuration identifier."
+                            },
+                            "contestId": {
+                              "type": "string",
+                              "description": "Contest that owns the configuration."
+                            }
+                          },
+                          "required": [
+                            "rosterSize",
+                            "countedScores",
+                            "id",
+                            "contestId"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Current commissioner-managed contest configuration."
+                        },
+                        "effectiveTiers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "tierKey": {
+                                "type": "string",
+                                "description": "Stable per-event tier key."
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "Commissioner-facing tier label."
+                              },
+                              "tierNumber": {
+                                "type": "integer",
+                                "description": "1-based tier ordering."
+                              },
+                              "defaultPickCount": {
+                                "type": "integer",
+                                "description": "Default number of golfers picked from this tier."
+                              },
+                              "assignments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "sportEventParticipantId": {
+                                      "type": "string",
+                                      "description": "Field entry the assignment belongs to."
+                                    },
+                                    "participantId": {
+                                      "type": "string",
+                                      "description": "Global golfer identity."
+                                    },
+                                    "tierOrderIndex": {
+                                      "type": [
+                                        "integer",
+                                        "null"
+                                      ],
+                                      "description": "Within-tier ordering position; null when the golfer has no explicit order."
+                                    },
+                                    "price": {
+                                      "type": [
+                                        "number",
+                                        "null"
+                                      ],
+                                      "description": "Per-golfer budget price when the event defines one; null otherwise."
+                                    }
+                                  },
+                                  "required": [
+                                    "sportEventParticipantId",
+                                    "participantId",
+                                    "tierOrderIndex",
+                                    "price"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "One golfer's inherited tier placement for the contest's linked event."
+                                },
+                                "description": "Golfers assigned to this tier, ordered by tierOrderIndex ascending."
+                              }
+                            },
+                            "required": [
+                              "tierKey",
+                              "label",
+                              "tierNumber",
+                              "defaultPickCount",
+                              "assignments"
+                            ],
+                            "additionalProperties": false,
+                            "description": "One inherited event tier and its golfer assignments."
+                          },
+                          "description": "Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When the contest was created."
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When the contest was last updated."
+                        },
+                        "templateId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "uuid",
+                          "description": "Seeded template chosen when the contest was created, if any."
+                        },
+                        "templateVersion": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "description": "Schema/template version captured when the contest was created, if any."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueId",
+                        "sportEventId",
+                        "name",
+                        "status",
+                        "configuration",
+                        "effectiveTiers",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Golf-first contest-management detail returned to commissioner tooling."
+                    }
+                  },
+                  "required": [
+                    "contest"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Managed-contest detail response."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND when the contest's event is gone.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND when the contest's event is gone."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONTEST_NOT_DRAFT — the contest is already open, or past it. CONTEST_EVENT_ALREADY_STARTED — the event's start time has passed or it is IN_PROGRESS, COMPLETED or CANCELLED; the draft stays a draft.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "CONTEST_NOT_DRAFT — the contest is already open, or past it. CONTEST_EVENT_ALREADY_STARTED — the event's start time has passed or it is IN_PROGRESS, COMPLETED or CANCELLED; the draft stays a draft."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event's tiers; edit the draft first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event's tiers; edit the draft first."
                 }
               }
             }

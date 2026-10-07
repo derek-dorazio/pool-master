@@ -13,7 +13,12 @@ import type {
   GolfEffectiveTierDto,
   UpdateContestConfigurationRequest,
 } from '@poolmaster/shared/dto';
-import { CONTEST_CONFIGURATION_REQUIRED, CONTEST_CONFIGURATION_SETTLED } from '@poolmaster/shared/dto';
+import {
+  CONTEST_CONFIGURATION_LOCKED,
+  CONTEST_CONFIGURATION_REQUIRED,
+  CONTEST_EVENT_ALREADY_STARTED,
+  CONTEST_NOT_DRAFT,
+} from '@poolmaster/shared/dto';
 import type {
   ContestConfigTemplate,
   ContestConfiguration,
@@ -26,6 +31,7 @@ import {
   ScoringEngine,
   SelectionType,
   Sport,
+  SportEventStatus,
   isContestFormatValidForTournamentFormat,
 } from '@poolmaster/shared/domain';
 import { toGolfEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
@@ -39,6 +45,8 @@ type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'erro
 
 export interface ContestCreateSportEventState {
   id: string;
+  status: SportEventStatus;
+  startDate: Date;
   releaseAt: Date;
   fieldLocksAt: Date;
   fieldLocked: boolean;
@@ -53,6 +61,16 @@ export interface ContestCreateSportEventReader {
     sportEventId: string,
   ): Promise<ContestCreateSportEventState | null>;
 }
+
+/**
+ * Event statuses at which the event has started, or is over: a draft contest on it can no
+ * longer be opened (#117). POSTPONED is not here — a postponed event has not started.
+ */
+const STARTED_SPORT_EVENT_STATUSES: readonly SportEventStatus[] = [
+  SportEventStatus.IN_PROGRESS,
+  SportEventStatus.COMPLETED,
+  SportEventStatus.CANCELLED,
+];
 
 function createNoopLogger(): LifecycleLogger {
   const noop = () => undefined;
@@ -74,6 +92,7 @@ export class ContestManagementService {
     private readonly sportEventTierService: SportEventTierService,
     private readonly logger: LifecycleLogger = createNoopLogger(),
     private readonly sportEventReader?: ContestCreateSportEventReader,
+    private readonly now: () => Date = () => new Date(),
   ) {}
 
   /**
@@ -123,7 +142,9 @@ export class ContestManagementService {
       leagueId: context.leagueId,
       sportEventId: input.sportEventId,
       name: input.name,
-      status: ContestStatus.OPEN,
+      // A new contest is the commissioner's draft (#117): only they see it, nobody can enter,
+      // and its settings stay editable until they open it to the league.
+      status: ContestStatus.DRAFT,
       contestFormat: input.contestFormat,
       selectionType,
       scoringEngine: ScoringEngine.STROKE_PLAY,
@@ -247,14 +268,14 @@ export class ContestManagementService {
       this.logger.warn({ contestId }, 'contest management update configuration missing contest');
       throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
     }
-    // A settled contest's result is frozen against the configuration it was settled under
-    // (#246). Reopening it (OverrideService.reopenContest: commissioner-gated, reason recorded)
-    // is the deliberate path back to an editable configuration.
-    if (contest.status === ContestStatus.COMPLETED) {
-      this.logger.warn({ contestId }, 'contest management update configuration refused for a settled contest');
+    // Only a draft's configuration can change (#117). Once the contest is open to the league,
+    // members enter against these rules, so they are locked for good — there is no path back:
+    // OverrideService.reopenContest returns a contest to ACTIVE, never to DRAFT.
+    if (contest.status !== ContestStatus.DRAFT) {
+      this.logger.warn({ contestId, status: contest.status }, 'contest management update configuration refused for a contest that is not a draft');
       throw new ContestManagementError(
-        'A settled contest\'s configuration cannot change. Reopen the contest first.',
-        CONTEST_CONFIGURATION_SETTLED,
+        'This contest is open to the league, so its settings are locked.',
+        CONTEST_CONFIGURATION_LOCKED,
         409,
       );
     }
@@ -289,6 +310,94 @@ export class ContestManagementService {
       refreshedConfiguration,
       await this.resolveEffectiveTiers(contest.sportEventId),
     );
+  }
+
+  /**
+   * "Open to league" (#117): the commissioner releases a draft contest, DRAFT → OPEN, and
+   * members can enter it. There is no undo. Refused when the contest is not a draft, when its
+   * event has started, or when its stored configuration no longer fits the event's tiers.
+   * The field need not be ready: entries already wait on it.
+   */
+  async openContest(leagueId: string, contestId: string): Promise<ContestManagementDetailDto> {
+    this.logger.debug({ leagueId, contestId }, 'contest management open contest start');
+    const contest = await this.contestRepo.findById(contestId);
+    // The route's gate proves the caller commissions `leagueId`; a contest in another league is
+    // not theirs to open, and answers as missing.
+    if (!contest || contest.leagueId !== leagueId) {
+      this.logger.warn({ leagueId, contestId }, 'contest management open contest missing contest');
+      throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
+    }
+    if (contest.status !== ContestStatus.DRAFT) {
+      this.logger.warn({ contestId, status: contest.status }, 'contest management open contest refused for a contest that is not a draft');
+      throw contestNotDraftError();
+    }
+    const configuration = await this.contestConfigurationRepo.findByContest(contestId);
+    if (!configuration) {
+      this.logger.warn({ contestId }, 'contest management open contest missing configuration');
+      throw new ContestManagementError('Contest configuration not found', 'CONTEST_NOT_FOUND', 404);
+    }
+
+    await this.assertSportEventNotStarted(contestId, contest.sportEventId);
+    await this.assertTierConfigurationFitsSportEvent(
+      contest.sportEventId,
+      ensureTypedConfiguration(configuration),
+    );
+
+    // Compare-and-set: of two presses racing, only one moves the contest.
+    const opened = await this.contestRepo.transitionStatus(contestId, {
+      from: [ContestStatus.DRAFT],
+      to: ContestStatus.OPEN,
+    });
+    if (!opened) {
+      this.logger.warn({ contestId }, 'contest management open contest lost the race to another transition');
+      throw contestNotDraftError();
+    }
+    this.onContestOpened(contest.id, contest.leagueId);
+
+    return this.getContest(contestId);
+  }
+
+  /**
+   * The seam for telling the league a contest has opened (#117). The League Feed post and the
+   * member email attach here when they are built; today it only records the fact.
+   */
+  private onContestOpened(contestId: string, leagueId: string): void {
+    this.logger.info({ contestId, leagueId }, 'contest opened to league');
+  }
+
+  private async assertSportEventNotStarted(
+    contestId: string,
+    sportEventId: string | undefined,
+  ): Promise<void> {
+    if (!this.sportEventReader || !sportEventId) {
+      return;
+    }
+    const sportEvent = await this.sportEventReader.findById(sportEventId);
+    if (!sportEvent) {
+      this.logger.warn({ contestId, sportEventId }, 'contest management open contest missing sport event');
+      throw new ContestManagementError(
+        'Selected sporting event was not found.',
+        'SPORT_EVENT_NOT_FOUND',
+        404,
+      );
+    }
+    const now = this.now();
+    if (
+      sportEvent.startDate.getTime() <= now.getTime()
+      || STARTED_SPORT_EVENT_STATUSES.includes(sportEvent.status)
+    ) {
+      this.logger.warn({
+        contestId,
+        sportEventId,
+        status: sportEvent.status,
+        startDate: sportEvent.startDate.toISOString(),
+      }, 'contest management open contest refused for an event that has started');
+      throw new ContestManagementError(
+        'This contest\'s event has already started, so it can no longer be opened.',
+        CONTEST_EVENT_ALREADY_STARTED,
+        409,
+      );
+    }
   }
 
   private async assertSportEventContestEligible(
@@ -394,6 +503,14 @@ export class ContestManagementService {
     }
     assertRosterSizeFitsTierCount(configuration, tiers.length);
   }
+}
+
+function contestNotDraftError(): ContestManagementError {
+  return new ContestManagementError(
+    'This contest is already open to the league.',
+    CONTEST_NOT_DRAFT,
+    409,
+  );
 }
 
 export class ContestManagementError extends Error {

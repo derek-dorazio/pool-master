@@ -82,10 +82,19 @@ export type ContestConfigurationRequest = z.infer<
 >;
 
 /**
- * Error code for a configuration edit on a COMPLETED contest (#246): its result is frozen
- * against the configuration it settled under. Reopening the contest is the path back.
+ * Error code for a configuration edit on a contest that is no longer DRAFT (#117). Opening a
+ * contest to its league locks its configuration for good: members enter against those rules.
  */
-export const CONTEST_CONFIGURATION_SETTLED = 'CONTEST_CONFIGURATION_SETTLED';
+export const CONTEST_CONFIGURATION_LOCKED = 'CONTEST_CONFIGURATION_LOCKED';
+
+/** Error code for opening a contest that is not DRAFT (#117): it is already open, or past it. */
+export const CONTEST_NOT_DRAFT = 'CONTEST_NOT_DRAFT';
+
+/**
+ * Error code for opening a contest whose event has already started (#117): its start time has
+ * passed, or its status is IN_PROGRESS or later. The draft stays a draft; delete it instead.
+ */
+export const CONTEST_EVENT_ALREADY_STARTED = 'CONTEST_EVENT_ALREADY_STARTED';
 
 export const UpdateContestConfigurationRequestSchema =
   ContestConfigurationRequestSchema;

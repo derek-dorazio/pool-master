@@ -55,9 +55,11 @@ export interface LeagueListRow {
 
 export type LeagueListScope = 'mine' | 'all';
 
-/** Statuses that make a contest count as active for a league's `activeContestCount`. */
+/**
+ * Statuses that make a contest count as active for a league's `activeContestCount`. DRAFT is
+ * not one (#117): a draft is the commissioner's private setup, not a contest the league has.
+ */
 const ACTIVE_LEAGUE_CONTEST_STATUSES = [
-  ContestStatus.DRAFT,
   ContestStatus.OPEN,
   ContestStatus.DRAFTING,
   ContestStatus.LOCKED,

@@ -300,7 +300,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     });
   });
 
-  test('act 2: a new commissioner creates a league and a contest on the catalog, then hands out a join link', async ({ page }) => {
+  test('act 2: a new commissioner creates a league and a draft contest on the catalog, opens it to the league, then hands out a join link', async ({ page }) => {
     test.setTimeout(120_000);
     const state = requireJourney();
     const { run } = state;
@@ -354,10 +354,42 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       );
       expect(created.contest.name).toBe(run.contestName);
       state.contestId = created.contest.id;
-      await expect(page).toHaveURL(new RegExp(`/league/${run.leagueCode}/contests/${state.contestId}$`));
+    });
+
+    await test.step('the new contest is a draft on its setup page, and its configuration still takes an edit', async () => {
+      // #117 — create saves a draft and lands the commissioner on its setup page.
+      await expect(page).toHaveURL(new RegExp(`/league/${run.leagueCode}/contests/${state.contestId}/manage$`));
+      await expect(page.getByTestId('manage-contest-page')).toBeVisible();
+      const managed = await readManagedContest(page, state.leagueId, state.contestId);
+      expect(managed.contest.status).toBe('DRAFT');
+      // The control for the lock below: the very same request, byte for byte, is accepted here
+      // and refused once the contest is open, so the refusal can only be the release's doing.
+      const accepted = await putContestConfigurationUnchanged(page, state.leagueId, state.contestId);
+      expect(accepted.status, `PUT the contest configuration answered ${accepted.status}`).toBe(200);
+    });
+
+    await test.step('open the contest to the league, after which its configuration is locked', async () => {
+      await page.getByTestId('contest-open-to-league').click();
+      await expect(page.getByTestId('contest-open-dialog')).toBeVisible();
+      const opened = await submitAndRead<{ contest: { status: string } }>(
+        page,
+        'contest-open-confirm',
+        'POST',
+        `/api/v1/leagues/${state.leagueId}/contest-management/contests/${state.contestId}/open`,
+      );
+      expect(opened.contest.status).toBe('OPEN');
+      await expect(page.getByTestId('contest-manage-readonly-note')).toBeVisible();
+      await expect(page.getByTestId('contest-open-to-league')).toHaveCount(0);
+
+      const refused = await putContestConfigurationUnchanged(page, state.leagueId, state.contestId);
+      expect(refused.status, `PUT the contest configuration answered ${refused.status}`).toBe(409);
+      // The documented code, not a generic failure. The sentence that comes with it is
+      // deliberately not asserted: the code is the contract, the prose is not.
+      expect(refused.errorCode).toBe('CONTEST_CONFIGURATION_LOCKED');
     });
 
     await test.step('the contest is on the board with no entries, and on the league\'s contest list', async () => {
+      await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
       await expect(page.getByTestId('contest-board')).toBeVisible();
       await expect(page.getByTestId('contest-detail-heading')).toHaveText(run.contestName);
       // The contest is this run's own and seconds old: zero entries is a fact about it, not
@@ -846,14 +878,7 @@ test('act 6: completing the event settles the contest and freezes its standing a
     }
   });
 
-  const finalLive = await test.step('the configuration still takes an edit, and this is the last live leaderboard before completion', async () => {
-    // The control for the freeze this act ends on: the very same request, byte for byte, is
-    // accepted here and refused once the contest settles, so the refusal can only be settlement's
-    // doing and not the request's. It writes the configuration back unchanged, so it moves no
-    // score and no standing.
-    const accepted = await putContestConfigurationUnchanged(page, state.leagueId, state.contestId);
-    expect(accepted.status, `PUT the contest configuration answered ${accepted.status}`).toBe(200);
-
+  const finalLive = await test.step('this is the last live leaderboard before completion', async () => {
     const read = await readContestLeaderboard(page, state.contestId, state.entryId);
     expectCountingPicksExplainTheTotal(read);
     return read;
@@ -906,14 +931,6 @@ test('act 6: completing the event settles the contest and freezes its standing a
     expect(read.entry.displayPosition).not.toBeNull();
     expectCountingPicksExplainTheTotal(read);
     return read;
-  });
-
-  await test.step('the settled contest refuses the configuration edit it accepted a moment ago', async () => {
-    const refused = await putContestConfigurationUnchanged(page, state.leagueId, state.contestId);
-    expect(refused.status, `PUT the contest configuration answered ${refused.status}`).toBe(409);
-    // The documented code for a settled configuration, not a generic failure. The sentence that
-    // comes with it is deliberately not asserted: the code is the contract, the prose is not.
-    expect(refused.errorCode).toBe('CONTEST_CONFIGURATION_SETTLED');
   });
 
   await test.step('a late score correction moves the golfer and leaves the settled standing alone', async () => {
@@ -1260,9 +1277,9 @@ type ManagedContestRead = {
  * Writes the contest's configuration back exactly as it already is, and reports how the API
  * answered.
  *
- * Unchanged on purpose. The act sends it twice — before settlement and after — and a request
- * that alters nothing makes the second answer attributable to the contest's status alone; it
- * also cannot disturb the standing the act is about to compare. The body carries only the four
+ * Unchanged on purpose. Act 2 sends it twice — while the contest is a draft and after it is
+ * opened to the league — and a request that alters nothing makes the second answer attributable
+ * to the contest's status alone. The body carries only the four
  * fields the request schema defines, so the configuration's own `id` and `contestId` are
  * dropped rather than sent back as unexpected properties.
  *

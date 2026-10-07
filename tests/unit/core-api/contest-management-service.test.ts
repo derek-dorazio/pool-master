@@ -4,11 +4,14 @@ import {
   ContestStatus,
   SelectionType,
   Sport,
+  SportEventStatus,
   TournamentFormat,
 } from '@poolmaster/shared/domain';
 import {
+  CONTEST_CONFIGURATION_LOCKED,
   CONTEST_CONFIGURATION_REQUIRED,
-  CONTEST_CONFIGURATION_SETTLED,
+  CONTEST_EVENT_ALREADY_STARTED,
+  CONTEST_NOT_DRAFT,
   type CreateContestRequest,
 } from '@poolmaster/shared/dto';
 import type {
@@ -202,6 +205,8 @@ function createSportEventTierServiceStub(
 }
 
 function createSportEventReader(overrides?: Partial<{
+  status: SportEventStatus;
+  startDate: Date;
   releaseAt: Date;
   fieldLocksAt: Date;
   fieldLocked: boolean;
@@ -215,6 +220,8 @@ function createSportEventReader(overrides?: Partial<{
   return {
     findById: jest.fn().mockResolvedValue({
       id: '11111111-1111-1111-1111-111111111111',
+      status: overrides?.status ?? SportEventStatus.SCHEDULED,
+      startDate: overrides?.startDate ?? new Date('2026-05-14T12:00:00.000Z'),
       releaseAt: overrides?.releaseAt ?? new Date('2026-04-22T12:00:00.000Z'),
       fieldLocksAt: overrides?.fieldLocksAt ?? new Date('2026-05-10T12:00:00.000Z'),
       fieldLocked: overrides?.fieldLocked ?? false,
@@ -237,7 +244,7 @@ describe('ContestManagementService', () => {
     jest.useRealTimers();
   });
 
-  it('creates a golf tiered contest and derives internal scoring rules automatically', async () => {
+  it('creates a golf tiered contest as a DRAFT and derives internal scoring rules automatically', async () => {
     const contestCoreRepo = createContestRepo();
     const contestConfigTemplateRepo = createContestConfigTemplateRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
@@ -276,7 +283,7 @@ describe('ContestManagementService', () => {
       selectionType: 'TIERED',
       scoringEngine: 'STROKE_PLAY',
       contestFormat: ContestFormat.ROSTER,
-      status: ContestStatus.OPEN,
+      status: ContestStatus.DRAFT,
     });
     expect(result).toBe('contest-1');
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
@@ -538,7 +545,11 @@ describe('ContestManagementService', () => {
   });
 
   // #246 — a settled contest's configuration is frozen with its result; reopening is the path back.
-  it('refuses a configuration edit while the contest is COMPLETED, and allows it once reopened', async () => {
+  it.each([
+    ContestStatus.OPEN,
+    ContestStatus.ACTIVE,
+    ContestStatus.COMPLETED,
+  ])('refuses a configuration edit with 409 CONTEST_CONFIGURATION_LOCKED once the contest is %s, writing nothing', async (status) => {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService(
@@ -551,19 +562,134 @@ describe('ContestManagementService', () => {
       createSportEventReader(),
     );
     const contest = await contestCoreRepo.findById('contest-1');
-    const edit = { rosterSize: 6, countedScores: 5 };
 
-    (contestCoreRepo.findById as jest.Mock).mockResolvedValueOnce({ ...contest, status: ContestStatus.COMPLETED });
-    await expect(service.updateContestConfiguration('contest-1', edit)).rejects.toMatchObject({
-      code: CONTEST_CONFIGURATION_SETTLED,
-      statusCode: 409,
-    });
+    (contestCoreRepo.findById as jest.Mock).mockResolvedValueOnce({ ...contest, status });
+    await expect(
+      service.updateContestConfiguration('contest-1', { rosterSize: 6, countedScores: 5 }),
+    ).rejects.toMatchObject({ code: CONTEST_CONFIGURATION_LOCKED, statusCode: 409 });
     expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
+  });
 
-    // OverrideService.reopenContest moves COMPLETED → ACTIVE; the edit then goes through.
-    (contestCoreRepo.findById as jest.Mock).mockResolvedValueOnce({ ...contest, status: ContestStatus.ACTIVE });
-    await service.updateContestConfiguration('contest-1', edit);
-    expect(contestConfigurationRepo.update).toHaveBeenCalledTimes(1);
+  describe('openContest', () => {
+    function buildService(options?: {
+      status?: ContestStatus;
+      leagueId?: string;
+      tierCount?: number;
+      reader?: ReturnType<typeof createSportEventReader>;
+      transitioned?: boolean;
+    }) {
+      const contestCoreRepo = createContestRepo();
+      const draft = {
+        id: 'contest-1',
+        leagueId: options?.leagueId ?? 'league-1',
+        sportEventId: '11111111-1111-1111-1111-111111111111',
+        name: 'Contest 1',
+        status: options?.status ?? ContestStatus.DRAFT,
+        contestFormat: ContestFormat.ROSTER,
+        selectionType: 'TIERED',
+        scoringEngine: 'STROKE_PLAY',
+        createdAt: new Date('2026-04-07T12:00:00.000Z'),
+        updatedAt: new Date('2026-04-07T12:00:00.000Z'),
+      };
+      (contestCoreRepo.findById as jest.Mock).mockResolvedValue(draft);
+      (contestCoreRepo.transitionStatus as jest.Mock).mockImplementation(async () => {
+        if (options?.transitioned === false) {
+          return false;
+        }
+        draft.status = ContestStatus.OPEN;
+        return true;
+      });
+      const service = new ContestManagementService(
+        contestCoreRepo,
+        createContestConfigTemplateRepo(),
+        createContestConfigurationRepo(),
+        createParticipantScoringRuleRepo(),
+        createSportEventTierServiceStub(options?.tierCount ?? 0),
+        undefined,
+        options?.reader ?? createSportEventReader(),
+        () => CONTEST_MANAGEMENT_TEST_NOW,
+      );
+      return { service, contestCoreRepo };
+    }
+
+    it('moves a DRAFT contest to OPEN with a compare-and-set from DRAFT, and returns it open', async () => {
+      const { service, contestCoreRepo } = buildService();
+
+      const opened = await service.openContest('league-1', 'contest-1');
+
+      expect(contestCoreRepo.transitionStatus).toHaveBeenCalledWith('contest-1', {
+        from: [ContestStatus.DRAFT],
+        to: ContestStatus.OPEN,
+      });
+      expect(opened.status).toBe(ContestStatus.OPEN);
+    });
+
+    it.each([
+      ContestStatus.OPEN,
+      ContestStatus.ACTIVE,
+      ContestStatus.COMPLETED,
+    ])('refuses a %s contest with 409 CONTEST_NOT_DRAFT and moves nothing', async (status) => {
+      const { service, contestCoreRepo } = buildService({ status });
+
+      await expect(service.openContest('league-1', 'contest-1'))
+        .rejects.toMatchObject({ code: CONTEST_NOT_DRAFT, statusCode: 409 });
+      expect(contestCoreRepo.transitionStatus).not.toHaveBeenCalled();
+    });
+
+    it('answers 409 CONTEST_NOT_DRAFT when a concurrent press already moved the contest', async () => {
+      const { service } = buildService({ transitioned: false });
+
+      await expect(service.openContest('league-1', 'contest-1'))
+        .rejects.toMatchObject({ code: CONTEST_NOT_DRAFT, statusCode: 409 });
+    });
+
+    it('refuses a contest from another league as not found, so one league\'s commissioner cannot open another\'s', async () => {
+      const { service, contestCoreRepo } = buildService({ leagueId: 'league-2' });
+
+      await expect(service.openContest('league-1', 'contest-1'))
+        .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+      expect(contestCoreRepo.transitionStatus).not.toHaveBeenCalled();
+    });
+
+    it('refuses with 409 CONTEST_EVENT_ALREADY_STARTED once the event start time has passed, even while it is still SCHEDULED', async () => {
+      const { service, contestCoreRepo } = buildService({
+        reader: createSportEventReader({ startDate: new Date('2026-04-23T11:59:59.000Z') }),
+      });
+
+      await expect(service.openContest('league-1', 'contest-1'))
+        .rejects.toMatchObject({ code: CONTEST_EVENT_ALREADY_STARTED, statusCode: 409 });
+      expect(contestCoreRepo.transitionStatus).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      SportEventStatus.IN_PROGRESS,
+      SportEventStatus.COMPLETED,
+      SportEventStatus.CANCELLED,
+    ])('refuses with 409 CONTEST_EVENT_ALREADY_STARTED when the event is %s, even before its start time', async (status) => {
+      const { service, contestCoreRepo } = buildService({ reader: createSportEventReader({ status }) });
+
+      await expect(service.openContest('league-1', 'contest-1'))
+        .rejects.toMatchObject({ code: CONTEST_EVENT_ALREADY_STARTED, statusCode: 409 });
+      expect(contestCoreRepo.transitionStatus).not.toHaveBeenCalled();
+    });
+
+    it('opens a contest on a POSTPONED event, which has not started', async () => {
+      const { service } = buildService({
+        reader: createSportEventReader({ status: SportEventStatus.POSTPONED }),
+      });
+
+      await expect(service.openContest('league-1', 'contest-1'))
+        .resolves.toMatchObject({ status: ContestStatus.OPEN });
+    });
+
+    it('refuses with 422 CONTEST_TIER_FIELD_OUT_OF_RANGE when the stored roster no longer divides across the event\'s tiers', async () => {
+      // The stored configuration picks 6; an event with 4 tiers cannot take it.
+      const { service, contestCoreRepo } = buildService({ tierCount: 4 });
+
+      await expect(service.openContest('league-1', 'contest-1'))
+        .rejects.toMatchObject({ code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE', statusCode: 422 });
+      expect(contestCoreRepo.transitionStatus).not.toHaveBeenCalled();
+    });
   });
 
   it('updates the persisted typed contest configuration shape', async () => {
