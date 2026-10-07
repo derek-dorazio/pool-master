@@ -141,6 +141,31 @@ describe('GolfScoreService — single-cell correction', () => {
     await expect(service.updateRoundScore(event.id, 1, 'missing', { strokes: 70 }))
       .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_FOUND', statusCode: 404 });
   });
+
+  // #398 — the server never fills in strokes or to par (#116), so a correction that would
+  // create a golfer's round must carry both.
+  it.each([
+    ['thru only', { thru: 9 }],
+    ['status only', { status: 'COMPLETED' as const }],
+    ['strokes without to par', { strokes: 70 }],
+    ['to par without strokes', { scoreToPar: -2 }],
+  ])('refuses a correction with %s for a golfer with no stored round with 422 ROUND_VALUES_REQUIRED, writing nothing', async (_label, patch) => {
+    const { store, service, event, anaEntry } = setup();
+
+    await expect(service.updateRoundScore(event.id, 1, anaEntry.id, patch))
+      .rejects.toMatchObject({ code: 'ROUND_VALUES_REQUIRED', statusCode: 422 });
+    expect(store.roundRows).toEqual([]);
+    expect(store.golfRoundRows).toEqual([]);
+  });
+
+  it('a correction with strokes and to par for a golfer with no stored round creates the round with exactly those values', async () => {
+    const { store, service, event, anaEntry } = setup();
+
+    await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 71, scoreToPar: -1 });
+
+    const [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
+    expect(round).toMatchObject({ participantRound: { status: 'IN_PROGRESS' }, golf: { strokes: 71, scoreToPar: -1, thru: null } });
+  });
 });
 
 // #375 — nothing is scored after the 18th hole of the event's last scheduled round. An admin

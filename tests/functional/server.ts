@@ -4,7 +4,13 @@ import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../packages/core-api/src/index';
 import { buildApp as buildMockContestFeedProvider } from '../../packages/mock-contest-feed-provider/src/app';
-import { startSmtpSinkServer, type SmtpSinkServer } from '../support/smtp-sink';
+import {
+  startMailInboxServer,
+  startSmtpSinkServer,
+  type MailInboxServer,
+  type SmtpSinkServer,
+} from '../support/smtp-sink';
+import { FUNCTIONAL_APP_BASE_URL } from './state';
 
 const stateFilePathEnv = process.env.FUNCTIONAL_SERVER_STATE_FILE;
 const runId = process.env.FUNCTIONAL_RUN_ID ?? 'functional-run';
@@ -18,6 +24,7 @@ if (!stateFilePathEnv) {
 const stateFilePath: string = stateFilePathEnv;
 
 let smtpSink: SmtpSinkServer | undefined;
+let mailInbox: MailInboxServer | undefined;
 // pool-master-cs8 — the FAPI daemon runs a real mock-contest-feed provider so
 // provider-linked golf scenarios (catalog browse, score-source link, sync-driven
 // live scores) can be driven end to end through the generated SDK, the same way
@@ -86,7 +93,7 @@ function activeRunsExist(): boolean {
   return found;
 }
 
-async function writeState(port: number): Promise<void> {
+async function writeState(port: number, mailInboxUrl: string): Promise<void> {
   await fs.mkdir(path.dirname(stateFilePath), { recursive: true });
   await fs.writeFile(
     stateFilePath,
@@ -95,6 +102,8 @@ async function writeState(port: number): Promise<void> {
       port,
       baseUrl: `http://127.0.0.1:${port}`,
       runId,
+      // #442 — where tests read the emails the server sent; see tests/functional/mail.ts.
+      mailInboxUrl,
       // #276 — read by global-setup, which adopts this daemon only while its spawner or a run using
       // it is alive: the condition under which the watchdog below keeps it running.
       spawnerPid,
@@ -110,6 +119,7 @@ const spawnerPid = Number(process.env.FUNCTIONAL_SPAWNER_PID) || process.ppid;
 
 async function main(): Promise<void> {
   smtpSink = await startSmtpSinkServer();
+  mailInbox = await startMailInboxServer(smtpSink);
   process.env.EMAIL_PROVIDER = 'smtp';
   process.env.SMTP_HOST = '127.0.0.1';
   process.env.SMTP_PORT = String(smtpSink.port);
@@ -117,6 +127,8 @@ async function main(): Promise<void> {
   process.env.SMTP_FROM = 'noreply@functional.test';
   delete process.env.SMTP_USERNAME;
   delete process.env.SMTP_PASSWORD;
+  // Fixed, so tests can assert the exact links in email bodies.
+  process.env.APP_BASE_URL = FUNCTIONAL_APP_BASE_URL;
 
   // Register the mock provider before buildApp() — registerConfiguredProviders
   // reads these env vars once, at construction time (pool-master-cs8).
@@ -136,7 +148,7 @@ async function main(): Promise<void> {
     throw new Error('Functional server failed to bind to a TCP port');
   }
 
-  await writeState(address.port);
+  await writeState(address.port, mailInbox.url);
 
   // Idempotent shutdown — multiple triggers (SIGTERM + watchdog) can fire concurrently
   // when the parent dies abruptly mid-shutdown. Without the guard, app.close() would be
@@ -150,6 +162,7 @@ async function main(): Promise<void> {
       await app.close();
     } finally {
       await mockContestFeedProvider?.close().catch(() => undefined);
+      await mailInbox?.close().catch(() => undefined);
       await smtpSink?.close().catch(() => undefined);
       process.exit(0);
     }
@@ -210,6 +223,7 @@ async function main(): Promise<void> {
 main().catch(async (error) => {
   process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
   await mockContestFeedProvider?.close().catch(() => undefined);
+  await mailInbox?.close().catch(() => undefined);
   await smtpSink?.close().catch(() => undefined);
   if (stateFilePath) {
     await fs.rm(stateFilePath, { force: true }).catch(() => undefined);

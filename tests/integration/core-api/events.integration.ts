@@ -382,5 +382,27 @@ describe('events routes', () => {
       const stored = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: eventId } });
       expect(stored.status).toBe('DRAFT');
     });
+
+    it('hides a draft event from a signed-in user who is not a root admin with 404 EVENT_NOT_FOUND, while a root admin reads it', async () => {
+      const admin = await createTestUser({ displayName: 'Draft Read Admin', isRootAdmin: true });
+      const viewer = await createTestUser({ displayName: 'Draft Read Member' });
+      const eventId = await seedDraftGolfEvent({ tiered: true });
+
+      const viewerRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/events/${eventId}`,
+        headers: viewer.headers,
+      });
+      expect(viewerRes.statusCode).toBe(404);
+      expect(viewerRes.json()).toMatchObject({ error: { code: 'EVENT_NOT_FOUND' } });
+
+      const adminRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/events/${eventId}`,
+        headers: admin.headers,
+      });
+      expect(adminRes.statusCode).toBe(200);
+      expect(adminRes.json()).toMatchObject({ event: { id: eventId, status: 'DRAFT' } });
+    });
   });
 });

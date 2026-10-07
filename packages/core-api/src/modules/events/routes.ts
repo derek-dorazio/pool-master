@@ -83,6 +83,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Get a sport event',
+      description: '404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin.',
       operationId: 'getEvent',
       params: EVENT_PARAMS,
       response: { 200: schemaRef('SportEventResponse'), ...errors(401, 404) },
@@ -330,11 +331,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Update a sport event\'s field',
-      description: 'Patches field rows and their manual prices, all or none. Root admin only.',
+      description: 'Patches field rows and their manual prices, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event\'s price would change: its tiers and prices are locked.',
       operationId: 'updateEventParticipants',
       params: EVENT_PARAMS,
       body: schemaRef('UpdateSportEventParticipantsRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409) },
     },
     handler: handler.updateEventParticipants,
   });
@@ -450,11 +451,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Fill a sport event\'s tiers from its active field',
-      description: 'Returns the field with its new valuations. Root admin only.',
+      description: 'Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.',
       operationId: 'autoAssignEventTiers',
       params: EVENT_PARAMS,
       body: schemaRef('AutoAssignSportEventTiersRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409) },
     },
     handler: handler.autoAssignEventTiers,
   });
@@ -464,11 +465,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Replace a sport event\'s tier assignments',
-      description: 'The drag-and-drop save, all or none. Returns the field with its new valuations. Root admin only.',
+      description: 'The drag-and-drop save, all or none. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.',
       operationId: 'replaceEventTierAssignments',
       params: EVENT_PARAMS,
       body: schemaRef('ReplaceSportEventTierAssignmentsRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 422) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409, 422) },
     },
     handler: handler.replaceEventTierAssignments,
   });
@@ -478,11 +479,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Price a sport event\'s seeded field',
-      description: 'Returns the field with its new valuations. Root admin only.',
+      description: 'Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.',
       operationId: 'autoAssignEventPrices',
       params: EVENT_PARAMS,
       body: schemaRef('AutoAssignSportEventPricesRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409) },
     },
     handler: handler.autoAssignEventPrices,
   });
@@ -522,7 +523,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Correct one golfer\'s round',
-      description: 'Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event\'s scheduled rounds. Refreshes standings. Root admin only.',
+      description: 'Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event\'s scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. Refreshes standings. Root admin only.',
       operationId: 'updateEventParticipantGolfRoundScore',
       params: {
         type: 'object',

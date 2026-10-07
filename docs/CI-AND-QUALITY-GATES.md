@@ -67,6 +67,30 @@ everything"*. So gating main on `changes` bought nothing. The explicit
 `needs.all-contract-gates.result == 'success'` keeps the contract gates blocking,
 so this is deliberately **not** `always()`.
 
+### Job timeouts
+
+Every job sets `timeout-minutes`. GitHub's default is six hours, and on 2026-10-06 a
+pull request's `all-contract-gates` hung from 23:29 to 05:30, holding that PR's verdict
+all night. Each limit is about three times the job's longest run across 80 recent runs,
+with a ten-minute floor:
+
+| Job | Usual | Limit |
+|---|---|---|
+| `changes`, `all-contract-gates`, `service-lint-typecheck`, `service-unit-tests`, `schema-migration-drift`, `service-build`, `service-mock-provider-build`, health-issue jobs | under 2 min | 10 |
+| `poolmaster-unit-tests` | 2 min | 15 |
+| `service-integration-tests`, `service-functional-api-tests` | 4 min | 20 |
+| `poolmaster-browser-e2e-local` | 4–9 min | 25 |
+| `poolmaster-build` | 1–12 min | 30 |
+| `deploy-publish-images` | 4–5 min | 20 |
+| `deploy-migrate-qa` | 1.5 min (its ECS wait is capped at 10) | 30 |
+| `deploy-qa` | 4–11 min (two ECS stability waits, up to 10 each) | 45 |
+| `poolmaster-browser-e2e` | 1.5–3.5 min | 15 |
+
+A timed-out job is cancelled, so the jobs that need it skip and the run fails rather than
+hanging. The deploy limits are deliberately wide: stopping `deploy-qa` mid-rollout leaves
+QA in the state the concurrency section above warns about. When a job's normal time grows,
+raise its limit rather than removing it.
+
 ## Repository setup — branch protection
 
 The CI gates only enforce discipline if `main` cannot be reached without going
@@ -717,8 +741,8 @@ hardening epic.
 - **Merged coverage** — not in `ci.yml`. It is the separate `coverage.yml` workflow.
   See *Merged coverage and the coverage.yml workflow* below.
 - **`service-build`** — backend service Docker build verification.
-- **`mock-contest-feed-provider-build`** — mock provider Docker build
-  verification.
+- **`service-mock-provider-build`** — mock contest feed provider lint,
+  typecheck, `tsc` build and its own test suite (see *Test suites* §6).
 - **`poolmaster-build`** — webapp build verification.
 - **`deploy-publish-images`** (push to `main` only) — builds and pushes
   Docker images to ECR and registers ECS task definitions. Deploys nothing.
@@ -777,13 +801,13 @@ answer.
 
 ## Test suites
 
-Five distinct test suites cover the codebase. Each has its own runner,
+Six distinct test suites cover the codebase. Each has its own runner,
 configuration, scope, and CI mapping. The suites are layered: unit
 tests cover service logic in isolation, integration tests exercise
 real database interactions, functional API tests verify the full
 backend stack through the generated SDK, webapp unit tests cover React
-components and hooks, and browser E2E tests verify the deployed
-release.
+components and hooks, browser E2E tests verify the deployed
+release, and the mock contest feed provider has its own suite.
 
 ### 1. Backend unit (`tests/unit/**/*.test.ts`)
 
@@ -879,6 +903,15 @@ release.
   - `poolmaster-browser-e2e` — push-to-main only, after `deploy-qa` succeeds. `@smoke` only, against the deployed QA frontend at `qa.ultimateofficepoolmanager.com`. Reads the `POOLMASTER_E2E_ADMIN_IDENTIFIER` and `POOLMASTER_E2E_ADMIN_PASSWORD` repository secrets.
 - **Required pre-push gate:** none. E2E is a **CI-only** signal; per `AGENTS.md` Quality Gates, browser E2E falls under "CI-only follow-up signals" and isn't required pre-push.
 - **Coverage policy:** N/A. E2E doesn't produce coverage artifacts.
+
+### 6. Mock contest feed provider (`packages/mock-contest-feed-provider/src/**/*.test.ts`)
+
+- **Runner:** Node's built-in `node --test`, with `--import tsx` for TypeScript. The glob is quoted in the package script so Node expands it, not the shell; an unquoted `**` in `sh` only matches one directory level.
+- **Scope:** the mock provider's live golf simulation, scenario store, sandbox events and tour seed validation. The mock drives all live-score testing, so a regression here breaks fake-event testing everywhere downstream.
+- **Environment:** Node only. No database, no built `@poolmaster/shared`.
+- **Local command:** `npm test --workspace @poolmaster/mock-contest-feed-provider`
+- **CI job:** `service-mock-provider-build`, after the package's lint, typecheck and build (#392).
+- **Coverage policy:** none collected.
 
 ### Merged coverage and the coverage.yml workflow
 

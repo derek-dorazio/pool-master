@@ -400,9 +400,10 @@ export class SportEventService {
     this.deps.logger?.info({ sportEventId }, 'Deleted sport event');
   }
 
-  async requireSummary(sportEventId: string): Promise<SportEventSummary> {
+  /** `releasedOnly` hides a DRAFT as if it did not exist: only a root admin sees drafts (#431). */
+  async requireSummary(sportEventId: string, options: { releasedOnly?: boolean } = {}): Promise<SportEventSummary> {
     const summary = await this.getEvent(sportEventId);
-    if (!summary) {
+    if (!summary || (options.releasedOnly && summary.event.status === SportEventStatus.DRAFT)) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
     return summary;

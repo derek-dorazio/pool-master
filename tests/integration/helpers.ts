@@ -17,7 +17,7 @@ import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
-import { startSmtpSinkServer, type SmtpSinkServer } from '../support/smtp-sink';
+import { startSmtpSinkServer, type CapturedMail, type SmtpSinkServer } from '../support/smtp-sink';
 
 // Plugins and modules from core-api
 import { healthPlugin } from '../../packages/core-api/src/plugins/health';
@@ -181,6 +181,36 @@ export async function setupIntegrationTests(): Promise<void> {
   await cleanupTestData();
   await startIntegrationMailSink();
   app = await buildTestApp();
+}
+
+/** The emails this worker's app has sent to the integration SMTP sink, oldest first (#442). */
+export function getSentMail(): CapturedMail[] {
+  if (!integrationSmtpServer) {
+    throw new Error('Integration mail sink not started — call setupIntegrationTests() first.');
+  }
+  return integrationSmtpServer.messages;
+}
+
+/**
+ * A second app built under different mail settings, e.g. `{ EMAIL_PROVIDER: 'disabled' }`. The
+ * modules read the mail environment once, when the app becomes ready, so the overrides are
+ * restored afterwards and the shared app is untouched. The caller closes the returned app.
+ */
+export async function buildTestAppWithMailEnv(
+  overrides: Partial<Record<MailEnvironmentKey, string>>,
+): Promise<FastifyInstance> {
+  const saved = Object.fromEntries(
+    Object.keys(overrides).map((key) => [key, process.env[key]]),
+  );
+  Object.assign(process.env, overrides);
+  try {
+    return await buildTestApp();
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 }
 
 /** Tear down after all tests. */
