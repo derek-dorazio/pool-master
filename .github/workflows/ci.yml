@@ -461,6 +461,7 @@ jobs:
       - run: npm run lint --workspace @poolmaster/mock-contest-feed-provider
       - run: npm run typecheck --workspace @poolmaster/mock-contest-feed-provider
       - run: npm run build --workspace @poolmaster/mock-contest-feed-provider
+      - run: npm test --workspace @poolmaster/mock-contest-feed-provider
 
   poolmaster-build:
     name: poolmaster-build
