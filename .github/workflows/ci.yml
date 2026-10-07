@@ -630,7 +630,9 @@ jobs:
       # bounds each attempt and retries, so a stalled apt mirror costs minutes, not the job.
       - name: Resolve the Playwright version
         id: playwright-version
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+        run: |
+          VERSION=$(node -p "require('@playwright/test/package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
         uses: actions/cache@v5
         with:
@@ -1499,7 +1501,8 @@ jobs:
   poolmaster-browser-e2e:
     name: poolmaster-browser-e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 20, not 15: the Playwright install alone may use 12 when its retries run (#470).
+    timeout-minutes: 20
     # Checks the release deploy-qa rolled out. Since #191 a failed migration
     # stops the rollout, so there is nothing new to check and this is skipped;
     # deploy-health-issue is what reports that failure.
@@ -1538,7 +1541,9 @@ jobs:
       # bounds each attempt and retries, so a stalled apt mirror costs minutes, not the job.
       - name: Resolve the Playwright version
         id: playwright-version
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+        run: |
+          VERSION=$(node -p "require('@playwright/test/package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
         uses: actions/cache@v5
         with:

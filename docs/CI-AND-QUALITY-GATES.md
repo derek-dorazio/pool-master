@@ -84,7 +84,7 @@ with a ten-minute floor:
 | `deploy-publish-images` | 4–5 min | 20 |
 | `deploy-migrate-qa` | 1.5 min (its ECS wait is capped at 10) | 30 |
 | `deploy-qa` | 4–11 min (two ECS stability waits, up to 10 each) | 45 |
-| `poolmaster-browser-e2e` | 1.5–3.5 min | 15 |
+| `poolmaster-browser-e2e` | 1.5–3.5 min | 20 (its Playwright install may use 12) |
 
 A timed-out job is cancelled, so the jobs that need it skip and the run fails rather than
 hanging. The deploy limits are deliberately wide: stopping `deploy-qa` mid-rollout leaves
