@@ -1115,7 +1115,7 @@ export const unlinkEventScoreSource = <ThrowOnError extends boolean = false>(opt
 /**
  * Link a sport event to a provider event for scores
  *
- * 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.
+ * 404 PROVIDER_NOT_FOUND when no provider is registered under the id; 422 PROVIDER_SPORT_MISMATCH when the provider does not cover the event's sport; 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.
  */
 export const linkEventScoreSource = <ThrowOnError extends boolean = false>(options: Options<LinkEventScoreSourceData, ThrowOnError>) => (options.client ?? client).put<LinkEventScoreSourceResponses, LinkEventScoreSourceErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

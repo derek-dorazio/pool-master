@@ -306,12 +306,12 @@ describe('EventScoreSourceService.linkScoreSource', () => {
   it('pool-master-753 409s EXTERNAL_EVENT_ALREADY_LINKED when another sport event already holds that identity', async () => {
     const prisma = {
       sportEvent: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'event-1', syncScope: 'NONE' }),
+        findUnique: jest.fn().mockResolvedValue({ id: 'event-1', sport: 'GOLF', syncScope: 'NONE' }),
         findFirst: jest.fn().mockResolvedValue({ id: 'event-2' }),
         update: jest.fn(),
       },
     };
-    const service = new EventScoreSourceService(asPrismaClient(prisma));
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(buildProvider()));
 
     await expect(
       service.linkScoreSource('event-1', { providerId: 'mock-golf', externalId: 'ext-1' }),
@@ -325,12 +325,12 @@ describe('EventScoreSourceService.linkScoreSource', () => {
   it('pool-master-753 sets providerId/externalId/syncScope=SCORES_ONLY when no conflict exists', async () => {
     const prisma = {
       sportEvent: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'event-1', syncScope: 'NONE' }),
+        findUnique: jest.fn().mockResolvedValue({ id: 'event-1', sport: 'GOLF', syncScope: 'NONE' }),
         findFirst: jest.fn().mockResolvedValue(null),
         update: jest.fn().mockResolvedValue({}),
       },
     };
-    const service = new EventScoreSourceService(asPrismaClient(prisma));
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(buildProvider()));
 
     await service.linkScoreSource('event-1', { providerId: 'mock-golf', externalId: 'ext-1' });
 

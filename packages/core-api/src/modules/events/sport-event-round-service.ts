@@ -4,7 +4,7 @@
  *
  * `ensureRounds` is a default, not a requirement: sequential daily dates from the event's
  * start, each editable afterwards, and idempotent — a round that already exists is never
- * overwritten. `reschedule` only moves existing rounds; it never creates one.
+ * overwritten. `reschedule` and `shiftSchedule` only move existing rounds; neither creates one.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -53,6 +53,19 @@ export class SportEventRoundService {
       'Created round schedule from a derived schedule',
     );
     return this.deps.rounds.findBySportEvent(sportEventId);
+  }
+
+  /** Moves every round, start and end, by `shiftMs`: the event's start date moved and its schedule moves with it. */
+  async shiftSchedule(sportEventId: string, shiftMs: number): Promise<SportEventRound[]> {
+    const existing = await this.deps.rounds.findBySportEvent(sportEventId);
+    if (existing.length === 0) {
+      return existing;
+    }
+    return this.reschedule(sportEventId, existing.map((round) => ({
+      roundNumber: round.roundNumber,
+      scheduledDate: new Date(round.scheduledDate.getTime() + shiftMs),
+      scheduledEndAt: round.scheduledEndAt ? new Date(round.scheduledEndAt.getTime() + shiftMs) : null,
+    })));
   }
 
   /** How a rain delay or an irregular schedule is recorded. 404 ROUND_NOT_FOUND for a round the event lacks. */

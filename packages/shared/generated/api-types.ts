@@ -1486,7 +1486,7 @@ export interface paths {
         get?: never;
         /**
          * Link a sport event to a provider event for scores
-         * @description 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.
+         * @description 404 PROVIDER_NOT_FOUND when no provider is registered under the id; 422 PROVIDER_SPORT_MISMATCH when the provider does not cover the event's sport; 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.
          */
         put: operations["linkEventScoreSource"];
         post?: never;
@@ -17166,6 +17166,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

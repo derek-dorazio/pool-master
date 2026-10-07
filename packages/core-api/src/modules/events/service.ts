@@ -326,10 +326,23 @@ export class SportEventService {
     return cloned;
   }
 
-  /** Edits an event. Every event is admin-owned, linked to a provider or not. */
+  /**
+   * Edits an event. Every event is admin-owned, linked to a provider or not. The round
+   * schedule follows the edit: a new start date moves every round by the same amount, and a
+   * higher round count schedules the added rounds, so automatic lifecycle and live scores
+   * read the schedule the admin now sees.
+   */
   async updateEvent(sportEventId: string, updates: SportEventUpdate): Promise<SportEventSummary> {
-    await this.requireEvent(sportEventId);
+    const { startDate: startedAt, rounds: roundCount } = await this.requireEvent(sportEventId);
     await this.deps.sportEvents.update(sportEventId, updates);
+    const startDate = updates.startDate ?? startedAt;
+    const shiftMs = startDate.getTime() - startedAt.getTime();
+    if (shiftMs !== 0) {
+      await this.deps.rounds.shiftSchedule(sportEventId, shiftMs);
+    }
+    if (updates.rounds && updates.rounds > (roundCount ?? 0)) {
+      await this.deps.rounds.ensureRounds({ sportEventId, rounds: updates.rounds, startDate });
+    }
     return this.requireSummary(sportEventId);
   }
 

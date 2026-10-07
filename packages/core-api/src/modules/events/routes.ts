@@ -222,11 +222,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Link a sport event to a provider event for scores',
-      description: '409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.',
+      description: '404 PROVIDER_NOT_FOUND when no provider is registered under the id; 422 PROVIDER_SPORT_MISMATCH when the provider does not cover the event\'s sport; 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.',
       operationId: 'linkEventScoreSource',
       params: EVENT_PARAMS,
       body: schemaRef('LinkSportEventScoreSourceRequest'),
-      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409) },
+      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409, 422) },
     },
     handler: handler.linkScoreSource,
   });
