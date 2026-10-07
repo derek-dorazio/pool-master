@@ -5,8 +5,8 @@ export type ManageSectionKey =
   | 'events'
   | 'golf'
   | 'leagues'
+  | 'settings'
   | 'sync'
-  | 'sync-config'
   | 'users';
 
 export type ManageSectionDefinition = {
@@ -76,12 +76,12 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     to: '/manage/sync',
   },
   {
-    key: 'sync-config',
+    key: 'settings',
     group: 'operations',
-    title: 'Sync Configuration',
+    title: 'Settings',
     description:
-      'Poll intervals, ingestion schedule, and sport overrides now live in dedicated edit pages.',
-    to: '/manage/sync-config',
+      'How the app behaves, changeable without a deploy: poll intervals, the ingestion schedule, and who changed them last.',
+    to: '/manage/settings',
   },
 ];
 
@@ -105,6 +105,7 @@ export function getManageSectionsByGroup(
 
 const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   manage: 'Manage',
+  'sync-config': 'Sync Configuration',
   'run-event-sync': 'Run Event Sync',
   'unmapped-participants': 'Unmapped Competitors',
   'poll-intervals': 'Poll Intervals',

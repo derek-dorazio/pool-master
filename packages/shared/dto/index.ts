@@ -9,6 +9,7 @@ export * from './contests.dto';
 export * from './drafts.dto';
 export * from './participants.dto';
 export * from './config.dto';
+export * from './settings.dto';
 export * from './events.dto';
 export * from './sport-catalog.dto';
 export * from './golf-scores.dto';
