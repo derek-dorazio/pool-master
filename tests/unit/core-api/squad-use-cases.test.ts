@@ -320,6 +320,15 @@ describe('Team use cases', () => {
       expect(world.membershipOf(league.id, commissioner.id)?.status).toBe(LeagueMembershipStatus.ACTIVE);
     });
 
+    it('refuses to inactivate a team whose co-owners are every active commissioner the league has', async () => {
+      const { world, league, commissioner, commissionerSquad, service } = leagueWithTwoTeams();
+      const coCommissioner = world.addUser();
+      world.addMember({ league, user: coCommissioner, role: LeagueRole.COMMISSIONER, squadId: commissionerSquad.id });
+
+      await expect(rejectionCode(service.inactivateSquad(league.id, commissionerSquad.id, commissioner.id))).resolves.toBe('LEAGUE_LAST_COMMISSIONER_REQUIRED');
+      expect(world.membershipOf(league.id, coCommissioner.id)?.status).toBe(LeagueMembershipStatus.ACTIVE);
+    });
+
     it('lets a commissioner inactivate their own team when another active commissioner remains', async () => {
       const { world, league, commissioner, commissionerSquad, service } = leagueWithTwoTeams();
       world.addMember({ league, user: world.addUser(), role: LeagueRole.COMMISSIONER });
