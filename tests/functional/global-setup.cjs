@@ -155,6 +155,8 @@ function writeRunState(serverState, runId) {
       runnerPid: process.pid,
       port: serverState.port,
       baseUrl: serverState.baseUrl,
+      // #442 — the daemon's captured-mail endpoint, read by tests/functional/mail.ts.
+      mailInboxUrl: serverState.mailInboxUrl,
       runId,
     }),
   );

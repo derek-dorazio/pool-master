@@ -1,6 +1,8 @@
 import { type SendEmailCommand } from '@aws-sdk/client-ses';
 import {
+  DisabledMailDeliveryProvider,
   MailDeliveryConfigError,
+  createMailDeliveryProvider,
   SesMailDeliveryProvider,
   readApplicationBaseUrl,
   readMailDeliveryConfig,
@@ -54,6 +56,20 @@ describe('pool-master-7ij mail delivery provider configuration', () => {
         secretAccessKey: 'test-secret',
       },
     });
+  });
+
+  it('selects the disabled provider with no SMTP or SES settings when EMAIL_PROVIDER is disabled', () => {
+    const config = readMailDeliveryConfig({
+      EMAIL_PROVIDER: 'Disabled',
+      SMTP_FROM: 'noreply@poolmaster.local',
+    });
+
+    expect(config).toEqual({
+      provider: 'disabled',
+      fromEmail: 'noreply@poolmaster.local',
+      replyToEmail: undefined,
+    });
+    expect(createMailDeliveryProvider(config)).toBeInstanceOf(DisabledMailDeliveryProvider);
   });
 
   it('rejects unsupported providers', () => {
@@ -122,5 +138,43 @@ describe('pool-master-7ij SES mail delivery provider', () => {
     });
     expect(JSON.stringify(logger.info.mock.calls)).not.toContain('Plain text body');
     expect(JSON.stringify(logger.info.mock.calls)).not.toContain('HTML body');
+  });
+});
+
+describe('disabled mail delivery provider', () => {
+  it('reports success without sending and logs the skip with ids but no message content', async () => {
+    const logger = fakeLogger();
+    const provider = new DisabledMailDeliveryProvider(logger);
+
+    const result = await provider.send({
+      to: ['member@example.com', 'second@example.com'],
+      subject: 'League invitation',
+      text: 'Plain text body',
+      html: '<p>HTML body</p>',
+      metadata: {
+        templateKey: 'LEAGUE_MEMBER_INVITE',
+        leagueId: 'league-1',
+        invitationId: 'invite-1',
+      },
+    });
+
+    expect(result).toEqual({ provider: 'disabled' });
+    expect(logger.info).toHaveBeenCalledWith(
+      {
+        action: 'mailDelivery.disabled.skip',
+        data: {
+          toCount: 2,
+          templateKey: 'LEAGUE_MEMBER_INVITE',
+          leagueId: 'league-1',
+          contestId: null,
+          entryId: null,
+          invitationId: 'invite-1',
+        },
+      },
+      expect.any(String),
+    );
+    const logged = JSON.stringify(logger.info.mock.calls);
+    expect(logged).not.toContain('Plain text body');
+    expect(logged).not.toContain('member@example.com');
   });
 });
