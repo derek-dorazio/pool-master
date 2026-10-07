@@ -26230,7 +26230,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Inactivates the target team, preserves its history, and removes its active owners from the league. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original team (#218).\n\n**League commissioners and root admins only (#219).** Team owners may invite and remove co-owners on their own team, but ending a team also ends its owners' league memberships, so it is league administration rather than team management.",
+        "description": "Inactivates the target team, preserves its history, removes its active owners from the league, and revokes its pending co-owner invitations so an old invite cannot revive it. Refused with LEAGUE_LAST_COMMISSIONER_REQUIRED when the team's owners are every active commissioner the league has. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original team (#218).\n\n**League commissioners and root admins only (#219).** Team owners may invite and remove co-owners on their own team, but ending a team also ends its owners' league memberships, so it is league administration rather than team management.",
         "parameters": [
           {
             "schema": {

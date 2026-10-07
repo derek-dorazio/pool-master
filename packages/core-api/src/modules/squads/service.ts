@@ -3,6 +3,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
+  SquadOwnerInvitationRepository,
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
@@ -10,6 +11,7 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
+  SquadOwnerInvitationStatus,
   TeamIconKey,
 } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
@@ -47,6 +49,7 @@ export class SquadService {
     private readonly leagueMembershipRepo: LeagueMembershipRepository,
     private readonly users: UserRepository,
     private readonly prisma: PrismaClient,
+    private readonly ownerInvitationRepo: SquadOwnerInvitationRepository,
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
@@ -227,6 +230,17 @@ export class SquadService {
     if (refreshedSquad?.isActive) {
       await this.squadRepo.update(squadId, { isActive: false });
     }
+
+    // Accepting a co-owner invitation reactivates its team, so an invitation left pending
+    // would let anyone holding it undo the inactivation.
+    const pendingInvitations = (await this.ownerInvitationRepo.findByLeague(leagueId)).filter(
+      (invitation) =>
+        invitation.squadId === squadId && invitation.status === SquadOwnerInvitationStatus.PENDING,
+    );
+    await Promise.all(
+      pendingInvitations.map(async (invitation) =>
+        this.ownerInvitationRepo.update(invitation.id, { status: SquadOwnerInvitationStatus.REVOKED })),
+    );
 
     const squadDto = await this.loadSquadDto(squadId);
     this.logger?.info({
