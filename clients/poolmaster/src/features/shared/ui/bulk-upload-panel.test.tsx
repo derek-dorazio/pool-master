@@ -8,6 +8,15 @@ import { BulkUploadPanel } from './bulk-upload-panel';
 // "avoid interaction dead-ends").
 
 type Row = { name: string };
+
+// The test runner's Node process, reached without Node's types (this package is typed for the browser).
+type RejectionListener = (reason: unknown) => void;
+const nodeProcess = (globalThis as unknown as {
+  process: {
+    on(event: 'unhandledRejection', listener: RejectionListener): void;
+    off(event: 'unhandledRejection', listener: RejectionListener): void;
+  };
+}).process;
 type PreviewRow = { name: string; resolved: boolean };
 
 function setup(overrides: Partial<Parameters<typeof BulkUploadPanel<Row, PreviewRow>>[0]> = {}) {
@@ -103,5 +112,26 @@ describe('BulkUploadPanel', () => {
     await waitFor(() =>
       expect(screen.getByTestId('panel-textarea')).toHaveValue(''),
     );
+  });
+
+  it('keeps the pasted rows and preview when an apply is rejected, leaving no unhandled rejection behind', async () => {
+    const unhandled = vi.fn();
+    nodeProcess.on('unhandledRejection', unhandled);
+    const onApplied = vi.fn();
+    const apply = vi.fn(() => Promise.reject(new Error('refused')));
+    setup({ apply, onApplied });
+
+    await userEvent.type(screen.getByTestId('panel-textarea'), 'rory');
+    await userEvent.click(screen.getByTestId('panel-preview'));
+    await waitFor(() => expect(screen.getByTestId('panel-apply')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('panel-apply'));
+
+    await waitFor(() => expect(apply).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.getByTestId('panel-textarea')).toHaveValue('rory');
+    expect(screen.getByTestId('preview-list')).toBeInTheDocument();
+    expect(onApplied).not.toHaveBeenCalled();
+    expect(unhandled).not.toHaveBeenCalled();
+    nodeProcess.off('unhandledRejection', unhandled);
   });
 });

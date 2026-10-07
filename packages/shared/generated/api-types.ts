@@ -1590,6 +1590,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/participants/upload/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview a field upload
+         * @description Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, oddsToWin, seedNumber, isActive and inactiveReason. A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.
+         */
+        post: operations["previewEventParticipantUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{eventId}/participants/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply a field upload
+         * @description Re-runs the preview, then patches every changed row in one transaction, all or none. 422 EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED, with nothing written, when any row is not MATCHED or is a duplicate. Omitted values are left alone; null clears. A later field refresh from the provider replaces these values as it does grid edits. Returns the field. Root admin only.
+         */
+        post: operations["applyEventParticipantUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/participants/{sportEventParticipantId}": {
         parameters: {
             query?: never;
@@ -2905,6 +2945,589 @@ export interface components {
                  */
                 updatedAt: string;
             };
+        };
+        /** @description A sport the platform runs contests on. */
+        SportDto: {
+            /**
+             * Format: uuid
+             * @description Sport identifier — what Participant.sportId and SportLeague.sportId point at.
+             */
+            id: string;
+            /**
+             * @description The sport.
+             * @enum {string}
+             */
+            name: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            /**
+             * @description Whether the sport's competitors are individuals or teams.
+             * @enum {string}
+             */
+            participantType: "INDIVIDUAL" | "TEAM";
+            /**
+             * @description Sport category.
+             * @enum {string}
+             */
+            category: "GOLF" | "BASKETBALL" | "FOOTBALL" | "F1" | "NASCAR" | "TENNIS" | "SOCCER";
+            /**
+             * @description Structural format of the sport's events; decides which contest formats are valid.
+             * @enum {string}
+             */
+            tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "KNOCKOUT_BRACKET" | "SERIES_PLAYOFF" | "ROUND_ROBIN_SEASON" | "WEEKLY_GAMES_SEASON" | "TIME_TRIAL_RACE" | "SEASON_OF_RACES" | "GROUP_STAGE_KNOCKOUT" | "MATCH_PLAY";
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            updatedAt: string;
+        };
+        /** @description The sports. */
+        SportListResponse: {
+            /** @description Every sport, by name. */
+            sports: {
+                /**
+                 * Format: uuid
+                 * @description Sport identifier — what Participant.sportId and SportLeague.sportId point at.
+                 */
+                id: string;
+                /**
+                 * @description The sport.
+                 * @enum {string}
+                 */
+                name: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                /**
+                 * @description Whether the sport's competitors are individuals or teams.
+                 * @enum {string}
+                 */
+                participantType: "INDIVIDUAL" | "TEAM";
+                /**
+                 * @description Sport category.
+                 * @enum {string}
+                 */
+                category: "GOLF" | "BASKETBALL" | "FOOTBALL" | "F1" | "NASCAR" | "TENNIS" | "SOCCER";
+                /**
+                 * @description Structural format of the sport's events; decides which contest formats are valid.
+                 * @enum {string}
+                 */
+                tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "KNOCKOUT_BRACKET" | "SERIES_PLAYOFF" | "ROUND_ROBIN_SEASON" | "WEEKLY_GAMES_SEASON" | "TIME_TRIAL_RACE" | "SEASON_OF_RACES" | "GROUP_STAGE_KNOCKOUT" | "MATCH_PLAY";
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                updatedAt: string;
+            }[];
+        };
+        /** @description A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
+        SportLeagueDto: {
+            /**
+             * Format: uuid
+             * @description Sport league identifier.
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The sport this sport league belongs to.
+             */
+            sportId: string;
+            /** @description Sport league name, e.g. "PGA Tour". */
+            name: string;
+            /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
+            matchKeyword: string | null;
+            /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
+            currentEventYear: number | null;
+            /** @description Whether the sport league is in use; a read filter, not a write lock. */
+            isActive: boolean;
+            /** @description Participants currently affiliated with the sport league. */
+            affiliationCount: number;
+            /** @description Events on record for the sport league, across every series and year. */
+            sportEventCount: number;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            updatedAt: string;
+        };
+        /** @description Filters for the sport-league list. */
+        SportLeagueListQuery: {
+            /**
+             * @description Only sport leagues of this sport.
+             * @enum {string}
+             */
+            sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            /** @description Only active, or only inactive, sport leagues. */
+            isActive?: boolean;
+        };
+        /** @description Sport leagues matching the filters. */
+        SportLeagueListResponse: {
+            /** @description Matching sport leagues, by name. */
+            sportLeagues: {
+                /**
+                 * Format: uuid
+                 * @description Sport league identifier.
+                 */
+                id: string;
+                /**
+                 * Format: uuid
+                 * @description The sport this sport league belongs to.
+                 */
+                sportId: string;
+                /** @description Sport league name, e.g. "PGA Tour". */
+                name: string;
+                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
+                matchKeyword: string | null;
+                /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
+                currentEventYear: number | null;
+                /** @description Whether the sport league is in use; a read filter, not a write lock. */
+                isActive: boolean;
+                /** @description Participants currently affiliated with the sport league. */
+                affiliationCount: number;
+                /** @description Events on record for the sport league, across every series and year. */
+                sportEventCount: number;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                updatedAt: string;
+            }[];
+        };
+        /** @description One sport league. */
+        SportLeagueResponse: {
+            /** @description A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
+            sportLeague: {
+                /**
+                 * Format: uuid
+                 * @description Sport league identifier.
+                 */
+                id: string;
+                /**
+                 * Format: uuid
+                 * @description The sport this sport league belongs to.
+                 */
+                sportId: string;
+                /** @description Sport league name, e.g. "PGA Tour". */
+                name: string;
+                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
+                matchKeyword: string | null;
+                /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
+                currentEventYear: number | null;
+                /** @description Whether the sport league is in use; a read filter, not a write lock. */
+                isActive: boolean;
+                /** @description Participants currently affiliated with the sport league. */
+                affiliationCount: number;
+                /** @description Events on record for the sport league, across every series and year. */
+                sportEventCount: number;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description A new sport league. */
+        CreateSportLeagueRequest: {
+            /**
+             * @description The sport the new sport league belongs to.
+             * @enum {string}
+             */
+            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            /** @description Unique within the sport. */
+            name: string;
+            /** @description Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. "PGA TOUR") to use the event-year import. */
+            matchKeyword?: string;
+        };
+        /** @description Changes to a sport league; omitted fields are left alone. */
+        UpdateSportLeagueRequest: {
+            name?: string;
+            /** @description null clears it. */
+            matchKeyword?: string | null;
+            isActive?: boolean;
+            /** @description Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in. */
+            currentEventYear?: number;
+        };
+        /** @description A participant's membership of a sport league, and their current rank there. */
+        ParticipantLeagueAffiliationDto: {
+            /**
+             * Format: uuid
+             * @description Affiliation identifier.
+             */
+            id: string;
+            /** Format: uuid */
+            sportLeagueId: string;
+            /** Format: uuid */
+            participantId: string;
+            /** @description The participant's current rank in the sport league; 1 is best. Null when unranked. */
+            ranking: number | null;
+            /** @description The canonical participant. */
+            participant: {
+                /** @description Participant identifier. */
+                id: string;
+                /** @description Owning sport identifier. */
+                sportId: string;
+                /** @description Primary participant display name. */
+                name: string;
+                /**
+                 * @description Whether the participant is an individual or team.
+                 * @enum {string}
+                 */
+                participantType: "INDIVIDUAL" | "TEAM";
+                /** @description Primary provider identifier when one exists. */
+                externalId?: string;
+                /** @description First name when the participant is a person. */
+                firstName?: string;
+                /** @description Last name when the participant is a person. */
+                lastName?: string;
+                /** @description Short-form display name for compact UI surfaces. */
+                shortName?: string;
+                /** @description Participant nationality or country code when known. */
+                nationality?: string;
+                /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
+                role?: string | null;
+                /** @description Current team affiliation when the participant is not itself a team. */
+                teamAffiliation?: string | null;
+                /**
+                 * @description Current participant lifecycle or availability status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
+                /** @description Normalized participant injury or availability state. */
+                injuryStatus: {
+                    /**
+                     * @description Current injury or availability status code.
+                     * @enum {string}
+                     */
+                    status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
+                    /** @description Optional injury-status detail or summary. */
+                    detail?: string;
+                    /**
+                     * Format: date-time
+                     * @description Expected return timestamp when known.
+                     */
+                    expectedReturn?: string;
+                    /**
+                     * Format: date-time
+                     * @description Expected return timestamp when known.
+                     */
+                    updatedAt?: string;
+                    /** @description Source that provided the injury-status update. */
+                    source?: string;
+                };
+                /** @description Optional participant image URL. */
+                photoUrl?: string | null;
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                photoLastUpdated?: string;
+                /** @description Map of provider identifiers keyed by provider code. */
+                externalIds: {
+                    [key: string]: string;
+                };
+                /**
+                 * Format: date-time
+                 * @description When the participant record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the participant record was last updated.
+                 */
+                updatedAt: string;
+            };
+            /**
+             * Format: date-time
+             * @description Expected return timestamp when known.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Expected return timestamp when known.
+             */
+            updatedAt: string;
+        };
+        /** @description A sport league's affiliations. */
+        ParticipantLeagueAffiliationListResponse: {
+            /** @description Best rank first, unranked last, then by name. */
+            affiliations: {
+                /**
+                 * Format: uuid
+                 * @description Affiliation identifier.
+                 */
+                id: string;
+                /** Format: uuid */
+                sportLeagueId: string;
+                /** Format: uuid */
+                participantId: string;
+                /** @description The participant's current rank in the sport league; 1 is best. Null when unranked. */
+                ranking: number | null;
+                /** @description The canonical participant. */
+                participant: {
+                    /** @description Participant identifier. */
+                    id: string;
+                    /** @description Owning sport identifier. */
+                    sportId: string;
+                    /** @description Primary participant display name. */
+                    name: string;
+                    /**
+                     * @description Whether the participant is an individual or team.
+                     * @enum {string}
+                     */
+                    participantType: "INDIVIDUAL" | "TEAM";
+                    /** @description Primary provider identifier when one exists. */
+                    externalId?: string;
+                    /** @description First name when the participant is a person. */
+                    firstName?: string;
+                    /** @description Last name when the participant is a person. */
+                    lastName?: string;
+                    /** @description Short-form display name for compact UI surfaces. */
+                    shortName?: string;
+                    /** @description Participant nationality or country code when known. */
+                    nationality?: string;
+                    /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
+                    role?: string | null;
+                    /** @description Current team affiliation when the participant is not itself a team. */
+                    teamAffiliation?: string | null;
+                    /**
+                     * @description Current participant lifecycle or availability status.
+                     * @enum {string}
+                     */
+                    status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
+                    /** @description Normalized participant injury or availability state. */
+                    injuryStatus: {
+                        /**
+                         * @description Current injury or availability status code.
+                         * @enum {string}
+                         */
+                        status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
+                        /** @description Optional injury-status detail or summary. */
+                        detail?: string;
+                        /**
+                         * Format: date-time
+                         * @description Expected return timestamp when known.
+                         */
+                        expectedReturn?: string;
+                        /**
+                         * Format: date-time
+                         * @description Expected return timestamp when known.
+                         */
+                        updatedAt?: string;
+                        /** @description Source that provided the injury-status update. */
+                        source?: string;
+                    };
+                    /** @description Optional participant image URL. */
+                    photoUrl?: string | null;
+                    /**
+                     * Format: date-time
+                     * @description Expected return timestamp when known.
+                     */
+                    photoLastUpdated?: string;
+                    /** @description Map of provider identifiers keyed by provider code. */
+                    externalIds: {
+                        [key: string]: string;
+                    };
+                    /**
+                     * Format: date-time
+                     * @description When the participant record was created.
+                     */
+                    createdAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the participant record was last updated.
+                     */
+                    updatedAt: string;
+                };
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                updatedAt: string;
+            }[];
+        };
+        /** @description One affiliation. */
+        ParticipantLeagueAffiliationResponse: {
+            /** @description A participant's membership of a sport league, and their current rank there. */
+            affiliation: {
+                /**
+                 * Format: uuid
+                 * @description Affiliation identifier.
+                 */
+                id: string;
+                /** Format: uuid */
+                sportLeagueId: string;
+                /** Format: uuid */
+                participantId: string;
+                /** @description The participant's current rank in the sport league; 1 is best. Null when unranked. */
+                ranking: number | null;
+                /** @description The canonical participant. */
+                participant: {
+                    /** @description Participant identifier. */
+                    id: string;
+                    /** @description Owning sport identifier. */
+                    sportId: string;
+                    /** @description Primary participant display name. */
+                    name: string;
+                    /**
+                     * @description Whether the participant is an individual or team.
+                     * @enum {string}
+                     */
+                    participantType: "INDIVIDUAL" | "TEAM";
+                    /** @description Primary provider identifier when one exists. */
+                    externalId?: string;
+                    /** @description First name when the participant is a person. */
+                    firstName?: string;
+                    /** @description Last name when the participant is a person. */
+                    lastName?: string;
+                    /** @description Short-form display name for compact UI surfaces. */
+                    shortName?: string;
+                    /** @description Participant nationality or country code when known. */
+                    nationality?: string;
+                    /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
+                    role?: string | null;
+                    /** @description Current team affiliation when the participant is not itself a team. */
+                    teamAffiliation?: string | null;
+                    /**
+                     * @description Current participant lifecycle or availability status.
+                     * @enum {string}
+                     */
+                    status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
+                    /** @description Normalized participant injury or availability state. */
+                    injuryStatus: {
+                        /**
+                         * @description Current injury or availability status code.
+                         * @enum {string}
+                         */
+                        status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
+                        /** @description Optional injury-status detail or summary. */
+                        detail?: string;
+                        /**
+                         * Format: date-time
+                         * @description Expected return timestamp when known.
+                         */
+                        expectedReturn?: string;
+                        /**
+                         * Format: date-time
+                         * @description Expected return timestamp when known.
+                         */
+                        updatedAt?: string;
+                        /** @description Source that provided the injury-status update. */
+                        source?: string;
+                    };
+                    /** @description Optional participant image URL. */
+                    photoUrl?: string | null;
+                    /**
+                     * Format: date-time
+                     * @description Expected return timestamp when known.
+                     */
+                    photoLastUpdated?: string;
+                    /** @description Map of provider identifiers keyed by provider code. */
+                    externalIds: {
+                        [key: string]: string;
+                    };
+                    /**
+                     * Format: date-time
+                     * @description When the participant record was created.
+                     */
+                    createdAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the participant record was last updated.
+                     */
+                    updatedAt: string;
+                };
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description Affiliates a participant with the sport league. */
+        CreateParticipantLeagueAffiliationRequest: {
+            /** Format: uuid */
+            participantId: string;
+        };
+        /** @description Re-ranks existing affiliations. */
+        UpdateParticipantLeagueAffiliationRankingsRequest: {
+            /** @description Existing affiliations to re-rank, all or none. */
+            rankings: {
+                /** Format: uuid */
+                participantId: string;
+                /** @description null unranks. */
+                ranking: number | null;
+            }[];
+        };
+        /** @description An affiliation upload. */
+        ParticipantLeagueAffiliationUploadRequest: {
+            rows: {
+                /** Format: uuid */
+                participantId?: string;
+                externalId?: string;
+                playerName?: string;
+                ranking?: number;
+            }[];
+        };
+        /**
+         * @description How an uploaded row resolved to a participant: one match, none, or several.
+         * @enum {string}
+         */
+        UploadRowResolutionDto: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
+        /** @description A dry run of an affiliation upload. Nothing is written. */
+        ParticipantLeagueAffiliationUploadPreviewResponse: {
+            /** @description One per uploaded row, in upload order. */
+            rows: {
+                /** @description One uploaded affiliation. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName. */
+                row: {
+                    /** Format: uuid */
+                    participantId?: string;
+                    externalId?: string;
+                    playerName?: string;
+                    ranking?: number;
+                };
+                /**
+                 * @description How an uploaded row resolved to a participant: one match, none, or several.
+                 * @enum {string}
+                 */
+                resolution: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
+                /**
+                 * Format: uuid
+                 * @description Set only when MATCHED.
+                 */
+                participantId: string | null;
+                /** @description Set only when MATCHED. */
+                participantName: string | null;
+            }[];
         };
         /** @enum {string} */
         EventStatusDto: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
@@ -4279,6 +4902,100 @@ export interface components {
                  * @description Expected return timestamp when known.
                  */
                 updatedAt: string;
+            };
+        };
+        /** @description A field upload: changes to participants already on the event's field. It never adds one. */
+        SportEventParticipantUploadRequest: {
+            rows: {
+                participantId?: string;
+                /** @description The participant's canonical external id. */
+                externalId?: string;
+                playerName?: string;
+                isActive?: boolean;
+                /** @enum {string|null} */
+                inactiveReason?: "WITHDRAWN" | "ELIMINATED" | null;
+                ranking?: number | null;
+                oddsToWin?: number | null;
+                seedNumber?: number | null;
+            }[];
+        };
+        /** @description A dry run of a field upload. Nothing is written. */
+        SportEventParticipantUploadPreviewResponse: {
+            /** @description One per uploaded row, in upload order. */
+            rows: {
+                /** @description One uploaded field row. The first identifier present is used — participantId, then externalId, then an exact case-insensitive playerName — matched only within the event's field, with no fallback to the next. Each value omitted is left alone; null clears it. */
+                row: {
+                    participantId?: string;
+                    /** @description The participant's canonical external id. */
+                    externalId?: string;
+                    playerName?: string;
+                    isActive?: boolean;
+                    /** @enum {string|null} */
+                    inactiveReason?: "WITHDRAWN" | "ELIMINATED" | null;
+                    ranking?: number | null;
+                    oddsToWin?: number | null;
+                    seedNumber?: number | null;
+                };
+                /**
+                 * @description MATCHED: one participant on the field. UNRESOLVED: none on the field — the upload never adds one, so load the field from the provider first. AMBIGUOUS: several.
+                 * @enum {string}
+                 */
+                resolution: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
+                /**
+                 * Format: uuid
+                 * @description Set only when MATCHED.
+                 */
+                participantId: string | null;
+                /** @description Set only when MATCHED. */
+                participantName: string | null;
+                /**
+                 * Format: uuid
+                 * @description The field row it resolved to; set only when MATCHED.
+                 */
+                sportEventParticipantId: string | null;
+                /**
+                 * @description Set when a MATCHED row still cannot be applied.
+                 * @enum {string|null}
+                 */
+                rowError: "DUPLICATE_PARTICIPANT" | null;
+                /**
+                 * @description Null when the row cannot be applied.
+                 * @enum {string|null}
+                 */
+                change: "UPDATE" | "UNCHANGED" | null;
+                /** @description What is stored now; set whenever the row resolved. */
+                before: {
+                    isActive: boolean;
+                    /** @enum {string|null} */
+                    inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                    ranking: number | null;
+                    oddsToWin: number | null;
+                    seedNumber: number | null;
+                } | null;
+                /** @description What applying would store; null when the row cannot be applied. */
+                after: {
+                    isActive: boolean;
+                    /** @enum {string|null} */
+                    inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                    ranking: number | null;
+                    oddsToWin: number | null;
+                    seedNumber: number | null;
+                } | null;
+                /** @description Why the row cannot be applied, for display; null when it can. */
+                message: string | null;
+            }[];
+            /** @description Counts by resolution and by change. Apply succeeds only when matched equals total and duplicate is 0. */
+            rollup: {
+                total: number;
+                matched: number;
+                unresolved: number;
+                ambiguous: number;
+                /** @description MATCHED rows refused as DUPLICATE_PARTICIPANT. */
+                duplicate: number;
+                /** @description Rows that would change a value. */
+                update: number;
+                /** @description Rows that would change nothing. */
+                unchanged: number;
             };
         };
         /** @description Tier definition used in contest create and update flows. */
@@ -7193,589 +7910,6 @@ export interface components {
                     };
                 };
             };
-        };
-        /** @description A sport the platform runs contests on. */
-        SportDto: {
-            /**
-             * Format: uuid
-             * @description Sport identifier — what Participant.sportId and SportLeague.sportId point at.
-             */
-            id: string;
-            /**
-             * @description The sport.
-             * @enum {string}
-             */
-            name: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-            /**
-             * @description Whether the sport's competitors are individuals or teams.
-             * @enum {string}
-             */
-            participantType: "INDIVIDUAL" | "TEAM";
-            /**
-             * @description Sport category.
-             * @enum {string}
-             */
-            category: "GOLF" | "BASKETBALL" | "FOOTBALL" | "F1" | "NASCAR" | "TENNIS" | "SOCCER";
-            /**
-             * @description Structural format of the sport's events; decides which contest formats are valid.
-             * @enum {string}
-             */
-            tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "KNOCKOUT_BRACKET" | "SERIES_PLAYOFF" | "ROUND_ROBIN_SEASON" | "WEEKLY_GAMES_SEASON" | "TIME_TRIAL_RACE" | "SEASON_OF_RACES" | "GROUP_STAGE_KNOCKOUT" | "MATCH_PLAY";
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            updatedAt: string;
-        };
-        /** @description The sports. */
-        SportListResponse: {
-            /** @description Every sport, by name. */
-            sports: {
-                /**
-                 * Format: uuid
-                 * @description Sport identifier — what Participant.sportId and SportLeague.sportId point at.
-                 */
-                id: string;
-                /**
-                 * @description The sport.
-                 * @enum {string}
-                 */
-                name: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                /**
-                 * @description Whether the sport's competitors are individuals or teams.
-                 * @enum {string}
-                 */
-                participantType: "INDIVIDUAL" | "TEAM";
-                /**
-                 * @description Sport category.
-                 * @enum {string}
-                 */
-                category: "GOLF" | "BASKETBALL" | "FOOTBALL" | "F1" | "NASCAR" | "TENNIS" | "SOCCER";
-                /**
-                 * @description Structural format of the sport's events; decides which contest formats are valid.
-                 * @enum {string}
-                 */
-                tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "KNOCKOUT_BRACKET" | "SERIES_PLAYOFF" | "ROUND_ROBIN_SEASON" | "WEEKLY_GAMES_SEASON" | "TIME_TRIAL_RACE" | "SEASON_OF_RACES" | "GROUP_STAGE_KNOCKOUT" | "MATCH_PLAY";
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                updatedAt: string;
-            }[];
-        };
-        /** @description A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
-        SportLeagueDto: {
-            /**
-             * Format: uuid
-             * @description Sport league identifier.
-             */
-            id: string;
-            /**
-             * Format: uuid
-             * @description The sport this sport league belongs to.
-             */
-            sportId: string;
-            /** @description Sport league name, e.g. "PGA Tour". */
-            name: string;
-            /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
-            matchKeyword: string | null;
-            /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
-            currentEventYear: number | null;
-            /** @description Whether the sport league is in use; a read filter, not a write lock. */
-            isActive: boolean;
-            /** @description Participants currently affiliated with the sport league. */
-            affiliationCount: number;
-            /** @description Events on record for the sport league, across every series and year. */
-            sportEventCount: number;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            updatedAt: string;
-        };
-        /** @description Filters for the sport-league list. */
-        SportLeagueListQuery: {
-            /**
-             * @description Only sport leagues of this sport.
-             * @enum {string}
-             */
-            sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-            /** @description Only active, or only inactive, sport leagues. */
-            isActive?: boolean;
-        };
-        /** @description Sport leagues matching the filters. */
-        SportLeagueListResponse: {
-            /** @description Matching sport leagues, by name. */
-            sportLeagues: {
-                /**
-                 * Format: uuid
-                 * @description Sport league identifier.
-                 */
-                id: string;
-                /**
-                 * Format: uuid
-                 * @description The sport this sport league belongs to.
-                 */
-                sportId: string;
-                /** @description Sport league name, e.g. "PGA Tour". */
-                name: string;
-                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
-                matchKeyword: string | null;
-                /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
-                currentEventYear: number | null;
-                /** @description Whether the sport league is in use; a read filter, not a write lock. */
-                isActive: boolean;
-                /** @description Participants currently affiliated with the sport league. */
-                affiliationCount: number;
-                /** @description Events on record for the sport league, across every series and year. */
-                sportEventCount: number;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                updatedAt: string;
-            }[];
-        };
-        /** @description One sport league. */
-        SportLeagueResponse: {
-            /** @description A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
-            sportLeague: {
-                /**
-                 * Format: uuid
-                 * @description Sport league identifier.
-                 */
-                id: string;
-                /**
-                 * Format: uuid
-                 * @description The sport this sport league belongs to.
-                 */
-                sportId: string;
-                /** @description Sport league name, e.g. "PGA Tour". */
-                name: string;
-                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
-                matchKeyword: string | null;
-                /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
-                currentEventYear: number | null;
-                /** @description Whether the sport league is in use; a read filter, not a write lock. */
-                isActive: boolean;
-                /** @description Participants currently affiliated with the sport league. */
-                affiliationCount: number;
-                /** @description Events on record for the sport league, across every series and year. */
-                sportEventCount: number;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                updatedAt: string;
-            };
-        };
-        /** @description A new sport league. */
-        CreateSportLeagueRequest: {
-            /**
-             * @description The sport the new sport league belongs to.
-             * @enum {string}
-             */
-            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-            /** @description Unique within the sport. */
-            name: string;
-            /** @description Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. "PGA TOUR") to use the event-year import. */
-            matchKeyword?: string;
-        };
-        /** @description Changes to a sport league; omitted fields are left alone. */
-        UpdateSportLeagueRequest: {
-            name?: string;
-            /** @description null clears it. */
-            matchKeyword?: string | null;
-            isActive?: boolean;
-            /** @description Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in. */
-            currentEventYear?: number;
-        };
-        /** @description A participant's membership of a sport league, and their current rank there. */
-        ParticipantLeagueAffiliationDto: {
-            /**
-             * Format: uuid
-             * @description Affiliation identifier.
-             */
-            id: string;
-            /** Format: uuid */
-            sportLeagueId: string;
-            /** Format: uuid */
-            participantId: string;
-            /** @description The participant's current rank in the sport league; 1 is best. Null when unranked. */
-            ranking: number | null;
-            /** @description The canonical participant. */
-            participant: {
-                /** @description Participant identifier. */
-                id: string;
-                /** @description Owning sport identifier. */
-                sportId: string;
-                /** @description Primary participant display name. */
-                name: string;
-                /**
-                 * @description Whether the participant is an individual or team.
-                 * @enum {string}
-                 */
-                participantType: "INDIVIDUAL" | "TEAM";
-                /** @description Primary provider identifier when one exists. */
-                externalId?: string;
-                /** @description First name when the participant is a person. */
-                firstName?: string;
-                /** @description Last name when the participant is a person. */
-                lastName?: string;
-                /** @description Short-form display name for compact UI surfaces. */
-                shortName?: string;
-                /** @description Participant nationality or country code when known. */
-                nationality?: string;
-                /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
-                role?: string | null;
-                /** @description Current team affiliation when the participant is not itself a team. */
-                teamAffiliation?: string | null;
-                /**
-                 * @description Current participant lifecycle or availability status.
-                 * @enum {string}
-                 */
-                status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
-                /** @description Normalized participant injury or availability state. */
-                injuryStatus: {
-                    /**
-                     * @description Current injury or availability status code.
-                     * @enum {string}
-                     */
-                    status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
-                    /** @description Optional injury-status detail or summary. */
-                    detail?: string;
-                    /**
-                     * Format: date-time
-                     * @description Expected return timestamp when known.
-                     */
-                    expectedReturn?: string;
-                    /**
-                     * Format: date-time
-                     * @description Expected return timestamp when known.
-                     */
-                    updatedAt?: string;
-                    /** @description Source that provided the injury-status update. */
-                    source?: string;
-                };
-                /** @description Optional participant image URL. */
-                photoUrl?: string | null;
-                /**
-                 * Format: date-time
-                 * @description Expected return timestamp when known.
-                 */
-                photoLastUpdated?: string;
-                /** @description Map of provider identifiers keyed by provider code. */
-                externalIds: {
-                    [key: string]: string;
-                };
-                /**
-                 * Format: date-time
-                 * @description When the participant record was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the participant record was last updated.
-                 */
-                updatedAt: string;
-            };
-            /**
-             * Format: date-time
-             * @description Expected return timestamp when known.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description Expected return timestamp when known.
-             */
-            updatedAt: string;
-        };
-        /** @description A sport league's affiliations. */
-        ParticipantLeagueAffiliationListResponse: {
-            /** @description Best rank first, unranked last, then by name. */
-            affiliations: {
-                /**
-                 * Format: uuid
-                 * @description Affiliation identifier.
-                 */
-                id: string;
-                /** Format: uuid */
-                sportLeagueId: string;
-                /** Format: uuid */
-                participantId: string;
-                /** @description The participant's current rank in the sport league; 1 is best. Null when unranked. */
-                ranking: number | null;
-                /** @description The canonical participant. */
-                participant: {
-                    /** @description Participant identifier. */
-                    id: string;
-                    /** @description Owning sport identifier. */
-                    sportId: string;
-                    /** @description Primary participant display name. */
-                    name: string;
-                    /**
-                     * @description Whether the participant is an individual or team.
-                     * @enum {string}
-                     */
-                    participantType: "INDIVIDUAL" | "TEAM";
-                    /** @description Primary provider identifier when one exists. */
-                    externalId?: string;
-                    /** @description First name when the participant is a person. */
-                    firstName?: string;
-                    /** @description Last name when the participant is a person. */
-                    lastName?: string;
-                    /** @description Short-form display name for compact UI surfaces. */
-                    shortName?: string;
-                    /** @description Participant nationality or country code when known. */
-                    nationality?: string;
-                    /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
-                    role?: string | null;
-                    /** @description Current team affiliation when the participant is not itself a team. */
-                    teamAffiliation?: string | null;
-                    /**
-                     * @description Current participant lifecycle or availability status.
-                     * @enum {string}
-                     */
-                    status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
-                    /** @description Normalized participant injury or availability state. */
-                    injuryStatus: {
-                        /**
-                         * @description Current injury or availability status code.
-                         * @enum {string}
-                         */
-                        status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
-                        /** @description Optional injury-status detail or summary. */
-                        detail?: string;
-                        /**
-                         * Format: date-time
-                         * @description Expected return timestamp when known.
-                         */
-                        expectedReturn?: string;
-                        /**
-                         * Format: date-time
-                         * @description Expected return timestamp when known.
-                         */
-                        updatedAt?: string;
-                        /** @description Source that provided the injury-status update. */
-                        source?: string;
-                    };
-                    /** @description Optional participant image URL. */
-                    photoUrl?: string | null;
-                    /**
-                     * Format: date-time
-                     * @description Expected return timestamp when known.
-                     */
-                    photoLastUpdated?: string;
-                    /** @description Map of provider identifiers keyed by provider code. */
-                    externalIds: {
-                        [key: string]: string;
-                    };
-                    /**
-                     * Format: date-time
-                     * @description When the participant record was created.
-                     */
-                    createdAt: string;
-                    /**
-                     * Format: date-time
-                     * @description When the participant record was last updated.
-                     */
-                    updatedAt: string;
-                };
-                /**
-                 * Format: date-time
-                 * @description Expected return timestamp when known.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description Expected return timestamp when known.
-                 */
-                updatedAt: string;
-            }[];
-        };
-        /** @description One affiliation. */
-        ParticipantLeagueAffiliationResponse: {
-            /** @description A participant's membership of a sport league, and their current rank there. */
-            affiliation: {
-                /**
-                 * Format: uuid
-                 * @description Affiliation identifier.
-                 */
-                id: string;
-                /** Format: uuid */
-                sportLeagueId: string;
-                /** Format: uuid */
-                participantId: string;
-                /** @description The participant's current rank in the sport league; 1 is best. Null when unranked. */
-                ranking: number | null;
-                /** @description The canonical participant. */
-                participant: {
-                    /** @description Participant identifier. */
-                    id: string;
-                    /** @description Owning sport identifier. */
-                    sportId: string;
-                    /** @description Primary participant display name. */
-                    name: string;
-                    /**
-                     * @description Whether the participant is an individual or team.
-                     * @enum {string}
-                     */
-                    participantType: "INDIVIDUAL" | "TEAM";
-                    /** @description Primary provider identifier when one exists. */
-                    externalId?: string;
-                    /** @description First name when the participant is a person. */
-                    firstName?: string;
-                    /** @description Last name when the participant is a person. */
-                    lastName?: string;
-                    /** @description Short-form display name for compact UI surfaces. */
-                    shortName?: string;
-                    /** @description Participant nationality or country code when known. */
-                    nationality?: string;
-                    /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
-                    role?: string | null;
-                    /** @description Current team affiliation when the participant is not itself a team. */
-                    teamAffiliation?: string | null;
-                    /**
-                     * @description Current participant lifecycle or availability status.
-                     * @enum {string}
-                     */
-                    status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
-                    /** @description Normalized participant injury or availability state. */
-                    injuryStatus: {
-                        /**
-                         * @description Current injury or availability status code.
-                         * @enum {string}
-                         */
-                        status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
-                        /** @description Optional injury-status detail or summary. */
-                        detail?: string;
-                        /**
-                         * Format: date-time
-                         * @description Expected return timestamp when known.
-                         */
-                        expectedReturn?: string;
-                        /**
-                         * Format: date-time
-                         * @description Expected return timestamp when known.
-                         */
-                        updatedAt?: string;
-                        /** @description Source that provided the injury-status update. */
-                        source?: string;
-                    };
-                    /** @description Optional participant image URL. */
-                    photoUrl?: string | null;
-                    /**
-                     * Format: date-time
-                     * @description Expected return timestamp when known.
-                     */
-                    photoLastUpdated?: string;
-                    /** @description Map of provider identifiers keyed by provider code. */
-                    externalIds: {
-                        [key: string]: string;
-                    };
-                    /**
-                     * Format: date-time
-                     * @description When the participant record was created.
-                     */
-                    createdAt: string;
-                    /**
-                     * Format: date-time
-                     * @description When the participant record was last updated.
-                     */
-                    updatedAt: string;
-                };
-                /**
-                 * Format: date-time
-                 * @description Expected return timestamp when known.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description Expected return timestamp when known.
-                 */
-                updatedAt: string;
-            };
-        };
-        /** @description Affiliates a participant with the sport league. */
-        CreateParticipantLeagueAffiliationRequest: {
-            /** Format: uuid */
-            participantId: string;
-        };
-        /** @description Re-ranks existing affiliations. */
-        UpdateParticipantLeagueAffiliationRankingsRequest: {
-            /** @description Existing affiliations to re-rank, all or none. */
-            rankings: {
-                /** Format: uuid */
-                participantId: string;
-                /** @description null unranks. */
-                ranking: number | null;
-            }[];
-        };
-        /** @description An affiliation upload. */
-        ParticipantLeagueAffiliationUploadRequest: {
-            rows: {
-                /** Format: uuid */
-                participantId?: string;
-                externalId?: string;
-                playerName?: string;
-                ranking?: number;
-            }[];
-        };
-        /**
-         * @description How an uploaded row resolved to a participant: one match, none, or several.
-         * @enum {string}
-         */
-        UploadRowResolutionDto: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
-        /** @description A dry run of an affiliation upload. Nothing is written. */
-        ParticipantLeagueAffiliationUploadPreviewResponse: {
-            /** @description One per uploaded row, in upload order. */
-            rows: {
-                /** @description One uploaded affiliation. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName. */
-                row: {
-                    /** Format: uuid */
-                    participantId?: string;
-                    externalId?: string;
-                    playerName?: string;
-                    ranking?: number;
-                };
-                /**
-                 * @description How an uploaded row resolved to a participant: one match, none, or several.
-                 * @enum {string}
-                 */
-                resolution: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
-                /**
-                 * Format: uuid
-                 * @description Set only when MATCHED.
-                 */
-                participantId: string | null;
-                /** @description Set only when MATCHED. */
-                participantName: string | null;
-            }[];
         };
         /** @description A round of golf scores. */
         GolfRoundScoreUploadRequest: {
@@ -16642,6 +16776,229 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    previewEventParticipantUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SportEventParticipantUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description A dry run of a field upload. Nothing is written. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventParticipantUploadPreviewResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    applyEventParticipantUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SportEventParticipantUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description An event's field. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

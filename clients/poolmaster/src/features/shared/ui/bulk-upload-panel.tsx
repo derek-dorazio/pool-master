@@ -136,11 +136,16 @@ export function BulkUploadPanel<TRow, TPreviewRow>({
     if (!rows) {
       return;
     }
-    void apply(rows).then(() => {
-      resetPreview();
-      setText("");
-      onApplied?.();
-    });
+    // A rejected apply keeps the pasted rows and preview; the caller's mutation
+    // renders the failure through `applyError`, as a rejected preview does.
+    void apply(rows).then(
+      () => {
+        resetPreview();
+        setText("");
+        onApplied?.();
+      },
+      () => undefined,
+    );
   }, [apply, onApplied, parseCurrent, resetPreview]);
 
   const templateHref = useMemo(

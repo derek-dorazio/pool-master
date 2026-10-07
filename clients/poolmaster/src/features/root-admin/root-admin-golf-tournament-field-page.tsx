@@ -11,6 +11,7 @@ import { GolfFieldGridCard } from './golf-field-grid-card';
 import { GolfFieldSeedAction } from './golf-field-seed-action';
 import { GolfFieldRefreshAction } from './golf-field-refresh-action';
 import { GolfFieldAddParticipantsModal } from './golf-field-add-participants-modal';
+import { GolfFieldUploadCard } from './golf-field-upload-card';
 import { useGolfFieldQuery, useGolfTournamentQuery } from './use-golf-tournament';
 
 /**
@@ -21,6 +22,7 @@ import { useGolfFieldQuery, useGolfTournamentQuery } from './use-golf-tournament
 export function RootAdminGolfTournamentFieldPage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
   const [addOpen, setAddOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const tournamentQuery = useGolfTournamentQuery(eventId);
   const fieldQuery = useGolfFieldQuery(eventId);
@@ -74,6 +76,15 @@ export function RootAdminGolfTournamentFieldPage() {
                 >
                   Add more participants
                 </Button>
+                <Button
+                  data-testid="root-admin-golf-field-upload-open"
+                  disabled={uploadOpen}
+                  onClick={() => setUploadOpen(true)}
+                  size="sm"
+                  variant="secondary"
+                >
+                  Bulk upload
+                </Button>
                 {golfTournamentHasScoreSync(tournament.syncScope) ? (
                   <GolfFieldRefreshAction
                     eventId={eventId}
@@ -88,6 +99,14 @@ export function RootAdminGolfTournamentFieldPage() {
             <Alert tone="warning">
               This tournament is fully provider-owned. Its field is read-only here.
             </Alert>
+          ) : null}
+
+          {!readOnly && uploadOpen ? (
+            <GolfFieldUploadCard
+              entries={entries}
+              eventId={eventId}
+              onClose={() => setUploadOpen(false)}
+            />
           ) : null}
 
           <GolfFieldGridCard
