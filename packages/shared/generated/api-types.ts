@@ -5591,50 +5591,6 @@ export interface components {
             maxEntriesPerSquad?: number | null;
             /** @description How many roster scores count toward the entry total in managed golf contests. */
             countedScores?: number;
-            /** @description Tier source used for managed golf contests. */
-            tierSource?: string;
-            tierGeneration?: {
-                /** @description Default managed tier size used to seed tier generation. */
-                defaultTierSize: number;
-            };
-            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-            tiers?: {
-                /** @description Stable tier key such as A, B, or C. */
-                tierKey: string;
-                /** @description Commissioner-facing tier label. */
-                label: string;
-                /** @description How many golfers must be picked from the tier. */
-                pickCount: number;
-                /** @description Starting resolved rank/odds position for the tier. */
-                startPosition: number;
-                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                endPosition: number | null;
-            }[];
-            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-            cutRule?: {
-                /** @enum {string} */
-                type: "FIXED_SCORE";
-                /** @description Fallback score assigned when a golfer misses the cut. */
-                fixedScore: number;
-            };
-            /** @description Managed-golf playoff handling strategy. */
-            playoffHandling?: string;
-            /** @description Managed-golf leaderboard display scoring mode. */
-            displayScoring?: string;
-            /** @description Managed-golf tiebreaker configuration. */
-            tiebreaker?: {
-                /** @enum {string} */
-                type: "PREDICT_WINNING_SCORE";
-            };
-            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-            categories?: {
-                /** @enum {string} */
-                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                /** @description Commissioner-facing category label. */
-                label: string;
-                /** @description How many golfers must be picked for the category. */
-                pickCount: number;
-            }[];
         };
         /** @description Single-contest response. */
         ContestResponse: {
@@ -5711,50 +5667,6 @@ export interface components {
                 maxEntriesPerSquad?: number | null;
                 /** @description How many roster scores count toward the entry total in managed golf contests. */
                 countedScores?: number;
-                /** @description Tier source used for managed golf contests. */
-                tierSource?: string;
-                tierGeneration?: {
-                    /** @description Default managed tier size used to seed tier generation. */
-                    defaultTierSize: number;
-                };
-                /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                tiers?: {
-                    /** @description Stable tier key such as A, B, or C. */
-                    tierKey: string;
-                    /** @description Commissioner-facing tier label. */
-                    label: string;
-                    /** @description How many golfers must be picked from the tier. */
-                    pickCount: number;
-                    /** @description Starting resolved rank/odds position for the tier. */
-                    startPosition: number;
-                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                    endPosition: number | null;
-                }[];
-                /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                cutRule?: {
-                    /** @enum {string} */
-                    type: "FIXED_SCORE";
-                    /** @description Fallback score assigned when a golfer misses the cut. */
-                    fixedScore: number;
-                };
-                /** @description Managed-golf playoff handling strategy. */
-                playoffHandling?: string;
-                /** @description Managed-golf leaderboard display scoring mode. */
-                displayScoring?: string;
-                /** @description Managed-golf tiebreaker configuration. */
-                tiebreaker?: {
-                    /** @enum {string} */
-                    type: "PREDICT_WINNING_SCORE";
-                };
-                /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                categories?: {
-                    /** @enum {string} */
-                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                    /** @description Commissioner-facing category label. */
-                    label: string;
-                    /** @description How many golfers must be picked for the category. */
-                    pickCount: number;
-                }[];
             } | null;
         };
         /** @description Contest-list response. */
