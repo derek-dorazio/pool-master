@@ -178,6 +178,14 @@ export function RootAdminGolfPlayerListPage() {
       <FormModal
         canSave={form.formState.isValid && Boolean(sportQuery.data)}
         error={createMutation.error}
+        // canSave waits for the sport, so a failed sport fetch must say why save stays off.
+        errorMessage={
+          sportQuery.isError
+            ? extractErrorMessage(sportQuery.error, {
+                fallback: 'We could not load the golf sport.',
+              })
+            : undefined
+        }
         isPending={createMutation.isPending}
         onCancel={() => setCreateOpen(false)}
         onOpenChange={(next) => !next && setCreateOpen(false)}

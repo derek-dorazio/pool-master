@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -211,5 +211,25 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
       await screen.findByText(/golf sport is still loading\. Wait a moment and try again\./),
     ).toBeInTheDocument();
     expect(createParticipantMock).not.toHaveBeenCalled();
+  });
+
+  it('explains in the Add player modal, with save disabled, when the golf sport fails to load', async () => {
+    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
+    listSportsMock.mockResolvedValue({
+      error: { code: 'INTERNAL', message: 'Sport catalog offline' },
+      response: { status: 500 },
+    });
+    renderPage({ sportsLoaded: false });
+
+    await userEvent.click(await screen.findByTestId('root-admin-golf-player-list-new'));
+    await userEvent.type(
+      screen.getByTestId('root-admin-golf-player-list-new-name'),
+      'Ludvig Åberg',
+    );
+
+    // The page's player list surfaces the same error behind the modal; this is the modal's own.
+    const modal = screen.getByTestId('root-admin-golf-player-list-new-modal');
+    expect(await within(modal).findByText('Sport catalog offline')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-player-list-new-save')).toBeDisabled();
   });
 });
