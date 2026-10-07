@@ -43,7 +43,7 @@ export function contestManagementModule(
       tags: ['Contest Management'],
       summary: 'Update a contest\'s configuration',
       description:
-        'Updates an existing contest\'s configuration and returns it as getContestConfiguration does. Commissioner only. Refused with 409 CONTEST_CONFIGURATION_SETTLED while the contest is COMPLETED: its result is frozen against the configuration it settled under, and reopening the contest is the path back.',
+        'Updates a draft contest\'s configuration and returns it as getContestConfiguration does. Commissioner only. Refused with 409 CONTEST_CONFIGURATION_LOCKED once the contest is no longer DRAFT: opening it to the league locks its settings for good.',
       operationId: 'updateContestConfiguration',
       body: zodToJsonSchema(ContestConfigurationRequestSchema),
       response: {
@@ -54,12 +54,42 @@ export function contestManagementModule(
         404: zodToJsonSchema(ErrorEnvelopeSchema),
         409: {
           ...zodToJsonSchema(ErrorEnvelopeSchema),
-          description: 'CONTEST_CONFIGURATION_SETTLED — the contest is COMPLETED; reopen it before changing its configuration.',
+          description: 'CONTEST_CONFIGURATION_LOCKED — the contest has been opened to the league (it is not DRAFT), so its configuration can no longer change.',
         },
         422: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     preHandler: requireCommissioner(membershipRepo),
     handler: handlers.updateContestConfiguration,
+  });
+
+  fastify.post('/contests/:contestId/open', {
+    schema: {
+      tags: ['Contest Management'],
+      summary: 'Open a draft contest to the league',
+      description:
+        'Moves a DRAFT contest to OPEN so league members can see and enter it, and returns it as getContestConfiguration does. Commissioner only. There is no undo: from here its name, configuration and existence are locked. The event\'s field need not be ready; entries wait on it.',
+      operationId: 'openContest',
+      response: {
+        200: zodToJsonSchema(ContestManagementResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: {
+          ...zodToJsonSchema(ErrorEnvelopeSchema),
+          description: 'CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND when the contest\'s event is gone.',
+        },
+        409: {
+          ...zodToJsonSchema(ErrorEnvelopeSchema),
+          description: 'CONTEST_NOT_DRAFT — the contest is already open, or past it. CONTEST_EVENT_ALREADY_STARTED — the event\'s start time has passed or it is IN_PROGRESS, COMPLETED or CANCELLED; the draft stays a draft.',
+        },
+        422: {
+          ...zodToJsonSchema(ErrorEnvelopeSchema),
+          description: 'CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event\'s tiers; edit the draft first.',
+        },
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: handlers.openContest,
   });
 }

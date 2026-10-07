@@ -152,6 +152,7 @@ function primeMocks(opts?: {
   picksRevealed?: boolean;
   entries?: ReturnType<typeof buildEntry>[];
   myTeamId?: string;
+  role?: 'MEMBER' | 'COMMISSIONER';
 }) {
   const contestStatus = opts?.contestStatus ?? 'OPEN';
   const picksRevealed = opts?.picksRevealed ?? (contestStatus !== 'OPEN' && contestStatus !== 'DRAFT');
@@ -207,7 +208,7 @@ function primeMocks(opts?: {
         leagueId: 'league-1',
         userId: 'user-1',
         user: VIEWER_USER,
-        role: 'MEMBER',
+        role: opts?.role ?? 'MEMBER',
         status: 'ACTIVE',
         joinedAt: '2026-04-15T00:00:00.000Z',
         createdAt: '2026-04-15T00:00:00.000Z',
@@ -571,5 +572,27 @@ describe('ContestDetailPage (Contest Board)', () => {
         body: { name: 'My Renamed Entry' },
       });
     });
+  });
+  it('offers a commissioner "Open to league" on a draft, with the draft note, and no create-entry button', async () => {
+    primeMocks({ contestStatus: 'DRAFT', role: 'COMMISSIONER' });
+
+    renderContestBoard();
+
+    expect(await screen.findByTestId('contest-open-to-league')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-draft-note')).toHaveTextContent(/only commissioners can see it/i);
+    expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['a member on a draft', 'DRAFT', 'MEMBER'],
+    ['a commissioner on an open contest', 'OPEN', 'COMMISSIONER'],
+  ] as const)('offers no "Open to league" to %s', async (_who, contestStatus, role) => {
+    primeMocks({ contestStatus, role });
+
+    renderContestBoard();
+
+    await screen.findByRole('heading', { name: 'Masters Pick 6' });
+    await waitFor(() => expect(getLeagueMock).toHaveBeenCalled());
+    expect(screen.queryByTestId('contest-open-to-league')).not.toBeInTheDocument();
   });
 });

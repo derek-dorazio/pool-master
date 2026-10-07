@@ -29,11 +29,21 @@ export class OverrideService {
     return this.contestRepo.update(contestId, { status: ContestStatus.ACTIVE } as Partial<Contest>);
   }
 
-  /** Force-closes a contest. */
+  /**
+   * Force-closes a contest. A draft is refused: "Open to league" and delete are its only exits
+   * (#117), and closing one would publish it to members as finished without the open checks.
+   */
   async closeContest(contestId: string): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       throw new OverrideError('Contest not found', 'CONTEST_NOT_FOUND');
+    }
+    if (contest.status === ContestStatus.DRAFT) {
+      throw new OverrideError(
+        'A draft contest cannot be closed; open it to the league or delete it.',
+        'CONTEST_CLOSE_STATUS_INVALID',
+        409,
+      );
     }
     if (contest.status === ContestStatus.COMPLETED || contest.status === ContestStatus.CANCELLED) {
       throw new OverrideError('Contest is already closed', 'CONTEST_ALREADY_CLOSED');
@@ -70,10 +80,13 @@ export class OverrideService {
 
 export class OverrideError extends Error {
   code: string;
+  /** Omitted: 404 for a `*_NOT_FOUND` code, else 400. */
+  statusCode?: number;
 
-  constructor(reason: string, code = 'CONTEST_OVERRIDE_INVALID') {
+  constructor(reason: string, code = 'CONTEST_OVERRIDE_INVALID', statusCode?: number) {
     super(reason);
     this.name = 'OverrideError';
     this.code = code;
+    this.statusCode = statusCode;
   }
 }

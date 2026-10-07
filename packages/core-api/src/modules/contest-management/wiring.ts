@@ -35,9 +35,9 @@ export function createContestManagementService(
 }
 
 /**
- * What contest creation needs to know about the event: its release and field-lock timing, its
- * sport's tournament format, and how much of its field has loaded. Composed from the slice-2
- * ports (#247) — it was a raw Prisma read inlined here.
+ * What contest creation and opening need to know about the event: its status and start time,
+ * its release and field-lock timing, its sport's tournament format, and how much of its field
+ * has loaded. Composed from the slice-2 ports (#247) — it was a raw Prisma read inlined here.
  */
 export function createContestSportEventReader(
   sportEvents: SportEventRepository,
@@ -55,6 +55,8 @@ export function createContestSportEventReader(
       ]);
       return {
         id: event.id,
+        status: event.status,
+        startDate: event.startDate,
         releaseAt: event.releaseAt,
         fieldLocksAt: event.fieldLocksAt,
         fieldLocked: event.fieldLocked,

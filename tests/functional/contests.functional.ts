@@ -10,6 +10,7 @@ import {
   listContestEntries,
   listContestConfigTemplates,
   listContests,
+  openContest,
   updateContestEntry,
   updateContest,
   submitContestSelection,
@@ -239,7 +240,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: Contests and Entries', () => {
-  it('creates a template-first managed contest for an imported golf event and is immediately entry-ready', async () => {
+  it('creates a template-first managed contest as a draft that becomes entry-ready once the commissioner opens it', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
       displayName: 'Managed Contest Commissioner',
       leagueName: 'Managed Contest Functional League',
@@ -282,7 +283,7 @@ describe('SDK Functional: Contests and Entries', () => {
     // contest's when none is supplied.
     expect(createResponse.response.status).toBe(201);
     expect(createResponse.data?.contest.id).toBeTruthy();
-    expect(createResponse.data?.contest.status).toBe(ContestStatus.OPEN);
+    expect(createResponse.data?.contest.status).toBe(ContestStatus.DRAFT);
     expect(createResponse.data?.contest.selectionType).toBe(SelectionType.TIERED);
     expect(createResponse.data?.contestConfiguration?.rosterSize).toBe(
       defaultTemplate?.configuration.rosterSize,
@@ -316,6 +317,21 @@ describe('SDK Functional: Contests and Entries', () => {
       tierNumber: 1,
     });
     expect(echoedTiers[0].assignments).toHaveLength(80);
+
+    // #117 — a draft takes no entries until the commissioner opens it to the league.
+    const draftEntryResponse = await enterContest({
+      client: commissioner.client,
+      path: {
+        contestId,
+      },
+    });
+    expectFunctionalError(draftEntryResponse, { status: 400, code: 'CONTEST_ENTRY_LOCKED' });
+
+    const openResponse = await openContest({
+      client: commissioner.client,
+      path: { id: league.id, contestId },
+    });
+    expect(openResponse.data?.contest.status).toBe(ContestStatus.OPEN);
 
     const entryResponse = await enterContest({
       client: commissioner.client,
@@ -385,6 +401,11 @@ describe('SDK Functional: Contests and Entries', () => {
     });
 
     const contestId = createResponse.data?.contest.id as string;
+    const openResponse = await openContest({
+      client: commissioner.client,
+      path: { id: league.id, contestId },
+    });
+    expect(openResponse.data?.contest.status).toBe(ContestStatus.OPEN);
     const firstEntryResponse = await enterContest({
       client: commissioner.client,
       path: {
@@ -523,6 +544,7 @@ describe('SDK Functional: Contests and Entries', () => {
       name: 'Functional Contest',
       selectionType: SelectionType.BUDGET_PICK,
       scoringEngine: ScoringEngine.POSITION,
+      status: 'DRAFT',
     });
 
     const listResponse = await listContests({
@@ -710,27 +732,6 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(reenterResponse.data?.contestId).toBe(contestId);
     expect(reenterResponse.data?.entry.status).toBe('ACTIVE');
     expect(reenterResponse.data?.entry.entryNumber).toBe(1);
-
-    const cleanupDeleteResponse = await deleteContest({
-      client: commissioner.client,
-      path: {
-        contestId,
-      },
-    });
-
-    expect(cleanupDeleteResponse.response.status).toBe(204);
-
-    const deletedContest = await getContest({
-      client: commissioner.client,
-      path: {
-        contestId,
-      },
-    });
-
-    expectFunctionalError(deletedContest, {
-      status: 404,
-      code: 'CONTEST_NOT_FOUND',
-    });
   });
 
   it('renames a team-owned contest entry and rejects duplicate names through the generated SDK', async () => {
@@ -1023,7 +1024,7 @@ describe('SDK Functional: Contests and Entries', () => {
   });
 
   it('rejects a league outsider from entering a contest', async () => {
-    const { commissioner, league } = await buildLeagueWithCommissioner({
+    const { league } = await buildLeagueWithCommissioner({
       displayName: 'Outsider Commissioner',
       leagueName: 'Outsider Functional League',
     });
@@ -1051,15 +1052,6 @@ describe('SDK Functional: Contests and Entries', () => {
       status: 403,
       code: 'LEAGUE_MEMBERSHIP_REQUIRED',
     });
-
-    const cleanupDeleteResponse = await deleteContest({
-      client: commissioner.client,
-      path: {
-        contestId,
-      },
-    });
-
-    expect(cleanupDeleteResponse.response.status).toBe(204);
   });
 
   it('rejects locked contest entry creation and leaving after selections exist', async () => {

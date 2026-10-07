@@ -13,6 +13,7 @@ const {
   listContestConfigTemplatesMock,
   listEventsMock,
   mockLogger,
+  openContestMock,
   updateContestMock,
   updateContestConfigurationMock,
 } = vi.hoisted(() => {
@@ -35,6 +36,7 @@ const {
     listContestConfigTemplatesMock: vi.fn(),
     listEventsMock: vi.fn(),
     mockLogger: logger,
+    openContestMock: vi.fn(),
     updateContestMock: vi.fn(),
     updateContestConfigurationMock: vi.fn(),
   };
@@ -47,6 +49,7 @@ bindApiMocks({
   getContestConfiguration: getContestConfigurationMock,
   listContestConfigTemplates: listContestConfigTemplatesMock,
   listEvents: listEventsMock,
+  openContest: openContestMock,
   updateContest: updateContestMock,
   updateContestConfiguration: updateContestConfigurationMock,
 });
@@ -103,6 +106,28 @@ function renderContestPage(initialEntry: string) {
       </MemoryRouter>
     </QueryClientProvider>,
   );
+}
+
+function buildManagedContest(status: string, overrides: { id?: string } = {}) {
+  const id = overrides.id ?? 'contest-90';
+  return {
+    id,
+    leagueId: 'league-1',
+    sportEventId: 'event-1',
+    name: 'Masters Pick 6',
+    status,
+    createdAt: '2026-04-15T00:00:00.000Z',
+    updatedAt: '2026-04-15T00:00:00.000Z',
+    configuration: {
+      id: `config-${id}`,
+      contestId: id,
+      locksAt: '2026-04-10T11:55:00.000Z',
+      maxEntriesPerSquad: 1,
+      rosterSize: 6,
+      countedScores: 4,
+    },
+    effectiveTiers: [],
+  };
 }
 
 function primeCommonMocks() {
@@ -217,6 +242,7 @@ describe('CreateContestPage', () => {
     getContestConfigurationMock.mockReset();
     listContestConfigTemplatesMock.mockReset();
     listEventsMock.mockReset();
+    openContestMock.mockReset();
     updateContestMock.mockReset();
     updateContestConfigurationMock.mockReset();
     mockLogger.debug.mockReset();
@@ -625,4 +651,67 @@ describe('CreateContestPage', () => {
     expect(screen.queryByTestId('inherited-tiers-panel')).not.toBeInTheDocument();
   });
 
+  it('lands the commissioner on the new draft\'s setup page, with "Open to league" offered, after create', async () => {
+    primeCommonMocks();
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-90' } } });
+    getContestConfigurationMock.mockResolvedValue({ data: { contest: buildManagedContest('DRAFT') } });
+
+    renderCreateContestPage();
+
+    await screen.findByTestId('contest-name');
+    fireEvent.change(screen.getByTestId('contest-name'), { target: { value: 'Masters Pick 6' } });
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-detail-page')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-open-to-league')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-delete')).toBeInTheDocument();
+  });
+
+  it('opens a draft to the league only after the confirm dialog, then shows the settings as locked', async () => {
+    primeCommonMocks();
+    getContestConfigurationMock
+      .mockResolvedValueOnce({ data: { contest: buildManagedContest('DRAFT') } })
+      .mockResolvedValue({ data: { contest: buildManagedContest('OPEN') } });
+    openContestMock.mockResolvedValue({ data: { contest: buildManagedContest('OPEN') } });
+
+    renderContestPage('/league/BIGDAWGS/contests/contest-90/manage');
+
+    fireEvent.click(await screen.findByTestId('contest-open-to-league'));
+    expect(await screen.findByTestId('contest-open-dialog')).toHaveTextContent(
+      /members will be able to see this contest and enter it/i,
+    );
+    expect(openContestMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('contest-open-confirm'));
+
+    await waitFor(() =>
+      expect(openContestMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', contestId: 'contest-90' },
+      }),
+    );
+    expect(await screen.findByTestId('contest-manage-readonly-note')).toHaveTextContent(
+      'This contest is open to the league, so its settings are locked.',
+    );
+    expect(screen.queryByTestId('create-contest-submit')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-delete')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-open-to-league')).not.toBeInTheDocument();
+  });
+
+  it('shows the event-started copy in the dialog when opening is refused with CONTEST_EVENT_ALREADY_STARTED', async () => {
+    primeCommonMocks();
+    getContestConfigurationMock.mockResolvedValue({ data: { contest: buildManagedContest('DRAFT') } });
+    openContestMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_EVENT_ALREADY_STARTED', message: 'server sentence' } },
+    });
+
+    renderContestPage('/league/BIGDAWGS/contests/contest-90/manage');
+
+    fireEvent.click(await screen.findByTestId('contest-open-to-league'));
+    fireEvent.click(await screen.findByTestId('contest-open-confirm'));
+
+    expect(await screen.findByTestId('contest-open-error')).toHaveTextContent(
+      'This contest’s event has already started, so it can no longer be opened. Delete the draft instead.',
+    );
+  });
 });

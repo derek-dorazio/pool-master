@@ -215,13 +215,15 @@ export async function buildLeagueWithCommissioner(overrides?: {
  * event-less create that used to make these through the API; the one create now needs a
  * contest-ready event and makes tiered contests only. Tests whose subject is entries, visibility
  * or draft state rather than creation — and budget/snake contests, which nothing can create yet
- * (#93) — seed the same rows that create wrote: a DRAFT contest and a configuration defaulting
- * to one entry per team.
+ * (#93) — seed the rows create and "Open to league" leave behind: an OPEN contest members can
+ * see and enter, and a configuration defaulting to one entry per team. `status: 'DRAFT'` seeds
+ * the commissioner-only draft create itself writes (#117).
  */
 export async function seedContestFixture(leagueId: string, options: {
   name: string;
   selectionType: string;
   scoringEngine: string;
+  status?: 'DRAFT' | 'OPEN';
   configuration?: {
     rounds?: number;
     timePerPickSeconds?: number;
@@ -238,7 +240,7 @@ export async function seedContestFixture(leagueId: string, options: {
     data: {
       leagueId,
       name: options.name,
-      status: 'DRAFT',
+      status: options.status ?? 'OPEN',
       contestFormat: 'ROSTER',
       selectionType: options.selectionType,
       scoringEngine: options.scoringEngine,
