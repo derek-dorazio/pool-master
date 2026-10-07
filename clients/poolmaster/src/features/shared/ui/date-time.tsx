@@ -27,9 +27,7 @@ export function DateDisplay({
         ? new Intl.DateTimeFormat(undefined, {
             dateStyle,
             timeStyle: timeStyle ?? undefined,
-          }).format(
-            date,
-          )
+          }).format(date)
         : emptyLabel}
     </span>
   );
