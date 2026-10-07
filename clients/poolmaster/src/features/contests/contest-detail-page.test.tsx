@@ -8,6 +8,7 @@ import { ContestDetailPage } from './contest-detail-page';
 const {
   enterContestMock,
   getContestMock,
+  getEventMock,
   listContestEntriesMock,
   getLeagueMock,
   mockLogger,
@@ -27,6 +28,7 @@ const {
   return {
     enterContestMock: vi.fn(),
     getContestMock: vi.fn(),
+    getEventMock: vi.fn(),
     getLeagueMock: vi.fn(),
     listContestEntriesMock: vi.fn(),
     mockLogger: logger,
@@ -37,6 +39,7 @@ const {
 bindApiMocks({
   enterContest: enterContestMock,
   getContest: getContestMock,
+  getEvent: getEventMock,
   // #202 — the contest board reads the league BY ID for the viewer's own squad membership. It
   // used to list every squad in the league and scan each one's members for the signed-in user.
   getLeague: getLeagueMock,
@@ -153,6 +156,7 @@ function primeMocks(opts?: {
   entries?: ReturnType<typeof buildEntry>[];
   myTeamId?: string;
   role?: 'MEMBER' | 'COMMISSIONER';
+  sportEventId?: string;
 }) {
   const contestStatus = opts?.contestStatus ?? 'OPEN';
   const picksRevealed = opts?.picksRevealed ?? (contestStatus !== 'OPEN' && contestStatus !== 'DRAFT');
@@ -172,6 +176,7 @@ function primeMocks(opts?: {
         leagueId: 'league-1',
         sport: 'GOLF',
         entryCount: entries.length,
+        ...(opts?.sportEventId ? { sportEventId: opts.sportEventId } : {}),
       },
     },
   });
@@ -233,6 +238,7 @@ describe('ContestDetailPage (Contest Board)', () => {
   afterEach(() => {
     enterContestMock.mockReset();
     getContestMock.mockReset();
+    getEventMock.mockReset();
     listContestEntriesMock.mockReset();
     getLeagueMock.mockReset();
     updateContestEntryMock.mockReset();
@@ -255,6 +261,31 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(badge).toHaveClass('shadow-[var(--shadow-red-pulse)]');
     expect(statusRow).toBeInTheDocument();
     expect(screen.queryByText('ACTIVE')).not.toBeInTheDocument();
+  });
+
+  it('shows when the contest starts and ends, from its sport event\'s schedule', async () => {
+    primeMocks({ sportEventId: 'event-1' });
+    getEventMock.mockResolvedValue({
+      data: {
+        event: {
+          id: 'event-1',
+          startDate: '2026-04-09T12:00:00.000Z',
+          endDate: '2026-04-12T23:00:00.000Z',
+        },
+      },
+    });
+    const format = (iso: string) =>
+      new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
+
+    renderContestBoard();
+
+    expect(await screen.findByTestId('contest-detail-starts')).toHaveTextContent(
+      `Starts ${format('2026-04-09T12:00:00.000Z')}`,
+    );
+    expect(screen.getByTestId('contest-detail-ends')).toHaveTextContent(
+      `Ends ${format('2026-04-12T23:00:00.000Z')}`,
+    );
+    expect(getEventMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'event-1' } }));
   });
 
   // pool-master-dxd.13 — header summary counts ('My Entries: N · Total Entries: M').

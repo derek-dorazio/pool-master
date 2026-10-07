@@ -20,6 +20,7 @@ import {
   Button,
   Checkbox,
   Chip,
+  DateDisplay,
   DefinitionList,
   EmptyState,
   ErrorState,
@@ -38,6 +39,7 @@ import {
   refreshOnContestStatusChange,
   shouldPollContestEntries,
 } from './contest-status';
+import { useContestEventSchedule } from './use-contest-event-schedule';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -166,6 +168,7 @@ export function ContestDetailPage() {
   });
 
   const leagueId = contestQuery.data?.leagueId ?? '';
+  const scheduleQuery = useContestEventSchedule(contestQuery.data?.sportEventId);
 
   /*
    * #202 (A8) — the viewer's own squad comes from their squad membership, which the
@@ -331,6 +334,18 @@ export function ContestDetailPage() {
                 {contest.selectionType} · {contest.scoringEngine}
                 {contest.sport ? ` · ${contest.sport}` : ''}
               </p>
+              {scheduleQuery.data ? (
+                <p className="mt-1 text-sm text-muted-foreground" data-testid="contest-detail-schedule">
+                  <span data-testid="contest-detail-starts">
+                    Starts <DateDisplay className="text-muted-foreground" value={scheduleQuery.data.startDate} />
+                  </span>
+                  {scheduleQuery.data.endDate ? (
+                    <span data-testid="contest-detail-ends">
+                      {' · '}Ends <DateDisplay className="text-muted-foreground" value={scheduleQuery.data.endDate} />
+                    </span>
+                  ) : null}
+                </p>
+              ) : null}
               <div className="mt-4 flex flex-wrap gap-3 text-sm">
                 <Chip
                   data-testid="contest-board-my-count"
