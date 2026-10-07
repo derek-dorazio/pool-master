@@ -221,9 +221,10 @@ classes; this is what is specific to *this* codebase.
 ### Auth and permission boundaries
 
 - Is every new route that reaches league-owned data guarded by the right authority
-  preHandler — `requireRootAdmin`, `requireCommissioner`, `requireLeagueMembership`, or for a
-  route reached by `:contestId`, `requireCommissionerForContest` / `requireMemberOfLeague`?
-  Reads count too: a by-id read with no gate leaks a league's data to every signed-in user.
+  preHandler — `requireRootAdmin`, `requireCommissioner` / `requireCommissionerForContest`,
+  `requireMemberOfLeague` with the right league resolver, or `requireMemberOfSquad` for an action
+  on a squad's behalf? Reads count too: a read with no gate leaks a league's data to every
+  signed-in user.
 - Does the diff add an entry to `scripts/route-authorization-opt-outs.mjs`? Each one is a route
   authorizing somewhere other than a hook; check that the reason is true and names the function
   that does the work (`service-rules.md` §3 *Route Authorization*).

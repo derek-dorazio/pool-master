@@ -8,6 +8,7 @@ import type {
 import {
   buildLeaderboardView,
   formatCurrentRoundLabel,
+  formatThru,
   resolveCurrentRound,
   resolveRoundNumbers,
 } from './contest-leaderboard';
@@ -418,5 +419,51 @@ describe('buildLeaderboardView', () => {
 
     expect(view.entries).toEqual([]);
     expect(view.roundNumbers).toEqual([1, 2]);
+  });
+});
+
+describe('formatThru', () => {
+  function golferOnRound2(
+    status: 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETE' | 'WITHDRAWN' | 'ELIMINATED',
+    currentRoundThru: number | null,
+    round2Status: string,
+  ) {
+    return participantFixture({
+      id: 'sep-1',
+      standing: { ...standingFixture(-3), status, golf: { eventScoreToPar: -3, eventStrokes: 105, currentRoundThru } },
+      rounds: [
+        roundFixture({ roundNumber: 1, status: 'COMPLETED' }),
+        roundFixture({ roundNumber: 2, status: round2Status }),
+      ],
+    });
+  }
+
+  it('shows the last hole completed while the golfer is mid-round', () => {
+    expect(formatThru(golferOnRound2('IN_PROGRESS', 12, 'IN_PROGRESS'))).toBe('12');
+  });
+
+  it('shows F once the golfer\'s current round is complete', () => {
+    expect(formatThru(golferOnRound2('IN_PROGRESS', 18, 'COMPLETED'))).toBe('F');
+  });
+
+  it('shows F for a golfer whose event is complete', () => {
+    expect(formatThru(golferOnRound2('COMPLETE', 18, 'COMPLETED'))).toBe('F');
+  });
+
+  it('shows CUT for an eliminated golfer, even with holes recorded on the round', () => {
+    expect(formatThru(golferOnRound2('ELIMINATED', 18, 'MISSED_CUT'))).toBe('CUT');
+  });
+
+  it('shows WD for a withdrawn golfer, even mid-round', () => {
+    expect(formatThru(golferOnRound2('WITHDRAWN', 7, 'IN_PROGRESS'))).toBe('WD');
+  });
+
+  it('shows a dash before the golfer tees off, whether thru is unset or zero', () => {
+    expect(formatThru(golferOnRound2('ACTIVE', null, 'PENDING'))).toBeNull();
+    expect(formatThru(golferOnRound2('ACTIVE', 0, 'PENDING'))).toBeNull();
+  });
+
+  it('shows a dash for a golfer with no standing yet', () => {
+    expect(formatThru(participantFixture({ id: 'sep-1' }))).toBeNull();
   });
 });

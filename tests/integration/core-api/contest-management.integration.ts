@@ -50,7 +50,6 @@ describe('Contest management integration', () => {
   let contestId: string;
   let topParticipantId: string;
   let secondParticipantId: string;
-  let entryLocksAt: string;
 
   async function addContestReadyGolfField(targetSize: number) {
     const prisma = getPrisma();
@@ -82,7 +81,6 @@ describe('Contest management integration', () => {
 
   beforeAll(async () => {
     const eventTiming = buildContestEligibleEventTiming();
-    entryLocksAt = eventTiming.entryLocksAt.toISOString();
     const owner = await createTestUser({
       displayName: 'Contest Management Owner',
     });
@@ -202,7 +200,6 @@ describe('Contest management integration', () => {
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         configuration: {
-          locksAt: entryLocksAt,
           maxEntriesPerSquad: 3,
           rosterSize: 6,
           countedScores: 4,
@@ -253,7 +250,6 @@ describe('Contest management integration', () => {
       url: API_ROUTES.contestManagement.configuration(leagueId, contestId),
       headers: ownerHeaders,
       payload: {
-        locksAt: entryLocksAt,
         maxEntriesPerSquad: null,
         rosterSize: 6,
         countedScores: 5,
@@ -316,7 +312,6 @@ describe('Contest management integration', () => {
       url: API_ROUTES.contestManagement.configuration(leagueId, contestId),
       headers: ownerHeaders,
       payload: {
-        locksAt: entryLocksAt,
         maxEntriesPerSquad: null,
         rosterSize: 6,
         countedScores: 4,
@@ -468,7 +463,6 @@ describe('Contest management integration', () => {
         selectionType: 'TIERED',
         templateId: defaultTemplate.id,
         configuration: {
-          locksAt: entryLocksAt,
           rosterSize: 6,
           countedScores: 3,
         },
@@ -481,7 +475,6 @@ describe('Contest management integration', () => {
     });
     expect(configuration.templateId).toBe(defaultTemplate.id);
     expect(configuration.configJson).toEqual({
-      locksAt: entryLocksAt,
       rosterSize: 6,
       countedScores: 3,
     });

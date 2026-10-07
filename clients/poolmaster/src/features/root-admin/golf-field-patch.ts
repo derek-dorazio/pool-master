@@ -32,8 +32,11 @@ export const GOLF_FIELD_INACTIVE_REASONS: readonly GolfFieldInactiveReason[] = [
   'ELIMINATED',
 ];
 
+/** Rank and seed are stored as 32-bit integers, so the server refuses anything larger. */
+const MAX_INT32 = 2147483647;
+
 function isPositiveInt(raw: string): boolean {
-  return /^\d+$/.test(raw.trim()) && Number(raw) > 0;
+  return /^\d+$/.test(raw.trim()) && Number(raw) > 0 && Number(raw) <= MAX_INT32;
 }
 
 function isNonNegativeInt(raw: string): boolean {

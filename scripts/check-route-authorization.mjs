@@ -1,28 +1,30 @@
 /**
- * #193 — every route under a by-id mount declares its authorization, or says where it lives.
+ * #193, #292 — every route that addresses something by a path parameter declares its
+ * authorization, or says where it lives.
  *
- * A by-id mount is a route module registered at a prefix with no path parameter
- * (`/api/v1/contests`), whose routes address a resource by id (`/:contestId`). Such a route has
- * lost the league context a nested mount (`/api/v1/leagues/:id/contests`) carries in its path,
- * so it must re-establish it, and the global auth guard proves only that the caller is logged
- * in. #193 found four contest routes that re-established it nowhere: no hook on the route, no
- * actor read in the handler, a service that never received one.
+ * The global auth guard proves only that the caller is logged in. A route whose path carries a
+ * parameter — a by-id route (`/api/v1/contests/:contestId`) or a route under a nested mount
+ * (`/api/v1/leagues/:id/squads/...`) — reaches data someone owns, so it must decide who may
+ * reach it. #193 found four contest routes that decided nowhere: no hook on the route, no actor
+ * read in the handler, a service that never received one. It covered by-id mounts only, on the
+ * theory that a nested mount "carries the league id"; #292 found that carrying the id is not
+ * checking it, and extended the rule to every mount.
  *
- * THE RULE. Each route with a path parameter under a by-id mount must either declare a
- * `preHandler` or `onRequest` hook — on the route, through a spread options object, or through
- * a module-wide `addHook` — or appear in `route-authorization-opt-outs.mjs` with a one-line
- * reason. Neither is satisfiable by accident: a route that authorizes nowhere fails here instead
- * of passing silently, and the opt-out list is the complete, reviewable set of by-id routes that
- * authorize somewhere other than a hook. An opt-out that names no route, or a route that now
- * declares a hook, fails too, so the list cannot drift from the code.
+ * THE RULE. Each route whose full path has a parameter must either declare a `preHandler` or
+ * `onRequest` hook — on the route, through a spread options object, or through a module-wide
+ * `addHook` — or appear in `route-authorization-opt-outs.mjs` with a one-line reason. Neither is
+ * satisfiable by accident: a route that authorizes nowhere fails here instead of passing
+ * silently, and the opt-out list is the complete, reviewable set of such routes that authorize
+ * somewhere other than a hook. An opt-out that names no route, or a route that now declares a
+ * hook, fails too, so the list cannot drift from the code.
  *
  * WHAT IT DOES NOT PROVE. A declared hook is not a correct hook: the check makes the decision
- * visible, and the reviewer judges it. Nested mounts (`/api/v1/leagues/:id/...`) are out of
- * scope; they carry the league id their gates read. The model is in docs/DOMAIN-OPERATIONS.md
- * (A12) and rules/service-rules.md §3 *Route Authorization*.
+ * visible, and the reviewer judges it. Routes with no path parameter (`GET /api/v1/leagues`)
+ * are not checked; they address no one's resource by id. The model is in
+ * docs/DOMAIN-OPERATIONS.md (A12) and rules/service-rules.md §3 *Route Authorization*.
  *
  * Mounts are read from the API entry point's `app.register(module, { prefix })` calls, so a new
- * by-id module is covered without being listed anywhere. A mount or route the scanner cannot
+ * module is covered without being listed anywhere. A mount or route the scanner cannot
  * read — a non-literal prefix or path, a module it cannot find — is a finding, not a skip.
  * A hook installed by a registered plugin (`fastify.register(someAuthPlugin)`) is not seen: the
  * scanner cannot tell a gate plugin from any other, so it fails closed. Declare the hook with
@@ -122,11 +124,6 @@ export function readMounts(entryText, entryFileName = API_ENTRY) {
   return { mounts, unreadable };
 }
 
-/** A by-id mount: a prefix with no path parameter. Nested mounts carry their scope in the path. */
-export function isByIdMount(mount) {
-  return !hasPathParameter(mount.prefix);
-}
-
 function objectHasGate(objectLiteral, resolveIdentifier) {
   for (const property of objectLiteral.properties) {
     if (
@@ -223,7 +220,7 @@ export function routeKey(method, fullPath) {
 }
 
 /**
- * The findings for a set of by-id routes against the opt-out list. Each route is
+ * The findings for a set of parameterized routes against the opt-out list. Each route is
  * `{ method, fullPath, gated, location }`; each opt-out is `{ route: 'METHOD /full/path', reason }`.
  */
 export function evaluateRoutes({ routes, optOuts }) {
@@ -256,7 +253,7 @@ export function evaluateRoutes({ routes, optOuts }) {
     if (!route.gated && !optOut) {
       findings.push({
         location: route.location,
-        message: `\`${key}\` authorizes nowhere visible: declare a preHandler (requireMemberOfLeague, requireCommissionerForContest, ...) or add it to scripts/route-authorization-opt-outs.mjs with the reason it authorizes elsewhere.`,
+        message: `\`${key}\` authorizes nowhere visible: declare a preHandler (requireMemberOfLeague, requireMemberOfSquad, requireCommissionerForContest, ...) or add it to scripts/route-authorization-opt-outs.mjs with the reason it authorizes elsewhere.`,
       });
     }
   }
@@ -265,7 +262,7 @@ export function evaluateRoutes({ routes, optOuts }) {
     if (!seen.has(key)) {
       findings.push({
         location: 'scripts/route-authorization-opt-outs.mjs',
-        message: `\`${key}\` matches no route under a by-id mount; remove it.`,
+        message: `\`${key}\` matches no route with a path parameter; remove it.`,
       });
     }
   }
@@ -278,8 +275,11 @@ function resolveModuleFile(entryFile, from) {
   return base.endsWith('.ts') ? base : `${base}.ts`;
 }
 
-/** Every by-id route in the tree rooted at `root`, plus findings for what could not be read. */
-export function collectByIdRoutes(root = process.cwd()) {
+/**
+ * Every route with a path parameter in the tree rooted at `root`, under any mount, plus findings
+ * for what could not be read.
+ */
+export function collectParameterizedRoutes(root = process.cwd()) {
   const entryFile = join(root, API_ENTRY);
   const { mounts, unreadable: unreadableMounts } = readMounts(readFileSync(entryFile, 'utf8'), entryFile);
   const findings = unreadableMounts.map(({ moduleName, line, reason }) => ({
@@ -288,7 +288,7 @@ export function collectByIdRoutes(root = process.cwd()) {
   }));
   const routes = [];
 
-  for (const mount of mounts.filter(isByIdMount)) {
+  for (const mount of mounts) {
     if (!mount.from.startsWith('.')) continue;
     const moduleFile = resolveModuleFile(entryFile, mount.from);
     const relativeFile = relative(root, moduleFile);
@@ -311,10 +311,11 @@ export function collectByIdRoutes(root = process.cwd()) {
       findings.push({ location: `${relativeFile}:${line}`, message: `Cannot read this route (${reason}).` });
     }
     for (const route of result.routes) {
-      if (!hasPathParameter(route.path)) continue;
+      const fullPath = joinPath(mount.prefix, route.path);
+      if (!hasPathParameter(fullPath)) continue;
       routes.push({
         method: route.method,
-        fullPath: joinPath(mount.prefix, route.path),
+        fullPath,
         gated: route.gated,
         location: `${relativeFile}:${route.line}`,
       });
@@ -326,14 +327,14 @@ export function collectByIdRoutes(root = process.cwd()) {
 
 function main() {
   const { warnOnly } = parseRuleCheckArgs();
-  const { routes, findings } = collectByIdRoutes();
+  const { routes, findings } = collectParameterizedRoutes();
   findings.push(...evaluateRoutes({ routes, optOuts: ROUTE_AUTHORIZATION_OPT_OUTS }));
   const gated = routes.filter((route) => route.gated).length;
   reportFindings({
     title: 'Route authorization scan',
     findings,
     warnOnly,
-    emptyMessage: `Route authorization scan OK (${routes.length} by-id routes: ${gated} hooked, ${routes.length - gated} on the opt-out list).`,
+    emptyMessage: `Route authorization scan OK (${routes.length} routes with a path parameter: ${gated} hooked, ${routes.length - gated} on the opt-out list).`,
   });
 }
 

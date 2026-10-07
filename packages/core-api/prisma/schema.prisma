@@ -665,7 +665,6 @@ model Contest {
   scoringStopsOnElimination Boolean             @default(false) @map("scoring_stops_on_elimination")
   startsAt                  DateTime?           @map("starts_at") @db.Timestamptz
   endsAt                    DateTime?           @map("ends_at") @db.Timestamptz
-  lockAt                    DateTime?           @map("lock_at") @db.Timestamptz
   createdAt                 DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                 DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -699,7 +698,6 @@ model ContestConfiguration {
   picksPerPeriod       Int?      @map("picks_per_period")
   roundValues          Json?     @map("round_values")
   startRound           String?   @map("start_round") @db.VarChar(50)
-  locksAt              DateTime? @map("locks_at") @db.Timestamptz
   minimumEntries       Int?      @map("minimum_entries")
   maxEntriesPerSquad   Int?      @map("max_entries_per_squad")
   rosterSize           Int?      @map("roster_size")

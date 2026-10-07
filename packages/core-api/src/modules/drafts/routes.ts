@@ -20,7 +20,7 @@ import {
 } from '@poolmaster/shared/dto';
 import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaContestRepository, PrismaLeagueMembershipRepository } from '../../adapters';
-import { requireMemberOfLeague } from '../leagues/permissions';
+import { leagueOfContest, requireMemberOfLeague } from '../leagues/permissions';
 import { createDraftHandlers } from './handler';
 import { createDraftService } from './wiring';
 
@@ -45,8 +45,8 @@ export function draftsModule(fastify: FastifyInstance): void {
   // #291 — the draft room shows every entry's picks, so reading it needs membership of the
   // contest's league, as every other contest read does.
   const requireContestLeagueMember = requireMemberOfLeague(
-    new PrismaContestRepository(prisma),
     new PrismaLeagueMembershipRepository(prisma),
+    leagueOfContest(new PrismaContestRepository(prisma)),
   );
 
   fastify.get('/:contestId', {

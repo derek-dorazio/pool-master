@@ -81,14 +81,6 @@ function buildUpcomingEvents(contests: Contest[]): UpcomingEvent[] {
         eventType: 'CONTEST_START',
       });
     }
-    if (contest.lockAt && contest.lockAt > now) {
-      events.push({
-        contestId: contest.id,
-        title: `${contest.name} locks`,
-        date: contest.lockAt,
-        eventType: 'LOCK_TIME',
-      });
-    }
     if (contest.endsAt && contest.endsAt > now) {
       events.push({
         contestId: contest.id,

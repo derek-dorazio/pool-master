@@ -147,7 +147,6 @@ function primeCommonMocks(overrides?: {
         contestType: 'ROSTER',
         selectionType: 'TIERED',
         scoringEngine: 'STROKE_PLAY',
-        lockAt: '2026-04-22T16:00:00.000Z',
       },
     },
   });

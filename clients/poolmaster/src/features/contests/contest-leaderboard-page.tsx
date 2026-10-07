@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import {
   getContest,
@@ -12,6 +12,7 @@ import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import {
+  Button,
   Chip,
   EmptyState,
   ErrorState,
@@ -58,12 +59,17 @@ const NO_SCORE = '—';
 function EntryBlock({
   entry,
   gridTemplateColumns,
+  isCollapsed,
+  onToggle,
   roundNumbers,
 }: {
   entry: LeaderboardEntryRow;
   gridTemplateColumns: string;
+  isCollapsed: boolean;
+  onToggle: () => void;
   roundNumbers: readonly number[];
 }) {
+  const picksId = `contest-leaderboard-picks-${entry.entryId}`;
   return (
     <Tile
       data-testid={`contest-leaderboard-entry-${entry.entryId}`}
@@ -71,9 +77,21 @@ function EntryBlock({
       radius="lg"
       variant="subtle"
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-4 py-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-baseline gap-2">
+      {/* #389 — the grey entry bar is the toggle for its own golfer rows. */}
+      <Button
+        aria-controls={picksId}
+        aria-expanded={!isCollapsed}
+        className={cn(
+          'flex w-full flex-wrap items-baseline justify-between gap-3 rounded-none bg-muted px-4 py-3 text-left font-normal',
+          isCollapsed ? 'rounded-[inherit]' : 'rounded-t-[inherit] border-b border-border',
+        )}
+        data-testid={`contest-leaderboard-entry-toggle-${entry.entryId}`}
+        onClick={onToggle}
+        size="auto"
+        variant="ghost"
+      >
+        <span className="block min-w-0">
+          <span className="flex flex-wrap items-baseline gap-2">
             <span
               className="text-sm font-semibold text-muted-foreground"
               data-testid={`contest-leaderboard-position-${entry.entryId}`}
@@ -81,26 +99,26 @@ function EntryBlock({
               {entry.displayPosition ?? NO_SCORE}
             </span>
             <span className="font-medium text-foreground">{entry.entryName}</span>
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground">
+          </span>
+          <span className="mt-1 block text-xs text-muted-foreground">
             {entry.squadName} · best {entry.countingPickLimit} of {entry.picks.length} count ·{' '}
             {entry.scoredPickCount} scored
-          </div>
-        </div>
+          </span>
+        </span>
         <span
           className="text-lg font-semibold text-foreground"
           data-testid={`contest-leaderboard-total-${entry.entryId}`}
         >
           {entry.total ?? NO_SCORE}
         </span>
-      </div>
+      </Button>
 
-      {entry.picks.length === 0 ? (
-        <p className="px-4 py-3 text-sm text-muted-foreground">
+      {isCollapsed ? null : entry.picks.length === 0 ? (
+        <p className="px-4 py-3 text-sm text-muted-foreground" id={picksId}>
           This entry has no scored picks yet.
         </p>
       ) : (
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-border" id={picksId}>
           {entry.picks.map((pick) => (
             <div
               className="grid gap-2 px-4 py-2 text-sm"
@@ -108,6 +126,7 @@ function EntryBlock({
               key={pick.pickId}
               style={{ gridTemplateColumns }}
             >
+              <span className="text-muted-foreground">{pick.position ?? NO_SCORE}</span>
               <span
                 className={cn(
                   'min-w-0 truncate',
@@ -119,6 +138,12 @@ function EntryBlock({
               </span>
               <span className={cn('text-right font-medium', pick.isDropped ? 'text-muted-foreground line-through' : 'text-foreground')}>
                 {pick.total ?? NO_SCORE}
+              </span>
+              <span
+                className="text-right text-muted-foreground"
+                data-testid={`contest-leaderboard-pick-thru-${entry.entryId}-${pick.pickId}`}
+              >
+                {pick.thru ?? NO_SCORE}
               </span>
               {pick.rounds.map((round, index) => (
                 <span
@@ -145,6 +170,10 @@ export function ContestLeaderboardPage() {
   }>();
   const location = useLocation();
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
+
+  // #389 — which entries' golfer rows are hidden. Keyed by entry id so it survives the live
+  // polls; an entry that first appears mid-session starts expanded like every other.
+  const [collapsedEntryIds, setCollapsedEntryIds] = useState<ReadonlySet<string>>(() => new Set());
 
   const queryClient = useQueryClient();
   const contestQuery = useQuery({
@@ -242,10 +271,25 @@ export function ContestLeaderboardPage() {
 
   const contest = contestQuery.data;
   const view = buildLeaderboardView(leaderboardQuery.data);
-  // Golfer name takes the slack; the total and each round get a fixed, right-aligned column.
-  const gridTemplateColumns = `minmax(0,1.5fr) minmax(56px,0.4fr) ${view.roundNumbers
+  // Golfer name takes the slack; position, total, thru and each round get a fixed column.
+  const gridTemplateColumns = `minmax(36px,0.3fr) minmax(0,1.5fr) minmax(48px,0.4fr) minmax(40px,0.3fr) ${view.roundNumbers
     .map(() => 'minmax(44px,0.3fr)')
     .join(' ')}`;
+
+  const allCollapsed = view.entries.length > 0
+    && view.entries.every((entry) => collapsedEntryIds.has(entry.entryId));
+  const toggleEntry = (entryId: string) => {
+    setCollapsedEntryIds((current) => {
+      const next = new Set(current);
+      if (!next.delete(entryId)) {
+        next.add(entryId);
+      }
+      return next;
+    });
+  };
+  const toggleAllEntries = () => {
+    setCollapsedEntryIds(allCollapsed ? new Set() : new Set(view.entries.map((entry) => entry.entryId)));
+  };
 
   return (
     <section className="space-y-6" data-testid="contest-leaderboard">
@@ -281,12 +325,27 @@ export function ContestLeaderboardPage() {
       </Tile>
 
       <Tile>
+        {view.entries.length > 0 ? (
+          <div className="flex justify-end px-4 pb-3">
+            <Button
+              data-testid="contest-leaderboard-toggle-all"
+              onClick={toggleAllEntries}
+              size="sm"
+              variant="secondary"
+            >
+              {allCollapsed ? 'Show Details' : 'Hide Details'}
+            </Button>
+          </div>
+        ) : null}
         <div
           className="grid gap-2 px-4 pb-2 text-xs font-medium uppercase text-muted-foreground"
+          data-testid="contest-leaderboard-column-headers"
           style={{ gridTemplateColumns }}
         >
+          <span>Pos</span>
           <span>Golfer</span>
-          <span className="text-right">Total</span>
+          <span className="text-right">Tot</span>
+          <span className="text-right">Thr</span>
           {view.roundNumbers.map((roundNumber) => (
             <span
               className="text-right"
@@ -306,7 +365,9 @@ export function ContestLeaderboardPage() {
               <EntryBlock
                 entry={entry}
                 gridTemplateColumns={gridTemplateColumns}
+                isCollapsed={collapsedEntryIds.has(entry.entryId)}
                 key={entry.entryId}
+                onToggle={() => toggleEntry(entry.entryId)}
                 roundNumbers={view.roundNumbers}
               />
             ))

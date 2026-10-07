@@ -74,7 +74,6 @@ echo -e "${BOLD}╟────────────────────�
 echo -e "${BOLD}║  DEV TOOLS — open in browser                                ║${RESET}"
 echo -e "${BOLD}╟──────────────────────────────────────────────────────────────╢${RESET}"
 echo -e "${BOLD}║${RESET}  ${GREEN}Mailpit (Email)${RESET}   ${BOLD}http://localhost:8025${RESET}  ${DIM}View sent emails${RESET}  ${BOLD}║${RESET}"
-echo -e "${BOLD}║${RESET}  ${GREEN}Push Mock Log${RESET}     ${BOLD}http://localhost:3099/push-log${RESET}       ${BOLD}║${RESET}"
 echo -e "${BOLD}║${RESET}  ${DIM}Prisma Studio${RESET}      ${DIM}npm run db:studio${RESET}      ${DIM}Browse database${RESET}  ${BOLD}║${RESET}"
 echo -e "${BOLD}╟──────────────────────────────────────────────────────────────╢${RESET}"
 echo -e "${BOLD}║  CLI ACCESS                                                 ║${RESET}"

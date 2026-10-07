@@ -18,6 +18,13 @@ import { createSquadOwnerInvitationHandlers } from './owner-invitation-handler';
 import { SquadOwnerInvitationService } from './owner-invitation-service';
 import { SquadService } from './service';
 import { getAppPrisma } from '../../core/prisma-context';
+import { requireRootAdmin } from '../../core/root-admin-guard';
+import {
+  leagueFromPath,
+  requireCommissioner,
+  requireMemberOfLeague,
+  requireMemberOfSquad,
+} from '../leagues/permissions';
 
 export function squadsModule(fastify: FastifyInstance): void {
   // Routes below $ref named components, so they must be registered on this instance.
@@ -48,7 +55,18 @@ export function squadsModule(fastify: FastifyInstance): void {
   );
   const ownerInvitationHandler = createSquadOwnerInvitationHandlers(ownerInvitationService);
 
+  // #292 — every route here declares its gate (rules/service-rules.md §3 *Route Authorization*).
+  // Reading the league's squads needs league membership; acting for a squad needs to own it, or
+  // to be its league's commissioner (access rule A7). The services repeat these checks, and still
+  // own the ones a hook cannot see, such as which squad an invitation belongs to.
+  const leagueMember = { preHandler: requireMemberOfLeague(leagueMembershipRepo, leagueFromPath) };
+  const squadMember = {
+    preHandler: requireMemberOfSquad(squadRepo, squadMembershipRepo, leagueMembershipRepo),
+  };
+  const commissioner = { preHandler: requireCommissioner(leagueMembershipRepo) };
+
   fastify.get('/', {
+    ...leagueMember,
     schema: {
       tags: ['Squads'],
       summary: 'List squads in a league',
@@ -59,6 +77,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         200: schemaRef('SquadListResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -66,6 +85,7 @@ export function squadsModule(fastify: FastifyInstance): void {
   });
 
   fastify.post('/', {
+    ...leagueMember,
     schema: {
       tags: ['Squads'],
       summary: 'Create a squad in a league',
@@ -77,6 +97,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         201: schemaRef('SquadResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -84,6 +105,7 @@ export function squadsModule(fastify: FastifyInstance): void {
   });
 
   fastify.get('/:squadId', {
+    ...leagueMember,
     schema: {
       tags: ['Squads'],
       summary: 'Get squad details',
@@ -94,6 +116,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         200: schemaRef('SquadResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -101,6 +124,7 @@ export function squadsModule(fastify: FastifyInstance): void {
   });
 
   fastify.patch('/:squadId', {
+    ...squadMember,
     schema: {
       tags: ['Squads'],
       summary: 'Update squad details',
@@ -112,6 +136,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         200: schemaRef('SquadResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -119,6 +144,7 @@ export function squadsModule(fastify: FastifyInstance): void {
   });
 
   fastify.post('/:squadId/inactivate', {
+    ...commissioner,
     schema: {
       tags: ['Squads'],
       summary: 'Inactivate a team',
@@ -137,6 +163,7 @@ export function squadsModule(fastify: FastifyInstance): void {
   });
 
   fastify.delete('/:squadId', {
+    onRequest: requireRootAdmin,
     schema: {
       tags: ['Squads'],
       summary: 'Permanently delete an inactive team',
@@ -155,6 +182,7 @@ export function squadsModule(fastify: FastifyInstance): void {
   });
 
   fastify.post('/:squadId/members', {
+    ...squadMember,
     schema: {
       tags: ['Squads'],
       summary: 'Add or reactivate a team owner',
@@ -166,6 +194,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         201: schemaRef('SquadMembershipResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -173,6 +202,7 @@ export function squadsModule(fastify: FastifyInstance): void {
   });
 
   fastify.delete('/:squadId/members/:userId', {
+    ...squadMember,
     schema: {
       tags: ['Squads'],
       summary: 'Remove a team owner',
@@ -183,6 +213,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         200: schemaRef('SquadMembershipResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -190,6 +221,7 @@ export function squadsModule(fastify: FastifyInstance): void {
   });
 
   fastify.get('/owner-invitations', {
+    ...leagueMember,
     schema: {
       tags: ['Squads'],
       summary: 'List team-owner invitations for a league',
@@ -200,6 +232,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         200: schemaRef('TeamOwnerInvitationListResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -207,6 +240,7 @@ export function squadsModule(fastify: FastifyInstance): void {
   });
 
   fastify.post('/:squadId/owner-invitations', {
+    ...squadMember,
     schema: {
       tags: ['Squads'],
       summary: 'Invite a co-owner by email',
@@ -218,6 +252,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         201: schemaRef('TeamOwnerInvitationResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -225,6 +260,7 @@ export function squadsModule(fastify: FastifyInstance): void {
   });
 
   fastify.post('/:squadId/owners/:userId/replace', {
+    ...squadMember,
     schema: {
       tags: ['Squads'],
       summary: 'Replace an active team owner',
@@ -236,6 +272,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         201: schemaRef('TeamOwnerInvitationResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -243,6 +280,7 @@ export function squadsModule(fastify: FastifyInstance): void {
   });
 
   fastify.delete('/owner-invitations/:invitationId', {
+    ...leagueMember,
     schema: {
       tags: ['Squads'],
       summary: 'Revoke a pending team-owner invitation',
@@ -253,6 +291,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         200: schemaRef('TeamOwnerInvitationResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },

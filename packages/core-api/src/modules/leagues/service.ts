@@ -10,6 +10,7 @@ import type {
   LeagueSearchFilters,
   SquadMembershipRepository,
   SquadRepository,
+  UserRepository,
 } from '@poolmaster/shared/db';
 import type {
   League,
@@ -68,15 +69,26 @@ const ACTIVE_LEAGUE_CONTEST_STATUSES = [
 
 const DEFAULT_JOIN_POLICY = JoinPolicy.COMMISSIONER_ONLY;
 
+/**
+ * Everything LeagueService reads and writes (#211). It replaced a six-parameter positional
+ * constructor, where a dependency added mid-list silently shifted every argument after it.
+ */
+export interface LeagueServiceDeps {
+  leagues: LeagueRepository;
+  memberships: LeagueMembershipRepository;
+  squads?: SquadRepository;
+  squadMemberships?: SquadMembershipRepository;
+  users: UserRepository;
+  prisma?: PrismaClient;
+  logger?: FastifyBaseLogger;
+}
+
 export class LeagueService {
-  constructor(
-    private readonly leagueRepo: LeagueRepository,
-    private readonly membershipRepo: LeagueMembershipRepository,
-    private readonly squadRepo?: SquadRepository,
-    private readonly squadMembershipRepo?: SquadMembershipRepository,
-    private readonly prisma?: PrismaClient,
-    private readonly logger?: FastifyBaseLogger,
-  ) {}
+  private readonly logger?: FastifyBaseLogger;
+
+  constructor(private readonly deps: LeagueServiceDeps) {
+    this.logger = deps.logger;
+  }
 
   /** Creates a new league and adds the creator as a commissioner. */
   async createLeague(input: CreateLeagueInput): Promise<{ league: League; membership: LeagueMembership }> {
@@ -88,7 +100,7 @@ export class LeagueService {
         hasDescription: Boolean(input.description?.trim()),
       },
     }, 'Creating league');
-    const existingLeague = await this.leagueRepo.findByCode(input.leagueCode);
+    const existingLeague = await this.deps.leagues.findByCode(input.leagueCode);
     if (existingLeague) {
       this.logger?.warn({
         action: 'league.create.conflict',
@@ -103,7 +115,7 @@ export class LeagueService {
     // #202 — `input.createdBy` is not written to the League. It is the userId that
     // becomes the first COMMISSIONER membership below, which is the authoritative
     // record of who runs the league (§12).
-    const league = await this.leagueRepo.create({
+    const league = await this.deps.leagues.create({
       leagueCode: input.leagueCode,
       name: input.name,
       description: input.description,
@@ -111,7 +123,7 @@ export class LeagueService {
       iconKey: LeagueIconKey.TROPHY,
       joinPolicy: DEFAULT_JOIN_POLICY,
     });
-    const membership = await this.membershipRepo.create({
+    const membership = await this.deps.memberships.create({
       leagueId: league.id,
       userId: input.createdBy,
       role: LeagueRole.COMMISSIONER,
@@ -134,11 +146,11 @@ export class LeagueService {
   }
 
   async findById(leagueId: string): Promise<League | null> {
-    return this.leagueRepo.findById(leagueId);
+    return this.deps.leagues.findById(leagueId);
   }
 
   async findByCode(leagueCode: string): Promise<League | null> {
-    return this.leagueRepo.findByCode(leagueCode.toUpperCase());
+    return this.deps.leagues.findByCode(leagueCode.toUpperCase());
   }
 
   /**
@@ -179,9 +191,9 @@ export class LeagueService {
     // most of the returned leagues will have none for this viewer.
     const [leagues, viewerMemberships] = await Promise.all([
       scope === 'all'
-        ? this.leagueRepo.findAll(filters)
+        ? this.deps.leagues.findAll(filters)
         : this.findLeaguesForUser(userId, filters),
-      this.membershipRepo.findByUser(userId),
+      this.deps.memberships.findByUser(userId),
     ]);
 
     const membershipByLeagueId = new Map(
@@ -208,7 +220,7 @@ export class LeagueService {
     userId: string,
     filters?: LeagueSearchFilters,
   ): Promise<League[]> {
-    const leagues = await this.leagueRepo.findByUser(userId);
+    const leagues = await this.deps.leagues.findByUser(userId);
     const search = filters?.search?.trim().toLowerCase();
 
     return leagues.filter((league) => {
@@ -242,10 +254,10 @@ export class LeagueService {
     }
 
     const [memberCounts, contestRows] = await Promise.all([
-      this.membershipRepo.countActiveByLeagues(leagueIds),
+      this.deps.memberships.countActiveByLeagues(leagueIds),
       // SLICE 3 — replace with a ContestRepository count once that cluster has ports.
-      this.prisma
-        ? this.prisma.contest.groupBy({
+      this.deps.prisma
+        ? this.deps.prisma.contest.groupBy({
           by: ['leagueId'],
           where: {
             leagueId: { in: leagueIds },
@@ -269,7 +281,7 @@ export class LeagueService {
       action: 'league.inactivate.enter',
       data: { leagueId },
     }, 'Inactivating league');
-    const league = await this.leagueRepo.findById(leagueId);
+    const league = await this.deps.leagues.findById(leagueId);
     if (!league) {
       this.logger?.warn({
         action: 'league.inactivate.notFound',
@@ -289,7 +301,7 @@ export class LeagueService {
       );
     }
 
-    const updatedLeague = await this.leagueRepo.update(leagueId, { isActive: false });
+    const updatedLeague = await this.deps.leagues.update(leagueId, { isActive: false });
     this.logger?.info({
       action: 'league.inactivate.success',
       data: { leagueId },
@@ -302,7 +314,7 @@ export class LeagueService {
       action: 'league.activate.enter',
       data: { leagueId },
     }, 'Activating league');
-    const league = await this.leagueRepo.findById(leagueId);
+    const league = await this.deps.leagues.findById(leagueId);
     if (!league) {
       this.logger?.warn({
         action: 'league.activate.notFound',
@@ -322,7 +334,7 @@ export class LeagueService {
       );
     }
 
-    const updatedLeague = await this.leagueRepo.update(leagueId, { isActive: true });
+    const updatedLeague = await this.deps.leagues.update(leagueId, { isActive: true });
     this.logger?.info({
       action: 'league.activate.success',
       data: { leagueId },
@@ -338,7 +350,7 @@ export class LeagueService {
         hasDescription: updates.description !== undefined,
       },
     }, 'Updating league details');
-    const league = await this.leagueRepo.findById(leagueId);
+    const league = await this.deps.leagues.findById(leagueId);
     if (!league) {
       this.logger?.warn({
         action: 'league.updateDetails.notFound',
@@ -358,7 +370,7 @@ export class LeagueService {
       );
     }
 
-    const updatedLeague = await this.leagueRepo.update(leagueId, {
+    const updatedLeague = await this.deps.leagues.update(leagueId, {
       name: updates.name,
       description: updates.description?.trim() ? updates.description.trim() : undefined,
     });
@@ -377,7 +389,7 @@ export class LeagueService {
         iconKey: updates.iconKey,
       },
     }, 'Updating league icon');
-    const league = await this.leagueRepo.findById(leagueId);
+    const league = await this.deps.leagues.findById(leagueId);
     if (!league) {
       this.logger?.warn({
         action: 'league.updateIcon.notFound',
@@ -397,7 +409,7 @@ export class LeagueService {
       );
     }
 
-    const updatedLeague = await this.leagueRepo.update(leagueId, {
+    const updatedLeague = await this.deps.leagues.update(leagueId, {
       iconKey: updates.iconKey,
     });
     this.logger?.info({
@@ -418,7 +430,7 @@ export class LeagueService {
       action: 'league.delete.enter',
       data: { leagueId, confirmationLeagueCode },
     }, 'Deleting inactive league');
-    const league = await this.leagueRepo.findById(leagueId);
+    const league = await this.deps.leagues.findById(leagueId);
     if (!league) {
       this.logger?.warn({
         action: 'league.delete.notFound',
@@ -449,7 +461,7 @@ export class LeagueService {
       );
     }
 
-    if (!this.prisma) {
+    if (!this.deps.prisma) {
       this.logger?.error({
         action: 'league.delete.prismaUnavailable',
         data: { leagueId },
@@ -465,7 +477,7 @@ export class LeagueService {
       action: 'league.delete.transaction.start',
       data: { leagueId },
     }, 'Deleting league-owned records');
-    await this.prisma.$transaction(async (tx) => {
+    await this.deps.prisma.$transaction(async (tx) => {
       await tx.draftPickHistory.deleteMany({
         where: { session: { contest: { leagueId } } },
       });
@@ -516,11 +528,11 @@ export class LeagueService {
   async getLeagueWithMembers(
     leagueId: string,
   ): Promise<{ league: League; members: LeagueMembership[] } | null> {
-    const league = await this.leagueRepo.findById(leagueId);
+    const league = await this.deps.leagues.findById(leagueId);
     if (!league) {
       return null;
     }
-    const members = await this.membershipRepo.findByLeague(leagueId);
+    const members = await this.deps.memberships.findByLeague(leagueId);
     return { league, members };
   }
 
@@ -531,12 +543,12 @@ export class LeagueService {
     if (!league) {
       return null;
     }
-    const members = await this.membershipRepo.findByLeague(league.id);
+    const members = await this.deps.memberships.findByLeague(league.id);
     return { league, members };
   }
 
   private async ensureDefaultSquad(leagueId: string, userId: string): Promise<void> {
-    if (!this.squadRepo || !this.squadMembershipRepo || !this.prisma) {
+    if (!this.deps.squads || !this.deps.squadMemberships) {
       this.logger?.debug({
         action: 'league.ensureDefaultSquad.skipped',
         data: { leagueId, userId },
@@ -547,9 +559,9 @@ export class LeagueService {
     await ensureDefaultSquadForLeagueMember({
       leagueId,
       userId,
-      squadRepo: this.squadRepo,
-      squadMembershipRepo: this.squadMembershipRepo,
-      prisma: this.prisma,
+      squadRepo: this.deps.squads,
+      squadMembershipRepo: this.deps.squadMemberships,
+      users: this.deps.users,
       logger: this.logger,
     });
   }
