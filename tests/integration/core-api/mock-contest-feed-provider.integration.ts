@@ -161,11 +161,8 @@ async function cleanupMockProviderImportData(): Promise<void> {
 // change on that path. A stuck run still fails here, well inside Jest's 30 s test timeout.
 /**
  * plans/147 — sync updates the events already linked to provider events and never creates
- * one, so a sync scenario starts where an admin would leave it: every provider golf event in
- * the window created and linked.
- */
-/**
- * Links the `golf-major-2026` scenario's events in the window — the fixed season these tests are
+ * one, so a sync scenario starts where an admin would leave it: the `golf-major-2026`
+ * scenario's events in the window created and linked. That is the fixed season these tests are
  * written against. The mock also serves the PGA TOUR and LPGA tour seeds (#383); they are left
  * unlinked, so they stay out of every sync these tests run.
  */
