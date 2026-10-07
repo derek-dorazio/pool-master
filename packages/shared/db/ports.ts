@@ -104,13 +104,13 @@ export interface UserRepository {
   findByIdentifier(identifier: string): Promise<User | null>;
 
   /**
-   * How many users hold `isRootAdmin`.
+   * How many ACTIVE users hold `isRootAdmin`.
    *
-   * Exists so the platform cannot be left with nobody able to administer it. The count was
-   * written inline three times in `admin/user-service` — on disable, on demotion and on
-   * delete — each time as `prisma.user.count({ where: { isRootAdmin: true } })`.
+   * Exists so the platform cannot be left with nobody able to administer it. An inactive root
+   * admin cannot sign in or refresh a session, so they do not count: counting them let the
+   * only active root admin disable or demote themselves while an inactive one remained.
    */
-  countRootAdmins(): Promise<number>;
+  countActiveRootAdmins(): Promise<number>;
 
   /**
    * `credentials` is a second parameter rather than a field on `User` because the domain

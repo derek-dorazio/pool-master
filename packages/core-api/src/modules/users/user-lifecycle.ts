@@ -91,9 +91,12 @@ export async function deleteUserCascade(tx: Prisma.TransactionClient, userId: st
 }
 
 /**
- * True when this user is the only root admin left.
+ * True when no OTHER active root admin would be left to administer the platform.
  *
- * The guard exists so the platform cannot be left with nobody able to administer it. It was
+ * The guard exists so the platform cannot be left with nobody able to administer it. Only
+ * active root admins count, because an inactive one cannot sign in; the user under test is
+ * subtracted when they are themselves active, so the question is the same for disabling or
+ * demoting an active admin and for deleting an inactive one. It was
  * written inline three times in `admin/user-service.ts` — on disable, on demotion and on
  * delete — as `prisma.user.count({ where: { isRootAdmin: true } })`, and a fourth time here
  * for the self-service path, which re-read the user to get `isRootAdmin`.
@@ -104,10 +107,11 @@ export async function deleteUserCascade(tx: Prisma.TransactionClient, userId: st
  */
 export async function isLastRootAdmin(
   users: UserRepository,
-  user: Pick<User, 'isRootAdmin'>,
+  user: Pick<User, 'isRootAdmin' | 'isActive'>,
 ): Promise<boolean> {
   if (user.isRootAdmin !== true) {
     return false;
   }
-  return (await users.countRootAdmins()) <= 1;
+  const otherActiveRootAdmins = (await users.countActiveRootAdmins()) - (user.isActive ? 1 : 0);
+  return otherActiveRootAdmins < 1;
 }

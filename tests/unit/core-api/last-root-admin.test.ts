@@ -37,8 +37,8 @@ function createUserWorld(seed: User[]) {
 
   const users: UserRepository = fakeUserRepo({
     findById: async (id) => (rows.has(id) ? { ...rows.get(id)! } : null),
-    countRootAdmins: async () =>
-      [...rows.values()].filter((user) => user.isRootAdmin === true).length,
+    countActiveRootAdmins: async () =>
+      [...rows.values()].filter((user) => user.isRootAdmin === true && user.isActive).length,
     update: async (id, updates) => {
       const next = { ...rows.get(id)!, ...updates } as User;
       rows.set(id, next);
