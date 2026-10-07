@@ -67,6 +67,30 @@ everything"*. So gating main on `changes` bought nothing. The explicit
 `needs.all-contract-gates.result == 'success'` keeps the contract gates blocking,
 so this is deliberately **not** `always()`.
 
+### Job timeouts
+
+Every job sets `timeout-minutes`. GitHub's default is six hours, and on 2026-10-06 a
+pull request's `all-contract-gates` hung from 23:29 to 05:30, holding that PR's verdict
+all night. Each limit is about three times the job's longest run across 80 recent runs,
+with a ten-minute floor:
+
+| Job | Usual | Limit |
+|---|---|---|
+| `changes`, `all-contract-gates`, `service-lint-typecheck`, `service-unit-tests`, `schema-migration-drift`, `service-build`, `service-mock-provider-build`, health-issue jobs | under 2 min | 10 |
+| `poolmaster-unit-tests` | 2 min | 15 |
+| `service-integration-tests`, `service-functional-api-tests` | 4 min | 20 |
+| `poolmaster-browser-e2e-local` | 4–9 min | 25 |
+| `poolmaster-build` | 1–12 min | 30 |
+| `deploy-publish-images` | 4–5 min | 20 |
+| `deploy-migrate-qa` | 1.5 min (its ECS wait is capped at 10) | 30 |
+| `deploy-qa` | 4–11 min (two ECS stability waits, up to 10 each) | 45 |
+| `poolmaster-browser-e2e` | 1.5–3.5 min | 15 |
+
+A timed-out job is cancelled, so the jobs that need it skip and the run fails rather than
+hanging. The deploy limits are deliberately wide: stopping `deploy-qa` mid-rollout leaves
+QA in the state the concurrency section above warns about. When a job's normal time grows,
+raise its limit rather than removing it.
+
 ## Repository setup — branch protection
 
 The CI gates only enforce discipline if `main` cannot be reached without going

@@ -71,10 +71,14 @@ export function buildApp() {
 
   const registry = new ProviderRegistry();
   registerConfiguredProviders(registry, process.env, app.log);
-  const mailDelivery = createMailDeliveryProvider(
-    readMailDeliveryConfig(process.env),
-    app.log,
-  );
+  const mailDeliveryConfig = readMailDeliveryConfig(process.env);
+  if (mailDeliveryConfig.provider === 'disabled') {
+    app.log.warn({
+      action: 'mailDelivery.startup.disabled',
+      data: { provider: mailDeliveryConfig.provider },
+    }, 'Email delivery is disabled (EMAIL_PROVIDER=disabled); no email will be sent');
+  }
+  const mailDelivery = createMailDeliveryProvider(mailDeliveryConfig, app.log);
   const appBaseUrl = readApplicationBaseUrl(process.env);
   const golfContestSettlement = createGolfContestSettlementService(prisma, app.log);
   const eventLifecycleService = createEventLifecycleService(prisma, {

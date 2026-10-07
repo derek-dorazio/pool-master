@@ -6,7 +6,12 @@ export interface FunctionalServerState {
   port: number;
   baseUrl: string;
   runId: string;
+  /** The server's captured-mail endpoint (#442); absent on a daemon started by older code. */
+  mailInboxUrl?: string;
 }
+
+/** The `APP_BASE_URL` the functional server runs with, so tests can assert exact email links. */
+export const FUNCTIONAL_APP_BASE_URL = 'http://app.functional.test';
 
 const DAEMON_STATE_FILE_PATH = path.join(
   process.cwd(),

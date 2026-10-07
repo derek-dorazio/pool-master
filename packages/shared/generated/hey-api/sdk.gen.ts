@@ -1400,7 +1400,7 @@ export const applyEventGolfRoundScores = <ThrowOnError extends boolean = false>(
 /**
  * Correct one golfer's round
  *
- * Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. Refreshes standings. Root admin only.
+ * Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. Refreshes standings. Root admin only.
  */
 export const updateEventParticipantGolfRoundScore = <ThrowOnError extends boolean = false>(options: Options<UpdateEventParticipantGolfRoundScoreData, ThrowOnError>) => (options.client ?? client).patch<UpdateEventParticipantGolfRoundScoreResponses, UpdateEventParticipantGolfRoundScoreErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

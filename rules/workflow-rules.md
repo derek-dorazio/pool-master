@@ -871,8 +871,29 @@ Standalone doc-only PRs are reserved for the *substantive plan/doc* cases above.
 - Workflow-infrastructure slices with no issue use a descriptive name without the number
   prefix.
 - Branch off the current `main` HEAD at slice start. Do not stack branches unless the
-  dependency is genuine.
+  dependency is genuine; when it is, follow *Slices in a series* below.
 - Never push directly to `main` except for the direct-push lane carve-out above.
+
+### Slices in a series
+
+CI is not where a series of dependent slices loses time: a PR run takes about five minutes
+and `main`'s run, deploy included, about eighteen. The time goes in the waits between them.
+So:
+
+- **Open the next PR as soon as its local gates pass**, without waiting for the PR it builds
+  on to merge. Branch it from the earlier slice's branch and **target `main`**, never the
+  earlier branch: CI runs only on pull requests into `main`, so a PR aimed at another branch
+  gets no verdict. Its diff carries the earlier slice's commits until that merges; say so in
+  the body, naming the PR it builds on, and review only the commits that are new. Once the
+  earlier PR merges, merge `main` into the branch, re-run the gates and push.
+- **Combine tiny related tickets into one PR** when each is a small change in the same area,
+  with `Closes #NN` for each. The cost is a larger diff and a coarser revert, so keep
+  separate anything with a migration, a contract change or its own review question.
+- **Two merges close together are fine.** `main` holds one run in progress and one pending,
+  and both get their own verdict. A third merge while one is still pending replaces the
+  queued run, and the commit it replaced loses its own verdict (see
+  `docs/CI-AND-QUALITY-GATES.md` *Trigger model*). So don't wait for a deploy to finish
+  before merging the next PR, but don't merge three inside one `main` run either.
 
 ### Review triggers in the PR body
 

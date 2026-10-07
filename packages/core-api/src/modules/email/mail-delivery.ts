@@ -7,7 +7,7 @@ import nodemailer, { type Transporter } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import type { FastifyBaseLogger } from 'fastify';
 
-export type MailDeliveryProviderName = 'smtp' | 'ses';
+export type MailDeliveryProviderName = 'smtp' | 'ses' | 'disabled';
 
 export interface MailDeliveryMessage {
   to: string | string[];
@@ -243,6 +243,32 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
   }
 }
 
+/**
+ * `EMAIL_PROVIDER=disabled`: an environment that must not send mail yet (QA until real delivery
+ * is set up, #120). Every send succeeds without contacting anyone, so invite by email still
+ * creates the invitation; the skip is logged with ids only, never the body.
+ */
+export class DisabledMailDeliveryProvider implements MailDeliveryProvider {
+  readonly providerName = 'disabled' as const;
+
+  constructor(private readonly logger?: FastifyBaseLogger) {}
+
+  send(message: MailDeliveryMessage): Promise<MailDeliveryResult> {
+    this.logger?.info({
+      action: 'mailDelivery.disabled.skip',
+      data: {
+        toCount: normalizeRecipients(message.to).length,
+        templateKey: message.metadata?.templateKey ?? null,
+        leagueId: message.metadata?.leagueId ?? null,
+        contestId: message.metadata?.contestId ?? null,
+        entryId: message.metadata?.entryId ?? null,
+        invitationId: message.metadata?.invitationId ?? null,
+      },
+    }, 'Email delivery is disabled; skipped sending email');
+    return Promise.resolve({ provider: this.providerName });
+  }
+}
+
 export function readMailDeliveryConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): MailDeliveryConfig {
@@ -251,6 +277,10 @@ export function readMailDeliveryConfig(
     ? env.SES_FROM_EMAIL ?? env.SMTP_FROM ?? 'noreply@poolmaster.local'
     : env.SMTP_FROM ?? env.SES_FROM_EMAIL ?? 'noreply@poolmaster.local';
   const replyToEmail = env.EMAIL_REPLY_TO?.trim() || undefined;
+
+  if (provider === 'disabled') {
+    return { provider, fromEmail, replyToEmail };
+  }
 
   if (provider === 'smtp') {
     return {
@@ -285,6 +315,9 @@ export function createMailDeliveryProvider(
   config: MailDeliveryConfig = readMailDeliveryConfig(),
   logger?: FastifyBaseLogger,
 ): MailDeliveryProvider {
+  if (config.provider === 'disabled') {
+    return new DisabledMailDeliveryProvider(logger);
+  }
   if (config.provider === 'smtp') {
     return new SmtpMailDeliveryProvider(config, undefined, logger);
   }
@@ -297,7 +330,7 @@ export function readApplicationBaseUrl(env: NodeJS.ProcessEnv = process.env): st
 
 function parseProviderName(value: string): MailDeliveryProviderName {
   const provider = value.trim().toLowerCase();
-  if (provider === 'smtp' || provider === 'ses') return provider;
+  if (provider === 'smtp' || provider === 'ses' || provider === 'disabled') return provider;
   throw new MailDeliveryConfigError(`Unsupported EMAIL_PROVIDER: ${value}`);
 }
 
