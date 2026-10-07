@@ -107,14 +107,11 @@ export class InvitationService {
         emailCount: input.emails.length,
       },
     }, 'Sending league email invitations');
-    await this.deps.memberships.findByLeague(input.leagueId);
-    const [league, inviterName] = await Promise.all([
+    const [league, inviterName, memberEmails] = await Promise.all([
       this.deps.leagues.findById(input.leagueId),
       this.resolveInviterName(input.invitedBy),
+      this.findActiveMemberEmails(input.leagueId),
     ]);
-    const memberEmails = new Set<string>();
-    // Note: we don't have email on membership directly; this is a simplification.
-    // In a full implementation we'd join with users. For now, skip based on pending invites.
     const sent: LeagueInvitation[] = [];
     const skippedMembers: string[] = [];
     const skippedDuplicates: string[] = [];
@@ -237,6 +234,24 @@ export class InvitationService {
       }, 'Failed to deliver league invitation email');
       throw new InvitationEmailDeliveryError(input.invitationId, input.email, err);
     }
+  }
+
+  /**
+   * Lower-cased emails of the league's ACTIVE members. `users.findByLeague` returns every
+   * membership status, so it is narrowed by the active memberships: a removed member can be
+   * invited back, a current one is skipped.
+   */
+  private async findActiveMemberEmails(leagueId: string): Promise<Set<string>> {
+    const [activeMemberships, users] = await Promise.all([
+      this.deps.memberships.findByLeague(leagueId),
+      this.deps.users.findByLeague(leagueId),
+    ]);
+    const activeUserIds = new Set(activeMemberships.map((membership) => membership.userId));
+    return new Set(
+      users
+        .filter((user) => activeUserIds.has(user.id))
+        .map((user) => user.email.toLowerCase().trim()),
+    );
   }
 
   private async resolveInviterName(userId: string): Promise<string> {

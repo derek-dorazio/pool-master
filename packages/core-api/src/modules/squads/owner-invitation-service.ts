@@ -21,6 +21,11 @@ import type {
   TeamOwnerInvitationDto,
   TeamOwnerInvitationPreviewResponse,
 } from '@poolmaster/shared/dto';
+import {
+  inactivateLeagueMemberUnit,
+  LastCommissionerError,
+  requireAnotherActiveCommissioner,
+} from '../leagues/member-lifecycle';
 
 const DEFAULT_OWNER_INVITE_EXPIRY_DAYS = 7;
 
@@ -169,6 +174,7 @@ export class SquadOwnerInvitationService {
 
     const existingUser = await this.findUserByEmail(normalizedEmail);
     await this.rejectIfCurrentLeagueMember(input.leagueId, existingUser?.id);
+    await this.requireAnotherActiveCommissioner(input.leagueId, input.targetUserId);
 
     const invitation = await this.invitationRepo.create({
       leagueId: input.leagueId,
@@ -181,8 +187,15 @@ export class SquadOwnerInvitationService {
       replacementForUserId: input.targetUserId,
     });
 
-    await this.squadMembershipRepo.update(targetMembership.id, {
-      status: SquadMembershipStatus.INACTIVE,
+    // A user belongs to a league only while they own a team in it, so losing their seat ends
+    // their league membership too — the same unit `SquadService.removeOwner` uses. At least one
+    // other owner remains (checked above), so the team itself stays active.
+    await inactivateLeagueMemberUnit({
+      leagueId: input.leagueId,
+      userId: input.targetUserId,
+      membershipRepo: this.membershipRepo,
+      squadRepo: this.squadRepo,
+      squadMembershipRepo: this.squadMembershipRepo,
     });
 
     if (existingUser) {
@@ -323,6 +336,22 @@ export class SquadOwnerInvitationService {
       acceptedBy: userId,
     });
     return this.mapInvitationDto(accepted);
+  }
+
+  /** The shared last-commissioner rule, raised as this module's operation error. */
+  private async requireAnotherActiveCommissioner(leagueId: string, targetUserId: string) {
+    try {
+      await requireAnotherActiveCommissioner({
+        leagueId,
+        targetUserId,
+        membershipRepo: this.membershipRepo,
+      });
+    } catch (err) {
+      if (err instanceof LastCommissionerError) {
+        throw new SquadOwnerInvitationOperationError(err.message, err.code);
+      }
+      throw err;
+    }
   }
 
   private async requireActiveLeagueMembership(leagueId: string, userId: string) {

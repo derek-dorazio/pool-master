@@ -886,7 +886,7 @@ export interface paths {
         put?: never;
         /**
          * Replace an active team owner
-         * @description Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email. Active team owners, league commissioners, and root admins may start this flow.
+         * @description Guided replacement flow that removes the selected current owner (ending their team and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner. Active team owners, league commissioners, and root admins may start this flow.
          */
         post: operations["replaceSquadOwner"];
         delete?: never;

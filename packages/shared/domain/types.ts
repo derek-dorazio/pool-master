@@ -68,7 +68,8 @@ export interface User extends DomainEntity {
 export interface League extends DomainEntity {
   leagueCode: string;
   name: string;
-  description?: string;
+  /** `null` in an update clears it; `undefined` leaves it unchanged. */
+  description?: string | null;
   isActive: boolean;
   iconKey: LeagueIconKey;
   joinPolicy: JoinPolicy;

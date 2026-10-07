@@ -627,7 +627,7 @@ export const createSquadOwnerInvitation = <ThrowOnError extends boolean = false>
 /**
  * Replace an active team owner
  *
- * Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email. Active team owners, league commissioners, and root admins may start this flow.
+ * Guided replacement flow that removes the selected current owner (ending their team and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner. Active team owners, league commissioners, and root admins may start this flow.
  */
 export const replaceSquadOwner = <ThrowOnError extends boolean = false>(options: Options<ReplaceSquadOwnerData, ThrowOnError>) => (options.client ?? client).post<ReplaceSquadOwnerResponses, ReplaceSquadOwnerErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
