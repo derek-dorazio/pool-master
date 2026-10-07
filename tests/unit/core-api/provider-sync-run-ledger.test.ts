@@ -203,7 +203,7 @@ describe('ProviderSyncRunLedger', () => {
       status: 'FAILED',
       recordsProcessed: 0,
       errors: 1,
-      errorLog: [{ error: 'No provider registered' }],
+      errorLog: [{ error: 'No provider registered', at: new Date('2026-05-30T12:00:02.000Z') }],
       warnings: [{ code: 'NO_PROVIDER', message: 'No provider registered' }],
     });
 

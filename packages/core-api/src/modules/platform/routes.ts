@@ -17,6 +17,7 @@ import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
 import { requireRootAdmin } from '../../core/root-admin-guard';
+import { requireAuthUser } from '../../plugins/auth-guard';
 
 // ---------------------------------------------------------------------------
 // Route registration
@@ -81,7 +82,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
         };
       }>,
     ) => {
-      const rootAdminUserId = request.authUser!.userId;
+      const rootAdminUserId = requireAuthUser(request).userId;
       return pollConfig.updateConfig(request.body, rootAdminUserId);
     },
   });
@@ -100,7 +101,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       },
     },
     handler: async (request: FastifyRequest) => {
-      const rootAdminUserId = request.authUser!.userId;
+      const rootAdminUserId = requireAuthUser(request).userId;
       return pollConfig.resetDefaults(rootAdminUserId);
     },
   });
@@ -146,7 +147,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
         Body: IngestionScheduleConfigOverride;
       }>,
     ) => {
-      const rootAdminUserId = request.authUser!.userId;
+      const rootAdminUserId = requireAuthUser(request).userId;
       return ingestionConfig.updateConfig(request.body, rootAdminUserId);
     },
   });
@@ -171,7 +172,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
         Body: IngestionScheduleConfigOverride;
       }>,
     ) => {
-      const rootAdminUserId = request.authUser!.userId;
+      const rootAdminUserId = requireAuthUser(request).userId;
       const { sport } = request.params;
       return ingestionConfig.setPerSportOverride(
         sport,
@@ -199,7 +200,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
         Params: { sport: string };
       }>,
     ) => {
-      const rootAdminUserId = request.authUser!.userId;
+      const rootAdminUserId = requireAuthUser(request).userId;
       const { sport } = request.params;
       return ingestionConfig.clearPerSportOverride(
         sport,
@@ -222,7 +223,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       },
     },
     handler: async (request: FastifyRequest) => {
-      const rootAdminUserId = request.authUser!.userId;
+      const rootAdminUserId = requireAuthUser(request).userId;
       return ingestionConfig.resetDefaults(rootAdminUserId);
     },
   });

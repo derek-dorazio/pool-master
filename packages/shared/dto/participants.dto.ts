@@ -13,6 +13,25 @@ import { DateTimeSchema, StringRecordSchema } from './common.dto';
 
 // --- Response Sub-schemas ---
 
+export const ParticipantInjuryStatusDtoSchema = z.object({
+  status: z
+    .enum([
+      InjuryStatusCode.HEALTHY,
+      InjuryStatusCode.QUESTIONABLE,
+      InjuryStatusCode.DOUBTFUL,
+      InjuryStatusCode.OUT,
+      InjuryStatusCode.WITHDRAWN,
+      InjuryStatusCode.SUSPENDED,
+      InjuryStatusCode.SCRATCHED,
+    ])
+    .describe('Current injury or availability status code.'),
+  detail: z.string().optional().describe('Optional injury-status detail or summary.'),
+  expectedReturn: DateTimeSchema.optional().describe('Expected return timestamp when known.'),
+  updatedAt: DateTimeSchema.optional().describe('When the injury-status record was last updated.'),
+  source: z.string().optional().describe('Source that provided the injury-status update.'),
+}).describe('Normalized participant injury or availability state.');
+export type ParticipantInjuryStatusDto = z.infer<typeof ParticipantInjuryStatusDtoSchema>;
+
 export const ParticipantDtoSchema = z.object({
   id: z.string().describe('Participant identifier.'),
   sportId: z.string().describe('Owning sport identifier.'),
@@ -35,23 +54,7 @@ export const ParticipantDtoSchema = z.object({
       ParticipantStatus.SUSPENDED,
     ])
     .describe('Current participant lifecycle or availability status.'),
-  injuryStatus: z.object({
-    status: z
-      .enum([
-        InjuryStatusCode.HEALTHY,
-        InjuryStatusCode.QUESTIONABLE,
-        InjuryStatusCode.DOUBTFUL,
-        InjuryStatusCode.OUT,
-        InjuryStatusCode.WITHDRAWN,
-        InjuryStatusCode.SUSPENDED,
-        InjuryStatusCode.SCRATCHED,
-      ])
-      .describe('Current injury or availability status code.'),
-    detail: z.string().optional().describe('Optional injury-status detail or summary.'),
-    expectedReturn: DateTimeSchema.optional().describe('Expected return timestamp when known.'),
-    updatedAt: DateTimeSchema.optional().describe('When the injury-status record was last updated.'),
-    source: z.string().optional().describe('Source that provided the injury-status update.'),
-  }).describe('Normalized participant injury or availability state.'),
+  injuryStatus: ParticipantInjuryStatusDtoSchema,
   photoUrl: z.string().nullable().optional().describe('Optional participant image URL.'),
   photoLastUpdated: DateTimeSchema.optional().describe('When the participant image metadata was last refreshed.'),
   externalIds: StringRecordSchema.describe('Map of provider identifiers keyed by provider code.'),
@@ -81,6 +84,32 @@ export type ParticipantListResponse = z.infer<typeof ParticipantListResponseSche
 export const ParticipantResponseSchema = z.object({
   participant: ParticipantDtoSchema,
 }).describe('Single-participant detail response.');
+
+// --- Requests ---
+
+export const UpdateParticipantRequestSchema = z.object({
+  name: z.string().min(1).max(500).optional().describe('Primary participant display name.'),
+  firstName: z.string().max(255).optional().describe('First name when the participant is a person.'),
+  lastName: z.string().max(255).optional().describe('Last name when the participant is a person.'),
+  shortName: z.string().max(100).optional().describe('Short-form display name for compact UI surfaces.'),
+  nationality: z.string().max(10).optional().describe('Participant nationality or country code.'),
+  role: z.string().max(50).optional().describe('Playing role ("GOLFER", "QB").'),
+  teamAffiliation: z.string().max(255).optional().describe('Current team affiliation.'),
+  status: z
+    .enum([
+      ParticipantStatus.ACTIVE,
+      ParticipantStatus.INACTIVE,
+      ParticipantStatus.RETIRED,
+      ParticipantStatus.SUSPENDED,
+    ])
+    .optional()
+    .describe('Participant lifecycle or availability status.'),
+  injuryStatus: ParticipantInjuryStatusDtoSchema.optional(),
+  photoUrl: z.string().optional().describe('Participant image URL.'),
+  externalId: z.string().optional().describe('Primary provider identifier.'),
+  externalIds: StringRecordSchema.optional().describe('Map of provider identifiers keyed by provider code.'),
+}).describe('Fields to change on a participant. Omitted fields keep their current values.');
+export type UpdateParticipantRequest = z.infer<typeof UpdateParticipantRequestSchema>;
 
 export const ParticipantProviderMappingDtoSchema = z.object({
   id: z.string().uuid(),
@@ -117,3 +146,4 @@ registerSchema('ParticipantDto', ParticipantDtoSchema);
 registerSchema('ParticipantListQuery', ParticipantListQuerySchema);
 registerSchema('ParticipantListResponse', ParticipantListResponseSchema);
 registerSchema('ParticipantResponse', ParticipantResponseSchema);
+registerSchema('UpdateParticipantRequest', UpdateParticipantRequestSchema);

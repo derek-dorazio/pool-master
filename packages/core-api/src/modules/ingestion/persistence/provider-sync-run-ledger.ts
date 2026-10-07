@@ -263,7 +263,7 @@ function toSerializableJob(job: IngestionJobRecord): Record<string, unknown> {
     ...(job.completedAt ? { completedAt: job.completedAt.toISOString() } : {}),
     recordsProcessed: job.recordsProcessed,
     errors: job.errors,
-    errorLog: job.errorLog,
+    errorLog: job.errorLog.map((entry) => ({ error: entry.error, at: entry.at.toISOString() })),
   };
 }
 
@@ -308,13 +308,7 @@ function buildSyncRunDetail(
   const target = eventId ?? job.eventExternalId ?? job.sport;
   const feed = formatFeedLabel(mapJobTypeToFeed(job.jobType));
   if (job.status === 'FAILED') {
-    const error =
-      typeof job.errorLog[0] === 'object'
-      && job.errorLog[0] !== null
-      && 'error' in job.errorLog[0]
-      && typeof (job.errorLog[0] as { error?: unknown }).error === 'string'
-        ? (job.errorLog[0] as { error: string }).error
-        : 'Unknown ingestion failure';
+    const error = job.errorLog[0]?.error ?? 'Unknown ingestion failure';
     return `Failed ${feed} sync for ${target}: ${error}`;
   }
 

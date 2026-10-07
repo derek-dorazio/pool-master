@@ -2969,6 +2969,58 @@ export interface components {
                 updatedAt: string;
             };
         };
+        /** @description Fields to change on a participant. Omitted fields keep their current values. */
+        UpdateParticipantRequest: {
+            /** @description Primary participant display name. */
+            name?: string;
+            /** @description First name when the participant is a person. */
+            firstName?: string;
+            /** @description Last name when the participant is a person. */
+            lastName?: string;
+            /** @description Short-form display name for compact UI surfaces. */
+            shortName?: string;
+            /** @description Participant nationality or country code. */
+            nationality?: string;
+            /** @description Playing role ("GOLFER", "QB"). */
+            role?: string;
+            /** @description Current team affiliation. */
+            teamAffiliation?: string;
+            /**
+             * @description Participant lifecycle or availability status.
+             * @enum {string}
+             */
+            status?: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
+            /** @description Normalized participant injury or availability state. */
+            injuryStatus?: {
+                /**
+                 * @description Current injury or availability status code.
+                 * @enum {string}
+                 */
+                status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
+                /** @description Optional injury-status detail or summary. */
+                detail?: string;
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                expectedReturn?: string;
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                updatedAt?: string;
+                /** @description Source that provided the injury-status update. */
+                source?: string;
+            };
+            /** @description Participant image URL. */
+            photoUrl?: string;
+            /** @description Primary provider identifier. */
+            externalId?: string;
+            /** @description Map of provider identifiers keyed by provider code. */
+            externalIds?: {
+                [key: string]: string;
+            };
+        };
         /** @description A sport the platform runs contests on. */
         SportDto: {
             /**
@@ -5591,50 +5643,6 @@ export interface components {
             maxEntriesPerSquad?: number | null;
             /** @description How many roster scores count toward the entry total in managed golf contests. */
             countedScores?: number;
-            /** @description Tier source used for managed golf contests. */
-            tierSource?: string;
-            tierGeneration?: {
-                /** @description Default managed tier size used to seed tier generation. */
-                defaultTierSize: number;
-            };
-            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-            tiers?: {
-                /** @description Stable tier key such as A, B, or C. */
-                tierKey: string;
-                /** @description Commissioner-facing tier label. */
-                label: string;
-                /** @description How many golfers must be picked from the tier. */
-                pickCount: number;
-                /** @description Starting resolved rank/odds position for the tier. */
-                startPosition: number;
-                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                endPosition: number | null;
-            }[];
-            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-            cutRule?: {
-                /** @enum {string} */
-                type: "FIXED_SCORE";
-                /** @description Fallback score assigned when a golfer misses the cut. */
-                fixedScore: number;
-            };
-            /** @description Managed-golf playoff handling strategy. */
-            playoffHandling?: string;
-            /** @description Managed-golf leaderboard display scoring mode. */
-            displayScoring?: string;
-            /** @description Managed-golf tiebreaker configuration. */
-            tiebreaker?: {
-                /** @enum {string} */
-                type: "PREDICT_WINNING_SCORE";
-            };
-            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-            categories?: {
-                /** @enum {string} */
-                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                /** @description Commissioner-facing category label. */
-                label: string;
-                /** @description How many golfers must be picked for the category. */
-                pickCount: number;
-            }[];
         };
         /** @description Single-contest response. */
         ContestResponse: {
@@ -5711,50 +5719,6 @@ export interface components {
                 maxEntriesPerSquad?: number | null;
                 /** @description How many roster scores count toward the entry total in managed golf contests. */
                 countedScores?: number;
-                /** @description Tier source used for managed golf contests. */
-                tierSource?: string;
-                tierGeneration?: {
-                    /** @description Default managed tier size used to seed tier generation. */
-                    defaultTierSize: number;
-                };
-                /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                tiers?: {
-                    /** @description Stable tier key such as A, B, or C. */
-                    tierKey: string;
-                    /** @description Commissioner-facing tier label. */
-                    label: string;
-                    /** @description How many golfers must be picked from the tier. */
-                    pickCount: number;
-                    /** @description Starting resolved rank/odds position for the tier. */
-                    startPosition: number;
-                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                    endPosition: number | null;
-                }[];
-                /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                cutRule?: {
-                    /** @enum {string} */
-                    type: "FIXED_SCORE";
-                    /** @description Fallback score assigned when a golfer misses the cut. */
-                    fixedScore: number;
-                };
-                /** @description Managed-golf playoff handling strategy. */
-                playoffHandling?: string;
-                /** @description Managed-golf leaderboard display scoring mode. */
-                displayScoring?: string;
-                /** @description Managed-golf tiebreaker configuration. */
-                tiebreaker?: {
-                    /** @enum {string} */
-                    type: "PREDICT_WINNING_SCORE";
-                };
-                /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                categories?: {
-                    /** @enum {string} */
-                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                    /** @description Commissioner-facing category label. */
-                    label: string;
-                    /** @description How many golfers must be picked for the category. */
-                    pickCount: number;
-                }[];
             } | null;
         };
         /** @description Contest-list response. */
@@ -7474,9 +7438,21 @@ export interface components {
                 eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END";
             }[];
         };
-        /** @description Arbitrary JSON object payload. */
+        /** @description Result of a bulk CSV member import. */
         LeagueBulkOperationResponse: {
-            [key: string]: unknown;
+            /** @description How many rows the import received. */
+            total: number;
+            /** @description How many invitations the import created. */
+            sent: number;
+            /** @description Rows that were not imported, with the reason for each. */
+            failed: {
+                /** @description Email address on the row that failed. */
+                email: string;
+                /** @description Why the row was not imported. */
+                reason: string;
+            }[];
+            /** @description Email addresses skipped because they already have an invitation to this league. */
+            duplicates: string[];
         };
         /** @description Request payload for inviting an additional co-owner to a team. */
         CreateSquadOwnerInvitationRequest: {
@@ -8069,8 +8045,16 @@ export interface components {
                     recordsProcessed: number;
                     /** @description Error count captured by the ingestion job. */
                     errors: number;
-                    /** @description Raw ingestion error-log entries for root-admin investigation. */
-                    errorLog: unknown[];
+                    /** @description Ingestion error-log entries for root-admin investigation. */
+                    errorLog: {
+                        /** @description Failure message the ingestion job recorded. */
+                        error: string;
+                        /**
+                         * Format: date-time
+                         * @description When the failure was recorded.
+                         */
+                        at: string;
+                    }[];
                 };
                 /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
                 writeDiagnostics?: {
@@ -8102,10 +8086,14 @@ export interface components {
                         internalId?: string;
                         /** @description Display name for the row, when known. */
                         name?: string;
-                        /** @description Normalized before-state JSON for UPDATED or DELETED rows. */
-                        before?: unknown;
-                        /** @description Normalized after-state JSON for CREATED or UPDATED rows. */
-                        after?: unknown;
+                        /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                        before?: {
+                            [key: string]: unknown;
+                        };
+                        /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                        after?: {
+                            [key: string]: unknown;
+                        };
                     }[];
                 };
                 /** @description Admin-facing outcome and warning summary for the sync run. */
@@ -8245,8 +8233,16 @@ export interface components {
                         recordsProcessed: number;
                         /** @description Error count captured by the ingestion job. */
                         errors: number;
-                        /** @description Raw ingestion error-log entries for root-admin investigation. */
-                        errorLog: unknown[];
+                        /** @description Ingestion error-log entries for root-admin investigation. */
+                        errorLog: {
+                            /** @description Failure message the ingestion job recorded. */
+                            error: string;
+                            /**
+                             * Format: date-time
+                             * @description When the failure was recorded.
+                             */
+                            at: string;
+                        }[];
                     };
                     /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
                     writeDiagnostics?: {
@@ -8278,10 +8274,14 @@ export interface components {
                             internalId?: string;
                             /** @description Display name for the row, when known. */
                             name?: string;
-                            /** @description Normalized before-state JSON for UPDATED or DELETED rows. */
-                            before?: unknown;
-                            /** @description Normalized after-state JSON for CREATED or UPDATED rows. */
-                            after?: unknown;
+                            /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                            before?: {
+                                [key: string]: unknown;
+                            };
+                            /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                            after?: {
+                                [key: string]: unknown;
+                            };
                         }[];
                     };
                     /** @description Admin-facing outcome and warning summary for the sync run. */
@@ -8414,8 +8414,16 @@ export interface components {
                         recordsProcessed: number;
                         /** @description Error count captured by the ingestion job. */
                         errors: number;
-                        /** @description Raw ingestion error-log entries for root-admin investigation. */
-                        errorLog: unknown[];
+                        /** @description Ingestion error-log entries for root-admin investigation. */
+                        errorLog: {
+                            /** @description Failure message the ingestion job recorded. */
+                            error: string;
+                            /**
+                             * Format: date-time
+                             * @description When the failure was recorded.
+                             */
+                            at: string;
+                        }[];
                     };
                     /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
                     writeDiagnostics?: {
@@ -8447,10 +8455,14 @@ export interface components {
                             internalId?: string;
                             /** @description Display name for the row, when known. */
                             name?: string;
-                            /** @description Normalized before-state JSON for UPDATED or DELETED rows. */
-                            before?: unknown;
-                            /** @description Normalized after-state JSON for CREATED or UPDATED rows. */
-                            after?: unknown;
+                            /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                            before?: {
+                                [key: string]: unknown;
+                            };
+                            /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                            after?: {
+                                [key: string]: unknown;
+                            };
                         }[];
                     };
                     /** @description Admin-facing outcome and warning summary for the sync run. */
@@ -11514,7 +11526,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Arbitrary JSON object payload. */
+            /** @description Result of a bulk CSV member import. */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -11622,6 +11634,25 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11705,6 +11736,25 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11767,6 +11817,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11974,6 +12043,25 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12157,6 +12245,25 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12220,6 +12327,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12317,6 +12443,25 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12383,6 +12528,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12486,6 +12650,25 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12548,6 +12731,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18974,21 +19176,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    name?: string;
-                    firstName?: string;
-                    lastName?: string;
-                    shortName?: string;
-                    nationality?: string;
-                    role?: string;
-                    teamAffiliation?: string;
-                    /** @enum {string} */
-                    status?: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
-                    injuryStatus?: Record<string, never>;
-                    photoUrl?: string;
-                    externalId?: string;
-                    externalIds?: Record<string, never>;
-                };
+                "application/json": components["schemas"]["UpdateParticipantRequest"];
             };
         };
         responses: {

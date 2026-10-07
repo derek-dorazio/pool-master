@@ -10,13 +10,7 @@ import {
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
-import {
-  ContestConfigurationRequestSchema,
-  GolfCategoryDefinitionSchema,
-  GolfContestTierSchema,
-  GolfFixedCutRuleSchema,
-  GolfTiebreakerSchema,
-} from './contest-management.dto';
+import { ContestConfigurationRequestSchema } from './contest-management.dto';
 import { SportEventParticipantDtoSchema } from './events.dto';
 
 // --- Requests ---
@@ -284,16 +278,6 @@ const nullablePositiveIntSchema = z
 export const ContestConfigurationDetailDtoSchema = ContestCrudConfigurationRequestSchema.extend({
   maxEntriesPerSquad: nullablePositiveIntSchema,
   countedScores: z.number().int().optional().describe('How many roster scores count toward the entry total in managed golf contests.'),
-  tierSource: z.string().optional().describe('Tier source used for managed golf contests.'),
-  tierGeneration: z.object({
-    defaultTierSize: z.number().int().min(1).describe('Default managed tier size used to seed tier generation.'),
-  }).optional(),
-  tiers: z.array(GolfContestTierSchema).optional().describe('Resolved managed-golf tier definitions when the contest stores typed tiered configuration.'),
-  cutRule: GolfFixedCutRuleSchema.optional().describe('Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.'),
-  playoffHandling: z.string().optional().describe('Managed-golf playoff handling strategy.'),
-  displayScoring: z.string().optional().describe('Managed-golf leaderboard display scoring mode.'),
-  tiebreaker: GolfTiebreakerSchema.optional().describe('Managed-golf tiebreaker configuration.'),
-  categories: z.array(GolfCategoryDefinitionSchema).optional().describe('Managed-golf category slot definitions when the contest uses category picks.'),
 }).describe(
   'Typed contest configuration returned by contest detail endpoints. Use this shape for client-side entry-cap and contest-behavior decisions instead of treating contestConfiguration as an untyped blob.',
 );
