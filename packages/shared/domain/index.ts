@@ -48,6 +48,7 @@ export type {
   PayoutConfig,
   PayoutSlot,
   PlatformRuntimeConfig,
+  PlatformRuntimeConfigChange,
   PriceOverride,
   PricingConfig,
   ProviderSyncRun,
