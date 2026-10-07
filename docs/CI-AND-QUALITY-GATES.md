@@ -84,12 +84,19 @@ with a ten-minute floor:
 | `deploy-publish-images` | 4–5 min | 20 |
 | `deploy-migrate-qa` | 1.5 min (its ECS wait is capped at 10) | 30 |
 | `deploy-qa` | 4–11 min (two ECS stability waits, up to 10 each) | 45 |
-| `poolmaster-browser-e2e` | 1.5–3.5 min | 15 |
+| `poolmaster-browser-e2e` | 1.5–3.5 min | 20 (its Playwright install may use 12) |
 
 A timed-out job is cancelled, so the jobs that need it skip and the run fails rather than
 hanging. The deploy limits are deliberately wide: stopping `deploy-qa` mid-rollout leaves
 QA in the state the concurrency section above warns about. When a job's normal time grows,
 raise its limit rather than removing it.
+
+The Playwright Chromium install in both browser E2E jobs also has a step limit, because it
+depends on Ubuntu's apt mirrors: on 2026-10-07 it hung four times and each hang used the
+whole 25-minute job limit (#470). `scripts/ci-install-playwright-chromium.sh` gives apt
+network timeouts and bounds each attempt at three minutes, retrying twice, against a usual
+time of about 35 seconds. The browser download is cached per Playwright version, so only
+the system packages still come from the mirror.
 
 ## Repository setup — branch protection
 
