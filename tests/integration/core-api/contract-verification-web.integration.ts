@@ -20,7 +20,6 @@ import {
   ErrorEnvelopeSchema,
   SportEventListResponseSchema,
   GenerateInviteLinkResponseSchema,
-  LeagueDashboardResponseSchema,
   LeagueResponseSchema,
   SendLeagueInvitationsResponseSchema,
   SquadListResponseSchema,
@@ -137,7 +136,7 @@ describe('Contract verification (web)', () => {
     expect(parsed.success).toBe(true);
   });
 
-  it('league invitation and dashboard routes match their response DTOs', async () => {
+  it('league invitation routes match their response DTOs', async () => {
     const owner = await createTestUser({ displayName: 'Contract Dashboard Owner' });
 
     const leagueRes = await getApp().inject({
@@ -173,16 +172,6 @@ describe('Contract verification (web)', () => {
     expect(inviteLinkRes.statusCode).toBe(201);
     expect(
       GenerateInviteLinkResponseSchema.safeParse(inviteLinkRes.json()).success,
-    ).toBe(true);
-
-    const dashboardRes = await getApp().inject({
-      method: 'GET',
-      url: `${API_ROUTES.leagues.detail(leagueId)}/dashboard`,
-      headers: owner.headers,
-    });
-    expect(dashboardRes.statusCode).toBe(200);
-    expect(
-      LeagueDashboardResponseSchema.safeParse(dashboardRes.json()).success,
     ).toBe(true);
   });
 

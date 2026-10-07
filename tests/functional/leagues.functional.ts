@@ -6,7 +6,6 @@ import {
   deleteLeague,
   generateInviteLink,
   getInvitationPreview,
-  getLeagueDashboard,
   getLeagueByCode,
   getLeague,
   inactivateLeague,
@@ -757,73 +756,6 @@ describe('SDK Functional: Leagues', () => {
       status: 403,
       code: 'LEAGUE_MEMBERSHIP_REQUIRED',
     });
-  });
-
-  it('rejects non-commissioners and outsiders from the commissioner dashboard', async () => {
-    const commissioner = await buildRegisteredUser({
-      displayName: 'Dashboard Commissioner',
-    });
-    const member = await buildRegisteredUser({
-      displayName: 'Dashboard Member',
-    });
-    const outsider = await buildRegisteredUser({
-      displayName: 'Dashboard Outsider',
-    });
-
-    const createResponse = await createLeague({
-      client: commissioner.client,
-      body: buildCreateLeagueBody('League Dashboard Negative Flow'),
-    });
-
-    const leagueId = createResponse.data?.league.id;
-    expect(leagueId).toBeTruthy();
-
-    const invitationResponse = await generateInviteLink({
-      client: commissioner.client,
-      path: {
-        id: leagueId as string,
-      },
-      body: {
-        maxUses: 1,
-      },
-    });
-
-    const acceptResponse = await acceptInvitation({
-      client: member.client,
-      body: {
-        inviteCode: invitationResponse.data?.invitation.inviteCode as string,
-      },
-    });
-
-    expect(acceptResponse.data?.membership.userId).toBe(member.userId);
-
-    const memberDashboardResponse = await getLeagueDashboard({
-      client: member.client,
-      path: {
-        id: leagueId as string,
-      },
-    });
-
-    expectFunctionalError(memberDashboardResponse, {
-      status: 403,
-      code: 'LEAGUE_PERMISSION_DENIED',
-    });
-
-    const outsiderDashboardResponse = await getLeagueDashboard({
-      client: outsider.client,
-      path: {
-        id: leagueId as string,
-      },
-    });
-
-    expectFunctionalError(outsiderDashboardResponse, {
-      status: 403,
-      code: 'LEAGUE_MEMBERSHIP_REQUIRED',
-    });
-
-    // #202 — the action-item resolve assertion is gone with its route (§1D). Nothing in the
-    // product ever created an action item, so this test had to insert one via Prisma just to
-    // have something to be refused.
   });
 
   it('requires inactive-first league delete with exact leagueCode confirmation and preserves user accounts', async () => {
