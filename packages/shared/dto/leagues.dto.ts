@@ -11,7 +11,7 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
 } from '../domain/enums';
-import { DateTimeSchema, JsonObjectSchema } from './common.dto';
+import { DateTimeSchema } from './common.dto';
 import { ContestDtoSchema } from './contests.dto';
 import { SquadMembershipDtoSchema } from './squads.dto';
 import { UserDtoSchema } from './users.dto';
@@ -397,7 +397,16 @@ export const LeagueDashboardResponseSchema = z.object({
 }).describe('Commissioner dashboard response.');
 export type LeagueDashboardResponse = z.infer<typeof LeagueDashboardResponseSchema>;
 
-export const LeagueBulkOperationResponseSchema = JsonObjectSchema;
+export const LeagueBulkOperationResponseSchema = z.object({
+  total: z.number().int().min(0).describe('How many rows the import received.'),
+  sent: z.number().int().min(0).describe('How many invitations the import created.'),
+  failed: z.array(z.object({
+    email: z.string().describe('Email address on the row that failed.'),
+    reason: z.string().describe('Why the row was not imported.'),
+  })).describe('Rows that were not imported, with the reason for each.'),
+  duplicates: z.array(z.string()).describe('Email addresses skipped because they already have an invitation to this league.'),
+}).describe('Result of a bulk CSV member import.');
+export type LeagueBulkOperationResponse = z.infer<typeof LeagueBulkOperationResponseSchema>;
 
 // --- Published contract (#192) -------------------------------------------------
 // Each name becomes `components.schemas.<name>` and an importable generated type. There is

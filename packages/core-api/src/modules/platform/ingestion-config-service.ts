@@ -1,6 +1,7 @@
 /**
- * IngestionConfigService — admin-configurable lifecycle-aware ingestion policy
- * management used by the scheduler and root-admin configuration routes.
+ * IngestionConfigService — admin-configurable lifecycle-aware ingestion policy, stored as the
+ * INGESTION_SCHEDULE_CONFIG settings group (#450) and read by the scheduler on every tick and by
+ * the root-admin configuration routes.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -12,80 +13,60 @@ import type {
   IngestionScheduleConfigOverride,
 } from '@poolmaster/shared/dto/config.dto';
 import { IngestionScheduleConfigSchema } from '@poolmaster/shared/dto/config.dto';
-import type { PlatformRuntimeConfigRepository } from '@poolmaster/shared/db';
+import type { AppSettingsService } from './app-settings-service';
+import { defineSettingsGroup } from './settings-group';
 
 type FeedPolicyKey = keyof Omit<IngestionScheduleConfigBody, 'scheduledSports'>;
 
-const DEFAULT_INGESTION_CONFIG: IngestionScheduleConfig = {
-  scheduledSports: [Sport.GOLF],
-  healthCheck: {
-    enabled: true,
-    intervalMinutes: 5,
-  },
-  eventParticipants: {
-    enabled: false,
-    intervalMinutes: 360,
-    lookaheadDays: 14,
-  },
-  eventLiveScores: {
-    enabled: true,
-    intervalSeconds: 300,
-  },
-  perSportOverrides: {},
-};
-
-let currentConfig: IngestionScheduleConfig = deepCopy(DEFAULT_INGESTION_CONFIG);
-const INGESTION_RUNTIME_CONFIG_KEY = 'INGESTION_SCHEDULE_CONFIG';
-
-/**
- * Feed policies that no longer exist (#125 retired `participantRankings` with the
- * PARTICIPANTRANKINGS feed; #126 retired `eventSchedule` and `eventResults` with the
- * EVENTSCHEDULE and EVENTRESULTS feeds). A config persisted before a retirement still carries them, at
- * the top level and inside per-sport overrides. They are dropped before the stored config is
- * parsed so it loads with its live settings intact rather than being judged invalid and reset
- * to defaults.
- */
-const RETIRED_FEED_POLICY_KEYS = ['participantRankings', 'eventSchedule', 'eventResults'] as const;
+export const INGESTION_SCHEDULE_SETTINGS = defineSettingsGroup<IngestionScheduleConfig>({
+  key: 'INGESTION_SCHEDULE_CONFIG',
+  title: 'Ingestion schedule',
+  description: 'Which sports sync on a schedule, and how often each provider feed runs.',
+  schema: IngestionScheduleConfigSchema,
+  defaults: () => ({
+    scheduledSports: [Sport.GOLF],
+    healthCheck: {
+      enabled: true,
+      intervalMinutes: 5,
+    },
+    eventParticipants: {
+      enabled: false,
+      intervalMinutes: 360,
+      lookaheadDays: 14,
+    },
+    eventLiveScores: {
+      enabled: true,
+      intervalSeconds: 300,
+    },
+    perSportOverrides: {},
+  }),
+});
 
 export class IngestionConfigService {
-  private initialized = false;
-  private readonly repository?: PlatformRuntimeConfigRepository;
-  private readonly logger?: FastifyBaseLogger;
-
   constructor(
-    repositoryOrLogger?: PlatformRuntimeConfigRepository | FastifyBaseLogger,
-    logger?: FastifyBaseLogger,
-  ) {
-    if (repositoryOrLogger && 'findByKey' in repositoryOrLogger) {
-      this.repository = repositoryOrLogger;
-      this.logger = logger;
-      return;
-    }
+    private readonly settings: AppSettingsService,
+    private readonly logger?: FastifyBaseLogger,
+  ) {}
 
-    this.repository = undefined;
-    this.logger = repositoryOrLogger;
-  }
-
-  async bootstrap(): Promise<void> {
-    await this.ensureLoaded();
-  }
-
-  async getConfig(): Promise<IngestionScheduleConfig> {
-    await this.ensureLoaded();
-    this.logger?.debug({
-      action: 'adminIngestionConfig.get.start',
-    }, 'Loading ingestion config');
-    this.logger?.info({
-      action: 'adminIngestionConfig.get.success',
-    }, 'Loaded ingestion config');
-    return deepCopy(currentConfig);
+  // The reads return promises for the scheduler's and the routes' sake; the read itself is
+  // synchronous. Each is built in an executor so a throw still arrives as a rejection.
+  getConfig(): Promise<IngestionScheduleConfig> {
+    return new Promise((resolve) => {
+      this.logger?.debug({
+        action: 'adminIngestionConfig.get.start',
+      }, 'Loading ingestion config');
+      const config = this.current();
+      this.logger?.info({
+        action: 'adminIngestionConfig.get.success',
+      }, 'Loaded ingestion config');
+      resolve(config);
+    });
   }
 
   async updateConfig(
     partial: IngestionScheduleConfigOverride,
     rootAdminUserId: string,
   ): Promise<IngestionScheduleConfig> {
-    await this.ensureLoaded();
     this.logger?.debug({
       action: 'adminIngestionConfig.update.start',
       data: {
@@ -93,11 +74,10 @@ export class IngestionConfigService {
       },
     }, 'Updating ingestion config');
 
-    currentConfig = {
-      ...mergeBasePolicies(currentConfig, partial),
-      perSportOverrides: deepCopy(currentConfig).perSportOverrides,
-    };
-    await this.persist(rootAdminUserId);
+    const saved = await this.update((current) => ({
+      ...mergeBasePolicies(current, partial),
+      perSportOverrides: current.perSportOverrides,
+    }), rootAdminUserId);
 
     this.logger?.info({
       action: 'adminIngestionConfig.update.success',
@@ -105,17 +85,20 @@ export class IngestionConfigService {
         keys: Object.keys(partial),
       },
     }, 'Updated ingestion config');
-    return deepCopy(currentConfig);
+    return saved;
   }
 
-  async getPerSportConfig(sport: string): Promise<IngestionScheduleConfig> {
-    await this.ensureLoaded();
+  getPerSportConfig(sport: string): Promise<IngestionScheduleConfig> {
+    return new Promise((resolve) => resolve(this.perSportConfig(sport)));
+  }
+
+  private perSportConfig(sport: string): IngestionScheduleConfig {
     this.logger?.debug({
       action: 'adminIngestionConfig.getPerSport.start',
       data: { sport },
     }, 'Loading per-sport ingestion config');
 
-    const baseConfig = deepCopy(currentConfig);
+    const baseConfig = this.current();
     const override = baseConfig.perSportOverrides?.[sport];
     if (!override) {
       this.logger?.info({
@@ -141,7 +124,6 @@ export class IngestionConfigService {
     config: IngestionScheduleConfigOverride,
     rootAdminUserId: string,
   ): Promise<IngestionScheduleConfig> {
-    await this.ensureLoaded();
     this.logger?.debug({
       action: 'adminIngestionConfig.setOverride.start',
       data: {
@@ -150,15 +132,13 @@ export class IngestionConfigService {
       },
     }, 'Setting per-sport ingestion override');
 
-    const existingOverride = currentConfig.perSportOverrides[sport] ?? {};
-    currentConfig = {
-      ...currentConfig,
+    const saved = await this.update((current) => ({
+      ...current,
       perSportOverrides: {
-        ...currentConfig.perSportOverrides,
-        [sport]: mergeOverride(existingOverride, config),
+        ...current.perSportOverrides,
+        [sport]: mergeOverride(current.perSportOverrides[sport] ?? {}, config),
       },
-    };
-    await this.persist(rootAdminUserId);
+    }), rootAdminUserId);
 
     this.logger?.info({
       action: 'adminIngestionConfig.setOverride.success',
@@ -167,176 +147,58 @@ export class IngestionConfigService {
         keys: Object.keys(config),
       },
     }, 'Set per-sport ingestion override');
-    return deepCopy(currentConfig);
+    return saved;
   }
 
   async clearPerSportOverride(
     sport: string,
     rootAdminUserId: string,
   ): Promise<IngestionScheduleConfig> {
-    await this.ensureLoaded();
     this.logger?.debug({
       action: 'adminIngestionConfig.clearOverride.start',
       data: { sport },
     }, 'Clearing per-sport ingestion override');
 
-    const remainingOverrides = { ...currentConfig.perSportOverrides };
-    delete remainingOverrides[sport];
-    currentConfig = {
-      ...currentConfig,
-      perSportOverrides: remainingOverrides,
-    };
-    await this.persist(rootAdminUserId);
+    const saved = await this.update((current) => {
+      const remainingOverrides = { ...current.perSportOverrides };
+      delete remainingOverrides[sport];
+      return { ...current, perSportOverrides: remainingOverrides };
+    }, rootAdminUserId);
 
     this.logger?.info({
       action: 'adminIngestionConfig.clearOverride.success',
       data: { sport },
     }, 'Cleared per-sport ingestion override');
-    return deepCopy(currentConfig);
+    return saved;
   }
 
   async resetDefaults(
     rootAdminUserId: string,
   ): Promise<IngestionScheduleConfig> {
-    await this.ensureLoaded();
     this.logger?.debug({
       action: 'adminIngestionConfig.reset.start',
     }, 'Resetting ingestion config');
 
-    currentConfig = deepCopy(DEFAULT_INGESTION_CONFIG);
-    await this.persist(rootAdminUserId);
+    const saved = await this.settings.reset(INGESTION_SCHEDULE_SETTINGS, { changedById: rootAdminUserId });
 
     this.logger?.info({
       action: 'adminIngestionConfig.reset.success',
     }, 'Reset ingestion config');
-    return deepCopy(currentConfig);
+    return saved.value;
   }
 
-  private async ensureLoaded(): Promise<void> {
-    if (this.initialized) {
-      return;
-    }
-
-    if (!this.repository) {
-      this.initialized = true;
-      return;
-    }
-
-    const existing = await this.repository.findByKey(INGESTION_RUNTIME_CONFIG_KEY);
-    if (!existing) {
-      await this.repository.create({
-        configKey: INGESTION_RUNTIME_CONFIG_KEY,
-        configJson: DEFAULT_INGESTION_CONFIG,
-      });
-      currentConfig = deepCopy(DEFAULT_INGESTION_CONFIG);
-      this.initialized = true;
-      return;
-    }
-
-    const withoutRetired = withoutRetiredFeedPolicies(existing.configJson);
-    const parsed = IngestionScheduleConfigSchema.safeParse(withoutRetired.config);
-    if (!parsed.success) {
-      this.logger?.warn({
-        action: 'adminIngestionConfig.bootstrap.invalidPersistedConfig',
-        issues: parsed.error.issues,
-      }, 'Persisted ingestion schedule config was invalid; reverting to defaults');
-      currentConfig = deepCopy(DEFAULT_INGESTION_CONFIG);
-      await this.repository.update({
-        configKey: INGESTION_RUNTIME_CONFIG_KEY,
-        configJson: currentConfig,
-        updatedById: existing.updatedById,
-      });
-      this.initialized = true;
-      return;
-    }
-
-    currentConfig = deepCopy(parsed.data);
-    if (withoutRetired.removed) {
-      this.logger?.info({
-        action: 'adminIngestionConfig.bootstrap.retiredFeedPoliciesRemoved',
-        data: { retiredKeys: RETIRED_FEED_POLICY_KEYS },
-      }, 'Removed retired feed policies from the persisted ingestion schedule config');
-      await this.repository.update({
-        configKey: INGESTION_RUNTIME_CONFIG_KEY,
-        configJson: currentConfig,
-        updatedById: existing.updatedById,
-      });
-    }
-    this.initialized = true;
+  private current(): IngestionScheduleConfig {
+    return this.settings.get(INGESTION_SCHEDULE_SETTINGS);
   }
 
-  private async persist(updatedById?: string): Promise<void> {
-    if (!this.repository) {
-      return;
-    }
-
-    await this.repository.update({
-      configKey: INGESTION_RUNTIME_CONFIG_KEY,
-      configJson: currentConfig,
-      updatedById: updatedById ?? null,
-    });
+  /** Applies a partial change to the stored version, never over another task's newer save. */
+  private async update(
+    change: (current: IngestionScheduleConfig) => IngestionScheduleConfig,
+    rootAdminUserId: string,
+  ): Promise<IngestionScheduleConfig> {
+    const saved = await this.settings.update(INGESTION_SCHEDULE_SETTINGS, change, { changedById: rootAdminUserId });
+    return saved.value;
   }
-}
-
-/**
- * Drops `RETIRED_FEED_POLICY_KEYS` from a persisted config, top level and per-sport overrides.
- * A per-sport override left with no keys is dropped too: an empty override is not a valid one.
- * Anything that is not the expected object shape passes through untouched for the schema to
- * judge.
- */
-function withoutRetiredFeedPolicies(configJson: unknown): { config: unknown; removed: boolean } {
-  if (!isPlainObject(configJson)) {
-    return { config: configJson, removed: false };
-  }
-
-  let removed = false;
-  const stripRetired = (value: Record<string, unknown>): Record<string, unknown> => {
-    const next = { ...value };
-    for (const key of RETIRED_FEED_POLICY_KEYS) {
-      if (key in next) {
-        delete next[key];
-        removed = true;
-      }
-    }
-    return next;
-  };
-
-  const config = stripRetired(configJson);
-  if (isPlainObject(config.perSportOverrides)) {
-    const overrides: Record<string, unknown> = {};
-    for (const [sport, override] of Object.entries(config.perSportOverrides)) {
-      if (!isPlainObject(override)) {
-        overrides[sport] = override;
-        continue;
-      }
-      const next = stripRetired(override);
-      if (Object.keys(next).length > 0) {
-        overrides[sport] = next;
-      }
-    }
-    config.perSportOverrides = overrides;
-  }
-
-  return { config, removed };
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function deepCopy(config: IngestionScheduleConfig): IngestionScheduleConfig {
-  return {
-    healthCheck: { ...config.healthCheck },
-    scheduledSports: [...config.scheduledSports],
-    eventParticipants: { ...config.eventParticipants },
-    eventLiveScores: { ...config.eventLiveScores },
-    perSportOverrides: Object.fromEntries(
-      Object.entries(config.perSportOverrides ?? {}).map(([sport, override]) => [
-        sport,
-        mergeOverride({}, override),
-      ]),
-    ),
-  };
 }
 
 function mergeBasePolicies(

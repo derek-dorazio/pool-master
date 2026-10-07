@@ -9,7 +9,7 @@
  * spec's paths, so we inline them here.
  */
 import { zodToJsonSchema as convert } from 'zod-to-json-schema';
-import type { ZodTypeAny } from 'zod';
+import type { ZodType } from 'zod';
 
 // zod-to-json-schema's own signature makes TypeScript instantiate a type that is
 // excessively deep, and ts-jest fails compilation with TS2589 at the call site
@@ -19,7 +19,7 @@ import type { ZodTypeAny } from 'zod';
 // type escape hatch, narrowed to the one shape this module actually calls.
 // eslint-disable-next-line no-restricted-syntax -- see above; TS2589 without it
 const convertToJsonSchema = convert as unknown as (
-  schema: ZodTypeAny,
+  schema: ZodType<unknown>,
   options: { target: 'openApi3' }
 ) => unknown;
 
@@ -53,7 +53,7 @@ function resolveLocalRefs(node: unknown, root: Record<string, unknown>): unknown
   return resolved;
 }
 
-export function zodToJsonSchema(schema: ZodTypeAny): Record<string, unknown> {
+export function zodToJsonSchema(schema: ZodType<unknown>): Record<string, unknown> {
   const raw = convertToJsonSchema(schema, { target: 'openApi3' }) as Record<string, unknown>;
   return resolveLocalRefs(raw, raw) as Record<string, unknown>;
 }

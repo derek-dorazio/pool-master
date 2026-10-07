@@ -58,57 +58,26 @@ export function getProviderName(
   return providers?.find((provider) => provider.providerId === providerId)?.providerName ?? providerId;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+export type ProviderSyncRunPayload = ProviderSyncRun['payload'];
+
+export function getPayloadOutcome(payload: ProviderSyncRunPayload) {
+  return payload.outcome ?? null;
 }
 
-export function getPayloadOutcome(payload: Record<string, unknown>) {
-  const outcome = payload.outcome;
-  if (!isRecord(outcome)) {
-    return null;
-  }
-
-  const severity = outcome.severity;
-  const summary = outcome.summary;
-  const warnings = outcome.warnings;
-
-  return {
-    severity: severity === 'SUCCESS' || severity === 'WARNING' || severity === 'ERROR'
-      ? severity
-      : null,
-    summary: typeof summary === 'string' ? summary : null,
-    warnings: Array.isArray(warnings) ? warnings : [],
-  };
+export function getRequestedFeed(payload: ProviderSyncRunPayload) {
+  return payload.requestedFeed ?? null;
 }
 
-export function getRequestedFeed(payload: Record<string, unknown>) {
-  const requestedFeed = payload.requestedFeed;
-  return typeof requestedFeed === 'string' && requestedFeed in FEED_LABELS
-    ? requestedFeed as keyof typeof FEED_LABELS
-    : null;
-}
-
-export function formatRequestedFeed(payload: Record<string, unknown>) {
+export function formatRequestedFeed(payload: ProviderSyncRunPayload) {
   const requestedFeed = getRequestedFeed(payload);
   return requestedFeed ? FEED_LABELS[requestedFeed] : 'Unknown feed';
 }
 
-export function getPayloadWarnings(payload: Record<string, unknown>) {
-  return getPayloadOutcome(payload)?.warnings.flatMap((warning) => {
-    if (!isRecord(warning)) {
-      return [];
-    }
-
-    const code = warning.code;
-    const message = warning.message;
-    return [{
-      code: typeof code === 'string' ? code : 'SYNC_WARNING',
-      message: typeof message === 'string' ? message : 'Sync completed with a warning.',
-    }];
-  }) ?? [];
+export function getPayloadWarnings(payload: ProviderSyncRunPayload) {
+  return getPayloadOutcome(payload)?.warnings ?? [];
 }
 
-export function buildPayloadSummary(payload: Record<string, unknown>) {
+export function buildPayloadSummary(payload: ProviderSyncRunPayload) {
   const outcome = getPayloadOutcome(payload);
   if (outcome?.summary) {
     return outcome.summary;
@@ -170,7 +139,7 @@ export function buildPayloadSummary(payload: Record<string, unknown>) {
   return fallbackEntries[0] ?? 'Payload captured for operational review.';
 }
 
-export function buildCompactStatsSummary(payload: Record<string, unknown>) {
+export function buildCompactStatsSummary(payload: ProviderSyncRunPayload) {
   const stats = buildStatsSummary(payload);
   if (stats.length === 0) {
     return 'No stats';
@@ -182,33 +151,21 @@ export function buildCompactStatsSummary(payload: Record<string, unknown>) {
     .join(' · ');
 }
 
-export function buildStatsSummary(payload: Record<string, unknown>) {
-  const stats = payload.stats;
-  if (!isRecord(stats)) {
-    return [];
-  }
-
-  return Object.entries(stats).flatMap(([key, value]) => {
-    if (typeof value !== 'number') {
-      return [];
-    }
-
-    return [{
-      key,
-      label: key
-        .replace(/([a-z])([A-Z])/g, '$1 $2')
-        .replace(/\b\w/g, (char) => char.toUpperCase()),
-      value,
-    }];
-  });
+export function buildStatsSummary(payload: ProviderSyncRunPayload) {
+  return Object.entries(payload.stats ?? {}).map(([key, value]) => ({
+    key,
+    label: key
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/\b\w/g, (char) => char.toUpperCase()),
+    value,
+  }));
 }
 
-export function getPayloadSection(
-  payload: Record<string, unknown>,
-  key: 'requestPayload' | 'providerPayload' | 'jobPayload',
-) {
-  const section = payload[key];
-  return isRecord(section) ? section : null;
+export function getPayloadSection<K extends 'requestPayload' | 'providerPayload' | 'jobPayload'>(
+  payload: ProviderSyncRunPayload,
+  key: K,
+): NonNullable<ProviderSyncRunPayload[K]> | null {
+  return payload[key] ?? null;
 }
 
 export function getEventSyncPreset(presetId: EventSyncPresetId) {
