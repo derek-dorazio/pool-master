@@ -32,7 +32,6 @@ export type {
   SportEventParticipant,
 } from './contest-management-types';
 export type {
-  CommissionerDashboard,
   Contest,
   ContestEntry,
   DomainEntity,
@@ -43,7 +42,6 @@ export type {
   League,
   LeagueInvitation,
   LeagueMembership,
-  MemberActivityEvent,
   ContestEntryPick,
   Participant,
   ParticipantProviderMapping,
@@ -59,6 +57,5 @@ export type {
   SquadOwnerInvitation,
   TierConfig,
   TierDefinition,
-  UpcomingEvent,
   User,
 } from './types';
