@@ -334,7 +334,7 @@ describe('InvitationService — accepting', () => {
   it('makes a newcomer an ACTIVE MEMBER with a team of their own and marks the email invitation ACCEPTED by them', async () => {
     const { world, commissioner, league, service } = setup();
     const invitation = seedInvitation(world, league, commissioner);
-    const newcomer = world.addUser({ firstName: 'Nia', lastName: 'New' });
+    const newcomer = world.addUser({ firstName: 'Nia', lastName: 'New', email: 'invitee@example.com' });
 
     const membership = await service.acceptInvitation(invitation.inviteCode, newcomer.id);
 
@@ -359,7 +359,7 @@ describe('InvitationService — accepting', () => {
 
   it('brings a removed member back as an ACTIVE MEMBER on their original, reactivated team', async () => {
     const { world, commissioner, league, service } = setup();
-    const former = world.addUser();
+    const former = world.addUser({ email: 'invitee@example.com' });
     const { membership, squad } = world.addMember({ league, user: former, role: LeagueRole.COMMISSIONER });
     world.tables.memberships.patch(membership.id, { status: LeagueMembershipStatus.INACTIVE });
     const formerSquadMembership = world.squadMembershipOf(league.id, former.id)!;
@@ -414,7 +414,7 @@ describe('InvitationService — accepting', () => {
     const doomed = world.addLeague();
     const invitation = seedInvitation(world, doomed, commissioner);
     world.tables.leagues.remove(doomed.id);
-    const user = world.addUser();
+    const user = world.addUser({ email: 'invitee@example.com' });
 
     await expect(service.acceptInvitation(invitation.inviteCode, user.id))
       .rejects.toMatchObject({ code: 'LEAGUE_NOT_FOUND' });
@@ -424,7 +424,7 @@ describe('InvitationService — accepting', () => {
   it('emails the new member a welcome naming their team and linking to the league home', async () => {
     const mail = recordingMail();
     const { world, commissioner, league, service } = setup({ mail: mail.provider, withPrisma: true });
-    const invitation = seedInvitation(world, league, commissioner);
+    const invitation = seedInvitation(world, league, commissioner, { email: 'nia@example.com' });
     const newcomer = world.addUser({ firstName: 'Nia', lastName: 'New', email: 'nia@example.com' });
 
     await service.acceptInvitation(invitation.inviteCode, newcomer.id);
@@ -438,13 +438,80 @@ describe('InvitationService — accepting', () => {
   it('still completes the join when the welcome email fails to send', async () => {
     const mail = recordingMail({ failFor: 'nia@example.com' });
     const { world, commissioner, league, service } = setup({ mail: mail.provider, withPrisma: true });
-    const invitation = seedInvitation(world, league, commissioner);
+    const invitation = seedInvitation(world, league, commissioner, { email: 'nia@example.com' });
     const newcomer = world.addUser({ email: 'nia@example.com' });
 
     await expect(service.acceptInvitation(invitation.inviteCode, newcomer.id)).resolves.toMatchObject({
       status: LeagueMembershipStatus.ACTIVE,
     });
     expect(world.tables.leagueInvitations.get(invitation.id)?.status).toBe(InvitationStatus.ACCEPTED);
+  });
+});
+
+describe('InvitationService — who may accept, and inactive leagues', () => {
+  it('refuses an email invitation accepted by an account with a different email, with LEAGUE_INVITATION_EMAIL_MISMATCH', async () => {
+    const { world, commissioner, league, service } = setup();
+    const invitation = seedInvitation(world, league, commissioner, { email: 'invitee@example.com' });
+    const forwardedTo = world.addUser({ email: 'someone-else@example.com' });
+
+    await expect(service.acceptInvitation(invitation.inviteCode, forwardedTo.id))
+      .rejects.toMatchObject({ code: 'LEAGUE_INVITATION_EMAIL_MISMATCH' });
+    expect(world.membershipOf(league.id, forwardedTo.id)).toBeNull();
+    expect(world.tables.leagueInvitations.get(invitation.id)).toMatchObject({
+      status: InvitationStatus.PENDING,
+      currentUses: 0,
+    });
+  });
+
+  it('accepts an email invitation when the account email differs only in case', async () => {
+    const { world, commissioner, league, service } = setup();
+    const invitation = seedInvitation(world, league, commissioner, { email: 'invitee@example.com' });
+    const invitee = world.addUser({ email: 'Invitee@Example.com' });
+
+    await expect(service.acceptInvitation(invitation.inviteCode, invitee.id))
+      .resolves.toMatchObject({ status: LeagueMembershipStatus.ACTIVE });
+  });
+
+  it('lets anyone holding a LINK invitation join, whatever their email', async () => {
+    const { world, commissioner, league, service } = setup();
+    const link = await service.generateInviteLink({ leagueId: league.id, invitedBy: commissioner.id });
+    const anyone = world.addUser({ email: 'anyone@example.com' });
+
+    await expect(service.acceptInvitation(link.inviteCode, anyone.id))
+      .resolves.toMatchObject({ status: LeagueMembershipStatus.ACTIVE });
+  });
+
+  it('refuses to send email invitations for an inactive league with LEAGUE_INACTIVE, recording none', async () => {
+    const { world, commissioner, league, service } = setup();
+    world.tables.leagues.patch(league.id, { isActive: false });
+
+    await expect(service.sendEmailInvitations({
+      leagueId: league.id,
+      emails: ['alex@example.com'],
+      invitedBy: commissioner.id,
+    })).rejects.toMatchObject({ code: 'LEAGUE_INACTIVE' });
+    expect(world.tables.leagueInvitations.where(() => true)).toEqual([]);
+  });
+
+  it('refuses to create an invite link for an inactive league with LEAGUE_INACTIVE', async () => {
+    const { world, commissioner, league, service } = setup();
+    world.tables.leagues.patch(league.id, { isActive: false });
+
+    await expect(service.generateInviteLink({ leagueId: league.id, invitedBy: commissioner.id }))
+      .rejects.toMatchObject({ code: 'LEAGUE_INACTIVE' });
+    expect(world.tables.leagueInvitations.where(() => true)).toEqual([]);
+  });
+
+  it('refuses to accept an invitation into an inactive league with LEAGUE_INACTIVE, creating no membership', async () => {
+    const { world, commissioner, league, service } = setup();
+    const invitation = seedInvitation(world, league, commissioner, { inviteType: InviteType.LINK, maxUses: 0 });
+    world.tables.leagues.patch(league.id, { isActive: false });
+    const newcomer = world.addUser();
+
+    await expect(service.acceptInvitation(invitation.inviteCode, newcomer.id))
+      .rejects.toMatchObject({ code: 'LEAGUE_INACTIVE' });
+    expect(world.membershipOf(league.id, newcomer.id)).toBeNull();
+    expect(world.tables.leagueInvitations.get(invitation.id)?.currentUses).toBe(0);
   });
 });
 

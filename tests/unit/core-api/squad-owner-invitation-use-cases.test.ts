@@ -328,17 +328,30 @@ describe('SquadOwnerInvitationService — replacing an owner', () => {
     })).rejects.toMatchObject({ code: 'SQUAD_OWNER_REPLACE_SELF_FORBIDDEN' });
   });
 
-  it('refuses to replace the only owner of a team with SQUAD_OWNER_REPLACE_REQUIRES_MULTIPLE_OWNERS', async () => {
+  it.each([
+    ['commissioner', false],
+    ['root admin', true],
+  ])('lets a %s replace a team\'s only owner, keeping the team active for the replacement', async (_actor, actorIsRootAdmin) => {
     const setup = leagueWithTwoTeams();
+    const actorUserId = actorIsRootAdmin ? setup.world.addUser({ isRootAdmin: true }).id : setup.commissioner.id;
 
-    await expect(setup.service.replaceOwner({
+    const invitation = await setup.service.replaceOwner({
       leagueId: setup.league.id,
       squadId: setup.ownerSquad.id,
-      actorUserId: setup.commissioner.id,
+      actorUserId,
+      actorIsRootAdmin,
       targetUserId: setup.owner.id,
-      email: 'pat@example.com',
-    })).rejects.toMatchObject({ code: 'SQUAD_OWNER_REPLACE_REQUIRES_MULTIPLE_OWNERS' });
-    expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([setup.owner.id]);
+      email: 'replacement@example.com',
+    });
+
+    expect(invitation).toMatchObject({ status: SquadOwnerInvitationStatus.PENDING, replacementForUserId: setup.owner.id });
+    expect(setup.world.membershipOf(setup.league.id, setup.owner.id)?.status).toBe(LeagueMembershipStatus.INACTIVE);
+    expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([]);
+    expect(setup.world.tables.squads.get(setup.ownerSquad.id)?.isActive).toBe(true);
+
+    const replacement = setup.world.addUser({ email: 'replacement@example.com' });
+    await setup.service.acceptInvitation(invitation.inviteCode, replacement.id);
+    expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([replacement.id]);
   });
 
   it('refuses a target who does not own the team as not found', async () => {
@@ -508,5 +521,64 @@ describe('SquadOwnerInvitationService — preview, registration and acceptance',
     await expect(setup.service.acceptInvitation(invitation.inviteCode, setup.commissioner.id))
       .rejects.toMatchObject({ code: 'SQUAD_OWNER_INVITATION_LEAGUE_MEMBER_CONFLICT' });
     expect(setup.world.tables.ownerInvitations.get(invitation.id)?.status).toBe(SquadOwnerInvitationStatus.PENDING);
+  });
+});
+
+describe('SquadOwnerInvitationService — who may accept, and inactive leagues', () => {
+  it('refuses acceptance by an account whose email is not the invited one, with SQUAD_OWNER_INVITATION_EMAIL_MISMATCH', async () => {
+    const setup = leagueWithTwoTeams();
+    const invitation = seedOwnerInvitation(setup, { email: 'invited@example.com' });
+    const forwardedTo = setup.world.addUser({ email: 'someone-else@example.com' });
+
+    await expect(setup.service.acceptInvitation(invitation.inviteCode, forwardedTo.id))
+      .rejects.toMatchObject({ code: 'SQUAD_OWNER_INVITATION_EMAIL_MISMATCH' });
+    expect(setup.world.membershipOf(setup.league.id, forwardedTo.id)).toBeNull();
+    expect(setup.world.tables.ownerInvitations.get(invitation.id)?.status).toBe(SquadOwnerInvitationStatus.PENDING);
+  });
+
+  it('accepts when the account email differs from the invited one only in case', async () => {
+    const setup = leagueWithTwoTeams();
+    const invitation = seedOwnerInvitation(setup, { email: 'invited@example.com' });
+    const invitee = setup.world.addUser({ email: 'INVITED@example.com' });
+
+    await expect(setup.service.acceptInvitation(invitation.inviteCode, invitee.id))
+      .resolves.toMatchObject({ status: SquadOwnerInvitationStatus.ACCEPTED });
+  });
+
+  it('refuses inviting or replacing an owner in an inactive league with LEAGUE_INACTIVE, recording no invitation', async () => {
+    const setup = leagueWithTwoTeams();
+    const coOwner = setup.world.addUser();
+    setup.world.addMember({ league: setup.league, user: coOwner, squadId: setup.ownerSquad.id });
+    setup.world.tables.leagues.patch(setup.league.id, { isActive: false });
+
+    await expect(setup.service.inviteOwner({
+      leagueId: setup.league.id,
+      squadId: setup.ownerSquad.id,
+      actorUserId: setup.owner.id,
+      email: 'pat@example.com',
+    })).rejects.toMatchObject({ code: 'LEAGUE_INACTIVE' });
+    await expect(setup.service.replaceOwner({
+      leagueId: setup.league.id,
+      squadId: setup.ownerSquad.id,
+      actorUserId: setup.owner.id,
+      targetUserId: coOwner.id,
+      email: 'pat@example.com',
+    })).rejects.toMatchObject({ code: 'LEAGUE_INACTIVE' });
+    expect(setup.world.tables.ownerInvitations.where(() => true)).toEqual([]);
+    expect(setup.world.squadMembershipOf(setup.league.id, coOwner.id)?.status).toBe(SquadMembershipStatus.ACTIVE);
+  });
+
+  it('refuses registering or accepting into an inactive league with LEAGUE_INACTIVE', async () => {
+    const setup = leagueWithTwoTeams();
+    const invitation = seedOwnerInvitation(setup, { email: 'newcomer@example.com' });
+    setup.world.tables.leagues.patch(setup.league.id, { isActive: false });
+    const newcomer = setup.world.addUser({ email: 'newcomer@example.com' });
+
+    await expect(setup.service.acceptInvitation(invitation.inviteCode, newcomer.id))
+      .rejects.toMatchObject({ code: 'LEAGUE_INACTIVE' });
+    setup.world.tables.users.remove(newcomer.id);
+    await expect(setup.service.requireInvitationForRegistration(invitation.inviteCode))
+      .rejects.toMatchObject({ code: 'LEAGUE_INACTIVE' });
+    expect(setup.world.membershipOf(setup.league.id, newcomer.id)).toBeNull();
   });
 });
