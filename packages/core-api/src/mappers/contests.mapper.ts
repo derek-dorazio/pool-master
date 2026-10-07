@@ -157,8 +157,10 @@ function toContestConfigurationDetailDto(
       : (contestConfiguration.maxEntriesPerSquad ?? 1);
 
   if (isManagedConfiguration && contestConfiguration.configJson) {
+    // Only the typed settings: rows saved before #416 also hold a lock time and an entry cap.
     return {
-      ...contestConfiguration.configJson,
+      rosterSize: contestConfiguration.configJson.rosterSize,
+      countedScores: contestConfiguration.configJson.countedScores,
       maxEntriesPerSquad,
     };
   }

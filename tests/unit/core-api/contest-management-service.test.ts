@@ -280,7 +280,9 @@ describe('ContestManagementService', () => {
       expect.objectContaining({
         templateId: undefined,
         selectionType: 'TIERED',
-        configJson: expect.objectContaining({ rosterSize: 6, countedScores: 4, maxEntriesPerSquad: 3 }),
+        // configJson holds only GolfContestConfig's own fields; the entry cap has its column (#416).
+        configJson: { rosterSize: 6, countedScores: 4 },
+        maxEntriesPerSquad: 3,
       }),
     );
     // pool-master-p15 — tiers are event-owned now (plans/124 §4.6); contest
@@ -696,12 +698,10 @@ describe('ContestManagementService', () => {
       countedScores: 5,
     });
 
-    // configJson stores the whole request, so it carries maxEntriesPerSquad
-    // beyond GolfContestConfig's two fields. A variable, not an inline literal, lets the
-    // exact stored value through Jest 30's typed toHaveBeenCalledWith.
+    // configJson stores only GolfContestConfig's two fields; maxEntriesPerSquad has its own
+    // column, so a JSON copy could only drift from it (#416).
     const storedConfigJson = {
       countedScores: 5,
-      maxEntriesPerSquad: 2,
       rosterSize: 8,
     };
     // #245 — an update never rewrites selectionType: it is fixed at create, and the
@@ -771,6 +771,43 @@ describe('ContestManagementService', () => {
     // effectiveTiers echo (plans/124 §5.3); empty here because this event
     // has no tiers defined.
     expect(result.effectiveTiers).toEqual([]);
+  });
+
+  it('reads only the typed settings from a configuration saved with extra keys, taking the entry cap from its column', async () => {
+    const contestConfigurationRepo = createContestConfigurationRepo();
+    const stored = await contestConfigurationRepo.findByContest('contest-1');
+    // A row written before #416 kept the whole request in configJson, a lock time and a
+    // stale entry cap included.
+    const legacyConfigJson = {
+      rosterSize: 6,
+      countedScores: 4,
+      locksAt: '2026-04-10T12:00:00.000Z',
+      maxEntriesPerSquad: 9,
+    };
+    contestConfigurationRepo.findByContest = jest.fn().mockResolvedValue({
+      ...stored,
+      configJson: legacyConfigJson,
+      maxEntriesPerSquad: 1,
+    });
+    const service = new ContestManagementService(
+      createContestRepo(),
+      createContestConfigTemplateRepo(),
+      contestConfigurationRepo,
+      createParticipantScoringRuleRepo(),
+      createSportEventTierServiceStub(),
+      undefined,
+      createSportEventReader(),
+    );
+
+    const result = await service.getContest('contest-1');
+
+    expect(result.configuration).toEqual({
+      id: 'config-1',
+      contestId: 'contest-1',
+      rosterSize: 6,
+      countedScores: 4,
+      maxEntriesPerSquad: 1,
+    });
   });
 
   it('pool-master-41t echoes the linked event\'s effective tiers read-only on the management detail', async () => {
@@ -861,7 +898,8 @@ describe('ContestManagementService', () => {
     // With no configuration supplied, the template's configuration is the contest's.
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        configJson: expect.objectContaining({ rosterSize: 6, countedScores: 4, maxEntriesPerSquad: 1 }),
+        configJson: { rosterSize: 6, countedScores: 4 },
+        maxEntriesPerSquad: 1,
       }),
     );
     expect(result).toBe('contest-1');

@@ -142,7 +142,7 @@ export class ContestManagementService {
       templateId: resolvedConfiguration.template?.id,
       templateVersion: resolvedConfiguration.template?.schemaVersion,
       selectionType,
-      configJson: resolvedConfiguration.configuration,
+      configJson: toStoredGolfConfig(resolvedConfiguration.configuration),
       maxEntriesPerSquad:
         resolvedConfiguration.configuration.maxEntriesPerSquad === null
           ? null
@@ -263,7 +263,7 @@ export class ContestManagementService {
     await this.assertTierConfigurationFitsSportEvent(contest.sportEventId, input);
 
     await this.contestConfigurationRepo.update(configuration.id, {
-      configJson: input,
+      configJson: toStoredGolfConfig(input),
       maxEntriesPerSquad:
         input.maxEntriesPerSquad === null ? null : input.maxEntriesPerSquad,
       ...deriveLegacyPersistenceFields(input),
@@ -624,6 +624,18 @@ function buildContestManagementDetail(
   };
 }
 
+/**
+ * The part of a configuration request that configJson stores: GolfContestConfig's own fields.
+ * The entry cap has its own column, so a copy here could only drift from it. Rows saved before
+ * #416 kept the whole request, a lock time included, and reading through this drops those keys.
+ */
+function toStoredGolfConfig(configuration: GolfContestConfig): GolfContestConfig {
+  return {
+    rosterSize: configuration.rosterSize,
+    countedScores: configuration.countedScores,
+  };
+}
+
 function ensureTypedConfiguration(configuration: {
   configJson?: GolfContestConfig;
   maxEntriesPerSquad?: number | null;
@@ -636,7 +648,7 @@ function ensureTypedConfiguration(configuration: {
 } {
   if (configuration.configJson) {
     return {
-      ...configuration.configJson,
+      ...toStoredGolfConfig(configuration.configJson),
       maxEntriesPerSquad: configuration.maxEntriesPerSquad ?? null,
     };
   }
