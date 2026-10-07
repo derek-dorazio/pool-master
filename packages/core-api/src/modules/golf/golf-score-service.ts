@@ -461,10 +461,10 @@ export class GolfScoreService {
       );
     }
     await this.requireScheduledRound(sportEventId, roundNumber);
-    const scheduledRound = (await this.deps.rounds.findBySportEvent(sportEventId)).find((candidate) => candidate.roundNumber === roundNumber);
-    const existing = scheduledRound
+    const storedRound = (await this.deps.rounds.findBySportEvent(sportEventId)).find((candidate) => candidate.roundNumber === roundNumber);
+    const existing = storedRound
       ? (await this.deps.golfRounds.findBySportEventParticipants([sportEventParticipantId]))
-        .find((result) => result.participantRound.sportEventRoundId === scheduledRound.id)
+        .find((result) => result.participantRound.sportEventRoundId === storedRound.id)
       : undefined;
     const strokes = patch.strokes ?? existing?.golf.strokes;
     const scoreToPar = patch.scoreToPar ?? existing?.golf.scoreToPar;
@@ -475,7 +475,7 @@ export class GolfScoreService {
         422,
       );
     }
-    const round = scheduledRound ?? await this.deps.rounds.findOrCreate(sportEventId, roundNumber);
+    const round = storedRound ?? await this.deps.rounds.findOrCreate(sportEventId, roundNumber);
 
     await this.deps.golfRounds.upsert({
       sportEventParticipantId,
