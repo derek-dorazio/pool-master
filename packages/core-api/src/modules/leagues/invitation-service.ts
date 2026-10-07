@@ -298,7 +298,7 @@ export class InvitationService {
       action: 'leagueInvitation.listOutstanding.enter',
       data: { leagueId },
     }, 'Listing outstanding league invitations');
-    const invitations = (await this.invitationRepo.findByLeague(leagueId)).filter(isOutstanding);
+    const invitations = (await this.deps.invitations.findByLeague(leagueId)).filter(isOutstanding);
     this.logger?.info({
       action: 'leagueInvitation.listOutstanding.success',
       data: { leagueId, invitationCount: invitations.length },
@@ -319,7 +319,7 @@ export class InvitationService {
       action: 'leagueInvitation.resend.enter',
       data: { leagueId, invitationId, resentBy },
     }, 'Resending league email invitation');
-    const invitation = await this.invitationRepo.findById(invitationId);
+    const invitation = await this.deps.invitations.findById(invitationId);
     if (!invitation || invitation.leagueId !== leagueId) {
       this.logger?.warn({
         action: 'leagueInvitation.resend.notFound',
@@ -345,10 +345,10 @@ export class InvitationService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRY_DAYS);
     const [league, inviterName] = await Promise.all([
-      this.leagueRepo.findById(leagueId),
+      this.deps.leagues.findById(leagueId),
       this.resolveInviterName(resentBy),
     ]);
-    const renewed = await this.invitationRepo.update(invitation.id, {
+    const renewed = await this.deps.invitations.update(invitation.id, {
       inviteCode: generateInviteCode(),
       status: InvitationStatus.PENDING,
       expiresAt,

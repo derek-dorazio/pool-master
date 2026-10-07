@@ -5,7 +5,6 @@ import { activateLeague, deleteLeague, inactivateLeague, leaveLeague, updateLeag
 import { useAuth } from '@/features/auth/auth-context';
 import {
   ActionList,
-  ActionModal,
   ActionTile,
   Alert,
   Button,

@@ -312,8 +312,8 @@ describe('InvitationService', () => {
       const pendingEmail = buildInvitation({ status: InvitationStatus.PENDING });
       const pendingLink = buildInvitation({ inviteType: InviteType.LINK, email: undefined, maxUses: 0 });
       const expiredEmail = buildInvitation({ status: InvitationStatus.EXPIRED });
-      const service = new InvitationService(
-        createMockInvitationRepo({
+      const service = new InvitationService({
+        invitations: createMockInvitationRepo({
           findByLeague: jest.fn().mockResolvedValue([
             pendingEmail,
             buildInvitation({ status: InvitationStatus.ACCEPTED }),
@@ -323,9 +323,10 @@ describe('InvitationService', () => {
             buildInvitation({ inviteType: InviteType.LINK, status: InvitationStatus.EXPIRED }),
           ]),
         }),
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-      );
+        memberships: createMockMembershipRepo(),
+        leagues: createMockLeagueRepo(),
+        users: fakeUserRepo(),
+      });
 
       const listed = await service.listOutstandingInvitations('league-1');
 
@@ -345,23 +346,20 @@ describe('InvitationService', () => {
       const invitationRepo = createMockInvitationRepo({
         findById: jest.fn().mockResolvedValue(invitation),
       });
-      const service = new InvitationService(
-        invitationRepo,
-        createMockMembershipRepo(),
-        createMockLeagueRepo({
+      const service = new InvitationService({
+        invitations: invitationRepo,
+        memberships: createMockMembershipRepo(),
+        leagues: createMockLeagueRepo({
           findById: jest.fn().mockResolvedValue(buildLeague({
             id: 'league-1',
             name: 'Mathworks',
             leagueCode: 'MATHWORKS',
           })),
         }),
-        undefined,
-        undefined,
-        asPrismaClient(createMockProvisioningPrisma()),
-        undefined,
+        users: createProvisioningUsers(),
         mailDelivery,
-        'https://app.example.com',
-      );
+        appBaseUrl: 'https://app.example.com',
+      });
       return { invitationRepo, service };
     }
 
