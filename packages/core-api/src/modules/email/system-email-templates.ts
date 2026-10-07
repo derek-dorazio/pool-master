@@ -1,11 +1,9 @@
-export const SYSTEM_EMAIL_TEMPLATE_KEYS = [
-  'LEAGUE_MEMBER_INVITE',
-  'LEAGUE_JOIN_SUCCESS',
-  'CONTEST_ENTRY_COMPLETED',
-  'CONTEST_STARTED_SUMMARY',
-] as const;
+import { EmailTemplateKeySchema, type EmailTemplateKey } from '@poolmaster/shared/dto';
 
-export type SystemEmailTemplateKey = (typeof SYSTEM_EMAIL_TEMPLATE_KEYS)[number];
+/** Declared once in the shared contract, so EMAIL_CONFIG has a switch for every template. */
+export const SYSTEM_EMAIL_TEMPLATE_KEYS = EmailTemplateKeySchema.options;
+
+export type SystemEmailTemplateKey = EmailTemplateKey;
 
 export interface SystemEmailMessage {
   templateKey: SystemEmailTemplateKey;

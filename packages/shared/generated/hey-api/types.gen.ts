@@ -31,6 +31,46 @@ export type PollIntervalConfig = {
 };
 
 /**
+ * A system email template.
+ */
+export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY';
+
+/**
+ * Whether and how system email is sent.
+ */
+export type EmailConfig = {
+    /**
+     * Whether any system email is sent. Off: every email is skipped and logged.
+     */
+    enabled: boolean;
+    /**
+     * Reply-To address for system email, or null to let replies go to the sender.
+     */
+    replyTo: string | null;
+    /**
+     * Per-template switches. A template that is off is skipped even while email is on.
+     */
+    templates: {
+        /**
+         * Whether this email is sent.
+         */
+        LEAGUE_MEMBER_INVITE: boolean;
+        /**
+         * Whether this email is sent.
+         */
+        LEAGUE_JOIN_SUCCESS: boolean;
+        /**
+         * Whether this email is sent.
+         */
+        CONTEST_ENTRY_COMPLETED: boolean;
+        /**
+         * Whether this email is sent.
+         */
+        CONTEST_STARTED_SUMMARY: boolean;
+    };
+};
+
+/**
  * Partial poll-interval update payload used by root-admin configuration tools.
  */
 export type PollIntervalConfigPatch = {
@@ -273,7 +313,7 @@ export type IngestionScheduleConfig = {
 /**
  * The stored key of a settings group.
  */
-export type SettingsGroupKey = 'POLL_INTERVAL_CONFIG' | 'INGESTION_SCHEDULE_CONFIG';
+export type SettingsGroupKey = 'POLL_INTERVAL_CONFIG' | 'INGESTION_SCHEDULE_CONFIG' | 'EMAIL_CONFIG';
 
 /**
  * The root admin who saved a settings change.
@@ -690,6 +730,105 @@ export type SettingsGroup = {
             };
         };
     };
+} | {
+    key: 'EMAIL_CONFIG';
+    /**
+     * Short display name of the group.
+     */
+    title: string;
+    /**
+     * What the group controls.
+     */
+    description: string;
+    /**
+     * `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
+     */
+    source: 'stored' | 'defaults';
+    /**
+     * When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
+     */
+    updatedAt: string | null;
+    /**
+     * Who last saved the stored value, when known.
+     */
+    updatedBy: {
+        /**
+         * The user id of the root admin who made the change.
+         */
+        id: string;
+        /**
+         * The admin's full name, for display.
+         */
+        name: string;
+    } | null;
+    /**
+     * The value in use.
+     */
+    value: {
+        /**
+         * Whether any system email is sent. Off: every email is skipped and logged.
+         */
+        enabled: boolean;
+        /**
+         * Reply-To address for system email, or null to let replies go to the sender.
+         */
+        replyTo: string | null;
+        /**
+         * Per-template switches. A template that is off is skipped even while email is on.
+         */
+        templates: {
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_MEMBER_INVITE: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_JOIN_SUCCESS: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_ENTRY_COMPLETED: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_STARTED_SUMMARY: boolean;
+        };
+    };
+    /**
+     * The value a reset would store.
+     */
+    defaults: {
+        /**
+         * Whether any system email is sent. Off: every email is skipped and logged.
+         */
+        enabled: boolean;
+        /**
+         * Reply-To address for system email, or null to let replies go to the sender.
+         */
+        replyTo: string | null;
+        /**
+         * Per-template switches. A template that is off is skipped even while email is on.
+         */
+        templates: {
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_MEMBER_INVITE: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_JOIN_SUCCESS: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_ENTRY_COMPLETED: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_STARTED_SUMMARY: boolean;
+        };
+    };
 };
 
 /**
@@ -1097,6 +1236,105 @@ export type SettingsGroupList = {
                 };
             };
         };
+    } | {
+        key: 'EMAIL_CONFIG';
+        /**
+         * Short display name of the group.
+         */
+        title: string;
+        /**
+         * What the group controls.
+         */
+        description: string;
+        /**
+         * `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
+         */
+        source: 'stored' | 'defaults';
+        /**
+         * When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
+         */
+        updatedAt: string | null;
+        /**
+         * Who last saved the stored value, when known.
+         */
+        updatedBy: {
+            /**
+             * The user id of the root admin who made the change.
+             */
+            id: string;
+            /**
+             * The admin's full name, for display.
+             */
+            name: string;
+        } | null;
+        /**
+         * The value in use.
+         */
+        value: {
+            /**
+             * Whether any system email is sent. Off: every email is skipped and logged.
+             */
+            enabled: boolean;
+            /**
+             * Reply-To address for system email, or null to let replies go to the sender.
+             */
+            replyTo: string | null;
+            /**
+             * Per-template switches. A template that is off is skipped even while email is on.
+             */
+            templates: {
+                /**
+                 * Whether this email is sent.
+                 */
+                LEAGUE_MEMBER_INVITE: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                LEAGUE_JOIN_SUCCESS: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_ENTRY_COMPLETED: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_STARTED_SUMMARY: boolean;
+            };
+        };
+        /**
+         * The value a reset would store.
+         */
+        defaults: {
+            /**
+             * Whether any system email is sent. Off: every email is skipped and logged.
+             */
+            enabled: boolean;
+            /**
+             * Reply-To address for system email, or null to let replies go to the sender.
+             */
+            replyTo: string | null;
+            /**
+             * Per-template switches. A template that is off is skipped even while email is on.
+             */
+            templates: {
+                /**
+                 * Whether this email is sent.
+                 */
+                LEAGUE_MEMBER_INVITE: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                LEAGUE_JOIN_SUCCESS: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_ENTRY_COMPLETED: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_STARTED_SUMMARY: boolean;
+            };
+        };
     }>;
 };
 
@@ -1283,6 +1521,46 @@ export type SettingsGroupUpdateRequest = {
      * The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
      */
     expectedUpdatedAt: string | null;
+} | {
+    key: 'EMAIL_CONFIG';
+    /**
+     * The whole new value.
+     */
+    value: {
+        /**
+         * Whether any system email is sent. Off: every email is skipped and logged.
+         */
+        enabled: boolean;
+        /**
+         * Reply-To address for system email, or null to let replies go to the sender.
+         */
+        replyTo: string | null;
+        /**
+         * Per-template switches. A template that is off is skipped even while email is on.
+         */
+        templates: {
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_MEMBER_INVITE: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_JOIN_SUCCESS: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_ENTRY_COMPLETED: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_STARTED_SUMMARY: boolean;
+        };
+    };
+    /**
+     * The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
+     */
+    expectedUpdatedAt: string | null;
 };
 
 /**
@@ -1293,7 +1571,7 @@ export type SettingsChange = {
     /**
      * The stored key of a settings group.
      */
-    key: 'POLL_INTERVAL_CONFIG' | 'INGESTION_SCHEDULE_CONFIG';
+    key: 'POLL_INTERVAL_CONFIG' | 'INGESTION_SCHEDULE_CONFIG' | 'EMAIL_CONFIG';
     /**
      * The stored value before the save, as it was stored; null when the save created the first stored value.
      */
@@ -1337,7 +1615,7 @@ export type SettingsChangeList = {
         /**
          * The stored key of a settings group.
          */
-        key: 'POLL_INTERVAL_CONFIG' | 'INGESTION_SCHEDULE_CONFIG';
+        key: 'POLL_INTERVAL_CONFIG' | 'INGESTION_SCHEDULE_CONFIG' | 'EMAIL_CONFIG';
         /**
          * The stored value before the save, as it was stored; null when the save created the first stored value.
          */
