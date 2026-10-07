@@ -14,6 +14,7 @@ import { getLogger } from '@/lib/logger';
 import {
   Alert,
   Chip,
+  DateDisplay,
   EmptyState,
   ErrorState,
   LoadingState,
@@ -272,6 +273,19 @@ export function TeamsPage() {
                             >
                               {formatUserName(owner.user.firstName, owner.user.lastName)}
                             </Link>
+                            {leagueMember ? (
+                              <span
+                                className="text-xs text-muted-foreground"
+                                data-testid={`league-team-owner-joined-${team.id}-${owner.userId}`}
+                              >
+                                Joined{' '}
+                                <DateDisplay
+                                  className="text-muted-foreground"
+                                  timeStyle={null}
+                                  value={leagueMember.joinedAt}
+                                />
+                              </span>
+                            ) : null}
                             <Chip>
                               Active owner
                             </Chip>

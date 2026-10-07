@@ -12,7 +12,6 @@
  */
 
 import fp from 'fastify-plugin';
-import { getPollIntervalConfig } from '../modules/platform/poll-config-service';
 
 export const POLL_INTERVALS: Record<string, number> = {
   '/api/v1/contests/*/standings': 10000,
@@ -20,18 +19,6 @@ export const POLL_INTERVALS: Record<string, number> = {
   '/api/v1/contests/*/standings/my-entry': 10000,
   '/api/v1/drafts/*/state': 10000,
   '/api/v1/contests/*': 30000,
-};
-
-/**
- * Named poll intervals exposed via the config endpoint.
- * Now reads from the PollConfigService so admins can tune at runtime.
- */
-export const POLL_INTERVAL_CONFIG = {
-  get standings() { return getPollIntervalConfig().standings; },
-  get draft() { return getPollIntervalConfig().draft; },
-  get contestStatus() { return getPollIntervalConfig().contestStatus; },
-  get notifications() { return getPollIntervalConfig().notifications; },
-  get default() { return getPollIntervalConfig().default; },
 };
 
 /**

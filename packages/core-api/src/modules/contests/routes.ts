@@ -19,7 +19,8 @@ import {
 import {
   requireCommissioner,
   requireCommissionerForContest,
-  requireLeagueMembership,
+  leagueFromPath,
+  leagueOfContest,
   requireMemberOfLeague,
 } from '../leagues/permissions';
 import { createContestService } from './wiring';
@@ -65,7 +66,7 @@ export function contestsModule(fastify: FastifyInstance): void {
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requireLeagueMembership(membershipRepo),
+    preHandler: requireMemberOfLeague(membershipRepo, leagueFromPath),
     handler: handlers.listContests,
   });
 
@@ -125,7 +126,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
   // #193 — the read-only gate: any active member of the league that owns the contest. Every
   // route here either declares a gate or is on scripts/route-authorization-opt-outs.mjs with
   // the reason it authorizes elsewhere; `npm run rules:check` fails a route that does neither.
-  const requireContestLeagueMember = requireMemberOfLeague(contestRepo, membershipRepo);
+  const requireContestLeagueMember = requireMemberOfLeague(membershipRepo, leagueOfContest(contestRepo));
 
   // --- Contest CRUD ---
   fastify.get('/:contestId', {

@@ -1,5 +1,9 @@
 import type { Participant, ParticipantProviderMapping } from '@poolmaster/shared/domain';
-import type { ParticipantProviderMappingDto } from '@poolmaster/shared/dto/participants.dto';
+import type {
+  ParticipantProviderMappingDto,
+  UpdateParticipantRequest,
+} from '@poolmaster/shared/dto/participants.dto';
+import type { UpdateParticipantInput } from '../modules/participants/service';
 
 function toIso(value?: Date | null): string | undefined {
   return value ? value.toISOString() : undefined;
@@ -42,5 +46,21 @@ export function mapParticipantProviderMappingToDto(mapping: ParticipantProviderM
     externalId: mapping.externalId,
     confidence: mapping.confidence,
     mappedAt: mapping.mappedAt.toISOString(),
+  };
+}
+
+export function toUpdateParticipantInput(request: UpdateParticipantRequest): UpdateParticipantInput {
+  const { injuryStatus, ...fields } = request;
+  if (!injuryStatus) {
+    return fields;
+  }
+  const { expectedReturn, updatedAt, ...injuryFields } = injuryStatus;
+  return {
+    ...fields,
+    injuryStatus: {
+      ...injuryFields,
+      ...(expectedReturn !== undefined && { expectedReturn: new Date(expectedReturn) }),
+      ...(updatedAt !== undefined && { updatedAt: new Date(updatedAt) }),
+    },
   };
 }

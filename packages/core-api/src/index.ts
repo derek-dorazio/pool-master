@@ -30,6 +30,8 @@ import { usersModule } from './modules/users/routes';
 import { platformModule } from './modules/platform/routes';
 import { IngestionConfigService } from './modules/platform/ingestion-config-service';
 import { PollConfigService } from './modules/platform/poll-config-service';
+import { AppSettingsService } from './modules/platform/app-settings-service';
+import { SETTINGS_GROUPS } from './modules/platform/settings-groups';
 import { ingestionModule } from './modules/ingestion/routes';
 import { IngestionService } from './modules/ingestion/ingestion-service';
 import {
@@ -95,8 +97,14 @@ export function buildApp() {
     app.log,
   );
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
-  const pollConfigService = new PollConfigService(runtimeConfigRepository, app.log);
-  const ingestionConfigService = new IngestionConfigService(runtimeConfigRepository, app.log);
+  const appSettings = new AppSettingsService({
+    repository: runtimeConfigRepository,
+    groups: SETTINGS_GROUPS,
+    env: process.env,
+    logger: app.log,
+  });
+  const pollConfigService = new PollConfigService(appSettings, app.log);
+  const ingestionConfigService = new IngestionConfigService(appSettings, app.log);
 
   // =========================================================================
   // Core plugins
@@ -201,8 +209,10 @@ export function buildApp() {
       return;
     }
 
-    await pollConfigService.bootstrap();
-    await ingestionConfigService.bootstrap();
+    // Settings load before the server reports ready, so nothing serves the code defaults in
+    // place of a stored value; the background refresh then carries other tasks' saves here.
+    await appSettings.load();
+    appSettings.start();
 
     // Ingestion
     if (process.env.AUTO_START_SCHEDULER !== 'false') {
@@ -218,6 +228,7 @@ export function buildApp() {
   });
 
   app.addHook('onClose', async () => {
+    appSettings.stop();
     ingestionScheduler.stop();
     eventLifecycleScheduler.stop();
     await prisma.$disconnect();

@@ -1,15 +1,23 @@
 import {
   LeagueMembershipStatus,
   LeagueRole,
+  SquadMembershipStatus,
 } from '@poolmaster/shared/domain';
 import {
   requireCommissioner,
   requireCommissionerForContest,
-  requireLeagueMembership,
+  leagueFromPath,
+  leagueOfContest,
   requireMemberOfLeague,
+  requireMemberOfSquad,
 } from '../../../packages/core-api/src/modules/leagues/permissions';
 import { buildContest, buildMembership } from '../../factories';
-import { fakeContestRepo, fakeLeagueMembershipRepo } from '../../support/repo-fakes';
+import {
+  fakeContestRepo,
+  fakeLeagueMembershipRepo,
+  fakeSquadMembershipRepo,
+  fakeSquadRepo,
+} from '../../support/repo-fakes';
 import { fakeLogger } from '../../support/fake-logger';
 
 function createReply() {
@@ -51,12 +59,12 @@ function expectReplyError(
 }
 
 describe('league permissions', () => {
-  it('allows any member through requireLeagueMembership', async () => {
+  it('allows any member through requireMemberOfLeague with the league from the path', async () => {
     const membership = buildMembership({ role: LeagueRole.MEMBER });
     const repo = fakeLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
     });
-    const hook = requireLeagueMembership(repo);
+    const hook = requireMemberOfLeague(repo, leagueFromPath);
     const reply = createReply();
     await hook.call(
       {} as never,
@@ -71,11 +79,11 @@ describe('league permissions', () => {
     expect(reply.payload).toBeUndefined();
   });
 
-  it('rejects non-members on requireLeagueMembership', async () => {
+  it('rejects non-members on requireMemberOfLeague with the league from the path', async () => {
     const repo = fakeLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(null),
     });
-    const hook = requireLeagueMembership(repo);
+    const hook = requireMemberOfLeague(repo, leagueFromPath);
     const reply = createReply();
     await hook.call(
       {} as never,
@@ -94,13 +102,13 @@ describe('league permissions', () => {
     );
   });
 
-  it('rejects inactive memberships on requireLeagueMembership', async () => {
+  it('rejects inactive memberships on requireMemberOfLeague with the league from the path', async () => {
     const repo = fakeLeagueMembershipRepo({
       findByLeagueAndUser: jest
         .fn()
         .mockResolvedValue(buildMembership({ status: LeagueMembershipStatus.INACTIVE })),
     });
-    const hook = requireLeagueMembership(repo);
+    const hook = requireMemberOfLeague(repo, leagueFromPath);
     const reply = createReply();
     await hook.call(
       {} as never,
@@ -115,9 +123,9 @@ describe('league permissions', () => {
     expectReplyError(reply, 'LEAGUE_MEMBERSHIP_INACTIVE', 'Your membership in this league is inactive');
   });
 
-  it('rejects requests without a user identity on requireLeagueMembership', async () => {
+  it('rejects requests without a user identity on requireMemberOfLeague with the league from the path', async () => {
     const repo = fakeLeagueMembershipRepo();
-    const hook = requireLeagueMembership(repo);
+    const hook = requireMemberOfLeague(repo, leagueFromPath);
     const reply = createReply();
     await hook.call(
       {} as never,
@@ -201,7 +209,7 @@ describe('contest-scoped league permissions (#193)', () => {
   const contest = buildContest({ id: 'contest-1', leagueId: 'league-1' });
 
   async function runContestGate(
-    gate: typeof requireMemberOfLeague,
+    gate: typeof requireCommissionerForContest,
     options: {
       membership?: ReturnType<typeof buildMembership> | null;
       contestFound?: boolean;
@@ -230,9 +238,13 @@ describe('contest-scoped league permissions (#193)', () => {
     return { reply, findById, findByLeagueAndUser };
   }
 
-  describe('requireMemberOfLeague', () => {
+  // The member gate takes the league resolver; for these cases it resolves through the contest.
+  const memberOfContestLeague: typeof requireCommissionerForContest = (contestRepo, membershipRepo) =>
+    requireMemberOfLeague(membershipRepo, leagueOfContest(contestRepo));
+
+  describe('requireMemberOfLeague with the contest\'s league', () => {
     it('admits an active member who is not a commissioner, reading membership in the contest\'s league', async () => {
-      const { reply, findById, findByLeagueAndUser } = await runContestGate(requireMemberOfLeague, {
+      const { reply, findById, findByLeagueAndUser } = await runContestGate(memberOfContestLeague, {
         membership: buildMembership({ role: LeagueRole.MEMBER }),
       });
       expect(reply.statusCode).toBe(200);
@@ -242,7 +254,7 @@ describe('contest-scoped league permissions (#193)', () => {
     });
 
     it('admits a commissioner', async () => {
-      const { reply } = await runContestGate(requireMemberOfLeague, {
+      const { reply } = await runContestGate(memberOfContestLeague, {
         membership: buildMembership({ role: LeagueRole.COMMISSIONER }),
       });
       expect(reply.statusCode).toBe(200);
@@ -250,7 +262,7 @@ describe('contest-scoped league permissions (#193)', () => {
     });
 
     it('rejects a caller with no membership in the contest\'s league with 403', async () => {
-      const { reply } = await runContestGate(requireMemberOfLeague, { membership: null });
+      const { reply } = await runContestGate(memberOfContestLeague, { membership: null });
       expect(reply.statusCode).toBe(403);
       expectReplyError(
         reply,
@@ -260,7 +272,7 @@ describe('contest-scoped league permissions (#193)', () => {
     });
 
     it('rejects an inactive membership with 403', async () => {
-      const { reply } = await runContestGate(requireMemberOfLeague, {
+      const { reply } = await runContestGate(memberOfContestLeague, {
         membership: buildMembership({ status: LeagueMembershipStatus.INACTIVE }),
       });
       expect(reply.statusCode).toBe(403);
@@ -268,7 +280,7 @@ describe('contest-scoped league permissions (#193)', () => {
     });
 
     it('answers 404 for a contest that does not exist, before reading any membership', async () => {
-      const { reply, findByLeagueAndUser } = await runContestGate(requireMemberOfLeague, {
+      const { reply, findByLeagueAndUser } = await runContestGate(memberOfContestLeague, {
         contestFound: false,
       });
       expect(reply.statusCode).toBe(404);
@@ -277,20 +289,20 @@ describe('contest-scoped league permissions (#193)', () => {
     });
 
     it('rejects a request without a session with 401', async () => {
-      const { reply, findById } = await runContestGate(requireMemberOfLeague, { authUser: null });
+      const { reply, findById } = await runContestGate(memberOfContestLeague, { authUser: null });
       expect(reply.statusCode).toBe(401);
       expectReplyError(reply, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
       expect(findById).not.toHaveBeenCalled();
     });
 
     it('rejects a request without a contest id with 400', async () => {
-      const { reply } = await runContestGate(requireMemberOfLeague, { contestId: null });
+      const { reply } = await runContestGate(memberOfContestLeague, { contestId: null });
       expect(reply.statusCode).toBe(400);
       expectReplyError(reply, 'CONTEST_ID_REQUIRED', 'Contest id is required');
     });
 
     it('lets a root admin through without a membership (access rule A10)', async () => {
-      const { reply, findByLeagueAndUser } = await runContestGate(requireMemberOfLeague, {
+      const { reply, findByLeagueAndUser } = await runContestGate(memberOfContestLeague, {
         authUser: { userId: 'admin-1', isRootAdmin: true },
       });
       expect(reply.statusCode).toBe(200);
@@ -336,5 +348,127 @@ describe('contest-scoped league permissions (#193)', () => {
       expect(reply.statusCode).toBe(403);
       expectReplyError(reply, 'LEAGUE_MEMBERSHIP_INACTIVE', 'Your membership in this league is inactive');
     });
+  });
+});
+
+/**
+ * #292 — the squad gate: acting for a squad needs an active owner of it, the league's
+ * commissioner (access rule A7), or a root admin. Both memberships must be ACTIVE, because an
+ * inactive squad membership survives leaving the league.
+ */
+describe('requireMemberOfSquad (#292)', () => {
+  async function runSquadGate(options: {
+    leagueMembership?: ReturnType<typeof buildMembership> | null;
+    squadMembershipStatus?: SquadMembershipStatus | null;
+    squadLeagueId?: string | null;
+    authUser?: { userId: string; isRootAdmin: boolean } | null;
+  } = {}) {
+    const squad = options.squadLeagueId === null
+      ? null
+      : { id: 'squad-1', leagueId: options.squadLeagueId ?? 'league-1' };
+    const findById = jest.fn().mockResolvedValue(squad);
+    const findBySquadAndUser = jest.fn().mockResolvedValue(
+      options.squadMembershipStatus === null || options.squadMembershipStatus === undefined
+        ? null
+        : { squadId: 'squad-1', leagueId: 'league-1', userId: 'user-1', status: options.squadMembershipStatus },
+    );
+    const findByLeagueAndUser = jest.fn().mockResolvedValue(
+      options.leagueMembership === undefined
+        ? buildMembership({ role: LeagueRole.MEMBER })
+        : options.leagueMembership,
+    );
+    const hook = requireMemberOfSquad(
+      fakeSquadRepo({ findById }),
+      fakeSquadMembershipRepo({ findBySquadAndUser }),
+      fakeLeagueMembershipRepo({ findByLeagueAndUser }),
+    );
+    const reply = createReply();
+    const authUser = options.authUser === undefined
+      ? { userId: 'user-1', isRootAdmin: false }
+      : options.authUser;
+    await hook.call(
+      {} as never,
+      {
+        authUser: authUser
+          ? { ...authUser, email: `${authUser.userId}@integration.test`, sessionId: null }
+          : undefined,
+        params: { id: 'league-1', squadId: 'squad-1' },
+        log: fakeLogger(),
+      } as never,
+      reply as never,
+    );
+    return { reply, findById, findBySquadAndUser, findByLeagueAndUser };
+  }
+
+  it('admits an active owner of the squad who is an active league member', async () => {
+    const { reply, findBySquadAndUser } = await runSquadGate({ squadMembershipStatus: SquadMembershipStatus.ACTIVE });
+    expect(reply.statusCode).toBe(200);
+    expect(reply.payload).toBeUndefined();
+    expect(findBySquadAndUser).toHaveBeenCalledWith('squad-1', 'user-1');
+  });
+
+  it('refuses a league member who does not own the squad with 403 SQUAD_OWNER_REQUIRED', async () => {
+    const { reply } = await runSquadGate({ squadMembershipStatus: null });
+    expect(reply.statusCode).toBe(403);
+    expectReplyError(reply, 'SQUAD_OWNER_REQUIRED', 'You must be an active team owner to perform this action');
+  });
+
+  it('refuses a former owner whose squad membership is inactive with 403', async () => {
+    const { reply } = await runSquadGate({ squadMembershipStatus: SquadMembershipStatus.INACTIVE });
+    expect(reply.statusCode).toBe(403);
+    expectReplyError(reply, 'SQUAD_OWNER_REQUIRED', 'You must be an active team owner to perform this action');
+  });
+
+  it('refuses an owner whose league membership is inactive with 403, before reading the squad membership', async () => {
+    const { reply, findBySquadAndUser } = await runSquadGate({
+      leagueMembership: buildMembership({ status: LeagueMembershipStatus.INACTIVE }),
+      squadMembershipStatus: SquadMembershipStatus.ACTIVE,
+    });
+    expect(reply.statusCode).toBe(403);
+    expectReplyError(reply, 'LEAGUE_MEMBERSHIP_INACTIVE', 'Your membership in this league is inactive');
+    expect(findBySquadAndUser).not.toHaveBeenCalled();
+  });
+
+  it('refuses a caller with no league membership with 403', async () => {
+    const { reply } = await runSquadGate({ leagueMembership: null, squadMembershipStatus: SquadMembershipStatus.ACTIVE });
+    expect(reply.statusCode).toBe(403);
+    expectReplyError(
+      reply,
+      'LEAGUE_MEMBERSHIP_REQUIRED',
+      'You must be an active member of this league to perform this action',
+    );
+  });
+
+  it('admits the league commissioner acting for a squad they do not own (access rule A7)', async () => {
+    const { reply, findBySquadAndUser } = await runSquadGate({
+      leagueMembership: buildMembership({ role: LeagueRole.COMMISSIONER }),
+    });
+    expect(reply.statusCode).toBe(200);
+    expect(findBySquadAndUser).not.toHaveBeenCalled();
+  });
+
+  it('admits a root admin without any membership (access rule A10)', async () => {
+    const { reply, findByLeagueAndUser } = await runSquadGate({ authUser: { userId: 'admin-1', isRootAdmin: true } });
+    expect(reply.statusCode).toBe(200);
+    expect(findByLeagueAndUser).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 for a squad in another league, so a path cannot pair one league with another\'s squad', async () => {
+    const { reply, findByLeagueAndUser } = await runSquadGate({ squadLeagueId: 'league-2' });
+    expect(reply.statusCode).toBe(404);
+    expectReplyError(reply, 'SQUAD_NOT_FOUND', 'Squad not found: squad-1');
+    expect(findByLeagueAndUser).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 for a squad that does not exist', async () => {
+    const { reply } = await runSquadGate({ squadLeagueId: null });
+    expect(reply.statusCode).toBe(404);
+  });
+
+  it('rejects a request without a session with 401, before reading the squad', async () => {
+    const { reply, findById } = await runSquadGate({ authUser: null });
+    expect(reply.statusCode).toBe(401);
+    expectReplyError(reply, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
+    expect(findById).not.toHaveBeenCalled();
   });
 });

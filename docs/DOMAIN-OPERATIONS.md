@@ -351,8 +351,8 @@ the pre-check that gates the route. They are never carried on the access token a
 
 The pre-checks are `requireMemberOfLeague` for read-only access within a league's scope
 (browsing contests, the leaderboard, other squads and members), the commissioner gates for
-league administration, and squad affiliation for anything done on a squad's behalf, entries
-included. Each one resolves the resource's league from the database and reads the caller's
+league administration, and squad affiliation (`requireMemberOfSquad`, #292) for anything done
+on a squad's behalf, entries included. Each one resolves the resource's league from the database and reads the caller's
 membership there.
 
 ### Why A10 does not transfer
@@ -756,7 +756,11 @@ went with it.
 
 ### PlatformRuntimeConfig — `platform`
 
-Two runtime-tunable documents: the client poll intervals and the ingestion schedule.
+Runtime-tunable settings groups, one JSON document each: the client poll intervals and the
+ingestion schedule. Every group is owned by `AppSettingsService` (#450): each core-api task
+refreshes them from the database every 30 seconds, and every save is recorded in
+`platform_runtime_config_history`. Which settings belong here and which stay in env is
+`rules/architecture-rules.md` §6 *Runtime settings live in the database, not in env*.
 
 | Operation | Role | Notes |
 |---|---|---|

@@ -43,6 +43,11 @@ export type JobType =
   | 'EVENT_PARTICIPANTS_SYNC'
   | 'EVENT_LIVE_SCORES_SYNC';
 
+export interface IngestionJobErrorLogEntry {
+  error: string;
+  at: Date;
+}
+
 export interface IngestionJobRecord {
   jobType: JobType;
   providerId: string;
@@ -53,7 +58,7 @@ export interface IngestionJobRecord {
   completedAt?: Date;
   recordsProcessed: number;
   errors: number;
-  errorLog: unknown[];
+  errorLog: IngestionJobErrorLogEntry[];
   providerPayload?: IngestionJobProviderPayload;
   stats?: Record<string, number>;
   warnings?: IngestionJobWarning[];

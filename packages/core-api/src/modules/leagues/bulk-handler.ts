@@ -6,6 +6,7 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { LeagueBulkOperationResponse } from '@poolmaster/shared/dto';
 import type { BulkService, CsvImportRow } from './bulk-service';
 import { BulkOperationError } from './bulk-service';
 import { sendError } from '../../core/error-handler';
@@ -24,7 +25,7 @@ export function createBulkHandlers(bulkService: BulkService) {
   ): Promise<void> {
     const userId = request.authUser?.userId as string;
     try {
-      const result = await bulkService.importMembersFromCsv(
+      const result: LeagueBulkOperationResponse = await bulkService.importMembersFromCsv(
         request.params.id,
         userId,
         request.body.rows,
