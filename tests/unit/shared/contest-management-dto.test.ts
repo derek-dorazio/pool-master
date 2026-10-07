@@ -16,7 +16,6 @@ describe('contest-management dto schemas', () => {
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       configuration: {
-        locksAt: '2026-04-10T12:00:00.000Z',
         maxEntriesPerSquad: 3,
         rosterSize: 6,
         countedScores: 4,
@@ -97,7 +96,6 @@ describe('contest-management dto schemas', () => {
       active: true,
       schemaVersion: 1,
       configuration: {
-        locksAt: '2026-04-10T12:00:00.000Z',
         maxEntriesPerSquad: 1,
         rosterSize: 6,
         countedScores: 4,
@@ -142,7 +140,6 @@ describe('contest-management dto schemas', () => {
         configuration: {
           id: 'config-1',
           contestId: 'contest-1',
-          locksAt: '2026-04-10T12:00:00.000Z',
           maxEntriesPerSquad: 1,
           rosterSize: 6,
           countedScores: 4,
@@ -184,7 +181,6 @@ describe('contest-management dto schemas', () => {
           configuration: {
             id: 'config-1',
             contestId: 'contest-1',
-            locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 1,
             rosterSize: 6,
             countedScores: 4,

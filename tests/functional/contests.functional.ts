@@ -388,7 +388,6 @@ describe('SDK Functional: Contests and Entries', () => {
         selectionType: SelectionType.TIERED,
         templateId: defaultTemplate?.id as string,
         configuration: {
-          locksAt: '2026-04-10T11:55:00.000Z',
           maxEntriesPerSquad: 3,
           rosterSize: 1,
           countedScores: 1,

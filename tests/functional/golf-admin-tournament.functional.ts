@@ -257,6 +257,26 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       body: { participants: [{ sportEventParticipantId: field.data!.participants[5].id, oddsToWin: 4242 }] },
     });
 
+    // --- A ranking or seed past a 32-bit integer is a 400, never a 500 -----------
+    const oversized = 2 ** 31;
+    const oversizedTarget = field.data!.participants[5];
+    expectFunctionalError(
+      await updateEventParticipants({
+        client: c,
+        path: { eventId },
+        body: { participants: [{ sportEventParticipantId: oversizedTarget.id, ranking: oversized }] },
+      }),
+      { status: 400, code: 'FST_ERR_VALIDATION' },
+    );
+    expectFunctionalError(
+      await previewEventParticipantUpload({
+        client: c,
+        path: { eventId },
+        body: { rows: [{ participantId: oversizedTarget.participantId, seedNumber: oversized }] },
+      }),
+      { status: 400, code: 'FST_ERR_VALIDATION' },
+    );
+
     // --- Bulk-adjust the field: preview, a refused apply, then apply -------------
     // The upload only adjusts golfers already on the field; one it cannot find blocks the apply.
     const [upA, upB] = field.data!.participants.slice(6, 8);

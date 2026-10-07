@@ -104,7 +104,6 @@ describe('League Dashboard Read Integration', () => {
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         startsAt: new Date('2099-05-06T12:00:00.000Z'),
-        lockAt: new Date('2099-05-06T13:00:00.000Z'),
         endsAt: new Date('2099-05-06T18:00:00.000Z'),
       },
     });
@@ -135,7 +134,6 @@ describe('League Dashboard Read Integration', () => {
     expect(dashboard.upcomingEvents).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ contestId, eventType: 'CONTEST_START' }),
-        expect.objectContaining({ contestId, eventType: 'LOCK_TIME' }),
         expect.objectContaining({ contestId, eventType: 'CONTEST_END' }),
       ]),
     );
