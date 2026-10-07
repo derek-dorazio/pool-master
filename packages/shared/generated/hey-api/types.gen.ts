@@ -3529,10 +3529,6 @@ export type CreateContestRequest = {
      */
     configuration?: {
         /**
-         * Contest entry lock timestamp.
-         */
-        locksAt?: string | null;
-        /**
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
@@ -3554,7 +3550,6 @@ export type UpdateContestRequest = {
     name?: string;
     startsAt?: string;
     endsAt?: string;
-    lockAt?: string;
     /**
      * Whether the contest should continue to enforce exclusive picks.
      */
@@ -3586,16 +3581,6 @@ export type ExtendContestDeadlineRequest = {
 };
 
 /**
- * Request payload for updating a contest lock time.
- */
-export type UpdateContestLockTimeRequest = {
-    /**
-     * Replacement contest lock timestamp.
-     */
-    newLock: string;
-};
-
-/**
  * A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields).
  */
 export type ContestDto = {
@@ -3614,10 +3599,6 @@ export type ContestDto = {
     entryCount?: number;
     startsAt?: string | null;
     endsAt?: string | null;
-    /**
-     * When entries lock.
-     */
-    lockAt?: string | null;
     /**
      * Whether a participant may be picked by only one entry in the contest.
      */
@@ -4281,10 +4262,6 @@ export type ContestConfigurationDetailDto = {
     captainSlot?: boolean;
     captainMultiplier?: number;
     /**
-     * Contest entry lock timestamp stored on the contest configuration record.
-     */
-    locksAt?: string | null;
-    /**
      * Maximum entries a Team may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
@@ -4391,10 +4368,6 @@ export type ContestResponse = {
         startsAt?: string | null;
         endsAt?: string | null;
         /**
-         * When entries lock.
-         */
-        lockAt?: string | null;
-        /**
          * Whether a participant may be picked by only one entry in the contest.
          */
         isExclusive: boolean;
@@ -4460,10 +4433,6 @@ export type ContestResponse = {
         missedCutPenalty?: number;
         captainSlot?: boolean;
         captainMultiplier?: number;
-        /**
-         * Contest entry lock timestamp stored on the contest configuration record.
-         */
-        locksAt?: string | null;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
@@ -4568,10 +4537,6 @@ export type ContestListResponse = {
         entryCount?: number;
         startsAt?: string | null;
         endsAt?: string | null;
-        /**
-         * When entries lock.
-         */
-        lockAt?: string | null;
         /**
          * Whether a participant may be picked by only one entry in the contest.
          */
@@ -5845,7 +5810,7 @@ export type UpcomingEventDto = {
     /**
      * Upcoming event category.
      */
-    eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
+    eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END';
 };
 
 /**
@@ -6676,10 +6641,6 @@ export type LeagueDashboardResponse = {
         startsAt?: string | null;
         endsAt?: string | null;
         /**
-         * When entries lock.
-         */
-        lockAt?: string | null;
-        /**
          * Whether a participant may be picked by only one entry in the contest.
          */
         isExclusive: boolean;
@@ -6732,7 +6693,7 @@ export type LeagueDashboardResponse = {
         /**
          * Upcoming event category.
          */
-        eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
+        eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END';
     }>;
 };
 
@@ -13636,10 +13597,6 @@ export type GetContestConfigurationResponses = {
              */
             configuration: {
                 /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string | null;
-                /**
                  * Maximum entries a Team may create. Null means unlimited.
                  */
                 maxEntriesPerSquad?: number | null;
@@ -13729,10 +13686,6 @@ export type UpdateContestConfigurationData = {
      * Approved commissioner-managed contest configuration payload for golf-first contest creation.
      */
     body: {
-        /**
-         * Contest entry lock timestamp.
-         */
-        locksAt?: string | null;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
@@ -13921,10 +13874,6 @@ export type UpdateContestConfigurationResponses = {
              * Current commissioner-managed contest configuration.
              */
             configuration: {
-                /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string | null;
                 /**
                  * Maximum entries a Team may create. Null means unlimited.
                  */
@@ -14187,10 +14136,6 @@ export type OpenContestResponses = {
              * Current commissioner-managed contest configuration.
              */
             configuration: {
-                /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string | null;
                 /**
                  * Maximum entries a Team may create. Null means unlimited.
                  */
@@ -15337,24 +15282,6 @@ export type ExtendContestDeadlineResponses = {
 
 export type ExtendContestDeadlineResponse = ExtendContestDeadlineResponses[keyof ExtendContestDeadlineResponses];
 
-export type UpdateContestLockTimeData = {
-    body: UpdateContestLockTimeRequest;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/update-lock';
-};
-
-export type UpdateContestLockTimeResponses = {
-    /**
-     * Single-contest response.
-     */
-    200: ContestResponse;
-};
-
-export type UpdateContestLockTimeResponse = UpdateContestLockTimeResponses[keyof UpdateContestLockTimeResponses];
-
 export type ListContestConfigTemplatesData = {
     body?: never;
     path?: never;
@@ -15487,10 +15414,6 @@ export type ListContestConfigTemplatesResponses = {
              */
             configuration: {
                 /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string | null;
-                /**
                  * Maximum entries a Team may create. Null means unlimited.
                  */
                 maxEntriesPerSquad?: number | null;
@@ -15538,10 +15461,6 @@ export type UpdateContestConfigTemplateData = {
          * Updated persisted configuration payload copied into future contests when this template is selected.
          */
         configuration?: {
-            /**
-             * Contest entry lock timestamp.
-             */
-            locksAt?: string | null;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -15717,10 +15636,6 @@ export type UpdateContestConfigTemplateResponses = {
              * Seeded configuration payload copied into a contest instance when the template is chosen.
              */
             configuration: {
-                /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string | null;
                 /**
                  * Maximum entries a Team may create. Null means unlimited.
                  */

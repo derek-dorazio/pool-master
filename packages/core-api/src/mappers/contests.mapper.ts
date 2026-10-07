@@ -42,7 +42,6 @@ interface ContestRow {
   isExclusive: boolean;
   startsAt?: Date | null;
   endsAt?: Date | null;
-  lockAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -128,7 +127,6 @@ export function toContestDto(
     entryCount: opts?.entryCount,
     startsAt: contest.startsAt?.toISOString() ?? null,
     endsAt: contest.endsAt?.toISOString() ?? null,
-    lockAt: contest.lockAt?.toISOString() ?? null,
     isExclusive: contest.isExclusive,
     createdAt: contest.createdAt.toISOString(),
     updatedAt: contest.updatedAt.toISOString(),
@@ -159,9 +157,10 @@ function toContestConfigurationDetailDto(
       : (contestConfiguration.maxEntriesPerSquad ?? 1);
 
   if (isManagedConfiguration && contestConfiguration.configJson) {
+    // Only the typed settings: rows saved before #416 also hold a lock time and an entry cap.
     return {
-      ...contestConfiguration.configJson,
-      locksAt: contestConfiguration.locksAt?.toISOString() ?? null,
+      rosterSize: contestConfiguration.configJson.rosterSize,
+      countedScores: contestConfiguration.configJson.countedScores,
       maxEntriesPerSquad,
     };
   }
@@ -184,7 +183,6 @@ function toContestConfigurationDetailDto(
     rosterSize: contestConfiguration.rosterSize,
     roundValues: contestConfiguration.roundValues,
     startRound: contestConfiguration.startRound,
-    locksAt: contestConfiguration.locksAt?.toISOString() ?? null,
     maxEntriesPerSquad,
   };
 }

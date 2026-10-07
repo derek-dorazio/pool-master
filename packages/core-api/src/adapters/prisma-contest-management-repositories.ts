@@ -51,7 +51,6 @@ export class PrismaContestConfigurationRepository
         picksPerPeriod: configuration.picksPerPeriod,
         roundValues: configuration.roundValues,
         startRound: configuration.startRound,
-        locksAt: configuration.locksAt,
         minimumEntries: configuration.minimumEntries,
         maxEntriesPerSquad: configuration.maxEntriesPerSquad,
         rosterSize: configuration.rosterSize,
@@ -104,7 +103,6 @@ export class PrismaContestConfigurationRepository
         ...(updates.startRound !== undefined && {
           startRound: updates.startRound,
         }),
-        ...(updates.locksAt !== undefined && { locksAt: updates.locksAt }),
         ...(updates.minimumEntries !== undefined && {
           minimumEntries: updates.minimumEntries,
         }),
@@ -326,7 +324,6 @@ function mapContestConfiguration(row: {
   picksPerPeriod: number | null;
   roundValues: unknown;
   startRound: string | null;
-  locksAt: Date | null;
   minimumEntries: number | null;
   maxEntriesPerSquad: number | null;
   rosterSize: number | null;
@@ -351,7 +348,6 @@ function mapContestConfiguration(row: {
     picksPerPeriod: row.picksPerPeriod ?? undefined,
     roundValues: (row.roundValues as number[]) ?? undefined,
     startRound: row.startRound ?? undefined,
-    locksAt: row.locksAt ?? undefined,
     minimumEntries: row.minimumEntries ?? undefined,
     maxEntriesPerSquad: row.maxEntriesPerSquad ?? undefined,
     rosterSize: row.rosterSize ?? undefined,

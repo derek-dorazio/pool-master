@@ -38,7 +38,6 @@ const UpdateContestBodySchema = zod.object({
   name: zod.string().min(1).max(100).optional(),
   startsAt: zod.string().datetime().optional(),
   endsAt: zod.string().datetime().optional(),
-  lockAt: zod.string().datetime().optional(),
   isExclusive: zod.boolean().optional(),
 });
 
@@ -360,7 +359,6 @@ export function createContestHandlers(contestService: ContestService) {
           name: body.name,
           startsAt: body.startsAt ? new Date(body.startsAt) : undefined,
           endsAt: body.endsAt ? new Date(body.endsAt) : undefined,
-          lockAt: body.lockAt ? new Date(body.lockAt) : undefined,
           isExclusive: body.isExclusive,
         },
       );

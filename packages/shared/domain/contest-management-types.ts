@@ -128,7 +128,6 @@ export interface ContestConfiguration extends DomainEntity {
   rounds?: number;
   timePerPickSeconds?: number;
   autoPickPolicy?: string;
-  locksAt?: Date;
   minimumEntries?: number;
   maxEntriesPerSquad?: number | null;
   totalPrizePoolAmount?: number | null;
