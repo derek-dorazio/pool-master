@@ -86,7 +86,7 @@ export function RootAdminSportOverridesPage() {
       setIngestionDraft(nextDraft);
       setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
     },
-    invalidates: [QueryKeys.rootAdmin.ingestionConfig],
+    invalidates: [QueryKeys.rootAdmin.ingestionConfig, QueryKeys.rootAdmin.settings],
   });
 
   const resetSportOverrideMutation = useInvalidatingMutation({
@@ -106,7 +106,7 @@ export function RootAdminSportOverridesPage() {
       setIngestionDraft(nextDraft);
       setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
     },
-    invalidates: [QueryKeys.rootAdmin.ingestionConfig],
+    invalidates: [QueryKeys.rootAdmin.ingestionConfig, QueryKeys.rootAdmin.settings],
   });
 
   return (

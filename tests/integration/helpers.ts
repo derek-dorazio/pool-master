@@ -44,6 +44,7 @@ import { PollConfigService } from '../../packages/core-api/src/modules/platform/
 import { IngestionConfigService } from '../../packages/core-api/src/modules/platform/ingestion-config-service';
 import { AppSettingsService } from '../../packages/core-api/src/modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from '../../packages/core-api/src/modules/platform/settings-groups';
+import { PlatformSettingsService } from '../../packages/core-api/src/modules/platform/platform-settings-service';
 import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
@@ -52,6 +53,7 @@ import {
   PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
+  PrismaUserRepository,
 } from '../../packages/core-api/src/adapters';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
@@ -103,6 +105,9 @@ const MAIL_ENVIRONMENT_KEYS = [
 ] as const;
 type MailEnvironmentKey = (typeof MAIL_ENVIRONMENT_KEYS)[number];
 
+/** The shared app's settings cache; `cleanupTestData` refreshes it so deleted rows are not served. */
+let appSettings: AppSettingsService | undefined;
+
 /** Get the shared Fastify app instance (created once per test suite). */
 export function getApp(): FastifyInstance {
   return app;
@@ -127,7 +132,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   // The ingestion and platform services index.ts builds, without the background scheduler.
   const providerRegistry = new ProviderRegistry();
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
-  const appSettings = new AppSettingsService({
+  appSettings = new AppSettingsService({
     repository: runtimeConfigRepository,
     groups: SETTINGS_GROUPS,
     env: process.env,
@@ -135,6 +140,11 @@ async function buildTestApp(): Promise<FastifyInstance> {
   await appSettings.load();
   const pollConfigService = new PollConfigService(appSettings);
   const ingestionConfigService = new IngestionConfigService(appSettings);
+  const platformSettingsService = new PlatformSettingsService({
+    settings: appSettings,
+    runtimeConfigs: runtimeConfigRepository,
+    users: new PrismaUserRepository(prisma),
+  });
   const ingestionService = new IngestionService({
     registry: providerRegistry,
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -161,7 +171,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
-  testApp.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService });
+  testApp.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService, platformSettingsService });
   testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
 
   await testApp.ready();
@@ -678,6 +688,7 @@ export async function cleanupTestData(): Promise<void> {
 
   await prisma.platformRuntimeConfig.deleteMany();
   await prisma.platformRuntimeConfigHistory.deleteMany();
+  await appSettings?.refresh();
   if (userIds.length > 0) {
     await prisma.refreshToken.deleteMany({
       where: { userId: { in: userIds } },

@@ -71,7 +71,7 @@ export function RootAdminPollIntervalsPage() {
     onSuccess: (data) => {
       setDraft(clonePollConfig(data));
     },
-    invalidates: [QueryKeys.rootAdmin.pollConfig],
+    invalidates: [QueryKeys.rootAdmin.pollConfig, QueryKeys.rootAdmin.settings],
   });
 
   const resetPollConfigMutation = useInvalidatingMutation({
@@ -85,7 +85,7 @@ export function RootAdminPollIntervalsPage() {
     onSuccess: (data) => {
       setDraft(clonePollConfig(data));
     },
-    invalidates: [QueryKeys.rootAdmin.pollConfig],
+    invalidates: [QueryKeys.rootAdmin.pollConfig, QueryKeys.rootAdmin.settings],
   });
 
   function updateDraftValue(key: keyof PollIntervalConfig, value: string) {

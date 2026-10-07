@@ -32,12 +32,14 @@ import { IngestionConfigService } from './modules/platform/ingestion-config-serv
 import { PollConfigService } from './modules/platform/poll-config-service';
 import { AppSettingsService } from './modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from './modules/platform/settings-groups';
+import { PlatformSettingsService } from './modules/platform/platform-settings-service';
 import { ingestionModule } from './modules/ingestion/routes';
 import { IngestionService } from './modules/ingestion/ingestion-service';
 import {
   PrismaParticipantProviderMappingRepository,
   PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
+  PrismaUserRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
 } from './adapters';
@@ -105,6 +107,12 @@ export function buildApp() {
   });
   const pollConfigService = new PollConfigService(appSettings, app.log);
   const ingestionConfigService = new IngestionConfigService(appSettings, app.log);
+  const platformSettingsService = new PlatformSettingsService({
+    settings: appSettings,
+    runtimeConfigs: runtimeConfigRepository,
+    users: new PrismaUserRepository(prisma),
+    logger: app.log,
+  });
 
   // =========================================================================
   // Core plugins
@@ -192,7 +200,7 @@ export function buildApp() {
   app.register(sportsModule, { prefix: '/api/v1/sports' });
   app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
-  app.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService });
+  app.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService, platformSettingsService });
   app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
 
