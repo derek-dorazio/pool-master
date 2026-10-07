@@ -1375,7 +1375,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a sport event */
+        /**
+         * Get a sport event
+         * @description 404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin.
+         */
         get: operations["getEvent"];
         put?: never;
         post?: never;
@@ -1585,7 +1588,7 @@ export interface paths {
         head?: never;
         /**
          * Update a sport event's field
-         * @description Patches field rows and their manual prices, all or none. Root admin only.
+         * @description Patches field rows and their manual prices, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event's price would change: its tiers and prices are locked.
          */
         patch: operations["updateEventParticipants"];
         trace?: never;
@@ -1725,7 +1728,7 @@ export interface paths {
         put?: never;
         /**
          * Fill a sport event's tiers from its active field
-         * @description Returns the field with its new valuations. Root admin only.
+         * @description Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.
          */
         post: operations["autoAssignEventTiers"];
         delete?: never;
@@ -1744,7 +1747,7 @@ export interface paths {
         get?: never;
         /**
          * Replace a sport event's tier assignments
-         * @description The drag-and-drop save, all or none. Returns the field with its new valuations. Root admin only.
+         * @description The drag-and-drop save, all or none. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.
          */
         put: operations["replaceEventTierAssignments"];
         post?: never;
@@ -1765,7 +1768,7 @@ export interface paths {
         put?: never;
         /**
          * Price a sport event's seeded field
-         * @description Returns the field with its new valuations. Root admin only.
+         * @description Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.
          */
         post: operations["autoAssignEventPrices"];
         delete?: never;
@@ -4085,7 +4088,7 @@ export interface components {
         /** @description Moves an event to its next lifecycle status, activating or settling its contests as that status requires. */
         TransitionSportEventRequest: {
             /**
-             * @description One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseSportEvent).
+             * @description One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseEvent).
              * @enum {string}
              */
             toStatus: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
@@ -16845,6 +16848,25 @@ export interface operations {
                     };
                 };
             };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
         };
     };
     seedEventParticipants: {
@@ -17663,6 +17685,25 @@ export interface operations {
                     };
                 };
             };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
         };
     };
     replaceEventTierAssignments: {
@@ -17729,6 +17770,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17831,6 +17891,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

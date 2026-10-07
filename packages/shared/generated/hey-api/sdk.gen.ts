@@ -1021,6 +1021,8 @@ export const deleteEvent = <ThrowOnError extends boolean = false>(options: Optio
 
 /**
  * Get a sport event
+ *
+ * 404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin.
  */
 export const getEvent = <ThrowOnError extends boolean = false>(options: Options<GetEventData, ThrowOnError>) => (options.client ?? client).get<GetEventResponses, GetEventErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1204,7 +1206,7 @@ export const listEventParticipants = <ThrowOnError extends boolean = false>(opti
 /**
  * Update a sport event's field
  *
- * Patches field rows and their manual prices, all or none. Root admin only.
+ * Patches field rows and their manual prices, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event's price would change: its tiers and prices are locked.
  */
 export const updateEventParticipants = <ThrowOnError extends boolean = false>(options: Options<UpdateEventParticipantsData, ThrowOnError>) => (options.client ?? client).patch<UpdateEventParticipantsResponses, UpdateEventParticipantsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1323,7 +1325,7 @@ export const replaceEventTiers = <ThrowOnError extends boolean = false>(options:
 /**
  * Fill a sport event's tiers from its active field
  *
- * Returns the field with its new valuations. Root admin only.
+ * Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.
  */
 export const autoAssignEventTiers = <ThrowOnError extends boolean = false>(options: Options<AutoAssignEventTiersData, ThrowOnError>) => (options.client ?? client).post<AutoAssignEventTiersResponses, AutoAssignEventTiersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1338,7 +1340,7 @@ export const autoAssignEventTiers = <ThrowOnError extends boolean = false>(optio
 /**
  * Replace a sport event's tier assignments
  *
- * The drag-and-drop save, all or none. Returns the field with its new valuations. Root admin only.
+ * The drag-and-drop save, all or none. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.
  */
 export const replaceEventTierAssignments = <ThrowOnError extends boolean = false>(options: Options<ReplaceEventTierAssignmentsData, ThrowOnError>) => (options.client ?? client).put<ReplaceEventTierAssignmentsResponses, ReplaceEventTierAssignmentsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1353,7 +1355,7 @@ export const replaceEventTierAssignments = <ThrowOnError extends boolean = false
 /**
  * Price a sport event's seeded field
  *
- * Returns the field with its new valuations. Root admin only.
+ * Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.
  */
 export const autoAssignEventPrices = <ThrowOnError extends boolean = false>(options: Options<AutoAssignEventPricesData, ThrowOnError>) => (options.client ?? client).post<AutoAssignEventPricesResponses, AutoAssignEventPricesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

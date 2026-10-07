@@ -2273,7 +2273,7 @@ export type UpdateSportEventRequest = {
  */
 export type TransitionSportEventRequest = {
     /**
-     * One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseSportEvent).
+     * One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseEvent).
      */
     toStatus: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
 };
@@ -17384,6 +17384,28 @@ export type UpdateEventParticipantsErrors = {
             details?: unknown;
         };
     };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
 };
 
 export type UpdateEventParticipantsError = UpdateEventParticipantsErrors[keyof UpdateEventParticipantsErrors];
@@ -18384,6 +18406,28 @@ export type AutoAssignEventTiersErrors = {
             details?: unknown;
         };
     };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
 };
 
 export type AutoAssignEventTiersError = AutoAssignEventTiersErrors[keyof AutoAssignEventTiersErrors];
@@ -18455,6 +18499,28 @@ export type ReplaceEventTierAssignmentsErrors = {
      * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
         /**
          * Error payload object.
          */
@@ -18566,6 +18632,28 @@ export type AutoAssignEventPricesErrors = {
      * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
         /**
          * Error payload object.
          */

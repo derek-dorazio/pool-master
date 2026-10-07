@@ -105,7 +105,9 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     },
 
     getEvent: async (request: FastifyRequest<EventParams>): Promise<SportEventResponse> => {
-      return eventResponse(request.params.eventId);
+      // As in listEvents: a draft is a 404 to anyone but a root admin.
+      const releasedOnly = request.authUser?.isRootAdmin !== true;
+      return { event: mapSportEventToDto(await sportEvents.requireSummary(request.params.eventId, { releasedOnly })) };
     },
 
     createEvent: async (request: FastifyRequest<{ Body: CreateSportEventRequest }>, reply: FastifyReply) => {

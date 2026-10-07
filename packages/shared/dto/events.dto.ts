@@ -167,7 +167,7 @@ export const UpdateSportEventRequestSchema = z.object({
 export type UpdateSportEventRequest = z.infer<typeof UpdateSportEventRequestSchema>;
 
 export const TransitionSportEventRequestSchema = z.object({
-  toStatus: EventStatusDtoSchema.describe('One of the event\'s allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseSportEvent).'),
+  toStatus: EventStatusDtoSchema.describe('One of the event\'s allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseEvent).'),
 }).describe('Moves an event to its next lifecycle status, activating or settling its contests as that status requires.');
 export type TransitionSportEventRequest = z.infer<typeof TransitionSportEventRequestSchema>;
 

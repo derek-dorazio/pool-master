@@ -3958,7 +3958,7 @@
               "CANCELLED",
               "POSTPONED"
             ],
-            "description": "One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseSportEvent)."
+            "description": "One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseEvent)."
           }
         },
         "required": [
@@ -30281,6 +30281,7 @@
         "tags": [
           "Events"
         ],
+        "description": "404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin.",
         "parameters": [
           {
             "schema": {
@@ -33183,7 +33184,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Patches field rows and their manual prices, all or none. Root admin only.",
+        "description": "Patches field rows and their manual prices, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event's price would change: its tiers and prices are locked.",
         "requestBody": {
           "required": true,
           "content": {
@@ -33295,6 +33296,45 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -34774,7 +34814,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Returns the field with its new valuations. Root admin only.",
+        "description": "Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.",
         "requestBody": {
           "required": true,
           "content": {
@@ -34923,6 +34963,45 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
           }
         }
       }
@@ -34934,7 +35013,7 @@
         "tags": [
           "Events"
         ],
-        "description": "The drag-and-drop save, all or none. Returns the field with its new valuations. Root admin only.",
+        "description": "The drag-and-drop save, all or none. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.",
         "requestBody": {
           "required": true,
           "content": {
@@ -35084,6 +35163,45 @@
               }
             }
           },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
           "422": {
             "description": "Standard API error envelope.",
             "content": {
@@ -35133,7 +35251,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Returns the field with its new valuations. Root admin only.",
+        "description": "Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.",
         "requestBody": {
           "required": true,
           "content": {
@@ -35245,6 +35363,45 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
