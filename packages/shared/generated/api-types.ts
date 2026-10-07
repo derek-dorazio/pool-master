@@ -2451,6 +2451,32 @@ export interface components {
             /** @description Fallback refresh interval for pollable surfaces without a more specific recommendation. */
             default: number;
         };
+        /**
+         * @description A system email template.
+         * @enum {string}
+         */
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY";
+        /** @description Whether and how system email is sent. */
+        EmailConfig: {
+            /** @description Whether any system email is sent. Off: every email is skipped and logged. */
+            enabled: boolean;
+            /**
+             * Format: email
+             * @description Reply-To address for system email, or null to let replies go to the sender.
+             */
+            replyTo: string | null;
+            /** @description Per-template switches. A template that is off is skipped even while email is on. */
+            templates: {
+                /** @description Whether this email is sent. */
+                LEAGUE_MEMBER_INVITE: boolean;
+                /** @description Whether this email is sent. */
+                LEAGUE_JOIN_SUCCESS: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_ENTRY_COMPLETED: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_STARTED_SUMMARY: boolean;
+            };
+        };
         /** @description Partial poll-interval update payload used by root-admin configuration tools. */
         PollIntervalConfigPatch: {
             /** @description Recommended refresh interval for standings and leaderboard surfaces. */
@@ -2587,7 +2613,7 @@ export interface components {
          * @description The stored key of a settings group.
          * @enum {string}
          */
-        SettingsGroupKey: "POLL_INTERVAL_CONFIG" | "INGESTION_SCHEDULE_CONFIG";
+        SettingsGroupKey: "POLL_INTERVAL_CONFIG" | "INGESTION_SCHEDULE_CONFIG" | "EMAIL_CONFIG";
         /** @description The root admin who saved a settings change. */
         SettingsActor: {
             /**
@@ -2843,6 +2869,75 @@ export interface components {
                     };
                 };
             };
+        } | {
+            /** @enum {string} */
+            key: "EMAIL_CONFIG";
+            /** @description Short display name of the group. */
+            title: string;
+            /** @description What the group controls. */
+            description: string;
+            /**
+             * @description `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
+             * @enum {string}
+             */
+            source: "stored" | "defaults";
+            /**
+             * Format: date-time
+             * @description When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
+             */
+            updatedAt: string | null;
+            /** @description Who last saved the stored value, when known. */
+            updatedBy: {
+                /**
+                 * Format: uuid
+                 * @description The user id of the root admin who made the change.
+                 */
+                id: string;
+                /** @description The admin's full name, for display. */
+                name: string;
+            } | null;
+            /** @description The value in use. */
+            value: {
+                /** @description Whether any system email is sent. Off: every email is skipped and logged. */
+                enabled: boolean;
+                /**
+                 * Format: email
+                 * @description Reply-To address for system email, or null to let replies go to the sender.
+                 */
+                replyTo: string | null;
+                /** @description Per-template switches. A template that is off is skipped even while email is on. */
+                templates: {
+                    /** @description Whether this email is sent. */
+                    LEAGUE_MEMBER_INVITE: boolean;
+                    /** @description Whether this email is sent. */
+                    LEAGUE_JOIN_SUCCESS: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_ENTRY_COMPLETED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_STARTED_SUMMARY: boolean;
+                };
+            };
+            /** @description The value a reset would store. */
+            defaults: {
+                /** @description Whether any system email is sent. Off: every email is skipped and logged. */
+                enabled: boolean;
+                /**
+                 * Format: email
+                 * @description Reply-To address for system email, or null to let replies go to the sender.
+                 */
+                replyTo: string | null;
+                /** @description Per-template switches. A template that is off is skipped even while email is on. */
+                templates: {
+                    /** @description Whether this email is sent. */
+                    LEAGUE_MEMBER_INVITE: boolean;
+                    /** @description Whether this email is sent. */
+                    LEAGUE_JOIN_SUCCESS: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_ENTRY_COMPLETED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_STARTED_SUMMARY: boolean;
+                };
+            };
         };
         /** @description Every settings group the platform has. */
         SettingsGroupList: {
@@ -3091,6 +3186,75 @@ export interface components {
                         };
                     };
                 };
+            } | {
+                /** @enum {string} */
+                key: "EMAIL_CONFIG";
+                /** @description Short display name of the group. */
+                title: string;
+                /** @description What the group controls. */
+                description: string;
+                /**
+                 * @description `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
+                 * @enum {string}
+                 */
+                source: "stored" | "defaults";
+                /**
+                 * Format: date-time
+                 * @description When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
+                 */
+                updatedAt: string | null;
+                /** @description Who last saved the stored value, when known. */
+                updatedBy: {
+                    /**
+                     * Format: uuid
+                     * @description The user id of the root admin who made the change.
+                     */
+                    id: string;
+                    /** @description The admin's full name, for display. */
+                    name: string;
+                } | null;
+                /** @description The value in use. */
+                value: {
+                    /** @description Whether any system email is sent. Off: every email is skipped and logged. */
+                    enabled: boolean;
+                    /**
+                     * Format: email
+                     * @description Reply-To address for system email, or null to let replies go to the sender.
+                     */
+                    replyTo: string | null;
+                    /** @description Per-template switches. A template that is off is skipped even while email is on. */
+                    templates: {
+                        /** @description Whether this email is sent. */
+                        LEAGUE_MEMBER_INVITE: boolean;
+                        /** @description Whether this email is sent. */
+                        LEAGUE_JOIN_SUCCESS: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_ENTRY_COMPLETED: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_STARTED_SUMMARY: boolean;
+                    };
+                };
+                /** @description The value a reset would store. */
+                defaults: {
+                    /** @description Whether any system email is sent. Off: every email is skipped and logged. */
+                    enabled: boolean;
+                    /**
+                     * Format: email
+                     * @description Reply-To address for system email, or null to let replies go to the sender.
+                     */
+                    replyTo: string | null;
+                    /** @description Per-template switches. A template that is off is skipped even while email is on. */
+                    templates: {
+                        /** @description Whether this email is sent. */
+                        LEAGUE_MEMBER_INVITE: boolean;
+                        /** @description Whether this email is sent. */
+                        LEAGUE_JOIN_SUCCESS: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_ENTRY_COMPLETED: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_STARTED_SUMMARY: boolean;
+                    };
+                };
             })[];
         };
         /** @description A whole new value for one settings group. `key` must match the path. */
@@ -3200,6 +3364,35 @@ export interface components {
              * @description The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
              */
             expectedUpdatedAt: string | null;
+        } | {
+            /** @enum {string} */
+            key: "EMAIL_CONFIG";
+            /** @description The whole new value. */
+            value: {
+                /** @description Whether any system email is sent. Off: every email is skipped and logged. */
+                enabled: boolean;
+                /**
+                 * Format: email
+                 * @description Reply-To address for system email, or null to let replies go to the sender.
+                 */
+                replyTo: string | null;
+                /** @description Per-template switches. A template that is off is skipped even while email is on. */
+                templates: {
+                    /** @description Whether this email is sent. */
+                    LEAGUE_MEMBER_INVITE: boolean;
+                    /** @description Whether this email is sent. */
+                    LEAGUE_JOIN_SUCCESS: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_ENTRY_COMPLETED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_STARTED_SUMMARY: boolean;
+                };
+            };
+            /**
+             * Format: date-time
+             * @description The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
+             */
+            expectedUpdatedAt: string | null;
         };
         /** @description One saved change to a settings group. */
         SettingsChange: {
@@ -3209,7 +3402,7 @@ export interface components {
              * @description The stored key of a settings group.
              * @enum {string}
              */
-            key: "POLL_INTERVAL_CONFIG" | "INGESTION_SCHEDULE_CONFIG";
+            key: "POLL_INTERVAL_CONFIG" | "INGESTION_SCHEDULE_CONFIG" | "EMAIL_CONFIG";
             /** @description The stored value before the save, as it was stored; null when the save created the first stored value. */
             previousValue: {
                 [key: string]: unknown;
@@ -3244,7 +3437,7 @@ export interface components {
                  * @description The stored key of a settings group.
                  * @enum {string}
                  */
-                key: "POLL_INTERVAL_CONFIG" | "INGESTION_SCHEDULE_CONFIG";
+                key: "POLL_INTERVAL_CONFIG" | "INGESTION_SCHEDULE_CONFIG" | "EMAIL_CONFIG";
                 /** @description The stored value before the save, as it was stored; null when the save created the first stored value. */
                 previousValue: {
                     [key: string]: unknown;

@@ -57,6 +57,69 @@
         "additionalProperties": false,
         "description": "Poll-interval configuration payload exposed to clients and root-admin tools."
       },
+      "EmailTemplateKey": {
+        "type": "string",
+        "enum": [
+          "LEAGUE_MEMBER_INVITE",
+          "LEAGUE_JOIN_SUCCESS",
+          "CONTEST_ENTRY_COMPLETED",
+          "CONTEST_STARTED_SUMMARY"
+        ],
+        "description": "A system email template."
+      },
+      "EmailConfig": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether any system email is sent. Off: every email is skipped and logged."
+          },
+          "replyTo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email",
+            "description": "Reply-To address for system email, or null to let replies go to the sender."
+          },
+          "templates": {
+            "type": "object",
+            "properties": {
+              "LEAGUE_MEMBER_INVITE": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "LEAGUE_JOIN_SUCCESS": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "CONTEST_ENTRY_COMPLETED": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "CONTEST_STARTED_SUMMARY": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              }
+            },
+            "required": [
+              "LEAGUE_MEMBER_INVITE",
+              "LEAGUE_JOIN_SUCCESS",
+              "CONTEST_ENTRY_COMPLETED",
+              "CONTEST_STARTED_SUMMARY"
+            ],
+            "additionalProperties": false,
+            "description": "Per-template switches. A template that is off is skipped even while email is on."
+          }
+        },
+        "required": [
+          "enabled",
+          "replyTo",
+          "templates"
+        ],
+        "additionalProperties": false,
+        "description": "Whether and how system email is sent."
+      },
       "PollIntervalConfigPatch": {
         "type": "object",
         "properties": {
@@ -440,7 +503,8 @@
         "type": "string",
         "enum": [
           "POLL_INTERVAL_CONFIG",
-          "INGESTION_SCHEDULE_CONFIG"
+          "INGESTION_SCHEDULE_CONFIG",
+          "EMAIL_CONFIG"
         ],
         "description": "The stored key of a settings group."
       },
@@ -1143,6 +1207,181 @@
                   "eventParticipants",
                   "eventLiveScores",
                   "perSportOverrides"
+                ],
+                "additionalProperties": false,
+                "description": "The value a reset would store."
+              }
+            },
+            "required": [
+              "key",
+              "title",
+              "description",
+              "source",
+              "updatedAt",
+              "updatedBy",
+              "value",
+              "defaults"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "EMAIL_CONFIG"
+                ]
+              },
+              "title": {
+                "type": "string",
+                "description": "Short display name of the group."
+              },
+              "description": {
+                "type": "string",
+                "description": "What the group controls."
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "stored",
+                  "defaults"
+                ],
+                "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
+              },
+              "updatedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save."
+              },
+              "updatedBy": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The user id of the root admin who made the change."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The admin's full name, for display."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Who last saved the stored value, when known."
+              },
+              "value": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Whether any system email is sent. Off: every email is skipped and logged."
+                  },
+                  "replyTo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "email",
+                    "description": "Reply-To address for system email, or null to let replies go to the sender."
+                  },
+                  "templates": {
+                    "type": "object",
+                    "properties": {
+                      "LEAGUE_MEMBER_INVITE": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "LEAGUE_JOIN_SUCCESS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_ENTRY_COMPLETED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_STARTED_SUMMARY": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      }
+                    },
+                    "required": [
+                      "LEAGUE_MEMBER_INVITE",
+                      "LEAGUE_JOIN_SUCCESS",
+                      "CONTEST_ENTRY_COMPLETED",
+                      "CONTEST_STARTED_SUMMARY"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Per-template switches. A template that is off is skipped even while email is on."
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "replyTo",
+                  "templates"
+                ],
+                "additionalProperties": false,
+                "description": "The value in use."
+              },
+              "defaults": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Whether any system email is sent. Off: every email is skipped and logged."
+                  },
+                  "replyTo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "email",
+                    "description": "Reply-To address for system email, or null to let replies go to the sender."
+                  },
+                  "templates": {
+                    "type": "object",
+                    "properties": {
+                      "LEAGUE_MEMBER_INVITE": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "LEAGUE_JOIN_SUCCESS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_ENTRY_COMPLETED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_STARTED_SUMMARY": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      }
+                    },
+                    "required": [
+                      "LEAGUE_MEMBER_INVITE",
+                      "LEAGUE_JOIN_SUCCESS",
+                      "CONTEST_ENTRY_COMPLETED",
+                      "CONTEST_STARTED_SUMMARY"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Per-template switches. A template that is off is skipped even while email is on."
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "replyTo",
+                  "templates"
                 ],
                 "additionalProperties": false,
                 "description": "The value a reset would store."
@@ -1863,6 +2102,181 @@
                     "defaults"
                   ],
                   "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "EMAIL_CONFIG"
+                      ]
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Short display name of the group."
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "What the group controls."
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "stored",
+                        "defaults"
+                      ],
+                      "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
+                    },
+                    "updatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time",
+                      "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save."
+                    },
+                    "updatedBy": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The user id of the root admin who made the change."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The admin's full name, for display."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Who last saved the stored value, when known."
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "description": "Whether any system email is sent. Off: every email is skipped and logged."
+                        },
+                        "replyTo": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "email",
+                          "description": "Reply-To address for system email, or null to let replies go to the sender."
+                        },
+                        "templates": {
+                          "type": "object",
+                          "properties": {
+                            "LEAGUE_MEMBER_INVITE": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "LEAGUE_JOIN_SUCCESS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "CONTEST_ENTRY_COMPLETED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "CONTEST_STARTED_SUMMARY": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            }
+                          },
+                          "required": [
+                            "LEAGUE_MEMBER_INVITE",
+                            "LEAGUE_JOIN_SUCCESS",
+                            "CONTEST_ENTRY_COMPLETED",
+                            "CONTEST_STARTED_SUMMARY"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Per-template switches. A template that is off is skipped even while email is on."
+                        }
+                      },
+                      "required": [
+                        "enabled",
+                        "replyTo",
+                        "templates"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value in use."
+                    },
+                    "defaults": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "description": "Whether any system email is sent. Off: every email is skipped and logged."
+                        },
+                        "replyTo": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "email",
+                          "description": "Reply-To address for system email, or null to let replies go to the sender."
+                        },
+                        "templates": {
+                          "type": "object",
+                          "properties": {
+                            "LEAGUE_MEMBER_INVITE": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "LEAGUE_JOIN_SUCCESS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "CONTEST_ENTRY_COMPLETED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "CONTEST_STARTED_SUMMARY": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            }
+                          },
+                          "required": [
+                            "LEAGUE_MEMBER_INVITE",
+                            "LEAGUE_JOIN_SUCCESS",
+                            "CONTEST_ENTRY_COMPLETED",
+                            "CONTEST_STARTED_SUMMARY"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Per-template switches. A template that is off is skipped even while email is on."
+                        }
+                      },
+                      "required": [
+                        "enabled",
+                        "replyTo",
+                        "templates"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value a reset would store."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "title",
+                    "description",
+                    "source",
+                    "updatedAt",
+                    "updatedBy",
+                    "value",
+                    "defaults"
+                  ],
+                  "additionalProperties": false
                 }
               ],
               "description": "One settings group: its current value, its defaults, and who last changed it."
@@ -2203,6 +2617,84 @@
               "expectedUpdatedAt"
             ],
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "EMAIL_CONFIG"
+                ]
+              },
+              "value": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Whether any system email is sent. Off: every email is skipped and logged."
+                  },
+                  "replyTo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "email",
+                    "description": "Reply-To address for system email, or null to let replies go to the sender."
+                  },
+                  "templates": {
+                    "type": "object",
+                    "properties": {
+                      "LEAGUE_MEMBER_INVITE": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "LEAGUE_JOIN_SUCCESS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_ENTRY_COMPLETED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_STARTED_SUMMARY": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      }
+                    },
+                    "required": [
+                      "LEAGUE_MEMBER_INVITE",
+                      "LEAGUE_JOIN_SUCCESS",
+                      "CONTEST_ENTRY_COMPLETED",
+                      "CONTEST_STARTED_SUMMARY"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Per-template switches. A template that is off is skipped even while email is on."
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "replyTo",
+                  "templates"
+                ],
+                "additionalProperties": false,
+                "description": "The whole new value."
+              },
+              "expectedUpdatedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT."
+              }
+            },
+            "required": [
+              "key",
+              "value",
+              "expectedUpdatedAt"
+            ],
+            "additionalProperties": false
           }
         ],
         "description": "A whole new value for one settings group. `key` must match the path."
@@ -2218,7 +2710,8 @@
             "type": "string",
             "enum": [
               "POLL_INTERVAL_CONFIG",
-              "INGESTION_SCHEDULE_CONFIG"
+              "INGESTION_SCHEDULE_CONFIG",
+              "EMAIL_CONFIG"
             ],
             "description": "The stored key of a settings group."
           },
@@ -2291,7 +2784,8 @@
                   "type": "string",
                   "enum": [
                     "POLL_INTERVAL_CONFIG",
-                    "INGESTION_SCHEDULE_CONFIG"
+                    "INGESTION_SCHEDULE_CONFIG",
+                    "EMAIL_CONFIG"
                   ],
                   "description": "The stored key of a settings group."
                 },

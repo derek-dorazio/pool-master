@@ -34,13 +34,9 @@ import { createMemberHandlers } from './member-handler';
 import { createDashboardHandlers } from './dashboard-handler';
 import { createBulkHandlers } from './bulk-handler';
 import { getAppPrisma } from '../../core/prisma-context';
-import {
-  createMailDeliveryProvider,
-  readApplicationBaseUrl,
-  readMailDeliveryConfig,
-} from '../email';
+import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 
-export function leaguesModule(fastify: FastifyInstance): void {
+export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
   // Routes below $ref named components, so they must be registered on this instance.
   void fastify.register(schemaComponentsPlugin);
 
@@ -52,10 +48,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const userRepo = new PrismaUserRepository(prisma);
   const contestRepo = new PrismaContestRepository(prisma);
-  const mailDelivery = createMailDeliveryProvider(
-    readMailDeliveryConfig(process.env),
-    fastify.log,
-  );
+  const mailDelivery = opts.mailDelivery;
   const appBaseUrl = readApplicationBaseUrl(process.env);
 
   const leagueService = new LeagueService({

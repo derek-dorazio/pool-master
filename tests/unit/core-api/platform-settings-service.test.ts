@@ -41,7 +41,7 @@ describe('PlatformSettingsService', () => {
 
     const groups = await service.list();
 
-    expect(groups.map((view) => view.group.key)).toEqual(['POLL_INTERVAL_CONFIG', 'INGESTION_SCHEDULE_CONFIG']);
+    expect(groups.map((view) => view.group.key)).toEqual(['POLL_INTERVAL_CONFIG', 'INGESTION_SCHEDULE_CONFIG', 'EMAIL_CONFIG']);
     expect(groups[0]).toEqual(expect.objectContaining({
       state: expect.objectContaining({ source: 'defaults', updatedAt: null }),
       updatedBy: null,

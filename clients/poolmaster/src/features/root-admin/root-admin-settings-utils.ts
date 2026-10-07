@@ -1,4 +1,4 @@
-import type { IngestionScheduleConfig, PollIntervalConfig, SettingsChange } from '@/lib/api';
+import type { EmailConfig, IngestionScheduleConfig, PollIntervalConfig, SettingsChange } from '@/lib/api';
 
 export type SettingsSummaryItem = {
   id: string;
@@ -47,6 +47,22 @@ export function summarizeIngestionSchedule(config: IngestionScheduleConfig): Set
       label: 'Sport overrides',
       value: overrideSports.length > 0 ? overrideSports.join(', ') : 'None',
     },
+  ];
+}
+
+export const EMAIL_TEMPLATE_LABELS: ReadonlyArray<readonly [keyof EmailConfig['templates'], string]> = [
+  ['LEAGUE_MEMBER_INVITE', 'League invitation'],
+  ['LEAGUE_JOIN_SUCCESS', 'League welcome'],
+  ['CONTEST_ENTRY_COMPLETED', 'Entry confirmation'],
+  ['CONTEST_STARTED_SUMMARY', 'Contest started'],
+];
+
+export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
+  const off = EMAIL_TEMPLATE_LABELS.filter(([key]) => !config.templates[key]).map(([, label]) => label);
+  return [
+    { id: 'enabled', label: 'System email', value: config.enabled ? 'On' : 'Off' },
+    { id: 'templates', label: 'Emails switched off', value: off.length > 0 ? off.join(', ') : 'None' },
+    { id: 'replyTo', label: 'Reply-To', value: config.replyTo ?? 'The sender address' },
   ];
 }
 

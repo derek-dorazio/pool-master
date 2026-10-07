@@ -29,19 +29,15 @@ import { createContestHandlers, createCreateContestHandler } from './handler';
 import { createContestManagementService } from '../contest-management/wiring';
 import { createOverrideHandlers } from './override-handler';
 import { getAppPrisma } from '../../core/prisma-context';
-import {
-  createMailDeliveryProvider,
-  readApplicationBaseUrl,
-  readMailDeliveryConfig,
-} from '../email';
+import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 
-export function contestsModule(fastify: FastifyInstance): void {
+export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const contestService = createContestService(prisma, fastify.log, {
-    mailDelivery: createMailDeliveryProvider(readMailDeliveryConfig(process.env), fastify.log),
+    mailDelivery: opts.mailDelivery,
     appBaseUrl: readApplicationBaseUrl(process.env),
   });
   const handlers = createContestHandlers(contestService);
@@ -101,13 +97,13 @@ export function contestsModule(fastify: FastifyInstance): void {
  * Standalone contest routes — registered at /api/v1/contests for
  * operations that use contestId rather than leagueId.
  */
-export function contestsByIdModule(fastify: FastifyInstance): void {
+export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const contestService = createContestService(prisma, fastify.log, {
-    mailDelivery: createMailDeliveryProvider(readMailDeliveryConfig(process.env), fastify.log),
+    mailDelivery: opts.mailDelivery,
     appBaseUrl: readApplicationBaseUrl(process.env),
   });
   const contestRepo = new PrismaContestRepository(prisma);

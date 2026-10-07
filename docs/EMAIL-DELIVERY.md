@@ -12,23 +12,32 @@ developer stack:
 - `SMTP_HOST=localhost`
 - `SMTP_PORT=1025`
 - `SMTP_FROM=noreply@poolmaster.local`
-- `EMAIL_REPLY_TO=noreply@poolmaster.local`
 
 `EMAIL_PROVIDER=ses` is used in deployed environments. The provider sends the
 same rendered subject, text, and HTML through AWS SES:
 
 - `AWS_REGION` selects the SES region.
 - `SES_FROM_EMAIL` is the verified sender address.
-- `EMAIL_REPLY_TO` is optional and defaults to the sender when Terraform owns it.
 - `SES_CONFIGURATION_SET` is optional for SES event tracking.
 - `AWS_ENDPOINT`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` are supported
   for LocalStack/dev overrides.
 
-`EMAIL_PROVIDER=disabled` sends nothing. Every send reports success, so invite
-by email still creates the invitation and the request succeeds; each skipped
-email is logged as `mailDelivery.disabled.skip` with the template key and ids
-(never the body), and startup logs `mailDelivery.startup.disabled` once, as a warning. QA
-runs this way until real delivery is set up (#120).
+## Switching Email Off
+
+Whether email is sent is the `EMAIL_CONFIG` app setting, which a root admin changes on the
+Email card of `/manage/settings`; every core-api task picks a save up within 30 seconds. It
+holds:
+
+- `enabled`: whether any system email is sent. It defaults to off when `ENVIRONMENT=qa` (until
+  real delivery is set up, #120) and on everywhere else.
+- `templates`: one switch per system email, all on by default.
+- `replyTo`: the Reply-To address, or none (the default), so replies go to the sender.
+
+An email that is switched off is skipped, and the send still reports success, so invite by
+email still creates the invitation and the request succeeds. Each skip is logged as
+`mailDelivery.skip` with the reason (`emailDisabled` or `templateDisabled`), the template key and
+ids, never the body or an address. The transport (`EMAIL_PROVIDER`) and the sender address stay
+in env, because they describe how the deployment is wired.
 
 `APP_BASE_URL` is required for links in email bodies. Local development uses
 `http://localhost:5173`; Terraform sets the deployed webapp URL.
@@ -48,15 +57,14 @@ each of the four system emails (league invite, league welcome, entry
 confirmation, contest started) is sent once, to the right person, with the
 right subject and link; the functional server runs with a fixed
 `APP_BASE_URL` so links are exact. Functional tests read the sink through
-`tests/functional/mail.ts`. `tests/integration/core-api/email-disabled.integration.ts`
-covers `EMAIL_PROVIDER=disabled`.
+`tests/functional/mail.ts`. `tests/integration/core-api/email-settings.integration.ts`
+covers switching email, and one email, off.
 
 ## SES Infrastructure
 
-Terraform sets the core-api ECS task's `EMAIL_PROVIDER` from the
-`email_provider` variable. Left empty, it is `disabled` on QA (until #120) and
-`ses` on staging and prod; Terraform refuses `disabled` on prod. Terraform also configures
-`APP_BASE_URL`, `AWS_REGION`, `SES_FROM_EMAIL`, and `EMAIL_REPLY_TO`. It also
+Terraform sets the core-api ECS task's `EMAIL_PROVIDER` to `ses` in every
+environment; QA's "send nothing yet" is the `EMAIL_CONFIG` default above. Terraform also configures
+`APP_BASE_URL`, `AWS_REGION`, `SES_FROM_EMAIL`, and `ENVIRONMENT`. It also
 grants the ECS task role `ses:SendEmail` and `ses:SendRawEmail` for the managed
 SES identity.
 

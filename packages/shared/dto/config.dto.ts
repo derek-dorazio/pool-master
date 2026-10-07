@@ -110,7 +110,40 @@ export type IngestionScheduleConfig = z.infer<typeof IngestionScheduleConfigSche
 // --- Published contract (#192) -------------------------------------------------
 // Served by the platform module (platform/routes.ts). IngestionFeedSchedulePolicy is not registered directly: it appears only
 // nested inside IngestionScheduleConfig, and no route serves it on its own (check 2).
+/** The system emails core-api can send, one per template. */
+export const EmailTemplateKeySchema = z.enum([
+  'LEAGUE_MEMBER_INVITE',
+  'LEAGUE_JOIN_SUCCESS',
+  'CONTEST_ENTRY_COMPLETED',
+  'CONTEST_STARTED_SUMMARY',
+]).describe('A system email template.');
+export type EmailTemplateKey = z.infer<typeof EmailTemplateKeySchema>;
+
+const templateSwitch = z.boolean().describe('Whether this email is sent.');
+
+/**
+ * EMAIL_CONFIG (#450): whether system email is sent. Transport and sender address stay in env.
+ * A skipped email still counts as sent, so an invite by email still succeeds.
+ */
+export const EmailConfigSchema = z.object({
+  enabled: z.boolean().describe('Whether any system email is sent. Off: every email is skipped and logged.'),
+  replyTo: z.string().email().nullable().describe(
+    'Reply-To address for system email, or null to let replies go to the sender.',
+  ),
+  templates: z.object({
+    LEAGUE_MEMBER_INVITE: templateSwitch,
+    LEAGUE_JOIN_SUCCESS: templateSwitch,
+    CONTEST_ENTRY_COMPLETED: templateSwitch,
+    CONTEST_STARTED_SUMMARY: templateSwitch,
+  } satisfies Record<EmailTemplateKey, z.ZodBoolean>).describe(
+    'Per-template switches. A template that is off is skipped even while email is on.',
+  ),
+}).describe('Whether and how system email is sent.');
+export type EmailConfig = z.infer<typeof EmailConfigSchema>;
+
 registerSchema('PollIntervalConfig', PollIntervalConfigSchema);
+registerSchema('EmailTemplateKey', EmailTemplateKeySchema);
+registerSchema('EmailConfig', EmailConfigSchema);
 registerSchema('PollIntervalConfigPatch', PollIntervalConfigPatchSchema);
 registerSchema('IngestionScheduleConfigOverride', IngestionScheduleConfigOverrideSchema);
 registerSchema('IngestionScheduleConfig', IngestionScheduleConfigSchema);
