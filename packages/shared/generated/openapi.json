@@ -1407,6 +1407,115 @@
         "additionalProperties": false,
         "description": "Single-participant detail response."
       },
+      "UpdateParticipantRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "Primary participant display name."
+          },
+          "firstName": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "First name when the participant is a person."
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Last name when the participant is a person."
+          },
+          "shortName": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Short-form display name for compact UI surfaces."
+          },
+          "nationality": {
+            "type": "string",
+            "maxLength": 10,
+            "description": "Participant nationality or country code."
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 50,
+            "description": "Playing role (\"GOLFER\", \"QB\")."
+          },
+          "teamAffiliation": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Current team affiliation."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "RETIRED",
+              "SUSPENDED"
+            ],
+            "description": "Participant lifecycle or availability status."
+          },
+          "injuryStatus": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "HEALTHY",
+                  "QUESTIONABLE",
+                  "DOUBTFUL",
+                  "OUT",
+                  "WITHDRAWN",
+                  "SUSPENDED",
+                  "SCRATCHED"
+                ],
+                "description": "Current injury or availability status code."
+              },
+              "detail": {
+                "type": "string",
+                "description": "Optional injury-status detail or summary."
+              },
+              "expectedReturn": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Expected return timestamp when known."
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Expected return timestamp when known."
+              },
+              "source": {
+                "type": "string",
+                "description": "Source that provided the injury-status update."
+              }
+            },
+            "required": [
+              "status"
+            ],
+            "additionalProperties": false,
+            "description": "Normalized participant injury or availability state."
+          },
+          "photoUrl": {
+            "type": "string",
+            "description": "Participant image URL."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Primary provider identifier."
+          },
+          "externalIds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Map of provider identifiers keyed by provider code."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Fields to change on a participant. Omitted fields keep their current values."
+      },
       "SportDto": {
         "type": "object",
         "properties": {
@@ -8288,152 +8397,6 @@
           "countedScores": {
             "type": "integer",
             "description": "How many roster scores count toward the entry total in managed golf contests."
-          },
-          "tierSource": {
-            "type": "string",
-            "description": "Tier source used for managed golf contests."
-          },
-          "tierGeneration": {
-            "type": "object",
-            "properties": {
-              "defaultTierSize": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Default managed tier size used to seed tier generation."
-              }
-            },
-            "required": [
-              "defaultTierSize"
-            ],
-            "additionalProperties": false
-          },
-          "tiers": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "tierKey": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "Stable tier key such as A, B, or C."
-                },
-                "label": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "Commissioner-facing tier label."
-                },
-                "pickCount": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "description": "How many golfers must be picked from the tier."
-                },
-                "startPosition": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "description": "Starting resolved rank/odds position for the tier."
-                },
-                "endPosition": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": 1,
-                  "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
-                }
-              },
-              "required": [
-                "tierKey",
-                "label",
-                "pickCount",
-                "startPosition",
-                "endPosition"
-              ],
-              "additionalProperties": false,
-              "description": "Tier definition for a golf tiered contest."
-            },
-            "description": "Resolved managed-golf tier definitions when the contest stores typed tiered configuration."
-          },
-          "cutRule": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "FIXED_SCORE"
-                ]
-              },
-              "fixedScore": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Fallback score assigned when a golfer misses the cut."
-              }
-            },
-            "required": [
-              "type",
-              "fixedScore"
-            ],
-            "additionalProperties": false,
-            "description": "Managed-golf missed-cut scoring rule when the contest uses typed golf configuration."
-          },
-          "playoffHandling": {
-            "type": "string",
-            "description": "Managed-golf playoff handling strategy."
-          },
-          "displayScoring": {
-            "type": "string",
-            "description": "Managed-golf leaderboard display scoring mode."
-          },
-          "tiebreaker": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "PREDICT_WINNING_SCORE"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "additionalProperties": false,
-            "description": "Managed-golf tiebreaker configuration."
-          },
-          "categories": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "categoryKey": {
-                  "type": "string",
-                  "enum": [
-                    "SENIOR",
-                    "ROOKIE",
-                    "PREVIOUS_WINNER",
-                    "US_PLAYER",
-                    "INTERNATIONAL_PLAYER"
-                  ]
-                },
-                "label": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "Commissioner-facing category label."
-                },
-                "pickCount": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "description": "How many golfers must be picked for the category."
-                }
-              },
-              "required": [
-                "categoryKey",
-                "label",
-                "pickCount"
-              ],
-              "additionalProperties": false,
-              "description": "Category slot definition for a golf category-picks contest."
-            },
-            "description": "Managed-golf category slot definitions when the contest uses category picks."
           }
         },
         "additionalProperties": false,
@@ -8692,152 +8655,6 @@
               "countedScores": {
                 "type": "integer",
                 "description": "How many roster scores count toward the entry total in managed golf contests."
-              },
-              "tierSource": {
-                "type": "string",
-                "description": "Tier source used for managed golf contests."
-              },
-              "tierGeneration": {
-                "type": "object",
-                "properties": {
-                  "defaultTierSize": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "Default managed tier size used to seed tier generation."
-                  }
-                },
-                "required": [
-                  "defaultTierSize"
-                ],
-                "additionalProperties": false
-              },
-              "tiers": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "tierKey": {
-                      "type": "string",
-                      "minLength": 1,
-                      "description": "Stable tier key such as A, B, or C."
-                    },
-                    "label": {
-                      "type": "string",
-                      "minLength": 1,
-                      "description": "Commissioner-facing tier label."
-                    },
-                    "pickCount": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How many golfers must be picked from the tier."
-                    },
-                    "startPosition": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "Starting resolved rank/odds position for the tier."
-                    },
-                    "endPosition": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 1,
-                      "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
-                    }
-                  },
-                  "required": [
-                    "tierKey",
-                    "label",
-                    "pickCount",
-                    "startPosition",
-                    "endPosition"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Tier definition for a golf tiered contest."
-                },
-                "description": "Resolved managed-golf tier definitions when the contest stores typed tiered configuration."
-              },
-              "cutRule": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "FIXED_SCORE"
-                    ]
-                  },
-                  "fixedScore": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Fallback score assigned when a golfer misses the cut."
-                  }
-                },
-                "required": [
-                  "type",
-                  "fixedScore"
-                ],
-                "additionalProperties": false,
-                "description": "Managed-golf missed-cut scoring rule when the contest uses typed golf configuration."
-              },
-              "playoffHandling": {
-                "type": "string",
-                "description": "Managed-golf playoff handling strategy."
-              },
-              "displayScoring": {
-                "type": "string",
-                "description": "Managed-golf leaderboard display scoring mode."
-              },
-              "tiebreaker": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "PREDICT_WINNING_SCORE"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "additionalProperties": false,
-                "description": "Managed-golf tiebreaker configuration."
-              },
-              "categories": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "categoryKey": {
-                      "type": "string",
-                      "enum": [
-                        "SENIOR",
-                        "ROOKIE",
-                        "PREVIOUS_WINNER",
-                        "US_PLAYER",
-                        "INTERNATIONAL_PLAYER"
-                      ]
-                    },
-                    "label": {
-                      "type": "string",
-                      "minLength": 1,
-                      "description": "Commissioner-facing category label."
-                    },
-                    "pickCount": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How many golfers must be picked for the category."
-                    }
-                  },
-                  "required": [
-                    "categoryKey",
-                    "label",
-                    "pickCount"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Category slot definition for a golf category-picks contest."
-                },
-                "description": "Managed-golf category slot definitions when the contest uses category picks."
               }
             },
             "additionalProperties": false,
@@ -13395,8 +13212,55 @@
       },
       "LeagueBulkOperationResponse": {
         "type": "object",
-        "additionalProperties": {},
-        "description": "Arbitrary JSON object payload."
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many rows the import received."
+          },
+          "sent": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many invitations the import created."
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Email address on the row that failed."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why the row was not imported."
+                }
+              },
+              "required": [
+                "email",
+                "reason"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Rows that were not imported, with the reason for each."
+          },
+          "duplicates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Email addresses skipped because they already have an invitation to this league."
+          }
+        },
+        "required": [
+          "total",
+          "sent",
+          "failed",
+          "duplicates"
+        ],
+        "additionalProperties": false,
+        "description": "Result of a bulk CSV member import."
       },
       "CreateSquadOwnerInvitationRequest": {
         "type": "object",
@@ -15502,8 +15366,27 @@
                   },
                   "errorLog": {
                     "type": "array",
-                    "items": {},
-                    "description": "Raw ingestion error-log entries for root-admin investigation."
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "error": {
+                          "type": "string",
+                          "description": "Failure message the ingestion job recorded."
+                        },
+                        "at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When the failure was recorded."
+                        }
+                      },
+                      "required": [
+                        "error",
+                        "at"
+                      ],
+                      "additionalProperties": false,
+                      "description": "One ingestion job error-log entry."
+                    },
+                    "description": "Ingestion error-log entries for root-admin investigation."
                   }
                 },
                 "required": [
@@ -15599,10 +15482,14 @@
                           "description": "Display name for the row, when known."
                         },
                         "before": {
-                          "description": "Normalized before-state JSON for UPDATED or DELETED rows."
+                          "type": "object",
+                          "additionalProperties": {},
+                          "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                         },
                         "after": {
-                          "description": "Normalized after-state JSON for CREATED or UPDATED rows."
+                          "type": "object",
+                          "additionalProperties": {},
+                          "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                         }
                       },
                       "required": [
@@ -15963,8 +15850,27 @@
                         },
                         "errorLog": {
                           "type": "array",
-                          "items": {},
-                          "description": "Raw ingestion error-log entries for root-admin investigation."
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "error": {
+                                "type": "string",
+                                "description": "Failure message the ingestion job recorded."
+                              },
+                              "at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "When the failure was recorded."
+                              }
+                            },
+                            "required": [
+                              "error",
+                              "at"
+                            ],
+                            "additionalProperties": false,
+                            "description": "One ingestion job error-log entry."
+                          },
+                          "description": "Ingestion error-log entries for root-admin investigation."
                         }
                       },
                       "required": [
@@ -16060,10 +15966,14 @@
                                 "description": "Display name for the row, when known."
                               },
                               "before": {
-                                "description": "Normalized before-state JSON for UPDATED or DELETED rows."
+                                "type": "object",
+                                "additionalProperties": {},
+                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                               },
                               "after": {
-                                "description": "Normalized after-state JSON for CREATED or UPDATED rows."
+                                "type": "object",
+                                "additionalProperties": {},
+                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                               }
                             },
                             "required": [
@@ -16422,8 +16332,27 @@
                         },
                         "errorLog": {
                           "type": "array",
-                          "items": {},
-                          "description": "Raw ingestion error-log entries for root-admin investigation."
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "error": {
+                                "type": "string",
+                                "description": "Failure message the ingestion job recorded."
+                              },
+                              "at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "When the failure was recorded."
+                              }
+                            },
+                            "required": [
+                              "error",
+                              "at"
+                            ],
+                            "additionalProperties": false,
+                            "description": "One ingestion job error-log entry."
+                          },
+                          "description": "Ingestion error-log entries for root-admin investigation."
                         }
                       },
                       "required": [
@@ -16519,10 +16448,14 @@
                                 "description": "Display name for the row, when known."
                               },
                               "before": {
-                                "description": "Normalized before-state JSON for UPDATED or DELETED rows."
+                                "type": "object",
+                                "additionalProperties": {},
+                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                               },
                               "after": {
-                                "description": "Normalized after-state JSON for CREATED or UPDATED rows."
+                                "type": "object",
+                                "additionalProperties": {},
+                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                               }
                             },
                             "required": [
@@ -22793,7 +22726,7 @@
         ],
         "responses": {
           "201": {
-            "description": "Arbitrary JSON object payload.",
+            "description": "Result of a bulk CSV member import.",
             "content": {
               "application/json": {
                 "schema": {
@@ -37940,59 +37873,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 500
-                  },
-                  "firstName": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "lastName": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "shortName": {
-                    "type": "string",
-                    "maxLength": 100
-                  },
-                  "nationality": {
-                    "type": "string",
-                    "maxLength": 10
-                  },
-                  "role": {
-                    "type": "string",
-                    "maxLength": 50
-                  },
-                  "teamAffiliation": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "ACTIVE",
-                      "INACTIVE",
-                      "RETIRED",
-                      "SUSPENDED"
-                    ]
-                  },
-                  "injuryStatus": {
-                    "type": "object"
-                  },
-                  "photoUrl": {
-                    "type": "string"
-                  },
-                  "externalId": {
-                    "type": "string"
-                  },
-                  "externalIds": {
-                    "type": "object"
-                  }
-                }
+                "$ref": "#/components/schemas/UpdateParticipantRequest"
               }
             }
           }

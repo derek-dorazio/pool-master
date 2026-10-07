@@ -168,12 +168,27 @@ export function mapToParticipant(row: {
     role: row.role ?? undefined,
     teamAffiliation: row.teamAffiliation ?? undefined,
     status: row.status as ParticipantStatus,
-    injuryStatus: (row.injuryStatus ?? { status: 'HEALTHY' }) as InjuryStatus,
+    injuryStatus: toInjuryStatus(row.injuryStatus),
     photoUrl: row.photoUrl ?? undefined,
     photoLastUpdated: row.photoLastUpdated ?? undefined,
     externalIds: (row.externalIds ?? {}) as Record<string, string>,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+  };
+}
+
+// The JSON column holds the injury dates as ISO strings; the domain type holds Dates.
+type StoredInjuryStatus = Omit<InjuryStatus, 'expectedReturn' | 'updatedAt'> & {
+  expectedReturn?: string;
+  updatedAt?: string;
+};
+
+function toInjuryStatus(value: unknown): InjuryStatus {
+  const { expectedReturn, updatedAt, ...fields } = (value ?? { status: 'HEALTHY' }) as StoredInjuryStatus;
+  return {
+    ...fields,
+    ...(expectedReturn !== undefined && { expectedReturn: new Date(expectedReturn) }),
+    ...(updatedAt !== undefined && { updatedAt: new Date(updatedAt) }),
   };
 }
 

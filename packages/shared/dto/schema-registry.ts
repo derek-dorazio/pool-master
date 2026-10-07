@@ -18,15 +18,15 @@
  * different thing and is followed correctly — which is the whole reason this registry
  * hoists schemas up rather than leaving them nested.
  */
-import type { ZodTypeAny } from 'zod';
+import type { ZodType } from 'zod';
 
 export interface NamedSchema {
   /** The name published as `components.schemas.<name>` and generated as a type. */
   readonly name: string;
-  readonly schema: ZodTypeAny;
+  readonly schema: ZodType<unknown>;
 }
 
-const registry = new Map<string, ZodTypeAny>();
+const registry = new Map<string, ZodType<unknown>>();
 
 /**
  * Register a Zod schema under a published component name.
@@ -35,7 +35,7 @@ const registry = new Map<string, ZodTypeAny>();
  * publishing different shapes under one name is the exact drift this epic removes,
  * and it must fail at startup rather than silently letting the last registration win.
  */
-export function registerSchema<T extends ZodTypeAny>(name: string, schema: T): T {
+export function registerSchema<T extends ZodType<unknown>>(name: string, schema: T): T {
   const existing = registry.get(name);
   if (existing !== undefined && existing !== schema) {
     throw new Error(

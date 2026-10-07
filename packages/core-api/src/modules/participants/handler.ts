@@ -11,9 +11,10 @@ import type {
   BindParticipantProviderMappingRequest,
   ParticipantListQuery,
   ParticipantListResponse,
+  UpdateParticipantRequest,
 } from '@poolmaster/shared/dto/participants.dto';
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
-import { mapParticipantProviderMappingToDto, mapParticipantToDto } from '../../mappers';
+import { mapParticipantProviderMappingToDto, mapParticipantToDto, toUpdateParticipantInput } from '../../mappers';
 import { sendError } from '../../core/error-handler';
 
 export function createParticipantHandlers(
@@ -212,7 +213,7 @@ export function createParticipantHandlers(
   async function updateParticipant(
     request: FastifyRequest<{
       Params: { id: string };
-      Body: Record<string, unknown>;
+      Body: UpdateParticipantRequest;
     }>,
     reply: FastifyReply,
   ) {
@@ -230,7 +231,7 @@ export function createParticipantHandlers(
     );
 
     try {
-      const participant = await participantService.update(request.params.id, request.body);
+      const participant = await participantService.update(request.params.id, toUpdateParticipantInput(request.body));
       logger.info(
         {
           action: 'participants.route.update.success',
