@@ -761,3 +761,91 @@ describe('#324 DraftService.submitSelection — the three outcomes', () => {
     );
   });
 });
+
+describe('DraftService — rooms with missing or partial data', () => {
+  it('places a budget pick in the next round when the entry still has room', async () => {
+    const { service, createPick } = setup({
+      contest: { selectionType: SelectionType.BUDGET_PICK },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3 },
+      picks: [pick('pick-a', 'p-a', 'sep-a')],
+    });
+
+    const result = await service.submitSelection(submit({ participantId: 'sep-d' }));
+
+    expect(result.outcome).toBe('placed');
+    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: 'sep-d', draftRound: 2 }));
+  });
+
+  it('answers 404 for a DRAFT contest\'s room to an anonymous reader and to a commissioner whose membership is inactive', async () => {
+    const draft = { status: ContestStatus.DRAFT };
+    await expect(setup({ contest: draft }).service.getDraftState({ contestId: CONTEST_ID }))
+      .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+
+    const inactiveCommissioner = {
+      id: 'lm-1', leagueId: LEAGUE_ID, userId: OWNER_USER_ID, role: 'COMMISSIONER', status: 'INACTIVE',
+    } as unknown as LeagueMembership;
+    await expect(setup({ contest: draft, actorMembership: inactiveCommissioner }).service.getDraftState({
+      contestId: CONTEST_ID,
+      actorUserId: OWNER_USER_ID,
+    })).rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('shows a contest with no event as an empty room that refuses every pick as unconfigured', async () => {
+    const { service } = setup({ contest: { sportEventId: undefined } });
+
+    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    expect(view.rosterSize).toBe(0);
+    expect(view.selectionGroups).toEqual([]);
+    expect(view.canCurrentUserSubmit).toBe(false);
+
+    await expect(service.submitSelection(submit())).rejects.toMatchObject({ code: 'SELECTION_CONFIG_INVALID' });
+  });
+
+  it('lists an entry whose team has no active member with an empty owner rather than dropping it', async () => {
+    const { service } = setup({
+      entries: [entry(ENTRY_ID, SQUAD_ID), entry(OTHER_ENTRY_ID, 'squad-orphan')],
+    });
+
+    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+
+    expect(view.entries.map((row) => [row.id, row.userId])).toEqual([[ENTRY_ID, OWNER_USER_ID], [OTHER_ENTRY_ID, '']]);
+  });
+
+  it('leaves a tier\'s golfer who is not on the field out of that tier\'s selection group', async () => {
+    const { service } = setup({ field: FIELD.filter((row) => row.id !== 'sep-c') });
+
+    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+
+    expect(view.selectionGroups[0].participants.map((participant) => participant.participantId)).toEqual(['p-a', 'p-b']);
+  });
+
+  it('places a pick of a golfer outside every tier in the history by its position in the entry, using its stored round when it has one', async () => {
+    const { service } = setup({
+      contest: { status: ContestStatus.LOCKED },
+      picks: [
+        pick('pick-x', 'p-untiered', 'sep-x', { draftRound: null as unknown as number, draftPickNumber: null as unknown as number }),
+        pick('pick-a', 'p-a', 'sep-a', { draftRound: 1 }),
+      ],
+    });
+
+    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+
+    expect(view.picks.map((row) => [row.sportEventParticipantId, row.pickNumber, row.round, row.pickInRound, row.tierId]))
+      .toEqual([
+        ['sep-x', 1, 1, 1, undefined],
+        ['sep-a', 2, 1, 1, 'tier-1'],
+      ]);
+  });
+
+  it('numbers a budget-pick history by each entry\'s own pick order, not by tier', async () => {
+    const { service } = setup({
+      contest: { selectionType: SelectionType.BUDGET_PICK, status: ContestStatus.LOCKED },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3 },
+      picks: [pick('pick-d', 'p-d', 'sep-d'), pick('pick-a', 'p-a', 'sep-a')],
+    });
+
+    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+
+    expect(view.picks.map((row) => row.round)).toEqual([1, 2]);
+  });
+});
