@@ -351,4 +351,15 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
       .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
     expect(await getPrisma().sportEventRound.count({ where: { sportEventId: event.id, roundNumber: 5 } })).toBe(0);
   });
+
+  it('refuses a thru-only correction for a golfer with no stored round with 422 ROUND_VALUES_REQUIRED, writing no round and no standing', async () => {
+    const { event, rory } = await createField('thru-only-no-round');
+    const service = createGolfScoreService(getPrisma());
+
+    await expect(service.updateRoundScore(event.id, 2, rory.sep.id, { thru: 9 }))
+      .rejects.toMatchObject({ code: 'ROUND_VALUES_REQUIRED', statusCode: 422 });
+    expect(await getPrisma().sportEventRound.count({ where: { sportEventId: event.id, roundNumber: 2 } })).toBe(0);
+    expect(await getPrisma().sportEventParticipantRound.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
+    expect(await getPrisma().sportEventParticipantStanding.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
+  });
 });
