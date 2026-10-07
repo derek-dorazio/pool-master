@@ -333,7 +333,8 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Close a contest early',
       description:
-        'Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop.',
+        'Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop. '
+        + 'A draft is refused with 409 CONTEST_CLOSE_STATUS_INVALID: open it to the league or delete it instead.',
       operationId: 'closeContest',
       response: { 200: schemaRef('ContestResponse') },
     },

@@ -23,10 +23,13 @@ import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
+  buildLeagueContestManagePath,
   buildLeagueContestPath,
   buildLeaguePath,
   buildLeagueTeamPath,
 } from '@/features/leagues/league-routing';
+import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
+import { OpenContestAction } from './open-contest-action';
 import {
   Alert,
   Button,
@@ -703,14 +706,19 @@ export function CreateContestPage() {
         },
         isEditMode ? 'Saved contest successfully' : 'Created contest successfully',
       );
-      navigate(buildLeagueContestPath(leagueCode, savedContestId), {
-        state: { leagueCode },
-      });
+      // A new contest is a draft (#117): the commissioner lands on its setup page, where they can
+      // still edit or delete it and open it to the league when it is ready.
+      navigate(
+        isEditMode
+          ? buildLeagueContestPath(leagueCode, savedContestId)
+          : buildLeagueContestManagePath(leagueCode, savedContestId),
+        { state: { leagueCode } },
+      );
     },
     invalidates: (savedContestId) => [
       QueryKeys.contests.list({ leagueId: league?.id }),
       QueryKeys.contests.detail(savedContestId),
-      QueryKeys.managedContests.detail(savedContestId),
+      QueryKeys.managedContests.all,
     ],
     onError: (error) => {
       const payload = {
@@ -732,7 +740,10 @@ export function CreateContestPage() {
       } else {
         logger.warn(payload, isEditMode ? 'Contest update was rejected' : 'Contest create was rejected');
       }
-      setFormError(extractErrorMessage(error, { fallback: 'We could not create that contest. Please try again.' }));
+      setFormError(extractErrorMessage(error, {
+        codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
+        fallback: 'We could not create that contest. Please try again.',
+      }));
     },
   });
 
@@ -897,8 +908,7 @@ export function CreateContestPage() {
           <div className="mt-6 space-y-5">
             {isEditMode && !isDraftEditable ? (
               <Alert data-testid="contest-manage-readonly-note">
-                Contest structure is no longer editable. Lock, in-progress, and completed states
-                follow the real event timing and feed updates automatically.
+                This contest is open to the league, so its settings are locked.
               </Alert>
             ) : null}
 
@@ -1088,6 +1098,9 @@ export function CreateContestPage() {
                     : (isEditMode ? 'Save draft changes' : 'Create contest')}
                 </Button>
               ) : null}
+              {isEditMode && isDraftEditable && contestId ? (
+                <OpenContestAction contestId={contestId} leagueId={league.id} />
+              ) : null}
               {isEditMode && isDraftEditable ? (
                 <Button
                   data-testid="contest-delete"
@@ -1133,7 +1146,8 @@ export function CreateContestPage() {
           <Tile>
             <h3 className="text-xl font-semibold">Lifecycle truth</h3>
             <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
-              <li>Creating a contest makes it immediately live for league entries.</li>
+              <li>A new contest is a draft: only commissioners see it, and nobody can enter yet.</li>
+              <li>Open it to the league when it is ready. Its settings lock for good at that point.</li>
               <li>Lock time is configured relative to the event start, then stored as an exact timestamp.</li>
               <li>Locked, in-progress, and completed states should follow event timing and feed updates automatically.</li>
             </ul>

@@ -30,6 +30,7 @@ import {
   Tile,
 } from '@/features/shared/ui';
 import { ContestStatusBadge } from './contest-status-badge';
+import { OpenContestAction } from './open-contest-action';
 import {
   CONTEST_POLL_INTERVAL_MS,
   contestRefetchInterval,
@@ -285,7 +286,11 @@ export function ContestDetailPage() {
   const myCount = myEntries.length;
   const visibleEntries = myOnly ? myEntries : entries;
   const isOpen = contest.status === 'OPEN';
+  const isDraft = contest.status === 'DRAFT';
   const canCreateEntry = isOpen && Boolean(myTeamId);
+  // Only commissioners can read a draft at all (#117); the check keeps the release action theirs
+  // in the UI too.
+  const canOpenToLeague = isDraft && (viewer.isCommissioner || viewer.isRootAdmin);
 
   const backToLeaguePath = hintedLeagueCode
     ? buildLeaguePath(hintedLeagueCode)
@@ -343,6 +348,9 @@ export function ContestDetailPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
+            {canOpenToLeague ? (
+              <OpenContestAction contestId={contestId} leagueId={leagueId} />
+            ) : null}
             {leaderboardPath ? (
               <LinkButton data-testid="contest-leaderboard-link" to={leaderboardPath}>
                 View leaderboard
@@ -367,6 +375,13 @@ export function ContestDetailPage() {
           </div>
         </div>
       </Tile>
+
+      {isDraft ? (
+        <Alert data-testid="contest-draft-note">
+          This contest is a draft. Only commissioners can see it, and nobody can enter until it is
+          opened to the league.
+        </Alert>
+      ) : null}
 
       <Tile>
         <div className="flex flex-wrap items-start justify-between gap-3">
