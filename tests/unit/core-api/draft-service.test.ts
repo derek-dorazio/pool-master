@@ -758,3 +758,42 @@ describe('#324 DraftService.submitSelection — the three outcomes', () => {
     );
   });
 });
+
+describe('DraftService.submitSelection — picks only while the contest is open', () => {
+  it.each([
+    ContestStatus.DRAFT,
+    ContestStatus.LOCKED,
+    ContestStatus.ACTIVE,
+    ContestStatus.COMPLETED,
+    ContestStatus.CANCELLED,
+  ])('refuses a pick with 409 CONTEST_ENTRY_LOCKED and writes nothing while the contest is %s', async (status) => {
+    const { service, createPick, deletePick } = setup({ contest: { status } });
+
+    await expect(service.submitSelection(submit())).rejects.toMatchObject({
+      code: 'CONTEST_ENTRY_LOCKED',
+      statusCode: 409,
+    });
+    expect(createPick).not.toHaveBeenCalled();
+    expect(deletePick).not.toHaveBeenCalled();
+  });
+
+  it('refuses toggling a held pick off with CONTEST_ENTRY_LOCKED once the contest is underway', async () => {
+    const { service, deletePick } = setup({
+      contest: { status: ContestStatus.ACTIVE },
+      picks: [pick('pick-a', 'p-a', 'sep-a')],
+    });
+
+    await expect(service.submitSelection(submit())).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
+    expect(deletePick).not.toHaveBeenCalled();
+  });
+
+  it('tells the room the owner cannot submit once the contest is underway, even with a short roster', async () => {
+    const { service } = setup({ contest: { status: ContestStatus.ACTIVE } });
+
+    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+
+    expect(view.isComplete).toBe(false);
+    expect(view.canCurrentUserSubmit).toBe(false);
+    expect(view.currentEntryId).toBeNull();
+  });
+});

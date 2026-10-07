@@ -941,4 +941,18 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     ]);
     expect(freedPickResponse.data?.availableParticipantIds).not.toContain(takenParticipantId);
   });
+  it('refuses a selection with 409 CONTEST_ENTRY_LOCKED once the contest is underway, and stores no pick', async () => {
+    const fixture = await seedTieredDraftFixture();
+    const prisma = getFunctionalPrisma();
+    await prisma.contest.update({ where: { id: fixture.contestId }, data: { status: 'ACTIVE' } });
+
+    const submitResponse = await submitContestSelection({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.entryId, participantId: fixture.sportEventParticipantId },
+    });
+
+    expectFunctionalError(submitResponse, { status: 409, code: 'CONTEST_ENTRY_LOCKED' });
+    await expect(prisma.contestEntryPick.count({ where: { entryId: fixture.entryId } })).resolves.toBe(0);
+  });
 });
