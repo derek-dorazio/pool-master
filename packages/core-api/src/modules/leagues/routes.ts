@@ -270,11 +270,12 @@ export function leaguesModule(fastify: FastifyInstance): void {
       tags: ['Leagues'],
       summary: 'Send email invitations to join a league',
       description:
-        'Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response.',
+        'Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.',
       operationId: 'sendLeagueInvitations',
       body: schemaRef('SendLeagueInvitationsRequest'),
       response: {
         201: schemaRef('SendLeagueInvitationsResponse'),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
         502: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -288,11 +289,12 @@ export function leaguesModule(fastify: FastifyInstance): void {
       tags: ['Leagues'],
       summary: 'Generate a shareable invite link',
       description:
-        'Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints.',
+        'Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints. An inactive league refuses with 400 `LEAGUE_INACTIVE`.',
       operationId: 'generateInviteLink',
       body: schemaRef('GenerateInviteLinkRequest'),
       response: {
         201: schemaRef('GenerateInviteLinkResponse'),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },

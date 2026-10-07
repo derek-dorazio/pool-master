@@ -23570,7 +23570,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response.",
+        "description": "Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.",
         "requestBody": {
           "required": true,
           "content": {
@@ -23598,6 +23598,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SendLeagueInvitationsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -23690,7 +23729,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints.",
+        "description": "Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints. An inactive league refuses with 400 `LEAGUE_INACTIVE`.",
         "requestBody": {
           "required": true,
           "content": {
@@ -23718,6 +23757,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GenerateInviteLinkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -26530,7 +26608,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. Active team owners, league commissioners, and root admins may start this flow.",
+        "description": "Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active team owners, league commissioners, and root admins may start this flow.",
         "requestBody": {
           "required": true,
           "content": {
@@ -26736,7 +26814,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Guided replacement flow that removes the selected current owner (ending their team and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner. Active team owners, league commissioners, and root admins may start this flow.",
+        "description": "Guided replacement flow that removes the selected current owner (ending their team and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A team owner may replace a co-owner; a league commissioner or root admin may also replace a team's only owner, and the team stays active for the replacement.",
         "requestBody": {
           "required": true,
           "content": {
@@ -27256,7 +27334,7 @@
         "tags": [
           "Invitations"
         ],
-        "description": "Accepts an invitation for the authenticated user and creates or reactivates a MEMBER membership in the target league.",
+        "description": "Accepts an invitation for the authenticated user and creates or reactivates a MEMBER membership in the target league. An email invitation can be accepted only by the account whose email it was sent to (400 `LEAGUE_INVITATION_EMAIL_MISMATCH`); an invite link can be used by anyone holding it. An inactive league refuses with 400 `LEAGUE_INACTIVE`.",
         "requestBody": {
           "required": true,
           "content": {
@@ -27515,7 +27593,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team.",
+        "description": "Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`.",
         "requestBody": {
           "required": true,
           "content": {
@@ -27664,7 +27742,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Creates a PoolMaster account for an invited co-owner who does not have one yet, then joins them to the league and the invited team — registration, league membership and team ownership in a single request. Returns the new account with a session, so the invitee is signed in and lands on their team.\n\nUnauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.\n\nThe account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person.",
+        "description": "Creates a PoolMaster account for an invited co-owner who does not have one yet, then joins them to the league and the invited team — registration, league membership and team ownership in a single request. Returns the new account with a session, so the invitee is signed in and lands on their team.\n\nUnauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.\n\nThe account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`.",
         "requestBody": {
           "required": true,
           "content": {

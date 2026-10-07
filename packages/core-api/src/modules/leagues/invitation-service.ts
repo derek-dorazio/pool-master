@@ -10,7 +10,7 @@ import type {
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
-import type { LeagueInvitation, LeagueMembership } from '@poolmaster/shared/domain';
+import type { League, LeagueInvitation, LeagueMembership } from '@poolmaster/shared/domain';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
@@ -112,6 +112,9 @@ export class InvitationService {
       this.resolveInviterName(input.invitedBy),
       this.findActiveMemberEmails(input.leagueId),
     ]);
+    if (league) {
+      this.requireActiveLeague(league, 'sendEmail');
+    }
     const sent: LeagueInvitation[] = [];
     const skippedMembers: string[] = [];
     const skippedDuplicates: string[] = [];
@@ -254,6 +257,21 @@ export class InvitationService {
     );
   }
 
+  /** An inactive league is read-only, so it neither issues nor honours invitations. */
+  private requireActiveLeague(league: League, operation: string): void {
+    if (league.isActive) {
+      return;
+    }
+    this.logger?.warn({
+      action: `leagueInvitation.${operation}.leagueInactive`,
+      data: { leagueId: league.id },
+    }, 'Rejected invitation operation for inactive league');
+    throw new InvitationInvalidError(
+      'This league is inactive. Reactivate it before inviting or adding members.',
+      'LEAGUE_INACTIVE',
+    );
+  }
+
   private async resolveInviterName(userId: string): Promise<string> {
     const user = await this.deps.users.findById(userId);
     if (!user) return DEFAULT_INVITER_NAME;
@@ -275,6 +293,10 @@ export class InvitationService {
         maxUses: input.maxUses ?? 0,
       },
     }, 'Generating league invite link');
+    const league = await this.deps.leagues.findById(input.leagueId);
+    if (league) {
+      this.requireActiveLeague(league, 'generateLink');
+    }
     const expiresAt = input.expiresInDays
       ? (() => {
           const d = new Date();
@@ -372,6 +394,21 @@ export class InvitationService {
         'LEAGUE_INVITATION_EXHAUSTED',
       );
     }
+    if (invitation.inviteType === InviteType.EMAIL && invitation.email) {
+      // An email invitation is for one person: a forwarded code must not let someone else in.
+      // Anyone may use a LINK invitation, which is what it is for.
+      const user = await this.deps.users.findById(userId);
+      if (user?.email.trim().toLowerCase() !== invitation.email.trim().toLowerCase()) {
+        this.logger?.warn({
+          action: 'leagueInvitation.accept.emailMismatch',
+          data: { userId, invitationId: invitation.id },
+        }, 'Cannot accept email invitation sent to a different address');
+        throw new InvitationInvalidError(
+          'This invitation was sent to a different email address. Sign in with that address to accept it.',
+          'LEAGUE_INVITATION_EMAIL_MISMATCH',
+        );
+      }
+    }
     const existingMembership = await this.deps.memberships.findByLeagueAndUser(
       invitation.leagueId,
       userId,
@@ -396,6 +433,7 @@ export class InvitationService {
       }, 'Cannot accept invitation for missing league');
       throw new InvitationInvalidError('League no longer exists', 'LEAGUE_NOT_FOUND');
     }
+    this.requireActiveLeague(league, 'accept');
     const membership = existingMembership
       ? await this.deps.memberships.update(existingMembership.id, {
           role: LeagueRole.MEMBER,

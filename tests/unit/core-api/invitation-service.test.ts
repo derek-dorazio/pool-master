@@ -129,7 +129,7 @@ function createProvisioningUsers() {
       firstName: 'User',
       lastName: 'One',
       username: 'user.one',
-      email: 'user.one@example.com',
+      email: 'invitee@example.com',
     })),
   });
 }
@@ -423,7 +423,7 @@ describe('InvitationService', () => {
 
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
-        to: 'user.one@example.com',
+        to: 'invitee@example.com',
         subject: 'Welcome to Mathworks',
         metadata: {
           templateKey: 'LEAGUE_JOIN_SUCCESS',

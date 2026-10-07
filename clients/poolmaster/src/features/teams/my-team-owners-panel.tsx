@@ -210,7 +210,7 @@ export function MyTeamOwnersPanel({
         <Tile radius="lg">
           <h4 className="text-sm font-semibold text-foreground">Replace owner</h4>
           <p className="mt-2 text-sm text-muted-foreground">
-            Replacing an owner inactivates the selected current owner and starts the owner-invite flow for the replacement email.
+            Replacing an owner removes them from this team and the league, and invites the replacement email to take their place.
           </p>
           <div className="mt-4 flex gap-3">
             <Input

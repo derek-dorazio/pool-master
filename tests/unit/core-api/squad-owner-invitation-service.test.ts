@@ -137,6 +137,7 @@ function createPrisma(overrides: Record<string, unknown> = {}) {
         id: 'league-1',
         leagueCode: 'BIGDAWGS',
         name: 'Big Dawgs',
+        isActive: true,
       }),
     },
     ...overrides,

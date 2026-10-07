@@ -80,6 +80,7 @@ export class SquadOwnerInvitationService {
       input.actorUserId,
       input.actorIsRootAdmin ?? false,
     );
+    await this.requireActiveLeague(input.leagueId);
     await this.requireActiveSquad(input.leagueId, input.squadId);
 
     const duplicate = await this.invitationRepo.findPendingByLeagueAndEmail(
@@ -127,6 +128,7 @@ export class SquadOwnerInvitationService {
       input.actorUserId,
       input.actorIsRootAdmin ?? false,
     );
+    await this.requireActiveLeague(input.leagueId);
     await this.requireActiveSquad(input.leagueId, input.squadId);
 
     if (input.actorUserId === input.targetUserId) {
@@ -146,8 +148,11 @@ export class SquadOwnerInvitationService {
       );
     }
 
+    // A commissioner or root admin may hand a team's only owner seat to someone new, so an
+    // abandoned team can change hands. An owner replaces a co-owner, which needs two.
+    const actorRunsLeague = context.isRootAdmin || context.isCommissioner;
     const activeOwners = await this.squadMembershipRepo.findBySquad(input.squadId);
-    if (activeOwners.length < 2) {
+    if (activeOwners.length < 2 && !actorRunsLeague) {
       throw new SquadOwnerInvitationOperationError(
         'Replace owner requires at least two active owners on the team',
         'SQUAD_OWNER_REPLACE_REQUIRES_MULTIPLE_OWNERS',
@@ -197,6 +202,12 @@ export class SquadOwnerInvitationService {
       squadRepo: this.squadRepo,
       squadMembershipRepo: this.squadMembershipRepo,
     });
+    // Replacing a sole owner leaves the team ownerless until the replacement accepts, and the
+    // unit above inactivates an ownerless team. It is being handed on, not closed, so it stays
+    // active and keeps its entries.
+    if (activeOwners.length < 2) {
+      await this.squadRepo.update(input.squadId, { isActive: true });
+    }
 
     if (existingUser) {
       await this.provisionOwnerOnSquad(input.leagueId, input.squadId, existingUser.id);
@@ -321,6 +332,7 @@ export class SquadOwnerInvitationService {
         mapInvitationStatusCode(expired.status),
       );
     }
+    await this.requireActiveLeague(invitation.leagueId);
     return invitation;
   }
 
@@ -328,6 +340,15 @@ export class SquadOwnerInvitationService {
     const invitation = await this.requirePendingInvitation(inviteCode);
 
     await this.rejectIfCurrentLeagueMember(invitation.leagueId, userId);
+    // The invitation is for the address it was sent to; a forwarded code must not admit someone
+    // else. Registration enforces the same by creating the account with the invited email.
+    const user = await this.users.findById(userId);
+    if (normalizeEmail(user?.email ?? '') !== normalizeEmail(invitation.email)) {
+      throw new SquadOwnerInvitationOperationError(
+        'This invitation was sent to a different email address. Sign in with that address to accept it.',
+        'SQUAD_OWNER_INVITATION_EMAIL_MISMATCH',
+      );
+    }
     await this.provisionOwnerOnSquad(invitation.leagueId, invitation.squadId, userId);
 
     const accepted = await this.invitationRepo.update(invitation.id, {
@@ -416,6 +437,17 @@ export class SquadOwnerInvitationService {
       );
     }
     return context;
+  }
+
+  /** An inactive league is read-only, so it neither issues nor honours owner invitations. */
+  private async requireActiveLeague(leagueId: string) {
+    const league = await this.prisma.league.findUnique({ where: { id: leagueId } });
+    if (league && !league.isActive) {
+      throw new SquadOwnerInvitationOperationError(
+        'This league is inactive. Reactivate it before inviting or adding team owners.',
+        'LEAGUE_INACTIVE',
+      );
+    }
   }
 
   private async requireActiveSquad(leagueId: string, squadId: string) {

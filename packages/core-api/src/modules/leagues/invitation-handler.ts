@@ -11,6 +11,7 @@ import {
 } from './invitation-service';
 import { sendError } from '../../core/error-handler';
 import type { UserRepository } from '@poolmaster/shared/db';
+import type { LeagueInvitation } from '@poolmaster/shared/domain';
 import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
 
 export function createInvitationHandlers(
@@ -68,6 +69,13 @@ export function createInvitationHandlers(
           'Invitation email delivery failed. Please try again or use the join URL.',
         );
       }
+      if (err instanceof InvitationInvalidError) {
+        logger.warn({
+          action: 'leagueInvitationRoute.sendEmail.invalid',
+          data: { leagueId: request.params.id, userId, errorCode: err.code },
+        }, 'Rejected send league invitations request');
+        return sendError(reply, 400, err.code, err.message);
+      }
       throw err;
     }
     logger.info({
@@ -101,12 +109,24 @@ export function createInvitationHandlers(
       },
     }, 'Handling generate league invite link request');
     const userId = request.authUser?.userId as string;
-    const invitation = await invitationService.generateInviteLink({
-      leagueId: request.params.id,
-      invitedBy: userId,
-      expiresInDays: request.body.expiresInDays,
-      maxUses: request.body.maxUses,
-    });
+    let invitation: LeagueInvitation;
+    try {
+      invitation = await invitationService.generateInviteLink({
+        leagueId: request.params.id,
+        invitedBy: userId,
+        expiresInDays: request.body.expiresInDays,
+        maxUses: request.body.maxUses,
+      });
+    } catch (err) {
+      if (err instanceof InvitationInvalidError) {
+        logger.warn({
+          action: 'leagueInvitationRoute.generateLink.invalid',
+          data: { leagueId: request.params.id, userId, errorCode: err.code },
+        }, 'Rejected generate league invite link request');
+        return sendError(reply, 400, err.code, err.message);
+      }
+      throw err;
+    }
     logger.info({
       action: 'leagueInvitationRoute.generateLink.success',
       data: {
