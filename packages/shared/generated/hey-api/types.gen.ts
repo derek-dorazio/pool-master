@@ -10191,6 +10191,28 @@ export type ListUsersErrors = {
     /**
      * Standard API error envelope.
      */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
     401: {
         /**
          * Error payload object.
@@ -10270,6 +10292,9 @@ export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
 export type DeleteUserData = {
     body: UserDeleteRequest;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -10408,6 +10433,9 @@ export type DeleteUserResponse = DeleteUserResponses[keyof DeleteUserResponses];
 export type GetUserData = {
     body?: never;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -10415,6 +10443,28 @@ export type GetUserData = {
 };
 
 export type GetUserErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -10497,6 +10547,9 @@ export type GetUserResponse = GetUserResponses[keyof GetUserResponses];
 export type UpdateUserProfileData = {
     body: UserProfileUpdateRequest;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -10630,6 +10683,9 @@ export type UpdateUserProfileResponse = UpdateUserProfileResponses[keyof UpdateU
 export type UpdateUserUsernameData = {
     body: UserUsernameUpdateRequest;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -10763,6 +10819,9 @@ export type UpdateUserUsernameResponse = UpdateUserUsernameResponses[keyof Updat
 export type UpdateUserPreferencesData = {
     body: UserPreferencesUpdateRequest;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -10770,6 +10829,28 @@ export type UpdateUserPreferencesData = {
 };
 
 export type UpdateUserPreferencesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -10874,6 +10955,9 @@ export type UpdateUserPreferencesResponse = UpdateUserPreferencesResponses[keyof
 export type ChangeUserPasswordData = {
     body: UserPasswordChangeRequest;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -11012,6 +11096,9 @@ export type ChangeUserPasswordResponse = ChangeUserPasswordResponses[keyof Chang
 export type ResetUserPasswordData = {
     body?: never;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -11019,6 +11106,28 @@ export type ResetUserPasswordData = {
 };
 
 export type ResetUserPasswordErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -11101,6 +11210,9 @@ export type ResetUserPasswordResponse = ResetUserPasswordResponses[keyof ResetUs
 export type DisableUserData = {
     body?: never;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -11108,6 +11220,28 @@ export type DisableUserData = {
 };
 
 export type DisableUserErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -11212,6 +11346,9 @@ export type DisableUserResponse = DisableUserResponses[keyof DisableUserResponse
 export type EnableUserData = {
     body?: never;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -11219,6 +11356,28 @@ export type EnableUserData = {
 };
 
 export type EnableUserErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -11323,6 +11482,9 @@ export type EnableUserResponse = EnableUserResponses[keyof EnableUserResponses];
 export type RevokeUserSessionsData = {
     body?: never;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -11330,6 +11492,28 @@ export type RevokeUserSessionsData = {
 };
 
 export type RevokeUserSessionsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -11412,6 +11596,9 @@ export type RevokeUserSessionsResponse2 = RevokeUserSessionsResponses[keyof Revo
 export type SetUserRootAdminData = {
     body: SetUserRootAdminRequest;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -11419,6 +11606,28 @@ export type SetUserRootAdminData = {
 };
 
 export type SetUserRootAdminErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
