@@ -70,18 +70,30 @@ export class InvitationEmailDeliveryError extends Error {
   }
 }
 
+/**
+ * Everything InvitationService reads and writes (#211). It replaced a nine-parameter positional
+ * constructor, where a dependency added mid-list silently shifted every argument after it.
+ */
+export interface InvitationServiceDeps {
+  invitations: LeagueInvitationRepository;
+  memberships: LeagueMembershipRepository;
+  leagues: LeagueRepository;
+  squads?: SquadRepository;
+  squadMemberships?: SquadMembershipRepository;
+  prisma?: PrismaClient;
+  logger?: FastifyBaseLogger;
+  mailDelivery?: MailDeliveryProvider;
+  appBaseUrl?: string;
+}
+
 export class InvitationService {
-  constructor(
-    private readonly invitationRepo: LeagueInvitationRepository,
-    private readonly membershipRepo: LeagueMembershipRepository,
-    private readonly leagueRepo: LeagueRepository,
-    private readonly squadRepo?: SquadRepository,
-    private readonly squadMembershipRepo?: SquadMembershipRepository,
-    private readonly prisma?: PrismaClient,
-    private readonly logger?: FastifyBaseLogger,
-    private readonly mailDelivery?: MailDeliveryProvider,
-    private readonly appBaseUrl = 'http://localhost:5173',
-  ) {}
+  private readonly logger?: FastifyBaseLogger;
+  private readonly appBaseUrl: string;
+
+  constructor(private readonly deps: InvitationServiceDeps) {
+    this.logger = deps.logger;
+    this.appBaseUrl = deps.appBaseUrl ?? 'http://localhost:5173';
+  }
 
   /** Creates email invitations, skipping existing members and pending duplicates. */
   async sendEmailInvitations(input: SendInvitationsInput): Promise<SendInvitationsResult> {
@@ -93,9 +105,9 @@ export class InvitationService {
         emailCount: input.emails.length,
       },
     }, 'Sending league email invitations');
-    await this.membershipRepo.findByLeague(input.leagueId);
+    await this.deps.memberships.findByLeague(input.leagueId);
     const [league, inviterName] = await Promise.all([
-      this.leagueRepo.findById(input.leagueId),
+      this.deps.leagues.findById(input.leagueId),
       this.resolveInviterName(input.invitedBy),
     ]);
     const memberEmails = new Set<string>();
@@ -114,7 +126,7 @@ export class InvitationService {
         skippedMembers.push(normalised);
         continue;
       }
-      const existing = await this.invitationRepo.findByEmail(input.leagueId, normalised);
+      const existing = await this.deps.invitations.findByEmail(input.leagueId, normalised);
       if (existing) {
         this.logger?.warn({
           action: 'leagueInvitation.sendEmail.skippedDuplicate',
@@ -125,7 +137,7 @@ export class InvitationService {
       }
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRY_DAYS);
-      const invitation = await this.invitationRepo.create({
+      const invitation = await this.deps.invitations.create({
         leagueId: input.leagueId,
         email: normalised,
         inviteCode: generateInviteCode(),
@@ -171,7 +183,7 @@ export class InvitationService {
     expiresAt: Date;
     message?: string;
   }): Promise<void> {
-    if (!this.mailDelivery) {
+    if (!this.deps.mailDelivery) {
       this.logger?.debug({
         action: 'leagueInvitation.emailDelivery.skipped',
         data: { invitationId: input.invitationId },
@@ -195,7 +207,7 @@ export class InvitationService {
       },
     }, 'Delivering league invitation email');
     try {
-      await this.mailDelivery.send({
+      await this.deps.mailDelivery.send({
         to: input.email,
         subject: message.subject,
         text: message.text,
@@ -226,8 +238,8 @@ export class InvitationService {
   }
 
   private async resolveInviterName(userId: string): Promise<string> {
-    if (!this.prisma) return DEFAULT_INVITER_NAME;
-    const user = await this.prisma.user.findUnique({
+    if (!this.deps.prisma) return DEFAULT_INVITER_NAME;
+    const user = await this.deps.prisma.user.findUnique({
       where: { id: userId },
       select: {
         firstName: true,
@@ -262,7 +274,7 @@ export class InvitationService {
           return d;
         })()
       : undefined;
-    const invitation = await this.invitationRepo.create({
+    const invitation = await this.deps.invitations.create({
       leagueId: input.leagueId,
       inviteCode: generateInviteCode(),
       inviteType: InviteType.LINK,
@@ -289,7 +301,7 @@ export class InvitationService {
       action: 'leagueInvitation.revoke.enter',
       data: { leagueId, inviteCodeLength: inviteCode.length },
     }, 'Revoking league invite link');
-    const invitation = await this.invitationRepo.findByCode(inviteCode);
+    const invitation = await this.deps.invitations.findByCode(inviteCode);
     if (!invitation || invitation.leagueId !== leagueId) {
       this.logger?.warn({
         action: 'leagueInvitation.revoke.notFound',
@@ -297,7 +309,7 @@ export class InvitationService {
       }, 'Cannot revoke missing league invite link');
       throw new InvitationNotFoundError(inviteCode);
     }
-    await this.invitationRepo.update(invitation.id, {
+    await this.deps.invitations.update(invitation.id, {
       status: InvitationStatus.REVOKED,
     });
     this.logger?.info({
@@ -312,7 +324,7 @@ export class InvitationService {
       action: 'leagueInvitation.accept.enter',
       data: { userId, inviteCodeLength: inviteCode.length },
     }, 'Accepting league invitation');
-    const invitation = await this.invitationRepo.findByCode(inviteCode);
+    const invitation = await this.deps.invitations.findByCode(inviteCode);
     if (!invitation) {
       this.logger?.warn({
         action: 'leagueInvitation.accept.notFound',
@@ -335,7 +347,7 @@ export class InvitationService {
       );
     }
     if (invitation.expiresAt && new Date() > invitation.expiresAt) {
-      await this.invitationRepo.update(invitation.id, { status: InvitationStatus.EXPIRED });
+      await this.deps.invitations.update(invitation.id, { status: InvitationStatus.EXPIRED });
       this.logger?.warn({
         action: 'leagueInvitation.accept.expired',
         data: { userId, invitationId: invitation.id },
@@ -352,7 +364,7 @@ export class InvitationService {
         'LEAGUE_INVITATION_EXHAUSTED',
       );
     }
-    const existingMembership = await this.membershipRepo.findByLeagueAndUser(
+    const existingMembership = await this.deps.memberships.findByLeagueAndUser(
       invitation.leagueId,
       userId,
     );
@@ -368,7 +380,7 @@ export class InvitationService {
         );
       }
     }
-    const league = await this.leagueRepo.findById(invitation.leagueId);
+    const league = await this.deps.leagues.findById(invitation.leagueId);
     if (!league) {
       this.logger?.warn({
         action: 'leagueInvitation.accept.leagueMissing',
@@ -377,12 +389,12 @@ export class InvitationService {
       throw new InvitationInvalidError('League no longer exists', 'LEAGUE_NOT_FOUND');
     }
     const membership = existingMembership
-      ? await this.membershipRepo.update(existingMembership.id, {
+      ? await this.deps.memberships.update(existingMembership.id, {
           role: LeagueRole.MEMBER,
           status: LeagueMembershipStatus.ACTIVE,
           joinedAt: new Date(),
         })
-      : await this.membershipRepo.create({
+      : await this.deps.memberships.create({
           leagueId: invitation.leagueId,
           userId,
           role: LeagueRole.MEMBER,
@@ -394,7 +406,7 @@ export class InvitationService {
 
     const newUses = invitation.currentUses + 1;
     const isFullyUsed = invitation.maxUses > 0 && newUses >= invitation.maxUses;
-    await this.invitationRepo.update(invitation.id, {
+    await this.deps.invitations.update(invitation.id, {
       currentUses: newUses,
       acceptedAt: new Date(),
       acceptedBy: userId,
@@ -428,7 +440,7 @@ export class InvitationService {
     leagueCode: string;
     userId: string;
   }): Promise<void> {
-    if (!this.mailDelivery || !this.prisma) {
+    if (!this.deps.mailDelivery || !this.deps.prisma) {
       this.logger?.debug({
         action: 'leagueInvitation.joinSuccessEmail.skipped',
         data: { invitationId: input.invitationId, leagueId: input.leagueId },
@@ -458,7 +470,7 @@ export class InvitationService {
       leagueHomeUrl: buildLeagueUrl(this.appBaseUrl, input.leagueCode),
     });
     try {
-      await this.mailDelivery.send({
+      await this.deps.mailDelivery.send({
         to: recipient.email,
         subject: message.subject,
         text: message.text,
@@ -491,8 +503,8 @@ export class InvitationService {
   }
 
   private async resolveRecipientUser(userId: string): Promise<{ email: string; name: string } | null> {
-    if (!this.prisma) return null;
-    const user = await this.prisma.user.findUnique({
+    if (!this.deps.prisma) return null;
+    const user = await this.deps.prisma.user.findUnique({
       where: { id: userId },
       select: {
         email: true,
@@ -513,8 +525,8 @@ export class InvitationService {
   }
 
   private async resolveUserTeamName(leagueId: string, userId: string): Promise<string | undefined> {
-    if (!this.prisma) return undefined;
-    const squadMembership = await this.prisma.squadMembership.findFirst({
+    if (!this.deps.prisma) return undefined;
+    const squadMembership = await this.deps.prisma.squadMembership.findFirst({
       where: { leagueId, userId },
       select: {
         squad: {
@@ -526,7 +538,7 @@ export class InvitationService {
   }
 
   private async ensureDefaultSquad(leagueId: string, userId: string): Promise<void> {
-    if (!this.squadRepo || !this.squadMembershipRepo || !this.prisma) {
+    if (!this.deps.squads || !this.deps.squadMemberships || !this.deps.prisma) {
       this.logger?.debug({
         action: 'leagueInvitation.ensureDefaultSquad.skipped',
         data: { leagueId, userId },
@@ -537,9 +549,9 @@ export class InvitationService {
     await ensureDefaultSquadForLeagueMember({
       leagueId,
       userId,
-      squadRepo: this.squadRepo,
-      squadMembershipRepo: this.squadMembershipRepo,
-      prisma: this.prisma,
+      squadRepo: this.deps.squads,
+      squadMembershipRepo: this.deps.squadMemberships,
+      prisma: this.deps.prisma,
       logger: this.logger,
     });
   }
@@ -549,7 +561,7 @@ export class InvitationService {
       action: 'leagueInvitation.preview.enter',
       data: { inviteCodeLength: inviteCode.length },
     }, 'Loading league invitation preview');
-    const invitation = await this.invitationRepo.findByCode(inviteCode);
+    const invitation = await this.deps.invitations.findByCode(inviteCode);
     if (!invitation) {
       this.logger?.warn({
         action: 'leagueInvitation.preview.notFound',
@@ -558,7 +570,7 @@ export class InvitationService {
       throw new InvitationNotFoundError(inviteCode);
     }
 
-    const league = await this.leagueRepo.findById(invitation.leagueId);
+    const league = await this.deps.leagues.findById(invitation.leagueId);
     if (!league) {
       this.logger?.warn({
         action: 'leagueInvitation.preview.leagueMissing',

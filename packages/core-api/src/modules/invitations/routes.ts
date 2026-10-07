@@ -45,17 +45,17 @@ export function invitationsModule(fastify: FastifyInstance): void {
   );
   const appBaseUrl = readApplicationBaseUrl(process.env);
 
-  const invitationService = new InvitationService(
-    invitationRepo,
-    membershipRepo,
-    leagueRepo,
-    squadRepo,
-    squadMembershipRepo,
+  const invitationService = new InvitationService({
+    invitations: invitationRepo,
+    memberships: membershipRepo,
+    leagues: leagueRepo,
+    squads: squadRepo,
+    squadMemberships: squadMembershipRepo,
     prisma,
-    fastify.log,
+    logger: fastify.log,
     mailDelivery,
     appBaseUrl,
-  );
+  });
   const handlers = createInvitationHandlers(invitationService, userRepo);
 
   fastify.get('/:inviteCode', {
