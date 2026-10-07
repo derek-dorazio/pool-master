@@ -90,7 +90,9 @@ Resend Invite (Teams and Owners, commissioner only) follows the same rule. It
 gives the invitation a new invite code and a fresh seven-day expiry before
 sending, so the old link stops working even when the provider then rejects the
 email; the commissioner sees `LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED` and can
-resend again.
+resend again. When `EMAIL_CONFIG` has the league invite email switched off, a
+resend still renews the code and reports success; the email is skipped, so the
+commissioner shares the new link another way.
 
 Contest entry confirmation emails are best-effort receipts. The saved entry is
 not rolled back when provider submission fails; PoolMaster logs the template,
