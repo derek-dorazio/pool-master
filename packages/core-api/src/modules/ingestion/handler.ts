@@ -23,6 +23,7 @@ import {
 import type { EventScoreSourceService } from '../events/event-score-source-service';
 import { EventScoreSourceError } from '../events/event-score-source-service';
 import { sendError } from '../../core/error-handler';
+import { requireAuthUser } from '../../plugins/auth-guard';
 import {
   mapProviderEventCleanupResultToDto,
   toProviderEventDto,
@@ -78,7 +79,7 @@ export function createIngestionHandlers(
     }>,
     reply: FastifyReply,
   ) {
-    const { userId: rootAdminUserId, email: rootAdminEmail } = request.authUser!;
+    const { userId: rootAdminUserId, email: rootAdminEmail } = requireAuthUser(request);
     const logger = request.contextLogger ?? request.log;
     logger.debug({
       sport: request.params.sport,
