@@ -13092,6 +13092,232 @@
         "additionalProperties": false,
         "description": "Generated invite-link response."
       },
+      "ListLeagueInvitationsResponse": {
+        "type": "object",
+        "properties": {
+          "invitations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Invitation record identifier."
+                },
+                "leagueId": {
+                  "type": "string",
+                  "description": "League that owns the invitation."
+                },
+                "email": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Email recipient for direct email invites. Link invites omit this field."
+                },
+                "inviteCode": {
+                  "type": "string",
+                  "description": "Shareable invitation code used in URLs and acceptance requests."
+                },
+                "inviteType": {
+                  "type": "string",
+                  "enum": [
+                    "EMAIL",
+                    "LINK"
+                  ],
+                  "description": "Invitation delivery mode, such as EMAIL or LINK."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "PENDING",
+                    "ACCEPTED",
+                    "EXPIRED",
+                    "REVOKED"
+                  ],
+                  "description": "Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED."
+                },
+                "maxUses": {
+                  "type": "integer",
+                  "description": "Maximum accepted joins allowed for the invitation."
+                },
+                "currentUses": {
+                  "type": "integer",
+                  "description": "How many times the invitation has already been accepted."
+                },
+                "invitedBy": {
+                  "type": "string",
+                  "description": "User ID of the commissioner or actor that issued the invite."
+                },
+                "expiresAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "description": "When the invite stops being valid, if it expires."
+                },
+                "acceptedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "description": "When the invitation was accepted, if applicable."
+                },
+                "acceptedBy": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "User ID that accepted the invite, when known."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Invitation creation timestamp."
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Last invitation update timestamp."
+                }
+              },
+              "required": [
+                "id",
+                "leagueId",
+                "inviteCode",
+                "inviteType",
+                "status",
+                "maxUses",
+                "currentUses",
+                "invitedBy",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false,
+              "description": "Invitation record returned from commissioner invite-management APIs."
+            },
+            "description": "The league's outstanding invitations, newest first: every PENDING invitation (email invites not yet accepted, join links not yet cancelled or used up), plus email invites that went EXPIRED without being accepted. An email invite past its expiresAt stays listed until it is accepted or cancelled; Resend Invite renews it."
+          }
+        },
+        "required": [
+          "invitations"
+        ],
+        "additionalProperties": false,
+        "description": "Commissioner list of a league's pending invitations."
+      },
+      "ResendLeagueInvitationResponse": {
+        "type": "object",
+        "properties": {
+          "invitation": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Invitation record identifier."
+              },
+              "leagueId": {
+                "type": "string",
+                "description": "League that owns the invitation."
+              },
+              "email": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Email recipient for direct email invites. Link invites omit this field."
+              },
+              "inviteCode": {
+                "type": "string",
+                "description": "Shareable invitation code used in URLs and acceptance requests."
+              },
+              "inviteType": {
+                "type": "string",
+                "enum": [
+                  "EMAIL",
+                  "LINK"
+                ],
+                "description": "Invitation delivery mode, such as EMAIL or LINK."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "PENDING",
+                  "ACCEPTED",
+                  "EXPIRED",
+                  "REVOKED"
+                ],
+                "description": "Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED."
+              },
+              "maxUses": {
+                "type": "integer",
+                "description": "Maximum accepted joins allowed for the invitation."
+              },
+              "currentUses": {
+                "type": "integer",
+                "description": "How many times the invitation has already been accepted."
+              },
+              "invitedBy": {
+                "type": "string",
+                "description": "User ID of the commissioner or actor that issued the invite."
+              },
+              "expiresAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When the invite stops being valid, if it expires."
+              },
+              "acceptedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When the invitation was accepted, if applicable."
+              },
+              "acceptedBy": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "User ID that accepted the invite, when known."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Invitation creation timestamp."
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Last invitation update timestamp."
+              }
+            },
+            "required": [
+              "id",
+              "leagueId",
+              "inviteCode",
+              "inviteType",
+              "status",
+              "maxUses",
+              "currentUses",
+              "invitedBy",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false,
+            "description": "The renewed invitation, with its new invite code and expiry."
+          }
+        },
+        "required": [
+          "invitation"
+        ],
+        "additionalProperties": false,
+        "description": "Resent email-invitation response."
+      },
       "LeagueDashboardResponse": {
         "type": "object",
         "properties": {
@@ -21827,6 +22053,271 @@
             }
           }
         }
+      },
+      "get": {
+        "operationId": "listLeagueInvitations",
+        "summary": "List a league's outstanding invitations",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Lists the league's outstanding invitations, newest first: every PENDING email invite and join link, plus email invites that expired without being accepted. Accepted and cancelled invitations are not listed. Commissioner only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Commissioner list of a league's pending invitations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListLeagueInvitationsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/invitations/{invitationId}/resend": {
+      "post": {
+        "operationId": "resendLeagueInvitation",
+        "summary": "Resend an email invitation",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "invitationId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resent email-invitation response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendLeagueInvitationResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/leagues/{id}/invite-link": {
@@ -21913,11 +22404,11 @@
     "/api/v1/leagues/{id}/invite-link/{code}": {
       "delete": {
         "operationId": "revokeInviteLink",
-        "summary": "Revoke an invite link",
+        "summary": "Cancel an invitation",
         "tags": [
           "Leagues"
         ],
-        "description": "Revokes a previously created shareable invite link so the invite code can no longer be accepted by future users.",
+        "description": "Cancels an invitation by its invite code, a shareable join link or an email invite, so the code can no longer be accepted. The invitation becomes REVOKED.",
         "parameters": [
           {
             "schema": {

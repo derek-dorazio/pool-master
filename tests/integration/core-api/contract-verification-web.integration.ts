@@ -181,7 +181,7 @@ describe('Contract verification (web)', () => {
 
     const listRes = await getApp().inject({
       method: 'GET',
-      url: API_ROUTES.leagues.invitations(leagueId),
+      url: `/api/v1/leagues/${leagueId}/invitations`,
       headers: owner.headers,
     });
     expect(listRes.statusCode).toBe(200);
@@ -192,7 +192,7 @@ describe('Contract verification (web)', () => {
     const emailInvitationId = invitationRes.json<SendLeagueInvitationsResponse>().sent[0].id;
     const resendRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.leagues.resendInvitation(leagueId, emailInvitationId),
+      url: `/api/v1/leagues/${leagueId}/invitations/${emailInvitationId}/resend`,
       headers: owner.headers,
     });
     expect(resendRes.statusCode).toBe(200);
@@ -200,10 +200,9 @@ describe('Contract verification (web)', () => {
 
     const resendLinkRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.leagues.resendInvitation(
-        leagueId,
-        inviteLinkRes.json<GenerateInviteLinkResponse>().invitation.id,
-      ),
+      url: `/api/v1/leagues/${leagueId}/invitations/${
+        inviteLinkRes.json<GenerateInviteLinkResponse>().invitation.id
+      }/resend`,
       headers: owner.headers,
     });
     expect(resendLinkRes.statusCode).toBe(409);
