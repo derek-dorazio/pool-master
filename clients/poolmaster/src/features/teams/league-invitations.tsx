@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { InvitationStatus, InviteType } from '@poolmaster/shared/domain';
 import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -7,6 +8,7 @@ import {
   resendLeagueInvitation,
   revokeInviteLink,
   sendLeagueInvitations,
+  type LeagueDto,
   type LeagueInvitationDto,
   type LeagueMembershipDto,
 } from '@/lib/api';
@@ -38,7 +40,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
  */
 type LeagueInvitationsProps = {
   isInactiveLeague: boolean;
-  joinPolicy: string;
+  joinPolicy: LeagueDto['joinPolicy'];
   leagueId: string;
   leagueName: string;
   membersByUserId: Map<string, LeagueMembershipDto>;
@@ -192,8 +194,8 @@ export function LeagueInvitations({
           </p>
         ) : invitations.length ? (
           invitations.map((invitation) => {
-            const isEmail = invitation.inviteType === 'EMAIL';
-            const isExpired = invitation.status === 'EXPIRED'
+            const isEmail = invitation.inviteType === InviteType.EMAIL;
+            const isExpired = invitation.status === InvitationStatus.EXPIRED
               || (invitation.expiresAt ? new Date(invitation.expiresAt).getTime() < Date.now() : false);
 
             return (

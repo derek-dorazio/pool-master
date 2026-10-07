@@ -238,8 +238,9 @@ describe('SDK Functional: Leagues', () => {
 
     const before = await listLeagueInvitations({ client: commissioner.client, path: { id: leagueId } });
     expect(before.response.status).toBe(200);
-    expect(before.data?.invitations.map((invitation) => invitation.id).sort()).toEqual(
-      [acceptedInvite.id, cancelledInvite.id, linkInvite.data?.invitation.id].sort(),
+    const byId = (a: string, b: string) => a.localeCompare(b);
+    expect(before.data?.invitations.map((invitation) => invitation.id).sort(byId)).toEqual(
+      [acceptedInvite.id, cancelledInvite.id, linkInvite.data?.invitation.id as string].sort(byId),
     );
 
     await acceptInvitation({ client: invitee.client, body: { inviteCode: acceptedInvite.inviteCode } });

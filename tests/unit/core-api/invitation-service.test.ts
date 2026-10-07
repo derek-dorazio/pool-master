@@ -374,7 +374,7 @@ describe('InvitationService', () => {
 
       const renewed = await service.resendEmailInvitation('league-1', 'invite-1', 'owner-1');
 
-      const update = (invitationRepo.update as jest.Mock).mock.calls[0][1] as Partial<typeof invitation>;
+      const update = jest.mocked(invitationRepo.update).mock.calls[0][1];
       expect(update.inviteCode).toBeDefined();
       expect(update.inviteCode).not.toBe('oldcode');
       expect(update.status).toBe(InvitationStatus.PENDING);
