@@ -1,4 +1,4 @@
-import { expect } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
 import { Sport } from '@poolmaster/shared/domain';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
@@ -130,5 +130,154 @@ describe('SportEventParticipantService — changing the field', () => {
     expect(store.field.map((entry) => entry.id)).toEqual([picked.id]);
     await expect(service.removeParticipant(event.id, picked.id)).rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_HAS_PICKS', statusCode: 409 });
     await expect(service.removeParticipant('other-event', picked.id)).rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+// The field upload adjusts golfers already on the field; it resolves rows against the field
+// alone and never adds a field row or a participant.
+describe('SportEventParticipantService — field upload', () => {
+  function fieldWithTwo() {
+    const ctx = setup();
+    const { store, sport, event } = ctx;
+    const ana = store.addParticipant(sport.id, 'Ana Lee', { externalId: 'ext-ana' });
+    const bo = store.addParticipant(sport.id, 'Bo Kim', { externalId: 'ext-bo' });
+    const anaEntry = store.addToField(event.id, ana.id, { ranking: 5, oddsToWin: 12, seedNumber: 1 });
+    const boEntry = store.addToField(event.id, bo.id, { ranking: 9, seedNumber: 2 });
+    return { ...ctx, ana, bo, anaEntry, boEntry };
+  }
+
+  it('matches a row by participantId, by externalId, and by case-insensitive playerName, each to its field row', async () => {
+    const { service, event, ana, bo, anaEntry, boEntry } = fieldWithTwo();
+
+    const rows = await service.previewUpload(event.id, [
+      { participantId: ana.id, ranking: 1 },
+      { externalId: 'ext-bo', ranking: 2 },
+    ]);
+    const byName = await service.previewUpload(event.id, [{ playerName: 'bo KIM', ranking: 2 }]);
+
+    expect(rows.map((row) => [row.resolution, row.participantId, row.sportEventParticipantId])).toEqual([
+      ['MATCHED', ana.id, anaEntry.id],
+      ['MATCHED', bo.id, boEntry.id],
+    ]);
+    expect(byName[0]).toMatchObject({ resolution: 'MATCHED', participantName: 'Bo Kim', sportEventParticipantId: boEntry.id });
+  });
+
+  it('uses only the first identifier present: a participantId that matches nothing is unresolved even when the playerName would match', async () => {
+    const { service, event } = fieldWithTwo();
+
+    const [row] = await service.previewUpload(event.id, [{ participantId: 'nobody', playerName: 'Ana Lee', ranking: 1 }]);
+
+    expect(row).toMatchObject({ resolution: 'UNRESOLVED', participantId: null, change: null, after: null });
+  });
+
+  it('reports a playerName shared by two golfers on the field as ambiguous, with no change', async () => {
+    const { store, service, sport, event } = fieldWithTwo();
+    store.addToField(event.id, store.addParticipant(sport.id, 'Ana Lee').id);
+
+    const [row] = await service.previewUpload(event.id, [{ playerName: 'Ana Lee', ranking: 1 }]);
+
+    expect(row).toMatchObject({ resolution: 'AMBIGUOUS', sportEventParticipantId: null, change: null });
+    expect(row.message).toMatch(/Several participants/);
+  });
+
+  it('reports a catalog golfer who is not on the field as unresolved, telling the admin to refresh the field first', async () => {
+    const { store, service, sport, event } = fieldWithTwo();
+    store.addParticipant(sport.id, 'Cy Park', { externalId: 'ext-cy' });
+
+    const [row] = await service.previewUpload(event.id, [{ externalId: 'ext-cy', ranking: 3 }]);
+
+    expect(row).toMatchObject({ resolution: 'UNRESOLVED', participantId: null, sportEventParticipantId: null, change: null });
+    expect(row.message).toMatch(/refresh the field from the provider first/);
+  });
+
+  it('flags every row that names the same participant as a DUPLICATE_PARTICIPANT row error, by different identifiers alike', async () => {
+    const { service, event, ana } = fieldWithTwo();
+
+    const rows = await service.previewUpload(event.id, [
+      { participantId: ana.id, ranking: 1 },
+      { externalId: 'ext-bo', ranking: 2 },
+      { playerName: 'Ana Lee', ranking: 3 },
+    ]);
+
+    expect(rows.map((row) => [row.resolution, row.rowError, row.change])).toEqual([
+      ['MATCHED', 'DUPLICATE_PARTICIPANT', null],
+      ['MATCHED', null, 'UPDATE'],
+      ['MATCHED', 'DUPLICATE_PARTICIPANT', null],
+    ]);
+    expect(rows[0].message).toMatch(/rows 1, 3/);
+  });
+
+  it('classifies a row that changes a value as UPDATE and one that restates stored values as UNCHANGED', async () => {
+    const { service, event } = fieldWithTwo();
+
+    const [changed, same] = await service.previewUpload(event.id, [
+      { externalId: 'ext-ana', oddsToWin: 15 },
+      { externalId: 'ext-bo', ranking: 9, seedNumber: 2, isActive: true },
+    ]);
+
+    expect(changed).toMatchObject({ change: 'UPDATE', before: { oddsToWin: 12 }, after: { oddsToWin: 15, ranking: 5 } });
+    expect(same).toMatchObject({ change: 'UNCHANGED' });
+    expect(same.after).toEqual(same.before);
+  });
+
+  it('leaves an omitted value untouched and clears a value sent as null, in preview and on apply', async () => {
+    const { store, service, event, anaEntry } = fieldWithTwo();
+    const row = { externalId: 'ext-ana', oddsToWin: null, isActive: false, inactiveReason: 'WITHDRAWN' as const };
+
+    const [preview] = await service.previewUpload(event.id, [row]);
+
+    expect(preview.after).toEqual({ isActive: false, inactiveReason: 'WITHDRAWN', ranking: 5, oddsToWin: null, seedNumber: 1 });
+    expect(anaEntry.oddsToWin).toBe(12);
+
+    await service.applyUpload(event.id, [row]);
+
+    const stored = store.field.find((entry) => entry.id === anaEntry.id);
+    expect(stored).toMatchObject({ ranking: 5, seedNumber: 1, isActive: false, inactiveReason: 'WITHDRAWN' });
+    expect(stored?.oddsToWin).toBeUndefined();
+  });
+
+  it('applies every changed row and returns the field, without adding a field row or a participant', async () => {
+    const { store, service, event, anaEntry, boEntry } = fieldWithTwo();
+    const participantsBefore = store.participants.length;
+
+    const field = await service.applyUpload(event.id, [
+      { externalId: 'ext-ana', ranking: 2 },
+      { playerName: 'Bo Kim', ranking: 9 },
+    ]);
+
+    expect(field.map((view) => [view.entry.id, view.entry.ranking])).toEqual([[anaEntry.id, 2], [boEntry.id, 9]]);
+    expect(store.field).toHaveLength(2);
+    expect(store.participants).toHaveLength(participantsBefore);
+  });
+
+  it('refuses to apply (422 EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED) and writes nothing when any row is unresolved or a duplicate', async () => {
+    const { store, event, anaEntry } = fieldWithTwo();
+    const fieldRepo = store.fieldRepo();
+    const updateMany = jest.spyOn(fieldRepo, 'updateMany');
+    const guarded = new SportEventParticipantService({
+      sportEvents: store.sportEventRepo(),
+      field: fieldRepo,
+      participants: store.participantRepo(),
+      affiliations: store.affiliationRepo(),
+      valuations: store.valuationRepo(),
+      standings: store.standingRepo(),
+      participantRounds: store.participantRoundRepo(),
+      golfStandings: store.golfStandingRepo(),
+      golfRounds: store.golfRoundRepo(),
+    });
+
+    for (const rows of [
+      [{ externalId: 'ext-ana', ranking: 1 }, { externalId: 'ext-nobody', ranking: 2 }],
+      [{ externalId: 'ext-ana', ranking: 1 }, { playerName: 'ana lee', ranking: 2 }],
+    ]) {
+      await expect(guarded.applyUpload(event.id, rows)).rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED', statusCode: 422 });
+    }
+    expect(updateMany).not.toHaveBeenCalled();
+    expect(anaEntry.ranking).toBe(5);
+  });
+
+  it('fails a preview for an unknown event with 404 EVENT_NOT_FOUND', async () => {
+    const { service } = setup();
+    await expect(service.previewUpload('missing', [{ externalId: 'x' }])).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
   });
 });

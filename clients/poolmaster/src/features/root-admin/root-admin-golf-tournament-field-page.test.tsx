@@ -268,6 +268,28 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
     expect(screen.getByTestId('root-admin-golf-field-save')).toBeDisabled();
   });
 
+  it('opens the bulk upload card from the Bulk upload action, above the field grid, and closes it again', async () => {
+    seed();
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-golf-field-upload-open'));
+
+    expect(screen.getByTestId('root-admin-golf-field-upload-card')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-field-upload-textarea')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-field-upload-open')).toBeDisabled();
+
+    await userEvent.click(screen.getByTestId('root-admin-golf-field-upload-close'));
+    expect(screen.queryByTestId('root-admin-golf-field-upload-card')).not.toBeInTheDocument();
+  });
+
+  it('offers no Bulk upload action on a read-only, fully provider-owned tournament', async () => {
+    seed({ tournament: { syncScope: 'FULL' } });
+    renderPage();
+
+    expect(await screen.findByText(/fully provider-owned/i)).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-golf-field-upload-open')).not.toBeInTheDocument();
+  });
+
   it('pool-master-za4 seeds the field from the league roster behind a confirmation', async () => {
     seed();
     seedEventParticipantsMock.mockResolvedValue({

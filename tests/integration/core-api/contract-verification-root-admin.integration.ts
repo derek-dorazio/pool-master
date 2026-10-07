@@ -23,6 +23,7 @@ import {
   ParticipantResponseSchema,
   SportEventListResponseSchema,
   SportEventParticipantListResponseSchema,
+  SportEventParticipantUploadPreviewResponseSchema,
   SportEventLiveSimulationResponseSchema,
   SportEventResponseSchema,
   ImportSportEventYearFromProviderResponseSchema,
@@ -1249,6 +1250,52 @@ describe('Contract verification (root admin)', () => {
       });
       expect(fieldRes.statusCode).toBe(200);
       expect(SportEventParticipantListResponseSchema.safeParse(fieldRes.json()).success).toBe(true);
+
+      // --- previewEventParticipantUpload (200) / applyEventParticipantUpload (200, 422) ---
+      // Two golfers on the field, the third only in the catalog: the upload adjusts the field
+      // and refuses a golfer not on it.
+      const addRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/participants`,
+        headers: rootAdmin.headers,
+        payload: { participantIds: created.participantIds.slice(0, 2) },
+      });
+      expect(addRes.statusCode).toBe(200);
+      const uploadPreviewRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/participants/upload/preview`,
+        headers: rootAdmin.headers,
+        payload: {
+          rows: [
+            { participantId: created.participantIds[0], ranking: 3, oddsToWin: 7.5 },
+            { externalId: `z3l-contract-${stamp}-p1`, isActive: false, inactiveReason: 'WITHDRAWN' },
+            { externalId: `z3l-contract-${stamp}-p2`, ranking: 1 },
+          ],
+        },
+      });
+      expect(uploadPreviewRes.statusCode).toBe(200);
+      const uploadPreview = SportEventParticipantUploadPreviewResponseSchema.safeParse(uploadPreviewRes.json());
+      expect(uploadPreview.success).toBe(true);
+      expect(uploadPreview.data?.rollup).toMatchObject({ total: 3, matched: 2, unresolved: 1, update: 2 });
+
+      const uploadRefusedRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/participants/upload`,
+        headers: rootAdmin.headers,
+        payload: { rows: [{ externalId: `z3l-contract-${stamp}-p2`, ranking: 1 }] },
+      });
+      expect(uploadRefusedRes.statusCode).toBe(422);
+      expect(ErrorEnvelopeSchema.safeParse(uploadRefusedRes.json()).success).toBe(true);
+      expect(uploadRefusedRes.json<ErrorEnvelope>().error.code).toBe('EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED');
+
+      const uploadApplyRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/participants/upload`,
+        headers: rootAdmin.headers,
+        payload: { rows: [{ participantId: created.participantIds[0], ranking: 3, oddsToWin: 7.5 }] },
+      });
+      expect(uploadApplyRes.statusCode).toBe(200);
+      expect(SportEventParticipantListResponseSchema.safeParse(uploadApplyRes.json()).success).toBe(true);
 
       const tiersRes = await getApp().inject({
         method: 'GET',

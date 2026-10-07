@@ -89,6 +89,15 @@ on. Then:
 The field load matches players by mock id only. If the roster already holds a hand-made
 player with the same name as a mock golfer, you will see both.
 
+**Optional: adjust the field by bulk upload.** To set many rankings, odds, seeds or
+withdrawals at once (copied from a tournament site, say), use *Bulk upload* on the same
+page. Paste or upload CSV or JSON with `externalId` or `playerName` per row, preview it,
+then apply. It only changes golfers already on the field: a golfer it cannot find shows as
+unresolved, and Apply stays disabled until every row matches one golfer, once. A blank cell
+leaves a value alone; `null` clears it. Load the field first — the upload never adds a
+golfer. A later *Refresh field* replaces rankings and odds with the provider's again, as it
+does grid edits (#415).
+
 ## 5. Build tiers
 
 *Tiers* (`/manage/golf/tournaments/:id/tiers`), then *Auto-assign tiers from ranking*. A golf

@@ -11,6 +11,12 @@
  * Seeding from a sport league copies its active affiliations onto the field once; it
  * does not constrain the field afterwards. `addParticipants` is the deliberate path for
  * anyone else (a LIV golfer at a PGA event): there was never a constraint to bypass.
+ *
+ * The field upload (#128) adjusts rankings, odds, seeds and withdrawals of participants
+ * already on the field; it never adds one. Live scores reach a participant only through a
+ * provider mapping, so the field comes from the provider first and the upload resolves
+ * rows against the field alone, with the shared participant-row resolver. Its apply goes
+ * through `updateParticipants`, the grid save, so a field edit has one write path.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -29,6 +35,7 @@ import type {
 import {
   ParticipantStatus,
   Sport,
+  type ParticipantInactiveReason,
   type Participant,
   type SportEvent,
   type SportEventParticipant,
@@ -39,6 +46,12 @@ import {
   type SportEventParticipantValuation,
 } from '@poolmaster/shared/domain';
 import { deriveSeedNumbersAndOdds } from '../golf/golf-seeding-algorithm';
+import {
+  matchAmong,
+  resolveParticipantRow,
+  type ParticipantRowIdentifiers,
+  type ParticipantRowResolution,
+} from '../sport-catalog/participant-row-resolver';
 import { SportEventError } from './errors';
 
 /** A round row with its sport extension, when the sport has one and it has been scored. */
@@ -81,6 +94,82 @@ export interface AddFieldResult {
 export interface FieldEntryUpdate extends SportEventParticipantPatch {
   sportEventParticipantId: string;
   price?: number | null;
+}
+
+/** One uploaded row: who it names, and the values to set. Omitted leaves a value alone; null clears it. */
+export interface FieldUploadRowInput extends ParticipantRowIdentifiers, SportEventParticipantPatch {}
+
+/** The values an upload can change on a field row, each as stored (null when unset). */
+export interface FieldUploadValues {
+  isActive: boolean;
+  inactiveReason: ParticipantInactiveReason | null;
+  ranking: number | null;
+  oddsToWin: number | null;
+  seedNumber: number | null;
+}
+
+export type FieldUploadChange = 'UPDATE' | 'UNCHANGED';
+
+/** A row that resolved but still cannot be applied. */
+export type FieldUploadRowError = 'DUPLICATE_PARTICIPANT';
+
+export interface FieldUploadPreviewRow {
+  row: FieldUploadRowInput;
+  resolution: ParticipantRowResolution;
+  /** Set only when MATCHED. */
+  participantId: string | null;
+  participantName: string | null;
+  sportEventParticipantId: string | null;
+  rowError: FieldUploadRowError | null;
+  /** Null when the row cannot be applied: not MATCHED, or a row error. */
+  change: FieldUploadChange | null;
+  /** Set whenever the row resolved to a field row. */
+  before: FieldUploadValues | null;
+  /** Null when the row cannot be applied. */
+  after: FieldUploadValues | null;
+  /** Why the row cannot be applied; null when it can. */
+  message: string | null;
+}
+
+const FIELD_UPLOAD_VALUE_KEYS = ['isActive', 'inactiveReason', 'ranking', 'oddsToWin', 'seedNumber'] as const;
+
+function fieldUploadValues(entry: SportEventParticipant): FieldUploadValues {
+  return {
+    isActive: entry.isActive,
+    inactiveReason: entry.inactiveReason ?? null,
+    ranking: entry.ranking ?? null,
+    oddsToWin: entry.oddsToWin ?? null,
+    seedNumber: entry.seedNumber ?? null,
+  };
+}
+
+/** The patch a row carries: only the values it names, each exactly as sent. */
+function fieldUploadPatch(row: FieldUploadRowInput): SportEventParticipantPatch {
+  const patch: SportEventParticipantPatch = {};
+  if (row.isActive !== undefined) patch.isActive = row.isActive;
+  if (row.inactiveReason !== undefined) patch.inactiveReason = row.inactiveReason;
+  if (row.ranking !== undefined) patch.ranking = row.ranking;
+  if (row.oddsToWin !== undefined) patch.oddsToWin = row.oddsToWin;
+  if (row.seedNumber !== undefined) patch.seedNumber = row.seedNumber;
+  return patch;
+}
+
+function describeIdentifier(row: ParticipantRowIdentifiers): string | null {
+  if (row.participantId) return `participantId "${row.participantId}"`;
+  if (row.externalId) return `externalId "${row.externalId}"`;
+  if (row.playerName) return `playerName "${row.playerName}"`;
+  return null;
+}
+
+function unresolvedMessage(row: ParticipantRowIdentifiers, resolution: ParticipantRowResolution): string {
+  const identifier = describeIdentifier(row);
+  if (!identifier) {
+    return 'The row names no participant: give a participantId, externalId or playerName.';
+  }
+  if (resolution === 'AMBIGUOUS') {
+    return `Several participants on this event's field match ${identifier}; name the participant by participantId or externalId.`;
+  }
+  return `No participant on this event's field matches ${identifier}. The upload only changes participants already on the field — refresh the field from the provider first.`;
 }
 
 export interface SportEventParticipantServiceDeps {
@@ -218,6 +307,98 @@ export class SportEventParticipantService {
       price,
     })));
     return this.listEventParticipants(sportEventId);
+  }
+
+  /**
+   * Dry run of a field upload (#128): resolves each row against the event's field and
+   * reports what applying it would change. Writes nothing. A participant not on the field
+   * is UNRESOLVED — the upload never adds one. A participant named by two or more rows
+   * is a row error on each of them. 404 EVENT_NOT_FOUND for an unknown event.
+   */
+  async previewUpload(sportEventId: string, rows: readonly FieldUploadRowInput[]): Promise<FieldUploadPreviewRow[]> {
+    await this.requireEvent(sportEventId);
+    const field = await this.deps.field.findBySportEvent(sportEventId);
+    const participants = await this.deps.participants.findByIds(field.map((entry) => entry.participantId));
+    const entryByParticipantId = new Map(field.map((entry) => [entry.participantId, entry]));
+    const resolved = await Promise.all(rows.map((row) => resolveParticipantRow(row, matchAmong(participants))));
+
+    const rowNumbersByParticipant = new Map<string, number[]>();
+    resolved.forEach((result, index) => {
+      if (!result.participant) return;
+      const list = rowNumbersByParticipant.get(result.participant.id) ?? [];
+      list.push(index + 1);
+      rowNumbersByParticipant.set(result.participant.id, list);
+    });
+
+    return rows.map((row, index) => {
+      const { resolution, participant } = resolved[index];
+      const entry = participant ? entryByParticipantId.get(participant.id) : undefined;
+      if (resolution !== 'MATCHED' || !participant || !entry) {
+        return {
+          row,
+          resolution: resolution === 'MATCHED' ? 'UNRESOLVED' : resolution,
+          participantId: null,
+          participantName: null,
+          sportEventParticipantId: null,
+          rowError: null,
+          change: null,
+          before: null,
+          after: null,
+          message: unresolvedMessage(row, resolution),
+        };
+      }
+      const before = fieldUploadValues(entry);
+      const matched = {
+        row,
+        resolution,
+        participantId: participant.id,
+        participantName: participant.name,
+        sportEventParticipantId: entry.id,
+        before,
+      };
+      const rowNumbers = rowNumbersByParticipant.get(participant.id) ?? [];
+      if (rowNumbers.length > 1) {
+        return {
+          ...matched,
+          rowError: 'DUPLICATE_PARTICIPANT' as const,
+          change: null,
+          after: null,
+          message: `${participant.name} is named by rows ${rowNumbers.join(', ')}; keep one row per participant.`,
+        };
+      }
+      const after: FieldUploadValues = { ...before, ...fieldUploadPatch(row) };
+      const changed = FIELD_UPLOAD_VALUE_KEYS.some((key) => before[key] !== after[key]);
+      return { ...matched, rowError: null, change: changed ? 'UPDATE' as const : 'UNCHANGED' as const, after, message: null };
+    });
+  }
+
+  /**
+   * Applies a field upload (#128): re-runs the preview and, when every row is MATCHED with
+   * no row error, patches the rows that change through the grid save — one transaction,
+   * all or none. Otherwise 422 EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED and nothing is
+   * written. Returns the field.
+   */
+  async applyUpload(sportEventId: string, rows: readonly FieldUploadRowInput[]): Promise<SportEventParticipantView[]> {
+    const preview = await this.previewUpload(sportEventId, rows);
+    const blocked = preview.filter((row) => row.resolution !== 'MATCHED' || row.rowError !== null);
+    if (blocked.length > 0) {
+      throw new SportEventError(
+        `${blocked.length} field upload row(s) cannot be applied: each row must name exactly one participant on the field, once.`,
+        'EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED',
+        422,
+      );
+    }
+    const updates: FieldEntryUpdate[] = preview
+      .filter((row) => row.change === 'UPDATE')
+      .map((row) => ({ sportEventParticipantId: row.sportEventParticipantId as string, ...fieldUploadPatch(row.row) }));
+    this.deps.logger?.info(
+      { sportEventId, rows: rows.length, updated: updates.length },
+      'Applied field upload',
+    );
+    if (updates.length === 0) {
+      return this.listEventParticipants(sportEventId);
+    }
+    return this.updateParticipants(sportEventId, updates);
   }
 
   /** Removes a field row. Refused (409) once any contest entry has picked it — withdraw instead. */

@@ -1,6 +1,7 @@
 import {
   addEventParticipants,
   applyEventGolfRoundScores,
+  applyEventParticipantUpload,
   applyParticipantLeagueAffiliationUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
@@ -17,6 +18,7 @@ import {
   listEventTiers,
   listSports,
   previewEventGolfRoundScores,
+  previewEventParticipantUpload,
   replaceEventTierAssignments,
   replaceEventTiers,
   seedEventParticipants,
@@ -255,6 +257,41 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       body: { participants: [{ sportEventParticipantId: field.data!.participants[5].id, oddsToWin: 4242 }] },
     });
 
+    // --- Bulk-adjust the field: preview, a refused apply, then apply -------------
+    // The upload only adjusts golfers already on the field; one it cannot find blocks the apply.
+    const [upA, upB] = field.data!.participants.slice(6, 8);
+    const uploadRows = [
+      { participantId: upA.participantId, ranking: 1, oddsToWin: 3.5 },
+      { playerName: upB.participant.name.toUpperCase(), ranking: null },
+    ];
+    const uploadPreview = await previewEventParticipantUpload({
+      client: c,
+      path: { eventId },
+      body: { rows: [...uploadRows, { externalId: `${RUN}-not-on-field`, ranking: 2 }] },
+    });
+    expect(uploadPreview.response?.status).toBe(200);
+    expect(uploadPreview.data!.rollup).toMatchObject({ total: 3, matched: 2, unresolved: 1, update: 2 });
+    expect(uploadPreview.data!.rows[1]).toMatchObject({ sportEventParticipantId: upB.id, after: { ranking: null } });
+    expect(uploadPreview.data!.rows[2].message).toMatch(/refresh the field from the provider first/);
+
+    expectFunctionalError(
+      await applyEventParticipantUpload({ client: c, path: { eventId }, body: { rows: [...uploadRows, { externalId: `${RUN}-not-on-field`, ranking: 2 }] } }),
+      { status: 422, code: 'EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED' },
+    );
+    const unchangedField = await listEventParticipants({ client: c, path: { eventId } });
+    expect(unchangedField.data!.participants.find((e) => e.id === upA.id)!.ranking).toBe(upA.ranking);
+
+    const uploaded = await applyEventParticipantUpload({ client: c, path: { eventId }, body: { rows: uploadRows } });
+    expect(uploaded.response?.status).toBe(200);
+    expect(uploaded.data!.participants).toHaveLength(field.data!.participants.length);
+    expect(uploaded.data!.participants.find((e) => e.id === upA.id)).toMatchObject({ ranking: 1, oddsToWin: 3.5 });
+    expect(uploaded.data!.participants.find((e) => e.id === upB.id)!.ranking).toBeNull();
+
+    expectFunctionalError(
+      await previewEventParticipantUpload({ client: c, path: { eventId: ANY_UUID }, body: { rows: uploadRows } }),
+      { status: 404, code: 'EVENT_NOT_FOUND' },
+    );
+
     // --- Reshape to 4 tiers, then auto-assign from ODDS -------------------------
     const fourTiers = await replaceEventTiers({
       client: c,
@@ -479,6 +516,8 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await autoAssignEventPrices({ client: c, path: { eventId: 'x' }, body: { minPrice: 1, maxPrice: 2 } }), deny);
     expectFunctionalError(await replaceEventTierAssignments({ client: c, path: { eventId: 'x' }, body: { assignments: [] } }), deny);
     expectFunctionalError(await applyEventGolfRoundScores({ client: c, path: { eventId: 'x', roundNumber: 1 }, body: { rows: [] } }), deny);
+    expectFunctionalError(await previewEventParticipantUpload({ client: c, path: { eventId: 'x' }, body: { rows: [] } }), deny);
+    expectFunctionalError(await applyEventParticipantUpload({ client: c, path: { eventId: 'x' }, body: { rows: [] } }), deny);
     expectFunctionalError(await updateEventParticipantGolfRoundScore({ client: c, path: { eventId: 'x', roundNumber: 1, sportEventParticipantId: 'x' }, body: { strokes: 70 } }), deny);
     expectFunctionalError(await createEvent({
       client: c,
