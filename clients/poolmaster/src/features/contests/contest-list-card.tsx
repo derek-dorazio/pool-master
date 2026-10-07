@@ -2,7 +2,7 @@ import type { ContestDto } from '@/lib/api';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { DateDisplay, ListCard } from '@/features/shared/ui';
 import { ContestStatusBadge } from './contest-status-badge';
-import { useContestEventSchedule } from './use-contest-event-schedule';
+import { useContestSchedule } from './use-contest-schedule';
 
 export function ContestListCard({
   contest,
@@ -13,15 +13,14 @@ export function ContestListCard({
   leagueCode: string;
   testId: string;
 }) {
-  const scheduleQuery = useContestEventSchedule(contest.sportEventId);
-  const startDate = scheduleQuery.data?.startDate;
+  const startsAt = useContestSchedule(contest)?.startsAt;
 
   return (
     <ListCard
       data-testid={testId}
-      description={startDate ? (
+      description={startsAt ? (
         <span data-testid={`${testId}-starts`}>
-          Starts <DateDisplay className="text-muted-foreground" value={startDate} />
+          Starts <DateDisplay className="text-muted-foreground" value={startsAt} />
         </span>
       ) : undefined}
       metadata={`${contest.sport} · ${contest.selectionType} · ${contest.scoringEngine}`}

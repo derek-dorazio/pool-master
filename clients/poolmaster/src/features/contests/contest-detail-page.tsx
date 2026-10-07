@@ -39,7 +39,7 @@ import {
   refreshOnContestStatusChange,
   shouldPollContestEntries,
 } from './contest-status';
-import { useContestEventSchedule } from './use-contest-event-schedule';
+import { useContestSchedule } from './use-contest-schedule';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -168,7 +168,7 @@ export function ContestDetailPage() {
   });
 
   const leagueId = contestQuery.data?.leagueId ?? '';
-  const scheduleQuery = useContestEventSchedule(contestQuery.data?.sportEventId);
+  const schedule = useContestSchedule(contestQuery.data);
 
   /*
    * #202 (A8) — the viewer's own squad comes from their squad membership, which the
@@ -334,14 +334,14 @@ export function ContestDetailPage() {
                 {contest.selectionType} · {contest.scoringEngine}
                 {contest.sport ? ` · ${contest.sport}` : ''}
               </p>
-              {scheduleQuery.data ? (
+              {schedule ? (
                 <p className="mt-1 text-sm text-muted-foreground" data-testid="contest-detail-schedule">
                   <span data-testid="contest-detail-starts">
-                    Starts <DateDisplay className="text-muted-foreground" value={scheduleQuery.data.startDate} />
+                    Starts <DateDisplay className="text-muted-foreground" value={schedule.startsAt} />
                   </span>
-                  {scheduleQuery.data.endDate ? (
+                  {schedule.endsAt ? (
                     <span data-testid="contest-detail-ends">
-                      {' · '}Ends <DateDisplay className="text-muted-foreground" value={scheduleQuery.data.endDate} />
+                      {' · '}Ends <DateDisplay className="text-muted-foreground" value={schedule.endsAt} />
                     </span>
                   ) : null}
                 </p>

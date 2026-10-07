@@ -157,6 +157,7 @@ function primeMocks(opts?: {
   myTeamId?: string;
   role?: 'MEMBER' | 'COMMISSIONER';
   sportEventId?: string;
+  endsAt?: string;
 }) {
   const contestStatus = opts?.contestStatus ?? 'OPEN';
   const picksRevealed = opts?.picksRevealed ?? (contestStatus !== 'OPEN' && contestStatus !== 'DRAFT');
@@ -177,6 +178,7 @@ function primeMocks(opts?: {
         sport: 'GOLF',
         entryCount: entries.length,
         ...(opts?.sportEventId ? { sportEventId: opts.sportEventId } : {}),
+        ...(opts?.endsAt ? { endsAt: opts.endsAt } : {}),
       },
     },
   });
@@ -286,6 +288,23 @@ describe('ContestDetailPage (Contest Board)', () => {
       `Ends ${format('2026-04-12T23:00:00.000Z')}`,
     );
     expect(getEventMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'event-1' } }));
+  });
+
+  it('shows the contest\'s own end once a commissioner has extended it, over the event\'s scheduled end', async () => {
+    primeMocks({ sportEventId: 'event-1', endsAt: '2026-04-14T18:00:00.000Z' });
+    getEventMock.mockResolvedValue({
+      data: {
+        event: { id: 'event-1', startDate: '2026-04-09T12:00:00.000Z', endDate: '2026-04-12T23:00:00.000Z' },
+      },
+    });
+    const format = (iso: string) =>
+      new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
+
+    renderContestBoard();
+
+    expect(await screen.findByTestId('contest-detail-ends')).toHaveTextContent(
+      `Ends ${format('2026-04-14T18:00:00.000Z')}`,
+    );
   });
 
   // pool-master-dxd.13 — header summary counts ('My Entries: N · Total Entries: M').
