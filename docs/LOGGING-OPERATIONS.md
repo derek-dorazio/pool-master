@@ -38,12 +38,13 @@ Typical fields in a runtime log event:
   "isRootAdmin": true,
   "ip": "127.0.0.1",
   "method": "POST",
-  "route": "/api/v1/ingestion/sports/:sport/sync",
-  "action": "admin.prepareSportSync.noProviders",
+  "route": "/api/v1/ingestion/sports/:sport/events/:eventId/sync",
+  "action": "admin.submitEventSync.noProviders",
   "data": {
-    "sport": "UFC"
+    "sport": "UFC",
+    "eventId": "ufc-300"
   },
-  "msg": "Sport sync preparation failed because no providers were registered"
+  "msg": "Manual event sync failed because no providers were registered"
 }
 ```
 

@@ -105,7 +105,6 @@ export function getManageSectionsByGroup(
 
 const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   manage: 'Manage',
-  'run-sport-sync': 'Run Sport Sync',
   'run-event-sync': 'Run Event Sync',
   'unmapped-participants': 'Unmapped Competitors',
   'poll-intervals': 'Poll Intervals',

@@ -1,15 +1,16 @@
 import { Sport } from '@poolmaster/shared/domain';
 import {
+  EventSyncRequestSchema,
   IngestionFeedTypeSchema,
-  SportSyncRequestSchema,
   type IngestionFeedType,
 } from '@poolmaster/shared/dto/ingestion.dto';
+import * as ingestionDtos from '@poolmaster/shared/dto/ingestion.dto';
+import * as syncOrchestratorModule from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import {
-  SPORT_SYNC_FEEDS,
+  EVENT_SYNC_FEEDS,
   SyncOrchestrator,
   SyncRequestValidationError,
   normalizeSyncRequest,
-  resolveSportSyncWindowPolicy,
 } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 
 describe('SyncOrchestrator request model', () => {
@@ -24,117 +25,6 @@ describe('SyncOrchestrator request model', () => {
     name: 'scheduler',
   } as const;
 
-  it('pool-master-rop.68.2.1: normalizes manual sport sync actor, feeds, and effective window', () => {
-    const now = new Date('2026-05-30T12:00:00.000Z');
-    const requestedFrom = new Date('2026-06-01T00:00:00.000Z');
-
-    const normalized = normalizeSyncRequest({
-      source: 'MANUAL',
-      actor: rootAdminActor,
-      scope: {
-        type: 'SPORT',
-        sport: Sport.GOLF,
-        feeds: ['EVENTSCHEDULE', 'EVENTSCHEDULE'],
-        window: { from: requestedFrom },
-      },
-      workflowContext: { requestId: 'manual-123' },
-    }, { now: () => now });
-
-    expect(normalized.source).toBe('MANUAL');
-    expect(normalized.actor).toEqual(rootAdminActor);
-    expect(normalized.workflowContext).toEqual({ requestId: 'manual-123' });
-    expect(normalized.normalizedAt).toEqual(now);
-    expect(normalized.scope).toMatchObject({
-      type: 'SPORT',
-      sport: Sport.GOLF,
-      feeds: ['EVENTSCHEDULE'],
-      requestedWindow: { from: requestedFrom },
-      effectiveWindow: {
-        from: requestedFrom,
-        to: new Date('2026-06-15T00:00:00.000Z'),
-        defaultedFrom: false,
-        defaultedTo: true,
-      },
-    });
-  });
-
-  it('pool-master-rop.68.2.1: normalizes scheduled sport sync with system actor and default window', () => {
-    const now = new Date('2026-05-30T12:00:00.000Z');
-    const orchestrator = new SyncOrchestrator({ now: () => now });
-
-    const normalized = orchestrator.normalizeRequest({
-      source: 'SCHEDULED',
-      actor: schedulerActor,
-      scope: {
-        type: 'SPORT',
-        sport: Sport.GOLF,
-        feeds: ['EVENTSCHEDULE'],
-      },
-    });
-
-    expect(normalized.scope).toMatchObject({
-      type: 'SPORT',
-      sport: Sport.GOLF,
-      feeds: ['EVENTSCHEDULE'],
-      requestedWindow: {},
-      effectiveWindow: {
-        from: now,
-        to: new Date('2026-06-13T12:00:00.000Z'),
-        defaultedFrom: true,
-        defaultedTo: true,
-      },
-    });
-  });
-
-  it('pool-master-rop.68.2.5: resolves the same configured sport window for scheduled and manual omitted-window sync', () => {
-    const now = new Date('2026-05-30T12:00:00.000Z');
-    const config = {
-      scheduledSports: [Sport.GOLF],
-      healthCheck: { enabled: true, intervalMinutes: 5 },
-      eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 45 },
-      eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
-      eventLiveScores: { enabled: true, intervalSeconds: 30 },
-      eventResults: { enabled: true, intervalMinutes: 30 },
-      perSportOverrides: {},
-    };
-    const windowPolicy = resolveSportSyncWindowPolicy({
-      feeds: ['EVENTSCHEDULE'],
-      config,
-    });
-
-    const scheduled = normalizeSyncRequest({
-      source: 'SCHEDULED',
-      actor: schedulerActor,
-      scope: {
-        type: 'SPORT',
-        sport: Sport.GOLF,
-        feeds: ['EVENTSCHEDULE'],
-        windowPolicy,
-      },
-    }, { now: () => now });
-    const manual = normalizeSyncRequest({
-      source: 'MANUAL',
-      actor: rootAdminActor,
-      scope: {
-        type: 'SPORT',
-        sport: Sport.GOLF,
-        feeds: ['EVENTSCHEDULE'],
-        windowPolicy,
-      },
-    }, { now: () => now });
-
-    expect(scheduled.scope).toMatchObject({
-      type: 'SPORT',
-      effectiveWindow: {
-        from: now,
-        to: new Date('2026-07-14T12:00:00.000Z'),
-        defaultedFrom: true,
-        defaultedTo: true,
-      },
-    });
-    expect(manual.scope).toEqual(scheduled.scope);
-  });
-
   it('pool-master-rop.68.2.1: normalizes manual event sync mock override into provider options', () => {
     const normalized = normalizeSyncRequest({
       source: 'MANUAL',
@@ -146,8 +36,13 @@ describe('SyncOrchestrator request model', () => {
         feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTPARTICIPANTS'],
         mockEventState: 'live',
       },
+      workflowContext: { requestId: 'manual-123' },
     }, { now: () => new Date('2026-05-30T12:00:00.000Z') });
 
+    expect(normalized.source).toBe('MANUAL');
+    expect(normalized.actor).toEqual(rootAdminActor);
+    expect(normalized.workflowContext).toEqual({ requestId: 'manual-123' });
+    expect(normalized.normalizedAt).toEqual(new Date('2026-05-30T12:00:00.000Z'));
     expect(normalized.scope).toEqual({
       type: 'EVENT',
       sport: Sport.GOLF,
@@ -158,14 +53,46 @@ describe('SyncOrchestrator request model', () => {
     });
   });
 
+  it('normalizes a scheduled event sync with the system actor and no provider options', () => {
+    const now = new Date('2026-05-30T12:00:00.000Z');
+    const orchestrator = new SyncOrchestrator({ now: () => now });
+
+    const normalized = orchestrator.normalizeRequest({
+      source: 'SCHEDULED',
+      actor: schedulerActor,
+      scope: {
+        type: 'EVENT',
+        sport: Sport.GOLF,
+        eventId: 'golf-masters-2026',
+        feeds: ['EVENTLIVESCORES'],
+      },
+    });
+
+    expect(normalized).toEqual({
+      source: 'SCHEDULED',
+      actor: schedulerActor,
+      scope: {
+        type: 'EVENT',
+        sport: Sport.GOLF,
+        eventId: 'golf-masters-2026',
+        feeds: ['EVENTLIVESCORES'],
+        mockEventState: undefined,
+        providerOptions: undefined,
+      },
+      workflowContext: {},
+      normalizedAt: now,
+    });
+  });
+
   it('pool-master-rop.68.2.1: rejects source and actor mismatches', () => {
     expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
       source: 'MANUAL',
       actor: schedulerActor,
       scope: {
-        type: 'SPORT',
+        type: 'EVENT',
         sport: Sport.GOLF,
-        feeds: ['EVENTSCHEDULE'],
+        eventId: 'golf-masters-2026',
+        feeds: ['EVENTLIVESCORES'],
       },
     }), 'MANUAL_REQUIRES_ROOT_ADMIN_ACTOR');
 
@@ -173,20 +100,22 @@ describe('SyncOrchestrator request model', () => {
       source: 'SCHEDULED',
       actor: rootAdminActor,
       scope: {
-        type: 'SPORT',
+        type: 'EVENT',
         sport: Sport.GOLF,
-        feeds: ['EVENTSCHEDULE'],
+        eventId: 'golf-masters-2026',
+        feeds: ['EVENTLIVESCORES'],
       },
     }), 'SCHEDULED_REQUIRES_SYSTEM_ACTOR');
   });
 
-  it('pool-master-rop.68.2.1: rejects feeds outside the selected sync scope', () => {
+  it('rejects an empty feed list and a feed the event scope does not run', () => {
     expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
       source: 'MANUAL',
       actor: rootAdminActor,
       scope: {
-        type: 'SPORT',
+        type: 'EVENT',
         sport: Sport.GOLF,
+        eventId: 'golf-open-championship-2026',
         feeds: [],
       },
     }), 'EMPTY_FEED_LIST');
@@ -195,44 +124,44 @@ describe('SyncOrchestrator request model', () => {
       source: 'MANUAL',
       actor: rootAdminActor,
       scope: {
-        type: 'SPORT',
-        sport: Sport.GOLF,
-        feeds: ['EVENTPARTICIPANTS'],
-      },
-    }), 'INVALID_SPORT_FEED');
-
-    expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
-      source: 'MANUAL',
-      actor: rootAdminActor,
-      scope: {
         type: 'EVENT',
         sport: Sport.GOLF,
         eventId: 'golf-open-championship-2026',
+        // @ts-expect-error -- EVENTSCHEDULE is no longer a member of IngestionFeedType.
         feeds: ['EVENTSCHEDULE'],
       },
     }), 'INVALID_EVENT_FEED');
   });
 
-  it('#125: PARTICIPANTRANKINGS is retired as a feed type — the contract, the sport sync request, and the orchestrator all refuse it', () => {
-    // @ts-expect-error -- PARTICIPANTRANKINGS is no longer a member of IngestionFeedType.
-    const retired: IngestionFeedType = 'PARTICIPANTRANKINGS';
+  it.each(['PARTICIPANTRANKINGS', 'EVENTSCHEDULE', 'EVENTRESULTS'])(
+    '#125/#126: %s is retired as a feed type — the contract, the event sync request and the orchestrator all refuse it',
+    (retired) => {
+      expect(IngestionFeedTypeSchema.safeParse(retired).success).toBe(false);
+      expect(IngestionFeedTypeSchema.options).not.toContain(retired);
+      expect(EventSyncRequestSchema.safeParse({ feeds: [retired] }).success).toBe(false);
+      expect(EVENT_SYNC_FEEDS).not.toContain(retired);
+      expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
+        source: 'MANUAL',
+        actor: rootAdminActor,
+        scope: {
+          type: 'EVENT',
+          sport: Sport.GOLF,
+          eventId: 'golf-masters-2026',
+          feeds: [retired as IngestionFeedType],
+        },
+      }), 'INVALID_EVENT_FEED');
+    },
+  );
 
-    expect(IngestionFeedTypeSchema.safeParse(retired).success).toBe(false);
-    expect(IngestionFeedTypeSchema.options).not.toContain('PARTICIPANTRANKINGS');
-    expect(SportSyncRequestSchema.safeParse({ feeds: ['PARTICIPANTRANKINGS'] }).success).toBe(false);
-    expect(SPORT_SYNC_FEEDS).toEqual(['EVENTSCHEDULE']);
-    expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
-      source: 'MANUAL',
-      actor: rootAdminActor,
-      scope: {
-        type: 'SPORT',
-        sport: Sport.GOLF,
-        feeds: [retired],
-      },
-    }), 'INVALID_SPORT_FEED');
+  it('#126: there is no sport-level sync — every feed is event-scoped and no sport sync request exists', () => {
+    expect(IngestionFeedTypeSchema.options).toEqual(['EVENTPARTICIPANTS', 'EVENTLIVESCORES']);
+    expect(EVENT_SYNC_FEEDS).toEqual(['EVENTPARTICIPANTS', 'EVENTLIVESCORES']);
+    expect(Reflect.get(ingestionDtos, 'SportSyncRequestSchema')).toBeUndefined();
+    expect(Reflect.get(syncOrchestratorModule, 'SPORT_SYNC_FEEDS')).toBeUndefined();
+    expect(Reflect.get(syncOrchestratorModule, 'resolveSportSyncWindowPolicy')).toBeUndefined();
   });
 
-  it('pool-master-rop.68.2.1: rejects invalid event IDs, windows, and scheduled mock overrides', () => {
+  it('pool-master-rop.68.2.1: rejects invalid event IDs and scheduled mock overrides', () => {
     expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
       source: 'MANUAL',
       actor: rootAdminActor,
@@ -243,20 +172,6 @@ describe('SyncOrchestrator request model', () => {
         feeds: ['EVENTLIVESCORES'],
       },
     }), 'INVALID_EVENT_ID');
-
-    expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
-      source: 'MANUAL',
-      actor: rootAdminActor,
-      scope: {
-        type: 'SPORT',
-        sport: Sport.GOLF,
-        feeds: ['EVENTSCHEDULE'],
-        window: {
-          from: new Date('2026-06-15T00:00:00.000Z'),
-          to: new Date('2026-06-01T00:00:00.000Z'),
-        },
-      },
-    }), 'INVALID_SYNC_WINDOW');
 
     expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
       source: 'SCHEDULED',

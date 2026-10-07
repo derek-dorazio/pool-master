@@ -51,133 +51,29 @@ describe('IngestionService manual sync submission', () => {
       getConfig: jest.fn().mockResolvedValue({
         scheduledSports: [Sport.GOLF],
         healthCheck: { enabled: true, intervalMinutes: 5 },
-        eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
         eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
         eventLiveScores: { enabled: true, intervalSeconds: 30 },
-        eventResults: { enabled: true, intervalMinutes: 30 },
         perSportOverrides: {},
       }),
       getPerSportConfig: jest.fn(),
     };
+    const scheduler = stubInstance(IngestionScheduler, { runEventSync: jest.fn().mockResolvedValue([]) });
     const service = new IngestionService({
       ...ports(),
-      registry,
-      logger: fakeLogger(),
-      ingestionConfigReader,
-    });
-
-    await expect(service.prepareSportSync({
-      sport: Sport.TENNIS,
-      feeds: ['EVENTSCHEDULE'],
-    }, 'admin-1', 'admin@example.com')).rejects.toMatchObject({
-      name: 'SportSyncNotConfiguredError',
-    });
-  });
-
-  it('pool-master-rop.68.2.3 pool-master-rop.68.2.5 proves deferred manual sport sync uses the normalized window', async () => {
-    const now = new Date('2026-05-30T12:00:00.000Z');
-    let deferredSync: (() => void) | undefined;
-    const setImmediateSpy = jest
-      .spyOn(global, 'setImmediate')
-      .mockImplementation((callback: () => void) => {
-        deferredSync = callback;
-        return 0 as unknown as NodeJS.Immediate;
-      });
-    const providerSyncRunCreate = echoSyncRunCreate();
-    const providerSyncRunUpdate = jest.fn().mockResolvedValue(undefined);
-    const registry = registryWith(fakeSportDataProvider({
-      providerId: 'mock-contest-feed',
-      providerName: 'Mock Contest Feed Provider',
-      sportsCovered: [Sport.GOLF],
-    }));
-    const scheduler = stubInstance(IngestionScheduler, {
-      runSportSync: jest.fn().mockResolvedValue([{
-        jobType: 'EVENT_SCHEDULE_SYNC',
-        providerId: 'mock-contest-feed',
-        sport: Sport.GOLF,
-        status: 'COMPLETED',
-        recordsProcessed: 1,
-        errors: 0,
-        errorLog: [],
-        warnings: [],
-        stats: { providerRecordsReturned: 1 },
-      }]),
-    });
-    const ingestionConfigReader = {
-      getConfig: jest.fn().mockResolvedValue({
-        scheduledSports: [Sport.GOLF],
-        healthCheck: { enabled: true, intervalMinutes: 5 },
-        eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 45 },
-        eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
-        eventLiveScores: { enabled: true, intervalSeconds: 30 },
-        eventResults: { enabled: true, intervalMinutes: 30 },
-        perSportOverrides: {},
-      }),
-      getPerSportConfig: jest.fn().mockResolvedValue({
-        scheduledSports: [Sport.GOLF],
-        healthCheck: { enabled: true, intervalMinutes: 5 },
-        eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 45 },
-        eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
-        eventLiveScores: { enabled: true, intervalSeconds: 30 },
-        eventResults: { enabled: true, intervalMinutes: 30 },
-        perSportOverrides: {},
-      }),
-    };
-    const service = new IngestionService({
-      ...ports({ syncRuns: { create: providerSyncRunCreate, update: providerSyncRunUpdate, findAll: jest.fn() } }),
       registry,
       scheduler,
       logger: fakeLogger(),
       ingestionConfigReader,
-      syncOrchestrator: new SyncOrchestrator({ now: () => now }),
     });
 
-    try {
-      const result = await service.prepareSportSync({
-        sport: Sport.GOLF,
-        feeds: ['EVENTSCHEDULE'],
-      }, 'admin-1', 'admin@example.com');
-
-      expect(result.requestedFeeds).toEqual(['EVENTSCHEDULE']);
-      expect(providerSyncRunCreate).toHaveBeenCalledWith(expect.objectContaining({
-        sport: Sport.GOLF,
-        eventId: null,
-        payload: expect.objectContaining({
-          requestedFeed: 'EVENTSCHEDULE',
-          requestPayload: expect.objectContaining({
-            source: 'MANUAL',
-            actor: {
-              type: 'ROOT_ADMIN',
-              userId: 'admin-1',
-              email: 'admin@example.com',
-            },
-            from: null,
-            to: null,
-            effectiveWindow: {
-              from: '2026-05-30T12:00:00.000Z',
-              to: '2026-07-14T12:00:00.000Z',
-              defaultedFrom: true,
-              defaultedTo: true,
-            },
-          }),
-        }),
-      }));
-      const payloadJson = providerSyncRunCreate.mock.calls[0][0].payload;
-      expect(payloadJson).not.toHaveProperty('source');
-      expect(payloadJson).not.toHaveProperty('actor');
-      expect(payloadJson).not.toHaveProperty('effectiveWindow');
-      expect(deferredSync).toBeDefined();
-      deferredSync?.();
-      await flushMicrotasks();
-      expect(scheduler.runSportSync).toHaveBeenCalledWith({
-        sport: Sport.GOLF,
-        feeds: ['EVENTSCHEDULE'],
-        from: new Date('2026-05-30T12:00:00.000Z'),
-        to: new Date('2026-07-14T12:00:00.000Z'),
-      });
-    } finally {
-      setImmediateSpy.mockRestore();
-    }
+    await expect(service.syncEventData({
+      sport: Sport.TENNIS,
+      eventId: 'tennis-event-1',
+      feeds: ['EVENTLIVESCORES'],
+    }, 'admin-1', 'admin@example.com')).rejects.toMatchObject({
+      name: 'SportSyncNotConfiguredError',
+    });
+    expect(scheduler.runEventSync).not.toHaveBeenCalled();
   });
 
   it('pool-master-rop.68.2.3 normalizes manual event sync before submission', async () => {
@@ -215,10 +111,8 @@ describe('IngestionService manual sync submission', () => {
       getConfig: jest.fn().mockResolvedValue({
         scheduledSports: [Sport.GOLF],
         healthCheck: { enabled: true, intervalMinutes: 5 },
-        eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
         eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
         eventLiveScores: { enabled: true, intervalSeconds: 30 },
-        eventResults: { enabled: true, intervalMinutes: 30 },
         perSportOverrides: {},
       }),
       getPerSportConfig: jest.fn(),
@@ -321,12 +215,12 @@ describe('IngestionService manual sync submission', () => {
       ).rejects.toBeInstanceOf(SportEventSyncScopeError);
     });
 
-    it('pool-master-5h3: allows EVENTPARTICIPANTS (not only EVENTLIVESCORES/EVENTRESULTS) when syncScope is SCORES_ONLY', async () => {
+    it('pool-master-5h3: allows EVENTPARTICIPANTS (not only EVENTLIVESCORES) when syncScope is SCORES_ONLY', async () => {
       // EVENTPARTICIPANTS (the field/"details" feed) is a separate concern
       // from the scores feeds and is gated by syncScope != 'NONE', not
       // restricted to FULL (plans/125 §3.2) — plans/124 §4.4a's admin
       // Load/Refresh Participant Field action depends on this for a
-      // SCORES_ONLY-linked tournament. Every one of the three manual-sync
+      // SCORES_ONLY-linked tournament. Every one of the manual-sync
       // feeds is a valid combination for SCORES_ONLY; only NONE (covered
       // above) rejects a manual-sync feed outright.
       const service = buildManualSyncService(
@@ -334,7 +228,7 @@ describe('IngestionService manual sync submission', () => {
       );
       await expect(
         service.syncEventData(
-          { sport: Sport.GOLF, eventId: 'linked-event', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTRESULTS'] },
+          { sport: Sport.GOLF, eventId: 'linked-event', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
           'admin-1',
           'admin@example.com',
         ),

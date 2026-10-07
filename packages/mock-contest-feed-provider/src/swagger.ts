@@ -8,14 +8,14 @@ export const swaggerPlugin = fp(async (fastify) => {
       openapi: '3.1.0',
       info: {
         title: 'Mock Contest Feed Provider',
-        description: 'QA/local-only contest feed simulator for fields, odds, and results.',
+        description: 'QA/local-only contest feed simulator for fields, odds, and live scores.',
         version: '0.1.0',
       },
       servers: [{ url: '/', description: 'Current server' }],
       tags: [
         { name: 'Health', description: 'Health checks' },
         { name: 'Scenarios', description: 'Scenario catalog and event listings' },
-        { name: 'Feeds', description: 'Field, odds, results, and update snapshots' },
+        { name: 'Feeds', description: 'Field and odds snapshots, and live scores' },
       ],
     },
   });

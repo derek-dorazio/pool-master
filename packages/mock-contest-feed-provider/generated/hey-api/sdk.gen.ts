@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { GetMockContestFeedEventUpdatesData, GetMockContestFeedEventUpdatesResponses, GetMockContestFeedFieldSnapshotData, GetMockContestFeedFieldSnapshotResponses, GetMockContestFeedLiveReplayData, GetMockContestFeedLiveReplayErrors, GetMockContestFeedLiveReplayResponses, GetMockContestFeedOddsSnapshotData, GetMockContestFeedOddsSnapshotResponses, GetMockContestFeedResultsSnapshotData, GetMockContestFeedResultsSnapshotResponses, GetMockContestFeedScenarioData, GetMockContestFeedScenarioEventData, GetMockContestFeedScenarioEventDetailData, GetMockContestFeedScenarioEventDetailResponses, GetMockContestFeedScenarioEventResponses, GetMockContestFeedScenarioResponses, GetMockContestFeedScoresSnapshotData, GetMockContestFeedScoresSnapshotResponses, ListMockContestFeedScenarioEventsData, ListMockContestFeedScenarioEventsResponses, ListMockContestFeedScenariosData, ListMockContestFeedScenariosResponses, MockContestFeedHealthData, MockContestFeedHealthResponses, StartMockContestFeedLiveReplayData, StartMockContestFeedLiveReplayErrors, StartMockContestFeedLiveReplayResponses, StopMockContestFeedLiveReplayData, StopMockContestFeedLiveReplayResponses } from './types.gen.js';
+import type { GetMockContestFeedFieldSnapshotData, GetMockContestFeedFieldSnapshotResponses, GetMockContestFeedLiveReplayData, GetMockContestFeedLiveReplayErrors, GetMockContestFeedLiveReplayResponses, GetMockContestFeedOddsSnapshotData, GetMockContestFeedOddsSnapshotResponses, GetMockContestFeedScenarioData, GetMockContestFeedScenarioEventDetailData, GetMockContestFeedScenarioEventDetailResponses, GetMockContestFeedScenarioResponses, GetMockContestFeedScoresSnapshotData, GetMockContestFeedScoresSnapshotResponses, ListMockContestFeedScenarioEventsData, ListMockContestFeedScenarioEventsResponses, ListMockContestFeedScenariosData, ListMockContestFeedScenariosResponses, MockContestFeedHealthData, MockContestFeedHealthResponses, StartMockContestFeedLiveReplayData, StartMockContestFeedLiveReplayErrors, StartMockContestFeedLiveReplayResponses, StopMockContestFeedLiveReplayData, StopMockContestFeedLiveReplayResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -39,11 +39,6 @@ export const getMockContestFeedScenario = <ThrowOnError extends boolean = false>
 export const listMockContestFeedScenarioEvents = <ThrowOnError extends boolean = false>(options: Options<ListMockContestFeedScenarioEventsData, ThrowOnError>) => (options.client ?? client).get<ListMockContestFeedScenarioEventsResponses, unknown, ThrowOnError>({ url: '/v1/scenarios/{scenarioId}/events', ...options });
 
 /**
- * Get an event and its feed snapshots
- */
-export const getMockContestFeedScenarioEvent = <ThrowOnError extends boolean = false>(options: Options<GetMockContestFeedScenarioEventData, ThrowOnError>) => (options.client ?? client).get<GetMockContestFeedScenarioEventResponses, unknown, ThrowOnError>({ url: '/v1/scenarios/{scenarioId}/events/{eventId}', ...options });
-
-/**
  * Get event detail with season context and baseline feeds
  */
 export const getMockContestFeedScenarioEventDetail = <ThrowOnError extends boolean = false>(options: Options<GetMockContestFeedScenarioEventDetailData, ThrowOnError>) => (options.client ?? client).get<GetMockContestFeedScenarioEventDetailResponses, unknown, ThrowOnError>({ url: '/v1/scenarios/{scenarioId}/events/{eventId}/detail', ...options });
@@ -57,11 +52,6 @@ export const getMockContestFeedFieldSnapshot = <ThrowOnError extends boolean = f
  * Get odds feed snapshot for an event
  */
 export const getMockContestFeedOddsSnapshot = <ThrowOnError extends boolean = false>(options: Options<GetMockContestFeedOddsSnapshotData, ThrowOnError>) => (options.client ?? client).get<GetMockContestFeedOddsSnapshotResponses, unknown, ThrowOnError>({ url: '/v1/scenarios/{scenarioId}/events/{eventId}/odds', ...options });
-
-/**
- * Get results feed snapshot for an event
- */
-export const getMockContestFeedResultsSnapshot = <ThrowOnError extends boolean = false>(options: Options<GetMockContestFeedResultsSnapshotData, ThrowOnError>) => (options.client ?? client).get<GetMockContestFeedResultsSnapshotResponses, unknown, ThrowOnError>({ url: '/v1/scenarios/{scenarioId}/events/{eventId}/results', ...options });
 
 /**
  * Get live scoring snapshot for an event
@@ -89,8 +79,3 @@ export const startMockContestFeedLiveReplay = <ThrowOnError extends boolean = fa
         ...options.headers
     }
 });
-
-/**
- * Get live or correction updates for an event
- */
-export const getMockContestFeedEventUpdates = <ThrowOnError extends boolean = false>(options: Options<GetMockContestFeedEventUpdatesData, ThrowOnError>) => (options.client ?? client).get<GetMockContestFeedEventUpdatesResponses, unknown, ThrowOnError>({ url: '/v1/scenarios/{scenarioId}/events/{eventId}/updates', ...options });

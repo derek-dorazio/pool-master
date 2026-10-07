@@ -5,7 +5,7 @@ import {
   enableUser,
   getIngestionSchedule,
   getPollIntervals,
-  submitSportSync,
+  submitEventSync,
   setUserRootAdmin,
   listContestConfigTemplates,
   listProviderCatalogEvents,
@@ -90,13 +90,14 @@ describe('SDK Functional: Root Admin', () => {
       code: 'LEAGUE_SCOPE_FORBIDDEN',
     });
 
-    const prepareSyncResponse = await submitSportSync({
+    const prepareSyncResponse = await submitEventSync({
       client: user.client,
       path: {
         sport: 'GOLF',
+        eventId: 'masters-2026',
       },
       body: {
-        feeds: ['EVENTSCHEDULE'],
+        feeds: ['EVENTLIVESCORES'],
       },
     });
 
@@ -317,12 +318,12 @@ describe('SDK Functional: Root Admin', () => {
           id: randomUUID(),
           providerId,
           sport: 'GOLF',
-          eventId: null,
+          eventId: 'masters-2026',
           status: 'FAILED',
           startedAt: new Date('2026-04-08T10:00:00.000Z'),
           completedAt: new Date('2026-04-08T10:00:30.000Z'),
           payloadJson: {
-            runType: 'EVENT_SCHEDULE_SYNC',
+            runType: 'SCHEDULED_EVENT_SYNC',
             detail: 'Transient timeout.',
           },
         },
@@ -365,13 +366,14 @@ describe('SDK Functional: Root Admin', () => {
       code: 'PROVIDER_NOT_FOUND',
     });
 
-    const prepareSyncResponse = await submitSportSync({
+    const prepareSyncResponse = await submitEventSync({
       client: user.client,
       path: {
         sport: 'UFC',
+        eventId: 'ufc-300',
       },
       body: {
-        feeds: ['EVENTSCHEDULE'],
+        feeds: ['EVENTLIVESCORES'],
       },
     });
 

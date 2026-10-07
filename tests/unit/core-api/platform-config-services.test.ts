@@ -30,23 +30,34 @@ function storedConfigRepository(configJson: unknown): PlatformRuntimeConfigRepos
   };
 }
 
-/** The shape every environment persisted before #125 retired the PARTICIPANTRANKINGS feed. */
-function configPersistedBeforeRankingsRetired() {
+const RETIRED_FEED_POLICY_KEYS = ['participantRankings', 'eventSchedule', 'eventResults'] as const;
+
+/**
+ * The shape every environment persisted before #125 retired the PARTICIPANTRANKINGS feed and
+ * #126 retired the EVENTSCHEDULE and EVENTRESULTS feeds.
+ */
+function configPersistedBeforeFeedsRetired() {
   return {
     scheduledSports: ['GOLF'],
     healthCheck: { enabled: true, intervalMinutes: 5 },
     eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
-    eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
+    eventParticipants: { enabled: true, intervalMinutes: 720, lookaheadDays: 21 },
     participantRankings: { enabled: true, intervalMinutes: 1440 },
     eventLiveScores: { enabled: true, intervalSeconds: 45 },
     eventResults: { enabled: false, intervalMinutes: 30 },
     perSportOverrides: {
       GOLF: {
         participantRankings: { enabled: false },
+        eventSchedule: { lookaheadDays: 90 },
+        eventResults: { enabled: true },
         eventLiveScores: { intervalSeconds: 20 },
       },
       TENNIS: {
         participantRankings: { intervalMinutes: 60 },
+      },
+      NFL: {
+        eventSchedule: { enabled: false },
+        eventResults: { intervalMinutes: 10 },
       },
     },
   };
@@ -64,13 +75,20 @@ describe('platform config services', () => {
       );
     });
 
-    it('ingestion config defaults the scheduled field sync to off and keeps live scores on', async () => {
+    it('ingestion config defaults the scheduled field sync to off, keeps live scores on, and has no schedule or results feed', async () => {
       const service = new IngestionConfigService(fakeLogger());
 
       const config = await service.getConfig();
 
       expect(config.eventParticipants.enabled).toBe(false);
       expect(config.eventLiveScores.enabled).toBe(true);
+      expect(Object.keys(config).sort()).toEqual([
+        'eventLiveScores',
+        'eventParticipants',
+        'healthCheck',
+        'perSportOverrides',
+        'scheduledSports',
+      ]);
       await expect(service.resetDefaults('admin-1')).resolves.toEqual(expect.objectContaining({
         eventParticipants: expect.objectContaining({ enabled: false }),
       }));
@@ -89,17 +107,17 @@ describe('platform config services', () => {
         eventLiveScores: expect.objectContaining({ intervalSeconds: 45 }),
       }));
       await expect(
-        service.setPerSportOverride('GOLF', { eventResults: { intervalMinutes: 360 } }, 'admin-1'),
+        service.setPerSportOverride('GOLF', { eventParticipants: { intervalMinutes: 720 } }, 'admin-1'),
       ).resolves.toEqual(expect.objectContaining({
         perSportOverrides: expect.objectContaining({
           GOLF: expect.objectContaining({
-            eventResults: expect.objectContaining({ intervalMinutes: 360 }),
+            eventParticipants: expect.objectContaining({ intervalMinutes: 720 }),
           }),
         }),
       }));
       await expect(service.getPerSportConfig('GOLF')).resolves.toEqual(
         expect.objectContaining({
-          eventResults: expect.objectContaining({ intervalMinutes: 360 }),
+          eventParticipants: expect.objectContaining({ intervalMinutes: 720 }),
         }),
       );
       await expect(service.resetDefaults('admin-1')).resolves.toEqual(
@@ -110,42 +128,48 @@ describe('platform config services', () => {
       );
     });
 
-    describe('a persisted ingestion config that still carries the retired participantRankings policy (#125)', () => {
-      it('loads with the admin\'s live-score and results settings intact instead of reverting to defaults', async () => {
-        const repository = storedConfigRepository(configPersistedBeforeRankingsRetired());
+    describe('a persisted ingestion config that still carries the retired participantRankings (#125), eventSchedule and eventResults (#126) policies', () => {
+      it('loads with the admin\'s live-score and participant settings intact instead of reverting to defaults', async () => {
+        const repository = storedConfigRepository(configPersistedBeforeFeedsRetired());
         const service = new IngestionConfigService(repository, fakeLogger());
 
         const config = await service.getConfig();
 
         expect(config.eventLiveScores).toEqual({ enabled: true, intervalSeconds: 45 });
-        expect(config.eventResults).toEqual({ enabled: false, intervalMinutes: 30 });
+        expect(config.eventParticipants).toEqual({ enabled: true, intervalMinutes: 720, lookaheadDays: 21 });
         expect(config.perSportOverrides.GOLF).toEqual({ eventLiveScores: { intervalSeconds: 20 } });
         await expect(service.getPerSportConfig('GOLF')).resolves.toEqual(
           expect.objectContaining({ eventLiveScores: { enabled: true, intervalSeconds: 20 } }),
         );
       });
 
-      it('drops the retired key everywhere, and drops a per-sport override that held nothing else', async () => {
-        const repository = storedConfigRepository(configPersistedBeforeRankingsRetired());
+      it('drops every retired key everywhere, and drops a per-sport override that held nothing else', async () => {
+        const repository = storedConfigRepository(configPersistedBeforeFeedsRetired());
         const service = new IngestionConfigService(repository, fakeLogger());
 
         const config = await service.getConfig();
 
-        expect(config).not.toHaveProperty('participantRankings');
-        expect(config.perSportOverrides.GOLF).not.toHaveProperty('participantRankings');
+        for (const key of RETIRED_FEED_POLICY_KEYS) {
+          expect(config).not.toHaveProperty(key);
+          expect(config.perSportOverrides.GOLF).not.toHaveProperty(key);
+        }
         expect(config.perSportOverrides).not.toHaveProperty('TENNIS');
+        expect(config.perSportOverrides).not.toHaveProperty('NFL');
         expect(IngestionScheduleConfigSchema.strict().safeParse(config).success).toBe(true);
       });
 
-      it('rewrites the stored document without the retired key, keeping every live setting', async () => {
-        const repository = storedConfigRepository(configPersistedBeforeRankingsRetired());
+      it('rewrites the stored document without the retired keys, keeping every live setting', async () => {
+        const repository = storedConfigRepository(configPersistedBeforeFeedsRetired());
         const service = new IngestionConfigService(repository, fakeLogger());
 
         await service.bootstrap();
 
         expect(repository.writes).toHaveLength(1);
-        expect(repository.writes[0]).not.toHaveProperty('participantRankings');
+        for (const key of RETIRED_FEED_POLICY_KEYS) {
+          expect(repository.writes[0]).not.toHaveProperty(key);
+        }
         expect(repository.writes[0]).toEqual(expect.objectContaining({
+          eventParticipants: { enabled: true, intervalMinutes: 720, lookaheadDays: 21 },
           eventLiveScores: { enabled: true, intervalSeconds: 45 },
           perSportOverrides: { GOLF: { eventLiveScores: { intervalSeconds: 20 } } },
         }));
@@ -153,8 +177,10 @@ describe('platform config services', () => {
     });
 
     it('a persisted ingestion config with no retired key loads as stored and is not rewritten', async () => {
-      const current: Record<string, unknown> = { ...configPersistedBeforeRankingsRetired(), perSportOverrides: {} };
-      delete current.participantRankings;
+      const current: Record<string, unknown> = { ...configPersistedBeforeFeedsRetired(), perSportOverrides: {} };
+      for (const key of RETIRED_FEED_POLICY_KEYS) {
+        delete current[key];
+      }
       const repository = storedConfigRepository(current);
       const service = new IngestionConfigService(repository, fakeLogger());
 

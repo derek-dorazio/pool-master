@@ -10,7 +10,6 @@ import type { IngestionCallbacks } from '../../../packages/core-api/src/modules/
 import type {
   SportDataProvider,
   ProviderHealthStatus,
-  SportEvent,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
@@ -28,7 +27,6 @@ function createMockProvider(overrides: Partial<SportDataProvider> = {}): SportDa
     getEventDetails: jest.fn().mockResolvedValue(null),
     getParticipants: jest.fn().mockResolvedValue([]),
     getLiveScores: jest.fn().mockResolvedValue({ category: 'GOLF', externalEventId: 'evt-ext', rounds: [] } satisfies LiveScoreResult),
-    getEventResults: jest.fn().mockResolvedValue(null),
     healthCheck: jest.fn().mockResolvedValue({
       providerId: 'mock-provider',
       status: 'HEALTHY',
@@ -41,7 +39,6 @@ function createMockProvider(overrides: Partial<SportDataProvider> = {}): SportDa
 
 function createMockCallbacks(overrides: Partial<IngestionCallbacks> = {}): IngestionCallbacks {
   return {
-    onEvents: jest.fn().mockResolvedValue(undefined),
     onEventDetail: jest.fn().mockResolvedValue(undefined),
     onLiveScores: jest.fn().mockResolvedValue(emptyLiveScorePersistenceResult()),
     ...overrides,
@@ -221,57 +218,6 @@ describe('IngestionScheduler', () => {
   beforeEach(() => {
     registry = new ProviderRegistry();
     callbacks = createMockCallbacks();
-  });
-
-  describe('syncSport', () => {
-    it('returns FAILED job when no provider is registered', async () => {
-      const scheduler = new IngestionScheduler(registry, callbacks);
-
-      const job = await scheduler.syncSport('GOLF' as Sport);
-      expect(job.status).toBe('FAILED');
-      expect(job.errors).toBe(1);
-      expect(job.errorLog[0]).toEqual(expect.objectContaining({ error: 'No provider registered' }));
-    });
-
-    it('syncs events from the provider and calls onEvents callback', async () => {
-      const mockEvents: SportEvent[] = [
-        {
-          externalId: 'evt-1',
-          providerId: 'mock-provider',
-          sport: 'GOLF' as Sport,
-          name: 'The Masters',
-          startDate: new Date(),
-          status: 'SCHEDULED',
-          fieldLocked: false,
-          metadata: {},
-        },
-      ];
-      const provider = createMockProvider({
-        getUpcomingEvents: jest.fn().mockResolvedValue(mockEvents),
-      });
-      registry.register('GOLF' as Sport, provider, 'PRIMARY');
-
-      const scheduler = new IngestionScheduler(registry, callbacks);
-      const job = await scheduler.syncSport('GOLF' as Sport);
-
-      expect(job.status).toBe('COMPLETED');
-      expect(job.recordsProcessed).toBe(1);
-      expect(callbacks.onEvents).toHaveBeenCalledWith(mockEvents);
-    });
-
-    it('returns FAILED job when provider throws', async () => {
-      const provider = createMockProvider({
-        getUpcomingEvents: jest.fn().mockRejectedValue(new Error('API timeout')),
-      });
-      registry.register('GOLF' as Sport, provider, 'PRIMARY');
-
-      const scheduler = new IngestionScheduler(registry, callbacks);
-      const job = await scheduler.syncSport('GOLF' as Sport);
-
-      expect(job.status).toBe('FAILED');
-      expect(job.errors).toBe(1);
-      expect(job.errorLog[0]).toEqual(expect.objectContaining({ error: 'API timeout' }));
-    });
   });
 
   describe('pollLiveScores', () => {

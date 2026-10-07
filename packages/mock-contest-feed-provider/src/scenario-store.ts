@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   feedKinds,
+  updateKinds,
   mockFeedProviderId,
   supportedSports,
   type ContestFeedEventRecord,
@@ -11,7 +12,6 @@ import {
   type ContestantRecord,
   type ContestFeedScenarioRecord,
   type ContestFeedSnapshotResponse,
-  type ContestFeedUpdateResponse,
   type EventFeedsRecord,
   type EventMetadataRecord,
   type EventScheduleRecord,
@@ -349,7 +349,7 @@ function parseUpdates(record: unknown, field: string): readonly FeedUpdateRecord
     );
     const feedKind = ensureEnumValue(
       toStringValue(item.feedKind, `${field}[${index}].feedKind`),
-      feedKinds,
+      updateKinds,
       `${field}[${index}].feedKind`,
     );
     const updateType = ensureEnumValue(
@@ -1495,36 +1495,6 @@ export class ScenarioStore {
       'Built mock feed snapshot response payload',
     );
     return snapshot;
-  }
-
-  public getUpdates(scenarioId: string, eventId: string): ContestFeedUpdateResponse {
-    const scenario = this.getScenario(scenarioId);
-    const event = this.getEvent(scenarioId, eventId);
-    const baselineContestants = resolveContestantsForFeed(scenario.sport, event);
-    const response: ContestFeedUpdateResponse = {
-      scenarioId,
-      eventId,
-      eventName: event.name,
-      updates: (event.updates ?? []).map((update) => ({
-        ...update,
-        contestants: mergeContestants(baselineContestants, update.contestants),
-      })),
-    };
-    this.logger?.info(
-      { action: 'mockScenarioStore.getUpdates', data: { scenarioId, eventId, updateCount: response.updates.length } },
-      'Built mock contest-feed updates response',
-    );
-    if (response.updates.length === 0) {
-      this.logger?.warn(
-        { action: 'mockScenarioStore.getUpdates.empty', data: { scenarioId, eventId } },
-        'Mock contest-feed event has no staged updates',
-      );
-    }
-    this.logger?.debug(
-      { action: 'mockScenarioStore.getUpdates.payload', data: { response } },
-      'Built mock contest-feed updates response payload',
-    );
-    return response;
   }
 
   public getScenarioCount(): number {

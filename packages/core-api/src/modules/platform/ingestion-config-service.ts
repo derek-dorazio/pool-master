@@ -22,11 +22,6 @@ const DEFAULT_INGESTION_CONFIG: IngestionScheduleConfig = {
     enabled: true,
     intervalMinutes: 5,
   },
-  eventSchedule: {
-    enabled: true,
-    intervalMinutes: 1440,
-    lookaheadDays: 365,
-  },
   eventParticipants: {
     enabled: false,
     intervalMinutes: 360,
@@ -36,10 +31,6 @@ const DEFAULT_INGESTION_CONFIG: IngestionScheduleConfig = {
     enabled: true,
     intervalSeconds: 300,
   },
-  eventResults: {
-    enabled: true,
-    intervalMinutes: 30,
-  },
   perSportOverrides: {},
 };
 
@@ -48,12 +39,13 @@ const INGESTION_RUNTIME_CONFIG_KEY = 'INGESTION_SCHEDULE_CONFIG';
 
 /**
  * Feed policies that no longer exist (#125 retired `participantRankings` with the
- * PARTICIPANTRANKINGS feed). A config persisted before the retirement still carries them, at
+ * PARTICIPANTRANKINGS feed; #126 retired `eventSchedule` and `eventResults` with the
+ * EVENTSCHEDULE and EVENTRESULTS feeds). A config persisted before a retirement still carries them, at
  * the top level and inside per-sport overrides. They are dropped before the stored config is
  * parsed so it loads with its live settings intact rather than being judged invalid and reset
  * to defaults.
  */
-const RETIRED_FEED_POLICY_KEYS = ['participantRankings'] as const;
+const RETIRED_FEED_POLICY_KEYS = ['participantRankings', 'eventSchedule', 'eventResults'] as const;
 
 export class IngestionConfigService {
   private initialized = false;
@@ -336,10 +328,8 @@ function deepCopy(config: IngestionScheduleConfig): IngestionScheduleConfig {
   return {
     healthCheck: { ...config.healthCheck },
     scheduledSports: [...config.scheduledSports],
-    eventSchedule: { ...config.eventSchedule },
     eventParticipants: { ...config.eventParticipants },
     eventLiveScores: { ...config.eventLiveScores },
-    eventResults: { ...config.eventResults },
     perSportOverrides: Object.fromEntries(
       Object.entries(config.perSportOverrides ?? {}).map(([sport, override]) => [
         sport,
@@ -358,10 +348,8 @@ function mergeBasePolicies(
       ? [...override.scheduledSports]
       : [...config.scheduledSports],
     healthCheck: mergePolicy(config.healthCheck, override.healthCheck),
-    eventSchedule: mergePolicy(config.eventSchedule, override.eventSchedule),
     eventParticipants: mergePolicy(config.eventParticipants, override.eventParticipants),
     eventLiveScores: mergePolicy(config.eventLiveScores, override.eventLiveScores),
-    eventResults: mergePolicy(config.eventResults, override.eventResults),
   };
 }
 
@@ -406,9 +394,7 @@ function mergePolicyPatch(
 function policyKeys(): FeedPolicyKey[] {
   return [
     'healthCheck',
-    'eventSchedule',
     'eventParticipants',
     'eventLiveScores',
-    'eventResults',
   ];
 }

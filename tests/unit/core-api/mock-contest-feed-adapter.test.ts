@@ -99,7 +99,7 @@ describe('MockContestFeedAdapter', () => {
     jest.restoreAllMocks();
   });
 
-  it('maps mock provider schedule, participants with their field rankings, scores, and results', async () => {
+  it('maps mock provider schedule, participants with their field rankings, and live scores', async () => {
     global.fetch = jest.fn(async (input: string | URL) => {
       const url = String(input);
 
@@ -161,14 +161,6 @@ describe('MockContestFeedAdapter', () => {
           ],
         });
       }
-      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/results')) {
-        return okJson({
-          contestants: [
-            { contestantId: 'scottie-scheffler', score: -4 },
-            { contestantId: 'rory-mcilroy', score: -5 },
-          ],
-        });
-      }
 
       throw new Error(`Unhandled fetch URL: ${url}`);
     }) as typeof fetch;
@@ -217,9 +209,6 @@ describe('MockContestFeedAdapter', () => {
     );
     }
 
-    const results = await adapter.getEventResults('golf-masters-2026');
-    expect(results?.results[0]?.participantExternalId).toBe('rory-mcilroy');
-
     const health = await adapter.healthCheck();
     expect(health.status).toBe('HEALTHY');
   });
@@ -257,7 +246,7 @@ describe('MockContestFeedAdapter', () => {
     );
     const getLiveScoresSource = adapterSource.slice(
       adapterSource.indexOf('async getLiveScores('),
-      adapterSource.indexOf('async getEventResults('),
+      adapterSource.indexOf('async healthCheck('),
     );
     expect(getLiveScoresSource).not.toMatch(/mockEventState\s*===/);
     expect(getLiveScoresSource).not.toMatch(/case ['"](golf-|open|locked|live|completed)/);

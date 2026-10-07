@@ -1,8 +1,8 @@
 import { type Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
-import type { ProviderSyncRun, Sport } from '@poolmaster/shared/domain';
-import type { IngestionFeedType, SportSyncRequest, EventSyncRequest, IngestionJobRecord } from '../core/ingestion-scheduler';
+import type { ProviderSyncRun } from '@poolmaster/shared/domain';
+import type { IngestionFeedType, EventSyncRequest, IngestionJobRecord } from '../core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../core/sync-orchestrator';
 
 type SyncOutcomePayload = Prisma.InputJsonObject & {
@@ -24,7 +24,7 @@ export class ProviderSyncRunLedger {
     submittedAt: Date;
     runType: string;
   }): Promise<ProviderSyncRun[]> {
-    const { sport, eventId, feeds } = getNormalizedTarget(input.normalizedRequest);
+    const { sport, eventId, feeds } = input.normalizedRequest.scope;
     const requestContext = buildNormalizedSyncRequestContext(input.normalizedRequest);
     const runs = await Promise.all(
       feeds.map(async (feed) => {
@@ -45,9 +45,9 @@ export class ProviderSyncRunLedger {
           stats: {},
           outcome: buildSyncOutcome({
             status: 'SUBMITTED',
-            summary: buildSubmittedSyncRunDetail(feed, sport, eventId),
+            summary: buildSubmittedSyncRunDetail(feed, eventId),
           }),
-          detail: buildSubmittedSyncRunDetail(feed, sport, eventId),
+          detail: buildSubmittedSyncRunDetail(feed, eventId),
         };
         return this.syncRuns.create({
           providerId: input.providerId,
@@ -226,48 +226,17 @@ export class ProviderSyncRunLedger {
   }
 }
 
-function getNormalizedTarget(normalized: NormalizedSyncRequest): {
-  sport: Sport;
-  eventId: string | null;
-  feeds: IngestionFeedType[];
-} {
-  if (normalized.scope.type === 'SPORT') {
-    return {
-      sport: normalized.scope.sport,
-      eventId: null,
-      feeds: normalized.scope.feeds,
-    };
-  }
-
-  return {
-    sport: normalized.scope.sport,
-    eventId: normalized.scope.eventId,
-    feeds: normalized.scope.feeds,
-  };
-}
-
 function mapJobTypeToFeed(jobType: IngestionJobRecord['jobType']): IngestionFeedType {
   switch (jobType) {
-    case 'EVENT_SCHEDULE_SYNC':
-      return 'EVENTSCHEDULE';
     case 'EVENT_PARTICIPANTS_SYNC':
       return 'EVENTPARTICIPANTS';
     case 'EVENT_LIVE_SCORES_SYNC':
       return 'EVENTLIVESCORES';
-    case 'EVENT_RESULTS_SYNC':
-      return 'EVENTRESULTS';
-    case 'HEALTH_CHECK':
-      return 'EVENTSCHEDULE';
   }
 }
 
-function buildSubmittedSyncRunDetail(
-  feed: IngestionFeedType,
-  sport: Sport,
-  eventId: string | null,
-): string {
-  const target = eventId ?? sport;
-  return `Submitted ${formatFeedLabel(feed)} sync for ${target}.`;
+function buildSubmittedSyncRunDetail(feed: IngestionFeedType, eventId: string): string {
+  return `Submitted ${formatFeedLabel(feed)} sync for ${eventId}.`;
 }
 
 function toJsonSafeErrorPayload(error: unknown): Record<string, unknown> {
@@ -325,14 +294,10 @@ function buildSyncOutcome(input: {
 
 function formatFeedLabel(feed: IngestionFeedType): string {
   switch (feed) {
-    case 'EVENTSCHEDULE':
-      return 'event schedule';
     case 'EVENTPARTICIPANTS':
       return 'event participants';
     case 'EVENTLIVESCORES':
       return 'event live scores';
-    case 'EVENTRESULTS':
-      return 'event results';
   }
 }
 
@@ -356,32 +321,7 @@ function buildSyncRunDetail(
   return `Completed ${feed} sync for ${target} (${job.recordsProcessed} records).`;
 }
 
-function serializeDate(value: Date | undefined): string | null {
-  return value?.toISOString() ?? null;
-}
-
 export function buildNormalizedSyncRequestContext(normalized: NormalizedSyncRequest): Record<string, unknown> {
-  if (normalized.scope.type === 'SPORT') {
-    return {
-      source: normalized.source,
-      actor: normalized.actor,
-      workflowContext: normalized.workflowContext,
-      from: serializeDate(normalized.scope.requestedWindow.from),
-      to: serializeDate(normalized.scope.requestedWindow.to),
-      requestedWindow: {
-        from: serializeDate(normalized.scope.requestedWindow.from),
-        to: serializeDate(normalized.scope.requestedWindow.to),
-      },
-      effectiveWindow: {
-        from: normalized.scope.effectiveWindow.from.toISOString(),
-        to: normalized.scope.effectiveWindow.to.toISOString(),
-        defaultedFrom: normalized.scope.effectiveWindow.defaultedFrom,
-        defaultedTo: normalized.scope.effectiveWindow.defaultedTo,
-      },
-      normalizedAt: normalized.normalizedAt.toISOString(),
-    };
-  }
-
   return {
     source: normalized.source,
     actor: normalized.actor,
@@ -391,16 +331,9 @@ export function buildNormalizedSyncRequestContext(normalized: NormalizedSyncRequ
   };
 }
 
-export function isSportSyncFeedType(
-  feed: unknown,
-): feed is SportSyncRequest['feeds'][number] {
-  return feed === 'EVENTSCHEDULE';
-}
-
 export function isEventSyncFeedType(
   feed: unknown,
 ): feed is EventSyncRequest['feeds'][number] {
   return feed === 'EVENTPARTICIPANTS'
-    || feed === 'EVENTLIVESCORES'
-    || feed === 'EVENTRESULTS';
+    || feed === 'EVENTLIVESCORES';
 }

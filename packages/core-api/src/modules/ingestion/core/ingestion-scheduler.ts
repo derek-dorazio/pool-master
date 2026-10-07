@@ -2,17 +2,19 @@
  * IngestionScheduler — orchestrates periodic data polling from providers.
  *
  * Schedules jobs for:
- * - Event schedule sync (daily)
- * - Event participant hydration (every 6h for the next unlocked field-ready events)
- * - Live score polling (every 30s during active events)
+ * - Event participant hydration (every 6h for the next unlocked field-ready events; off by default)
+ * - Live score polling (every 5 min during active events)
  * - Provider health checks (every 5 min)
+ *
+ * Every feed is event-scoped. There is no scheduled event discovery: an admin creates each
+ * event and moves its lifecycle by hand (#126).
  */
 
 import type { Sport } from '@poolmaster/shared/domain';
 import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
-import { SyncOrchestrator, resolveSportSyncWindowPolicy } from './sync-orchestrator';
+import { SyncOrchestrator } from './sync-orchestrator';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { syncWriteStats } from './sync-write-diagnostics';
 import type {
@@ -20,18 +22,14 @@ import type {
   IngestionFeedType,
   NormalizedSyncRequest,
   NormalizedEventSyncScope,
-  NormalizedSportSyncScope,
-  SportSyncFeed,
   SyncOrchestratorRequest,
   SyncRequestSource,
-  SyncWindowPolicy,
 } from './sync-orchestrator';
 import type {
   ProviderEventSyncOptions,
   ProviderPayloadCapture,
   ProviderPayloadCaptureSession,
   SportDataProvider,
-  SportEvent,
   SportEventDetail,
 } from './provider-interface';
 import { supportsMockEventStateControls, supportsProviderPayloadDiagnostics } from './provider-interface';
@@ -42,11 +40,8 @@ import type { LiveScorePersistenceResult } from './score-publisher';
 export type { IngestionFeedType } from './sync-orchestrator';
 
 export type JobType =
-  | 'EVENT_SCHEDULE_SYNC'
   | 'EVENT_PARTICIPANTS_SYNC'
-  | 'EVENT_LIVE_SCORES_SYNC'
-  | 'EVENT_RESULTS_SYNC'
-  | 'HEALTH_CHECK';
+  | 'EVENT_LIVE_SCORES_SYNC';
 
 export interface IngestionJobRecord {
   jobType: JobType;
@@ -84,24 +79,15 @@ interface IngestionJobWorkResult {
   writeDiagnostics?: SyncWriteDiagnostics;
 }
 
-export interface SportSyncRequest {
-  sport: Sport;
-  feeds: Array<'EVENTSCHEDULE'>;
-  from?: Date;
-  to?: Date;
-  workflowContext?: Record<string, unknown>;
-}
-
 export interface EventSyncRequest {
   sport: Sport;
   eventId: string;
-  feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+  feeds: EventSyncFeed[];
   mockEventState?: MockEventState;
   workflowContext?: Record<string, unknown>;
 }
 
 export interface IngestionCallbacks {
-  onEvents(events: SportEvent[]): Promise<SyncWriteDiagnostics | void>;
   onEventDetail(detail: SportEventDetail): Promise<SyncWriteDiagnostics | void>;
   onLiveScores(result: LiveScoreResult, providerId: string): Promise<LiveScorePersistenceResult>;
 }
@@ -114,7 +100,7 @@ export interface IngestionScheduleConfigReader {
 export interface IngestionScheduledEventReader {
   listEventIdsForFeed(input: {
     sport: Sport;
-    feed: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
+    feed: EventSyncFeed;
     from?: Date;
     now: Date;
     to?: Date;
@@ -186,24 +172,14 @@ export class IngestionScheduler {
         }
 
         this.startRecurringLoop(
-          `${sport} schedule sync`,
-          async () => this.runConfiguredSportScheduleSync(sport),
-          async () => this.getSportDelayMs(sport, 'eventSchedule'),
-        );
-        this.startRecurringLoop(
           `${sport} participant sync`,
           async () => this.runConfiguredSportFieldSync(sport),
           async () => this.getSportDelayMs(sport, 'eventParticipants'),
         );
         this.startRecurringLoop(
           `${sport} live score sync`,
-          async () => this.runConfiguredEventSyncSweep(sport, 'EVENTLIVESCORES'),
+          async () => this.runConfiguredLiveScoreSweep(sport),
           async () => this.getSportDelayMs(sport, 'eventLiveScores'),
-        );
-        this.startRecurringLoop(
-          `${sport} results sync`,
-          async () => this.runConfiguredEventSyncSweep(sport, 'EVENTRESULTS'),
-          async () => this.getSportDelayMs(sport, 'eventResults'),
         );
         this.startedSportLoops.add(sport);
       }
@@ -230,36 +206,6 @@ export class IngestionScheduler {
     this.logger?.info('Ingestion scheduler stopped');
   }
 
-  /** Backward-compatible wrapper for a schedule-only sport sync. */
-  async syncSport(sport: Sport): Promise<IngestionJobRecord> {
-    return this.runScheduleSync(sport);
-  }
-
-  /** Runs a one-off sport sync for explicit feed types. */
-  async runSportSync(request: SportSyncRequest): Promise<IngestionJobRecord[]> {
-    const jobs: IngestionJobRecord[] = [];
-    this.logger?.info({
-      sport: request.sport,
-      feeds: request.feeds,
-      from: request.from?.toISOString() ?? null,
-      to: request.to?.toISOString() ?? null,
-    }, 'Ad hoc sport sync requested');
-
-    for (const feed of dedupe(request.feeds)) {
-      if (feed === 'EVENTSCHEDULE') {
-        jobs.push(await this.runScheduleSync(request.sport, request.from, request.to));
-      }
-    }
-
-    this.logger?.info({
-      sport: request.sport,
-      feeds: request.feeds,
-      jobs: jobs.map(toJobLogPayload),
-    }, 'Ad hoc sport sync completed');
-
-    return jobs;
-  }
-
   /** Runs a one-off event sync for explicit feed types. */
   async runEventSync(request: EventSyncRequest): Promise<IngestionJobRecord[]> {
     const jobs: IngestionJobRecord[] = [];
@@ -277,12 +223,7 @@ export class IngestionScheduler {
         continue;
       }
 
-      if (feed === 'EVENTLIVESCORES') {
-        jobs.push(await this.pollLiveScores(request.sport, request.eventId, options));
-        continue;
-      }
-
-      jobs.push(await this.fetchEventResults(request.sport, request.eventId, options));
+      jobs.push(await this.pollLiveScores(request.sport, request.eventId, options));
     }
 
     this.logger?.info({
@@ -357,75 +298,6 @@ export class IngestionScheduler {
     }, eventId);
   }
 
-  /** Fetches final results for a completed event. */
-  async fetchEventResults(
-    sport: Sport,
-    eventId: string,
-    options?: ProviderEventSyncOptions,
-  ): Promise<IngestionJobRecord> {
-    this.logger?.debug({ sport, eventId, mockEventState: options?.mockEventState ?? null }, 'Fetching event results');
-    const provider = this.registry.getProvider(sport);
-    if (!provider) {
-      this.logger?.warn({ sport, eventId }, 'No provider registered for event results fetch');
-      return createFailedJob('EVENT_RESULTS_SYNC', 'none', sport, 'No provider registered', eventId);
-    }
-    const unsupportedJob = createUnsupportedMockEventStateJob(provider, 'EVENT_RESULTS_SYNC', sport, eventId, options);
-    if (unsupportedJob) {
-      return unsupportedJob;
-    }
-
-    return this.runJob('EVENT_RESULTS_SYNC', provider.providerId, sport, 'EVENTRESULTS', provider, async () => {
-      const results = options
-        ? await provider.getEventResults(eventId, options)
-        : await provider.getEventResults(eventId);
-      if (!results) {
-        this.logger?.warn({ sport, eventId, providerId: provider.providerId }, 'Provider returned no event results');
-        return {
-          recordsProcessed: 0,
-          stats: {
-            providerRecordsReturned: 0,
-            resultsReturned: 0,
-          } as Record<string, number>,
-          warnings: [{
-            code: 'NO_PROVIDER_RESULTS',
-            message: 'Provider returned no final results for the requested event.',
-          }],
-        };
-      }
-
-      // pool-master-rop.78.3 — the previous path synthesized a
-      // ProviderStatEvent[] from final-result rows by hardcoding
-      // statKey='FINISH_POSITION', then routed it through onLiveScores so
-      // scoring could pick it up. With the typed LiveScoreResult contract
-      // (plans/117 §10.2) final-result rows no longer fit the live-score
-      // shape — final position is not a per-round update. The synthetic
-      // bridge has been removed; rop.78.7 reconstitutes the final-result
-      // → contribution path against the typed substrate. This handler
-      // still records the job count so admin event-results triggers
-      // remain observable.
-      this.logger?.info({
-        sport,
-        eventId,
-        providerId: provider.providerId,
-        resultsReturned: results.results.length,
-      }, 'Fetched event results (no live-score bridge — rop.78.7 rebuilds)');
-      return {
-        recordsProcessed: results.results.length,
-        stats: {
-          providerRecordsReturned: results.results.length,
-          resultsReturned: results.results.length,
-          resultsProcessed: results.results.length,
-        } as Record<string, number>,
-        warnings: results.results.length === 0
-          ? [{
-              code: 'NO_PROVIDER_RESULTS',
-              message: 'Provider returned an empty final-results payload.',
-            }]
-          : [],
-      };
-    }, eventId);
-  }
-
   private async runHealthChecks(): Promise<void> {
     this.logger?.debug('Running provider health checks');
     const providers = this.registry.getAllProviders();
@@ -452,34 +324,6 @@ export class IngestionScheduler {
         }, 'Provider health check threw exception');
       }
     }
-  }
-
-  private async runConfiguredSportScheduleSync(sport: Sport): Promise<void> {
-    if (!(await this.isSportScheduled(sport))) {
-      this.logger?.debug({ sport }, 'Skipping scheduled sport schedule sync because sport is not configured');
-      return;
-    }
-
-    const config = await this.getSportConfig(sport);
-    if (!config.eventSchedule.enabled) {
-      this.logger?.debug({ sport }, 'Skipping scheduled sport schedule sync because it is disabled');
-      return;
-    }
-
-    const normalized = this.normalizeScheduledSportSync({
-      sport,
-      feeds: ['EVENTSCHEDULE'],
-      windowPolicy: resolveSportSyncWindowPolicy({ feeds: ['EVENTSCHEDULE'], config }),
-    });
-    const scope = assertScheduledSportScope(normalized);
-    this.logger?.debug({
-      sport,
-      from: scope.effectiveWindow.from.toISOString(),
-      to: scope.effectiveWindow.to.toISOString(),
-    }, 'Running configured sport schedule sync');
-    await this.executeScheduledSyncRun(normalized, () =>
-      this.runScheduleSync(scope.sport, scope.effectiveWindow.from, scope.effectiveWindow.to),
-    );
   }
 
   private async runConfiguredSportFieldSync(sport: Sport): Promise<void> {
@@ -540,18 +384,15 @@ export class IngestionScheduler {
     }
   }
 
-  private async runConfiguredEventSyncSweep(
-    sport: Sport,
-    feed: 'EVENTLIVESCORES' | 'EVENTRESULTS',
-  ): Promise<void> {
+  private async runConfiguredLiveScoreSweep(sport: Sport): Promise<void> {
+    const feed = 'EVENTLIVESCORES' as const;
     if (!(await this.isSportScheduled(sport))) {
       this.logger?.debug({ sport, feed }, 'Skipping scheduled event sync sweep because sport is not configured');
       return;
     }
 
     const config = await this.getSportConfig(sport);
-    const policy = feed === 'EVENTLIVESCORES' ? config.eventLiveScores : config.eventResults;
-    if (!policy.enabled) {
+    if (!config.eventLiveScores.enabled) {
       this.logger?.debug({ sport, feed }, 'Skipping scheduled event sync sweep because it is disabled');
       return;
     }
@@ -589,44 +430,13 @@ export class IngestionScheduler {
       });
       const scope = assertScheduledEventScope(normalized);
       try {
-        if (scope.feeds[0] === 'EVENTLIVESCORES') {
-          await this.executeScheduledSyncRun(normalized, () =>
-            this.pollLiveScores(scope.sport, scope.eventId, scope.providerOptions),
-          );
-        } else {
-          await this.executeScheduledSyncRun(normalized, () =>
-            this.fetchEventResults(scope.sport, scope.eventId, scope.providerOptions),
-          );
-        }
+        await this.executeScheduledSyncRun(normalized, () =>
+          this.pollLiveScores(scope.sport, scope.eventId, scope.providerOptions),
+        );
       } finally {
         this.inFlightScheduledEventSyncs.delete(inFlightKey);
       }
     }
-  }
-
-  private normalizeScheduledSportSync(input: {
-    sport: Sport;
-    feeds: readonly SportSyncFeed[];
-    window?: { from?: Date; to?: Date };
-    windowPolicy?: SyncWindowPolicy;
-  }): NormalizedSyncRequest {
-    const normalized = this.syncOrchestrator.normalizeRequest({
-      source: SCHEDULED_SYNC_SOURCE,
-      actor: SCHEDULED_SYNC_ACTOR,
-      scope: {
-        type: 'SPORT',
-        sport: input.sport,
-        feeds: input.feeds,
-        window: input.window,
-        windowPolicy: input.windowPolicy,
-      },
-    } satisfies SyncOrchestratorRequest);
-
-    if (normalized.scope.type !== 'SPORT') {
-      throw new Error('Scheduled sport sync normalization returned an event scope.');
-    }
-
-    return normalized;
   }
 
   private normalizeScheduledEventSync(input: {
@@ -661,14 +471,13 @@ export class IngestionScheduler {
       return run();
     }
 
-    const target = getNormalizedSyncTarget(normalizedRequest);
-    const provider = this.registry.getProvider(target.sport);
+    const provider = this.registry.getProvider(normalizedRequest.scope.sport);
     const providerId = provider?.providerId ?? 'none';
     const [syncRun] = await syncRunLedger.createSubmissions({
       normalizedRequest,
       providerId,
       submittedAt: this.getNow(),
-      runType: target.eventId ? 'SCHEDULED_EVENT_SYNC' : 'SCHEDULED_SPORT_SYNC',
+      runType: 'SCHEDULED_EVENT_SYNC',
     });
 
     if (!syncRun) {
@@ -676,66 +485,6 @@ export class IngestionScheduler {
     }
 
     return syncRunLedger.executeFeedRun(syncRun, run);
-  }
-
-  private async runScheduleSync(
-    sport: Sport,
-    from?: Date,
-    to?: Date,
-  ): Promise<IngestionJobRecord> {
-    const dateRange = resolveDateRange(from, to);
-    this.logger?.debug({
-      sport,
-      from: dateRange.from.toISOString(),
-      to: dateRange.to.toISOString(),
-    }, 'Running schedule sync for sport');
-    const provider = this.registry.getProvider(sport);
-    if (!provider) {
-      this.logger?.warn({ sport }, 'No provider registered for schedule sync');
-      return createFailedJob('EVENT_SCHEDULE_SYNC', 'none', sport, 'No provider registered');
-    }
-
-    return this.runJob('EVENT_SCHEDULE_SYNC', provider.providerId, sport, 'EVENTSCHEDULE', provider, async () => {
-      const events = await provider.getUpcomingEvents(sport, dateRange);
-      this.logger?.debug({
-        sport,
-        providerId: provider.providerId,
-        eventsReturned: events.length,
-        eventSample: events.slice(0, 10).map(toEventSample),
-      }, 'Provider returned upcoming events');
-      if (events.length === 0) {
-        this.logger?.warn({
-          sport,
-          providerId: provider.providerId,
-          from: dateRange.from.toISOString(),
-          to: dateRange.to.toISOString(),
-        }, 'Provider returned no upcoming events for schedule sync');
-      }
-      const writeDiagnostics = await this.callbacks.onEvents(events);
-      this.logger?.info({
-        sport,
-        providerId: provider.providerId,
-        eventsProcessed: events.length,
-        from: dateRange.from.toISOString(),
-        to: dateRange.to.toISOString(),
-      }, 'Completed schedule sync for sport');
-      return {
-        recordsProcessed: events.length,
-        stats: {
-          providerRecordsReturned: events.length,
-          eventsFetched: events.length,
-          eventsProcessed: events.length,
-          ...syncWriteStats(writeDiagnostics ?? undefined),
-        },
-        writeDiagnostics: writeDiagnostics ?? undefined,
-        warnings: events.length === 0
-          ? [{
-              code: 'NO_PROVIDER_EVENTS',
-              message: 'Provider returned no upcoming events for the requested sport/date window.',
-            }]
-          : [],
-      };
-    });
   }
 
   private async runEventFieldSync(
@@ -984,15 +733,6 @@ function countLiveScoreUpdates(result: LiveScoreResult): number {
   }
 }
 
-function resolveDateRange(from?: Date, to?: Date): { from: Date; to: Date } {
-  const resolvedFrom = from ?? new Date();
-  const resolvedTo = to ?? new Date(resolvedFrom.getTime() + 14 * 24 * 60 * 60 * 1000);
-  return {
-    from: resolvedFrom,
-    to: resolvedTo,
-  };
-}
-
 function resolveEventParticipantSyncWindow(
   config: IngestionScheduleConfig,
   now: Date,
@@ -1026,35 +766,11 @@ function createFailedJob(
   };
 }
 
-function assertScheduledSportScope(normalized: NormalizedSyncRequest): NormalizedSportSyncScope {
-  if (normalized.scope.type !== 'SPORT') {
-    throw new Error('Scheduled sport sync normalization returned an event scope.');
-  }
-  return normalized.scope;
-}
-
 function assertScheduledEventScope(normalized: NormalizedSyncRequest): NormalizedEventSyncScope {
   if (normalized.scope.type !== 'EVENT') {
     throw new Error('Scheduled event sync normalization returned a sport scope.');
   }
   return normalized.scope;
-}
-
-function getNormalizedSyncTarget(normalized: NormalizedSyncRequest): {
-  sport: Sport;
-  eventId: string | null;
-} {
-  if (normalized.scope.type === 'SPORT') {
-    return {
-      sport: normalized.scope.sport,
-      eventId: null,
-    };
-  }
-
-  return {
-    sport: normalized.scope.sport,
-    eventId: normalized.scope.eventId,
-  };
 }
 
 function buildProviderEventSyncOptions(
@@ -1065,7 +781,7 @@ function buildProviderEventSyncOptions(
 
 function buildScheduledEventSyncKey(
   sport: Sport,
-  feed: 'EVENTLIVESCORES' | 'EVENTRESULTS',
+  feed: EventSyncFeed,
   eventId: string,
 ): string {
   return `${sport}:${feed}:${eventId}`;
@@ -1146,20 +862,6 @@ function dedupe<T extends string>(items: readonly T[]): T[] {
   return Array.from(new Set(items));
 }
 
-function toEventSample(event: SportEvent): Record<string, unknown> {
-  return {
-    externalId: event.externalId,
-    providerId: event.providerId,
-    name: event.name,
-    status: event.status,
-    startDate: event.startDate.toISOString(),
-    endDate: event.endDate?.toISOString() ?? null,
-    participantCount: event.participantCount ?? null,
-    releaseAt: event.metadata.releaseAt ?? null,
-    fieldLocksAt: event.metadata.fieldLocksAt ?? null,
-  };
-}
-
 function toJobLogPayload(job: IngestionJobRecord): Record<string, unknown> {
   return {
     jobType: job.jobType,
@@ -1204,11 +906,6 @@ function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
         enabled: true,
         intervalMinutes: 5,
       },
-    eventSchedule: {
-        enabled: true,
-        intervalMinutes: 1440,
-        lookaheadDays: 365,
-      },
     eventParticipants: {
         enabled: false,
         intervalMinutes: 360,
@@ -1217,10 +914,6 @@ function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
     eventLiveScores: {
         enabled: true,
         intervalSeconds: 300,
-      },
-    eventResults: {
-        enabled: true,
-        intervalMinutes: 30,
       },
     perSportOverrides: {},
   };

@@ -62,7 +62,7 @@ export const IngestionFeedSchedulePolicySchema = z.object({
     'How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.',
   ),
   lookaheadDays: z.number().int().min(0).optional().describe(
-    'How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.',
+    'How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).',
   ),
 }).describe('Feed-specific ingestion scheduling policy.');
 export type IngestionFeedSchedulePolicy = z.infer<typeof IngestionFeedSchedulePolicySchema>;
@@ -81,17 +81,11 @@ export const IngestionScheduleConfigBodySchema = z.object({
   healthCheck: IngestionFeedSchedulePolicySchema.describe(
     'Scheduling policy for provider health checks.',
   ),
-  eventSchedule: IngestionFeedSchedulePolicySchema.describe(
-    'Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.',
-  ),
   eventParticipants: IngestionFeedSchedulePolicySchema.describe(
     'Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.',
   ),
   eventLiveScores: IngestionFeedSchedulePolicySchema.describe(
     'Scheduling policy for live score polling.',
-  ),
-  eventResults: IngestionFeedSchedulePolicySchema.describe(
-    'Scheduling policy for completed-event result refreshes.',
   ),
 }).describe('Base ingestion scheduling configuration without per-sport overrides.');
 export type IngestionScheduleConfigBody = z.infer<typeof IngestionScheduleConfigBodySchema>;
@@ -99,10 +93,8 @@ export type IngestionScheduleConfigBody = z.infer<typeof IngestionScheduleConfig
 export const IngestionScheduleConfigOverrideSchema = z.object({
   scheduledSports: z.array(SportSchema).min(1).optional(),
   healthCheck: IngestionFeedSchedulePolicyPatchSchema.optional(),
-  eventSchedule: IngestionFeedSchedulePolicyPatchSchema.optional(),
   eventParticipants: IngestionFeedSchedulePolicyPatchSchema.optional(),
   eventLiveScores: IngestionFeedSchedulePolicyPatchSchema.optional(),
-  eventResults: IngestionFeedSchedulePolicyPatchSchema.optional(),
 }).refine((value) => Object.keys(value).length > 0, {
   message: 'At least one ingestion feed override must be provided.',
 }).describe('Partial ingestion scheduling override used for global updates and per-sport overrides.');

@@ -70,10 +70,8 @@ export function RootAdminSportOverridesPage() {
         path: { sport: input.sport },
         body: {
           healthCheck: { enabled: input.draft.healthCheck },
-          eventSchedule: { enabled: input.draft.eventSchedule },
           eventParticipants: { enabled: input.draft.eventParticipants },
           eventLiveScores: { enabled: input.draft.eventLiveScores },
-          eventResults: { enabled: input.draft.eventResults },
         },
       });
 

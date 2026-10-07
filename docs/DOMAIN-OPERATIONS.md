@@ -674,6 +674,13 @@ replaced `adminMapParticipant`, which took both ids in the body under `/admin/pr
 admin; an event participant's ranking comes from the provider's field (#384), and a field that
 carries none leaves the ranking already on the row.
 
+The `EVENTSCHEDULE` and `EVENTRESULTS` feeds were retired in #126, and with them the sport-level
+sync (`submitSportSync`). Events are created and linked by the root admin; the provider's
+upcoming-event catalog is read only on demand. The two remaining feeds, `EVENTPARTICIPANTS` and
+`EVENTLIVESCORES`, are event-scoped, and an event's lifecycle is moved by the admin or, for
+non-`FULL` events, by the date-driven lifecycle scheduler. Sync-run history rows for the retired
+feeds were deleted by migration, and stored ingestion config drops their keys on boot.
+
 ## Contests and entries
 
 Cluster: `ContestConfigTemplate`, `Contest`, `ContestConfiguration`, `ContestEntry`,
@@ -758,7 +765,7 @@ Two runtime-tunable documents: the client poll intervals and the ingestion sched
 |---|---|---|
 | List providers | `rootAdmin` | `listProviders` — each registered provider with a live health check made for the request, its scheduled sports and its active event count. There is no stored health: `ProviderHealthLog` went with the manual health check that wrote it and the provider detail that read it |
 | List sync runs | `rootAdmin` | `listProviderSyncRuns` — filtered by provider, sport and status, bounded by a submission-time window (`from`/`to`, default the last 6 hours). Unpaged (§16): the window is the bound |
-| Submit a sport sync, an event sync | `rootAdmin` | `submitSportSync`, `submitEventSync` — 202 with one `SUBMITTED` run per feed; the runs execute after acceptance. An event whose `syncScope` forbids a feed is 409 |
+| Submit an event sync | `rootAdmin` | `submitEventSync` — 202 with one `SUBMITTED` run per feed; the runs execute after acceptance. An event whose `syncScope` forbids a feed is 409 |
 | List unmapped competitors | `rootAdmin` | `listUnmappedProviderParticipants` — competitors a provider reports that no participant is mapped to. `bindParticipantProviderMapping` (above) repairs each |
 | Clean up stale provider events | `rootAdmin` | `cleanupStaleProviderEvents` — `DRY_RUN` inventories, `EXECUTE` deletes the unblocked; an event a contest references is never deleted |
 | Browse a provider's catalog | `rootAdmin` | `listProviderCatalogEvents` — live provider events, each the full `ProviderEventDto`; without `from`/`to` it returns every event the provider has, with no window around today (#402) |

@@ -46,8 +46,6 @@ function getValidEventStatusesForPreset(
   switch (presetId) {
     case 'EVENTLIVESCORES':
       return ['IN_PROGRESS'];
-    case 'EVENTRESULTS':
-      return ['COMPLETED'];
     case 'EVENTPARTICIPANTS':
       return ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'];
   }
