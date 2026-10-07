@@ -55,7 +55,6 @@ function renderCard(props: Partial<Parameters<typeof GolfFieldGridCard>[0]> = {}
           eventId="evt-1"
           fieldError={null}
           fieldLoading={false}
-          readOnly={false}
           {...props}
         />
       </MemoryRouter>
@@ -91,7 +90,6 @@ describe('pool-master-za4 GolfFieldGridCard', () => {
             eventId="evt-1"
             fieldError={null}
             fieldLoading={false}
-            readOnly={false}
           />
         </MemoryRouter>
       </QueryClientProvider>,
@@ -115,20 +113,12 @@ describe('pool-master-za4 GolfFieldGridCard', () => {
             eventId="evt-2"
             fieldError={null}
             fieldLoading={false}
-            readOnly={false}
           />
         </MemoryRouter>
       </QueryClientProvider>,
     );
 
     expect(screen.getByTestId('root-admin-golf-field-ranking-sep-1')).toHaveValue('2');
-    expect(screen.queryByTestId('root-admin-golf-field-dirty-bar')).not.toBeInTheDocument();
-  });
-
-  it('pool-master-za4 hides the save bar when readOnly', async () => {
-    renderCard({ readOnly: true });
-    await userEvent.clear(screen.getByTestId('root-admin-golf-field-ranking-sep-1'));
-    await userEvent.type(screen.getByTestId('root-admin-golf-field-ranking-sep-1'), '1');
     expect(screen.queryByTestId('root-admin-golf-field-dirty-bar')).not.toBeInTheDocument();
   });
 });

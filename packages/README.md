@@ -88,7 +88,7 @@ Polls configured sports data providers, upserts normalized event data, and store
 | OpenF1 | F1 | Free |
 | Mock contest feed | Golf and QA scenarios | Local/QA only |
 
-**Routes:** root-admin sync operations are exposed through `POST /api/v1/ingestion/sports/:sport/sync` and `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync`; scheduled ingestion uses the internal scheduler directly.
+**Routes:** root-admin sync is event-scoped: `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync` runs the event field (`EVENTPARTICIPANTS`) and live-score (`EVENTLIVESCORES`) feeds. Scheduled ingestion uses the internal scheduler directly for the same two feeds. There is no sport-level sync and no scheduled schedule or results pull (#126); events are created and linked by the root admin, and `getUpcomingEvents` is read only on demand.
 
 ---
 
@@ -121,7 +121,7 @@ Polls configured sports data providers, upserts normalized event data, and store
 | Package | Purpose |
 |---------|---------|
 | `push-mock-server` | Local APNs/FCM capture service for push integration testing |
-| `mock-contest-feed-provider` | Local/QA-only contest feed simulator for odds, rankings, and results scenarios |
+| `mock-contest-feed-provider` | Local/QA-only contest feed simulator for event fields, odds, and live-score scenarios |
 
 ---
 

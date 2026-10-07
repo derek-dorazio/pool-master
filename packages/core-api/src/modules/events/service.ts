@@ -329,16 +329,9 @@ export class SportEventService {
     return cloned;
   }
 
-  /** Edits an admin-managed event. 409 EVENT_NOT_ADMIN_MANAGED for one a provider owns in full. */
+  /** Edits an event. Every event is admin-owned, linked to a provider or not. */
   async updateEvent(sportEventId: string, updates: SportEventUpdate): Promise<SportEventSummary> {
-    const existing = await this.requireEvent(sportEventId);
-    if (existing.syncScope === SportEventSyncScope.FULL) {
-      throw new SportEventError(
-        `Sport event ${sportEventId} is provider-owned and cannot be edited here.`,
-        'EVENT_NOT_ADMIN_MANAGED',
-        409,
-      );
-    }
+    await this.requireEvent(sportEventId);
     await this.deps.sportEvents.update(sportEventId, updates);
     return this.requireSummary(sportEventId);
   }

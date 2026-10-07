@@ -125,7 +125,6 @@ function toEvent(tour: string, event: TourSeedEvent, source: string): ContestFee
     field: { asOf: releaseAt.toISOString(), status: 'announced', contestants: [] },
     feeds: {
       odds: { asOf: releaseAt.toISOString(), contestants: [] },
-      rankings: { asOf: releaseAt.toISOString(), contestants: [] },
       results: { asOf: releaseAt.toISOString(), contestants: [] },
     },
     updates: [],

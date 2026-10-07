@@ -67,19 +67,6 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
     handler: handler.listSyncRuns,
   });
 
-  fastify.post('/sports/:sport/sync', {
-    schema: {
-      tags: ['Ingestion'],
-      summary: 'Submit a manual sport sync',
-      description: 'Submits one sync run per requested sport-level feed. The runs execute asynchronously after acceptance; follow them in the sync-run history.',
-      operationId: 'submitSportSync',
-      params: { type: 'object', required: ['sport'], properties: { sport: SPORT_PARAM } },
-      body: schemaRef('SportSyncRequest'),
-      response: { 202: schemaRef('ProviderManualSyncSubmissionResponse'), ...errors(404, 422) },
-    },
-    handler: handler.submitSportSync,
-  });
-
   fastify.post('/sports/:sport/events/:eventId/sync', {
     schema: {
       tags: ['Ingestion'],

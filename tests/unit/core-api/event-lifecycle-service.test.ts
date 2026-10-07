@@ -166,25 +166,6 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);
   });
 
-  it('pool-master-g1z applies an undeclared transition anyway for a PROVIDER actor, only logging it', async () => {
-    const logger = fakeLogger();
-    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const contests = contestDeps();
-    const service = new EventLifecycleService(contests, sportEvents, logger);
-
-    await expect(
-      service.applySportEventStatusTransition({
-        sportEventId: 'sport-event-1',
-        toStatus: SportEventStatus.COMPLETED,
-        actor: { type: 'PROVIDER' },
-      }),
-    ).resolves.toMatchObject({ toStatus: SportEventStatus.COMPLETED });
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ fromStatus: SportEventStatus.SCHEDULED, toStatus: SportEventStatus.COMPLETED }),
-      expect.stringContaining('not in the declared transition map'),
-    );
-  });
-
   it('pool-master-g1z treats a same-status call as a no-op, never rejecting it', async () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.COMPLETED, endDate: new Date('2026-05-31T22:00:00.000Z') });
     const contests = contestDeps();
@@ -215,7 +196,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
       toStatus: SportEventStatus.COMPLETED,
-      actor: { type: 'PROVIDER' },
+      actor: { type: 'SYSTEM' },
     });
 
     expect(storedEvent().status).toBe(SportEventStatus.COMPLETED);
@@ -231,7 +212,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
       toStatus: SportEventStatus.COMPLETED,
-      actor: { type: 'PROVIDER' },
+      actor: { type: 'SYSTEM' },
     });
 
     expect(storedEvent().status).toBe(SportEventStatus.COMPLETED);
@@ -294,7 +275,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
       toStatus: SportEventStatus.COMPLETED,
-      actor: { type: 'PROVIDER' },
+      actor: { type: 'SYSTEM' },
     });
 
     expect(settlement.settleCompletedSportEvent).toHaveBeenCalledWith('sport-event-1', {
@@ -321,7 +302,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
       toStatus: SportEventStatus.IN_PROGRESS,
-      actor: { type: 'PROVIDER' },
+      actor: { type: 'SYSTEM' },
     });
 
     expect(contests.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', {
@@ -371,7 +352,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
       toStatus: SportEventStatus.IN_PROGRESS,
-      actor: { type: 'PROVIDER' },
+      actor: { type: 'SYSTEM' },
     });
 
     expect(mailDelivery.send).not.toHaveBeenCalled();
@@ -396,7 +377,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       service.applySportEventStatusTransition({
         sportEventId: 'sport-event-1',
         toStatus: SportEventStatus.IN_PROGRESS,
-        actor: { type: 'PROVIDER' },
+        actor: { type: 'SYSTEM' },
       }),
     ).resolves.toMatchObject({ toStatus: SportEventStatus.IN_PROGRESS });
 
@@ -420,7 +401,7 @@ describe('EventLifecycleService on an unknown event', () => {
       service.applySportEventStatusTransition({
         sportEventId: 'no-such-event',
         toStatus: SportEventStatus.IN_PROGRESS,
-        actor: { type: 'PROVIDER' },
+        actor: { type: 'SYSTEM' },
       }),
     ).rejects.toMatchObject({ name: 'EventLifecycleError', code: 'SPORT_EVENT_NOT_FOUND', statusCode: 404 });
     expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);

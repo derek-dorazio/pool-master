@@ -34,7 +34,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
         externalId: { not: '' },
         status: { in: ['IN_PROGRESS'] },
         sportEventParticipants: { some: {} },
-        syncScope: { in: ['FULL', 'SCORES_ONLY'] },
+        syncScope: 'SCORES_ONLY',
       },
       orderBy: undefined,
       take: undefined,
@@ -85,37 +85,6 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
     expect(prisma.sportEvent.findMany).not.toHaveBeenCalled();
   });
 
-  it('keeps result polling constrained to the active provider and recent completed events', async () => {
-    const prisma = createPrisma();
-    const registry = {
-      getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }),
-    };
-    const reader = createScheduledEventReader({ prisma: prisma as never, registry: registry as never });
-    const now = new Date('2026-04-26T22:30:00.000Z');
-
-    await reader.listEventIdsForFeed({
-      sport: 'GOLF' as Sport,
-      feed: 'EVENTRESULTS',
-      now,
-    });
-
-    expect(prisma.sportEvent.findMany).toHaveBeenCalledWith({
-      where: {
-        sport: 'GOLF',
-        providerId: 'mock-contest-feed',
-        externalId: { not: '' },
-        status: { in: ['COMPLETED'] },
-        updatedAt: { gte: new Date('2026-04-25T22:30:00.000Z') },
-        syncScope: { in: ['FULL', 'SCORES_ONLY'] },
-      },
-      orderBy: undefined,
-      take: undefined,
-      select: {
-        externalId: true,
-      },
-    });
-  });
-
   it('pool-master-rop.68.1.2 lists only field-available scheduled events inside the configured window for participant hydration', async () => {
     const prisma = createPrisma();
     const registry = {
@@ -144,7 +113,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
           gte: new Date('2026-04-26T22:30:00.000Z'),
           lte: new Date('2026-05-03T22:30:00.000Z'),
         },
-        syncScope: 'FULL',
+        syncScope: 'SCORES_ONLY',
       },
       orderBy: [
         { startDate: 'asc' },
@@ -306,10 +275,9 @@ describe('pool-master-cgb: syncScope gating', () => {
   const rowsByScope = [
     { externalId: 'none-event', syncScope: 'NONE' },
     { externalId: 'scores-only-event', syncScope: 'SCORES_ONLY' },
-    { externalId: 'full-event', syncScope: 'FULL' },
   ];
 
-  it('pool-master-cgb: EVENTPARTICIPANTS never returns a NONE or SCORES_ONLY event — FULL only', async () => {
+  it('EVENTPARTICIPANTS returns only linked (SCORES_ONLY) events, never an unlinked NONE one', async () => {
     const prisma = createPrismaWithSyncScopeAwareFilter(rowsByScope);
     const registry = { getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }) };
     const reader = createScheduledEventReader({ prisma: prisma as never, registry: registry as never });
@@ -320,23 +288,20 @@ describe('pool-master-cgb: syncScope gating', () => {
       now: new Date('2026-04-26T22:30:00.000Z'),
     });
 
-    expect(eventIds).toEqual(['full-event']);
+    expect(eventIds).toEqual(['scores-only-event']);
   });
 
-  it.each(['EVENTLIVESCORES', 'EVENTRESULTS'] as const)(
-    'pool-master-cgb: %s never returns a NONE event, but does return SCORES_ONLY and FULL',
-    async (feed) => {
-      const prisma = createPrismaWithSyncScopeAwareFilter(rowsByScope);
-      const registry = { getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }) };
-      const reader = createScheduledEventReader({ prisma: prisma as never, registry: registry as never });
+  it('EVENTLIVESCORES returns only linked (SCORES_ONLY) events, never an unlinked NONE one', async () => {
+    const prisma = createPrismaWithSyncScopeAwareFilter(rowsByScope);
+    const registry = { getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }) };
+    const reader = createScheduledEventReader({ prisma: prisma as never, registry: registry as never });
 
-      const eventIds = await reader.listEventIdsForFeed({
-        sport: 'GOLF' as Sport,
-        feed,
-        now: new Date('2026-04-26T22:30:00.000Z'),
-      });
+    const eventIds = await reader.listEventIdsForFeed({
+      sport: 'GOLF' as Sport,
+      feed: 'EVENTLIVESCORES',
+      now: new Date('2026-04-26T22:30:00.000Z'),
+    });
 
-      expect(eventIds.sort()).toEqual(['full-event', 'scores-only-event']);
-    },
-  );
+    expect(eventIds).toEqual(['scores-only-event']);
+  });
 });

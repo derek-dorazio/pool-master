@@ -37,11 +37,6 @@ test('ScenarioStore loads event-first scenarios and exposes field snapshots', ()
   assert.equal(fieldSnapshot.feedKind, 'field');
   assert.equal(fieldSnapshot.contestants[0]?.name, 'Scottie Scheffler');
   assert.equal(fieldSnapshot.contestants.length, 80);
-
-  const resultUpdates = store.getUpdates('golf-major-2026', 'golf-masters-2026');
-  assert.equal(resultUpdates.updates[0]?.feedKind, 'field');
-  assert.equal(resultUpdates.updates[1]?.feedKind, 'odds');
-  assert.equal(resultUpdates.updates[2]?.feedKind, 'results');
 });
 
 test('ScenarioStore catalog is golf-only and does not change with the clock: no scenario is generated from the current date', () => {
@@ -57,7 +52,7 @@ test('ScenarioStore catalog is golf-only and does not change with the clock: no 
   assert.deepEqual(store.listScenarios(), before);
 });
 
-test('pool-master-33l.8.8: explicit mock event states control golf detail, results, and live scores', () => {
+test('explicit mock event states control golf event detail and live scores, through to a completed event with every golfer scored', () => {
   const store = new ScenarioStore(scenarioDir);
   const scenarioId = 'golf-major-2026';
   const eventId = 'golf-masters-2026';
@@ -84,10 +79,10 @@ test('pool-master-33l.8.8: explicit mock event states control golf detail, resul
   const completedDetail = store.getEventResponse(scenarioId, eventId, 'completed');
   assert.equal(completedDetail.event.status, 'completed');
   assert.equal(completedDetail.event.field.status, 'final');
-  const completedResults = store.getSnapshot(scenarioId, eventId, 'results', 'completed');
-  assert.equal(completedResults.contestants.length, 80);
-  assert.ok(completedResults.contestants.some((contestant) => contestant.result === 'win'));
-  assert.ok(completedResults.contestants.every((contestant) => typeof contestant.strokes === 'number'));
+  const completedScores = store.getLiveScores(scenarioId, eventId, undefined, 'completed');
+  assert.equal(completedScores.contestants.length, 80);
+  assert.ok(completedScores.contestants.every((contestant) =>
+    contestant.rounds.length > 0 && contestant.rounds.every((round) => typeof round.strokes === 'number')));
 });
 
 test('pool-master-eux.7: golf mock live-state tokens emit provider-owned multi-round /scores payloads', () => {
@@ -283,10 +278,6 @@ test('ScenarioStore rejects new contestants in deltas unless they include a name
                 asOf: '2026-04-01T12:00:00.000Z',
                 contestants: [{ contestantId: 'golfer-02', odds: 11.5 }],
               },
-              rankings: {
-                asOf: '2026-04-01T12:00:00.000Z',
-                contestants: [],
-              },
               results: {
                 asOf: '2026-04-14T12:00:00.000Z',
                 contestants: [],
@@ -336,10 +327,6 @@ test('ScenarioStore rejects golf events that omit odds contestants', () => {
             },
             feeds: {
               odds: {
-                asOf: '2026-04-01T12:00:00.000Z',
-                contestants: [],
-              },
-              rankings: {
                 asOf: '2026-04-01T12:00:00.000Z',
                 contestants: [],
               },
@@ -408,6 +395,28 @@ test('pool-master-33l.8.8: routes expose detail, field, and mock event-state sco
     assert.equal(liveScoresJson.contestants[0]?.rounds.length, 1);
     assert.equal(liveScoresJson.contestants[0]?.rounds[0]?.status, 'IN_PROGRESS');
     assert.ok(typeof liveScoresJson.contestants[0]?.rounds[0]?.strokes === 'number');
+  } finally {
+    await app.close();
+    if (previousScenarioDir === undefined) {
+      delete process.env.SCENARIO_DIR;
+    } else {
+      process.env.SCENARIO_DIR = previousScenarioDir;
+    }
+  }
+});
+
+test('the retired results snapshot, updates and bare event routes are not served: each answers 404', async () => {
+  const previousScenarioDir = process.env.SCENARIO_DIR;
+  process.env.SCENARIO_DIR = scenarioDir;
+
+  const app = buildApp();
+
+  try {
+    for (const suffix of ['/results', '/updates', '']) {
+      const url = `/v1/scenarios/golf-major-2026/events/golf-masters-2026${suffix}`;
+      const response = await app.inject({ method: 'GET', url });
+      assert.equal(response.statusCode, 404, url);
+    }
   } finally {
     await app.close();
     if (previousScenarioDir === undefined) {

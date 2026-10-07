@@ -3,10 +3,12 @@ export const mockFeedProviderId = 'mock-contest-feed';
 export const supportedSports = ['GOLF', 'TENNIS', 'NCAA_BASKETBALL', 'TEAM_TOURNAMENT'] as const;
 export type SupportedSport = (typeof supportedSports)[number];
 
-export const feedKinds = ['field', 'odds', 'rankings', 'results'] as const;
+/** Feeds served as per-event snapshots. Scores are served by the `scores` route instead (#126). */
+export const feedKinds = ['field', 'odds'] as const;
 export type FeedKind = (typeof feedKinds)[number];
 
-export const updateKinds = [...feedKinds] as const;
+/** What a staged scenario update revises: a snapshot feed, or the event's scoring data. */
+export const updateKinds = ['field', 'odds', 'results'] as const;
 export type UpdateKind = (typeof updateKinds)[number];
 
 export const updateTypeKinds = ['refresh', 'correction', 'live', 'final'] as const;
@@ -140,7 +142,6 @@ export interface FeedSnapshotRecord {
 
 export interface EventFeedsRecord {
   readonly odds: FeedSnapshotRecord;
-  readonly rankings: FeedSnapshotRecord;
   readonly results: FeedSnapshotRecord;
 }
 
@@ -264,13 +265,6 @@ export interface ContestFeedEventResponse {
   readonly scenarioDescription?: string;
   readonly season: SeasonRecord;
   readonly event: ContestFeedEventRecord;
-}
-
-export interface ContestFeedUpdateResponse {
-  readonly scenarioId: string;
-  readonly eventId: string;
-  readonly eventName: string;
-  readonly updates: readonly FeedUpdateRecord[];
 }
 
 const participantStatusKindsSchemaEnum = [...participantStatusKinds] as const;
@@ -399,10 +393,9 @@ export const feedSnapshotSchema = {
 export const eventFeedsSchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['odds', 'rankings', 'results'],
+  required: ['odds', 'results'],
   properties: {
     odds: feedSnapshotSchema,
-    rankings: feedSnapshotSchema,
     results: feedSnapshotSchema,
   },
 } as const;
@@ -600,17 +593,5 @@ export const eventResponseSchema = {
     scenarioDescription: { type: 'string' },
     season: seasonRecordSchema,
     event: eventRecordSchema,
-  },
-} as const;
-
-export const updatesResponseSchema = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['scenarioId', 'eventId', 'eventName', 'updates'],
-  properties: {
-    scenarioId: { type: 'string' },
-    eventId: { type: 'string' },
-    eventName: { type: 'string' },
-    updates: { type: 'array', items: feedUpdateSchema },
   },
 } as const;

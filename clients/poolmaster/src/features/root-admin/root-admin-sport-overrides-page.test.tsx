@@ -48,15 +48,12 @@ describe('RootAdminSportOverridesPage', () => {
     const response = {
       data: {
         healthCheck: { enabled: true, intervalMinutes: 5 },
-        eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
         eventParticipants: {
           enabled: true,
           intervalMinutes: 360,
           lookaheadDays: 14,
         },
-        participantRankings: { enabled: true, intervalMinutes: 1440 },
         eventLiveScores: { enabled: true, intervalSeconds: 30 },
-        eventResults: { enabled: true, intervalMinutes: 30 },
         perSportOverrides: {},
       },
     };
@@ -100,11 +97,8 @@ describe('RootAdminSportOverridesPage', () => {
         path: { sport: 'GOLF' },
         body: {
           healthCheck: { enabled: true },
-          eventSchedule: { enabled: true },
           eventParticipants: { enabled: true },
-          participantRankings: { enabled: true },
           eventLiveScores: { enabled: false },
-          eventResults: { enabled: true },
         },
       }),
     );

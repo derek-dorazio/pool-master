@@ -12,22 +12,10 @@ import { registerSchema } from './schema-registry';
 const SportDtoSchema = z.nativeEnum(Sport);
 
 export const IngestionFeedTypeSchema = z.enum([
-  'EVENTSCHEDULE',
   'EVENTPARTICIPANTS',
-  'PARTICIPANTRANKINGS',
   'EVENTLIVESCORES',
-  'EVENTRESULTS',
-]).describe('Explicit ingestion feed type requested by the caller.');
+]).describe('Explicit ingestion feed type requested by the caller. Every feed is event-scoped.');
 export type IngestionFeedType = z.infer<typeof IngestionFeedTypeSchema>;
-
-export const SportSyncRequestSchema = z.object({
-  feeds: z.array(z.enum(['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'])).min(1).describe(
-    'Feed types to run for a sport-level sync request. Event participant, live-score, result, and odds hydration are event-scoped and must use the event sync endpoint.',
-  ),
-  from: DateTimeSchema.optional().describe('Optional lower bound for sport-level event discovery.'),
-  to: DateTimeSchema.optional().describe('Optional upper bound for sport-level event discovery.'),
-}).describe('Feed-aware sport sync request.');
-export type SportSyncRequest = z.infer<typeof SportSyncRequestSchema>;
 
 export const MockEventStateSchema = z.enum([
   'open',
@@ -49,7 +37,7 @@ export const MockEventStateSchema = z.enum([
 export type MockEventState = z.infer<typeof MockEventStateSchema>;
 
 export const EventSyncRequestSchema = z.object({
-  feeds: z.array(z.enum(['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTRESULTS'])).min(1).describe(
+  feeds: z.array(IngestionFeedTypeSchema).min(1).describe(
     'Feed types to run for a specific event sync request.',
   ),
   mockEventState: MockEventStateSchema.optional().describe(
@@ -157,10 +145,10 @@ export const ProviderSyncWriteDiagnosticsDtoSchema = z.object({
 export type ProviderSyncWriteDiagnosticsDto = z.infer<typeof ProviderSyncWriteDiagnosticsDtoSchema>;
 
 export const ProviderSyncRunPayloadDtoSchema = z.object({
-  runType: z.string().optional().describe('Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.'),
+  runType: z.string().optional().describe('Sync run source: a manual or scheduled event sync.'),
   requestedFeeds: z.array(IngestionFeedTypeSchema).optional().describe('Feeds represented by the originating manual or scheduled sync request.'),
   requestedFeed: IngestionFeedTypeSchema.optional().describe('Single feed represented by this sync run row.'),
-  requestPayload: JsonObjectSchema.optional().describe('Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design.'),
+  requestPayload: JsonObjectSchema.optional().describe('Normalized request context that submitted the sync run, including source and actor diagnostics.'),
   providerPayload: ProviderSyncProviderPayloadDtoSchema.optional().describe('Raw/debug provider payload captured for this run.'),
   jobPayload: ProviderSyncJobPayloadDtoSchema.optional().describe('Serialized ingestion job details after an ingestion job is available.'),
   writeDiagnostics: ProviderSyncWriteDiagnosticsDtoSchema.optional().describe('Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.'),
@@ -201,7 +189,7 @@ export type ProviderSyncRunListResponse = z.infer<typeof ProviderSyncRunListResp
 
 export const ProviderManualSyncSubmissionResponseSchema = z.object({
   sport: SportDtoSchema,
-  eventId: z.string().nullable(),
+  eventId: z.string().describe('Provider event identifier the submitted runs sync.'),
   requestedFeeds: z.array(IngestionFeedTypeSchema),
   submittedAt: DateTimeSchema,
   syncRuns: z.array(ProviderSyncRunDtoSchema),
@@ -325,7 +313,6 @@ export const ProviderCatalogEventListResponseSchema = z.object({
 export type ProviderCatalogEventListResponse = z.infer<typeof ProviderCatalogEventListResponseSchema>;
 
 // --- Published contract (#192) -------------------------------------------------
-registerSchema('SportSyncRequest', SportSyncRequestSchema);
 registerSchema('EventSyncRequest', EventSyncRequestSchema);
 registerSchema('ProviderSummaryDto', ProviderSummaryDtoSchema);
 registerSchema('ProviderListResponse', ProviderListResponseSchema);

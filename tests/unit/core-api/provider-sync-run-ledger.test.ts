@@ -11,15 +11,15 @@ function createSyncRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRu
     id: 'sync-run-1',
     providerId: 'mock-provider',
     sport: Sport.GOLF,
-    eventId: null,
+    eventId: 'event-1',
     status: 'SUBMITTED',
     startedAt: null,
     completedAt: null,
     createdAt: new Date('2026-05-30T12:00:00.000Z'),
     payload: {
-      requestedFeed: 'EVENTSCHEDULE',
+      requestedFeed: 'EVENTPARTICIPANTS',
       providerPayload: {
-        operation: 'EVENTSCHEDULE',
+        operation: 'EVENTPARTICIPANTS',
         rawCaptured: false,
         rawTruncated: false,
       },
@@ -30,9 +30,10 @@ function createSyncRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRu
 
 function createJob(overrides: Partial<IngestionJobRecord> = {}): IngestionJobRecord {
   return {
-    jobType: 'EVENT_SCHEDULE_SYNC',
+    jobType: 'EVENT_PARTICIPANTS_SYNC',
     providerId: 'mock-provider',
     sport: Sport.GOLF,
+    eventExternalId: 'event-1',
     status: 'COMPLETED',
     startedAt: new Date('2026-05-30T12:00:01.000Z'),
     completedAt: new Date('2026-05-30T12:00:02.000Z'),
@@ -40,7 +41,7 @@ function createJob(overrides: Partial<IngestionJobRecord> = {}): IngestionJobRec
     errors: 0,
     errorLog: [],
     providerPayload: {
-      operation: 'EVENTSCHEDULE',
+      operation: 'EVENTPARTICIPANTS',
       rawCaptured: true,
       rawTruncated: false,
       raw: [],
@@ -86,10 +87,10 @@ describe('ProviderSyncRunLedger', () => {
       source: 'SCHEDULED',
       actor: { type: 'SYSTEM', name: 'scheduler' },
       scope: {
-        type: 'SPORT',
+        type: 'EVENT',
         sport: Sport.GOLF,
-        feeds: ['EVENTSCHEDULE'],
-        windowPolicy: { defaultLookaheadDays: 30 },
+        eventId: 'event-1',
+        feeds: ['EVENTPARTICIPANTS'],
       },
     });
     const providerSyncRunCreate = mockFn<ProviderSyncRunRepository['create']>(async (input) => ({
@@ -102,42 +103,37 @@ describe('ProviderSyncRunLedger', () => {
       normalizedRequest,
       providerId: 'mock-provider',
       submittedAt: now,
-      runType: 'SCHEDULED_SPORT_SYNC',
+      runType: 'SCHEDULED_EVENT_SYNC',
     });
 
     expect(runs).toHaveLength(1);
     expect(providerSyncRunCreate).toHaveBeenCalledWith(expect.objectContaining({
       providerId: 'mock-provider',
       sport: Sport.GOLF,
-      eventId: null,
+      eventId: 'event-1',
       status: 'SUBMITTED',
       createdAt: now,
       payload: expect.objectContaining({
-        runType: 'SCHEDULED_SPORT_SYNC',
-        requestedFeeds: ['EVENTSCHEDULE'],
-        requestedFeed: 'EVENTSCHEDULE',
-        requestPayload: expect.objectContaining({
+        runType: 'SCHEDULED_EVENT_SYNC',
+        requestedFeeds: ['EVENTPARTICIPANTS'],
+        requestedFeed: 'EVENTPARTICIPANTS',
+        requestPayload: {
           sport: Sport.GOLF,
-          eventId: null,
+          eventId: 'event-1',
           source: 'SCHEDULED',
           actor: { type: 'SYSTEM', name: 'scheduler' },
-          from: null,
-          to: null,
-          effectiveWindow: {
-            from: '2026-05-30T12:00:00.000Z',
-            to: '2026-06-29T12:00:00.000Z',
-            defaultedFrom: true,
-            defaultedTo: true,
-          },
-        }),
+          workflowContext: {},
+          mockEventState: null,
+          normalizedAt: '2026-05-30T12:00:00.000Z',
+        },
         providerPayload: {
-          operation: 'EVENTSCHEDULE',
+          operation: 'EVENTPARTICIPANTS',
           rawCaptured: false,
           rawTruncated: false,
         },
         outcome: {
           severity: 'SUCCESS',
-          summary: 'Submitted event schedule sync for GOLF.',
+          summary: 'Submitted event participants sync for event-1.',
           warnings: [],
           errors: 0,
         },
@@ -158,10 +154,10 @@ describe('ProviderSyncRunLedger', () => {
       startedAt: expect.any(Date),
       completedAt: null,
       payload: expect.objectContaining({
-        detail: 'Started event schedule sync.',
+        detail: 'Started event participants sync.',
         outcome: expect.objectContaining({
           severity: 'SUCCESS',
-          summary: 'Started event schedule sync.',
+          summary: 'Started event participants sync.',
         }),
       }),
     }));
@@ -170,9 +166,9 @@ describe('ProviderSyncRunLedger', () => {
       startedAt: expect.any(Date),
       completedAt: expect.any(Date),
       payload: expect.objectContaining({
-        detail: 'Completed event schedule sync for GOLF (3 records).',
+        detail: 'Completed event participants sync for event-1 (3 records).',
         jobPayload: expect.objectContaining({
-          jobType: 'EVENT_SCHEDULE_SYNC',
+          jobType: 'EVENT_PARTICIPANTS_SYNC',
           recordsProcessed: 3,
           errors: 0,
         }),
@@ -180,7 +176,7 @@ describe('ProviderSyncRunLedger', () => {
         writeDiagnostics: job.writeDiagnostics,
         outcome: expect.objectContaining({
           severity: 'SUCCESS',
-          summary: 'Completed event schedule sync for GOLF (3 records).',
+          summary: 'Completed event participants sync for event-1 (3 records).',
         }),
         stats: {
           events: 3,
@@ -217,10 +213,10 @@ describe('ProviderSyncRunLedger', () => {
       status: 'FAILED',
       completedAt: expect.any(Date),
       payload: expect.objectContaining({
-        detail: 'Failed event schedule sync for GOLF: No provider registered',
+        detail: 'Failed event participants sync for event-1: No provider registered',
         outcome: {
           severity: 'ERROR',
-          summary: 'Failed event schedule sync for GOLF: No provider registered',
+          summary: 'Failed event participants sync for event-1: No provider registered',
           warnings: [{ code: 'NO_PROVIDER', message: 'No provider registered' }],
           errors: 1,
         },
@@ -246,10 +242,10 @@ describe('ProviderSyncRunLedger', () => {
       startedAt: expect.any(Date),
       completedAt: expect.any(Date),
       payload: expect.objectContaining({
-        detail: 'Failed event schedule sync.',
+        detail: 'Failed event participants sync.',
         outcome: expect.objectContaining({
           severity: 'ERROR',
-          summary: 'Failed event schedule sync.',
+          summary: 'Failed event participants sync.',
           errors: 1,
         }),
         errors: 1,
@@ -275,7 +271,7 @@ describe('ProviderSyncRunLedger', () => {
       startedAt: expect.any(Date),
       completedAt: expect.any(Date),
       payload: expect.objectContaining({
-        detail: 'Failed event schedule sync.',
+        detail: 'Failed event participants sync.',
         errors: 1,
         failurePayload: {
           error: {

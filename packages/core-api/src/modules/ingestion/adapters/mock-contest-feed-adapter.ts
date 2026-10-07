@@ -8,14 +8,11 @@ import type {
   LiveSimulationStatus,
   ProviderEventSyncOptions,
   ProviderLiveSimulationControls,
-  ProviderEventResult,
   ProviderHealthStatus,
   ProviderParticipant,
-  ProviderParticipantResult,
   ProviderPayloadCapture,
   ProviderPayloadCaptureSession,
   ProviderPayloadDiagnostics,
-  ProviderRanking,
   SportDataProvider,
   SportEvent,
   SportEventDetail,
@@ -30,7 +27,6 @@ import type {
   ListMockContestFeedScenarioEventsResponse,
   GetMockContestFeedScenarioEventDetailResponse,
   GetMockContestFeedScoresSnapshotResponse,
-  GetMockContestFeedResultsSnapshotResponse,
   GetMockContestFeedLiveReplayResponse,
   StartMockContestFeedLiveReplayResponse,
 } from '@poolmaster/mock-contest-feed-provider/generated/hey-api/types';
@@ -39,7 +35,6 @@ type ScenarioSummaryResponse = ListMockContestFeedScenariosResponse;
 type EventListResponse = ListMockContestFeedScenarioEventsResponse;
 type EventDetailResponse = GetMockContestFeedScenarioEventDetailResponse;
 type ScoresSnapshotResponse = GetMockContestFeedScoresSnapshotResponse;
-type ResultsSnapshotResponse = GetMockContestFeedResultsSnapshotResponse;
 type LiveReplayResponse = StartMockContestFeedLiveReplayResponse;
 
 type SupportedMockSport = ScenarioSummaryResponse['scenarios'][number]['sport'];
@@ -152,32 +147,6 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     return Array.from(seen.values());
   }
 
-  async getRankings(sport: Sport, rankingType: string): Promise<ProviderRanking[]> {
-    const eventRankings = await this.mapScenarioEventDetails(sport, undefined, (_scenarioId, detail) => {
-      const asOfDate = new Date(detail.event.feeds.rankings.asOf);
-      return detail.event.feeds.rankings.contestants.flatMap((contestant): ProviderRanking[] =>
-        typeof contestant.ranking === 'number'
-          ? [{
-              providerId: this.providerId,
-              participantExternalId: contestant.contestantId,
-              rankingType,
-              rank: contestant.ranking,
-              asOfDate,
-            }]
-          : [],
-      );
-    });
-    const rankings = new Map<string, ProviderRanking>();
-
-    for (const eventRanking of eventRankings) {
-      for (const ranking of eventRanking) {
-        rankings.set(ranking.participantExternalId, ranking);
-      }
-    }
-
-    return Array.from(rankings.values()).sort((left, right) => left.rank - right.rank);
-  }
-
   // Thin mapper only — no branching on `options.mockEventState`, no score
   // math, no fallback for a missing/malformed field. The mock provider (see
   // `GolfLiveState` in scenario-store.ts) owns all deterministic scenario
@@ -262,64 +231,6 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
       });
 
     return { category: 'GOLF', externalEventId: eventId, rounds };
-  }
-
-  async getEventResults(
-    eventId: string,
-    options?: ProviderEventSyncOptions,
-  ): Promise<ProviderEventResult | null> {
-    const match = await this.findEventById(eventId);
-    if (!match) {
-      return null;
-    }
-
-    const detail = await this.fetchJson<EventDetailResponse>(
-      withMockEventState(
-        `/v1/scenarios/${match.scenarioId}/events/${eventId}/detail`,
-        options,
-      ),
-    );
-    const resultsSnapshot = await this.fetchJson<ResultsSnapshotResponse>(
-      withMockEventState(
-        `/v1/scenarios/${match.scenarioId}/events/${eventId}/results`,
-        options,
-      ),
-    );
-
-    const merged = new Map<string, ContestantRecord>();
-    for (const contestant of resolveParticipants(detail)) {
-      merged.set(contestant.contestantId, { ...contestant });
-    }
-    for (const contestant of resultsSnapshot.contestants) {
-      const current = merged.get(contestant.contestantId);
-      merged.set(contestant.contestantId, { ...current, ...contestant });
-    }
-
-    const results = Array.from(merged.values())
-      .sort(compareContestantsForResults)
-      .map<ProviderParticipantResult>((contestant, index) => ({
-        participantExternalId: contestant.contestantId,
-        finishPosition: index + 1,
-        scoreToPar: contestant.score,
-        totalStrokes: contestant.strokes,
-        dnf: contestant.result === 'withdrawn' || contestant.result === 'cut',
-        dnfReason:
-          contestant.result === 'withdrawn'
-            ? 'WITHDRAWN'
-            : contestant.result === 'cut'
-              ? 'MISSED_CUT'
-              : undefined,
-        stats: buildResultStats(contestant),
-      }));
-
-    return {
-      eventExternalId: eventId,
-      providerId: this.providerId,
-      status: detail.event.status === 'completed' || detail.event.status === 'corrected'
-        ? 'OFFICIAL'
-        : 'COMPLETED',
-      results,
-    };
   }
 
   async healthCheck(): Promise<ProviderHealthStatus> {
@@ -653,34 +564,6 @@ function mapEventStatus(
     case 'corrected':
       return 'COMPLETED';
   }
-}
-
-function compareContestantsForResults(left: ContestantRecord, right: ContestantRecord): number {
-  const leftScore = typeof left.score === 'number' ? left.score : Number.POSITIVE_INFINITY;
-  const rightScore = typeof right.score === 'number' ? right.score : Number.POSITIVE_INFINITY;
-
-  if (leftScore !== rightScore) {
-    return leftScore - rightScore;
-  }
-
-  const leftRanking = typeof left.ranking === 'number' ? left.ranking : Number.POSITIVE_INFINITY;
-  const rightRanking = typeof right.ranking === 'number' ? right.ranking : Number.POSITIVE_INFINITY;
-
-  if (leftRanking !== rightRanking) {
-    return leftRanking - rightRanking;
-  }
-
-  return left.name.localeCompare(right.name);
-}
-
-function buildResultStats(contestant: ContestantRecord): Record<string, number> {
-  const stats: Record<string, number> = {};
-
-  if (typeof contestant.ranking === 'number') {
-    stats.ranking = contestant.ranking;
-  }
-
-  return stats;
 }
 
 function mergeContestantView(

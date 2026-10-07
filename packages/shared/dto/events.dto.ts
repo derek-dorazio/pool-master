@@ -11,6 +11,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
+import { UploadRowResolutionDtoSchema } from './sport-catalog.dto';
 
 /** Derived from the domain SportEventStatus constant (plans/124 §4.1) — `OFFICIAL` dropped. */
 export const EventStatusDtoSchema = z.nativeEnum(SportEventStatus);
@@ -168,7 +169,7 @@ export const UpdateSportEventRequestSchema = z.object({
   releaseAt: DateTimeSchema.optional(),
   fieldLocksAt: DateTimeSchema.optional(),
   autoLifecycleEnabled: z.boolean().optional(),
-}).describe('Changes to an admin-managed event; omitted fields are left alone.');
+}).describe('Changes to an event; omitted fields are left alone.');
 export type UpdateSportEventRequest = z.infer<typeof UpdateSportEventRequestSchema>;
 
 export const TransitionSportEventRequestSchema = z.object({
@@ -367,18 +368,84 @@ export const SeedSportEventParticipantsResponseSchema = z.object({
 }).describe('What seeding the field from the event\'s sport league did.');
 export type SeedSportEventParticipantsResponse = z.infer<typeof SeedSportEventParticipantsResponseSchema>;
 
+/** The field-row values an admin patches — by the grid save and by the field upload alike. */
+const SportEventParticipantPatchShape = {
+  isActive: z.boolean().optional(),
+  inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().optional(),
+  ranking: z.number().int().nullable().optional(),
+  oddsToWin: z.number().nullable().optional(),
+  seedNumber: z.number().int().nullable().optional(),
+};
+
 export const UpdateSportEventParticipantsRequestSchema = z.object({
   participants: z.array(z.object({
     sportEventParticipantId: z.string().uuid(),
-    isActive: z.boolean().optional(),
-    inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().optional(),
-    ranking: z.number().int().nullable().optional(),
-    oddsToWin: z.number().nullable().optional(),
-    seedNumber: z.number().int().nullable().optional(),
+    ...SportEventParticipantPatchShape,
     price: z.number().nullable().optional().describe('A manual price; null clears it.'),
   })).min(1).describe('Field rows to patch, all or none. Omitted fields are left alone; null clears.'),
 }).describe('One save of the field grid.');
 export type UpdateSportEventParticipantsRequest = z.infer<typeof UpdateSportEventParticipantsRequestSchema>;
+
+// --- Field upload (#128): adjust the field's rankings, odds, seeds and withdrawals ------
+
+export const SportEventParticipantUploadRowSchema = z.object({
+  participantId: z.string().optional(),
+  externalId: z.string().optional().describe('The participant\'s canonical external id.'),
+  playerName: z.string().optional(),
+  ...SportEventParticipantPatchShape,
+}).describe(
+  'One uploaded field row. The first identifier present is used — participantId, then externalId, then an exact '
+  + 'case-insensitive playerName — matched only within the event\'s field, with no fallback to the next. '
+  + 'Each value omitted is left alone; null clears it.',
+);
+export type SportEventParticipantUploadRow = z.infer<typeof SportEventParticipantUploadRowSchema>;
+
+export const SportEventParticipantUploadRequestSchema = z.object({
+  rows: z.array(SportEventParticipantUploadRowSchema).min(1).max(500),
+}).describe('A field upload: changes to participants already on the event\'s field. It never adds one.');
+export type SportEventParticipantUploadRequest = z.infer<typeof SportEventParticipantUploadRequestSchema>;
+
+export const SportEventParticipantUploadValuesDtoSchema = z.object({
+  isActive: z.boolean(),
+  inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable(),
+  ranking: z.number().int().nullable(),
+  oddsToWin: z.number().nullable(),
+  seedNumber: z.number().int().nullable(),
+}).describe('The values a field upload can change on a field row.');
+
+export const SportEventParticipantUploadChangeDtoSchema = z.enum(['UPDATE', 'UNCHANGED'])
+  .describe('What applying the row would do to its field row: change a value, or nothing.');
+
+export const SportEventParticipantUploadRowErrorDtoSchema = z.enum(['DUPLICATE_PARTICIPANT'])
+  .describe('Why a row that resolved still cannot be applied. DUPLICATE_PARTICIPANT: another row in the upload names the same participant.');
+
+export const SportEventParticipantUploadPreviewRowDtoSchema = z.object({
+  row: SportEventParticipantUploadRowSchema,
+  resolution: UploadRowResolutionDtoSchema.describe('MATCHED: one participant on the field. UNRESOLVED: none on the field — the upload never adds one, so load the field from the provider first. AMBIGUOUS: several.'),
+  participantId: z.string().uuid().nullable().describe('Set only when MATCHED.'),
+  participantName: z.string().nullable().describe('Set only when MATCHED.'),
+  sportEventParticipantId: z.string().uuid().nullable().describe('The field row it resolved to; set only when MATCHED.'),
+  rowError: SportEventParticipantUploadRowErrorDtoSchema.nullable().describe('Set when a MATCHED row still cannot be applied.'),
+  change: SportEventParticipantUploadChangeDtoSchema.nullable().describe('Null when the row cannot be applied.'),
+  before: SportEventParticipantUploadValuesDtoSchema.nullable().describe('What is stored now; set whenever the row resolved.'),
+  after: SportEventParticipantUploadValuesDtoSchema.nullable().describe('What applying would store; null when the row cannot be applied.'),
+  message: z.string().nullable().describe('Why the row cannot be applied, for display; null when it can.'),
+}).describe('What applying one uploaded field row would do.');
+export type SportEventParticipantUploadPreviewRowDto = z.infer<typeof SportEventParticipantUploadPreviewRowDtoSchema>;
+
+export const SportEventParticipantUploadPreviewResponseSchema = z.object({
+  rows: z.array(SportEventParticipantUploadPreviewRowDtoSchema).describe('One per uploaded row, in upload order.'),
+  rollup: z.object({
+    total: z.number().int(),
+    matched: z.number().int(),
+    unresolved: z.number().int(),
+    ambiguous: z.number().int(),
+    duplicate: z.number().int().describe('MATCHED rows refused as DUPLICATE_PARTICIPANT.'),
+    update: z.number().int().describe('Rows that would change a value.'),
+    unchanged: z.number().int().describe('Rows that would change nothing.'),
+  }).describe('Counts by resolution and by change. Apply succeeds only when matched equals total and duplicate is 0.'),
+}).describe('A dry run of a field upload. Nothing is written.');
+export type SportEventParticipantUploadPreviewResponse = z.infer<typeof SportEventParticipantUploadPreviewResponseSchema>;
 
 export const SportEventParticipantResponseSchema = z.object({
   participant: SportEventParticipantDtoSchema,
@@ -425,3 +492,5 @@ registerSchema('AddSportEventParticipantsResponse', AddSportEventParticipantsRes
 registerSchema('SeedSportEventParticipantsResponse', SeedSportEventParticipantsResponseSchema);
 registerSchema('UpdateSportEventParticipantsRequest', UpdateSportEventParticipantsRequestSchema);
 registerSchema('SportEventParticipantResponse', SportEventParticipantResponseSchema);
+registerSchema('SportEventParticipantUploadRequest', SportEventParticipantUploadRequestSchema);
+registerSchema('SportEventParticipantUploadPreviewResponse', SportEventParticipantUploadPreviewResponseSchema);

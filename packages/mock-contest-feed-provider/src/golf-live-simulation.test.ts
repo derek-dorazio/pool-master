@@ -54,7 +54,6 @@ function withNonGolfScenarioDir(run: (dir: string) => Promise<void> | void): Pro
       field: { asOf, status: 'announced', contestants: [{ contestantId: 'player-01', name: 'Player One' }] },
       feeds: {
         odds: { asOf, contestants: [] },
-        rankings: { asOf, contestants: [] },
         results: { asOf, contestants: [] },
       },
     }],

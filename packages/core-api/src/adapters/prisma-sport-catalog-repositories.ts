@@ -51,12 +51,13 @@ import type {
   SportEventParticipantStanding,
   SportEventParticipantValuation,
   SportEventRound,
+  SportEventSyncScope,
   SportEventTier,
   SportLeague,
   TournamentFormat,
   ValuationSource,
 } from '@poolmaster/shared/domain';
-import { SportEventStatus, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { SportEventStatus } from '@poolmaster/shared/domain';
 import { mapToParticipant } from './prisma-participant-repository';
 
 type Db = PrismaClient;
@@ -374,7 +375,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         autoLifecycleEnabled: true,
-        syncScope: { not: SportEventSyncScope.FULL },
         status: { in: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] },
       },
       include: SPORT_EVENT_INCLUDE,

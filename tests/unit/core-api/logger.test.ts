@@ -110,9 +110,9 @@ describe('core-api logging foundation', () => {
       const request = {
         id: 'req-error',
         method: 'POST',
-        url: '/api/v1/ingestion/sports/GOLF/sync',
+        url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
         ip: '127.0.0.1',
-        routeOptions: { url: '/api/v1/ingestion/sports/:sport/sync' },
+        routeOptions: { url: '/api/v1/ingestion/sports/:sport/events/:eventId/sync' },
         contextLogger: { warn, error },
         log: { warn: jest.fn(), error: jest.fn() },
       } as unknown as FastifyRequest;

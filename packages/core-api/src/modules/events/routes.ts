@@ -159,11 +159,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Update a sport event',
-      description: '409 EVENT_NOT_ADMIN_MANAGED for an event a provider owns in full. Root admin only.',
+      description: 'Edits any event, linked to a provider or not; a provider never overwrites these fields. Root admin only.',
       operationId: 'updateEvent',
       params: EVENT_PARAMS,
       body: schemaRef('UpdateSportEventRequest'),
-      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409) },
+      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404) },
     },
     handler: handler.updateEvent,
   });
@@ -200,7 +200,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Link a sport event to a provider event for scores',
-      description: 'Root admin only.',
+      description: '409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.',
       operationId: 'linkEventScoreSource',
       params: EVENT_PARAMS,
       body: schemaRef('LinkSportEventScoreSourceRequest'),
@@ -217,7 +217,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       description: 'Root admin only.',
       operationId: 'unlinkEventScoreSource',
       params: EVENT_PARAMS,
-      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409) },
+      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404) },
     },
     handler: handler.unlinkScoreSource,
   });
@@ -342,6 +342,41 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       response: { 202: schemaRef('ProviderManualSyncSubmissionResponse'), ...errors(401, 403, 404, 409, 422) },
     },
     handler: handler.refreshEventParticipants,
+  });
+
+  fastify.post('/:eventId/participants/upload/preview', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Preview a field upload',
+      description:
+        'Resolves each row against the event\'s field — participantId, then externalId, then an exact case-insensitive playerName, '
+        + 'with no fallback — and reports what applying it would change to ranking, oddsToWin, seedNumber, isActive and inactiveReason. '
+        + 'A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. '
+        + 'A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.',
+      operationId: 'previewEventParticipantUpload',
+      params: EVENT_PARAMS,
+      body: schemaRef('SportEventParticipantUploadRequest'),
+      response: { 200: schemaRef('SportEventParticipantUploadPreviewResponse'), ...errors(400, 401, 403, 404) },
+    },
+    handler: handler.previewEventParticipantUpload,
+  });
+
+  fastify.post('/:eventId/participants/upload', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Apply a field upload',
+      description:
+        'Re-runs the preview, then patches every changed row in one transaction, all or none. 422 EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED, '
+        + 'with nothing written, when any row is not MATCHED or is a duplicate. Omitted values are left alone; null clears. '
+        + 'A later field refresh from the provider replaces these values as it does grid edits. Returns the field. Root admin only.',
+      operationId: 'applyEventParticipantUpload',
+      params: EVENT_PARAMS,
+      body: schemaRef('SportEventParticipantUploadRequest'),
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(400, 401, 403, 404, 422) },
+    },
+    handler: handler.applyEventParticipantUpload,
   });
 
   fastify.delete('/:eventId/participants/:sportEventParticipantId', {

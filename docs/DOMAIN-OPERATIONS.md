@@ -313,7 +313,7 @@ borderline object is tenant-scoped until the repo owner says otherwise.
 
 | | Objects |
 |---|---|
-| **Global** | `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate` |
+| **Global** | `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate` |
 | **Tenant-scoped** | `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, both invitation objects, `Contest` and everything under it — configuration, entries, picks, scoring rules, prizes |
 
 The boundary is where the two halves meet: `SportEventParticipant` is global (a golfer in a
@@ -509,7 +509,7 @@ link with `maxUses` / `currentUses`.
 Cluster: `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `SportEventParticipantRound`, `SportEventParticipantStanding`,
 `SportEventTier`, `SportEventParticipantValuation`, `Participant`,
-`ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`.
+`ParticipantProviderMapping`, `ParticipantLeagueAffiliation`.
 The tree is `SportLeague → EventSeries → SportEvent`: an event is one edition of a series, in
 one event year, and the series is its only parent.
 
@@ -578,7 +578,7 @@ are gone (#236).
 | Create | `rootAdmin` | `createEvent` (manual) or `createEventFromProviderEvent` (linked for scores), on a sport league in an event year. The series is found or created by name; a second edition of a series in one year is 409 `EVENT_EDITION_ALREADY_EXISTS` — the database's `(eventSeriesId, eventYear)` constraint. The sport comes from the sport league; golf only for now, 422 `SPORT_NOT_SUPPORTED` otherwise. Seeds the rounds and the default tiers. Provider sync never creates an event: it updates the one linked to a provider event and skips the rest |
 | Clone an event year | `rootAdmin` | `cloneEventYear` re-creates each of a sport league's events in one year as next year's edition (or `targetYear`'s), dates shifted; never the field, tiers, scores or provider link. 422 `EVENT_YEAR_HAS_NO_EVENTS` for an empty source year, 409 `EVENT_YEAR_NOT_EMPTY` for a target year that has events. Leaves the current event year alone |
 | Import an event year from a provider | `rootAdmin` | `importEventYearFromProvider` creates each provider event for a sport league's tour starting in that calendar year that PoolMaster lacks, each as `createEventFromProviderEvent` would, linked for scores. A provider event belongs to the tour when its tour name equals the sport league's `matchKeyword`, ignoring case. Events already linked, and series that already have an edition that year, are skipped and reported, so a re-run creates nothing. 422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD`; 404 `PROVIDER_NOT_FOUND` or `SPORT_LEAGUE_NOT_FOUND` (#385) |
-| Update | `rootAdmin` | 409 `EVENT_NOT_ADMIN_MANAGED` once a provider owns the event in full |
+| Update | `rootAdmin` | `updateEvent` edits any event, linked to a provider or not. A provider sync never overwrites these fields (#435) |
 | Delete | `rootAdmin` | 409 `EVENT_HAS_CONTESTS`. Deletes the event's rounds and tiers first — before #236 it failed on the foreign key for any event that had them |
 | Transition, link / unlink the score source | `rootAdmin` | `transitionEvent`, `linkEventScoreSource`, `unlinkEventScoreSource` |
 | Start simulated live scoring | `rootAdmin` | `startEventLiveSimulation` asks the linked provider to play the event's four rounds forward on its own clock, so a live contest's leaderboard can be tested; calling again restarts from round 1. Scores still arrive through the live-score sync, which polls only while the event is `IN_PROGRESS`. 409 `EVENT_NOT_LINKED` when unlinked, 422 `LIVE_SIMULATION_UNSUPPORTED` unless the event is golf and the provider reports `supportsLiveSimulation` (only the QA mock feed does), 404 `PROVIDER_EVENT_NOT_FOUND` when the provider no longer has the linked event |
@@ -604,6 +604,7 @@ Carries `ranking` (the rank that applied at this event), `seedNumber`, `oddsToWi
 |---|---|---|
 | List for an event | `authenticated` | `listEventParticipants`. Embeds the canonical `Participant`, the valuation, the standing and each round, with their golf rows. One read serves the field grid, the tier board and the score corrections |
 | Add, edit, remove | `rootAdmin` | `addEventParticipants`, `updateEventParticipants` (price included), `removeEventParticipant` — 409 `EVENT_PARTICIPANT_HAS_PICKS` once a contest entry picked it |
+| Bulk-adjust by upload | `rootAdmin` | `previewEventParticipantUpload` (writes nothing) and `applyEventParticipantUpload`: rows set `ranking`, `oddsToWin`, `seedNumber`, `isActive`, `inactiveReason` on participants **already on the field** — omitted leaves a value, null clears it. Rows resolve within the field by `participantId`, then `externalId`, then exact case-insensitive `playerName`, first identifier only. A participant not on the field is UNRESOLVED (the upload never adds one); one named twice is a `DUPLICATE_PARTICIPANT` row error. Apply is all or none through the `updateEventParticipants` write path, 422 `EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED` otherwise (#128) |
 | Seed from the sport league, refresh from the provider | `rootAdmin` | `seedEventParticipants` (golf only for now); `refreshEventParticipants` queues a provider sync (202), which writes each golfer's ranking from the provider's field onto the event participant (#384) |
 
 **Golf surfaces render `ELIMINATED` as "Cut"** (decision 1). That is a display mapping, not
@@ -659,7 +660,7 @@ still the event's, by the ruling above. #93 does not get to re-key it on its own
 | Read one | `authenticated` | |
 | Create, update | `rootAdmin` | **A10** · 403 `ROOT_ADMIN_ACCESS_REQUIRED` from the claim. Before #235 any signed-in user could create or rename a catalog participant |
 
-### ParticipantProviderMapping, ParticipantRankingSnapshot
+### ParticipantProviderMapping
 
 Provider plumbing. Written by sync; read and repaired by `rootAdmin`. #236 adds one read,
 `listParticipantProviderMappings` (`authenticated`, like every catalog read), for the player
@@ -668,6 +669,20 @@ page — the mapping count the golf player list carried is gone. #205 adds the r
 a provider's identifier to the participant with `MANUAL` confidence, moving it if another
 participant held it; 404 `PROVIDER_NOT_FOUND` for a provider that is not registered. It
 replaced `adminMapParticipant`, which took both ids in the body under `/admin/providers`.
+
+`ParticipantRankingSnapshot` and the `PARTICIPANTRANKINGS` feed that wrote it were retired in
+#125. A golfer's current ranking is `ParticipantLeagueAffiliation.ranking`, owned by the root
+admin; an event participant's ranking comes from the provider's field (#384), and a field that
+carries none leaves the ranking already on the row.
+
+The `EVENTSCHEDULE` and `EVENTRESULTS` feeds were retired in #126, and with them the sport-level
+sync (`submitSportSync`). Events are created and linked by the root admin; the provider's
+upcoming-event catalog is read only on demand. The two remaining feeds, `EVENTPARTICIPANTS` and
+`EVENTLIVESCORES`, are event-scoped and reach only linked (`SCORES_ONLY`) events. A field sync
+writes the field and its size, never the event's details or status, and a score for a round the
+admin did not schedule is skipped, never creating the round (#435). An event's lifecycle is moved
+by the admin or by the date-driven lifecycle scheduler. Sync-run history rows for the retired
+feeds were deleted by migration, and stored ingestion config drops their keys on boot.
 
 ## Contests and entries
 
@@ -753,7 +768,7 @@ Two runtime-tunable documents: the client poll intervals and the ingestion sched
 |---|---|---|
 | List providers | `rootAdmin` | `listProviders` — each registered provider with a live health check made for the request, its scheduled sports and its active event count. There is no stored health: `ProviderHealthLog` went with the manual health check that wrote it and the provider detail that read it |
 | List sync runs | `rootAdmin` | `listProviderSyncRuns` — filtered by provider, sport and status, bounded by a submission-time window (`from`/`to`, default the last 6 hours). Unpaged (§16): the window is the bound |
-| Submit a sport sync, an event sync | `rootAdmin` | `submitSportSync`, `submitEventSync` — 202 with one `SUBMITTED` run per feed; the runs execute after acceptance. An event whose `syncScope` forbids a feed is 409 |
+| Submit an event sync | `rootAdmin` | `submitEventSync` — 202 with one `SUBMITTED` run per feed; the runs execute after acceptance. An event whose `syncScope` forbids a feed is 409 |
 | List unmapped competitors | `rootAdmin` | `listUnmappedProviderParticipants` — competitors a provider reports that no participant is mapped to. `bindParticipantProviderMapping` (above) repairs each |
 | Clean up stale provider events | `rootAdmin` | `cleanupStaleProviderEvents` — `DRY_RUN` inventories, `EXECUTE` deletes the unblocked; an event a contest references is never deleted |
 | Browse a provider's catalog | `rootAdmin` | `listProviderCatalogEvents` — live provider events, each the full `ProviderEventDto`; without `from`/`to` it returns every event the provider has, with no window around today (#402) |

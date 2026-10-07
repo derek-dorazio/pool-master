@@ -69,14 +69,6 @@ function toFeedWhere(
   from?: Date,
   to?: Date,
 ) {
-  if (feed === 'EVENTRESULTS') {
-    return {
-      status: { in: [SportEventStatus.COMPLETED] },
-      updatedAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
-      syncScope: { in: [SportEventSyncScope.FULL, SportEventSyncScope.SCORES_ONLY] },
-    };
-  }
-
   if (feed === 'EVENTPARTICIPANTS') {
     return {
       status: SportEventStatus.SCHEDULED,
@@ -87,13 +79,13 @@ function toFeedWhere(
         gte: from ?? now,
         ...(to ? { lte: to } : {}),
       },
-      syncScope: SportEventSyncScope.FULL,
+      syncScope: SportEventSyncScope.SCORES_ONLY,
     };
   }
 
   return {
     status: { in: [SportEventStatus.IN_PROGRESS] },
     sportEventParticipants: { some: {} },
-    syncScope: { in: [SportEventSyncScope.FULL, SportEventSyncScope.SCORES_ONLY] },
+    syncScope: SportEventSyncScope.SCORES_ONLY,
   };
 }

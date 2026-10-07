@@ -1,16 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Alert, AsyncPage, Button, LinkButton } from '@/features/shared/ui';
+import { AsyncPage, Button, LinkButton } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import {
-  golfTournamentHasScoreSync,
-  isAdminManagedGolfTournament,
-} from './golf-admin-utils';
+import { golfTournamentHasScoreSync } from './golf-admin-utils';
 import { GolfFieldGridCard } from './golf-field-grid-card';
 import { GolfFieldSeedAction } from './golf-field-seed-action';
 import { GolfFieldRefreshAction } from './golf-field-refresh-action';
 import { GolfFieldAddParticipantsModal } from './golf-field-add-participants-modal';
+import { GolfFieldUploadCard } from './golf-field-upload-card';
 import { useGolfFieldQuery, useGolfTournamentQuery } from './use-golf-tournament';
 
 /**
@@ -21,6 +19,7 @@ import { useGolfFieldQuery, useGolfTournamentQuery } from './use-golf-tournament
 export function RootAdminGolfTournamentFieldPage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
   const [addOpen, setAddOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const tournamentQuery = useGolfTournamentQuery(eventId);
   const fieldQuery = useGolfFieldQuery(eventId);
@@ -39,10 +38,6 @@ export function RootAdminGolfTournamentFieldPage() {
     : tournamentQuery.isError
       ? 'error'
       : 'ready';
-
-  const readOnly = tournament
-    ? !isAdminManagedGolfTournament(tournament.syncScope)
-    : false;
 
   return (
     <AsyncPage
@@ -64,30 +59,39 @@ export function RootAdminGolfTournamentFieldPage() {
             >
               ← Tournament Home
             </LinkButton>
-            {!readOnly ? (
-              <div className="flex flex-wrap gap-2">
-                <GolfFieldSeedAction eventId={eventId} />
-                <Button
-                  data-testid="root-admin-golf-field-add"
-                  onClick={() => setAddOpen(true)}
-                  size="sm"
-                >
-                  Add more participants
-                </Button>
-                {golfTournamentHasScoreSync(tournament.syncScope) ? (
-                  <GolfFieldRefreshAction
-                    eventId={eventId}
-                    fieldCount={entries.length}
-                  />
-                ) : null}
-              </div>
-            ) : null}
+            <div className="flex flex-wrap gap-2">
+              <GolfFieldSeedAction eventId={eventId} />
+              <Button
+                data-testid="root-admin-golf-field-add"
+                onClick={() => setAddOpen(true)}
+                size="sm"
+              >
+                Add more participants
+              </Button>
+              <Button
+                data-testid="root-admin-golf-field-upload-open"
+                disabled={uploadOpen}
+                onClick={() => setUploadOpen(true)}
+                size="sm"
+                variant="secondary"
+              >
+                Bulk upload
+              </Button>
+              {golfTournamentHasScoreSync(tournament.syncScope) ? (
+                <GolfFieldRefreshAction
+                  eventId={eventId}
+                  fieldCount={entries.length}
+                />
+              ) : null}
+            </div>
           </div>
 
-          {readOnly ? (
-            <Alert tone="warning">
-              This tournament is fully provider-owned. Its field is read-only here.
-            </Alert>
+          {uploadOpen ? (
+            <GolfFieldUploadCard
+              entries={entries}
+              eventId={eventId}
+              onClose={() => setUploadOpen(false)}
+            />
           ) : null}
 
           <GolfFieldGridCard
@@ -101,7 +105,6 @@ export function RootAdminGolfTournamentFieldPage() {
                 : null
             }
             fieldLoading={fieldQuery.isLoading}
-            readOnly={readOnly}
           />
 
           {addOpen ? (

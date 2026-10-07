@@ -4,9 +4,6 @@ export type {
   SportEvent,
   SportEventDetail,
   ProviderParticipant,
-  ProviderRanking,
-  ProviderEventResult,
-  ProviderParticipantResult,
   ProviderHealthStatus,
 } from './provider-interface';
 export { LiveScoreUnsupportedError } from './provider-interface';
@@ -18,7 +15,6 @@ export type {
   IngestionCallbacks,
   IngestionJobRecord,
   JobType,
-  SportSyncRequest,
 } from './ingestion-scheduler';
 export {
   publishLiveScoreUpdate,
@@ -28,7 +24,6 @@ export {
 export type { LiveScorePublisherDeps } from './score-publisher';
 export {
   EVENT_SYNC_FEEDS,
-  SPORT_SYNC_FEEDS,
   SyncOrchestrator,
   SyncRequestValidationError,
   normalizeSyncRequest,
@@ -37,16 +32,12 @@ export type {
   EventSyncFeed,
   IngestionFeedType,
   NormalizedEventSyncScope,
-  NormalizedSportSyncScope,
   NormalizedSyncRequest,
   NormalizedSyncScope,
   RootAdminSyncActor,
-  SportSyncFeed,
   SyncActorContext,
-  SyncEffectiveWindow,
   SyncOrchestratorRequest,
   SyncRequestSource,
   SyncRequestValidationCode,
-  SyncRequestedWindow,
   SystemSyncActor,
 } from './sync-orchestrator';

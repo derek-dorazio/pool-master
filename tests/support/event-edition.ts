@@ -15,6 +15,9 @@ import type { PrismaClient } from '@prisma/client';
 
 export const FIXTURE_TOUR_NAME = 'Fixture Tour (plans/147 test editions)';
 
+const LINKED_EVENT_ROUNDS = 4;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
 type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'eventSeries'>;
 
 export interface EventEdition {
@@ -52,11 +55,23 @@ export async function cleanupFreshEventEditions(prisma: Pick<PrismaClient, 'even
 /**
  * plans/147 — sync updates only an event already linked to the provider event; it never
  * creates one. This is the row a sync test starts from: an event in a fresh series, holding
- * the provider identity, as an admin creating and linking it would leave it.
+ * the provider identity, as an admin creating and linking it would leave it. The field
+ * release and lock times default to the start; pass the admin's own when a test needs a field
+ * that is open (#126: no schedule sync sets them any more). Like an admin-created event it is
+ * linked for scores (SCORES_ONLY) and has a four-round schedule, a round a day from the start,
+ * because a feed never creates a round (#435).
  */
 export async function linkedProviderEvent(
   prisma: Db & Pick<PrismaClient, 'sportEvent'>,
-  input: { providerId: string; externalId: string; name: string; startDate: Date; sport?: string },
+  input: {
+    providerId: string;
+    externalId: string;
+    name: string;
+    startDate: Date;
+    sport?: string;
+    releaseAt?: Date;
+    fieldLocksAt?: Date;
+  },
 ) {
   return prisma.sportEvent.create({
     data: {
@@ -66,8 +81,16 @@ export async function linkedProviderEvent(
       sport: input.sport ?? 'GOLF',
       name: input.name,
       startDate: input.startDate,
-      releaseAt: input.startDate,
-      fieldLocksAt: input.startDate,
+      releaseAt: input.releaseAt ?? input.startDate,
+      fieldLocksAt: input.fieldLocksAt ?? input.startDate,
+      syncScope: 'SCORES_ONLY',
+      rounds: LINKED_EVENT_ROUNDS,
+      roundSchedule: {
+        create: Array.from({ length: LINKED_EVENT_ROUNDS }, (_, index) => ({
+          roundNumber: index + 1,
+          scheduledDate: new Date(input.startDate.getTime() + index * MS_PER_DAY),
+        })),
+      },
     },
   });
 }

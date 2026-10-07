@@ -80,13 +80,6 @@ const eventDetailResponse = {
           { contestantId: 'rory-mcilroy', odds: 8.0 },
         ],
       },
-      rankings: {
-        asOf: '2026-04-07T12:00:00.000Z',
-        contestants: [
-          { contestantId: 'scottie-scheffler', ranking: 1 },
-          { contestantId: 'rory-mcilroy', ranking: 2 },
-        ],
-      },
       results: {
         asOf: '2026-04-10T22:00:00.000Z',
         contestants: [
@@ -106,7 +99,7 @@ describe('MockContestFeedAdapter', () => {
     jest.restoreAllMocks();
   });
 
-  it('maps mock provider schedule, participants, rankings, scores, and results', async () => {
+  it('maps mock provider schedule, participants with their field rankings, and live scores', async () => {
     global.fetch = jest.fn(async (input: string | URL) => {
       const url = String(input);
 
@@ -168,14 +161,6 @@ describe('MockContestFeedAdapter', () => {
           ],
         });
       }
-      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/results')) {
-        return okJson({
-          contestants: [
-            { contestantId: 'scottie-scheffler', score: -4 },
-            { contestantId: 'rory-mcilroy', score: -5 },
-          ],
-        });
-      }
 
       throw new Error(`Unhandled fetch URL: ${url}`);
     }) as typeof fetch;
@@ -197,13 +182,6 @@ describe('MockContestFeedAdapter', () => {
       oddsSourceEventId: 'golf-masters-2026',
     });
     expect(detail?.participants.map((participant) => participant.ranking)).toEqual([1, 2]);
-
-    const rankings = await adapter.getRankings(Sport.GOLF, 'OWGR');
-    expect(rankings.map((ranking) => ranking.rank)).toEqual([1, 2]);
-    expect(rankings[0]).toEqual(expect.objectContaining({
-      providerId: 'mock-contest-feed',
-      rankingType: 'OWGR',
-    }));
 
     // pool-master-rop.78.3 — the typed LiveScoreResult contract replaced
     // the legacy ProviderStatEvent[] shape. plans/117 §10.2.
@@ -230,9 +208,6 @@ describe('MockContestFeedAdapter', () => {
       ]),
     );
     }
-
-    const results = await adapter.getEventResults('golf-masters-2026');
-    expect(results?.results[0]?.participantExternalId).toBe('rory-mcilroy');
 
     const health = await adapter.healthCheck();
     expect(health.status).toBe('HEALTHY');
@@ -271,7 +246,7 @@ describe('MockContestFeedAdapter', () => {
     );
     const getLiveScoresSource = adapterSource.slice(
       adapterSource.indexOf('async getLiveScores('),
-      adapterSource.indexOf('async getEventResults('),
+      adapterSource.indexOf('async healthCheck('),
     );
     expect(getLiveScoresSource).not.toMatch(/mockEventState\s*===/);
     expect(getLiveScoresSource).not.toMatch(/case ['"](golf-|open|locked|live|completed)/);
@@ -435,7 +410,6 @@ describe('MockContestFeedAdapter', () => {
         },
         feeds: {
           odds: { asOf: '2026-04-07T12:00:00.000Z', contestants: [] },
-          rankings: { asOf: '2026-04-07T12:00:00.000Z', contestants: [] },
           results: { asOf: '2026-04-07T12:00:00.000Z', contestants: [] },
         },
       },
@@ -691,7 +665,6 @@ describe('MockContestFeedAdapter', () => {
         },
         feeds: {
           odds: { asOf: '2026-04-09T00:00:00.000Z', contestants: [] },
-          rankings: { asOf: '2026-04-09T00:00:00.000Z', contestants: [] },
           results: { asOf: '2026-04-09T00:00:00.000Z', contestants: [] },
         },
       },

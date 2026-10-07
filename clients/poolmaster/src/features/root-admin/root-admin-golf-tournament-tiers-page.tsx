@@ -9,9 +9,6 @@ import {
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import {
-  isAdminManagedGolfTournament,
-} from './golf-admin-utils';
 import { GolfTierAutoAssignActions } from './golf-tier-auto-assign-actions';
 import { GolfTierBoard } from './golf-tier-board';
 import { GolfTierDefinitionsPanel } from './golf-tier-definitions-panel';
@@ -52,10 +49,6 @@ export function RootAdminGolfTournamentTiersPage() {
       ? 'error'
       : 'ready';
 
-  const readOnly = tournament
-    ? !isAdminManagedGolfTournament(tournament.syncScope)
-    : false;
-
   return (
     <AsyncPage
       errorBody={extractErrorMessage(tournamentQuery.error, {
@@ -76,21 +69,13 @@ export function RootAdminGolfTournamentTiersPage() {
             >
               ← Tournament Home
             </LinkButton>
-            {!readOnly ? (
-              <GolfTierAutoAssignActions
-                disabled={field.length === 0}
-                eventId={eventId}
-              />
-            ) : null}
+            <GolfTierAutoAssignActions
+              disabled={field.length === 0}
+              eventId={eventId}
+            />
           </div>
 
-          {readOnly ? (
-            <Alert tone="warning">
-              This tournament is fully provider-owned. Tiers are read-only here.
-            </Alert>
-          ) : null}
-
-          {!readOnly && tournament.contestCount > 0 ? (
+          {tournament.contestCount > 0 ? (
             <Callout tone="info">
               This tournament has {tournament.contestCount} contest
               {tournament.contestCount === 1 ? '' : 's'}. Tier and price changes are
@@ -135,7 +120,6 @@ export function RootAdminGolfTournamentTiersPage() {
                   <GolfTierBoard
                     eventId={eventId}
                     field={field}
-                    readOnly={readOnly}
                     tiers={tiers}
                   />
                 }
@@ -143,7 +127,6 @@ export function RootAdminGolfTournamentTiersPage() {
                   <GolfTierDefinitionsPanel
                     assignmentCountByTierKey={assignmentCountByTierKey}
                     eventId={eventId}
-                    readOnly={readOnly}
                     tiers={tiers}
                   />
                 }

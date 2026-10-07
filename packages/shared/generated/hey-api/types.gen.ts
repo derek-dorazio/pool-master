@@ -888,6 +888,729 @@ export type ParticipantResponse = {
     };
 };
 
+/**
+ * A sport the platform runs contests on.
+ */
+export type SportDto = {
+    /**
+     * Sport identifier — what Participant.sportId and SportLeague.sportId point at.
+     */
+    id: string;
+    /**
+     * The sport.
+     */
+    name: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+    /**
+     * Whether the sport's competitors are individuals or teams.
+     */
+    participantType: 'INDIVIDUAL' | 'TEAM';
+    /**
+     * Sport category.
+     */
+    category: 'GOLF' | 'BASKETBALL' | 'FOOTBALL' | 'F1' | 'NASCAR' | 'TENNIS' | 'SOCCER';
+    /**
+     * Structural format of the sport's events; decides which contest formats are valid.
+     */
+    tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'KNOCKOUT_BRACKET' | 'SERIES_PLAYOFF' | 'ROUND_ROBIN_SEASON' | 'WEEKLY_GAMES_SEASON' | 'TIME_TRIAL_RACE' | 'SEASON_OF_RACES' | 'GROUP_STAGE_KNOCKOUT' | 'MATCH_PLAY';
+    /**
+     * ISO 8601 datetime string.
+     */
+    createdAt: string;
+    /**
+     * ISO 8601 datetime string.
+     */
+    updatedAt: string;
+};
+
+/**
+ * The sports.
+ */
+export type SportListResponse = {
+    /**
+     * Every sport, by name.
+     */
+    sports: Array<{
+        /**
+         * Sport identifier — what Participant.sportId and SportLeague.sportId point at.
+         */
+        id: string;
+        /**
+         * The sport.
+         */
+        name: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        /**
+         * Whether the sport's competitors are individuals or teams.
+         */
+        participantType: 'INDIVIDUAL' | 'TEAM';
+        /**
+         * Sport category.
+         */
+        category: 'GOLF' | 'BASKETBALL' | 'FOOTBALL' | 'F1' | 'NASCAR' | 'TENNIS' | 'SOCCER';
+        /**
+         * Structural format of the sport's events; decides which contest formats are valid.
+         */
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'KNOCKOUT_BRACKET' | 'SERIES_PLAYOFF' | 'ROUND_ROBIN_SEASON' | 'WEEKLY_GAMES_SEASON' | 'TIME_TRIAL_RACE' | 'SEASON_OF_RACES' | 'GROUP_STAGE_KNOCKOUT' | 'MATCH_PLAY';
+        /**
+         * ISO 8601 datetime string.
+         */
+        createdAt: string;
+        /**
+         * ISO 8601 datetime string.
+         */
+        updatedAt: string;
+    }>;
+};
+
+/**
+ * A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League.
+ */
+export type SportLeagueDto = {
+    /**
+     * Sport league identifier.
+     */
+    id: string;
+    /**
+     * The sport this sport league belongs to.
+     */
+    sportId: string;
+    /**
+     * Sport league name, e.g. "PGA Tour".
+     */
+    name: string;
+    /**
+     * The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
+     */
+    matchKeyword: string | null;
+    /**
+     * The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.
+     */
+    currentEventYear: number | null;
+    /**
+     * Whether the sport league is in use; a read filter, not a write lock.
+     */
+    isActive: boolean;
+    /**
+     * Participants currently affiliated with the sport league.
+     */
+    affiliationCount: number;
+    /**
+     * Events on record for the sport league, across every series and year.
+     */
+    sportEventCount: number;
+    /**
+     * ISO 8601 datetime string.
+     */
+    createdAt: string;
+    /**
+     * ISO 8601 datetime string.
+     */
+    updatedAt: string;
+};
+
+/**
+ * Filters for the sport-league list.
+ */
+export type SportLeagueListQuery = {
+    /**
+     * Only sport leagues of this sport.
+     */
+    sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+    /**
+     * Only active, or only inactive, sport leagues.
+     */
+    isActive?: boolean;
+};
+
+/**
+ * Sport leagues matching the filters.
+ */
+export type SportLeagueListResponse = {
+    /**
+     * Matching sport leagues, by name.
+     */
+    sportLeagues: Array<{
+        /**
+         * Sport league identifier.
+         */
+        id: string;
+        /**
+         * The sport this sport league belongs to.
+         */
+        sportId: string;
+        /**
+         * Sport league name, e.g. "PGA Tour".
+         */
+        name: string;
+        /**
+         * The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
+         */
+        matchKeyword: string | null;
+        /**
+         * The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.
+         */
+        currentEventYear: number | null;
+        /**
+         * Whether the sport league is in use; a read filter, not a write lock.
+         */
+        isActive: boolean;
+        /**
+         * Participants currently affiliated with the sport league.
+         */
+        affiliationCount: number;
+        /**
+         * Events on record for the sport league, across every series and year.
+         */
+        sportEventCount: number;
+        /**
+         * ISO 8601 datetime string.
+         */
+        createdAt: string;
+        /**
+         * ISO 8601 datetime string.
+         */
+        updatedAt: string;
+    }>;
+};
+
+/**
+ * One sport league.
+ */
+export type SportLeagueResponse = {
+    /**
+     * A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League.
+     */
+    sportLeague: {
+        /**
+         * Sport league identifier.
+         */
+        id: string;
+        /**
+         * The sport this sport league belongs to.
+         */
+        sportId: string;
+        /**
+         * Sport league name, e.g. "PGA Tour".
+         */
+        name: string;
+        /**
+         * The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
+         */
+        matchKeyword: string | null;
+        /**
+         * The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.
+         */
+        currentEventYear: number | null;
+        /**
+         * Whether the sport league is in use; a read filter, not a write lock.
+         */
+        isActive: boolean;
+        /**
+         * Participants currently affiliated with the sport league.
+         */
+        affiliationCount: number;
+        /**
+         * Events on record for the sport league, across every series and year.
+         */
+        sportEventCount: number;
+        /**
+         * ISO 8601 datetime string.
+         */
+        createdAt: string;
+        /**
+         * ISO 8601 datetime string.
+         */
+        updatedAt: string;
+    };
+};
+
+/**
+ * A new sport league.
+ */
+export type CreateSportLeagueRequest = {
+    /**
+     * The sport the new sport league belongs to.
+     */
+    sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+    /**
+     * Unique within the sport.
+     */
+    name: string;
+    /**
+     * Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. "PGA TOUR") to use the event-year import.
+     */
+    matchKeyword?: string;
+};
+
+/**
+ * Changes to a sport league; omitted fields are left alone.
+ */
+export type UpdateSportLeagueRequest = {
+    name?: string;
+    /**
+     * null clears it.
+     */
+    matchKeyword?: string | null;
+    isActive?: boolean;
+    /**
+     * Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in.
+     */
+    currentEventYear?: number;
+};
+
+/**
+ * A participant's membership of a sport league, and their current rank there.
+ */
+export type ParticipantLeagueAffiliationDto = {
+    /**
+     * Affiliation identifier.
+     */
+    id: string;
+    sportLeagueId: string;
+    participantId: string;
+    /**
+     * The participant's current rank in the sport league; 1 is best. Null when unranked.
+     */
+    ranking: number | null;
+    /**
+     * The canonical participant.
+     */
+    participant: {
+        /**
+         * Participant identifier.
+         */
+        id: string;
+        /**
+         * Owning sport identifier.
+         */
+        sportId: string;
+        /**
+         * Primary participant display name.
+         */
+        name: string;
+        /**
+         * Whether the participant is an individual or team.
+         */
+        participantType: 'INDIVIDUAL' | 'TEAM';
+        /**
+         * Primary provider identifier when one exists.
+         */
+        externalId?: string;
+        /**
+         * First name when the participant is a person.
+         */
+        firstName?: string;
+        /**
+         * Last name when the participant is a person.
+         */
+        lastName?: string;
+        /**
+         * Short-form display name for compact UI surfaces.
+         */
+        shortName?: string;
+        /**
+         * Participant nationality or country code when known.
+         */
+        nationality?: string;
+        /**
+         * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
+         */
+        role?: string | null;
+        /**
+         * Current team affiliation when the participant is not itself a team.
+         */
+        teamAffiliation?: string | null;
+        /**
+         * Current participant lifecycle or availability status.
+         */
+        status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+        /**
+         * Normalized participant injury or availability state.
+         */
+        injuryStatus: {
+            /**
+             * Current injury or availability status code.
+             */
+            status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
+            /**
+             * Optional injury-status detail or summary.
+             */
+            detail?: string;
+            /**
+             * Expected return timestamp when known.
+             */
+            expectedReturn?: string;
+            /**
+             * Expected return timestamp when known.
+             */
+            updatedAt?: string;
+            /**
+             * Source that provided the injury-status update.
+             */
+            source?: string;
+        };
+        /**
+         * Optional participant image URL.
+         */
+        photoUrl?: string | null;
+        /**
+         * Expected return timestamp when known.
+         */
+        photoLastUpdated?: string;
+        /**
+         * Map of provider identifiers keyed by provider code.
+         */
+        externalIds: {
+            [key: string]: string;
+        };
+        /**
+         * When the participant record was created.
+         */
+        createdAt: string;
+        /**
+         * When the participant record was last updated.
+         */
+        updatedAt: string;
+    };
+    /**
+     * Expected return timestamp when known.
+     */
+    createdAt: string;
+    /**
+     * Expected return timestamp when known.
+     */
+    updatedAt: string;
+};
+
+/**
+ * A sport league's affiliations.
+ */
+export type ParticipantLeagueAffiliationListResponse = {
+    /**
+     * Best rank first, unranked last, then by name.
+     */
+    affiliations: Array<{
+        /**
+         * Affiliation identifier.
+         */
+        id: string;
+        sportLeagueId: string;
+        participantId: string;
+        /**
+         * The participant's current rank in the sport league; 1 is best. Null when unranked.
+         */
+        ranking: number | null;
+        /**
+         * The canonical participant.
+         */
+        participant: {
+            /**
+             * Participant identifier.
+             */
+            id: string;
+            /**
+             * Owning sport identifier.
+             */
+            sportId: string;
+            /**
+             * Primary participant display name.
+             */
+            name: string;
+            /**
+             * Whether the participant is an individual or team.
+             */
+            participantType: 'INDIVIDUAL' | 'TEAM';
+            /**
+             * Primary provider identifier when one exists.
+             */
+            externalId?: string;
+            /**
+             * First name when the participant is a person.
+             */
+            firstName?: string;
+            /**
+             * Last name when the participant is a person.
+             */
+            lastName?: string;
+            /**
+             * Short-form display name for compact UI surfaces.
+             */
+            shortName?: string;
+            /**
+             * Participant nationality or country code when known.
+             */
+            nationality?: string;
+            /**
+             * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
+             */
+            role?: string | null;
+            /**
+             * Current team affiliation when the participant is not itself a team.
+             */
+            teamAffiliation?: string | null;
+            /**
+             * Current participant lifecycle or availability status.
+             */
+            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+            /**
+             * Normalized participant injury or availability state.
+             */
+            injuryStatus: {
+                /**
+                 * Current injury or availability status code.
+                 */
+                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
+                /**
+                 * Optional injury-status detail or summary.
+                 */
+                detail?: string;
+                /**
+                 * Expected return timestamp when known.
+                 */
+                expectedReturn?: string;
+                /**
+                 * Expected return timestamp when known.
+                 */
+                updatedAt?: string;
+                /**
+                 * Source that provided the injury-status update.
+                 */
+                source?: string;
+            };
+            /**
+             * Optional participant image URL.
+             */
+            photoUrl?: string | null;
+            /**
+             * Expected return timestamp when known.
+             */
+            photoLastUpdated?: string;
+            /**
+             * Map of provider identifiers keyed by provider code.
+             */
+            externalIds: {
+                [key: string]: string;
+            };
+            /**
+             * When the participant record was created.
+             */
+            createdAt: string;
+            /**
+             * When the participant record was last updated.
+             */
+            updatedAt: string;
+        };
+        /**
+         * Expected return timestamp when known.
+         */
+        createdAt: string;
+        /**
+         * Expected return timestamp when known.
+         */
+        updatedAt: string;
+    }>;
+};
+
+/**
+ * One affiliation.
+ */
+export type ParticipantLeagueAffiliationResponse = {
+    /**
+     * A participant's membership of a sport league, and their current rank there.
+     */
+    affiliation: {
+        /**
+         * Affiliation identifier.
+         */
+        id: string;
+        sportLeagueId: string;
+        participantId: string;
+        /**
+         * The participant's current rank in the sport league; 1 is best. Null when unranked.
+         */
+        ranking: number | null;
+        /**
+         * The canonical participant.
+         */
+        participant: {
+            /**
+             * Participant identifier.
+             */
+            id: string;
+            /**
+             * Owning sport identifier.
+             */
+            sportId: string;
+            /**
+             * Primary participant display name.
+             */
+            name: string;
+            /**
+             * Whether the participant is an individual or team.
+             */
+            participantType: 'INDIVIDUAL' | 'TEAM';
+            /**
+             * Primary provider identifier when one exists.
+             */
+            externalId?: string;
+            /**
+             * First name when the participant is a person.
+             */
+            firstName?: string;
+            /**
+             * Last name when the participant is a person.
+             */
+            lastName?: string;
+            /**
+             * Short-form display name for compact UI surfaces.
+             */
+            shortName?: string;
+            /**
+             * Participant nationality or country code when known.
+             */
+            nationality?: string;
+            /**
+             * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
+             */
+            role?: string | null;
+            /**
+             * Current team affiliation when the participant is not itself a team.
+             */
+            teamAffiliation?: string | null;
+            /**
+             * Current participant lifecycle or availability status.
+             */
+            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+            /**
+             * Normalized participant injury or availability state.
+             */
+            injuryStatus: {
+                /**
+                 * Current injury or availability status code.
+                 */
+                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
+                /**
+                 * Optional injury-status detail or summary.
+                 */
+                detail?: string;
+                /**
+                 * Expected return timestamp when known.
+                 */
+                expectedReturn?: string;
+                /**
+                 * Expected return timestamp when known.
+                 */
+                updatedAt?: string;
+                /**
+                 * Source that provided the injury-status update.
+                 */
+                source?: string;
+            };
+            /**
+             * Optional participant image URL.
+             */
+            photoUrl?: string | null;
+            /**
+             * Expected return timestamp when known.
+             */
+            photoLastUpdated?: string;
+            /**
+             * Map of provider identifiers keyed by provider code.
+             */
+            externalIds: {
+                [key: string]: string;
+            };
+            /**
+             * When the participant record was created.
+             */
+            createdAt: string;
+            /**
+             * When the participant record was last updated.
+             */
+            updatedAt: string;
+        };
+        /**
+         * Expected return timestamp when known.
+         */
+        createdAt: string;
+        /**
+         * Expected return timestamp when known.
+         */
+        updatedAt: string;
+    };
+};
+
+/**
+ * Affiliates a participant with the sport league.
+ */
+export type CreateParticipantLeagueAffiliationRequest = {
+    participantId: string;
+};
+
+/**
+ * Re-ranks existing affiliations.
+ */
+export type UpdateParticipantLeagueAffiliationRankingsRequest = {
+    /**
+     * Existing affiliations to re-rank, all or none.
+     */
+    rankings: Array<{
+        participantId: string;
+        /**
+         * null unranks.
+         */
+        ranking: number | null;
+    }>;
+};
+
+/**
+ * An affiliation upload.
+ */
+export type ParticipantLeagueAffiliationUploadRequest = {
+    rows: Array<{
+        participantId?: string;
+        externalId?: string;
+        playerName?: string;
+        ranking?: number;
+    }>;
+};
+
+/**
+ * How an uploaded row resolved to a participant: one match, none, or several.
+ */
+export type UploadRowResolutionDto = 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
+
+/**
+ * A dry run of an affiliation upload. Nothing is written.
+ */
+export type ParticipantLeagueAffiliationUploadPreviewResponse = {
+    /**
+     * One per uploaded row, in upload order.
+     */
+    rows: Array<{
+        /**
+         * One uploaded affiliation. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName.
+         */
+        row: {
+            participantId?: string;
+            externalId?: string;
+            playerName?: string;
+            ranking?: number;
+        };
+        /**
+         * How an uploaded row resolved to a participant: one match, none, or several.
+         */
+        resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
+        /**
+         * Set only when MATCHED.
+         */
+        participantId: string | null;
+        /**
+         * Set only when MATCHED.
+         */
+        participantName: string | null;
+    }>;
+};
+
 export type EventStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
 
 export type EventReadinessStatusDto = 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
@@ -989,7 +1712,7 @@ export type SportEventDto = {
     /**
      * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
      */
-    syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+    syncScope: 'NONE' | 'SCORES_ONLY';
     /**
      * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
      */
@@ -1147,7 +1870,7 @@ export type SportEventListResponse = {
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
-        syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+        syncScope: 'NONE' | 'SCORES_ONLY';
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
@@ -1280,7 +2003,7 @@ export type SportEventResponse = {
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
-        syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+        syncScope: 'NONE' | 'SCORES_ONLY';
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
@@ -1512,7 +2235,7 @@ export type ImportSportEventYearFromProviderResponse = {
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
-        syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+        syncScope: 'NONE' | 'SCORES_ONLY';
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
@@ -1561,7 +2284,7 @@ export type ImportSportEventYearFromProviderResponse = {
 };
 
 /**
- * Changes to an admin-managed event; omitted fields are left alone.
+ * Changes to an event; omitted fields are left alone.
  */
 export type UpdateSportEventRequest = {
     name?: string;
@@ -2602,6 +3325,121 @@ export type SportEventParticipantResponse = {
          * Expected return timestamp when known.
          */
         updatedAt: string;
+    };
+};
+
+/**
+ * A field upload: changes to participants already on the event's field. It never adds one.
+ */
+export type SportEventParticipantUploadRequest = {
+    rows: Array<{
+        participantId?: string;
+        /**
+         * The participant's canonical external id.
+         */
+        externalId?: string;
+        playerName?: string;
+        isActive?: boolean;
+        inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+        ranking?: number | null;
+        oddsToWin?: number | null;
+        seedNumber?: number | null;
+    }>;
+};
+
+/**
+ * A dry run of a field upload. Nothing is written.
+ */
+export type SportEventParticipantUploadPreviewResponse = {
+    /**
+     * One per uploaded row, in upload order.
+     */
+    rows: Array<{
+        /**
+         * One uploaded field row. The first identifier present is used — participantId, then externalId, then an exact case-insensitive playerName — matched only within the event's field, with no fallback to the next. Each value omitted is left alone; null clears it.
+         */
+        row: {
+            participantId?: string;
+            /**
+             * The participant's canonical external id.
+             */
+            externalId?: string;
+            playerName?: string;
+            isActive?: boolean;
+            inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+            ranking?: number | null;
+            oddsToWin?: number | null;
+            seedNumber?: number | null;
+        };
+        /**
+         * MATCHED: one participant on the field. UNRESOLVED: none on the field — the upload never adds one, so load the field from the provider first. AMBIGUOUS: several.
+         */
+        resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
+        /**
+         * Set only when MATCHED.
+         */
+        participantId: string | null;
+        /**
+         * Set only when MATCHED.
+         */
+        participantName: string | null;
+        /**
+         * The field row it resolved to; set only when MATCHED.
+         */
+        sportEventParticipantId: string | null;
+        /**
+         * Set when a MATCHED row still cannot be applied.
+         */
+        rowError: 'DUPLICATE_PARTICIPANT' | null;
+        /**
+         * Null when the row cannot be applied.
+         */
+        change: 'UPDATE' | 'UNCHANGED' | null;
+        /**
+         * What is stored now; set whenever the row resolved.
+         */
+        before: {
+            isActive: boolean;
+            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+            ranking: number | null;
+            oddsToWin: number | null;
+            seedNumber: number | null;
+        } | null;
+        /**
+         * What applying would store; null when the row cannot be applied.
+         */
+        after: {
+            isActive: boolean;
+            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+            ranking: number | null;
+            oddsToWin: number | null;
+            seedNumber: number | null;
+        } | null;
+        /**
+         * Why the row cannot be applied, for display; null when it can.
+         */
+        message: string | null;
+    }>;
+    /**
+     * Counts by resolution and by change. Apply succeeds only when matched equals total and duplicate is 0.
+     */
+    rollup: {
+        total: number;
+        matched: number;
+        unresolved: number;
+        ambiguous: number;
+        /**
+         * MATCHED rows refused as DUPLICATE_PARTICIPANT.
+         */
+        duplicate: number;
+        /**
+         * Rows that would change a value.
+         */
+        update: number;
+        /**
+         * Rows that would change nothing.
+         */
+        unchanged: number;
     };
 };
 
@@ -6222,28 +7060,7 @@ export type IngestionScheduleConfigOverride = {
          */
         intervalSeconds?: number;
         /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-         */
-        lookaheadDays?: number;
-    };
-    /**
-     * Partial feed-scheduling override payload.
-     */
-    eventSchedule?: {
-        /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled?: boolean;
-        /**
-         * How often the feed should run, in minutes, for interval-driven orchestration.
-         */
-        intervalMinutes?: number;
-        /**
-         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-         */
-        intervalSeconds?: number;
-        /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
     };
@@ -6264,28 +7081,7 @@ export type IngestionScheduleConfigOverride = {
          */
         intervalSeconds?: number;
         /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-         */
-        lookaheadDays?: number;
-    };
-    /**
-     * Partial feed-scheduling override payload.
-     */
-    participantRankings?: {
-        /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled?: boolean;
-        /**
-         * How often the feed should run, in minutes, for interval-driven orchestration.
-         */
-        intervalMinutes?: number;
-        /**
-         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-         */
-        intervalSeconds?: number;
-        /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
     };
@@ -6306,28 +7102,7 @@ export type IngestionScheduleConfigOverride = {
          */
         intervalSeconds?: number;
         /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-         */
-        lookaheadDays?: number;
-    };
-    /**
-     * Partial feed-scheduling override payload.
-     */
-    eventResults?: {
-        /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled?: boolean;
-        /**
-         * How often the feed should run, in minutes, for interval-driven orchestration.
-         */
-        intervalMinutes?: number;
-        /**
-         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-         */
-        intervalSeconds?: number;
-        /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
     };
@@ -6358,28 +7133,7 @@ export type IngestionScheduleConfig = {
          */
         intervalSeconds?: number;
         /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-         */
-        lookaheadDays?: number;
-    };
-    /**
-     * Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.
-     */
-    eventSchedule: {
-        /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled: boolean;
-        /**
-         * How often the feed should run, in minutes, for interval-driven orchestration.
-         */
-        intervalMinutes?: number;
-        /**
-         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-         */
-        intervalSeconds?: number;
-        /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
     };
@@ -6400,28 +7154,7 @@ export type IngestionScheduleConfig = {
          */
         intervalSeconds?: number;
         /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-         */
-        lookaheadDays?: number;
-    };
-    /**
-     * Scheduling policy for ranking refreshes.
-     */
-    participantRankings: {
-        /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled: boolean;
-        /**
-         * How often the feed should run, in minutes, for interval-driven orchestration.
-         */
-        intervalMinutes?: number;
-        /**
-         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-         */
-        intervalSeconds?: number;
-        /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
     };
@@ -6442,28 +7175,7 @@ export type IngestionScheduleConfig = {
          */
         intervalSeconds?: number;
         /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-         */
-        lookaheadDays?: number;
-    };
-    /**
-     * Scheduling policy for completed-event result refreshes.
-     */
-    eventResults: {
-        /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled: boolean;
-        /**
-         * How often the feed should run, in minutes, for interval-driven orchestration.
-         */
-        intervalMinutes?: number;
-        /**
-         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-         */
-        intervalSeconds?: number;
-        /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
     };
@@ -6490,28 +7202,7 @@ export type IngestionScheduleConfig = {
                  */
                 intervalSeconds?: number;
                 /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                 */
-                lookaheadDays?: number;
-            };
-            /**
-             * Partial feed-scheduling override payload.
-             */
-            eventSchedule?: {
-                /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled?: boolean;
-                /**
-                 * How often the feed should run, in minutes, for interval-driven orchestration.
-                 */
-                intervalMinutes?: number;
-                /**
-                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                 */
-                intervalSeconds?: number;
-                /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
             };
@@ -6532,28 +7223,7 @@ export type IngestionScheduleConfig = {
                  */
                 intervalSeconds?: number;
                 /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                 */
-                lookaheadDays?: number;
-            };
-            /**
-             * Partial feed-scheduling override payload.
-             */
-            participantRankings?: {
-                /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled?: boolean;
-                /**
-                 * How often the feed should run, in minutes, for interval-driven orchestration.
-                 */
-                intervalMinutes?: number;
-                /**
-                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                 */
-                intervalSeconds?: number;
-                /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
             };
@@ -6574,756 +7244,12 @@ export type IngestionScheduleConfig = {
                  */
                 intervalSeconds?: number;
                 /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                 */
-                lookaheadDays?: number;
-            };
-            /**
-             * Partial feed-scheduling override payload.
-             */
-            eventResults?: {
-                /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled?: boolean;
-                /**
-                 * How often the feed should run, in minutes, for interval-driven orchestration.
-                 */
-                intervalMinutes?: number;
-                /**
-                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                 */
-                intervalSeconds?: number;
-                /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
             };
         };
     };
-};
-
-/**
- * A sport the platform runs contests on.
- */
-export type SportDto = {
-    /**
-     * Sport identifier — what Participant.sportId and SportLeague.sportId point at.
-     */
-    id: string;
-    /**
-     * The sport.
-     */
-    name: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-    /**
-     * Whether the sport's competitors are individuals or teams.
-     */
-    participantType: 'INDIVIDUAL' | 'TEAM';
-    /**
-     * Sport category.
-     */
-    category: 'GOLF' | 'BASKETBALL' | 'FOOTBALL' | 'F1' | 'NASCAR' | 'TENNIS' | 'SOCCER';
-    /**
-     * Structural format of the sport's events; decides which contest formats are valid.
-     */
-    tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'KNOCKOUT_BRACKET' | 'SERIES_PLAYOFF' | 'ROUND_ROBIN_SEASON' | 'WEEKLY_GAMES_SEASON' | 'TIME_TRIAL_RACE' | 'SEASON_OF_RACES' | 'GROUP_STAGE_KNOCKOUT' | 'MATCH_PLAY';
-    /**
-     * ISO 8601 datetime string.
-     */
-    createdAt: string;
-    /**
-     * ISO 8601 datetime string.
-     */
-    updatedAt: string;
-};
-
-/**
- * The sports.
- */
-export type SportListResponse = {
-    /**
-     * Every sport, by name.
-     */
-    sports: Array<{
-        /**
-         * Sport identifier — what Participant.sportId and SportLeague.sportId point at.
-         */
-        id: string;
-        /**
-         * The sport.
-         */
-        name: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-        /**
-         * Whether the sport's competitors are individuals or teams.
-         */
-        participantType: 'INDIVIDUAL' | 'TEAM';
-        /**
-         * Sport category.
-         */
-        category: 'GOLF' | 'BASKETBALL' | 'FOOTBALL' | 'F1' | 'NASCAR' | 'TENNIS' | 'SOCCER';
-        /**
-         * Structural format of the sport's events; decides which contest formats are valid.
-         */
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'KNOCKOUT_BRACKET' | 'SERIES_PLAYOFF' | 'ROUND_ROBIN_SEASON' | 'WEEKLY_GAMES_SEASON' | 'TIME_TRIAL_RACE' | 'SEASON_OF_RACES' | 'GROUP_STAGE_KNOCKOUT' | 'MATCH_PLAY';
-        /**
-         * ISO 8601 datetime string.
-         */
-        createdAt: string;
-        /**
-         * ISO 8601 datetime string.
-         */
-        updatedAt: string;
-    }>;
-};
-
-/**
- * A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League.
- */
-export type SportLeagueDto = {
-    /**
-     * Sport league identifier.
-     */
-    id: string;
-    /**
-     * The sport this sport league belongs to.
-     */
-    sportId: string;
-    /**
-     * Sport league name, e.g. "PGA Tour".
-     */
-    name: string;
-    /**
-     * The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
-     */
-    matchKeyword: string | null;
-    /**
-     * The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.
-     */
-    currentEventYear: number | null;
-    /**
-     * Whether the sport league is in use; a read filter, not a write lock.
-     */
-    isActive: boolean;
-    /**
-     * Participants currently affiliated with the sport league.
-     */
-    affiliationCount: number;
-    /**
-     * Events on record for the sport league, across every series and year.
-     */
-    sportEventCount: number;
-    /**
-     * ISO 8601 datetime string.
-     */
-    createdAt: string;
-    /**
-     * ISO 8601 datetime string.
-     */
-    updatedAt: string;
-};
-
-/**
- * Filters for the sport-league list.
- */
-export type SportLeagueListQuery = {
-    /**
-     * Only sport leagues of this sport.
-     */
-    sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-    /**
-     * Only active, or only inactive, sport leagues.
-     */
-    isActive?: boolean;
-};
-
-/**
- * Sport leagues matching the filters.
- */
-export type SportLeagueListResponse = {
-    /**
-     * Matching sport leagues, by name.
-     */
-    sportLeagues: Array<{
-        /**
-         * Sport league identifier.
-         */
-        id: string;
-        /**
-         * The sport this sport league belongs to.
-         */
-        sportId: string;
-        /**
-         * Sport league name, e.g. "PGA Tour".
-         */
-        name: string;
-        /**
-         * The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
-         */
-        matchKeyword: string | null;
-        /**
-         * The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.
-         */
-        currentEventYear: number | null;
-        /**
-         * Whether the sport league is in use; a read filter, not a write lock.
-         */
-        isActive: boolean;
-        /**
-         * Participants currently affiliated with the sport league.
-         */
-        affiliationCount: number;
-        /**
-         * Events on record for the sport league, across every series and year.
-         */
-        sportEventCount: number;
-        /**
-         * ISO 8601 datetime string.
-         */
-        createdAt: string;
-        /**
-         * ISO 8601 datetime string.
-         */
-        updatedAt: string;
-    }>;
-};
-
-/**
- * One sport league.
- */
-export type SportLeagueResponse = {
-    /**
-     * A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League.
-     */
-    sportLeague: {
-        /**
-         * Sport league identifier.
-         */
-        id: string;
-        /**
-         * The sport this sport league belongs to.
-         */
-        sportId: string;
-        /**
-         * Sport league name, e.g. "PGA Tour".
-         */
-        name: string;
-        /**
-         * The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
-         */
-        matchKeyword: string | null;
-        /**
-         * The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.
-         */
-        currentEventYear: number | null;
-        /**
-         * Whether the sport league is in use; a read filter, not a write lock.
-         */
-        isActive: boolean;
-        /**
-         * Participants currently affiliated with the sport league.
-         */
-        affiliationCount: number;
-        /**
-         * Events on record for the sport league, across every series and year.
-         */
-        sportEventCount: number;
-        /**
-         * ISO 8601 datetime string.
-         */
-        createdAt: string;
-        /**
-         * ISO 8601 datetime string.
-         */
-        updatedAt: string;
-    };
-};
-
-/**
- * A new sport league.
- */
-export type CreateSportLeagueRequest = {
-    /**
-     * The sport the new sport league belongs to.
-     */
-    sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-    /**
-     * Unique within the sport.
-     */
-    name: string;
-    /**
-     * Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. "PGA TOUR") to use the event-year import.
-     */
-    matchKeyword?: string;
-};
-
-/**
- * Changes to a sport league; omitted fields are left alone.
- */
-export type UpdateSportLeagueRequest = {
-    name?: string;
-    /**
-     * null clears it.
-     */
-    matchKeyword?: string | null;
-    isActive?: boolean;
-    /**
-     * Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in.
-     */
-    currentEventYear?: number;
-};
-
-/**
- * A participant's membership of a sport league, and their current rank there.
- */
-export type ParticipantLeagueAffiliationDto = {
-    /**
-     * Affiliation identifier.
-     */
-    id: string;
-    sportLeagueId: string;
-    participantId: string;
-    /**
-     * The participant's current rank in the sport league; 1 is best. Null when unranked.
-     */
-    ranking: number | null;
-    /**
-     * The canonical participant.
-     */
-    participant: {
-        /**
-         * Participant identifier.
-         */
-        id: string;
-        /**
-         * Owning sport identifier.
-         */
-        sportId: string;
-        /**
-         * Primary participant display name.
-         */
-        name: string;
-        /**
-         * Whether the participant is an individual or team.
-         */
-        participantType: 'INDIVIDUAL' | 'TEAM';
-        /**
-         * Primary provider identifier when one exists.
-         */
-        externalId?: string;
-        /**
-         * First name when the participant is a person.
-         */
-        firstName?: string;
-        /**
-         * Last name when the participant is a person.
-         */
-        lastName?: string;
-        /**
-         * Short-form display name for compact UI surfaces.
-         */
-        shortName?: string;
-        /**
-         * Participant nationality or country code when known.
-         */
-        nationality?: string;
-        /**
-         * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
-         */
-        role?: string | null;
-        /**
-         * Current team affiliation when the participant is not itself a team.
-         */
-        teamAffiliation?: string | null;
-        /**
-         * Current participant lifecycle or availability status.
-         */
-        status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
-        /**
-         * Normalized participant injury or availability state.
-         */
-        injuryStatus: {
-            /**
-             * Current injury or availability status code.
-             */
-            status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
-            /**
-             * Optional injury-status detail or summary.
-             */
-            detail?: string;
-            /**
-             * Expected return timestamp when known.
-             */
-            expectedReturn?: string;
-            /**
-             * Expected return timestamp when known.
-             */
-            updatedAt?: string;
-            /**
-             * Source that provided the injury-status update.
-             */
-            source?: string;
-        };
-        /**
-         * Optional participant image URL.
-         */
-        photoUrl?: string | null;
-        /**
-         * Expected return timestamp when known.
-         */
-        photoLastUpdated?: string;
-        /**
-         * Map of provider identifiers keyed by provider code.
-         */
-        externalIds: {
-            [key: string]: string;
-        };
-        /**
-         * When the participant record was created.
-         */
-        createdAt: string;
-        /**
-         * When the participant record was last updated.
-         */
-        updatedAt: string;
-    };
-    /**
-     * Expected return timestamp when known.
-     */
-    createdAt: string;
-    /**
-     * Expected return timestamp when known.
-     */
-    updatedAt: string;
-};
-
-/**
- * A sport league's affiliations.
- */
-export type ParticipantLeagueAffiliationListResponse = {
-    /**
-     * Best rank first, unranked last, then by name.
-     */
-    affiliations: Array<{
-        /**
-         * Affiliation identifier.
-         */
-        id: string;
-        sportLeagueId: string;
-        participantId: string;
-        /**
-         * The participant's current rank in the sport league; 1 is best. Null when unranked.
-         */
-        ranking: number | null;
-        /**
-         * The canonical participant.
-         */
-        participant: {
-            /**
-             * Participant identifier.
-             */
-            id: string;
-            /**
-             * Owning sport identifier.
-             */
-            sportId: string;
-            /**
-             * Primary participant display name.
-             */
-            name: string;
-            /**
-             * Whether the participant is an individual or team.
-             */
-            participantType: 'INDIVIDUAL' | 'TEAM';
-            /**
-             * Primary provider identifier when one exists.
-             */
-            externalId?: string;
-            /**
-             * First name when the participant is a person.
-             */
-            firstName?: string;
-            /**
-             * Last name when the participant is a person.
-             */
-            lastName?: string;
-            /**
-             * Short-form display name for compact UI surfaces.
-             */
-            shortName?: string;
-            /**
-             * Participant nationality or country code when known.
-             */
-            nationality?: string;
-            /**
-             * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
-             */
-            role?: string | null;
-            /**
-             * Current team affiliation when the participant is not itself a team.
-             */
-            teamAffiliation?: string | null;
-            /**
-             * Current participant lifecycle or availability status.
-             */
-            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
-            /**
-             * Normalized participant injury or availability state.
-             */
-            injuryStatus: {
-                /**
-                 * Current injury or availability status code.
-                 */
-                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
-                /**
-                 * Optional injury-status detail or summary.
-                 */
-                detail?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                expectedReturn?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                updatedAt?: string;
-                /**
-                 * Source that provided the injury-status update.
-                 */
-                source?: string;
-            };
-            /**
-             * Optional participant image URL.
-             */
-            photoUrl?: string | null;
-            /**
-             * Expected return timestamp when known.
-             */
-            photoLastUpdated?: string;
-            /**
-             * Map of provider identifiers keyed by provider code.
-             */
-            externalIds: {
-                [key: string]: string;
-            };
-            /**
-             * When the participant record was created.
-             */
-            createdAt: string;
-            /**
-             * When the participant record was last updated.
-             */
-            updatedAt: string;
-        };
-        /**
-         * Expected return timestamp when known.
-         */
-        createdAt: string;
-        /**
-         * Expected return timestamp when known.
-         */
-        updatedAt: string;
-    }>;
-};
-
-/**
- * One affiliation.
- */
-export type ParticipantLeagueAffiliationResponse = {
-    /**
-     * A participant's membership of a sport league, and their current rank there.
-     */
-    affiliation: {
-        /**
-         * Affiliation identifier.
-         */
-        id: string;
-        sportLeagueId: string;
-        participantId: string;
-        /**
-         * The participant's current rank in the sport league; 1 is best. Null when unranked.
-         */
-        ranking: number | null;
-        /**
-         * The canonical participant.
-         */
-        participant: {
-            /**
-             * Participant identifier.
-             */
-            id: string;
-            /**
-             * Owning sport identifier.
-             */
-            sportId: string;
-            /**
-             * Primary participant display name.
-             */
-            name: string;
-            /**
-             * Whether the participant is an individual or team.
-             */
-            participantType: 'INDIVIDUAL' | 'TEAM';
-            /**
-             * Primary provider identifier when one exists.
-             */
-            externalId?: string;
-            /**
-             * First name when the participant is a person.
-             */
-            firstName?: string;
-            /**
-             * Last name when the participant is a person.
-             */
-            lastName?: string;
-            /**
-             * Short-form display name for compact UI surfaces.
-             */
-            shortName?: string;
-            /**
-             * Participant nationality or country code when known.
-             */
-            nationality?: string;
-            /**
-             * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
-             */
-            role?: string | null;
-            /**
-             * Current team affiliation when the participant is not itself a team.
-             */
-            teamAffiliation?: string | null;
-            /**
-             * Current participant lifecycle or availability status.
-             */
-            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
-            /**
-             * Normalized participant injury or availability state.
-             */
-            injuryStatus: {
-                /**
-                 * Current injury or availability status code.
-                 */
-                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
-                /**
-                 * Optional injury-status detail or summary.
-                 */
-                detail?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                expectedReturn?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                updatedAt?: string;
-                /**
-                 * Source that provided the injury-status update.
-                 */
-                source?: string;
-            };
-            /**
-             * Optional participant image URL.
-             */
-            photoUrl?: string | null;
-            /**
-             * Expected return timestamp when known.
-             */
-            photoLastUpdated?: string;
-            /**
-             * Map of provider identifiers keyed by provider code.
-             */
-            externalIds: {
-                [key: string]: string;
-            };
-            /**
-             * When the participant record was created.
-             */
-            createdAt: string;
-            /**
-             * When the participant record was last updated.
-             */
-            updatedAt: string;
-        };
-        /**
-         * Expected return timestamp when known.
-         */
-        createdAt: string;
-        /**
-         * Expected return timestamp when known.
-         */
-        updatedAt: string;
-    };
-};
-
-/**
- * Affiliates a participant with the sport league.
- */
-export type CreateParticipantLeagueAffiliationRequest = {
-    participantId: string;
-};
-
-/**
- * Re-ranks existing affiliations.
- */
-export type UpdateParticipantLeagueAffiliationRankingsRequest = {
-    /**
-     * Existing affiliations to re-rank, all or none.
-     */
-    rankings: Array<{
-        participantId: string;
-        /**
-         * null unranks.
-         */
-        ranking: number | null;
-    }>;
-};
-
-/**
- * An affiliation upload.
- */
-export type ParticipantLeagueAffiliationUploadRequest = {
-    rows: Array<{
-        participantId?: string;
-        externalId?: string;
-        playerName?: string;
-        ranking?: number;
-    }>;
-};
-
-/**
- * How an uploaded row resolved to a participant: one match, none, or several.
- */
-export type UploadRowResolutionDto = 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
-
-/**
- * A dry run of an affiliation upload. Nothing is written.
- */
-export type ParticipantLeagueAffiliationUploadPreviewResponse = {
-    /**
-     * One per uploaded row, in upload order.
-     */
-    rows: Array<{
-        /**
-         * One uploaded affiliation. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName.
-         */
-        row: {
-            participantId?: string;
-            externalId?: string;
-            playerName?: string;
-            ranking?: number;
-        };
-        /**
-         * How an uploaded row resolved to a participant: one match, none, or several.
-         */
-        resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
-        /**
-         * Set only when MATCHED.
-         */
-        participantId: string | null;
-        /**
-         * Set only when MATCHED.
-         */
-        participantName: string | null;
-    }>;
 };
 
 /**
@@ -7436,31 +7362,13 @@ export type UpdateGolfRoundScoreRequest = {
 };
 
 /**
- * Feed-aware sport sync request.
- */
-export type SportSyncRequest = {
-    /**
-     * Feed types to run for a sport-level sync request. Event participant, live-score, result, and odds hydration are event-scoped and must use the event sync endpoint.
-     */
-    feeds: Array<'EVENTSCHEDULE' | 'PARTICIPANTRANKINGS'>;
-    /**
-     * Optional lower bound for sport-level event discovery.
-     */
-    from?: string;
-    /**
-     * Optional lower bound for sport-level event discovery.
-     */
-    to?: string;
-};
-
-/**
  * Feed-aware event sync request.
  */
 export type EventSyncRequest = {
     /**
      * Feed types to run for a specific event sync request.
      */
-    feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+    feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
     /**
      * Optional mock-provider-only event state override for manual QA event syncs.
      */
@@ -7582,19 +7490,19 @@ export type ProviderSyncRunDto = {
      */
     payload: {
         /**
-         * Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.
+         * Sync run source: a manual or scheduled event sync.
          */
         runType?: string;
         /**
          * Feeds represented by the originating manual or scheduled sync request.
          */
-        requestedFeeds?: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+        requestedFeeds?: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
         /**
-         * Explicit ingestion feed type requested by the caller.
+         * Explicit ingestion feed type requested by the caller. Every feed is event-scoped.
          */
-        requestedFeed?: 'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
+        requestedFeed?: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
         /**
-         * Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design.
+         * Normalized request context that submitted the sync run, including source and actor diagnostics.
          */
         requestPayload?: {
             [key: string]: unknown;
@@ -7606,7 +7514,7 @@ export type ProviderSyncRunDto = {
             /**
              * Provider feed operation represented by this payload.
              */
-            operation: 'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
+            operation: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
             /**
              * Whether raw provider response JSON was captured for this run.
              */
@@ -7819,19 +7727,19 @@ export type ProviderSyncRunListResponse = {
          */
         payload: {
             /**
-             * Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.
+             * Sync run source: a manual or scheduled event sync.
              */
             runType?: string;
             /**
              * Feeds represented by the originating manual or scheduled sync request.
              */
-            requestedFeeds?: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+            requestedFeeds?: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
             /**
-             * Explicit ingestion feed type requested by the caller.
+             * Explicit ingestion feed type requested by the caller. Every feed is event-scoped.
              */
-            requestedFeed?: 'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
+            requestedFeed?: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
             /**
-             * Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design.
+             * Normalized request context that submitted the sync run, including source and actor diagnostics.
              */
             requestPayload?: {
                 [key: string]: unknown;
@@ -7843,7 +7751,7 @@ export type ProviderSyncRunListResponse = {
                 /**
                  * Provider feed operation represented by this payload.
                  */
-                operation: 'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
+                operation: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
                 /**
                  * Whether raw provider response JSON was captured for this run.
                  */
@@ -8015,8 +7923,11 @@ export type ProviderSyncRunListResponse = {
  */
 export type ProviderManualSyncSubmissionResponse = {
     sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-    eventId: string | null;
-    requestedFeeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+    /**
+     * Provider event identifier the submitted runs sync.
+     */
+    eventId: string;
+    requestedFeeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
     /**
      * ISO 8601 datetime string.
      */
@@ -8047,19 +7958,19 @@ export type ProviderManualSyncSubmissionResponse = {
          */
         payload: {
             /**
-             * Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.
+             * Sync run source: a manual or scheduled event sync.
              */
             runType?: string;
             /**
              * Feeds represented by the originating manual or scheduled sync request.
              */
-            requestedFeeds?: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+            requestedFeeds?: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
             /**
-             * Explicit ingestion feed type requested by the caller.
+             * Explicit ingestion feed type requested by the caller. Every feed is event-scoped.
              */
-            requestedFeed?: 'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
+            requestedFeed?: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
             /**
-             * Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design.
+             * Normalized request context that submitted the sync run, including source and actor diagnostics.
              */
             requestPayload?: {
                 [key: string]: unknown;
@@ -8071,7 +7982,7 @@ export type ProviderManualSyncSubmissionResponse = {
                 /**
                  * Provider feed operation represented by this payload.
                  */
-                operation: 'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
+                operation: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
                 /**
                  * Whether raw provider response JSON was captured for this run.
                  */
@@ -15840,28 +15751,6 @@ export type UpdateEventErrors = {
             details?: unknown;
         };
     };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
 };
 
 export type UpdateEventError = UpdateEventErrors[keyof UpdateEventErrors];
@@ -16415,28 +16304,6 @@ export type UnlinkEventScoreSourceErrors = {
      * Standard API error envelope.
      */
     404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
         /**
          * Error payload object.
          */
@@ -17533,6 +17400,250 @@ export type RefreshEventParticipantsResponses = {
 };
 
 export type RefreshEventParticipantsResponse = RefreshEventParticipantsResponses[keyof RefreshEventParticipantsResponses];
+
+export type PreviewEventParticipantUploadData = {
+    body: SportEventParticipantUploadRequest;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/participants/upload/preview';
+};
+
+export type PreviewEventParticipantUploadErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type PreviewEventParticipantUploadError = PreviewEventParticipantUploadErrors[keyof PreviewEventParticipantUploadErrors];
+
+export type PreviewEventParticipantUploadResponses = {
+    /**
+     * A dry run of a field upload. Nothing is written.
+     */
+    200: SportEventParticipantUploadPreviewResponse;
+};
+
+export type PreviewEventParticipantUploadResponse = PreviewEventParticipantUploadResponses[keyof PreviewEventParticipantUploadResponses];
+
+export type ApplyEventParticipantUploadData = {
+    body: SportEventParticipantUploadRequest;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/participants/upload';
+};
+
+export type ApplyEventParticipantUploadErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type ApplyEventParticipantUploadError = ApplyEventParticipantUploadErrors[keyof ApplyEventParticipantUploadErrors];
+
+export type ApplyEventParticipantUploadResponses = {
+    /**
+     * An event's field.
+     */
+    200: SportEventParticipantListResponse;
+};
+
+export type ApplyEventParticipantUploadResponse = ApplyEventParticipantUploadResponses[keyof ApplyEventParticipantUploadResponses];
 
 export type RemoveEventParticipantData = {
     body?: never;
@@ -20278,117 +20389,6 @@ export type ListProviderSyncRunsResponses = {
 };
 
 export type ListProviderSyncRunsResponse = ListProviderSyncRunsResponses[keyof ListProviderSyncRunsResponses];
-
-export type SubmitSportSyncData = {
-    body: SportSyncRequest;
-    path: {
-        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-    };
-    query?: never;
-    url: '/api/v1/ingestion/sports/{sport}/sync';
-};
-
-export type SubmitSportSyncErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type SubmitSportSyncError = SubmitSportSyncErrors[keyof SubmitSportSyncErrors];
-
-export type SubmitSportSyncResponses = {
-    /**
-     * A manual sync submission. The runs execute asynchronously after the request is accepted.
-     */
-    202: ProviderManualSyncSubmissionResponse;
-};
-
-export type SubmitSportSyncResponse = SubmitSportSyncResponses[keyof SubmitSportSyncResponses];
 
 export type SubmitEventSyncData = {
     body: EventSyncRequest;

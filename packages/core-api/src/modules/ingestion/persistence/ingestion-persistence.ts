@@ -2,35 +2,19 @@
  * IngestionPersistence — persists ingested data to the database via Prisma.
  *
  * Called by ingestion callbacks to upsert sport events, participants,
- * and rankings received from data providers.
+ * and event fields received from data providers.
  */
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { getDefaultTournamentFormatForSport, SportEventSyncScope, type Sport, type SportEventStatus } from '@poolmaster/shared/domain';
+import { getDefaultTournamentFormatForSport } from '@poolmaster/shared/domain';
 import type {
-  ProviderRanking,
   SportEvent,
   SportEventDetail,
   ProviderParticipant,
 } from '../core/provider-interface';
-import { resolveRankingType } from '../core/ranking-types';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
-import { resolveEventTiming } from '../../events/operational-timing';
-
-/**
- * Narrow interface onto EventLifecycleService.applySportEventStatusTransition
- * (plans/124 §3.3) — keeps this module decoupled from the full service/actor
- * union, matching the CompletedSportEventSettlement pattern this replaces.
- */
-interface SportEventLifecycleApplier {
-  applySportEventStatusTransition(input: {
-    sportEventId: string;
-    toStatus: SportEventStatus;
-    actor: { type: 'PROVIDER' };
-  }): Promise<unknown>;
-}
 
 interface PersistenceDiagnosticsResult<T> {
   count: number;
@@ -42,12 +26,14 @@ export class IngestionPersistence {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
-    private readonly eventLifecycleService?: SportEventLifecycleApplier,
   ) {}
 
   /**
    * Update the sport events already linked to these provider events, by (providerId,
    * externalId). Returns the number of events persisted.
+   *
+   * Only the field size is written. An admin owns every event's name, venue, dates, rounds,
+   * timing and status, so a provider's copy of them is ignored (ADR-0009, #435).
    *
    * Sync never creates a SportEvent (plans/147). An event is an edition of a series in a
    * sport league, and a provider event names neither, so a row created here would have
@@ -78,10 +64,6 @@ export class IngestionPersistence {
     }, 'Persisting sport events from ingestion');
 
     for (const event of events) {
-      const resolvedTiming = resolveEventTiming({
-        startDate: event.startDate,
-        metadata: event.metadata,
-      });
       const existingEvent = await this.prisma.sportEvent.findUnique({
         where: {
           providerId_externalId: {
@@ -99,32 +81,12 @@ export class IngestionPersistence {
         continue;
       }
       const before = normalizeSportEventRow(existingEvent);
-      // An admin owns the header, rounds and status of an event it linked for scores only
-      // (SCORES_ONLY) or not at all (NONE); sync refreshes the field size and nothing else (#118).
-      const providerOwned = existingEvent.syncScope === SportEventSyncScope.FULL;
-      const after = providerOwned
-        ? normalizeSportEventInput(event, resolvedTiming)
-        : { ...before, participantCount: event.participantCount ?? before.participantCount };
+      const participantCount = event.participantCount ?? existingEvent.participantCount;
+      const after = { ...before, participantCount };
 
       const persistedEvent = await this.prisma.sportEvent.update({
         where: { id: existingEvent.id },
-        data: providerOwned
-          ? {
-            name: event.name,
-            venue: event.venue ?? null,
-            location: event.location ?? null,
-            startDate: event.startDate,
-            endDate: event.endDate ?? null,
-            // status intentionally omitted — applySportEventStatusTransition below is the
-            // one place that ever writes SportEvent.status (plans/124 §3.3).
-            rounds: event.rounds ?? null,
-            participantCount: event.participantCount ?? null,
-            releaseAt: resolvedTiming.releaseAt,
-            fieldLocksAt: resolvedTiming.fieldLocksAt,
-            fieldLocked: event.fieldLocked,
-            metadata: toPrismaJson(event.metadata),
-          }
-          : { participantCount: event.participantCount ?? existingEvent.participantCount },
+        data: { participantCount },
       });
       detailRows.push({
         id: `sport-event:${event.providerId}:${event.externalId}`,
@@ -137,22 +99,13 @@ export class IngestionPersistence {
         before,
         after,
       });
-      if (providerOwned) {
-        await this.eventLifecycleService?.applySportEventStatusTransition({
-          sportEventId: persistedEvent.id,
-          toStatus: event.status,
-          actor: { type: 'PROVIDER' },
-        });
-      }
       count++;
       this.logger?.debug({
         providerId: event.providerId,
         externalId: event.externalId,
         sport: event.sport,
         name: event.name,
-        releaseAt: resolvedTiming.releaseAt.toISOString(),
-        fieldLocksAt: resolvedTiming.fieldLocksAt.toISOString(),
-        providerFieldLocked: event.fieldLocked,
+        participantCount,
       }, 'Persisted sport event from ingestion');
     }
 
@@ -336,14 +289,9 @@ export class IngestionPersistence {
           },
         },
       });
-      // #384 — the field's own ranking wins and the sport-level snapshot is only a fallback.
-      // When neither gives one, the rank already on the row stays rather than being blanked.
+      // #384 — the field's own ranking wins. When the field gives none, the rank already on
+      // the row stays rather than being blanked.
       const ranking = participant.ranking
-        ?? await this.findLatestRankingForEventParticipant({
-          providerId: participant.providerId,
-          participantId: mapping.participantId,
-          sport: detail.sport,
-        })
         ?? existingEventParticipant?.ranking
         ?? null;
       const before = existingEventParticipant
@@ -420,125 +368,6 @@ export class IngestionPersistence {
       writeDiagnostics: summarizeSyncWriteRows(detailRows),
     };
   }
-
-  /**
-   * Persist global participant ranking snapshots by provider-scoped mapping.
-   *
-   * Rankings are not event-scoped source facts. They are provider-scoped
-   * snapshots keyed by ranking type + asOf; event participant hydration copies
-   * the latest applicable snapshot onto SportEventParticipant.ranking.
-   */
-  async persistRankings(rankings: ProviderRanking[]): Promise<number> {
-    return (await this.persistRankingsWithDiagnostics(rankings)).count;
-  }
-
-  async persistRankingsWithDiagnostics(
-    rankings: ProviderRanking[],
-  ): Promise<PersistenceDiagnosticsResult<number>> {
-    let count = 0;
-    const detailRows: SyncWriteDetailRow[] = [];
-    this.logger?.debug({
-      count: rankings.length,
-      rankings: rankings.slice(0, 10).map((ranking) => ({
-        providerId: ranking.providerId,
-        participantExternalId: ranking.participantExternalId,
-        rankingType: ranking.rankingType,
-        rank: ranking.rank,
-        asOfDate: ranking.asOfDate.toISOString(),
-      })),
-    }, 'Persisting participant ranking snapshots from ingestion');
-
-    for (const ranking of rankings) {
-      const mapping = await this.prisma.participantProviderMapping.findUnique({
-        where: {
-          providerId_externalId: {
-            providerId: ranking.providerId,
-            externalId: ranking.participantExternalId,
-          },
-        },
-      });
-
-      if (!mapping) {
-        this.logger?.warn({
-          providerId: ranking.providerId,
-          participantExternalId: ranking.participantExternalId,
-          rankingType: ranking.rankingType,
-        }, 'Skipped participant ranking because provider mapping was not found');
-        continue;
-      }
-      const existingRanking = await this.prisma.participantRankingSnapshot.findUnique({
-        where: {
-          providerId_participantId_rankingType_asOfDate: {
-            providerId: ranking.providerId,
-            participantId: mapping.participantId,
-            rankingType: ranking.rankingType,
-            asOfDate: ranking.asOfDate,
-          },
-        },
-      });
-      const before = existingRanking ? normalizeRankingSnapshotRow(existingRanking) : undefined;
-      const after = normalizeRankingSnapshotInput(ranking, mapping.participantId);
-
-      const persistedRanking = await this.prisma.participantRankingSnapshot.upsert({
-        where: {
-          providerId_participantId_rankingType_asOfDate: {
-            providerId: ranking.providerId,
-            participantId: mapping.participantId,
-            rankingType: ranking.rankingType,
-            asOfDate: ranking.asOfDate,
-          },
-        },
-        create: {
-          providerId: ranking.providerId,
-          participantId: mapping.participantId,
-          rankingType: ranking.rankingType,
-          rank: ranking.rank,
-          points: ranking.points ?? null,
-          asOfDate: ranking.asOfDate,
-        },
-        update: {
-          rank: ranking.rank,
-          points: ranking.points ?? null,
-        },
-      });
-      detailRows.push({
-        id: `participant-ranking:${ranking.providerId}:${mapping.participantId}:${ranking.rankingType}:${ranking.asOfDate.toISOString()}`,
-        entityType: 'ParticipantRankingSnapshot',
-        disposition: resolveDisposition(before, after),
-        providerId: ranking.providerId,
-        participantExternalId: ranking.participantExternalId,
-        internalId: persistedRanking.id,
-        name: ranking.participantExternalId,
-        ...(before ? { before } : {}),
-        after,
-      });
-      count++;
-    }
-
-    this.logger?.info({ count }, 'Persisted participant ranking snapshots from ingestion');
-    return {
-      count,
-      value: count,
-      writeDiagnostics: summarizeSyncWriteRows(detailRows),
-    };
-  }
-
-  private async findLatestRankingForEventParticipant(input: {
-    providerId: string;
-    participantId: string;
-    sport: Sport;
-  }): Promise<number | null> {
-    const snapshot = await this.prisma.participantRankingSnapshot.findFirst({
-      where: {
-        providerId: input.providerId,
-        participantId: input.participantId,
-        rankingType: resolveRankingType(input.sport),
-      },
-      orderBy: { asOfDate: 'desc' },
-    });
-
-    return snapshot?.rank ?? null;
-  }
 }
 
 function readEventScopedOddsToWin(
@@ -562,29 +391,6 @@ function resolveDisposition(
   }
 
   return stableJson(before) === stableJson(after) ? 'UNCHANGED' : 'UPDATED';
-}
-
-function normalizeSportEventInput(
-  event: SportEvent,
-  timing: { releaseAt: Date; fieldLocksAt: Date },
-): Record<string, unknown> {
-  return {
-    externalId: event.externalId,
-    providerId: event.providerId,
-    sport: event.sport,
-    name: event.name,
-    venue: event.venue ?? null,
-    location: event.location ?? null,
-    startDate: event.startDate.toISOString(),
-    endDate: event.endDate?.toISOString() ?? null,
-    status: event.status,
-    rounds: event.rounds ?? null,
-    participantCount: event.participantCount ?? null,
-    releaseAt: timing.releaseAt.toISOString(),
-    fieldLocksAt: timing.fieldLocksAt.toISOString(),
-    fieldLocked: event.fieldLocked,
-    metadata: jsonClone(event.metadata),
-  };
 }
 
 function normalizeSportEventRow(row: {
@@ -656,38 +462,6 @@ function normalizeSportEventParticipantRow(row: {
     oddsToWin: decimalToNumber(row.oddsToWin),
     seedNumber: row.seedNumber,
     metadata: jsonClone(row.metadata),
-  };
-}
-
-function normalizeRankingSnapshotInput(
-  ranking: ProviderRanking,
-  participantId: string,
-): Record<string, unknown> {
-  return {
-    providerId: ranking.providerId,
-    participantId,
-    rankingType: ranking.rankingType,
-    rank: ranking.rank,
-    points: ranking.points ?? null,
-    asOfDate: ranking.asOfDate.toISOString(),
-  };
-}
-
-function normalizeRankingSnapshotRow(row: {
-  providerId: string;
-  participantId: string;
-  rankingType: string;
-  rank: number;
-  points: Prisma.Decimal | number | null;
-  asOfDate: Date;
-}): Record<string, unknown> {
-  return {
-    providerId: row.providerId,
-    participantId: row.participantId,
-    rankingType: row.rankingType,
-    rank: row.rank,
-    points: decimalToNumber(row.points),
-    asOfDate: row.asOfDate.toISOString(),
   };
 }
 

@@ -240,29 +240,6 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     );
   });
 
-  it('pool-master-3dg renders a read-only notice and hides editing for a fully provider-owned tournament', async () => {
-    getEventMock.mockResolvedValue({
-      data: { event: tournament({ syncScope: 'FULL' }) },
-    });
-    listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
-    listSportLeaguesMock.mockResolvedValue({
-      data: { sportLeagues: [sportLeagueFixture({ id: 'league-1', name: 'PGA Tour' })] },
-    });
-    renderPage();
-
-    expect(
-      await screen.findByText(
-        'This tournament is fully provider-owned. Setup, workflow, and score source are read-only here.',
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByTestId('root-admin-golf-tournament-home-edit'),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId('root-admin-golf-tournament-transition-IN_PROGRESS'),
-    ).not.toBeInTheDocument();
-  });
-
   it('pool-master-3dg saves edited summary details through RHF + updateEvent', async () => {
     seedDefaults();
     updateEventMock.mockResolvedValue({

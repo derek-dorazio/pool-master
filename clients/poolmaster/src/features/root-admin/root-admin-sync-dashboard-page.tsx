@@ -50,9 +50,7 @@ type SyncRunEvidenceRow = {
 const evidenceColumnHelper = createColumnHelper<SyncRunEvidenceRow>();
 
 const WORKFLOW_STEPS = [
-  'Schedule',
   'Participants',
-  'World rankings',
   'Mock state',
   'Live scores',
 ] as const;
@@ -387,16 +385,9 @@ export function RootAdminSyncDashboardPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <LinkButton
-              data-testid="root-admin-open-run-sport-sync-page"
-              to="/manage/sync/run-sport-sync"
-              variant="primary"
-            >
-              Run sport sync
-            </LinkButton>
-            <LinkButton
               data-testid="root-admin-open-run-event-sync-page"
               to="/manage/sync/run-event-sync"
-              variant="subtle"
+              variant="primary"
             >
               Run event sync
             </LinkButton>

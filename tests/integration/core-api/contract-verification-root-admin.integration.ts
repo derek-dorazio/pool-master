@@ -23,6 +23,7 @@ import {
   ParticipantResponseSchema,
   SportEventListResponseSchema,
   SportEventParticipantListResponseSchema,
+  SportEventParticipantUploadPreviewResponseSchema,
   SportEventLiveSimulationResponseSchema,
   SportEventResponseSchema,
   ImportSportEventYearFromProviderResponseSchema,
@@ -81,12 +82,10 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import type {
-  ProviderEventResult,
   ProviderHealthStatus,
   ProviderParticipant,
   ProviderPayloadCapture,
   ProviderPayloadDiagnostics,
-  ProviderRanking,
   SportDataProvider,
   SportEvent,
   SportEventDetail,
@@ -203,25 +202,8 @@ class OperationalContractProvider implements SportDataProvider {
     ];
   }
 
-  async getRankings(): Promise<ProviderRanking[]> {
-    return [
-      {
-        providerId: this.providerId,
-        participantExternalId: 'golfer-1',
-        rankingType: 'OWGR',
-        rank: 1,
-        points: 15.2,
-        asOfDate: new Date('2026-04-08T00:00:00.000Z'),
-      },
-    ];
-  }
-
   async getLiveScores(): Promise<LiveScoreResult> {
     return { category: 'GOLF', externalEventId: 'unused', rounds: [] };
-  }
-
-  async getEventResults(): Promise<ProviderEventResult | null> {
-    return null;
   }
 
   async healthCheck(): Promise<ProviderHealthStatus> {
@@ -251,16 +233,16 @@ class EmptyDiagnosticsProvider extends OperationalContractProvider implements Pr
     return payloads;
   }
 
-  override async getUpcomingEvents(): Promise<SportEvent[]> {
+  override async getLiveScores(): Promise<LiveScoreResult> {
     this.payloads.push({
-      operation: 'test.schedule',
-      path: '/test/schedule',
+      operation: 'test.scores',
+      path: '/test/scores',
       capturedAt: '2026-04-05T12:00:00.000Z',
       raw: {
-        events: [],
+        contestants: [],
       },
     });
-    return [];
+    return { category: 'GOLF', externalEventId: 'empty-diagnostics-event', rounds: [] };
   }
 }
 
@@ -324,9 +306,7 @@ async function buildIngestionApp(provider: SportDataProvider): Promise<FastifyIn
   const registry = new ProviderRegistry();
   registry.register('GOLF', provider, 'PRIMARY');
   const scheduler = new IngestionScheduler(registry, {
-    onEvents: async () => undefined,
     onEventDetail: async () => undefined,
-    onRankings: async () => undefined,
     onLiveScores: async () => emptyLiveScorePersistenceResult(),
   }, undefined, {
     now: () => new Date('2026-04-05T12:00:00.000Z'),
@@ -437,12 +417,12 @@ describe('Contract verification (root admin)', () => {
           id: '22222222-2222-2222-2222-222222222222',
           providerId: 'integration-test',
           sport: 'GOLF',
-          eventId: null,
+          eventId: 'event-2',
           status: 'FAILED',
           startedAt: new Date('2026-04-08T10:00:00.000Z'),
           completedAt: new Date('2026-04-08T10:00:30.000Z'),
           payloadJson: {
-            runType: 'EVENT_SCHEDULE_SYNC',
+            runType: 'SCHEDULED_EVENT_SYNC',
             errorCount: 1,
             detail: 'Transient provider timeout',
           },
@@ -819,20 +799,48 @@ describe('Contract verification (root admin)', () => {
         ),
       ).toBe(true);
 
-      const prepareSyncRes = await app.inject({
+      const eventSyncRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/ingestion/sports/GOLF/events/contract-sync-event/sync',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+        payload: {
+          feeds: ['EVENTLIVESCORES'],
+        },
+      });
+      expect(eventSyncRes.statusCode).toBe(202);
+      expect(ProviderManualSyncSubmissionResponseSchema.safeParse(eventSyncRes.json()).success).toBe(true);
+      expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().sport).toBe('GOLF');
+      expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().eventId).toBe('contract-sync-event');
+      expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().requestedFeeds).toEqual(['EVENTLIVESCORES']);
+      expect(typeof eventSyncRes.json<ProviderManualSyncSubmissionResponse>().submittedAt).toBe('string');
+      expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns.length).toBeGreaterThanOrEqual(1);
+      expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns[0]?.status).toBe('SUBMITTED');
+      await waitForProviderSyncRun(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns[0]?.id);
+
+      // #125 / #126 — PARTICIPANTRANKINGS, EVENTSCHEDULE and EVENTRESULTS are retired, not
+      // demoted: the event sync contract refuses each of them.
+      for (const retiredFeed of ['PARTICIPANTRANKINGS', 'EVENTSCHEDULE', 'EVENTRESULTS']) {
+        const retiredFeedRes = await app.inject({
+          method: 'POST',
+          url: '/api/v1/ingestion/sports/GOLF/events/contract-sync-event/sync',
+          headers: withoutJsonBodyHeaders(rootAdmin.headers),
+          payload: {
+            feeds: [retiredFeed],
+          },
+        });
+        expect(retiredFeedRes.statusCode).toBe(400);
+      }
+
+      // #126 — with every feed event-scoped, the sport-level sync route is gone.
+      const sportSyncRes = await app.inject({
         method: 'POST',
         url: '/api/v1/ingestion/sports/GOLF/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
-          feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
+          feeds: ['EVENTSCHEDULE'],
         },
       });
-      expect(prepareSyncRes.statusCode).toBe(202);
-      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().sport).toBe('GOLF');
-      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().requestedFeeds).toEqual(['EVENTSCHEDULE', 'PARTICIPANTRANKINGS']);
-      expect(typeof prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().submittedAt).toBe('string');
-      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns.length).toBeGreaterThanOrEqual(1);
-      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns[0]?.status).toBe('SUBMITTED');
+      expect(sportSyncRes.statusCode).toBe(404);
 
       const cleanupDryRunRes = await app.inject({
         method: 'POST',
@@ -862,10 +870,10 @@ describe('Contract verification (root admin)', () => {
     try {
       const prepareSyncRes = await app.inject({
         method: 'POST',
-        url: '/api/v1/ingestion/sports/GOLF/sync',
+        url: '/api/v1/ingestion/sports/GOLF/events/empty-diagnostics-event/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
-          feeds: ['EVENTSCHEDULE'],
+          feeds: ['EVENTLIVESCORES'],
         },
       });
       expect(prepareSyncRes.statusCode).toBe(202);
@@ -884,8 +892,8 @@ describe('Contract verification (root admin)', () => {
             rawCaptured: true,
             raw: [
               expect.objectContaining({
-                path: '/test/schedule',
-                raw: { events: [] },
+                path: '/test/scores',
+                raw: { contestants: [] },
               }),
             ],
           }),
@@ -893,13 +901,13 @@ describe('Contract verification (root admin)', () => {
             severity: 'WARNING',
             warnings: [
               expect.objectContaining({
-                code: 'NO_PROVIDER_EVENTS',
+                code: 'NO_PROVIDER_LIVE_SCORES',
               }),
             ],
           }),
           stats: expect.objectContaining({
             providerRecordsReturned: 0,
-            eventsFetched: 0,
+            liveScoreUpdatesReturned: 0,
           }),
         }),
       );
@@ -972,10 +980,10 @@ describe('Contract verification (root admin)', () => {
 
       const missingSportProviderRes = await app.inject({
         method: 'POST',
-        url: '/api/v1/ingestion/sports/UFC/sync',
+        url: '/api/v1/ingestion/sports/UFC/events/ufc-300/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
-          feeds: ['EVENTSCHEDULE'],
+          feeds: ['EVENTLIVESCORES'],
         },
       });
       expect(missingSportProviderRes.statusCode).toBe(404);
@@ -1242,6 +1250,52 @@ describe('Contract verification (root admin)', () => {
       });
       expect(fieldRes.statusCode).toBe(200);
       expect(SportEventParticipantListResponseSchema.safeParse(fieldRes.json()).success).toBe(true);
+
+      // --- previewEventParticipantUpload (200) / applyEventParticipantUpload (200, 422) ---
+      // Two golfers on the field, the third only in the catalog: the upload adjusts the field
+      // and refuses a golfer not on it.
+      const addRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/participants`,
+        headers: rootAdmin.headers,
+        payload: { participantIds: created.participantIds.slice(0, 2) },
+      });
+      expect(addRes.statusCode).toBe(200);
+      const uploadPreviewRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/participants/upload/preview`,
+        headers: rootAdmin.headers,
+        payload: {
+          rows: [
+            { participantId: created.participantIds[0], ranking: 3, oddsToWin: 7.5 },
+            { externalId: `z3l-contract-${stamp}-p1`, isActive: false, inactiveReason: 'WITHDRAWN' },
+            { externalId: `z3l-contract-${stamp}-p2`, ranking: 1 },
+          ],
+        },
+      });
+      expect(uploadPreviewRes.statusCode).toBe(200);
+      const uploadPreview = SportEventParticipantUploadPreviewResponseSchema.safeParse(uploadPreviewRes.json());
+      expect(uploadPreview.success).toBe(true);
+      expect(uploadPreview.data?.rollup).toMatchObject({ total: 3, matched: 2, unresolved: 1, update: 2 });
+
+      const uploadRefusedRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/participants/upload`,
+        headers: rootAdmin.headers,
+        payload: { rows: [{ externalId: `z3l-contract-${stamp}-p2`, ranking: 1 }] },
+      });
+      expect(uploadRefusedRes.statusCode).toBe(422);
+      expect(ErrorEnvelopeSchema.safeParse(uploadRefusedRes.json()).success).toBe(true);
+      expect(uploadRefusedRes.json<ErrorEnvelope>().error.code).toBe('EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED');
+
+      const uploadApplyRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/participants/upload`,
+        headers: rootAdmin.headers,
+        payload: { rows: [{ participantId: created.participantIds[0], ranking: 3, oddsToWin: 7.5 }] },
+      });
+      expect(uploadApplyRes.statusCode).toBe(200);
+      expect(SportEventParticipantListResponseSchema.safeParse(uploadApplyRes.json()).success).toBe(true);
 
       const tiersRes = await getApp().inject({
         method: 'GET',

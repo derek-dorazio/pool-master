@@ -1,7 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { resolve } from 'node:path';
 import {
-  eventRecordSchema,
   eventResponseSchema,
   eventSummarySchema,
   feedKinds,
@@ -13,7 +12,6 @@ import {
   scenarioRecordSchema,
   scenarioSummarySchema,
   snapshotResponseSchema,
-  updatesResponseSchema,
   type LiveReplayRequest,
   type MockEventStateKind,
 } from './contracts';
@@ -284,52 +282,6 @@ export async function mockContestFeedRoutes(
     },
   );
 
-  fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
-    '/v1/scenarios/:scenarioId/events/:eventId',
-    {
-      schema: {
-        tags: ['Scenarios'],
-        summary: 'Get an event and its feed snapshots',
-        operationId: 'getMockContestFeedScenarioEvent',
-        params: {
-          type: 'object',
-          required: ['scenarioId', 'eventId'],
-          properties: {
-            scenarioId: { type: 'string' },
-            eventId: { type: 'string' },
-          },
-        },
-        response: {
-          200: {
-            type: 'object',
-            additionalProperties: false,
-            required: ['event'],
-            properties: {
-              event: eventRecordSchema,
-            },
-          },
-        },
-      },
-    },
-    async (request) => {
-      fastify.log.debug(
-        { action: 'mockFeedRoute.getEvent.start', data: request.params },
-        'Serving mock contest-feed event detail',
-      );
-      const payload = {
-        event: store.getEvent(request.params.scenarioId, request.params.eventId),
-      };
-      logRoutePayload(
-        fastify,
-        'mockFeedRoute.getEvent',
-        request.params,
-        payload,
-        'Served mock contest-feed event detail',
-      );
-      return payload;
-    },
-  );
-
   fastify.get<{
     Params: { scenarioId: string; eventId: string };
     Querystring: { mockEventState?: MockEventStateKind };
@@ -388,15 +340,11 @@ export async function mockContestFeedRoutes(
   // `/v1/scenarios/.../events/.../...` surface. They were dropped in this
   // slice so the generated SDK is the single source of truth for callers.
 
-  for (const feedKind of ['field', 'odds', 'rankings', 'results'] as const) {
+  for (const feedKind of feedKinds) {
     const operationId =
       feedKind === 'field'
         ? 'getMockContestFeedFieldSnapshot'
-        : feedKind === 'odds'
-        ? 'getMockContestFeedOddsSnapshot'
-        : feedKind === 'rankings'
-          ? 'getMockContestFeedRankingsSnapshot'
-          : 'getMockContestFeedResultsSnapshot';
+        : 'getMockContestFeedOddsSnapshot';
 
     fastify.get<{
       Params: { scenarioId: string; eventId: string };
@@ -602,47 +550,6 @@ export async function mockContestFeedRoutes(
       store.stopLiveReplay(request.params.scenarioId, request.params.eventId);
       fastify.log.info({ action: 'mockFeedRoute.stopLiveReplay', data: { ...request.params } }, 'Stopped mock live replay');
       return reply.code(204).send();
-    },
-  );
-
-  fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
-    '/v1/scenarios/:scenarioId/events/:eventId/updates',
-    {
-      schema: {
-        tags: ['Feeds'],
-        summary: 'Get live or correction updates for an event',
-        operationId: 'getMockContestFeedEventUpdates',
-        params: {
-          type: 'object',
-          required: ['scenarioId', 'eventId'],
-          properties: {
-            scenarioId: { type: 'string' },
-            eventId: { type: 'string' },
-          },
-        },
-        response: {
-          200: updatesResponseSchema,
-        },
-      },
-    },
-    async (request) => {
-      fastify.log.debug(
-        { action: 'mockFeedRoute.getUpdates.start', data: request.params },
-        'Serving mock contest-feed event updates',
-      );
-      const payload = store.getUpdates(request.params.scenarioId, request.params.eventId);
-      logRoutePayload(
-        fastify,
-        'mockFeedRoute.getUpdates',
-        {
-          scenarioId: request.params.scenarioId,
-          eventId: request.params.eventId,
-          updateCount: payload.updates.length,
-        },
-        payload,
-        'Served mock contest-feed event updates',
-      );
-      return payload;
     },
   );
 }

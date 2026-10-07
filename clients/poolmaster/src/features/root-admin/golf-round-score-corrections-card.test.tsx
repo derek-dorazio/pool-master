@@ -51,7 +51,6 @@ function renderCard(props: Partial<Parameters<typeof GolfRoundScoreCorrectionsCa
     <QueryClientProvider client={queryClient}>
       <GolfRoundScoreCorrectionsCard
         eventId="evt-1"
-        readOnly={false}
         round={2}
         rows={[scoreRow()]}
         rowsError={null}
@@ -158,12 +157,6 @@ describe('pool-master-r11 GolfRoundScoreCorrectionsCard', () => {
     await userEvent.clear(strokes);
     await userEvent.type(strokes, '69');
     expect(screen.getByTestId('root-admin-golf-scores-save-sep-1')).toBeEnabled();
-  });
-
-  it('pool-master-r11 hides the Save column when read-only', () => {
-    renderCard({ readOnly: true });
-    expect(screen.queryByTestId('root-admin-golf-scores-save-sep-1')).not.toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-golf-scores-strokes-sep-1')).toBeInTheDocument();
   });
 
   it('pool-master-r11 surfaces the row-load error', () => {

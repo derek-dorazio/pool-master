@@ -7,13 +7,12 @@ import { IngestionPersistence } from '../../../packages/core-api/src/modules/ing
 import type { SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { Sport } from '@poolmaster/shared/domain';
 import { linkedProviderEvent } from '../../support/event-edition';
-import { resolveRankingType } from '../../../packages/core-api/src/modules/ingestion/core/ranking-types';
 
 const rankedEventIds = [
   'integration-ingestion-event',
   'integration-ranked-field',
   'integration-ranked-refresh',
-  'integration-ranked-snapshot',
+  'integration-ranked-overwrite',
 ];
 
 beforeAll(() => setupIntegrationTests());
@@ -40,11 +39,11 @@ afterAll(async () => {
       sportEvent: { externalId: { in: rankedEventIds } },
     },
   });
+  await prisma.sportEventRound.deleteMany({
+    where: { sportEvent: { externalId: { in: rankedEventIds } } },
+  });
   await prisma.sportEvent.deleteMany({
     where: { externalId: { in: rankedEventIds } },
-  });
-  await prisma.participantRankingSnapshot.deleteMany({
-    where: { providerId: 'TEST_PROVIDER' },
   });
   await prisma.participantProviderMapping.deleteMany({
     where: { providerId: 'TEST_PROVIDER' },
@@ -203,7 +202,7 @@ describe('IngestionPersistence', () => {
     };
   }
 
-  it('keeps a golfer\'s existing ranking when a later field refresh gives no ranking and no snapshot exists', async () => {
+  it('keeps a golfer\'s existing ranking when a later field refresh gives no ranking', async () => {
     const prisma = getPrisma();
     const persistence = new IngestionPersistence(prisma);
     const first = rankedFieldDetail('integration-ranked-refresh', [rankedGolfer('ingestion-ranked-3', 12)]);
@@ -225,35 +224,37 @@ describe('IngestionPersistence', () => {
     expect(row.ranking).toBe(12);
   });
 
-  it('writes the field\'s ranking over an older ranking snapshot that disagrees with it', async () => {
+  it('writes the field\'s ranking over the ranking a golfer already has on the event when a refresh carries a new one', async () => {
     const prisma = getPrisma();
     const persistence = new IngestionPersistence(prisma);
-    const detail = rankedFieldDetail('integration-ranked-snapshot', [rankedGolfer('ingestion-ranked-4', 5)]);
+    const first = rankedFieldDetail('integration-ranked-overwrite', [rankedGolfer('ingestion-ranked-4', 40)]);
     const event = await linkedProviderEvent(prisma, {
-      providerId: detail.providerId,
-      externalId: detail.externalId,
-      name: detail.name,
-      startDate: detail.startDate,
+      providerId: first.providerId,
+      externalId: first.externalId,
+      name: first.name,
+      startDate: first.startDate,
     });
-    // The first load creates the participant and its provider mapping, so a snapshot can name it.
-    await persistence.persistEventDetail(detail);
-    const participant = await prisma.participant.findFirstOrThrow({ where: { externalId: 'ingestion-ranked-4' } });
-    await prisma.participantRankingSnapshot.create({
-      data: {
-        participantId: participant.id,
-        providerId: 'TEST_PROVIDER',
-        rankingType: resolveRankingType(Sport.GOLF),
-        rank: 40,
-        asOfDate: new Date('2026-04-20T00:00:00.000Z'),
-      },
-    });
+    await persistence.persistEventDetail(first);
 
-    await persistence.persistEventDetail(detail);
+    await persistence.persistEventDetail(
+      rankedFieldDetail('integration-ranked-overwrite', [rankedGolfer('ingestion-ranked-4', 5)]),
+    );
 
     const row = await prisma.sportEventParticipant.findFirstOrThrow({
-      where: { sportEventId: event.id, participantId: participant.id },
+      where: { sportEventId: event.id, participant: { externalId: 'ingestion-ranked-4' } },
     });
     expect(row.ranking).toBe(5);
+  });
+
+  it('#125: the participant_ranking_snapshots table no longer exists — the global ranking snapshot is retired, not demoted', async () => {
+    const prisma = getPrisma();
+
+    const [{ table }] = await prisma.$queryRaw<Array<{ table: string | null }>>`
+      SELECT to_regclass('public.participant_ranking_snapshots')::text AS "table"
+    `;
+
+    expect(table).toBeNull();
+    expect((prisma as unknown as Record<string, unknown>).participantRankingSnapshot).toBeUndefined();
   });
 
   // #205 — the `pool-master-8yh` job-completion case went with `persistIngestionJob` and the

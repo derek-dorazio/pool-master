@@ -22,18 +22,14 @@ import type {
   IngestionFeedType,
   IngestionScheduleConfigReader,
   IngestionScheduler,
-  SportSyncRequest,
 } from './core/ingestion-scheduler';
 import {
   SyncOrchestrator,
-  resolveSportSyncWindowPolicy,
   type NormalizedEventSyncScope,
-  type NormalizedSportSyncScope,
 } from './core/sync-orchestrator';
 import {
   ProviderSyncRunLedger,
   isEventSyncFeedType,
-  isSportSyncFeedType,
 } from './persistence/provider-sync-run-ledger';
 
 // ---------------------------------------------------------------------------
@@ -56,7 +52,7 @@ export interface ProviderSummary {
 
 export interface ProviderManualSyncSubmissionResult {
   sport: Sport;
-  eventId: string | null;
+  eventId: string;
   requestedFeeds: IngestionFeedType[];
   submittedAt: Date;
   syncRuns: ProviderSyncRun[];
@@ -295,18 +291,12 @@ export class IngestionService {
   /**
    * A one-off manual sync can't bypass SportEvent.syncScope any more than the
    * scheduled feeds can (plans/124 §4.4). No-op when no local SportEvent row
-   * exists yet for (providerId, externalId) — there is no scope to violate,
-   * and EVENTSCHEDULE/EVENTPARTICIPANTS syncs routinely run before any local
-   * row exists.
+   * exists yet for (providerId, externalId) — there is no scope to violate.
    *
-   * EVENTPARTICIPANTS (the field/"details" feed) is allowed for any linked
-   * event (`syncScope != 'NONE'`), not only `FULL` — plans/125 §3.2's
-   * already-decided design, which plans/124 §4.4a's admin-triggered
-   * Load/Refresh Participant Field action depends on. It is a separate
-   * concern from the scores feeds (EVENTLIVESCORES/EVENTRESULTS): a
-   * `SCORES_ONLY` tournament is still admin-managed for setup/field/tiers
-   * (§3.5), so an explicit, on-demand field refresh must not be blocked the
-   * way an automatic schedule/rankings sync correctly is.
+   * A linked event (`SCORES_ONLY`) accepts both event feeds: live scores, and the field
+   * feed (EVENTPARTICIPANTS) behind the admin's Load/Refresh field action. The field feed
+   * writes only the field and its size, never the event's details or status (ADR-0009).
+   * An unlinked event (`NONE`) accepts neither.
    */
   private async assertFeedsAllowedForSyncScope(
     providerId: string,
@@ -318,11 +308,9 @@ export class IngestionService {
       return;
     }
 
-    const allowedFeeds: string[] = event.syncScope === SportEventSyncScope.FULL
-      ? ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS', 'EVENTLIVESCORES', 'EVENTRESULTS']
-      : event.syncScope === SportEventSyncScope.SCORES_ONLY
-      ? ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTRESULTS']
-      : [];
+    const allowedFeeds: string[] = event.syncScope === SportEventSyncScope.NONE
+      ? []
+      : ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'];
     const disallowedFeeds = feeds.filter((feed) => !allowedFeeds.includes(feed));
     if (disallowedFeeds.length > 0) {
       this.logger?.warn({
@@ -334,10 +322,6 @@ export class IngestionService {
       }, 'Manual event sync rejected — requested feed(s) not allowed for this event\'s syncScope');
       throw new SportEventSyncScopeError(eventId, event.syncScope, disallowedFeeds);
     }
-  }
-
-  private async getSportSyncConfig(sport: Sport) {
-    return this.ingestionConfigReader?.getPerSportConfig(sport);
   }
 
   private async buildUnmappedParticipantsForProvider(provider: SportDataProvider): Promise<UnmappedParticipant[]> {
@@ -411,85 +395,6 @@ export class IngestionService {
     });
   }
 
-  async prepareSportSync(
-    request: SportSyncRequest,
-    rootAdminUserId: string,
-    rootAdminEmail: string,
-  ): Promise<ProviderManualSyncSubmissionResult> {
-    const { sport } = request;
-    this.logger?.info({
-      sport,
-      requestedFeeds: request.feeds,
-      from: request.from?.toISOString() ?? null,
-      to: request.to?.toISOString() ?? null,
-      rootAdminUserId,
-    }, 'Submitting manual sport sync');
-    const provider = this.registry.getProvider(sport);
-    if (!provider) {
-      this.logger?.error({ sport }, 'Manual sport sync was requested without a configured provider');
-      throw new SportProviderNotFoundError(sport);
-    }
-    await this.assertSportSyncConfigured(sport);
-    const config = await this.getSportSyncConfig(sport);
-    const normalizedRequest = this.syncOrchestrator.normalizeRequest({
-      source: 'MANUAL',
-      actor: {
-        type: 'ROOT_ADMIN',
-        userId: rootAdminUserId,
-        email: rootAdminEmail,
-      },
-      scope: {
-        type: 'SPORT',
-        sport,
-        feeds: request.feeds,
-        window: {
-          from: request.from,
-          to: request.to,
-        },
-        windowPolicy: resolveSportSyncWindowPolicy({ feeds: request.feeds, config }),
-      },
-      workflowContext: request.workflowContext,
-    });
-    if (normalizedRequest.scope.type !== 'SPORT') {
-      throw new Error('Manual sport sync normalization returned an event scope.');
-    }
-    const normalizedScope = normalizedRequest.scope;
-    if (!this.scheduler) {
-      throw new Error('Ingestion scheduler is required for manual sport sync');
-    }
-
-    const submittedAt = new Date();
-    const syncRuns = await this.syncRunLedger.createSubmissions({
-      normalizedRequest,
-      providerId: provider.providerId,
-      submittedAt,
-      runType: 'MANUAL_SPORT_SYNC',
-    });
-
-    setImmediate(() => {
-      void this.executeSubmittedSportSync({
-        normalizedScope,
-        syncRuns,
-      });
-    });
-
-    this.logger?.info({
-      sport: normalizedScope.sport,
-      providerId: provider.providerId,
-      requestedFeeds: normalizedScope.feeds,
-      from: normalizedScope.effectiveWindow.from.toISOString(),
-      to: normalizedScope.effectiveWindow.to.toISOString(),
-      syncRunIds: syncRuns.map((run) => run.id),
-    }, 'Submitted manual sport sync');
-    return {
-      sport: normalizedScope.sport,
-      eventId: null,
-      requestedFeeds: normalizedScope.feeds,
-      submittedAt,
-      syncRuns,
-    };
-  }
-
   async syncEventData(
     request: EventSyncRequest,
     rootAdminUserId: string,
@@ -527,9 +432,6 @@ export class IngestionService {
       },
       workflowContext: request.workflowContext,
     });
-    if (normalizedRequest.scope.type !== 'EVENT') {
-      throw new Error('Manual event sync normalization returned a sport scope.');
-    }
     const normalizedScope = normalizedRequest.scope;
     await this.assertFeedsAllowedForSyncScope(
       provider.providerId,
@@ -576,46 +478,6 @@ export class IngestionService {
       submittedAt,
       syncRuns,
     };
-  }
-
-  private async executeSubmittedSportSync(input: {
-    normalizedScope: NormalizedSportSyncScope;
-    syncRuns: ProviderSyncRun[];
-  }): Promise<void> {
-    this.logger?.debug({
-      sport: input.normalizedScope.sport,
-      requestedFeeds: input.normalizedScope.feeds,
-      syncRunIds: input.syncRuns.map((run) => run.id),
-      from: input.normalizedScope.effectiveWindow.from.toISOString(),
-      to: input.normalizedScope.effectiveWindow.to.toISOString(),
-    }, 'Executing submitted manual sport sync');
-    for (const syncRun of input.syncRuns) {
-      const requestedFeed = syncRun.payload.requestedFeed;
-      if (!isSportSyncFeedType(requestedFeed)) {
-        await this.syncRunLedger.failSubmittedRun(syncRun, new Error(`Unsupported sport sync feed: ${String(requestedFeed)}`));
-        continue;
-      }
-
-      try {
-        await this.syncRunLedger.executeFeedRun(syncRun, () =>
-          this.scheduler!.runSportSync({
-            sport: input.normalizedScope.sport,
-            feeds: [requestedFeed],
-            from: input.normalizedScope.effectiveWindow.from,
-            to: input.normalizedScope.effectiveWindow.to,
-          }),
-        );
-      } catch (error) {
-        this.logger?.error({
-          syncRunId: syncRun.id,
-          sport: input.normalizedScope.sport,
-          requestedFeed,
-          error,
-        }, 'Manual sport sync feed failed after provider sync run was marked failed');
-        // The ledger already marks the submitted run as failed; keep the
-        // asynchronous manual submission worker moving through remaining feeds.
-      }
-    }
   }
 
   private async executeSubmittedEventSync(input: {
