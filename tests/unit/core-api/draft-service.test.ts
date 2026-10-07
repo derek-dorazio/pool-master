@@ -345,14 +345,17 @@ describe('#324 DraftService.getDraftState', () => {
     expect(view.isCommissioner).toBe(false);
   });
 
-  it('honours an explicitly selected entry, and falls back to the actor\'s own for an unknown one', async () => {
+  // Once picks are revealed (LOCKED onwards). While the contest is OPEN another team's entry
+  // is not honoured: draft-selection-use-cases.test.ts covers that half.
+  it('honours an explicitly selected entry once picks are revealed, and falls back to the actor\'s own for an unknown one', async () => {
     const entries = [entry(ENTRY_ID, SQUAD_ID), entry(OTHER_ENTRY_ID, 'squad-2', 'Challenger')];
     const squadMemberships = [
       squadMembership(SQUAD_ID, OWNER_USER_ID),
       squadMembership('squad-2', 'user-challenger'),
     ];
 
-    const selected = await setup({ entries, squadMemberships }).service.getDraftState({
+    const revealed = { status: ContestStatus.LOCKED };
+    const selected = await setup({ contest: revealed, entries, squadMemberships }).service.getDraftState({
       contestId: CONTEST_ID,
       selectedEntryId: OTHER_ENTRY_ID,
       actorUserId: OWNER_USER_ID,
@@ -361,7 +364,7 @@ describe('#324 DraftService.getDraftState', () => {
     expect(selected.selectedEntryName).toBe('Challenger');
     expect(selected.myEntryId).toBe(ENTRY_ID);
 
-    const unknown = await setup({ entries, squadMemberships }).service.getDraftState({
+    const unknown = await setup({ contest: revealed, entries, squadMemberships }).service.getDraftState({
       contestId: CONTEST_ID,
       selectedEntryId: 'entry-nope',
       actorUserId: OWNER_USER_ID,

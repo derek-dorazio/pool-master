@@ -738,6 +738,11 @@ design (#247), so no adapter or fake can become a second way in. The selection o
 themselves — including the tiered replace-on-full and toggle-off rules — are the draft room's,
 and move to #198's `SelectionEngine`.
 
+| Operation | Role | Notes |
+|---|---|---|
+| Read the draft room | `member` | `getDraftState`. A `DRAFT` contest answers 404 `CONTEST_NOT_FOUND` to anyone but its league's commissioners and root admins, as the contest read does (#117). While the contest is `DRAFT` or `OPEN`, picks are hidden from other teams (`contestPicksRevealed`): the history carries only the caller's own entries, and `entryId` names another team's entry only from `LOCKED` on, falling back to the caller's own before that. Any active member of the entry's squad, co-owners included, reads it as their own |
+| Place, swap, unselect | squad member | `submitContestSelection`, only while the contest is `OPEN`: 409 `CONTEST_ENTRY_LOCKED` otherwise, the code the entry's own create, edit and leave answer. Re-picking a held golfer unselects it, and that works for a golfer who has since withdrawn; a new pick of a withdrawn golfer is 400 `PARTICIPANT_UNAVAILABLE` |
+
 ## Platform and operations
 
 Cluster: `ProviderSyncRun`, `PlatformRuntimeConfig`, and the provider registry they serve.

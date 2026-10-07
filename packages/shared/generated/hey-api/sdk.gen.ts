@@ -1869,7 +1869,7 @@ export const ingestClientLogs = <ThrowOnError extends boolean = false>(options: 
 /**
  * Get current draft state for a contest
  *
- * Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+ * Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (LOCKED onwards); otherwise it falls back to the caller's own.
  */
 export const getDraftState = <ThrowOnError extends boolean = false>(options: Options<GetDraftStateData, ThrowOnError>) => (options.client ?? client).get<GetDraftStateResponses, GetDraftStateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1880,7 +1880,7 @@ export const getDraftState = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Submit a draft pick
  *
- * Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed.
+ * Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN: 409 CONTEST_ENTRY_LOCKED otherwise.
  */
 export const submitContestSelection = <ThrowOnError extends boolean = false>(options: Options<SubmitContestSelectionData, ThrowOnError>) => (options.client ?? client).post<SubmitContestSelectionResponses, SubmitContestSelectionErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

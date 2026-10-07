@@ -26,7 +26,9 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import {
+  ContestStatus,
   DraftStatus,
+  LeagueMembershipStatus,
   SelectionType,
   type ContestEntry,
   type Participant,
@@ -43,6 +45,7 @@ import type {
   SquadMembershipRepository,
 } from '@poolmaster/shared/db';
 import type { ContestEntryPickService } from '../contest-entry-picks';
+import { contestPicksRevealed } from '../contests/service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { draftErrors } from './draft-errors';
 import {
@@ -90,9 +93,14 @@ export interface DraftServiceDeps {
 
 export interface GetDraftStateInput {
   contestId: string;
-  /** The entry whose selections to show; defaults to the actor's own entry. */
+  /**
+   * The entry whose selections to show; defaults to the actor's own entry. Another team's
+   * entry is honoured only once the contest's picks are revealed.
+   */
   selectedEntryId?: string;
   actorUserId?: string;
+  /** Root admins see a DRAFT contest's room, as they see the contest itself (#117). */
+  actorIsRootAdmin?: boolean;
 }
 
 export interface SubmitSelectionInput {
@@ -107,11 +115,23 @@ export class DraftService {
   constructor(private readonly deps: DraftServiceDeps) {}
 
   /**
-   * The draft room as the actor should see it. 404 for an unknown contest, 501 for a
-   * selection type this surface does not serve.
+   * The draft room as the actor should see it. 404 for an unknown contest, and for a DRAFT
+   * one to anyone but its league's commissioners and root admins, the answer the contest read
+   * gives (#117); 501 for a selection type this surface does not serve.
    */
   async getDraftState(input: GetDraftStateInput): Promise<DraftRoomView> {
     const context = await this.loadContext(input.contestId);
+
+    if (
+      context.contest.status === ContestStatus.DRAFT
+      && !(await this.canSeeDraftContest(context.contest.leagueId, input))
+    ) {
+      this.deps.logger?.warn(
+        { action: 'draft.getDraftState.draftHidden', data: { contestId: input.contestId } },
+        'Hid a draft contest\'s room from a member',
+      );
+      throw draftErrors.contestNotFound(input.contestId);
+    }
 
     if (!isRosterSelectionType(context.contest.selectionType)) {
       throw draftErrors.draftModeUnsupportedForRead(context.contest.selectionType);
@@ -150,6 +170,12 @@ export class DraftService {
       throw draftErrors.draftModeUnsupportedForSubmission(context.contest.selectionType);
     }
 
+    // Placing, swapping and unselecting alike: once the contest leaves OPEN its picks are
+    // revealed to the league, so a change after that would be made with the others in view.
+    if (context.contest.status !== ContestStatus.OPEN) {
+      throw draftErrors.selectionLocked(contestId, context.contest.status);
+    }
+
     const isTiered = context.contest.selectionType === SelectionType.TIERED;
     const { tiers } = context;
     const rosterSize = getRosterSize(context.contest.selectionType, context.configuration, tiers);
@@ -170,12 +196,6 @@ export class DraftService {
     if (!selectionParticipant) {
       throw draftErrors.participantNotSelectable(participantId, contestId);
     }
-    if (!selectionParticipant.isAvailable) {
-      throw draftErrors.participantUnavailable(
-        participantId,
-        selectionParticipant.unavailableReason,
-      );
-    }
 
     const existingPicks = await this.deps.picks.findByEntriesWithParticipant([entryId]);
     const existingParticipantPick = existingPicks.find(
@@ -184,7 +204,9 @@ export class DraftService {
 
     // Outcome one: toggle off. Re-submitting a participant a tiered entry already holds
     // unselects it — the pick is deleted and nothing is inserted. A budget-pick entry has no
-    // such gesture, so there the same submission is a duplicate.
+    // such gesture, so there the same submission is a duplicate. It runs before the
+    // availability check: a golfer who withdrew after being picked can no longer be chosen,
+    // but must still be removable, or the entry is stuck holding them.
     if (existingParticipantPick && isTiered) {
       await this.deps.pickWrites.deletePick(existingParticipantPick.id);
       this.deps.logger?.info(
@@ -198,6 +220,12 @@ export class DraftService {
         outcome: 'toggled-off',
         view: await this.buildRoomView({ context, selectedEntryId: entryId, actorUserId }),
       };
+    }
+    if (!selectionParticipant.isAvailable) {
+      throw draftErrors.participantUnavailable(
+        participantId,
+        selectionParticipant.unavailableReason,
+      );
     }
     if (existingParticipantPick) throw draftErrors.duplicatePick(participantId);
 
@@ -268,6 +296,14 @@ export class DraftService {
       outcome: 'placed',
       view: await this.buildRoomView({ context, selectedEntryId: entryId, actorUserId }),
     };
+  }
+
+  /** A DRAFT contest is its league's active commissioners' alone, and root admins' (#117). */
+  private async canSeeDraftContest(leagueId: string, input: GetDraftStateInput): Promise<boolean> {
+    if (input.actorIsRootAdmin) return true;
+    if (!input.actorUserId) return false;
+    const membership = await this.deps.memberships.findByLeagueAndUser(leagueId, input.actorUserId);
+    return membership?.status === LeagueMembershipStatus.ACTIVE && isCommissionerRole(membership.role);
   }
 
   /**
@@ -346,6 +382,23 @@ export class DraftService {
       ]),
     );
 
+    // While the contest takes entries (DRAFT, OPEN) a team sees only its own picks, the rule
+    // the contest's entry reads follow (`contestPicksRevealed`). The actor's teams are every
+    // squad they are an active member of, co-owners included, not only the squad's first
+    // member, which is who `entryUserIdMap` attributes an entry to.
+    const picksRevealed = contestPicksRevealed(contest.status);
+    const actorSquadIds = new Set(
+      actorUserId
+        ? context.squadMemberships
+          .filter((membership) => membership.userId === actorUserId)
+          .map((membership) => membership.squadId)
+        : [],
+    );
+    const actorEntryIds = new Set(
+      contestEntries.filter((entry) => actorSquadIds.has(entry.squadId)).map((entry) => entry.id),
+    );
+    const visiblePicks = picksRevealed ? picks : picks.filter((pick) => actorEntryIds.has(pick.entryId));
+
     const picksByEntry = new Map<string, ContestEntryPickWithParticipant[]>();
     for (const pick of picks) {
       const existing = picksByEntry.get(pick.entryId) ?? [];
@@ -360,11 +413,11 @@ export class DraftService {
       pickCount: picksByEntry.get(entry.id)?.length ?? 0,
     }));
 
-    const myEntryId = actorUserId
-      ? entries.find((entry) => entry.userId === actorUserId)?.id ?? null
-      : null;
+    const myEntryId = entries.find((entry) => actorEntryIds.has(entry.id))?.id ?? null;
+    const canViewSelectedEntry = (entryId: string): boolean =>
+      entries.some((entry) => entry.id === entryId) && (picksRevealed || actorEntryIds.has(entryId));
     const resolvedSelectedEntryId =
-      input.selectedEntryId && entries.some((entry) => entry.id === input.selectedEntryId)
+      input.selectedEntryId && canViewSelectedEntry(input.selectedEntryId)
         ? input.selectedEntryId
         : myEntryId;
     const selectedEntry = resolvedSelectedEntryId
@@ -383,12 +436,14 @@ export class DraftService {
         ? entries.every((entry) => entry.pickCount >= rosterSize)
         : false;
     const status = mapContestStatusToDraftStatus(contest.status, isComplete);
-    // Against `status`, not `isComplete`: a COMPLETED contest closes submission even while
-    // some roster is still short, which is the whole difference between the two.
+    // Against the contest's own status, not `isComplete`: only an OPEN contest takes picks
+    // (`submitSelection` refuses the rest), so a LOCKED, ACTIVE or COMPLETED one closes
+    // submission even while some roster is still short.
     const canCurrentUserSubmit =
       myEntryId !== null
       && rosterSize > 0
       && myEntryPickCount < rosterSize
+      && contest.status === ContestStatus.OPEN
       && status !== DraftStatus.COMPLETE;
 
     return {
@@ -400,7 +455,7 @@ export class DraftService {
       status,
       entries,
       picks: this.buildPickHistory({
-        picks,
+        picks: visiblePicks,
         contestEntryById,
         tierByParticipantId,
         priceBySportEventParticipantId,

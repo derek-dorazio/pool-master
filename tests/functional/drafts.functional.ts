@@ -866,19 +866,14 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       body: { entryId: fixture.challengerEntryId, participantId: fixture.firstEventParticipantId },
     });
 
-    expect(samePickResponse.data?.draftPickHistories).toHaveLength(2);
-    expect(samePickResponse.data?.draftPickHistories).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          entryId: fixture.commissionerEntryId,
-          participantId: fixture.firstEventParticipantId,
-        }),
-        expect.objectContaining({
-          entryId: fixture.challengerEntryId,
-          participantId: fixture.firstEventParticipantId,
-        }),
-      ]),
-    );
+    // Both entries now hold it, but while the contest is OPEN each team's history carries only
+    // its own picks, so the challenger sees one row, their own.
+    expect(samePickResponse.data?.draftPickHistories).toEqual([
+      expect.objectContaining({
+        entryId: fixture.challengerEntryId,
+        participantId: fixture.firstEventParticipantId,
+      }),
+    ]);
     expect(samePickResponse.data?.availableParticipantIds).toContain(fixture.firstEventParticipantId);
     expect(samePickResponse.data?.isComplete).toBe(true);
   });
