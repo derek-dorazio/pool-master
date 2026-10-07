@@ -109,7 +109,7 @@ export class AppSettingsService {
     return this.entries.get(key)?.group ?? null;
   }
 
-    /** The value a group currently resolves to. A copy: changing it changes nothing. */
+  /** The value a group currently resolves to. A copy: changing it changes nothing. */
   get<T>(group: SettingsGroup<T>): T {
     return structuredClone(this.entry(group).state.value as T);
   }
