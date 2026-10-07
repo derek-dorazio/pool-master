@@ -717,8 +717,8 @@ hardening epic.
 - **Merged coverage** — not in `ci.yml`. It is the separate `coverage.yml` workflow.
   See *Merged coverage and the coverage.yml workflow* below.
 - **`service-build`** — backend service Docker build verification.
-- **`mock-contest-feed-provider-build`** — mock provider Docker build
-  verification.
+- **`service-mock-provider-build`** — mock contest feed provider lint,
+  typecheck, `tsc` build and its own test suite (see *Test suites* §6).
 - **`poolmaster-build`** — webapp build verification.
 - **`deploy-publish-images`** (push to `main` only) — builds and pushes
   Docker images to ECR and registers ECS task definitions. Deploys nothing.
@@ -777,13 +777,13 @@ answer.
 
 ## Test suites
 
-Five distinct test suites cover the codebase. Each has its own runner,
+Six distinct test suites cover the codebase. Each has its own runner,
 configuration, scope, and CI mapping. The suites are layered: unit
 tests cover service logic in isolation, integration tests exercise
 real database interactions, functional API tests verify the full
 backend stack through the generated SDK, webapp unit tests cover React
-components and hooks, and browser E2E tests verify the deployed
-release.
+components and hooks, browser E2E tests verify the deployed
+release, and the mock contest feed provider has its own suite.
 
 ### 1. Backend unit (`tests/unit/**/*.test.ts`)
 
@@ -879,6 +879,15 @@ release.
   - `poolmaster-browser-e2e` — push-to-main only, after `deploy-qa` succeeds. `@smoke` only, against the deployed QA frontend at `qa.ultimateofficepoolmanager.com`. Reads the `POOLMASTER_E2E_ADMIN_IDENTIFIER` and `POOLMASTER_E2E_ADMIN_PASSWORD` repository secrets.
 - **Required pre-push gate:** none. E2E is a **CI-only** signal; per `AGENTS.md` Quality Gates, browser E2E falls under "CI-only follow-up signals" and isn't required pre-push.
 - **Coverage policy:** N/A. E2E doesn't produce coverage artifacts.
+
+### 6. Mock contest feed provider (`packages/mock-contest-feed-provider/src/**/*.test.ts`)
+
+- **Runner:** Node's built-in `node --test`, with `--import tsx` for TypeScript. The glob is quoted in the package script so Node expands it, not the shell; an unquoted `**` in `sh` only matches one directory level.
+- **Scope:** the mock provider's live golf simulation, scenario store, sandbox events and tour seed validation. The mock drives all live-score testing, so a regression here breaks fake-event testing everywhere downstream.
+- **Environment:** Node only. No database, no built `@poolmaster/shared`.
+- **Local command:** `npm test --workspace @poolmaster/mock-contest-feed-provider`
+- **CI job:** `service-mock-provider-build`, after the package's lint, typecheck and build (#392).
+- **Coverage policy:** none collected.
 
 ### Merged coverage and the coverage.yml workflow
 
