@@ -51,6 +51,12 @@ function getErrorMessage(error: unknown) {
   return 'We could not accept this invitation. Please try again.';
 }
 
+const UNUSABLE_INVITATION_MESSAGES: Partial<Record<string, string>> = {
+  EXPIRED: 'This invitation has expired. Ask the commissioner for a new one.',
+  REVOKED: 'This invitation was withdrawn. Ask the commissioner for a new one.',
+  ACCEPTED: 'This invitation has already been used.',
+};
+
 export function JoinLeaguePage() {
   const logger = getLogger().child({
     feature: 'join-league-page',
@@ -58,13 +64,16 @@ export function JoinLeaguePage() {
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-  const [teamName, setTeamName] = useState('');
+  // null until the viewer types: the field shows the default built from their name, which is
+  // only known once the signed-in user has loaded.
+  const [teamNameDraft, setTeamNameDraft] = useState<string | null>(null);
   const [selectedIconKey, setSelectedIconKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
   const [teamSetupSeedInviteCode, setTeamSetupSeedInviteCode] = useState<string | null>(null);
   const defaultTeamNameSeed = useMemo(
     () => buildDefaultTeamName(user?.firstName, user?.lastName),
     [user?.firstName, user?.lastName],
   );
+  const teamName = teamNameDraft ?? defaultTeamNameSeed;
   const invitationQuery = useQuery({
     queryKey: getInvitationPreviewQueryKey(inviteCode),
     queryFn: () => fetchInvitationPreview(inviteCode),
@@ -113,10 +122,10 @@ export function JoinLeaguePage() {
       return;
     }
 
-    setTeamName(defaultTeamNameSeed);
+    setTeamNameDraft(null);
     setSelectedIconKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
     setTeamSetupSeedInviteCode(inviteCode);
-  }, [defaultTeamNameSeed, inviteCode, teamSetupSeedInviteCode]);
+  }, [inviteCode, teamSetupSeedInviteCode]);
 
   const acceptMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -146,8 +155,17 @@ export function JoinLeaguePage() {
               body: { name: nextTeamName, iconKey: selectedIconKey },
             });
 
+            // The join has already happened, so a failed rename must not read as a failed
+            // join: the viewer goes into the league and can rename the team from Team Home.
             if (!updateResponse.data?.squad) {
-              throwApiError(updateResponse.error, 'Team update response is missing data.');
+              logger.warn(
+                {
+                  action: 'leagueInvite.teamSetup.failed',
+                  data: { inviteCode, leagueId, squadId: myTeam.id },
+                  err: updateResponse.error,
+                },
+                'Joined the league but could not save the chosen team name and icon',
+              );
             }
           }
         }
@@ -227,6 +245,9 @@ export function JoinLeaguePage() {
   }, [inviteCode, isAuthenticated]);
 
   const selectedIcon = getTeamIconOption(selectedIconKey);
+  const unusableInvitationMessage = invitationQuery.data
+    ? UNUSABLE_INVITATION_MESSAGES[invitationQuery.data.status] ?? null
+    : null;
 
   if (redirectMessage) {
     return (
@@ -294,6 +315,7 @@ export function JoinLeaguePage() {
               title="Ready to join"
             />
           ) : null}
+          {unusableInvitationMessage ? <p className="mt-4">{unusableInvitationMessage}</p> : null}
           {acceptMutation.isPending ? <p className="mt-4">Accepting invitation...</p> : null}
           {acceptMutation.isError ? <p className="mt-4">{getErrorMessage(acceptMutation.error)}</p> : null}
           {acceptMutation.isSuccess ? <p className="mt-4">Invitation accepted. Redirecting you to the league...</p> : null}
@@ -310,7 +332,7 @@ export function JoinLeaguePage() {
               <Input
                 data-testid="join-league-team-name"
                 maxLength={100}
-                onChange={(event) => setTeamName(event.target.value)}
+                onChange={(event) => setTeamNameDraft(event.target.value)}
                 value={teamName}
               />
             </FormField>
@@ -357,7 +379,7 @@ export function JoinLeaguePage() {
         </div>
       </div>
 
-      {invitationQuery.data ? (
+      {invitationQuery.data && !unusableInvitationMessage ? (
         <div className="mt-5 flex gap-3">
           <Button
             data-testid="invite-accept"
