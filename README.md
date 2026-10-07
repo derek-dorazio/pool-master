@@ -18,8 +18,8 @@ npm run dev:start
 ```
 
 `npm run dev:start` is the whole setup path. It starts the Docker services, applies
-migrations, runs the bootstrap step and both dev servers, and prints every local URL it
-started. Copy `.env.example` to `.env` first if you need non-default settings.
+migrations (which also seed the reference data), starts both dev servers, and prints every
+local URL it started. Copy `.env.example` to `.env` first if you need non-default settings.
 
 This README deliberately does not restate commands, the stack, or the directory layout:
 `package.json` scripts are the command reference, the manifests are the stack, and the
