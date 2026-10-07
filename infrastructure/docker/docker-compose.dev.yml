@@ -35,13 +35,6 @@ services:
       - localstack-data:/var/lib/localstack
       - ./localstack-init:/etc/localstack/init
 
-  # Push notification mock — captures APNs/FCM payloads, log at GET http://localhost:3099/push-log
-  push-mock:
-    build:
-      context: ../../packages/push-mock-server
-    ports:
-      - "3099:3099"
-
 volumes:
   pgdata:
   localstack-data:
