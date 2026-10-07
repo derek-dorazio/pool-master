@@ -46,8 +46,6 @@ locals {
   qa_only_services                     = var.environment == "qa" ? ["mock-contest-feed-provider"] : []
   services                             = concat(["core-api"], local.qa_only_services)
   mock_provider_base_url               = "http://mock-contest-feed-provider.${var.environment}.${var.internal_service_discovery_domain}:3105"
-  # #442 — QA sends no email until SES delivery is finished (#120); invites still succeed there.
-  resolved_email_provider              = var.email_provider != "" ? var.email_provider : (var.environment == "qa" ? "disabled" : "ses")
   resolved_sport_data_default_provider = trimspace(var.sport_data_default_provider) != "" ? var.sport_data_default_provider : (var.environment == "qa" ? "mock-contest-feed" : "")
   resolved_sport_data_provider_bindings_json = trimspace(var.sport_data_provider_bindings_json) != "" ? var.sport_data_provider_bindings_json : (
     var.environment == "qa"
@@ -616,11 +614,11 @@ resource "aws_ecs_task_definition" "core_api" {
     portMappings = [{ containerPort = 3000, protocol = "tcp" }]
     environment = concat(local.common_env, [
       { name = "PORT", value = "3000" },
-      { name = "EMAIL_PROVIDER", value = local.resolved_email_provider },
+      # Whether email is sent (off on QA until #120) is the EMAIL_CONFIG app setting, not env (#450).
+      { name = "EMAIL_PROVIDER", value = "ses" },
       { name = "APP_BASE_URL", value = local.app_url },
       { name = "AWS_REGION", value = var.region },
       { name = "SES_FROM_EMAIL", value = local.ses_from_email },
-      { name = "EMAIL_REPLY_TO", value = local.ses_from_email },
       { name = "ENVIRONMENT", value = var.environment },
       { name = "AUTO_START_SCHEDULER", value = "true" },
     ])
@@ -639,14 +637,6 @@ resource "aws_ecs_task_definition" "core_api" {
       }
     }
   }])
-
-  # #442 — "disabled" drops every system email while each send reports success; never on prod.
-  lifecycle {
-    precondition {
-      condition     = !(var.environment == "prod" && local.resolved_email_provider == "disabled")
-      error_message = "email_provider = \"disabled\" is not allowed on prod: it silently drops every system email."
-    }
-  }
 }
 
 resource "aws_service_discovery_private_dns_namespace" "qa_internal" {

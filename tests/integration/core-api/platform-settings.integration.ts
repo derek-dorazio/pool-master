@@ -23,12 +23,20 @@ import {
 } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
 import { SETTINGS_GROUPS } from '../../../packages/core-api/src/modules/platform/settings-groups';
 import {
+  SettingsChangeListSchema,
+  SettingsGroupListSchema,
+  SettingsGroupSchema,
+  type SettingsGroup,
+} from '@poolmaster/shared/dto/settings.dto';
+import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+import {
   cleanupTestData,
   createTestUser,
   getApp,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
+  withoutJsonBodyHeaders,
 } from '../helpers';
 
 function coreApiTask(): AppSettingsService {
@@ -143,6 +151,95 @@ describe('settings registry on Postgres', () => {
     expect(task.get(POLL_INTERVAL_SETTINGS).standings).toBe(10000);
     const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: POLL_INTERVAL_SETTINGS.key } });
     expect(stored?.configJson).toEqual({ standings: 'fast' });
+  });
+});
+
+describe('settings routes (contract verification)', () => {
+  it('lists every group to a root admin and refuses everyone else', async () => {
+    const rootAdmin = await createTestUser({ displayName: 'Settings List Admin', isRootAdmin: true });
+    const member = await createTestUser({ displayName: 'Settings List Member' });
+
+    const list = await getApp().inject({ method: 'GET', url: '/api/v1/platform/settings', headers: rootAdmin.headers });
+    const refused = await getApp().inject({ method: 'GET', url: '/api/v1/platform/settings', headers: member.headers });
+
+    expect(list.statusCode).toBe(200);
+    expect(SettingsGroupListSchema.safeParse(list.json()).success).toBe(true);
+    expect(list.json<{ groups: SettingsGroup[] }>().groups.map((group) => group.key))
+      .toEqual(['POLL_INTERVAL_CONFIG', 'INGESTION_SCHEDULE_CONFIG', 'EMAIL_CONFIG']);
+    expect(refused.statusCode).toBe(403);
+  });
+
+  it('saves a whole value, names the admin, records it in the history, and refuses a second save against the old version with 409', async () => {
+    const rootAdmin = await createTestUser({
+      displayName: 'Settings Save Admin', firstName: 'Sam', lastName: 'Saver', isRootAdmin: true,
+    });
+    const before = (await getApp().inject({
+      method: 'GET', url: '/api/v1/platform/settings/POLL_INTERVAL_CONFIG', headers: rootAdmin.headers,
+    })).json<SettingsGroup>();
+    const save = (draft: number) => getApp().inject({
+      method: 'PUT',
+      url: '/api/v1/platform/settings/POLL_INTERVAL_CONFIG',
+      headers: rootAdmin.headers,
+      payload: { key: 'POLL_INTERVAL_CONFIG', value: { ...before.value, draft }, expectedUpdatedAt: before.updatedAt },
+    });
+
+    const saved = await save(12000);
+    const stale = await save(14000);
+    const history = await getApp().inject({
+      method: 'GET', url: '/api/v1/platform/settings/POLL_INTERVAL_CONFIG/history', headers: rootAdmin.headers,
+    });
+
+    expect(saved.statusCode).toBe(200);
+    expect(SettingsGroupSchema.safeParse(saved.json()).success).toBe(true);
+    const savedGroup = saved.json<SettingsGroup>();
+    expect(savedGroup.source).toBe('stored');
+    expect(savedGroup.updatedBy).toEqual({ id: rootAdmin.user.id, name: 'Sam Saver' });
+    expect(savedGroup.value).toEqual({ ...before.value, draft: 12000 });
+    expect(stale.statusCode).toBe(409);
+    expect(ErrorEnvelopeSchema.safeParse(stale.json()).success).toBe(true);
+    expect(stale.json<{ error: { code: string } }>().error.code).toBe('SETTINGS_CONFLICT');
+    expect(history.statusCode).toBe(200);
+    expect(SettingsChangeListSchema.safeParse(history.json()).success).toBe(true);
+    expect(history.json<{ changes: Array<{ newValue: { draft: number } }> }>().changes.map((change) => change.newValue.draft))
+      .toEqual([12000]);
+  });
+
+  it('refuses an invalid value with 400 and an unknown key with 404, storing nothing', async () => {
+    const rootAdmin = await createTestUser({ displayName: 'Settings Invalid Admin', isRootAdmin: true });
+
+    const invalid = await getApp().inject({
+      method: 'PUT',
+      url: '/api/v1/platform/settings/POLL_INTERVAL_CONFIG',
+      headers: rootAdmin.headers,
+      payload: {
+        key: 'POLL_INTERVAL_CONFIG',
+        value: { standings: 1, draft: 10000, contestStatus: 30000, notifications: 30000, default: 30000 },
+        expectedUpdatedAt: null,
+      },
+    });
+    const unknown = await getApp().inject({
+      method: 'POST', url: '/api/v1/platform/settings/NOT_A_GROUP/reset', headers: withoutJsonBodyHeaders(rootAdmin.headers),
+    });
+
+    expect(invalid.statusCode).toBe(400);
+    expect(ErrorEnvelopeSchema.safeParse(invalid.json()).success).toBe(true);
+    expect(unknown.statusCode).toBe(404);
+    expect(unknown.json<{ error: { code: string } }>().error.code).toBe('SETTINGS_GROUP_NOT_FOUND');
+    expect(await getPrisma().platformRuntimeConfig.count()).toBe(0);
+  });
+
+  it('resets a group to its defaults, stored and recorded like any other save', async () => {
+    const rootAdmin = await createTestUser({ displayName: 'Settings Reset Admin', isRootAdmin: true });
+
+    const reset = await getApp().inject({
+      method: 'POST', url: '/api/v1/platform/settings/INGESTION_SCHEDULE_CONFIG/reset', headers: withoutJsonBodyHeaders(rootAdmin.headers),
+    });
+
+    expect(reset.statusCode).toBe(200);
+    expect(SettingsGroupSchema.safeParse(reset.json()).success).toBe(true);
+    expect(reset.json<SettingsGroup>()).toEqual(expect.objectContaining({ source: 'stored' }));
+    expect(reset.json<SettingsGroup>().value).toEqual(reset.json<SettingsGroup>().defaults);
+    expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(1);
   });
 });
 

@@ -196,6 +196,11 @@ export const QueryKeys = {
     manageUsers: ['poolmaster', 'root-admin', 'manage-users'] as const,
     pollConfig: ['poolmaster', 'root-admin', 'poll-config'] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,
+    // Every settings group (#450). History sits under the same prefix, so invalidating
+    // `settings` after any save refreshes each group's recent changes too.
+    settings: ['poolmaster', 'root-admin', 'settings'] as const,
+    settingsHistory: (key: QueryKeyId) =>
+      ['poolmaster', 'root-admin', 'settings', key, 'history'] as const,
     providerSyncRuns: ['poolmaster', 'root-admin', 'provider-sync-runs'] as const,
     unmappedProviderParticipants: ['poolmaster', 'root-admin', 'unmapped-provider-participants'] as const,
     participantCandidates: (sportId: QueryKeyId, search: QueryKeyId) =>

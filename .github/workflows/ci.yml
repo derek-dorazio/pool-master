@@ -626,8 +626,21 @@ jobs:
             exit 1
           fi
           echo "Build served at $POOLMASTER_E2E_BASE_URL with /api reaching core-api"
+      # #470: the browser download is cached per Playwright version, and the install script
+      # bounds each attempt and retries, so a stalled apt mirror costs minutes, not the job.
+      - name: Resolve the Playwright version
+        id: playwright-version
+        run: |
+          VERSION=$(node -p "require('@playwright/test/package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
       - name: Install Playwright Chromium
-        run: cd clients/poolmaster && npx playwright install --with-deps chromium
+        timeout-minutes: 12
+        run: scripts/ci-install-playwright-chromium.sh
       - name: Run PoolMaster browser E2E against the local stack
         run: npm run test:poolmaster:browser-e2e
       - name: Collect server logs
@@ -1488,7 +1501,8 @@ jobs:
   poolmaster-browser-e2e:
     name: poolmaster-browser-e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 20, not 15: the Playwright install alone may use 12 when its retries run (#470).
+    timeout-minutes: 20
     # Checks the release deploy-qa rolled out. Since #191 a failed migration
     # stops the rollout, so there is nothing new to check and this is skipped;
     # deploy-health-issue is what reports that failure.
@@ -1523,8 +1537,21 @@ jobs:
           echo "Expected deployed PoolMaster frontend release $EXPECTED_RELEASE was not observed."
           exit 1
       - run: npm ci
+      # #470: the browser download is cached per Playwright version, and the install script
+      # bounds each attempt and retries, so a stalled apt mirror costs minutes, not the job.
+      - name: Resolve the Playwright version
+        id: playwright-version
+        run: |
+          VERSION=$(node -p "require('@playwright/test/package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
       - name: Install Playwright Chromium
-        run: cd clients/poolmaster && npx playwright install --with-deps chromium
+        timeout-minutes: 12
+        run: scripts/ci-install-playwright-chromium.sh
       # Only the @smoke specs. Since #84 and #280 that includes the journey's
       # acts 1-3, which write a run-named golf catalog, league, contest, entry
       # and two users to QA and tear them down in afterAll (plans/130 "Owner

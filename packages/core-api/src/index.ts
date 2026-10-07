@@ -32,12 +32,14 @@ import { IngestionConfigService } from './modules/platform/ingestion-config-serv
 import { PollConfigService } from './modules/platform/poll-config-service';
 import { AppSettingsService } from './modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from './modules/platform/settings-groups';
+import { PlatformSettingsService } from './modules/platform/platform-settings-service';
 import { ingestionModule } from './modules/ingestion/routes';
 import { IngestionService } from './modules/ingestion/ingestion-service';
 import {
   PrismaParticipantProviderMappingRepository,
   PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
+  PrismaUserRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
 } from './adapters';
@@ -59,6 +61,8 @@ import { registerConfiguredProviders } from './modules/ingestion/core/provider-b
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createGolfContestSettlementService } from './modules/contests/wiring';
 import {
+  EMAIL_SETTINGS,
+  SettingsAwareMailDeliveryProvider,
   createMailDeliveryProvider,
   readApplicationBaseUrl,
   readMailDeliveryConfig,
@@ -73,14 +77,19 @@ export function buildApp() {
 
   const registry = new ProviderRegistry();
   registerConfiguredProviders(registry, process.env, app.log);
-  const mailDeliveryConfig = readMailDeliveryConfig(process.env);
-  if (mailDeliveryConfig.provider === 'disabled') {
-    app.log.warn({
-      action: 'mailDelivery.startup.disabled',
-      data: { provider: mailDeliveryConfig.provider },
-    }, 'Email delivery is disabled (EMAIL_PROVIDER=disabled); no email will be sent');
-  }
-  const mailDelivery = createMailDeliveryProvider(mailDeliveryConfig, app.log);
+  const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
+  const appSettings = new AppSettingsService({
+    repository: runtimeConfigRepository,
+    groups: SETTINGS_GROUPS,
+    env: process.env,
+    logger: app.log,
+  });
+  // One mail delivery for the whole app; EMAIL_CONFIG decides on every send whether it goes out.
+  const mailDelivery = new SettingsAwareMailDeliveryProvider(
+    createMailDeliveryProvider(readMailDeliveryConfig(process.env), app.log),
+    () => appSettings.get(EMAIL_SETTINGS),
+    app.log,
+  );
   const appBaseUrl = readApplicationBaseUrl(process.env);
   const golfContestSettlement = createGolfContestSettlementService(prisma, app.log);
   const eventLifecycleService = createEventLifecycleService(prisma, {
@@ -96,15 +105,14 @@ export function buildApp() {
     eventLifecycleService,
     app.log,
   );
-  const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
-  const appSettings = new AppSettingsService({
-    repository: runtimeConfigRepository,
-    groups: SETTINGS_GROUPS,
-    env: process.env,
-    logger: app.log,
-  });
   const pollConfigService = new PollConfigService(appSettings, app.log);
   const ingestionConfigService = new IngestionConfigService(appSettings, app.log);
+  const platformSettingsService = new PlatformSettingsService({
+    settings: appSettings,
+    runtimeConfigs: runtimeConfigRepository,
+    users: new PrismaUserRepository(prisma),
+    logger: app.log,
+  });
 
   // =========================================================================
   // Core plugins
@@ -173,15 +181,15 @@ export function buildApp() {
   // =========================================================================
   // Domain modules (protected by auth-guard)
   // =========================================================================
-  app.register(leaguesModule, { prefix: '/api/v1/leagues' });
+  app.register(leaguesModule, { prefix: '/api/v1/leagues', mailDelivery });
   app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
-  app.register(invitationsModule, { prefix: '/api/v1/invitations' });
+  app.register(invitationsModule, { prefix: '/api/v1/invitations', mailDelivery });
   app.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations' });
-  app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
+  app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', mailDelivery });
   app.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',
   });
-  app.register(contestsByIdModule, { prefix: '/api/v1/contests' });
+  app.register(contestsByIdModule, { prefix: '/api/v1/contests', mailDelivery });
   app.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   app.register(eventsModule, {
     prefix: '/api/v1/events',
@@ -192,7 +200,7 @@ export function buildApp() {
   app.register(sportsModule, { prefix: '/api/v1/sports' });
   app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
-  app.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService });
+  app.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService, platformSettingsService });
   app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
 

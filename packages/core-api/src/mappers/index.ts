@@ -13,3 +13,4 @@ export * from './contest-management.mapper';
 export * from './version.mapper';
 export * from './ingestion.mapper';
 export * from './drafts.mapper';
+export * from './platform-settings.mapper';

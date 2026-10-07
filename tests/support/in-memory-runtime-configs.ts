@@ -74,5 +74,10 @@ export function inMemoryRuntimeConfigs(): InMemoryRuntimeConfigs {
       });
       return { status: 'saved', config: structuredClone(saved) };
     },
+    findRecentChanges: async (configKey, limit) => history
+      .filter((change) => change.configKey === configKey)
+      .reverse()
+      .slice(0, limit)
+      .map((change) => structuredClone(change)),
   };
 }

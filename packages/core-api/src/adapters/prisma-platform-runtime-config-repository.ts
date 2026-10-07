@@ -4,13 +4,17 @@
  */
 
 import { Prisma } from '@prisma/client';
-import type { PrismaClient, PlatformRuntimeConfig as PlatformRuntimeConfigRow } from '@prisma/client';
+import type {
+  PrismaClient,
+  PlatformRuntimeConfig as PlatformRuntimeConfigRow,
+  PlatformRuntimeConfigHistory as PlatformRuntimeConfigHistoryRow,
+} from '@prisma/client';
 import type {
   PlatformRuntimeConfigRepository,
   PlatformRuntimeConfigSave,
   PlatformRuntimeConfigSaveResult,
 } from '@poolmaster/shared/db';
-import type { PlatformRuntimeConfig } from '@poolmaster/shared/domain';
+import type { PlatformRuntimeConfig, PlatformRuntimeConfigChange } from '@poolmaster/shared/domain';
 
 export class PrismaPlatformRuntimeConfigRepository implements PlatformRuntimeConfigRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -61,6 +65,26 @@ export class PrismaPlatformRuntimeConfigRepository implements PlatformRuntimeCon
       throw error;
     }
   }
+
+  async findRecentChanges(configKey: string, limit: number): Promise<PlatformRuntimeConfigChange[]> {
+    const rows = await this.prisma.platformRuntimeConfigHistory.findMany({
+      where: { configKey },
+      orderBy: [{ changedAt: 'desc' }, { id: 'desc' }],
+      take: limit,
+    });
+    return rows.map(toPlatformRuntimeConfigChange);
+  }
+}
+
+function toPlatformRuntimeConfigChange(row: PlatformRuntimeConfigHistoryRow): PlatformRuntimeConfigChange {
+  return {
+    id: row.id,
+    configKey: row.configKey,
+    previousJson: row.previousJson,
+    newJson: row.newJson,
+    changedById: row.changedById,
+    changedAt: row.changedAt,
+  };
 }
 
 function toPlatformRuntimeConfig(row: PlatformRuntimeConfigRow): PlatformRuntimeConfig {

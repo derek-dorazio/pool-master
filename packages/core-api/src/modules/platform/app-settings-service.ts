@@ -99,6 +99,16 @@ export class AppSettingsService {
     }
   }
 
+  /** Every registered group, in registry order. */
+  groups(): SettingsGroup<unknown>[] {
+    return [...this.entries.values()].map((entry) => entry.group);
+  }
+
+  /** The registered group stored under `key`, or null. */
+  findGroup(key: string): SettingsGroup<unknown> | null {
+    return this.entries.get(key)?.group ?? null;
+  }
+
   /** The value a group currently resolves to. A copy: changing it changes nothing. */
   get<T>(group: SettingsGroup<T>): T {
     return structuredClone(this.entry(group).state.value as T);
