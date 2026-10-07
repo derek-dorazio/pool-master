@@ -62,7 +62,11 @@ interface WorldOptions {
   withdrawn?: string[];
   squadMemberships?: SquadMembership[];
   leagueMemberships?: LeagueMembership[];
+  /** The event's scheduled start; the clock reads NOW. Defaults to a day after NOW. */
+  eventStartDate?: Date;
 }
+
+const NOW = new Date('2026-04-09T12:00:00.000Z');
 
 function squadMembership(
   squadId: string,
@@ -189,7 +193,14 @@ function buildWorld(options: WorldOptions = {}) {
   const fieldRowById = new Map(field.map((row) => [row.id, row]));
   const participantById = new Map(participants.map((participant) => [participant.id, participant]));
 
-  const service = new DraftService({
+  const sportEvent = {
+    id: EVENT_ID,
+    status: 'SCHEDULED',
+    startDate: options.eventStartDate ?? new Date(NOW.getTime() + 24 * 60 * 60 * 1000),
+  };
+  const deps = {
+    sportEvents: { findById: async (id: string) => (id === EVENT_ID ? sportEvent : null) },
+    now: () => NOW,
     contests: fakeContestRepo({ findById: async (id: string) => (id === CONTEST_ID ? contest : null) }),
     configurations: fakeContestConfigurationRepo({ findByContest: async () => configuration }),
     entries: fakeContestEntryRepo({ findByContest: async () => entries }),
@@ -255,7 +266,8 @@ function buildWorld(options: WorldOptions = {}) {
       getEffectiveTiersForSportEvent: async () => tierGroups,
       getEffectiveValuationsForSportEvent: async () => valuations,
     } as unknown as SportEventTierService,
-  });
+  };
+  const service = new DraftService(deps);
 
   return {
     service,
@@ -480,6 +492,48 @@ describe('Tiered selection — picks change only while the contest is open', () 
 
     expect(room.canCurrentUserSubmit).toBe(false);
     expect(room.currentEntryId).toBeNull();
+  });
+});
+
+describe('Tiered selection — picks close when the event starts, whatever the contest status says', () => {
+  const started = new Date(NOW.getTime() - 60 * 1000);
+
+  it('accepts a pick before the event\'s scheduled start', async () => {
+    const world = buildWorld({ eventStartDate: new Date(NOW.getTime() + 60 * 1000) });
+
+    await world.pickFor(ENTRY_A, 'a');
+
+    expect(world.held(ENTRY_A)).toEqual(['a']);
+  });
+
+  it('refuses a new pick with 409 CONTEST_ENTRY_LOCKED once the start time has passed, though the contest is still OPEN', async () => {
+    const world = buildWorld({ eventStartDate: started });
+
+    await expect(world.pickFor(ENTRY_A, 'a')).rejects.toMatchObject({
+      code: 'CONTEST_ENTRY_LOCKED',
+      statusCode: 409,
+    });
+    expect(world.held(ENTRY_A)).toEqual([]);
+  });
+
+  it('refuses to unselect a held golfer once the start time has passed', async () => {
+    const world = buildWorld({ eventStartDate: started });
+    world.picks.push(...(await (async () => {
+      const before = buildWorld();
+      await before.pickFor(ENTRY_A, 'a');
+      return before.picks;
+    })()));
+
+    await expect(world.pickFor(ENTRY_A, 'a')).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
+    expect(world.held(ENTRY_A)).toEqual(['a']);
+  });
+
+  it('tells the room an OPEN contest whose event has started takes no picks', async () => {
+    const world = buildWorld({ eventStartDate: started });
+
+    const room = await world.service.getDraftState({ contestId: CONTEST_ID, actorUserId: ALICE });
+
+    expect(room.canCurrentUserSubmit).toBe(false);
   });
 });
 
