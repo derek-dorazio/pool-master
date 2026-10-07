@@ -29,6 +29,13 @@ concurrency:
 env:
   AWS_REGION: us-east-2
 
+# Every job carries `timeout-minutes`. Without one GitHub waits six hours: on 2026-10-06 a PR
+# run's all-contract-gates (normally under a minute and a half) hung from 23:29 to 05:30 and held
+# that PR's verdict all night. Each limit is about three times the job's longest run across 80
+# recent runs, ten minutes at the least. deploy-qa's is wider still, because its two ECS
+# stability waits can each take ten minutes and stopping it mid-rollout is the hazard the
+# concurrency note above describes. Raise a limit when a job's normal time grows; don't remove it.
+
 jobs:
   # #300 — which areas this change can affect, so jobs that cannot be affected are skipped.
   # Narrative and the reasoning behind every rule: plans/146-ci-path-filtered-jobs.md.
@@ -43,6 +50,7 @@ jobs:
   changes:
     name: changes
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       code: ${{ steps.classify.outputs.code }}
       service: ${{ steps.classify.outputs.service }}
@@ -72,6 +80,7 @@ jobs:
   all-contract-gates:
     name: all-contract-gates
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
         with:
@@ -111,6 +120,7 @@ jobs:
   service-lint-typecheck:
     name: service-lint-typecheck
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [all-contract-gates, changes]
     # #300 — see plans/146. A documentation-only change cannot break lint or typecheck.
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
@@ -164,6 +174,7 @@ jobs:
   service-unit-tests:
     name: service-unit-tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [all-contract-gates, changes]
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
@@ -200,6 +211,7 @@ jobs:
   service-integration-tests:
     name: service-integration-tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [all-contract-gates, changes]
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
@@ -260,6 +272,7 @@ jobs:
   schema-migration-drift:
     name: schema-migration-drift
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [all-contract-gates, changes]
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
@@ -303,6 +316,7 @@ jobs:
   service-functional-api-tests:
     name: service-functional-api-tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [all-contract-gates, changes]
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
@@ -356,6 +370,7 @@ jobs:
   poolmaster-unit-tests:
     name: poolmaster-unit-tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [all-contract-gates, changes]
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
@@ -436,6 +451,7 @@ jobs:
   service-build:
     name: service-build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: service-lint-typecheck
     steps:
       - uses: actions/checkout@v6
@@ -450,6 +466,7 @@ jobs:
   service-mock-provider-build:
     name: service-mock-provider-build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: service-lint-typecheck
     steps:
       - uses: actions/checkout@v6
@@ -466,6 +483,7 @@ jobs:
   poolmaster-build:
     name: poolmaster-build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [all-contract-gates, changes]
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
@@ -501,6 +519,7 @@ jobs:
   poolmaster-browser-e2e-local:
     name: poolmaster-browser-e2e-local
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     needs: [all-contract-gates, changes]
     # #300 — see plans/146. Gated on `code`, not `client`: it runs the whole stack, core-api included.
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
@@ -642,6 +661,7 @@ jobs:
   deploy-publish-images:
     name: deploy-publish-images
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     # The three service suite jobs; coverage reporting gates nothing and is not here (#294, #302).
     # service-lint-typecheck is also reached through service-build; it is listed so the lint
     # gate stays visible now that the test jobs no longer wait on it.
@@ -1007,6 +1027,7 @@ jobs:
   deploy-migrate-qa:
     name: deploy-migrate-qa
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: deploy-publish-images
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
@@ -1086,6 +1107,7 @@ jobs:
   deploy-qa:
     name: deploy-qa
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     needs: [deploy-publish-images, deploy-migrate-qa]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
@@ -1466,6 +1488,7 @@ jobs:
   poolmaster-browser-e2e:
     name: poolmaster-browser-e2e
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # Checks the release deploy-qa rolled out. Since #191 a failed migration
     # stops the rollout, so there is nothing new to check and this is skipped;
     # deploy-health-issue is what reports that failure.
@@ -1546,6 +1569,7 @@ jobs:
   deploy-health-issue:
     name: deploy-health-issue
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [deploy-publish-images, deploy-migrate-qa, deploy-qa, poolmaster-browser-e2e]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
@@ -1580,6 +1604,7 @@ jobs:
   main-ci-health-issue:
     name: main-ci-health-issue
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs:
       - changes
       - all-contract-gates
