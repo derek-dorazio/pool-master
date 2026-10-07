@@ -1073,10 +1073,30 @@ export interface paths {
         get?: never;
         /**
          * Update a contest's configuration
-         * @description Updates an existing contest's configuration and returns it as getContestConfiguration does. Commissioner only. Refused with 409 CONTEST_CONFIGURATION_SETTLED while the contest is COMPLETED: its result is frozen against the configuration it settled under, and reopening the contest is the path back.
+         * @description Updates a draft contest's configuration and returns it as getContestConfiguration does. Commissioner only. Refused with 409 CONTEST_CONFIGURATION_LOCKED once the contest is no longer DRAFT: opening it to the league locks its settings for good.
          */
         put: operations["updateContestConfiguration"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Open a draft contest to the league
+         * @description Moves a DRAFT contest to OPEN so league members can see and enter it, and returns it as getContestConfiguration does. Commissioner only. There is no undo: from here its name, configuration and existence are locked. The event's field need not be ready; entries wait on it.
+         */
+        post: operations["openContest"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1235,7 +1255,7 @@ export interface paths {
         put?: never;
         /**
          * Close a contest early
-         * @description Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop.
+         * @description Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop. A draft is refused with 409 CONTEST_CLOSE_STATUS_INVALID: open it to the league or delete it instead.
          */
         post: operations["closeContest"];
         delete?: never;
@@ -13548,7 +13568,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description CONTEST_CONFIGURATION_SETTLED — the contest is COMPLETED; reopen it before changing its configuration. */
+            /** @description CONTEST_CONFIGURATION_LOCKED — the contest has been opened to the league (it is not DRAFT), so its configuration can no longer change. */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -13568,6 +13588,214 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    openContest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Managed-contest detail response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Golf-first contest-management detail returned to commissioner tooling. */
+                        contest: {
+                            /** @description Contest identifier. */
+                            id: string;
+                            /** @description League that owns the contest. */
+                            leagueId: string;
+                            /** @description Sport event attached to the contest. */
+                            sportEventId: string;
+                            /** @description Contest display name. */
+                            name: string;
+                            /** @enum {string} */
+                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                            /** @description Current commissioner-managed contest configuration. */
+                            configuration: {
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
+                                locksAt?: string | null;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description How many golfers each Team entry must pick. */
+                                rosterSize: number;
+                                /** @description How many golfer scores count toward the Team total. */
+                                countedScores: number;
+                                /** @description Contest-configuration identifier. */
+                                id: string;
+                                /** @description Contest that owns the configuration. */
+                                contestId: string;
+                            };
+                            /** @description Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+                            effectiveTiers: {
+                                /** @description Stable per-event tier key. */
+                                tierKey: string;
+                                /** @description Commissioner-facing tier label. */
+                                label: string;
+                                /** @description 1-based tier ordering. */
+                                tierNumber: number;
+                                /** @description Default number of golfers picked from this tier. */
+                                defaultPickCount: number;
+                                /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
+                                assignments: {
+                                    /** @description Field entry the assignment belongs to. */
+                                    sportEventParticipantId: string;
+                                    /** @description Global golfer identity. */
+                                    participantId: string;
+                                    /** @description Within-tier ordering position; null when the golfer has no explicit order. */
+                                    tierOrderIndex: number | null;
+                                    /** @description Per-golfer budget price when the event defines one; null otherwise. */
+                                    price: number | null;
+                                }[];
+                            }[];
+                            /**
+                             * Format: date-time
+                             * @description When the contest was created.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description When the contest was last updated.
+                             */
+                            updatedAt: string;
+                            /**
+                             * Format: uuid
+                             * @description Seeded template chosen when the contest was created, if any.
+                             */
+                            templateId?: string | null;
+                            /** @description Schema/template version captured when the contest was created, if any. */
+                            templateVersion?: number | null;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND when the contest's event is gone. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description CONTEST_NOT_DRAFT — the contest is already open, or past it. CONTEST_EVENT_ALREADY_STARTED — the event's start time has passed or it is IN_PROGRESS, COMPLETED or CANCELLED; the draft stays a draft. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event's tiers; edit the draft first. */
             422: {
                 headers: {
                     [name: string]: unknown;

@@ -717,8 +717,8 @@ hardening epic.
 - **Merged coverage** — not in `ci.yml`. It is the separate `coverage.yml` workflow.
   See *Merged coverage and the coverage.yml workflow* below.
 - **`service-build`** — backend service Docker build verification.
-- **`mock-contest-feed-provider-build`** — mock provider Docker build
-  verification.
+- **`service-mock-provider-build`** — mock contest feed provider lint,
+  typecheck, `tsc` build and its own test suite (see *Test suites* §6).
 - **`poolmaster-build`** — webapp build verification.
 - **`deploy-publish-images`** (push to `main` only) — builds and pushes
   Docker images to ECR and registers ECS task definitions. Deploys nothing.
@@ -777,13 +777,13 @@ answer.
 
 ## Test suites
 
-Five distinct test suites cover the codebase. Each has its own runner,
+Six distinct test suites cover the codebase. Each has its own runner,
 configuration, scope, and CI mapping. The suites are layered: unit
 tests cover service logic in isolation, integration tests exercise
 real database interactions, functional API tests verify the full
 backend stack through the generated SDK, webapp unit tests cover React
-components and hooks, and browser E2E tests verify the deployed
-release.
+components and hooks, browser E2E tests verify the deployed
+release, and the mock contest feed provider has its own suite.
 
 ### 1. Backend unit (`tests/unit/**/*.test.ts`)
 
@@ -858,11 +858,11 @@ release.
   - `smoke.e2e.ts` (`@smoke`) — root admin signs in, reaches `/manage`, logs out. Creates no domain data.
   - `golden-journey.e2e.ts` — one `test()` per act in a serial file (`test.describe.configure({ mode: 'serial' })`), so the report names the failing act in the test title and the failing stage in its steps, act 1's ids reach the later acts through module state, and a failure skips the acts after it. Tags select tests, not steps, so acts 1–3 sit in a describe tagged `@smoke` and acts 4–6 sit outside it, untagged — a test inside a tagged block cannot drop the tag. A retry re-runs the whole file in a fresh worker with a fresh run id.
     - Act 1 (`@smoke`): the root admin walks the manage list pages, then creates a run-named golf tour, six players and a tournament on that tour in its start year (released already, locking at its start, so it is contest-eligible), loads the six into the field and places one in each default tier.
-    - Act 2 (`@smoke`): a fresh commissioner registers, creates a run-named league, creates a contest on act 1's tournament (roster 6, counted 4, one entry per team), confirms it on the board and the league's contest list, edits the league description, and generates the join URL.
+    - Act 2 (`@smoke`): a fresh commissioner registers, creates a run-named league, creates a contest on act 1's tournament (roster 6, counted 4, one entry per team), which lands it on the draft's setup page; the draft takes an unchanged configuration write, the commissioner opens it to the league through the confirm dialog, and the same write is then refused with 409 `CONTEST_CONFIGURATION_LOCKED` (#117). It then confirms the contest on the board and the league's contest list, edits the league description, and generates the join URL.
     - Act 3 (`@smoke`): a fresh member opens the join URL signed out, registers through the invite, names a squad, picks an icon, accepts, builds an entry with one golfer from each of the six tiers plus the tiebreaker, and submits; then renames the entry, changes a preference and opens the league history page. The invite **link** is the only member-join flow that completes post-deploy: QA's SES has no inbox the suite can read.
     - Act 4 (untagged, pre-merge only): the root admin bulk-loads round-1 scores, moves the tournament to `IN_PROGRESS`, checks the member's picks are revealed on the board and scored on the golf leaderboard endpoint, and finds the new league and both new users in `/manage`. The transition activates the contest and sends its members the contest-started email, which is why it is not tagged.
     - Act 5 (untagged, pre-merge only): the root admin bulk-loads round 2 and then round 3, and the contest leaderboard is re-read after each upload and after two one-golfer corrections. Each read is asserted against the read before it — the entry's total, the order the field is placed in and which of its picks count all move — and the counted/dropped asymmetry of best-4-of-6 is proven both ways: a penalty on a dropped pick moves that golfer alone, the same correction on a counting pick moves the entry's total by exactly its own change. It writes scores, so it is untagged for the same reason act 4 is.
-    - Act 6 (untagged, pre-merge only): the root admin loads the round that completes the card — read off the event's own schedule, not assumed — then moves the tournament to `COMPLETED`, which is what settles its contests: there is no settle operation, settlement is a consequence of the event reaching that status. The frozen standing is asserted to be the last live leaderboard read before the transition, field by field; the settled contest then refuses the configuration edit it accepted moments earlier with 409 `CONTEST_CONFIGURATION_SETTLED`; and a late score correction moves the golfer's own event total while the settled entry's total, position and displayed position do not. It drives the event to a terminal status, so it is untagged for the reason acts 4 and 5 are, and more so.
+    - Act 6 (untagged, pre-merge only): the root admin loads the round that completes the card — read off the event's own schedule, not assumed — then moves the tournament to `COMPLETED`, which is what settles its contests: there is no settle operation, settlement is a consequence of the event reaching that status. The frozen standing is asserted to be the last live leaderboard read before the transition, field by field; and a late score correction moves the golfer's own event total while the settled entry's total, position and displayed position do not. It drives the event to a terminal status, so it is untagged for the reason acts 4 and 5 are, and more so.
     - Acts 1–3 **write to QA on every main push**. `afterAll` removes every attempt's data through the API with the admin token, in dependency order: the league (with its contest, entry, squads, memberships and invite link), the tournament (with field, rounds, scores and tiers), then the tour and players — inactivated, because neither has a delete operation — then both users. Each run therefore leaves one inactive tour, one `event_series` row and six inactive players behind, all named with the run id.
   - `squad-management.e2e.ts` (untagged, pre-merge only) — squad management against the real API (#363). A fresh commissioner creates a run-named league and join URL; a fresh member joins and, on My Team, renames the squad (checked on My Team and the squad list), changes its icon, and invites a co-owner by a brand-new `@e2e.invalid` address, reading the pending invite code from the response. The co-owner registers through `/team-invite/<code>` and lands on the squad as their own. The commissioner then inactivates the squad from the squad list, and the root admin deletes it from its Team Home — delete is root-admin only and requires an inactive squad. Each role keeps its own browser context, because a registered user's password is never kept. It is its own file, not a journey act, because deleting a squad deletes its contest entries. `afterAll` removes the league and the three users through the API.
 - **Credentials:** `POOLMASTER_E2E_ADMIN_PASSWORD` (required, no default — a missing value fails the spec immediately) and `POOLMASTER_E2E_ADMIN_IDENTIFIER` (defaults to the admin username). Users the suite registers get `@e2e.invalid` addresses.
@@ -879,6 +879,15 @@ release.
   - `poolmaster-browser-e2e` — push-to-main only, after `deploy-qa` succeeds. `@smoke` only, against the deployed QA frontend at `qa.ultimateofficepoolmanager.com`. Reads the `POOLMASTER_E2E_ADMIN_IDENTIFIER` and `POOLMASTER_E2E_ADMIN_PASSWORD` repository secrets.
 - **Required pre-push gate:** none. E2E is a **CI-only** signal; per `AGENTS.md` Quality Gates, browser E2E falls under "CI-only follow-up signals" and isn't required pre-push.
 - **Coverage policy:** N/A. E2E doesn't produce coverage artifacts.
+
+### 6. Mock contest feed provider (`packages/mock-contest-feed-provider/src/**/*.test.ts`)
+
+- **Runner:** Node's built-in `node --test`, with `--import tsx` for TypeScript. The glob is quoted in the package script so Node expands it, not the shell; an unquoted `**` in `sh` only matches one directory level.
+- **Scope:** the mock provider's live golf simulation, scenario store, sandbox events and tour seed validation. The mock drives all live-score testing, so a regression here breaks fake-event testing everywhere downstream.
+- **Environment:** Node only. No database, no built `@poolmaster/shared`.
+- **Local command:** `npm test --workspace @poolmaster/mock-contest-feed-provider`
+- **CI job:** `service-mock-provider-build`, after the package's lint, typecheck and build (#392).
+- **Coverage policy:** none collected.
 
 ### Merged coverage and the coverage.yml workflow
 

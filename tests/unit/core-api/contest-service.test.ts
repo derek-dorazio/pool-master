@@ -20,6 +20,7 @@ import {
 
   ContestFormat,
   LeagueMembershipStatus,
+  LeagueRole,
   Sport,
   SquadMembershipStatus,
   TeamIconKey,
@@ -410,6 +411,27 @@ describe('ContestService', () => {
     });
   });
 
+  describe('getContest', () => {
+    it.each([
+      ['a member', LeagueRole.MEMBER, false],
+      ['a commissioner', LeagueRole.COMMISSIONER, true],
+    ] as const)('reads a draft contest as missing for anyone but its commissioners: %s finds it = %s', async (_who, role, found) => {
+      const service = buildService({
+        contests: createMockContestRepo({
+          findById: jest.fn().mockResolvedValue(buildContest({ id: 'draft', status: ContestStatus.DRAFT })),
+        }),
+        configurations: createMockContestConfigurationRepo(),
+        memberships: createMockMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue(buildMembership({ role })),
+        }),
+      });
+
+      const result = await service.getContest('draft', { userId: 'user-1', isRootAdmin: false });
+
+      expect(result !== null).toBe(found);
+    });
+  });
+
   describe('listByLeague', () => {
     it('returns contests for the league', async () => {
       const contests = [buildContest(), buildContest()];
@@ -421,8 +443,34 @@ describe('ContestService', () => {
         configurations: createMockContestConfigurationRepo(),
         memberships: createMockMembershipRepo(),
       });
-      const result = await service.listByLeague('league-1');
+      const result = await service.listByLeague('league-1', { userId: 'user-1', isRootAdmin: true });
       expect(result).toHaveLength(2);
+    });
+
+    it.each([
+      ['a member', LeagueRole.MEMBER, false, ['open']],
+      ['a commissioner', LeagueRole.COMMISSIONER, false, ['draft', 'open']],
+      ['a root admin who is not a member', null, true, ['draft', 'open']],
+    ] as const)('lists draft contests only to their commissioners: %s sees %j', async (_who, role, isRootAdmin, expected) => {
+      const contestRepo = createMockContestRepo({
+        findByLeague: jest.fn().mockResolvedValue([
+          buildContest({ id: 'draft', status: ContestStatus.DRAFT }),
+          buildContest({ id: 'open', status: ContestStatus.OPEN }),
+        ]),
+      });
+      const service = buildService({
+        contests: contestRepo,
+        configurations: createMockContestConfigurationRepo(),
+        memberships: createMockMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue(
+            role === null ? null : buildMembership({ role }),
+          ),
+        }),
+      });
+
+      const result = await service.listByLeague('league-1', { userId: 'user-1', isRootAdmin });
+
+      expect(result.map((contest) => contest.id)).toEqual(expected);
     });
 
     it('pool-master-d0v counts entries for league contest summaries', async () => {
@@ -533,6 +581,42 @@ describe('ContestService', () => {
         entryNumber: 1,
         name: "Derek's Squad Entry 1",
       }));
+    });
+
+    it('refuses an entry in a DRAFT contest with CONTEST_ENTRY_LOCKED and writes nothing, until the commissioner opens it', async () => {
+      const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.DRAFT });
+      const entryRepo = createMockEntryRepo({
+        findBySquad: jest.fn().mockResolvedValue([]),
+      });
+      const service = buildService({
+        contests: createMockContestRepo({
+          findById: jest.fn().mockResolvedValue(contest),
+        }),
+        configurations: createMockContestConfigurationRepo(),
+        memberships: createMockMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue(
+            buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' }),
+          ),
+        }),
+        squads: createMockSquadRepo(),
+        squadMemberships: createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
+        entries: entryRepo,
+      });
+
+      await expect(service.createEntry('contest-1', 'user-1'))
+        .rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
+      expect(entryRepo.create).not.toHaveBeenCalled();
     });
 
     it('rejects contest entry creation when the league member has no active squad', async () => {

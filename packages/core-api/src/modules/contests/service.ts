@@ -32,6 +32,7 @@ import {
   ContestStatus,
   deriveLegacyParticipantStatus,
   LeagueMembershipStatus,
+  LeagueRole,
   Sport,
   SquadMembershipStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
@@ -62,6 +63,12 @@ import {
   type ContestEntryCompletedTierSelection,
   type MailDeliveryProvider,
 } from '../email';
+/** Who is reading contests, for what they may see: DRAFT contests are commissioner-only (#117). */
+export interface ContestViewer {
+  userId: string;
+  isRootAdmin: boolean;
+}
+
 export interface UpdateContestInput {
   name?: string;
   startsAt?: Date;
@@ -169,13 +176,26 @@ export class ContestService {
     this.appBaseUrl = deps.appBaseUrl ?? 'http://localhost:5173';
   }
 
+  /**
+   * Reads a contest. With a `viewer`, a DRAFT contest answers as missing unless the viewer can
+   * see drafts in its league (#117): only its commissioners and root admins can.
+   */
   async getContest(
     contestId: string,
+    viewer?: ContestViewer,
   ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration | null } | null> {
     this.logger.debug({ contestId }, 'contest get start');
     const contest = await this.deps.contests.findById(contestId);
     if (!contest) {
       this.logger.warn({ contestId }, 'contest get missing contest');
+      return null;
+    }
+    if (
+      viewer
+      && contest.status === ContestStatus.DRAFT
+      && !(await this.canSeeDraftContests(contest.leagueId, viewer))
+    ) {
+      this.logger.warn({ contestId, userId: viewer.userId }, 'contest get hid a draft contest from a member');
       return null;
     }
     const contestConfiguration = await this.deps.configurations.findByContest(contestId);
@@ -186,8 +206,23 @@ export class ContestService {
     return { contest, contestConfiguration };
   }
 
-  async listByLeague(leagueId: string): Promise<Contest[]> {
-    return this.deps.contests.findByLeague(leagueId);
+  /** The league's contests the viewer can see: DRAFT contests only for its commissioners (#117). */
+  async listByLeague(leagueId: string, viewer: ContestViewer): Promise<Contest[]> {
+    const contests = await this.deps.contests.findByLeague(leagueId);
+    if (await this.canSeeDraftContests(leagueId, viewer)) {
+      return contests;
+    }
+    return contests.filter((contest) => contest.status !== ContestStatus.DRAFT);
+  }
+
+  /** A draft contest is its commissioners' alone until they open it (#117); root admins see all. */
+  private async canSeeDraftContests(leagueId: string, viewer: ContestViewer): Promise<boolean> {
+    if (viewer.isRootAdmin) {
+      return true;
+    }
+    const membership = await this.deps.memberships.findByLeagueAndUser(leagueId, viewer.userId);
+    return membership?.status === LeagueMembershipStatus.ACTIVE
+      && membership.role === LeagueRole.COMMISSIONER;
   }
 
   async countEntriesByContest(contestIds: string[]): Promise<Map<string, number>> {
@@ -1202,19 +1237,19 @@ function buildEntryUrl(
   return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/contests/${encodeURIComponent(contestId)}/entries/${encodeURIComponent(entryId)}`;
 }
 
+/** Entries can be created, changed or deleted only while the contest is OPEN (#117): a DRAFT is the commissioner's alone. */
 function isContestJoinable(status: ContestStatus): boolean {
-  return status === ContestStatus.DRAFT || status === ContestStatus.OPEN;
+  return status === ContestStatus.OPEN;
 }
 
 /**
  * Whether participant picks on a contest are visible to non-owning squad members.
  *
- * pool-master-dxd.13 — picks are hidden from non-owners while the contest is
- * still in its joinable phase (DRAFT or OPEN). Once the contest progresses past
- * that phase (DRAFTING, LOCKED, ACTIVE, COMPLETED, CANCELLED), picks are public
- * to every league member.
+ * pool-master-dxd.13 — picks are hidden from non-owners until the contest moves past
+ * taking entries (DRAFT or OPEN). Once it progresses (DRAFTING, LOCKED, ACTIVE, COMPLETED,
+ * CANCELLED), picks are public to every league member.
  */
 export function contestPicksRevealed(status: ContestStatus): boolean {
-  return !isContestJoinable(status);
+  return status !== ContestStatus.DRAFT && status !== ContestStatus.OPEN;
 }
 

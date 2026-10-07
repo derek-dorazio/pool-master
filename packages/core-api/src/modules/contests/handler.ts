@@ -21,7 +21,7 @@ import {
 } from '../../mappers/contests.mapper';
 import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
-import type { ContestService } from './service';
+import type { ContestService, ContestViewer } from './service';
 import {
   ContestManagementError,
   type ContestManagementService,
@@ -41,6 +41,14 @@ const UpdateContestBodySchema = zod.object({
   lockAt: zod.string().datetime().optional(),
   isExclusive: zod.boolean().optional(),
 });
+
+/** The signed-in reader of a contest read. Both reads sit behind a membership gate, so there is one. */
+function readContestViewer(request: FastifyRequest): ContestViewer {
+  return {
+    userId: request.authUser?.userId as string,
+    isRootAdmin: request.authUser?.isRootAdmin === true,
+  };
+}
 
 export function createContestHandlers(contestService: ContestService) {
   return {
@@ -63,7 +71,7 @@ export function createContestHandlers(contestService: ContestService) {
   ): Promise<{ contests: unknown[] }> {
     const logger = createRequestContextLogger(request);
     logger.debug({ leagueId: request.params.id }, 'contest list route start');
-    const contests = await contestService.listByLeague(request.params.id);
+    const contests = await contestService.listByLeague(request.params.id, readContestViewer(request));
     const entryCounts = await contestService.countEntriesByContest(contests.map((contest) => contest.id));
     logger.info({
       leagueId: request.params.id,
@@ -79,7 +87,7 @@ export function createContestHandlers(contestService: ContestService) {
   ): Promise<void> {
     const logger = createRequestContextLogger(request);
     logger.debug({ contestId: request.params.contestId }, 'contest get route start');
-    const result = await contestService.getContest(request.params.contestId);
+    const result = await contestService.getContest(request.params.contestId, readContestViewer(request));
     if (!result) {
       logger.warn({ contestId: request.params.contestId }, 'contest get route missing contest');
       return sendError(reply, 404, 'CONTEST_NOT_FOUND', 'Contest not found');

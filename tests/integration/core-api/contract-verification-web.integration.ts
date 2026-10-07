@@ -14,6 +14,7 @@ import {
   UserResponseSchema,
   AuthResponseSchema,
   ContestConfigTemplateListResponseSchema,
+  ContestManagementResponseSchema,
   ContestResponseSchema,
   DraftStateResponseSchema,
   ErrorEnvelopeSchema,
@@ -29,6 +30,7 @@ import {
 } from '@poolmaster/shared/dto';
 import type {
   ContestConfigTemplateListResponse,
+  ContestResponse,
   ErrorEnvelope,
   LeagueContextResponse,
   SquadListResponse,
@@ -568,6 +570,18 @@ describe('Contract verification (web)', () => {
     expect(res.statusCode).toBe(201);
     const parsed = ContestResponseSchema.safeParse(res.json());
     expect(parsed.success).toBe(true);
+
+    // openContest (#117) answers with the commissioner's contest read, now OPEN.
+    const contestId = res.json<ContestResponse>().contest.id;
+    const openRes = await getApp().inject({
+      method: 'POST',
+      url: `${API_ROUTES.contestManagement.detail(leagueId, contestId)}/open`,
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+    expect(openRes.statusCode).toBe(200);
+    const openParsed = ContestManagementResponseSchema.safeParse(openRes.json());
+    expect(openParsed.success).toBe(true);
+    expect(openParsed.data?.contest.status).toBe('OPEN');
   });
 
   it('account lifecycle routes match their shared response DTOs', async () => {
