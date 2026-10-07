@@ -27,7 +27,7 @@ import { MemberService } from './member-service';
 import { MemberDirectoryService } from './member-directory-service';
 import { DashboardService } from './dashboard-service';
 import { BulkService } from './bulk-service';
-import { requireCommissioner, requireLeagueMembership } from './permissions';
+import { leagueFromPath, requireCommissioner, requireMemberOfLeague } from './permissions';
 import { createLeagueHandlers } from './handler';
 import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
@@ -58,25 +58,27 @@ export function leaguesModule(fastify: FastifyInstance): void {
   );
   const appBaseUrl = readApplicationBaseUrl(process.env);
 
-  const leagueService = new LeagueService(
-    leagueRepo,
-    membershipRepo,
-    squadRepo,
-    squadMembershipRepo,
+  const leagueService = new LeagueService({
+    leagues: leagueRepo,
+    memberships: membershipRepo,
+    squads: squadRepo,
+    squadMemberships: squadMembershipRepo,
+    users: userRepo,
     prisma,
-    fastify.log,
-  );
-  const invitationService = new InvitationService(
-    invitationRepo,
-    membershipRepo,
-    leagueRepo,
-    squadRepo,
-    squadMembershipRepo,
+    logger: fastify.log,
+  });
+  const invitationService = new InvitationService({
+    invitations: invitationRepo,
+    memberships: membershipRepo,
+    leagues: leagueRepo,
+    squads: squadRepo,
+    squadMemberships: squadMembershipRepo,
+    users: userRepo,
     prisma,
-    fastify.log,
+    logger: fastify.log,
     mailDelivery,
     appBaseUrl,
-  );
+  });
   const memberService = new MemberService(
     membershipRepo,
     prisma,
@@ -330,7 +332,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requireLeagueMembership(membershipRepo),
+    preHandler: requireMemberOfLeague(membershipRepo, leagueFromPath),
     handler: member.listMembers,
   });
 

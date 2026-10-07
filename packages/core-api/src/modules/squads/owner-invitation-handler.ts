@@ -9,6 +9,7 @@ import { AuthError } from '../auth/auth-service';
 import { toAuthResponse } from '../../mappers/auth.mapper';
 import { createSessionCookieHeaders } from '../../core/session-cookies';
 import { sendError } from '../../core/error-handler';
+import { requireAuthUser } from '../../plugins/auth-guard';
 
 export function createSquadOwnerInvitationHandlers(
   service: SquadOwnerInvitationService,
@@ -33,10 +34,7 @@ export function createSquadOwnerInvitationHandlers(
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const userId = request.authUser?.userId;
-      if (!userId) {
-        return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
-      }
+      const userId = requireAuthUser(request).userId;
       const invitations = await service.listInvitationsForViewer(
         request.params.id,
         userId,
@@ -56,10 +54,7 @@ export function createSquadOwnerInvitationHandlers(
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const userId = request.authUser?.userId;
-      if (!userId) {
-        return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
-      }
+      const userId = requireAuthUser(request).userId;
       const invitation = await service.inviteOwner({
         leagueId: request.params.id,
         squadId: request.params.squadId,
@@ -81,10 +76,7 @@ export function createSquadOwnerInvitationHandlers(
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const actorUserId = request.authUser?.userId;
-      if (!actorUserId) {
-        return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
-      }
+      const actorUserId = requireAuthUser(request).userId;
       const invitation = await service.replaceOwner({
         leagueId: request.params.id,
         squadId: request.params.squadId,
@@ -104,10 +96,7 @@ export function createSquadOwnerInvitationHandlers(
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const actorUserId = request.authUser?.userId;
-      if (!actorUserId) {
-        return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
-      }
+      const actorUserId = requireAuthUser(request).userId;
       const invitation = await service.revokeInvitation(
         request.params.id,
         request.params.invitationId,
@@ -210,10 +199,7 @@ export function createSquadOwnerInvitationHandlers(
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const userId = request.authUser?.userId;
-      if (!userId) {
-        return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
-      }
+      const userId = requireAuthUser(request).userId;
       const invitation = await service.acceptInvitation(request.body.inviteCode, userId);
       return reply.code(201).send({ invitation });
     } catch (error) {

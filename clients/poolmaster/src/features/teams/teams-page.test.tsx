@@ -375,6 +375,19 @@ describe('TeamsPage', () => {
     expect(screen.getByTestId('squad-actions-open-inactivate-team-1')).toBeInTheDocument();
   });
 
+  it('shows each owner\'s league join date as small muted text beside their name', async () => {
+    primeAuthenticatedLeague();
+    listLeagueSquadsMock.mockResolvedValue({ data: { squads: [buildTeamSummary()] } });
+
+    renderTeamsPage();
+
+    const joined = await screen.findByTestId('league-team-owner-joined-team-1-user-1');
+    expect(joined).toHaveTextContent(
+      `Joined ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date('2026-04-16T00:00:00.000Z'))}`,
+    );
+    expect(joined).toHaveClass('text-muted-foreground');
+  });
+
   it('lets a commissioner promote an owner to commissioner from the teams directory', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {

@@ -7,7 +7,7 @@
  */
 
 import fp from 'fastify-plugin';
-import jwt from 'jsonwebtoken';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { readJwtSecret } from '../core/config';
 import { sendError } from '../core/error-handler';
@@ -33,6 +33,25 @@ declare module 'fastify' {
   interface FastifyRequest {
     authUser?: AuthUser;
   }
+}
+
+/**
+ * The signed-in user of a request the auth guard admitted (#153). Throws a 401
+ * `AUTH_SESSION_REQUIRED` when there is none, which the global error handler sends.
+ *
+ * `authUser` is optional on every request because public routes have none, so an authenticated
+ * handler must say it needs one. This is that statement, made once: if a route is ever added to
+ * the public set, or made optional-auth, its handlers answer 401 instead of crashing with a
+ * `TypeError` on `undefined` — and never pass `undefined` on as a user id.
+ */
+export function requireAuthUser(request: FastifyRequest): AuthUser {
+  if (!request.authUser) {
+    throw Object.assign(new Error('Authenticated session required'), {
+      statusCode: 401,
+      code: 'AUTH_SESSION_REQUIRED',
+    });
+  }
+  return request.authUser;
 }
 
 // ---------------------------------------------------------------------------
@@ -106,19 +125,36 @@ export function readRequestAccessToken(request: FastifyRequest): string | undefi
     : readAccessCookie(request.headers.cookie);
 }
 
-/** Verifies an access token and returns the user it names. Throws when it is invalid or expired. */
+/**
+ * Verifies an access token and returns the user it names. Throws when it is invalid or expired,
+ * or when it does not name a user (#153).
+ *
+ * `jwt.verify` returns `string | JwtPayload`, whose `sub` and `email` are optional. A
+ * signature-valid token without them used to become an authenticated request with an `undefined`
+ * user id, which Prisma reads as "omit this filter" — a widened query rather than an error. Every
+ * caller turns the throw into a 401.
+ */
 export function verifyAccessToken(accessToken: string, jwtSecret: string): AuthUser {
-  const payload = jwt.verify(accessToken, jwtSecret) as {
-    sub: string;
-    email: string;
-    isRootAdmin?: boolean;
-    sid?: string;
+  const payload = jwt.verify(accessToken, jwtSecret);
+  if (typeof payload === 'string') {
+    throw new Error('Access token payload is not an object');
+  }
+  const { sub, email, isRootAdmin, sid } = payload as JwtPayload & {
+    email?: unknown;
+    isRootAdmin?: unknown;
+    sid?: unknown;
   };
+  if (typeof sub !== 'string' || sub === '') {
+    throw new Error('Missing user ID in token payload');
+  }
+  if (typeof email !== 'string') {
+    throw new Error('Missing email in token payload');
+  }
   return {
-    userId: payload.sub,
-    email: payload.email,
-    isRootAdmin: payload.isRootAdmin === true,
-    sessionId: payload.sid ?? null,
+    userId: sub,
+    email,
+    isRootAdmin: isRootAdmin === true,
+    sessionId: typeof sid === 'string' ? sid : null,
   };
 }
 

@@ -6,10 +6,9 @@ import { after, describe, it } from 'node:test';
 
 import {
   API_ENTRY,
-  collectByIdRoutes,
+  collectParameterizedRoutes,
   evaluateRoutes,
   hasPathParameter,
-  isByIdMount,
   joinPath,
   readModuleRoutes,
   readMounts,
@@ -178,11 +177,11 @@ describe('check-route-authorization (#193)', () => {
       '`GET /api/v1/contests/:contestId` needs a one-line reason saying where the route authorizes.',
       '`GET /api/v1/contests/:contestId` is listed twice.',
       '`PUT /api/v1/contests/:contestId` declares a hook and is also on the opt-out list; remove the opt-out.',
-      '`GET /api/v1/contests/:contestId/audit-log` matches no route under a by-id mount; remove it.',
+      '`GET /api/v1/contests/:contestId/audit-log` matches no route with a path parameter; remove it.',
     ]);
   });
 
-  it('treats a param-free prefix as a by-id mount and a nested one as already scoped', () => {
+  it('reads both by-id and nested mounts, and reports a non-literal prefix', () => {
     const { mounts, unreadable } = readMounts(`
       import { contestsModule, contestsByIdModule } from './modules/contests/routes';
       app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
@@ -190,9 +189,9 @@ describe('check-route-authorization (#193)', () => {
       app.register(swaggerPlugin);
       app.register(contestsByIdModule, { prefix: CONTEST_PREFIX });
     `);
-    assert.deepEqual(mounts.map((mount) => [mount.exportName, isByIdMount(mount)]), [
-      ['contestsModule', false],
-      ['contestsByIdModule', true],
+    assert.deepEqual(mounts.map((mount) => [mount.exportName, mount.prefix]), [
+      ['contestsModule', '/api/v1/leagues/:id/contests'],
+      ['contestsByIdModule', '/api/v1/contests'],
     ]);
     assert.deepEqual(unreadable.map((entry) => entry.reason), ['non-literal prefix']);
   });
@@ -217,7 +216,7 @@ describe('check-route-authorization (#193)', () => {
           fastify.patch('/:squadId', { handler: h });
         }
       `);
-      const { routes, findings } = collectByIdRoutes(root);
+      const { routes, findings } = collectParameterizedRoutes(root);
       assert.deepEqual(findings, []);
       const ungated = evaluateRoutes({ routes, optOuts: [entryOptOut] })
         .map((finding) => finding.message.split(' authorizes nowhere')[0]);
@@ -226,6 +225,33 @@ describe('check-route-authorization (#193)', () => {
         '`PUT /api/v1/contests/:contestId`',
         '`DELETE /api/v1/contests/:contestId`',
         '`PATCH /api/v1/squads/:squadId`',
+      ]);
+    });
+
+    it('checks every route under a nested mount, its root route included, because carrying the league id is not checking it (#292)', () => {
+      const nestedRoot = join(root, 'nested');
+      mkdirSync(join(nestedRoot, 'packages/core-api/src/modules/squads'), { recursive: true });
+      writeFileSync(join(nestedRoot, API_ENTRY), `
+        import { squadsModule } from './modules/squads/routes';
+        app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
+      `);
+      writeFileSync(join(nestedRoot, 'packages/core-api/src/modules/squads/routes.ts'), `
+        const squadMember = { preHandler: requireMemberOfSquad(squadRepo, squadMembershipRepo, membershipRepo) };
+        export function squadsModule(fastify) {
+          fastify.get('/', { handler: h });
+          fastify.patch('/:squadId', { ...squadMember, handler: h });
+          fastify.delete('/:squadId', { onRequest: requireRootAdmin, handler: h });
+          fastify.post('/:squadId/members', { handler: h });
+        }
+      `);
+      const { routes, findings } = collectParameterizedRoutes(nestedRoot);
+      assert.deepEqual(findings, []);
+      assert.equal(routes.length, 4);
+      const ungated = evaluateRoutes({ routes, optOuts: [] })
+        .map((finding) => finding.message.split(' authorizes nowhere')[0]);
+      assert.deepEqual(ungated, [
+        '`GET /api/v1/leagues/:id/squads`',
+        '`POST /api/v1/leagues/:id/squads/:squadId/members`',
       ]);
     });
   });
