@@ -194,6 +194,7 @@ describe('Contract verification (web)', () => {
       method: 'POST',
       url: `/api/v1/leagues/${leagueId}/invitations/${emailInvitationId}/resend`,
       headers: owner.headers,
+      payload: {},
     });
     expect(resendRes.statusCode).toBe(200);
     expect(ResendLeagueInvitationResponseSchema.safeParse(resendRes.json()).success).toBe(true);
@@ -204,6 +205,7 @@ describe('Contract verification (web)', () => {
         inviteLinkRes.json<GenerateInviteLinkResponse>().invitation.id
       }/resend`,
       headers: owner.headers,
+      payload: {},
     });
     expect(resendLinkRes.statusCode).toBe(409);
     expect(ErrorEnvelopeSchema.safeParse(resendLinkRes.json()).success).toBe(true);
