@@ -27,7 +27,7 @@ same rendered subject, text, and HTML through AWS SES:
 `EMAIL_PROVIDER=disabled` sends nothing. Every send reports success, so invite
 by email still creates the invitation and the request succeeds; each skipped
 email is logged as `mailDelivery.disabled.skip` with the template key and ids
-(never the body), and startup logs `mailDelivery.startup.disabled` once. QA
+(never the body), and startup logs `mailDelivery.startup.disabled` once, as a warning. QA
 runs this way until real delivery is set up (#120).
 
 `APP_BASE_URL` is required for links in email bodies. Local development uses
@@ -55,7 +55,7 @@ covers `EMAIL_PROVIDER=disabled`.
 
 Terraform sets the core-api ECS task's `EMAIL_PROVIDER` from the
 `email_provider` variable. Left empty, it is `disabled` on QA (until #120) and
-`ses` on staging and prod. Terraform also configures
+`ses` on staging and prod; Terraform refuses `disabled` on prod. Terraform also configures
 `APP_BASE_URL`, `AWS_REGION`, `SES_FROM_EMAIL`, and `EMAIL_REPLY_TO`. It also
 grants the ECS task role `ses:SendEmail` and `ses:SendRawEmail` for the managed
 SES identity.

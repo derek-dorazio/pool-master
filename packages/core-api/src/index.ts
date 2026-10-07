@@ -73,7 +73,7 @@ export function buildApp() {
   registerConfiguredProviders(registry, process.env, app.log);
   const mailDeliveryConfig = readMailDeliveryConfig(process.env);
   if (mailDeliveryConfig.provider === 'disabled') {
-    app.log.info({
+    app.log.warn({
       action: 'mailDelivery.startup.disabled',
       data: { provider: mailDeliveryConfig.provider },
     }, 'Email delivery is disabled (EMAIL_PROVIDER=disabled); no email will be sent');

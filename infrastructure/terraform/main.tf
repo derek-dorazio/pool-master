@@ -639,6 +639,14 @@ resource "aws_ecs_task_definition" "core_api" {
       }
     }
   }])
+
+  # #442 — "disabled" drops every system email while each send reports success; never on prod.
+  lifecycle {
+    precondition {
+      condition     = !(var.environment == "prod" && local.resolved_email_provider == "disabled")
+      error_message = "email_provider = \"disabled\" is not allowed on prod: it silently drops every system email."
+    }
+  }
 }
 
 resource "aws_service_discovery_private_dns_namespace" "qa_internal" {
