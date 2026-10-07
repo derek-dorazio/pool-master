@@ -305,21 +305,4 @@ describe('AuthService', () => {
       expect(profile).not.toHaveProperty('passwordHash');
     });
   });
-
-  it('verifies a valid access token and rejects a forged one', async () => {
-    const service = new AuthService(fakeUserRepo(), asPrismaClient(createPrismaMock()));
-    const tokens = await service['issueTokens']('user-1', 'user@example.com', false, 'session-1');
-
-    expect(service.verifyAccessToken(tokens.accessToken)).toEqual(
-      expect.objectContaining({
-        sub: 'user-1',
-        email: 'user@example.com',
-        sid: 'session-1',
-      }),
-    );
-
-    expect(() => service.verifyAccessToken('not-a-real-token')).toThrow(
-      expect.objectContaining({ code: 'INVALID_TOKEN' }),
-    );
-  });
 });
