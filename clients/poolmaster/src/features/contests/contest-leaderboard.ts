@@ -89,13 +89,46 @@ export function resolveRoundNumbers(
   return [...roundNumbers].sort((left, right) => left - right);
 }
 
+/**
+ * The THR cell (#389): how far the golfer is through their current round. `CUT` and `WD`
+ * outrank everything — a golfer out of the event has no round in progress — then `F` once the
+ * current round is complete, then the last hole completed. Null (a dash) before they tee off.
+ */
+export function formatThru(participant: SportEventParticipantDto): string | null {
+  const standing = participant.standing;
+  if (!standing) {
+    return null;
+  }
+  if (standing.status === 'ELIMINATED') {
+    return 'CUT';
+  }
+  if (standing.status === 'WITHDRAWN') {
+    return 'WD';
+  }
+  if (standing.status === 'COMPLETE') {
+    return 'F';
+  }
+  const currentRound = participant.rounds.find(
+    (round) => round.roundNumber === standing.currentRound,
+  );
+  if (currentRound && isRoundComplete(currentRound)) {
+    return 'F';
+  }
+  const thru = standing.golf?.currentRoundThru ?? null;
+  return thru === null || thru <= 0 ? null : String(thru);
+}
+
 /** One golfer row under an entry. Every score is already formatted; null renders as a dash. */
 export interface LeaderboardPickRow {
   pickId: string;
+  /** The golfer's own position in the event (T5 for ties), not the entry's. */
+  position: string | null;
   participantName: string;
   /** The worst `M - N` scored picks: present on the page, struck through, out of the total. */
   isDropped: boolean;
   total: string | null;
+  /** See `formatThru`. */
+  thru: string | null;
   /** One cell per entry of `roundNumbers`, in that order. */
   rounds: Array<string | null>;
 }
@@ -157,9 +190,11 @@ export function buildLeaderboardView(response: ContestLeaderboardResponse): Lead
         const eventScoreToPar = participant.standing?.golf?.eventScoreToPar ?? null;
         return [{
           pickId: pick.pickId,
+          position: participant.standing?.displayPosition ?? null,
           participantName: participant.participant.name,
           isDropped: pick.isDropped,
           total: eventScoreToPar === null ? null : definition.format(eventScoreToPar),
+          thru: formatThru(participant),
           rounds: roundNumbers.map((roundNumber) => {
             const round = roundsByNumber.get(roundNumber);
             if (!round?.golf) {
