@@ -13,7 +13,7 @@ import {
   LinkButton,
   Tile,
 } from '@/features/shared/ui';
-import { throwApiError } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { formatUserName } from '@/features/account/user-name';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import { getLogger } from '@/lib/logger';
@@ -24,7 +24,7 @@ import { MyTeamDetailsTile, MyTeamIconModal, MyTeamNameModal } from './my-team-d
 import { MyTeamHeader } from './my-team-header';
 import { MyTeamLifecycleActions, MyTeamLifecycleDialogs, MyTeamLifecycleNotices } from './my-team-lifecycle';
 import { MyTeamOwnersPanel } from './my-team-owners-panel';
-import type { ActiveTeamDialog } from './my-team-shared';
+import { type ActiveTeamDialog, TEAM_PAGE_FALLBACK_ERROR } from './my-team-shared';
 import { useMyTeamDetails } from './use-my-team-details';
 import { useMyTeamLifecycle } from './use-my-team-lifecycle';
 import { useMyTeamOwners } from './use-my-team-owners';
@@ -182,6 +182,24 @@ export function MyTeamPage() {
     );
   }
 
+  // Until the squads load, "no team" is unknown, not true: offering the create-team form here
+  // would invite a viewer who already has a team to create a second one.
+  if (teamsQuery.isLoading) {
+    return (
+      <Tile padding="lg">Loading your team...</Tile>
+    );
+  }
+
+  if (teamsQuery.isError) {
+    return (
+      <Tile padding="lg">
+        <Alert tone="danger">
+          {extractErrorMessage(teamsQuery.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}
+        </Alert>
+      </Tile>
+    );
+  }
+
   const isBusy = details.isPending || owners.isPending || lifecycle.isPending;
   const activeMembers = (selectedTeam?.members ?? []).filter((member) => member.status === 'ACTIVE');
   const currentIconKey = selectedTeam?.iconKey ?? details.iconDraftKey;
@@ -304,8 +322,6 @@ export function MyTeamPage() {
             isBusy={isBusy}
             isInactiveLeague={isInactiveLeague}
             isInactiveTeam={isInactiveTeam}
-            isTeamsError={teamsQuery.isError}
-            isTeamsLoading={teamsQuery.isLoading}
             leagueCode={leagueCode}
             leagueId={leagueId}
             leagueMembersByUserId={leagueMembersByUserId}
