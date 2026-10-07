@@ -218,6 +218,23 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // #149 — `ZodTypeAny` is `ZodType<any, any, any>`. The `any`s sit inside a named import,
+    // so no-explicit-any cannot see them; this is the only rule that does.
+    files: ['packages/shared/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [{
+            name: 'zod',
+            importNames: ['ZodTypeAny'],
+            message: 'ZodTypeAny is ZodType<any, any, any>. Use ZodType<unknown>, or a generic bounded by it.',
+          }],
+        },
+      ],
+    },
+  },
 
   // ---------------------------------------------------------------------------
   // Local rules — see eslint-rules/index.mjs for why these are named rules

@@ -6552,10 +6552,34 @@ export type LeagueDashboardResponse = {
 };
 
 /**
- * Arbitrary JSON object payload.
+ * Result of a bulk CSV member import.
  */
 export type LeagueBulkOperationResponse = {
-    [key: string]: unknown;
+    /**
+     * How many rows the import received.
+     */
+    total: number;
+    /**
+     * How many invitations the import created.
+     */
+    sent: number;
+    /**
+     * Rows that were not imported, with the reason for each.
+     */
+    failed: Array<{
+        /**
+         * Email address on the row that failed.
+         */
+        email: string;
+        /**
+         * Why the row was not imported.
+         */
+        reason: string;
+    }>;
+    /**
+     * Email addresses skipped because they already have an invitation to this league.
+     */
+    duplicates: Array<string>;
 };
 
 /**
@@ -7334,9 +7358,18 @@ export type ProviderSyncRunDto = {
              */
             errors: number;
             /**
-             * Raw ingestion error-log entries for root-admin investigation.
+             * Ingestion error-log entries for root-admin investigation.
              */
-            errorLog: Array<unknown>;
+            errorLog: Array<{
+                /**
+                 * Failure message the ingestion job recorded.
+                 */
+                error: string;
+                /**
+                 * When the failure was recorded.
+                 */
+                at: string;
+            }>;
         };
         /**
          * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
@@ -7386,13 +7419,17 @@ export type ProviderSyncRunDto = {
                  */
                 name?: string;
                 /**
-                 * Normalized before-state JSON for UPDATED or DELETED rows.
+                 * Normalized request context that submitted the sync run, including source and actor diagnostics.
                  */
-                before?: unknown;
+                before?: {
+                    [key: string]: unknown;
+                };
                 /**
-                 * Normalized after-state JSON for CREATED or UPDATED rows.
+                 * Normalized request context that submitted the sync run, including source and actor diagnostics.
                  */
-                after?: unknown;
+                after?: {
+                    [key: string]: unknown;
+                };
             }>;
         };
         /**
@@ -7571,9 +7608,18 @@ export type ProviderSyncRunListResponse = {
                  */
                 errors: number;
                 /**
-                 * Raw ingestion error-log entries for root-admin investigation.
+                 * Ingestion error-log entries for root-admin investigation.
                  */
-                errorLog: Array<unknown>;
+                errorLog: Array<{
+                    /**
+                     * Failure message the ingestion job recorded.
+                     */
+                    error: string;
+                    /**
+                     * When the failure was recorded.
+                     */
+                    at: string;
+                }>;
             };
             /**
              * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
@@ -7623,13 +7669,17 @@ export type ProviderSyncRunListResponse = {
                      */
                     name?: string;
                     /**
-                     * Normalized before-state JSON for UPDATED or DELETED rows.
+                     * Normalized request context that submitted the sync run, including source and actor diagnostics.
                      */
-                    before?: unknown;
+                    before?: {
+                        [key: string]: unknown;
+                    };
                     /**
-                     * Normalized after-state JSON for CREATED or UPDATED rows.
+                     * Normalized request context that submitted the sync run, including source and actor diagnostics.
                      */
-                    after?: unknown;
+                    after?: {
+                        [key: string]: unknown;
+                    };
                 }>;
             };
             /**
@@ -7802,9 +7852,18 @@ export type ProviderManualSyncSubmissionResponse = {
                  */
                 errors: number;
                 /**
-                 * Raw ingestion error-log entries for root-admin investigation.
+                 * Ingestion error-log entries for root-admin investigation.
                  */
-                errorLog: Array<unknown>;
+                errorLog: Array<{
+                    /**
+                     * Failure message the ingestion job recorded.
+                     */
+                    error: string;
+                    /**
+                     * When the failure was recorded.
+                     */
+                    at: string;
+                }>;
             };
             /**
              * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
@@ -7854,13 +7913,17 @@ export type ProviderManualSyncSubmissionResponse = {
                      */
                     name?: string;
                     /**
-                     * Normalized before-state JSON for UPDATED or DELETED rows.
+                     * Normalized request context that submitted the sync run, including source and actor diagnostics.
                      */
-                    before?: unknown;
+                    before?: {
+                        [key: string]: unknown;
+                    };
                     /**
-                     * Normalized after-state JSON for CREATED or UPDATED rows.
+                     * Normalized request context that submitted the sync run, including source and actor diagnostics.
                      */
-                    after?: unknown;
+                    after?: {
+                        [key: string]: unknown;
+                    };
                 }>;
             };
             /**
@@ -11389,7 +11452,7 @@ export type ImportMembersError = ImportMembersErrors[keyof ImportMembersErrors];
 
 export type ImportMembersResponses = {
     /**
-     * Arbitrary JSON object payload.
+     * Result of a bulk CSV member import.
      */
     201: LeagueBulkOperationResponse;
 };

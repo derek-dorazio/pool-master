@@ -13103,8 +13103,55 @@
       },
       "LeagueBulkOperationResponse": {
         "type": "object",
-        "additionalProperties": {},
-        "description": "Arbitrary JSON object payload."
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many rows the import received."
+          },
+          "sent": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many invitations the import created."
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Email address on the row that failed."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why the row was not imported."
+                }
+              },
+              "required": [
+                "email",
+                "reason"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Rows that were not imported, with the reason for each."
+          },
+          "duplicates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Email addresses skipped because they already have an invitation to this league."
+          }
+        },
+        "required": [
+          "total",
+          "sent",
+          "failed",
+          "duplicates"
+        ],
+        "additionalProperties": false,
+        "description": "Result of a bulk CSV member import."
       },
       "CreateSquadOwnerInvitationRequest": {
         "type": "object",
@@ -15210,8 +15257,27 @@
                   },
                   "errorLog": {
                     "type": "array",
-                    "items": {},
-                    "description": "Raw ingestion error-log entries for root-admin investigation."
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "error": {
+                          "type": "string",
+                          "description": "Failure message the ingestion job recorded."
+                        },
+                        "at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When the failure was recorded."
+                        }
+                      },
+                      "required": [
+                        "error",
+                        "at"
+                      ],
+                      "additionalProperties": false,
+                      "description": "One ingestion job error-log entry."
+                    },
+                    "description": "Ingestion error-log entries for root-admin investigation."
                   }
                 },
                 "required": [
@@ -15307,10 +15373,14 @@
                           "description": "Display name for the row, when known."
                         },
                         "before": {
-                          "description": "Normalized before-state JSON for UPDATED or DELETED rows."
+                          "type": "object",
+                          "additionalProperties": {},
+                          "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                         },
                         "after": {
-                          "description": "Normalized after-state JSON for CREATED or UPDATED rows."
+                          "type": "object",
+                          "additionalProperties": {},
+                          "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                         }
                       },
                       "required": [
@@ -15671,8 +15741,27 @@
                         },
                         "errorLog": {
                           "type": "array",
-                          "items": {},
-                          "description": "Raw ingestion error-log entries for root-admin investigation."
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "error": {
+                                "type": "string",
+                                "description": "Failure message the ingestion job recorded."
+                              },
+                              "at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "When the failure was recorded."
+                              }
+                            },
+                            "required": [
+                              "error",
+                              "at"
+                            ],
+                            "additionalProperties": false,
+                            "description": "One ingestion job error-log entry."
+                          },
+                          "description": "Ingestion error-log entries for root-admin investigation."
                         }
                       },
                       "required": [
@@ -15768,10 +15857,14 @@
                                 "description": "Display name for the row, when known."
                               },
                               "before": {
-                                "description": "Normalized before-state JSON for UPDATED or DELETED rows."
+                                "type": "object",
+                                "additionalProperties": {},
+                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                               },
                               "after": {
-                                "description": "Normalized after-state JSON for CREATED or UPDATED rows."
+                                "type": "object",
+                                "additionalProperties": {},
+                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                               }
                             },
                             "required": [
@@ -16130,8 +16223,27 @@
                         },
                         "errorLog": {
                           "type": "array",
-                          "items": {},
-                          "description": "Raw ingestion error-log entries for root-admin investigation."
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "error": {
+                                "type": "string",
+                                "description": "Failure message the ingestion job recorded."
+                              },
+                              "at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "When the failure was recorded."
+                              }
+                            },
+                            "required": [
+                              "error",
+                              "at"
+                            ],
+                            "additionalProperties": false,
+                            "description": "One ingestion job error-log entry."
+                          },
+                          "description": "Ingestion error-log entries for root-admin investigation."
                         }
                       },
                       "required": [
@@ -16227,10 +16339,14 @@
                                 "description": "Display name for the row, when known."
                               },
                               "before": {
-                                "description": "Normalized before-state JSON for UPDATED or DELETED rows."
+                                "type": "object",
+                                "additionalProperties": {},
+                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                               },
                               "after": {
-                                "description": "Normalized after-state JSON for CREATED or UPDATED rows."
+                                "type": "object",
+                                "additionalProperties": {},
+                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                               }
                             },
                             "required": [
@@ -22501,7 +22617,7 @@
         ],
         "responses": {
           "201": {
-            "description": "Arbitrary JSON object payload.",
+            "description": "Result of a bulk CSV member import.",
             "content": {
               "application/json": {
                 "schema": {

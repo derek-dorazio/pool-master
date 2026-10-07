@@ -9,8 +9,8 @@ export interface SyncWriteDetailRow {
   participantExternalId?: string;
   internalId?: string;
   name?: string;
-  before?: unknown;
-  after?: unknown;
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
 }
 
 export interface SyncWriteDiagnostics {

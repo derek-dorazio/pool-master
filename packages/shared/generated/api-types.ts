@@ -7386,9 +7386,21 @@ export interface components {
                 eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END";
             }[];
         };
-        /** @description Arbitrary JSON object payload. */
+        /** @description Result of a bulk CSV member import. */
         LeagueBulkOperationResponse: {
-            [key: string]: unknown;
+            /** @description How many rows the import received. */
+            total: number;
+            /** @description How many invitations the import created. */
+            sent: number;
+            /** @description Rows that were not imported, with the reason for each. */
+            failed: {
+                /** @description Email address on the row that failed. */
+                email: string;
+                /** @description Why the row was not imported. */
+                reason: string;
+            }[];
+            /** @description Email addresses skipped because they already have an invitation to this league. */
+            duplicates: string[];
         };
         /** @description Request payload for inviting an additional co-owner to a team. */
         CreateSquadOwnerInvitationRequest: {
@@ -7981,8 +7993,16 @@ export interface components {
                     recordsProcessed: number;
                     /** @description Error count captured by the ingestion job. */
                     errors: number;
-                    /** @description Raw ingestion error-log entries for root-admin investigation. */
-                    errorLog: unknown[];
+                    /** @description Ingestion error-log entries for root-admin investigation. */
+                    errorLog: {
+                        /** @description Failure message the ingestion job recorded. */
+                        error: string;
+                        /**
+                         * Format: date-time
+                         * @description When the failure was recorded.
+                         */
+                        at: string;
+                    }[];
                 };
                 /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
                 writeDiagnostics?: {
@@ -8014,10 +8034,14 @@ export interface components {
                         internalId?: string;
                         /** @description Display name for the row, when known. */
                         name?: string;
-                        /** @description Normalized before-state JSON for UPDATED or DELETED rows. */
-                        before?: unknown;
-                        /** @description Normalized after-state JSON for CREATED or UPDATED rows. */
-                        after?: unknown;
+                        /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                        before?: {
+                            [key: string]: unknown;
+                        };
+                        /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                        after?: {
+                            [key: string]: unknown;
+                        };
                     }[];
                 };
                 /** @description Admin-facing outcome and warning summary for the sync run. */
@@ -8157,8 +8181,16 @@ export interface components {
                         recordsProcessed: number;
                         /** @description Error count captured by the ingestion job. */
                         errors: number;
-                        /** @description Raw ingestion error-log entries for root-admin investigation. */
-                        errorLog: unknown[];
+                        /** @description Ingestion error-log entries for root-admin investigation. */
+                        errorLog: {
+                            /** @description Failure message the ingestion job recorded. */
+                            error: string;
+                            /**
+                             * Format: date-time
+                             * @description When the failure was recorded.
+                             */
+                            at: string;
+                        }[];
                     };
                     /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
                     writeDiagnostics?: {
@@ -8190,10 +8222,14 @@ export interface components {
                             internalId?: string;
                             /** @description Display name for the row, when known. */
                             name?: string;
-                            /** @description Normalized before-state JSON for UPDATED or DELETED rows. */
-                            before?: unknown;
-                            /** @description Normalized after-state JSON for CREATED or UPDATED rows. */
-                            after?: unknown;
+                            /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                            before?: {
+                                [key: string]: unknown;
+                            };
+                            /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                            after?: {
+                                [key: string]: unknown;
+                            };
                         }[];
                     };
                     /** @description Admin-facing outcome and warning summary for the sync run. */
@@ -8326,8 +8362,16 @@ export interface components {
                         recordsProcessed: number;
                         /** @description Error count captured by the ingestion job. */
                         errors: number;
-                        /** @description Raw ingestion error-log entries for root-admin investigation. */
-                        errorLog: unknown[];
+                        /** @description Ingestion error-log entries for root-admin investigation. */
+                        errorLog: {
+                            /** @description Failure message the ingestion job recorded. */
+                            error: string;
+                            /**
+                             * Format: date-time
+                             * @description When the failure was recorded.
+                             */
+                            at: string;
+                        }[];
                     };
                     /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
                     writeDiagnostics?: {
@@ -8359,10 +8403,14 @@ export interface components {
                             internalId?: string;
                             /** @description Display name for the row, when known. */
                             name?: string;
-                            /** @description Normalized before-state JSON for UPDATED or DELETED rows. */
-                            before?: unknown;
-                            /** @description Normalized after-state JSON for CREATED or UPDATED rows. */
-                            after?: unknown;
+                            /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                            before?: {
+                                [key: string]: unknown;
+                            };
+                            /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                            after?: {
+                                [key: string]: unknown;
+                            };
                         }[];
                     };
                     /** @description Admin-facing outcome and warning summary for the sync run. */
@@ -11426,7 +11474,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Arbitrary JSON object payload. */
+            /** @description Result of a bulk CSV member import. */
             201: {
                 headers: {
                     [name: string]: unknown;
