@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -62,6 +62,9 @@ function participant(overrides: {
   id: string;
   name: string;
   eventScoreToPar?: number | null;
+  standingStatus?: 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETE' | 'WITHDRAWN' | 'ELIMINATED';
+  displayPosition?: string;
+  currentRoundThru?: number | null;
   rounds?: Array<{
     roundNumber: number;
     status: string;
@@ -103,14 +106,14 @@ function participant(overrides: {
       : {
         id: `standing-${overrides.id}`,
         position: 1,
-        displayPosition: '1',
-        status: 'IN_PROGRESS' as const,
+        displayPosition: overrides.displayPosition ?? '1',
+        status: overrides.standingStatus ?? 'IN_PROGRESS',
         asOf: '2026-04-11T18:00:00.000Z',
         currentRound: 2,
         golf: {
           eventScoreToPar: overrides.eventScoreToPar,
           eventStrokes: 140,
-          currentRoundThru: 9,
+          currentRoundThru: overrides.currentRoundThru === undefined ? 9 : overrides.currentRoundThru,
         },
       },
     rounds: (overrides.rounds ?? []).map((round) => ({
@@ -211,6 +214,50 @@ function leaderboardResponse(entryTotalScoreToPar = -5) {
   };
 }
 
+type GolferFixture = Parameters<typeof participant>[0];
+
+/** One entry picking every golfer given, all counting, so each golfer gets a row. */
+function leaderboardWithGolfers(golfers: GolferFixture[]) {
+  const base = leaderboardResponse().data;
+  return {
+    ...base,
+    participants: golfers.map((golfer) => participant(golfer)),
+    entries: [{
+      ...base.entries[0],
+      countingPickLimit: golfers.length,
+      scoredPickCount: golfers.length,
+      picks: golfers.map((golfer, index) => ({
+        pickId: `pick-${index + 1}`,
+        sportEventParticipantId: golfer.id,
+        pickedAt: '2026-04-01T00:00:00.000Z',
+        slot: index + 1,
+        isCounting: true,
+        isDropped: false,
+      })),
+    }],
+  };
+}
+
+/** The default read plus a second entry, so toggling one can be told apart from toggling all. */
+function leaderboardWithTwoEntries() {
+  const base = leaderboardResponse().data;
+  return {
+    ...base,
+    entries: [
+      base.entries[0],
+      {
+        ...base.entries[0],
+        entryId: 'entry-2',
+        entryName: 'Eagle Eyes Entry 1',
+        entryNumber: 1,
+        squadId: 'squad-2',
+        squadName: 'Eagle Eyes',
+        picks: [{ ...base.entries[0].picks[0], pickId: 'pick-3' }],
+      },
+    ],
+  };
+}
+
 function primeMocks(opts?: {
   contestStatus?: ContestStatusFixture;
   leaderboard?: Record<string, unknown>;
@@ -250,7 +297,111 @@ describe('ContestLeaderboardPage', () => {
 
     expect(screen.getByText('R1')).toBeInTheDocument();
     expect(screen.getByText('R2')).toBeInTheDocument();
-    expect(screen.getByText('Total')).toBeInTheDocument();
+    expect(screen.getByText('Tot')).toBeInTheDocument();
+  });
+
+  it('heads the golfer columns POS, GOLFER, TOT, THR, then one per round, in that order', async () => {
+    primeMocks();
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-position-entry-1');
+    expect(screen.getByTestId('contest-leaderboard-column-headers')).toHaveTextContent('PosGolferTotThrR1R2');
+  });
+
+  it('shows each golfer\'s own tournament position under POS, apart from the entry\'s position', async () => {
+    primeMocks({
+      leaderboard: leaderboardWithGolfers([
+        { id: 'sep-1', name: 'Rory McIlroy', eventScoreToPar: -5, displayPosition: 'T4' },
+      ]),
+    });
+
+    renderLeaderboard();
+
+    const row = await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
+    expect(row).toHaveTextContent(/^T4Rory McIlroy/);
+    expect(screen.getByTestId('contest-leaderboard-position-entry-1')).toHaveTextContent('T1');
+  });
+
+  it('shows THR as the hole number mid-round, F when done, CUT when eliminated, WD when withdrawn and a dash before tee-off', async () => {
+    primeMocks({
+      leaderboard: leaderboardWithGolfers([
+        { id: 'sep-1', name: 'Mid Round', eventScoreToPar: -2, currentRoundThru: 12, rounds: [{ roundNumber: 2, status: 'IN_PROGRESS', strokes: 40, scoreToPar: -2 }] },
+        { id: 'sep-2', name: 'Finished', eventScoreToPar: -1, currentRoundThru: 18, rounds: [{ roundNumber: 2, status: 'COMPLETED', strokes: 71, scoreToPar: -1 }] },
+        { id: 'sep-3', name: 'Missed Cut', eventScoreToPar: 6, standingStatus: 'ELIMINATED' },
+        { id: 'sep-4', name: 'Withdrew', eventScoreToPar: 3, standingStatus: 'WITHDRAWN', currentRoundThru: 7 },
+        { id: 'sep-5', name: 'Not Started', eventScoreToPar: 0, standingStatus: 'ACTIVE', currentRoundThru: null, rounds: [{ roundNumber: 2, status: 'PENDING' }] },
+      ]),
+    });
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-pick-thru-entry-1-pick-1');
+    const thruCells = [1, 2, 3, 4, 5].map(
+      (n) => screen.getByTestId(`contest-leaderboard-pick-thru-entry-1-pick-${n}`).textContent,
+    );
+    expect(thruCells).toEqual(['12', 'F', 'CUT', 'WD', '—']);
+  });
+
+  it('hides an entry\'s golfer rows when its bar is clicked and shows them again on a second click', async () => {
+    primeMocks();
+
+    renderLeaderboard();
+
+    const toggle = await screen.findByTestId('contest-leaderboard-entry-toggle-entry-1');
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1')).toBeInTheDocument();
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByTestId('contest-leaderboard-pick-entry-1-pick-1')).not.toBeInTheDocument();
+    // The bar itself stays: position, name and total are still readable collapsed.
+    expect(screen.getByTestId('contest-leaderboard-total-entry-1')).toHaveTextContent('-5');
+
+    fireEvent.click(toggle);
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1')).toBeInTheDocument();
+  });
+
+  it('collapses every entry with Hide Details, expands them with Show Details, and still lets one bar toggle afterwards', async () => {
+    primeMocks({ leaderboard: leaderboardWithTwoEntries() });
+
+    renderLeaderboard();
+
+    const toggleAll = await screen.findByTestId('contest-leaderboard-toggle-all');
+    expect(toggleAll).toHaveTextContent('Hide Details');
+
+    fireEvent.click(toggleAll);
+    expect(toggleAll).toHaveTextContent('Show Details');
+    expect(screen.queryByTestId('contest-leaderboard-pick-entry-1-pick-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-leaderboard-pick-entry-2-pick-3')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-leaderboard-entry-toggle-entry-2'));
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-2-pick-3')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-leaderboard-pick-entry-1-pick-1')).not.toBeInTheDocument();
+    // Not every entry is collapsed any more, so the toolbar offers to hide them all again.
+    expect(toggleAll).toHaveTextContent('Hide Details');
+
+    fireEvent.click(toggleAll);
+    fireEvent.click(toggleAll);
+    expect(toggleAll).toHaveTextContent('Hide Details');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-2-pick-3')).toBeInTheDocument();
+  });
+
+  it('keeps a collapsed entry collapsed across a live poll', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      primeMocks({ contestStatus: 'ACTIVE' });
+      renderLeaderboard();
+      fireEvent.click(await screen.findByTestId('contest-leaderboard-entry-toggle-entry-1'));
+      const callsBefore = getGolfContestLeaderboardMock.mock.calls.length;
+
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(getGolfContestLeaderboardMock.mock.calls.length).toBeGreaterThan(callsBefore);
+      expect(screen.queryByTestId('contest-leaderboard-pick-entry-1-pick-1')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('strikes through a dropped pick and leaves a counting pick unstruck', async () => {

@@ -45,7 +45,7 @@ const formatTiebreaker = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TO
 // The entry page says what an open contest means for this entry; every other status reads as it
 // does on every contest page.
 function getContestPhaseLabel(contest: ContestDto) {
-  return contest.status === 'OPEN' ? 'Editable until contest lock' : contestStatusLabel(contest.status);
+  return contest.status === 'OPEN' ? 'Editable until the event starts' : contestStatusLabel(contest.status);
 }
 
 function getCompletionStats(selectionGroups: SelectionGroup[]) {
@@ -635,8 +635,8 @@ export function ContestEntryPage() {
                   : 'Lineup is fully selected'
                 : 'Entry editing is closed'
             }
-            label="Lock time"
-            value={formatDateTimeDisplay(contest.lockAt)}
+            label="Entries close"
+            value={contest.status === 'OPEN' ? 'When the event starts' : 'Closed'}
           />
         </MetricGrid>
       </Tile>

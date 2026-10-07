@@ -57,6 +57,11 @@ describe('pool-master-za4 golf-field-patch: validators', () => {
     expect(golfFieldCellInvalid('3.5', 'seedNumber')).toBe(true);
     expect(golfFieldCellInvalid('abc', 'oddsToWin')).toBe(true);
   });
+  it('flags a rank or seed above the largest 32-bit integer, which the server refuses, and accepts the largest one', () => {
+    expect(golfFieldCellInvalid('2147483648', 'ranking')).toBe(true);
+    expect(golfFieldCellInvalid('2147483648', 'seedNumber')).toBe(true);
+    expect(golfFieldCellInvalid('2147483647', 'ranking')).toBe(false);
+  });
   it('pool-master-za4 allows a zero price but not a negative one', () => {
     expect(golfFieldCellInvalid('0', 'price')).toBe(false);
     expect(golfFieldCellInvalid('-1', 'price')).toBe(true);

@@ -209,7 +209,6 @@ export interface Contest extends DomainEntity {
   // Timing
   startsAt?: Date;
   endsAt?: Date;
-  lockAt?: Date;
   scoringStopsOnElimination: boolean;
 }
 
@@ -390,5 +389,5 @@ export interface UpcomingEvent {
   contestId?: string;
   title: string;
   date: Date;
-  eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
+  eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END';
 }

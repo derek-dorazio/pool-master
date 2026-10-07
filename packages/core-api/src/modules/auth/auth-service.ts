@@ -35,15 +35,6 @@ export interface TokenPair {
   sessionId: string;
 }
 
-export interface JwtPayload {
-  sub: string;
-  email: string;
-  isRootAdmin: boolean;
-  sid?: string;
-  iat: number;
-  exp: number;
-}
-
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -266,29 +257,6 @@ export class AuthService {
         revokedCount: result.count,
       },
     }, 'Revoked refresh token');
-  }
-
-  /**
-   * Decodes and verifies a JWT access token. Returns the payload.
-   */
-  verifyAccessToken(token: string): JwtPayload {
-    try {
-      const payload = jwt.verify(token, this.jwtSecret) as JwtPayload;
-      this.logger?.debug({
-        action: 'authService.verifyAccessToken.success',
-        data: {
-          userId: payload.sub,
-          sessionId: payload.sid ?? null,
-        },
-      }, 'Verified access token');
-      return payload;
-    } catch (error) {
-      this.logger?.warn({
-        action: 'authService.verifyAccessToken.invalid',
-        err: error,
-      }, 'Rejected invalid access token');
-      throw new AuthError('Invalid or expired access token', 'INVALID_TOKEN');
-    }
   }
 
   /**

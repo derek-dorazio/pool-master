@@ -45,7 +45,6 @@ function createMockContestRepo(overrides: Partial<ContestRepository> = {}): Cont
         name: 'Future Pool',
         status: ContestStatus.DRAFT,
         startsAt: new Date('2099-06-01'),
-        lockAt: new Date('2099-05-31'),
       }),
     ]),
     update: jest.fn().mockResolvedValue(buildContest()),

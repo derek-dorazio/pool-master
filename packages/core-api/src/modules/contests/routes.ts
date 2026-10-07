@@ -19,7 +19,8 @@ import {
 import {
   requireCommissioner,
   requireCommissionerForContest,
-  requireLeagueMembership,
+  leagueFromPath,
+  leagueOfContest,
   requireMemberOfLeague,
 } from '../leagues/permissions';
 import { createContestService } from './wiring';
@@ -65,7 +66,7 @@ export function contestsModule(fastify: FastifyInstance): void {
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requireLeagueMembership(membershipRepo),
+    preHandler: requireMemberOfLeague(membershipRepo, leagueFromPath),
     handler: handlers.listContests,
   });
 
@@ -125,7 +126,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
   // #193 — the read-only gate: any active member of the league that owns the contest. Every
   // route here either declares a gate or is on scripts/route-authorization-opt-outs.mjs with
   // the reason it authorizes elsewhere; `npm run rules:check` fails a route that does neither.
-  const requireContestLeagueMember = requireMemberOfLeague(contestRepo, membershipRepo);
+  const requireContestLeagueMember = requireMemberOfLeague(membershipRepo, leagueOfContest(contestRepo));
 
   // --- Contest CRUD ---
   fastify.get('/:contestId', {
@@ -353,18 +354,5 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
     },
     preHandler: requireContestCommissioner,
     handler: overrides.extendDeadline,
-  });
-  fastify.post('/:contestId/update-lock', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Update the contest lock time',
-      description:
-        'Changes the contest lock time that governs when picks or entries stop being editable.',
-      operationId: 'updateContestLockTime',
-      body: schemaRef('UpdateContestLockTimeRequest'),
-      response: { 200: schemaRef('ContestResponse') },
-    },
-    preHandler: requireContestCommissioner,
-    handler: overrides.updateLockTime,
   });
 }

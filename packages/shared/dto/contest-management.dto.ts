@@ -64,7 +64,6 @@ export type GolfCategoryDefinitionDto = z.infer<typeof GolfCategoryDefinitionSch
  * zero real reads downstream, dropped as dead configuration.
  */
 export const GolfTieredContestConfigurationSchema = z.object({
-  locksAt: z.string().datetime().nullable().optional().describe('Contest entry lock timestamp.'),
   maxEntriesPerSquad: nullablePositiveIntSchema,
   rosterSize: z.number().int().min(1).describe('How many golfers each Team entry must pick.'),
   countedScores: z.number().int().min(1).describe('How many golfer scores count toward the Team total.'),

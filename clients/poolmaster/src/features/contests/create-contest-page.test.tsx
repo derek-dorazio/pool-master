@@ -121,7 +121,6 @@ function buildManagedContest(status: string, overrides: { id?: string } = {}) {
     configuration: {
       id: `config-${id}`,
       contestId: id,
-      locksAt: '2026-04-10T11:55:00.000Z',
       maxEntriesPerSquad: 1,
       rosterSize: 6,
       countedScores: 4,
@@ -284,7 +283,6 @@ describe('CreateContestPage', () => {
           templateId: '11111111-1111-4111-8111-111111111111',
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
           configuration: expect.objectContaining({
-            locksAt: '2026-04-10T11:55:00.000Z',
             rosterSize: 6,
             countedScores: 4,
           }),
@@ -301,6 +299,24 @@ describe('CreateContestPage', () => {
       }),
       expect.any(String),
     );
+  });
+
+  it('offers no lock-time setting and sends no lock time, because entries close when the event starts', async () => {
+    primeCommonMocks();
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-1' } } });
+
+    renderCreateContestPage();
+
+    await screen.findByTestId('contest-name');
+    expect(screen.queryByTestId('contest-lock-preset')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('contest-name'), {
+      target: { value: 'Masters Pick 6' },
+    });
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await waitFor(() => expect(createContestMock).toHaveBeenCalled());
+    const [request] = createContestMock.mock.calls[0] as [{ body: { configuration: Record<string, unknown> } }];
+    expect(request.body.configuration).not.toHaveProperty('locksAt');
   });
 
   it('pool-master-7wj.6 shows setup validation before submitting an unnamed contest', async () => {
@@ -475,7 +491,6 @@ describe('CreateContestPage', () => {
           configuration: {
             id: 'config-78',
             contestId: 'contest-78',
-            locksAt: '2026-04-10T11:55:00.000Z',
             maxEntriesPerSquad: 1,
             rosterSize: 6,
             countedScores: 4,
@@ -541,7 +556,6 @@ describe('CreateContestPage', () => {
           configuration: {
             id: 'config-77',
             contestId: 'contest-77',
-            locksAt: '2026-04-10T11:55:00.000Z',
             maxEntriesPerSquad: 2,
             rosterSize: 6,
             countedScores: 4,
@@ -574,7 +588,6 @@ describe('CreateContestPage', () => {
 
     expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
     expect(screen.getByTestId('contest-name')).toHaveValue('Masters Pick 6');
-    expect(screen.getByTestId('contest-lock-preset')).toHaveValue('FIVE_MINUTES');
 
     // pool-master-41t — manage mode shows the read-only inherited tiers echoed
     // by the managed-contest response (plans/124 §4.6/§5.3).
@@ -597,7 +610,6 @@ describe('CreateContestPage', () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         body: expect.objectContaining({
           name: 'Masters Pick 6 Updated',
-          lockAt: '2026-04-10T11:55:00.000Z',
         }),
       }),
     );
