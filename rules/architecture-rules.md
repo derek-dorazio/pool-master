@@ -207,6 +207,27 @@ decides its shape, and write its rules then. The rules that stood here (typed ev
 after commit, at-least-once idempotent subscribers, `allSettled` failure policy) were written
 for subscribers that never existed; they are in git history if that day comes.
 
+### Provider data reaches only events an admin authored and linked
+
+Every event is created by an admin, and a provider feeds only events an admin has linked
+to a provider event. Sync-driven event creation, scheduled event lists, scheduled results
+and the rankings feed are **removed, not legacy**: do not re-add them, put them behind a
+flag, or keep them as a fallback. The decision and its alternatives are
+[ADR-0009](../docs/adr/0009-admin-authored-events-score-only-linking.md).
+
+- The only feed that runs on a schedule by default is live scores, for linked events.
+- A provider's field and odds are an on-demand complement an admin triggers for one linked
+  event. A provider that has no such feed for a sport or league is a normal empty state,
+  not an error.
+- Listing a provider's events is a lookup behind an admin action (browse, link, year
+  import). It never creates, updates or changes the status of an event by itself.
+- A new feed that would create events or write across events on a schedule needs a new ADR
+  first.
+- **The one exception still in the code** is the provider-owned sync scope
+  (`SportEventSyncScope.FULL`): a field load on a `FULL` event still overwrites its details
+  and moves its status. It is due for removal under #435. Do not create new `FULL` events
+  or build on that path.
+
 ---
 
 ## 5. Project Structure and Layer Boundaries
