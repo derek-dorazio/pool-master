@@ -34,8 +34,15 @@ function createNoopLogger(): LifecycleLogger {
 }
 
 
-/** Every status settlement may complete a contest from: anything it is not already. */
-const NOT_COMPLETED = Object.values(ContestStatus).filter((status) => status !== ContestStatus.COMPLETED);
+/**
+ * What settlement never touches: a contest already settled or cancelled, and a DRAFT. A draft
+ * leaves only by being opened or deleted (#117), so completing one would publish a contest
+ * nobody could enter to the league as finished. Its event starting leaves it a draft too.
+ */
+const NOT_SETTLED: readonly ContestStatus[] = [ContestStatus.CANCELLED, ContestStatus.COMPLETED, ContestStatus.DRAFT];
+
+/** Every status settlement may complete a contest from. */
+const SETTLEABLE = Object.values(ContestStatus).filter((status) => !NOT_SETTLED.includes(status));
 
 export interface GolfContestSettlementSummary {
   sportEventId: string;
@@ -83,7 +90,7 @@ export class GolfContestSettlementService {
     // it. Reopening a contest (OverrideService.reopenContest) moves it back to ACTIVE, which is
     // the deliberate way to have it settled again.
     const contests = await this.deps.contests.findBySportEvent(sportEventId, {
-      excludeStatuses: [ContestStatus.CANCELLED, ContestStatus.COMPLETED],
+      excludeStatuses: NOT_SETTLED,
     });
 
     let standingsUpserted = 0;
@@ -140,7 +147,7 @@ export class GolfContestSettlementService {
       }
 
       const completed = await this.deps.contests.transitionStatus(contest.id, {
-        from: NOT_COMPLETED,
+        from: SETTLEABLE,
         to: ContestStatus.COMPLETED,
         endsAt: completedAt,
       });
