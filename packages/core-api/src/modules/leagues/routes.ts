@@ -27,7 +27,7 @@ import { MemberService } from './member-service';
 import { MemberDirectoryService } from './member-directory-service';
 import { DashboardService } from './dashboard-service';
 import { BulkService } from './bulk-service';
-import { requireCommissioner, requireLeagueMembership } from './permissions';
+import { leagueFromPath, requireCommissioner, requireMemberOfLeague } from './permissions';
 import { createLeagueHandlers } from './handler';
 import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
@@ -330,7 +330,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
-    preHandler: requireLeagueMembership(membershipRepo),
+    preHandler: requireMemberOfLeague(membershipRepo, leagueFromPath),
     handler: member.listMembers,
   });
 

@@ -351,8 +351,8 @@ the pre-check that gates the route. They are never carried on the access token a
 
 The pre-checks are `requireMemberOfLeague` for read-only access within a league's scope
 (browsing contests, the leaderboard, other squads and members), the commissioner gates for
-league administration, and squad affiliation for anything done on a squad's behalf, entries
-included. Each one resolves the resource's league from the database and reads the caller's
+league administration, and squad affiliation (`requireMemberOfSquad`, #292) for anything done
+on a squad's behalf, entries included. Each one resolves the resource's league from the database and reads the caller's
 membership there.
 
 ### Why A10 does not transfer

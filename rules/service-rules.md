@@ -116,18 +116,30 @@ The global auth guard proves only that the caller is signed in. Every route that
 someone else owns decides who may reach it, and says so where a reader will look:
 
 - **A `preHandler` is the default** for anything decidable from the path and the session. The
-  league gates live in `modules/leagues/permissions.ts`: `requireLeagueMembership` and
-  `requireCommissioner` for routes carrying the league id as `:id`; `requireMemberOfLeague`
-  (read-only access within a league) and `requireCommissionerForContest` for routes that reach a
-  contest by `:contestId` and must resolve its league first. Root admins bypass all of them.
+  league gates live in `modules/leagues/permissions.ts`:
+  - `requireMemberOfLeague(membershipRepo, leagueOf)` — read-only access within a league. The
+    resolver says where the league comes from: `leagueFromPath` for routes carrying it as `:id`,
+    `leagueOfContest(contestRepo)` for routes that reach a contest by `:contestId`.
+  - `requireCommissioner` (`:id`) and `requireCommissionerForContest` (`:contestId`) — league
+    administration.
+  - `requireMemberOfSquad` — anything done on a squad's behalf, under
+    `/leagues/:id/squads/:squadId`: an ACTIVE owner of the squad, or the league's commissioner
+    acting for a member (access rule A7).
+
+  Root admins bypass all of them. Every rejection in a gate awaits `sendError`; a hook that sends
+  without awaiting lets Fastify run the handler behind the refusal.
 - **Authorizing in the handler or service is the declared exception**, taken only when the check
   needs what a hook cannot see — the request body, or which sub-resource is being acted on — or
   when the service already takes the actor and enforces the rule itself.
-- **A declared exception is stated, not implied.** A by-id mount (a prefix with no path parameter,
-  such as `/api/v1/contests`) has lost the league context a nested mount carries, so every route
-  under one with a path parameter either declares a `preHandler`/`onRequest` hook or appears in
-  `scripts/route-authorization-opt-outs.mjs` with a one-line reason. `npm run rules:check`
-  (`rules:check:route-authorization`) fails a route that does neither.
+- **A declared exception is stated, not implied.** Every route whose full path has a parameter —
+  under a by-id mount (`/api/v1/contests/:contestId`) or a nested one
+  (`/api/v1/leagues/:id/squads`) — either declares a `preHandler`/`onRequest` hook or appears in
+  `scripts/route-authorization-opt-outs.mjs` with a one-line reason. Carrying the league id in the
+  path is not checking it. `npm run rules:check` (`rules:check:route-authorization`) fails a route
+  that does neither.
+- **An authenticated handler reads its caller with `requireAuthUser(request)`**
+  (`plugins/auth-guard.ts`), never `request.authUser!`: it answers 401 if the route is ever made
+  public or optional-auth, instead of a `TypeError` or an `undefined` user id.
 - League and squad membership are resolved by query inside the gate, never read from the token —
   `docs/DOMAIN-OPERATIONS.md` access rule A12.
 

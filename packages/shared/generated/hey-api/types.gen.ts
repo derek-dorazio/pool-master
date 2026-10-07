@@ -11638,6 +11638,28 @@ export type ListLeagueSquadsErrors = {
     /**
      * Standard API error envelope.
      */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
     404: {
         /**
          * Error payload object.
@@ -11706,6 +11728,28 @@ export type CreateLeagueSquadErrors = {
      * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
         /**
          * Error payload object.
          */
@@ -11934,6 +11978,28 @@ export type GetLeagueSquadErrors = {
     /**
      * Standard API error envelope.
      */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
     404: {
         /**
          * Error payload object.
@@ -12003,6 +12069,28 @@ export type UpdateLeagueSquadErrors = {
      * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
         /**
          * Error payload object.
          */
@@ -12226,6 +12314,28 @@ export type AddSquadOwnerErrors = {
     /**
      * Standard API error envelope.
      */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
     404: {
         /**
          * Error payload object.
@@ -12296,6 +12406,28 @@ export type RemoveSquadOwnerErrors = {
      * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
         /**
          * Error payload object.
          */
@@ -12406,6 +12538,28 @@ export type ListSquadOwnerInvitationsErrors = {
     /**
      * Standard API error envelope.
      */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
     404: {
         /**
          * Error payload object.
@@ -12475,6 +12629,28 @@ export type CreateSquadOwnerInvitationErrors = {
      * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
         /**
          * Error payload object.
          */
@@ -12587,6 +12763,28 @@ export type ReplaceSquadOwnerErrors = {
     /**
      * Standard API error envelope.
      */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
     404: {
         /**
          * Error payload object.
@@ -12656,6 +12854,28 @@ export type RevokeSquadOwnerInvitationErrors = {
      * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
         /**
          * Error payload object.
          */

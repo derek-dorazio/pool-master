@@ -3,6 +3,7 @@ import type { TeamIconKey } from '@poolmaster/shared/domain';
 import { SquadNotFoundError, SquadOperationError } from './errors';
 import type { SquadService } from './service';
 import { sendError } from '../../core/error-handler';
+import { requireAuthUser } from '../../plugins/auth-guard';
 
 export function createSquadHandlers(service: SquadService) {
   return {
@@ -16,7 +17,7 @@ export function createSquadHandlers(service: SquadService) {
         data: { leagueId: request.params.id, userId: request.authUser?.userId ?? null },
       }, 'Handling list squads request');
       try {
-        const userId = request.authUser!.userId;
+        const userId = requireAuthUser(request).userId;
         const squads = await service.listSquads(
           request.params.id,
           userId,
@@ -43,7 +44,7 @@ export function createSquadHandlers(service: SquadService) {
         data: { leagueId: request.params.id, squadId: request.params.squadId, userId: request.authUser?.userId ?? null },
       }, 'Handling get squad request');
       try {
-        const userId = request.authUser!.userId;
+        const userId = requireAuthUser(request).userId;
         const squad = await service.getSquad(
           request.params.id,
           request.params.squadId,
@@ -81,7 +82,7 @@ export function createSquadHandlers(service: SquadService) {
         },
       }, 'Handling create squad request');
       try {
-        const userId = request.authUser!.userId;
+        const userId = requireAuthUser(request).userId;
         const squad = await service.createSquad(request.params.id, userId, {
           name: request.body?.name,
           iconKey: request.body?.iconKey as TeamIconKey | undefined,
@@ -118,7 +119,7 @@ export function createSquadHandlers(service: SquadService) {
         },
       }, 'Handling update squad request');
       try {
-        const userId = request.authUser!.userId;
+        const userId = requireAuthUser(request).userId;
         const squad = await service.updateSquad(
           request.params.id,
           request.params.squadId,
@@ -154,7 +155,7 @@ export function createSquadHandlers(service: SquadService) {
         data: { leagueId: request.params.id, squadId: request.params.squadId, userId: request.authUser?.userId ?? null },
       }, 'Handling inactivate squad request');
       try {
-        const userId = request.authUser!.userId;
+        const userId = requireAuthUser(request).userId;
         const squad = await service.inactivateSquad(
           request.params.id,
           request.params.squadId,
@@ -185,15 +186,9 @@ export function createSquadHandlers(service: SquadService) {
         action: 'squadRoute.delete.enter',
         data: { leagueId: request.params.id, squadId: request.params.squadId, userId: request.authUser?.userId ?? null },
       }, 'Handling delete squad request');
-      if (request.authUser?.isRootAdmin !== true) {
-        logger.warn({
-          action: 'squadRoute.delete.rootAdminRequired',
-          data: { leagueId: request.params.id, squadId: request.params.squadId, userId: request.authUser?.userId ?? null },
-        }, 'Rejected squad delete for non-root-admin user');
-        return sendError(reply, 403, 'ROOT_ADMIN_ACCESS_REQUIRED', 'Root-admin access is required');
-      }
+      // Root admin only: the route's `onRequest: requireRootAdmin` refuses everyone else (#292).
       try {
-        const userId = request.authUser.userId;
+        const userId = requireAuthUser(request).userId;
         await service.deleteInactiveSquad(
           request.params.id,
           request.params.squadId,
@@ -230,7 +225,7 @@ export function createSquadHandlers(service: SquadService) {
         },
       }, 'Handling add squad owner request');
       try {
-        const userId = request.authUser!.userId;
+        const userId = requireAuthUser(request).userId;
         const membership = await service.addOwner(
           request.params.id,
           request.params.squadId,
@@ -269,7 +264,7 @@ export function createSquadHandlers(service: SquadService) {
         },
       }, 'Handling remove squad owner request');
       try {
-        const actorUserId = request.authUser!.userId;
+        const actorUserId = requireAuthUser(request).userId;
         const membership = await service.removeOwner(
           request.params.id,
           request.params.squadId,

@@ -227,7 +227,7 @@ describe('SDK Functional: Squads', () => {
     });
   });
 
-  it('rejects a non-league member from creating a squad', async () => {
+  it('rejects a non-league member from creating a squad with 403 from the league gate', async () => {
     const { league, commissioner } = await buildLeagueWithCommissioner({
       displayName: 'Squad Commissioner',
       leagueName: 'Negative Squad League',
@@ -256,7 +256,7 @@ describe('SDK Functional: Squads', () => {
     });
 
     expectFunctionalError(outsiderResponse, {
-      status: 400,
+      status: 403,
       code: 'LEAGUE_MEMBERSHIP_REQUIRED',
     });
   });
