@@ -1,8 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, Copy } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { activateLeague, deleteLeague, generateInviteLink, inactivateLeague, leaveLeague, sendLeagueInvitations, updateLeagueDetails, updateLeagueIcon, type LeaveLeagueResponses, type LeagueDto } from '@/lib/api';
+import { activateLeague, deleteLeague, inactivateLeague, leaveLeague, updateLeagueDetails, updateLeagueIcon, type LeaveLeagueResponses, type LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import {
   ActionList,
@@ -35,13 +34,12 @@ import { getLeagueIconOption, LEAGUE_ICON_OPTIONS } from './league-icon-catalog'
 import { LeagueIcon } from './league-icon';
 import { getLeagueLoadErrorCopy } from './league-load-error';
 import { LeagueSummaryCard } from './league-summary-card';
-import { buildInvitePath } from './league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type LeaveLeagueResult = LeaveLeagueResponses[200];
-type ActiveLeagueDialog = 'details' | 'inactivate' | 'invite' | 'leave' | null;
+type ActiveLeagueDialog = 'details' | 'inactivate' | 'leave' | null;
 
 function formatRole(role: string | null | undefined) {
   if (!role) {
@@ -67,9 +65,6 @@ export function LeagueDetailPage() {
   const logger = getLogger().child({
     feature: 'league-detail-page',
   });
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteLink, setInviteLink] = useState('');
-  const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
   const [leaveActionError, setLeaveActionError] = useState<string | null>(null);
   const [detailsName, setDetailsName] = useState('');
   const [detailsDescription, setDetailsDescription] = useState('');
@@ -135,41 +130,6 @@ export function LeagueDetailPage() {
   const isInactiveLeague = league?.isActive === false;
   const currentLeagueIconKey = league?.iconKey ?? iconDraftKey;
   const selectedLeagueIcon = getLeagueIconOption(currentLeagueIconKey);
-
-  const inviteLinkMutation = useInvalidatingMutation({
-    mutationFn: async (): Promise<string> => {
-      const response = await generateInviteLink({
-        path: { id: leagueId },
-        body: {},
-      });
-
-      const inviteCode = response.data?.invitation?.inviteCode;
-      if (!inviteCode) {
-        throwApiError(response.error, 'Invite link generation did not return an invite code.');
-      }
-
-      return `${window.location.origin}${buildInvitePath(inviteCode)}`;
-    },
-    invalidates: [],
-  });
-
-  const sendInviteMutation = useInvalidatingMutation({
-    mutationFn: async (email: string) => {
-      const response = await sendLeagueInvitations({
-        path: { id: leagueId },
-        body: {
-          emails: [email],
-        },
-      });
-
-      if (!response.data) {
-        throwApiError(response.error, 'Invitation send response is missing data.');
-      }
-
-      return response.data;
-    },
-    invalidates: [],
-  });
 
   const updateDetailsMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -319,39 +279,6 @@ export function LeagueDetailPage() {
     },
   });
 
-  async function handleGenerateInviteLink() {
-    if (isInactiveLeague) {
-      return;
-    }
-
-    const nextLink = await inviteLinkMutation.mutateAsync();
-    setInviteLink(nextLink);
-    setInviteLinkCopied(false);
-  }
-
-  async function handleCopyInviteLink() {
-    if (!inviteLink) {
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      setInviteLinkCopied(true);
-    } catch {
-      // Keep the link visible for manual copy when clipboard access is unavailable.
-    }
-  }
-
-  async function handleSendInvite() {
-    const email = inviteEmail.trim();
-    if (!email || isInactiveLeague) {
-      return;
-    }
-
-    await sendInviteMutation.mutateAsync(email);
-    setInviteEmail('');
-  }
-
   async function handleLeaveLeague() {
     setLeaveActionError(null);
     try {
@@ -490,13 +417,6 @@ export function LeagueDetailPage() {
                   label="Change league icon"
                   disabled={!canEditLeague}
                   onClick={handleOpenIconModal}
-                  trailing="Open"
-                />
-                <ActionTile
-                  data-testid="league-open-invite-members"
-                  label="Invite members"
-                  disabled={isInactiveLeague}
-                  onClick={() => setActiveDialog('invite')}
                   trailing="Open"
                 />
 
@@ -702,92 +622,6 @@ export function LeagueDetailPage() {
           </Button>
         </div>
       </Modal>
-
-      <ActionModal
-        description={`Invite new members to join the ${league.name} league.`}
-        footer={(
-          <Button onClick={() => setActiveDialog(null)} variant="secondary">
-            Close
-          </Button>
-        )}
-        onCancel={() => setActiveDialog(null)}
-        onOpenChange={(open) => setActiveDialog(open ? 'invite' : null)}
-        open={activeDialog === 'invite'}
-        testId="league-invitations-section"
-        title="Invite Members"
-      >
-        <DefinitionList
-          className="sm:grid-cols-1"
-          items={[{ id: 'join-policy', label: 'Join policy', value: league.joinPolicy }]}
-        />
-
-        <FormField className="mt-5" label="Join URL">
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Input
-              className="min-w-0 flex-1 font-mono"
-              data-testid="league-join-url"
-              disabled={isInactiveLeague}
-              placeholder="Create a join URL"
-              readOnly
-              value={inviteLink}
-            />
-            <div className="flex gap-2">
-              <Button
-                data-testid="league-create-join-url"
-                disabled={inviteLinkMutation.isPending || isInactiveLeague}
-                onClick={() => void handleGenerateInviteLink()}
-                variant="secondary"
-              >
-                {inviteLinkMutation.isPending ? 'Creating...' : inviteLink ? 'Refresh URL' : 'Create URL'}
-              </Button>
-              <Button
-                aria-label="Copy join URL"
-                data-testid="league-copy-join-url"
-                disabled={!inviteLink || isInactiveLeague}
-                onClick={() => void handleCopyInviteLink()}
-                size="icon"
-                title="Copy join URL"
-                variant="icon"
-              >
-                {inviteLinkCopied ? <Check aria-hidden size={18} /> : <Copy aria-hidden size={18} />}
-              </Button>
-            </div>
-          </div>
-        </FormField>
-
-        {inviteLinkMutation.isError ? (
-          <Alert className="mt-3" tone="danger">
-            {extractErrorMessage(inviteLinkMutation.error, { fallback: 'We could not create a join URL.', codeMessages: LEAGUE_DETAIL_ERROR_CODE_MESSAGES })}
-          </Alert>
-        ) : null}
-
-        <FormField className="mt-5" label="Invite by email">
-          <div className="flex gap-3">
-            <Input
-              data-testid="league-invite-email"
-              disabled={isInactiveLeague}
-              onChange={(event) => setInviteEmail(event.target.value)}
-              placeholder="member@example.com"
-              type="email"
-              value={inviteEmail}
-            />
-            <Button
-              data-testid="league-send-invite"
-              disabled={sendInviteMutation.isPending || !inviteEmail.trim() || isInactiveLeague}
-              onClick={() => void handleSendInvite()}
-            >
-              {sendInviteMutation.isPending ? 'Sending...' : 'Send'}
-            </Button>
-          </div>
-        </FormField>
-
-        {sendInviteMutation.isError ? (
-          <Alert className="mt-3" tone="danger">
-            {extractErrorMessage(sendInviteMutation.error, { fallback: 'We could not send that invitation.', codeMessages: LEAGUE_DETAIL_ERROR_CODE_MESSAGES })}
-          </Alert>
-        ) : null}
-
-      </ActionModal>
 
       <ConfirmDialog
         confirmLabel="Inactivate"

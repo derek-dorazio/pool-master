@@ -11,8 +11,11 @@ import {
   getLeague,
   inactivateLeague,
   leaveLeague,
+  listLeagueInvitations,
   listLeagueMembers,
   listLeagues,
+  revokeInviteLink,
+  sendLeagueInvitations,
   listLeagueSquads,
   removeMember,
   updateLeagueDetails,
@@ -211,6 +214,66 @@ describe('SDK Functional: Leagues', () => {
       status: 400,
       code: 'LEAGUE_ICON_READ_ONLY_WHEN_INACTIVE',
     });
+  });
+
+  it('lists a league\'s pending invites to its commissioner until each is accepted or cancelled', async () => {
+    const commissioner = await buildRegisteredUser({ displayName: 'Listing Commissioner' });
+    const invitee = await buildRegisteredUser({ displayName: 'Accepting Invitee' });
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: buildCreateLeagueBody('Pending Invites League'),
+    });
+    const leagueId = createResponse.data?.league.id as string;
+    const emailInvite = await sendLeagueInvitations({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: { emails: [invitee.email, `cancelled-${randomUUID().slice(0, 8)}@functional.test`] },
+    });
+    const [acceptedInvite, cancelledInvite] = emailInvite.data?.sent ?? [];
+    const linkInvite = await generateInviteLink({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: {},
+    });
+
+    const before = await listLeagueInvitations({ client: commissioner.client, path: { id: leagueId } });
+    expect(before.response.status).toBe(200);
+    expect(before.data?.invitations.map((invitation) => invitation.id).sort()).toEqual(
+      [acceptedInvite.id, cancelledInvite.id, linkInvite.data?.invitation.id].sort(),
+    );
+
+    await acceptInvitation({ client: invitee.client, body: { inviteCode: acceptedInvite.inviteCode } });
+    const cancelled = await revokeInviteLink({
+      client: commissioner.client,
+      path: { id: leagueId, code: cancelledInvite.inviteCode },
+    });
+    expect(cancelled.response.status).toBe(200);
+
+    const after = await listLeagueInvitations({ client: commissioner.client, path: { id: leagueId } });
+    expect(after.data?.invitations.map((invitation) => invitation.id)).toEqual([
+      linkInvite.data?.invitation.id,
+    ]);
+    const cancelledAccept = await acceptInvitation({
+      client: invitee.client,
+      body: { inviteCode: cancelledInvite.inviteCode },
+    });
+    expect(cancelledAccept.response.status).toBe(400);
+  });
+
+  it('refuses a plain member the pending invites list', async () => {
+    const commissioner = await buildRegisteredUser({ displayName: 'Guarding Commissioner' });
+    const member = await buildRegisteredUser({ displayName: 'Curious Member' });
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: buildCreateLeagueBody('Guarded Invites League'),
+    });
+    const leagueId = createResponse.data?.league.id as string;
+    const link = await generateInviteLink({ client: commissioner.client, path: { id: leagueId }, body: {} });
+    await acceptInvitation({ client: member.client, body: { inviteCode: link.data?.invitation.inviteCode as string } });
+
+    const response = await listLeagueInvitations({ client: member.client, path: { id: leagueId } });
+
+    expect(response.response.status).toBe(403);
   });
 
   it('generates a commissioner invite link and accepts it for another authenticated user', async () => {

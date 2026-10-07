@@ -102,6 +102,9 @@ export const QueryKeys = {
     all: ['poolmaster', 'league-teams'] as const,
     byLeague: (leagueId: QueryKeyId) => ['poolmaster', 'league-teams', leagueId] as const,
   },
+  leagueInvitations: {
+    byLeague: (leagueId: QueryKeyId) => ['poolmaster', 'league-invitations', leagueId] as const,
+  },
   leagueTeamOwnerInvitations: {
     all: ['poolmaster', 'league-team-owner-invitations'] as const,
     byLeague: (leagueId: QueryKeyId) =>

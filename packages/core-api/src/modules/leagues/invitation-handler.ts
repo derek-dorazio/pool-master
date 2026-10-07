@@ -11,7 +11,10 @@ import {
 } from './invitation-service';
 import { sendError } from '../../core/error-handler';
 import type { UserRepository } from '@poolmaster/shared/db';
-import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
+import {
+  mapLeagueInvitationToDto,
+  mapLeagueMembershipToDto,
+} from '../../mappers/leagues-extra.mapper';
 
 export function createInvitationHandlers(
   invitationService: InvitationService,
@@ -19,6 +22,8 @@ export function createInvitationHandlers(
 ) {
   return {
     getInvitationPreview,
+    listInvitations,
+    resendInvitation,
     sendInvitations,
     generateInviteLink,
     revokeInviteLink,
@@ -81,6 +86,75 @@ export function createInvitationHandlers(
       },
     }, 'Sent league invitations');
     return reply.status(201).send(result);
+  }
+
+  async function listInvitations(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({
+      action: 'leagueInvitationRoute.list.enter',
+      data: { leagueId: request.params.id, userId: request.authUser?.userId ?? null },
+    }, 'Handling list league invitations request');
+    const invitations = await invitationService.listOutstandingInvitations(request.params.id);
+    logger.info({
+      action: 'leagueInvitationRoute.list.success',
+      data: { leagueId: request.params.id, invitationCount: invitations.length },
+    }, 'Listed league invitations');
+    return reply.send({ invitations: invitations.map(mapLeagueInvitationToDto) });
+  }
+
+  async function resendInvitation(
+    request: FastifyRequest<{ Params: { id: string; invitationId: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+    const userId = request.authUser?.userId as string;
+    logger.debug({
+      action: 'leagueInvitationRoute.resend.enter',
+      data: { leagueId: request.params.id, invitationId: request.params.invitationId, userId },
+    }, 'Handling resend league invitation request');
+    try {
+      const invitation = await invitationService.resendEmailInvitation(
+        request.params.id,
+        request.params.invitationId,
+        userId,
+      );
+      logger.info({
+        action: 'leagueInvitationRoute.resend.success',
+        data: { leagueId: request.params.id, invitationId: invitation.id },
+      }, 'Resent league invitation');
+      return reply.send({ invitation: mapLeagueInvitationToDto(invitation) });
+    } catch (err) {
+      if (err instanceof InvitationNotFoundError) {
+        logger.warn({
+          action: 'leagueInvitationRoute.resend.notFound',
+          data: { leagueId: request.params.id, invitationId: request.params.invitationId },
+        }, 'Cannot resend missing league invitation');
+        return sendError(reply, 404, 'LEAGUE_INVITATION_NOT_FOUND', err.message);
+      }
+      if (err instanceof InvitationInvalidError) {
+        logger.warn({
+          action: 'leagueInvitationRoute.resend.invalid',
+          data: { leagueId: request.params.id, errorCode: err.code },
+        }, 'Rejected league invitation resend');
+        return sendError(reply, 409, err.code, err.message);
+      }
+      if (err instanceof InvitationEmailDeliveryError) {
+        logger.error({
+          action: 'leagueInvitationRoute.resend.deliveryFailure',
+          data: { leagueId: request.params.id, invitationId: err.invitationId },
+        }, 'League invitation was renewed but email delivery failed');
+        return sendError(
+          reply,
+          502,
+          'LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED',
+          'Invitation email delivery failed. Please try again or use the join URL.',
+        );
+      }
+      throw err;
+    }
   }
 
   async function generateInviteLink(

@@ -22,6 +22,7 @@ import {
 } from '@/features/shared/ui';
 import { SquadActions } from './squad-actions';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
+import { LeagueInvitations } from './league-invitations';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
 import { QueryKeys } from '@/lib/query-keys';
@@ -173,8 +174,8 @@ export function TeamsPage() {
         description={(
           <>
             Every member of {league.name} owns a team, so this is the league roster. Owners manage
-            their own team&apos;s co-owners here; commissioners and root admins manage every team
-            and can inactivate one.
+            their own team&apos;s co-owners here; commissioners and root admins manage every team,
+            can inactivate one, and invite new members.
           </>
         )}
         eyebrow="League Directory"
@@ -191,6 +192,16 @@ export function TeamsPage() {
             for this league right now.
           </p>
         </Alert>
+      ) : null}
+
+      {canManageLeague ? (
+        <LeagueInvitations
+          isInactiveLeague={!leagueIsActive}
+          joinPolicy={league.joinPolicy}
+          leagueId={leagueId}
+          leagueName={league.name}
+          membersByUserId={leagueMembersByUserId}
+        />
       ) : null}
 
       <Tile>

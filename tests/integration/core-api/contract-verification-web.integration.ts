@@ -20,6 +20,8 @@ import {
   ErrorEnvelopeSchema,
   SportEventListResponseSchema,
   GenerateInviteLinkResponseSchema,
+  ListLeagueInvitationsResponseSchema,
+  ResendLeagueInvitationResponseSchema,
   LeagueDashboardResponseSchema,
   LeagueResponseSchema,
   SendLeagueInvitationsResponseSchema,
@@ -32,7 +34,9 @@ import type {
   ContestConfigTemplateListResponse,
   ContestResponse,
   ErrorEnvelope,
+  GenerateInviteLinkResponse,
   LeagueContextResponse,
+  SendLeagueInvitationsResponse,
   SquadListResponse,
 } from '@poolmaster/shared/dto';
 import {
@@ -174,6 +178,37 @@ describe('Contract verification (web)', () => {
     expect(
       GenerateInviteLinkResponseSchema.safeParse(inviteLinkRes.json()).success,
     ).toBe(true);
+
+    const listRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.leagues.invitations(leagueId),
+      headers: owner.headers,
+    });
+    expect(listRes.statusCode).toBe(200);
+    const listed = ListLeagueInvitationsResponseSchema.safeParse(listRes.json());
+    expect(listed.success).toBe(true);
+    expect(listed.data?.invitations).toHaveLength(2);
+
+    const emailInvitationId = invitationRes.json<SendLeagueInvitationsResponse>().sent[0].id;
+    const resendRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.resendInvitation(leagueId, emailInvitationId),
+      headers: owner.headers,
+    });
+    expect(resendRes.statusCode).toBe(200);
+    expect(ResendLeagueInvitationResponseSchema.safeParse(resendRes.json()).success).toBe(true);
+
+    const resendLinkRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.resendInvitation(
+        leagueId,
+        inviteLinkRes.json<GenerateInviteLinkResponse>().invitation.id,
+      ),
+      headers: owner.headers,
+    });
+    expect(resendLinkRes.statusCode).toBe(409);
+    expect(ErrorEnvelopeSchema.safeParse(resendLinkRes.json()).success).toBe(true);
+    expect(resendLinkRes.json<ErrorEnvelope>().error.code).toBe('LEAGUE_INVITATION_NOT_RESENDABLE');
 
     const dashboardRes = await getApp().inject({
       method: 'GET',
