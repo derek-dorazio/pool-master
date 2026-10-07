@@ -1,5 +1,4 @@
-import type { PrismaClient } from '@prisma/client';
-import type { SquadMembershipRepository, SquadRepository } from '@poolmaster/shared/db';
+import type { SquadMembershipRepository, SquadRepository, UserRepository } from '@poolmaster/shared/db';
 import type { Squad } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import { SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
@@ -10,7 +9,7 @@ interface EnsureDefaultSquadForLeagueMemberInput {
   userId: string;
   squadRepo: SquadRepository;
   squadMembershipRepo: SquadMembershipRepository;
-  prisma: PrismaClient;
+  users: UserRepository;
   logger?: FastifyBaseLogger;
 }
 
@@ -45,10 +44,7 @@ export async function ensureDefaultSquadForLeagueMember(
     return existingSquad;
   }
 
-  const user = await input.prisma.user.findUnique({
-    where: { id: input.userId },
-    select: { firstName: true, lastName: true },
-  });
+  const user = await input.users.findById(input.userId);
 
   if (!user?.firstName || !user?.lastName) {
     input.logger?.warn({
