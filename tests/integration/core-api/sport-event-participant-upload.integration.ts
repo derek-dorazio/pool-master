@@ -36,8 +36,6 @@ async function createField(suffix: string) {
       name: `Field Upload Open ${suffix}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: 'SCHEDULED',
-      releaseAt: new Date('2026-05-01T12:00:00.000Z'),
-      fieldLocksAt: new Date('2026-05-06T16:00:00.000Z'),
     },
   });
   const golfers = await Promise.all(['Rory McIlroy', 'Jordan Spieth', 'Tommy Fleetwood'].map(async (name, index) => {

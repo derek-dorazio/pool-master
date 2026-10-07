@@ -13,7 +13,7 @@ import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 
 /**
  * plans/124 §6.3 block 2 — the horizontal lifecycle rail
- * (Setup → Field open → Field locked → Live → Completed) with the current stage
+ * (Draft → Released for contests → Live → Completed, #431) with the current stage
  * marked, plus the auto-lifecycle hint when the scheduler will advance it.
  */
 export function GolfTournamentWorkflowRail({
@@ -23,11 +23,7 @@ export function GolfTournamentWorkflowRail({
   rounds: readonly SportEventRoundDto[];
   tournament: SportEventDto;
 }) {
-  const stage = resolveGolfLifecycleStage({
-    status: tournament.status,
-    fieldLocked: tournament.fieldLocked,
-    releaseAt: tournament.releaseAt,
-  });
+  const stage = resolveGolfLifecycleStage(tournament.status);
   const auto = deriveGolfAutoTransition({
     status: tournament.status,
     autoLifecycleEnabled: tournament.autoLifecycleEnabled,

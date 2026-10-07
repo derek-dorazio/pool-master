@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   deriveGolfAutoTransition,
   deriveGolfTournamentReadiness,
+  describeGolfReleaseBlockers,
   formatSportEventStatus,
   golfSyncScopeLabel,
   golfSyncScopeTone,
@@ -52,61 +53,54 @@ describe('pool-master-3dg golf-admin-utils: status formatting', () => {
   });
 });
 
-describe('pool-master-3dg golf-admin-utils: resolveGolfLifecycleStage', () => {
-  const releaseAt = '2026-03-01T00:00:00.000Z';
-
-  it('pool-master-3dg returns null for CANCELLED/POSTPONED (off the rail)', () => {
-    expect(
-      resolveGolfLifecycleStage({
-        status: 'CANCELLED',
-        fieldLocked: false,
-        releaseAt,
-      }),
-    ).toBeNull();
-    expect(
-      resolveGolfLifecycleStage({
-        status: 'POSTPONED',
-        fieldLocked: true,
-        releaseAt,
-      }),
-    ).toBeNull();
+describe('golf-admin-utils: resolveGolfLifecycleStage', () => {
+  it('puts CANCELLED and POSTPONED off the rail (null)', () => {
+    expect(resolveGolfLifecycleStage('CANCELLED')).toBeNull();
+    expect(resolveGolfLifecycleStage('POSTPONED')).toBeNull();
   });
 
-  it('pool-master-3dg maps COMPLETED and IN_PROGRESS to their late stages', () => {
-    expect(
-      resolveGolfLifecycleStage({ status: 'COMPLETED', fieldLocked: true, releaseAt })
-        ?.key,
-    ).toBe('COMPLETED');
-    expect(
-      resolveGolfLifecycleStage({
-        status: 'IN_PROGRESS',
-        fieldLocked: true,
-        releaseAt,
-      })?.index,
-    ).toBe(3);
+  it('places DRAFT, SCHEDULED, IN_PROGRESS and COMPLETED on Draft, Released, Live and Completed in order', () => {
+    expect(resolveGolfLifecycleStage('DRAFT')).toEqual({ key: 'DRAFT', label: 'Draft', index: 0 });
+    expect(resolveGolfLifecycleStage('SCHEDULED')?.key).toBe('RELEASED');
+    expect(resolveGolfLifecycleStage('IN_PROGRESS')?.index).toBe(2);
+    expect(resolveGolfLifecycleStage('COMPLETED')?.key).toBe('COMPLETED');
+  });
+});
+
+describe('golf-admin-utils: describeGolfReleaseBlockers', () => {
+  const now = new Date('2026-04-01T00:00:00.000Z');
+  const ready = {
+    status: 'DRAFT' as const,
+    startDate: '2026-05-07T12:00:00.000Z',
+    loadedParticipantCount: 120,
+    untieredParticipantCount: 0,
+  };
+
+  it('lists nothing for a draft with a loaded, fully tiered field before its start', () => {
+    expect(describeGolfReleaseBlockers(ready, now)).toEqual([]);
   });
 
-  it('pool-master-3dg maps SCHEDULED to Field locked / Field open / Setup by state', () => {
-    expect(
-      resolveGolfLifecycleStage({ status: 'SCHEDULED', fieldLocked: true, releaseAt })
-        ?.key,
-    ).toBe('FIELD_LOCKED');
-    expect(
-      resolveGolfLifecycleStage({
-        status: 'SCHEDULED',
-        fieldLocked: false,
-        releaseAt,
-        now: new Date('2026-03-05T00:00:00.000Z'),
-      })?.key,
-    ).toBe('FIELD_OPEN');
-    expect(
-      resolveGolfLifecycleStage({
-        status: 'SCHEDULED',
-        fieldLocked: false,
-        releaseAt,
-        now: new Date('2026-02-01T00:00:00.000Z'),
-      })?.key,
-    ).toBe('SETUP');
+  it('lists nothing once the tournament is released, whatever its field', () => {
+    expect(describeGolfReleaseBlockers({ ...ready, status: 'SCHEDULED', loadedParticipantCount: 0 }, now)).toEqual([]);
+  });
+
+  it('asks for the field to be loaded when the draft has none', () => {
+    expect(describeGolfReleaseBlockers({ ...ready, loadedParticipantCount: 0 }, now)).toEqual(['Load the field.']);
+  });
+
+  it('counts the active golfers still without a tier', () => {
+    expect(describeGolfReleaseBlockers({ ...ready, untieredParticipantCount: 1 }, now)).toEqual([
+      'Put the 1 active golfer without a tier into a tier.',
+    ]);
+    expect(describeGolfReleaseBlockers({ ...ready, untieredParticipantCount: 3 }, now)).toEqual([
+      'Put the 3 active golfers without a tier into tiers.',
+    ]);
+  });
+
+  it('says a draft whose start time has passed can no longer be released', () => {
+    expect(describeGolfReleaseBlockers({ ...ready, startDate: '2026-03-01T00:00:00.000Z' }, now)).toEqual([
+      'Its start time has passed, so it can no longer be released.',
+    ]);
   });
 });
 
@@ -158,10 +152,10 @@ describe('pool-master-3dg golf-admin-utils: deriveGolfAutoTransition', () => {
   });
 });
 
-describe('pool-master-3dg golf-admin-utils: deriveGolfTournamentReadiness', () => {
-  const base = { status: 'SCHEDULED' as const, fieldLocked: false, loadedParticipantCount: 120, tierCount: 6 };
+describe('golf-admin-utils: deriveGolfTournamentReadiness', () => {
+  const base = { status: 'DRAFT' as const, loadedParticipantCount: 120, tierCount: 6, untieredParticipantCount: 0 };
 
-  it('pool-master-3dg reports Setup with a reason when the field is empty', () => {
+  it('reports Setup with a reason when a draft has no field', () => {
     expect(deriveGolfTournamentReadiness({ ...base, loadedParticipantCount: 0 })).toEqual({
       label: 'Setup',
       tone: 'neutral',
@@ -169,23 +163,23 @@ describe('pool-master-3dg golf-admin-utils: deriveGolfTournamentReadiness', () =
     });
   });
 
-  it('pool-master-3dg reports Field pending when tiers are undefined', () => {
-    expect(deriveGolfTournamentReadiness({ ...base, tierCount: 0 }).label).toBe(
-      'Field pending',
-    );
+  it('reports Field pending when a draft has no tiers defined', () => {
+    expect(deriveGolfTournamentReadiness({ ...base, tierCount: 0 }).label).toBe('Field pending');
   });
 
-  it('pool-master-3dg reports Field locked, Field open, Live, and Completed', () => {
-    expect(deriveGolfTournamentReadiness({ ...base, fieldLocked: true }).label).toBe(
-      'Field locked',
-    );
-    expect(deriveGolfTournamentReadiness(base).label).toBe('Field open');
-    expect(
-      deriveGolfTournamentReadiness({ ...base, status: 'IN_PROGRESS' }).label,
-    ).toBe('Live');
-    expect(
-      deriveGolfTournamentReadiness({ ...base, status: 'COMPLETED' }).label,
-    ).toBe('Completed');
+  it('reports Tiers pending, with the count, while golfers in a draft have no tier', () => {
+    expect(deriveGolfTournamentReadiness({ ...base, untieredParticipantCount: 4 })).toEqual({
+      label: 'Tiers pending',
+      tone: 'warning',
+      reasons: ['4 golfer(s) without a tier'],
+    });
+  });
+
+  it('reports Ready to release for a fully tiered draft, and Released, Live and Completed after', () => {
+    expect(deriveGolfTournamentReadiness(base).label).toBe('Ready to release');
+    expect(deriveGolfTournamentReadiness({ ...base, status: 'SCHEDULED' }).label).toBe('Released');
+    expect(deriveGolfTournamentReadiness({ ...base, status: 'IN_PROGRESS' }).label).toBe('Live');
+    expect(deriveGolfTournamentReadiness({ ...base, status: 'COMPLETED' }).label).toBe('Completed');
   });
 });
 

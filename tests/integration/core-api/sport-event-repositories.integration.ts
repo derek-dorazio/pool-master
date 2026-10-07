@@ -76,8 +76,6 @@ async function createEvent(name = 'Repository Open') {
     endDate: new Date('2026-06-07T12:00:00.000Z'),
     status: 'SCHEDULED',
     rounds: 4,
-    releaseAt: new Date('2026-05-21T12:00:00.000Z'),
-    fieldLocksAt: new Date('2026-06-03T12:00:00.000Z'),
     syncScope: 'NONE',
     autoLifecycleEnabled: true,
   });

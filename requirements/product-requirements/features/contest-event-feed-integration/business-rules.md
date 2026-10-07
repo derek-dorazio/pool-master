@@ -26,9 +26,9 @@
   event sync controls in the first pass.
 - `BR-101A` `(Confirmed)` Root admin does not manually author sporting events;
   events are provider-discovered/imported from real-world schedules.
-- `BR-101B` `(Confirmed)` Root admin does not normally release events manually;
-  event availability is driven by imported events plus default event-relative
-  `releaseAt` and `fieldLocksAt` timing rules.
+- `BR-101B` `(Confirmed, revised by #431)` Root admin releases each event for
+  contests once its field is loaded and every active golfer is tiered. Until
+  then the event is a draft that commissioners cannot see.
 - `BR-101C` `(Confirmed)` Root-admin routes and functions are exceptional
   operational tools, not the normal way the product runs day to day.
 - `BR-102` `(Confirmed)` Commissioners create and configure contests for their
@@ -54,14 +54,11 @@
 
 - `BR-201` `(Confirmed)` Contest lifecycle is downstream of event/feed timing,
   not primarily commissioner-driven.
-- `BR-201A` `(Confirmed)` Each imported event has PoolMaster operational
-  datetimes `releaseAt` and `fieldLocksAt`.
-- `BR-201B` `(Confirmed)` `releaseAt` and `fieldLocksAt` default from global
-  sport or sport+contest-style rules and resolve into event-specific datetime
-  stamps.
-- `BR-201C` `(Confirmed)` Root-admin override of `releaseAt` and
-  `fieldLocksAt` is an advanced path and should rarely be needed in normal
-  operations.
+- `BR-201A` `(Confirmed, revised by #431)` An event is released by an explicit
+  root-admin action, never by a time. Release locks its tiers and prices; rank,
+  odds and withdrawals stay editable.
+- `BR-201B` `(Confirmed, revised by #431)` The event's start time is the
+  contest cutoff: no contest is created or opened on an event that has started.
 - `BR-202` `(Confirmed)` Team entries are editable only while the contest is
   still open/editable.
 - `BR-202A` `(Confirmed)` After contest lock, entries become frozen and

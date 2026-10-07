@@ -9,8 +9,10 @@
  * provider schedule implies) and six default tiers. Any other sport is refused with 422
  * rather than created as if it were golf.
  *
- * Status changes are not here: they go through `EventLifecycleService`, the one path
- * that also activates and settles the event's contests.
+ * Every event is created `DRAFT` and hidden from commissioners until an admin releases it
+ * (#431). Status changes, the release included, go through `EventLifecycleService`, the one
+ * path that also activates and settles the event's contests; `releaseEvent` here only checks
+ * the event is ready first.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -34,7 +36,8 @@ import {
 } from '@poolmaster/shared/domain';
 import { deriveGolfTournamentRounds } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
-import { resolveEventTiming } from './operational-timing';
+import { hasSportEventStarted } from './operational-timing';
+import type { EventLifecycleService } from './event-lifecycle-service';
 import type { SportEventRoundService } from './sport-event-round-service';
 import type { SportEventTierService } from './sport-event-tier-service';
 
@@ -44,6 +47,8 @@ const GOLF_DEFAULT_ROUNDS = 4;
 export interface SportEventSummary {
   event: SportEvent;
   loadedParticipantCount: number;
+  /** Active participants with no tier: a DRAFT event can't be released while any remain. */
+  untieredParticipantCount: number;
   tierCount: number;
   contestCount: number;
 }
@@ -59,8 +64,6 @@ export interface CreateSportEventInput {
   startDate: Date;
   endDate?: Date;
   rounds?: number;
-  releaseAt: Date;
-  fieldLocksAt: Date;
   autoLifecycleEnabled?: boolean;
 }
 
@@ -104,7 +107,9 @@ export interface SportEventServiceDeps {
   sports: SportRepository;
   rounds: SportEventRoundService;
   tiers: SportEventTierService;
+  lifecycle: Pick<EventLifecycleService, 'applySportEventStatusTransition'>;
   logger?: FastifyBaseLogger;
+  now?: () => Date;
 }
 
 export class SportEventService {
@@ -126,7 +131,7 @@ export class SportEventService {
     return summary;
   }
 
-  /** An admin-authored event: the reserved manual identity, SCHEDULED, accepting no provider data. */
+  /** An admin-authored event: the reserved manual identity, DRAFT, accepting no provider data. */
   async createEvent(input: CreateSportEventInput): Promise<SportEventSummary> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
     const rounds = input.rounds ?? GOLF_DEFAULT_ROUNDS;
@@ -141,10 +146,8 @@ export class SportEventService {
       location: input.location,
       startDate: input.startDate,
       endDate: input.endDate,
-      status: SportEventStatus.SCHEDULED,
+      status: SportEventStatus.DRAFT,
       rounds,
-      releaseAt: input.releaseAt,
-      fieldLocksAt: input.fieldLocksAt,
       eventSeriesId: eventSeries.id,
       eventYear: input.eventYear,
       syncScope: SportEventSyncScope.NONE,
@@ -183,8 +186,6 @@ export class SportEventService {
     }
     const { providerEvent } = input;
     const eventSeries = await this.deps.eventSeries.findOrCreate(sportLeague.id, providerEvent.name);
-    // No metadata is passed, so both times are the provider event's start (#263).
-    const timing = resolveEventTiming({ startDate: providerEvent.startDate, metadata: {} });
     // The derived schedule applies only when no round count was given; an explicit count
     // falls back to sequential days, so `rounds` always matches the rounds created.
     const derived = deriveGolfTournamentRounds(providerEvent.startDate, providerEvent.endDate);
@@ -198,10 +199,8 @@ export class SportEventService {
       venue: providerEvent.venue ?? undefined,
       startDate: providerEvent.startDate,
       endDate: providerEvent.endDate ?? undefined,
-      status: SportEventStatus.SCHEDULED,
+      status: SportEventStatus.DRAFT,
       rounds,
-      releaseAt: timing.releaseAt,
-      fieldLocksAt: timing.fieldLocksAt,
       eventSeriesId: eventSeries.id,
       eventYear: input.eventYear,
       syncScope: SportEventSyncScope.SCORES_ONLY,
@@ -317,8 +316,6 @@ export class SportEventService {
         startDate: shiftYears(event.startDate, shift),
         endDate: event.endDate ? shiftYears(event.endDate, shift) : undefined,
         rounds: event.rounds,
-        releaseAt: shiftYears(event.releaseAt, shift),
-        fieldLocksAt: shiftYears(event.fieldLocksAt, shift),
         autoLifecycleEnabled: event.autoLifecycleEnabled,
       }));
     }
@@ -333,6 +330,58 @@ export class SportEventService {
   async updateEvent(sportEventId: string, updates: SportEventUpdate): Promise<SportEventSummary> {
     await this.requireEvent(sportEventId);
     await this.deps.sportEvents.update(sportEventId, updates);
+    return this.requireSummary(sportEventId);
+  }
+
+  /**
+   * "Release for contests" (#431): DRAFT → SCHEDULED, after which commissioners can build
+   * contests on the event and its tiers and prices are locked for good. 409
+   * SPORT_EVENT_NOT_DRAFT once released; 409 SPORT_EVENT_ALREADY_STARTED once its start time
+   * has passed; 422 SPORT_EVENT_NOT_READY while its field is empty or any active participant
+   * has no tier.
+   */
+  async releaseEvent(sportEventId: string): Promise<SportEventSummary> {
+    const summary = await this.requireSummary(sportEventId);
+    const { event } = summary;
+    if (event.status !== SportEventStatus.DRAFT) {
+      this.deps.logger?.warn({ sportEventId, status: event.status }, 'Refused to release a sport event that is not a draft');
+      throw new SportEventError(
+        `Sport event ${sportEventId} has already been released.`,
+        'SPORT_EVENT_NOT_DRAFT',
+        409,
+      );
+    }
+    if (hasSportEventStarted(event, this.now())) {
+      this.deps.logger?.warn(
+        { sportEventId, startDate: event.startDate.toISOString() },
+        'Refused to release a sport event whose start time has passed',
+      );
+      throw new SportEventError(
+        `Sport event ${sportEventId} has already started, so it can no longer be released.`,
+        'SPORT_EVENT_ALREADY_STARTED',
+        409,
+      );
+    }
+    const missing = describeReleaseBlockers(summary);
+    if (missing.length > 0) {
+      this.deps.logger?.warn(
+        { sportEventId, loadedParticipantCount: summary.loadedParticipantCount, untieredParticipantCount: summary.untieredParticipantCount },
+        'Refused to release a sport event that is not ready',
+      );
+      throw new SportEventError(
+        `Sport event ${sportEventId} is not ready to release: ${missing.join('; ')}.`,
+        'SPORT_EVENT_NOT_READY',
+        422,
+      );
+    }
+
+    await this.deps.lifecycle.applySportEventStatusTransition({
+      sportEventId,
+      toStatus: SportEventStatus.SCHEDULED,
+      actor: { type: 'ROOT_ADMIN' },
+      release: true,
+    });
+    this.deps.logger?.info({ sportEventId }, 'Released sport event for contests');
     return this.requireSummary(sportEventId);
   }
 
@@ -351,9 +400,10 @@ export class SportEventService {
     this.deps.logger?.info({ sportEventId }, 'Deleted sport event');
   }
 
-  async requireSummary(sportEventId: string): Promise<SportEventSummary> {
+  /** `releasedOnly` hides a DRAFT as if it did not exist: only a root admin sees drafts (#431). */
+  async requireSummary(sportEventId: string, options: { releasedOnly?: boolean } = {}): Promise<SportEventSummary> {
     const summary = await this.getEvent(sportEventId);
-    if (!summary) {
+    if (!summary || (options.releasedOnly && summary.event.status === SportEventStatus.DRAFT)) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
     return summary;
@@ -400,18 +450,36 @@ export class SportEventService {
     return { sportLeague, sport };
   }
 
+  private now(): Date {
+    return this.deps.now?.() ?? new Date();
+  }
+
   private async summarize(events: SportEvent[]): Promise<SportEventSummary[]> {
     const ids = events.map((event) => event.id);
-    const [participants, tiers, contests] = await Promise.all([
+    const [participants, untiered, tiers, contests] = await Promise.all([
       this.deps.sportEvents.countParticipants(ids),
+      this.deps.sportEvents.countUntieredActiveParticipants(ids),
       this.deps.sportEvents.countTiers(ids),
       this.deps.sportEvents.countContests(ids),
     ]);
     return events.map((event) => ({
       event,
       loadedParticipantCount: participants.get(event.id) ?? 0,
+      untieredParticipantCount: untiered.get(event.id) ?? 0,
       tierCount: tiers.get(event.id) ?? 0,
       contestCount: contests.get(event.id) ?? 0,
     }));
   }
+}
+
+/** What still stops a DRAFT event being released, in words an admin can act on. */
+function describeReleaseBlockers(summary: SportEventSummary): string[] {
+  const blockers: string[] = [];
+  if (summary.loadedParticipantCount === 0) {
+    blockers.push('its field is not loaded');
+  }
+  if (summary.untieredParticipantCount > 0) {
+    blockers.push(`${summary.untieredParticipantCount} active participant(s) have no tier`);
+  }
+  return blockers;
 }

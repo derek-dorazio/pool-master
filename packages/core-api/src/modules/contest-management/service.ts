@@ -23,6 +23,7 @@ import type {
   ContestConfigTemplate,
   ContestConfiguration,
   GolfContestConfig,
+  SportEventStatus,
   TournamentFormat,
 } from '@poolmaster/shared/domain';
 import {
@@ -31,11 +32,10 @@ import {
   ScoringEngine,
   SelectionType,
   Sport,
-  SportEventStatus,
   isContestFormatValidForTournamentFormat,
 } from '@poolmaster/shared/domain';
 import { toGolfEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
-import { evaluateEventOperationalState } from '../events/operational-timing';
+import { evaluateEventOperationalState, hasSportEventStarted } from '../events/operational-timing';
 
 interface CreateContestManagementContext {
   leagueId: string;
@@ -47,9 +47,6 @@ export interface ContestCreateSportEventState {
   id: string;
   status: SportEventStatus;
   startDate: Date;
-  releaseAt: Date;
-  fieldLocksAt: Date;
-  fieldLocked: boolean;
   sport: Sport;
   tournamentFormat: TournamentFormat;
   participantCount: number | null;
@@ -61,16 +58,6 @@ export interface ContestCreateSportEventReader {
     sportEventId: string,
   ): Promise<ContestCreateSportEventState | null>;
 }
-
-/**
- * Event statuses at which the event has started, or is over: a draft contest on it can no
- * longer be opened (#117). POSTPONED is not here — a postponed event has not started.
- */
-const STARTED_SPORT_EVENT_STATUSES: readonly SportEventStatus[] = [
-  SportEventStatus.IN_PROGRESS,
-  SportEventStatus.COMPLETED,
-  SportEventStatus.CANCELLED,
-];
 
 function createNoopLogger(): LifecycleLogger {
   const noop = () => undefined;
@@ -381,11 +368,7 @@ export class ContestManagementService {
         404,
       );
     }
-    const now = this.now();
-    if (
-      sportEvent.startDate.getTime() <= now.getTime()
-      || STARTED_SPORT_EVENT_STATUSES.includes(sportEvent.status)
-    ) {
+    if (hasSportEventStarted(sportEvent, this.now())) {
       this.logger.warn({
         contestId,
         sportEventId,
@@ -418,16 +401,16 @@ export class ContestManagementService {
     }
 
     const operationalState = evaluateEventOperationalState({
+      status: sportEvent.status,
+      startDate: sportEvent.startDate,
       participantCount: sportEvent.loadedParticipantCount,
-      releaseAt: sportEvent.releaseAt,
-      fieldLocksAt: sportEvent.fieldLocksAt,
-      providerFieldLocked: sportEvent.fieldLocked,
+      now: this.now(),
     });
 
     if (operationalState.readinessReasons.includes('EVENT_NOT_RELEASED')) {
       this.logger.warn({
         sportEventId,
-        releaseAt: sportEvent.releaseAt.toISOString(),
+        status: sportEvent.status,
       }, 'contest management create contest rejected for unreleased sport event');
       throw new ContestManagementError(
         'Selected sporting event is not released for contest creation yet.',
@@ -447,15 +430,15 @@ export class ContestManagementService {
       );
     }
 
-    if (operationalState.readinessReasons.includes('FIELD_LOCKED')) {
+    if (operationalState.readinessReasons.includes('EVENT_STARTED')) {
       this.logger.warn({
         sportEventId,
-        fieldLocksAt: sportEvent.fieldLocksAt.toISOString(),
-        providerFieldLocked: sportEvent.fieldLocked,
-      }, 'contest management create contest rejected for locked sport event field');
+        status: sportEvent.status,
+        startDate: sportEvent.startDate.toISOString(),
+      }, 'contest management create contest rejected for a sport event that has started');
       throw new ContestManagementError(
-        'Selected sporting event field is already locked for contest creation.',
-        'SPORT_EVENT_FIELD_LOCKED',
+        'Selected sporting event has already started, so contests can no longer be created on it.',
+        'SPORT_EVENT_ALREADY_STARTED',
       );
     }
 

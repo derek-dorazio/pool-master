@@ -6,8 +6,8 @@ These question IDs are intended to stay stable as the discussion evolves.
 
 - `CEFI-000` First complete commissioner-to-member loop `(Resolved)`
   - There is no manual root-admin event release step in the normal flow.
-  - Events are provider-imported and use default event-relative `releaseAt`
-    and `fieldLocksAt` rules.
+  - Revised by #431: events start as drafts and the root admin releases each
+    one for contests; the event's start time is the contest cutoff.
   - Commissioner contest creation immediately makes the contest live for team
     entries.
   - The first meaningful user loop is:
@@ -19,8 +19,8 @@ These question IDs are intended to stay stable as the discussion evolves.
 - `CEFI-001` Event creation authority `(Resolved)`
   - Events are provider-discovered/imported only.
   - Root admin does not manually create event shells or stubs.
-  - Root admin controls PoolMaster operational timing through event-level
-    `releaseAt` and `fieldLocksAt` datetimes.
+  - Revised by #431: root admin releases the event for contests; there are no
+    release or field-lock datetimes.
 
 - `CEFI-002` Contest eligibility readiness `(Resolved)`
   - Commissioners may create/configure contests as soon as the event exists.
@@ -93,8 +93,8 @@ These question IDs are intended to stay stable as the discussion evolves.
 ## Current Recommendations
 
 - `CEFI-R1` Treat provider/imported events as the only event source of truth.
-- `CEFI-R2` Resolve global sport or sport+contest-style timing rules into
-  event-level `releaseAt` and `fieldLocksAt` datetimes.
+- `CEFI-R2` Release each event for contests by an explicit root-admin action
+  (#431).
 - `CEFI-R3` Keep the event field canonical at `SportEventParticipant` and use a
   released-contest frozen field projection when needed to preserve contest
   validity.

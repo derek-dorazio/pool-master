@@ -85,8 +85,6 @@ describe('RosterPick CRUD integration', () => {
         sport: Sport.GOLF,
         name: 'Roster Pick CRUD Event',
         startDate: eventTiming.startDate,
-        releaseAt: eventTiming.releaseAt,
-        fieldLocksAt: eventTiming.fieldLocksAt,
         status: 'SCHEDULED',
       },
     });

@@ -215,6 +215,9 @@ enum PrismaParticipantMappingConfidence {
 }
 
 enum PrismaSportEventStatus {
+  /// Being prepared by an admin; commissioners don't see it. Release moves it to
+  /// SCHEDULED, and only release does (#431).
+  DRAFT
   SCHEDULED
   IN_PROGRESS
   COMPLETED
@@ -944,9 +947,6 @@ model SportEvent {
   status               PrismaSportEventStatus    @default(SCHEDULED)
   rounds               Int?
   participantCount     Int?                      @map("participant_count")
-  releaseAt            DateTime                  @map("release_at") @db.Timestamptz
-  fieldLocksAt         DateTime                  @map("field_locks_at") @db.Timestamptz
-  fieldLocked          Boolean                   @default(false) @map("field_locked")
   metadata             Json                      @default("{}")
   // The series this is one edition of — the event's only parent, and its only
   // path to a sport league (plans/147). Auto-resolved by find-or-create on

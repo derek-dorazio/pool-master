@@ -53,9 +53,10 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
+  const eventLifecycle = opts.eventLifecycleService ?? createEventLifecycleService(prisma, { logger: fastify.log });
   const handler = createEventHandlers({
-    services: createSportEventServices(prisma, fastify.log.child({ module: 'events.service' })),
-    eventLifecycle: opts.eventLifecycleService ?? createEventLifecycleService(prisma, { logger: fastify.log }),
+    services: createSportEventServices(prisma, fastify.log.child({ module: 'events.service' }), eventLifecycle),
+    eventLifecycle,
     scoreSource: new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log),
     ingestion: opts.ingestionService,
   });
@@ -70,7 +71,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       description:
         'The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. Any signed-in user may read it: '
         + 'contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field '
-        + 'size, contest-setup readiness, and its tier and contest counts.',
+        + 'size, contest-setup readiness, and its tier and contest counts. DRAFT events (not yet released for contests) are listed for a root admin only.',
       operationId: 'listEvents',
       querystring: schemaRef('SportEventListQuery'),
       response: { 200: schemaRef('SportEventListResponse'), ...errors(401) },
@@ -82,6 +83,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Get a sport event',
+      description: '404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin.',
       operationId: 'getEvent',
       params: EVENT_PARAMS,
       response: { 200: schemaRef('SportEventResponse'), ...errors(401, 404) },
@@ -181,12 +183,32 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     handler: handler.deleteEvent,
   });
 
+  fastify.post('/:eventId/release', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Release a draft sport event for contests',
+      description: 'DRAFT → SCHEDULED. Commissioners can then see the event and build contests on it, and its tiers and prices are locked for good. '
+        + 'Refused unless the field is loaded, every active participant has a tier, and the start time has not passed. Root admin only.',
+      operationId: 'releaseEvent',
+      params: EVENT_PARAMS,
+      response: {
+        200: schemaRef('SportEventResponse'),
+        ...errors(401, 403, 404),
+        409: { ...zodToJsonSchema(ErrorEnvelopeSchema), description: 'SPORT_EVENT_NOT_DRAFT: the event has already been released. SPORT_EVENT_ALREADY_STARTED: its start time has passed.' },
+        422: { ...zodToJsonSchema(ErrorEnvelopeSchema), description: 'SPORT_EVENT_NOT_READY: the field is not loaded, or an active participant has no tier.' },
+      },
+    },
+    handler: handler.releaseEvent,
+  });
+
   fastify.post('/:eventId/transition', {
     ...write,
     schema: {
       tags: TAGS,
       summary: 'Move a sport event to its next status',
-      description: 'Only to one of the event\'s allowedTransitions. Activates or settles its contests as the new status requires. Root admin only.',
+      description: 'Only to one of the event\'s allowedTransitions. Activates or settles its contests as the new status requires. '
+        + 'A DRAFT event is refused SCHEDULED with 409 SPORT_EVENT_RELEASE_REQUIRED: releasing it is its own action (releaseEvent). Root admin only.',
       operationId: 'transitionEvent',
       params: EVENT_PARAMS,
       body: schemaRef('TransitionSportEventRequest'),
@@ -309,11 +331,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Update a sport event\'s field',
-      description: 'Patches field rows and their manual prices, all or none. Root admin only.',
+      description: 'Patches field rows and their manual prices, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event\'s price would change: its tiers and prices are locked.',
       operationId: 'updateEventParticipants',
       params: EVENT_PARAMS,
       body: schemaRef('UpdateSportEventParticipantsRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409) },
     },
     handler: handler.updateEventParticipants,
   });
@@ -429,11 +451,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Fill a sport event\'s tiers from its active field',
-      description: 'Returns the field with its new valuations. Root admin only.',
+      description: 'Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.',
       operationId: 'autoAssignEventTiers',
       params: EVENT_PARAMS,
       body: schemaRef('AutoAssignSportEventTiersRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409) },
     },
     handler: handler.autoAssignEventTiers,
   });
@@ -443,11 +465,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Replace a sport event\'s tier assignments',
-      description: 'The drag-and-drop save, all or none. Returns the field with its new valuations. Root admin only.',
+      description: 'The drag-and-drop save, all or none. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.',
       operationId: 'replaceEventTierAssignments',
       params: EVENT_PARAMS,
       body: schemaRef('ReplaceSportEventTierAssignmentsRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 422) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409, 422) },
     },
     handler: handler.replaceEventTierAssignments,
   });
@@ -457,11 +479,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Price a sport event\'s seeded field',
-      description: 'Returns the field with its new valuations. Root admin only.',
+      description: 'Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.',
       operationId: 'autoAssignEventPrices',
       params: EVENT_PARAMS,
       body: schemaRef('AutoAssignSportEventPricesRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409) },
     },
     handler: handler.autoAssignEventPrices,
   });

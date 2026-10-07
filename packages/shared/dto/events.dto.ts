@@ -21,14 +21,14 @@ export const EventReadinessStatusDtoSchema = z.enum([
   'NOT_RELEASED',
   'PENDING_FIELD',
   'CONTEST_ELIGIBLE',
-  'FIELD_LOCKED',
+  'EVENT_STARTED',
 ]);
 export type EventReadinessStatusDto = z.infer<typeof EventReadinessStatusDtoSchema>;
 
 export const EventReadinessReasonDtoSchema = z.enum([
   'EVENT_NOT_RELEASED',
   'FIELD_NOT_LOADED',
-  'FIELD_LOCKED',
+  'EVENT_STARTED',
 ]);
 export type EventReadinessReasonDto = z.infer<typeof EventReadinessReasonDtoSchema>;
 
@@ -41,7 +41,7 @@ const ADMIN_ONLY = '(Admin-only: operational detail no member surface reads.)';
 /**
  * The canonical SportEvent — the row plus the three things every reader of an event
  * needs and the row does not store: how many participants are loaded, and whether the
- * event is ready for contest setup (derived from release/field-lock timing and the
+ * event is ready for contest setup (derived from its status, its start time and the
  * loaded field). One shape for every caller; it replaced EventSummaryDto and
  * AdminEventSummaryDto, which each derived the same readiness in their own mapper.
  */
@@ -59,12 +59,10 @@ export const SportEventDtoSchema = z.object({
   rounds: z.number().int().nullable().describe('Number of rounds when the format has them; null otherwise.'),
   participantCount: z.number().int().nullable().describe('Field size the provider reports, when it reports one; null otherwise.'),
   loadedParticipantCount: z.number().int().describe('Number of event participants currently persisted for the event.'),
-  releaseAt: DateTimeSchema.describe('When the event becomes available for contest setup.'),
-  fieldLocksAt: DateTimeSchema.describe('After this time, field changes are no longer honored for new contest setup.'),
-  fieldLocked: z.boolean().describe('Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed.'),
+  untieredParticipantCount: z.number().int().describe(`Active event participants with no tier. A DRAFT event can't be released while any remain. ${ADMIN_ONLY}`),
   readinessStatus: EventReadinessStatusDtoSchema.describe('Contest-setup readiness right now.'),
-  readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Why the event is or is not contest-eligible right now.'),
-  contestEligible: z.boolean().describe('Whether a contest can be created or configured for the event right now.'),
+  readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started.'),
+  contestEligible: z.boolean().describe('Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started.'),
   eventSeriesId: z.string().uuid().describe('The recurring tournament (event series) this is one edition of — the event\'s only parent.'),
   eventYear: z.number().int().describe('The year this edition is branded with ("the 2026 Masters"), which is not always the year startDate falls in. One edition of a series per year.'),
   sportLeagueId: z.string().uuid().describe('The sport league the event\'s series belongs to. Read through the series, not stored on the event.'),
@@ -108,10 +106,8 @@ export const CreateSportEventRequestSchema = z.object({
   startDate: DateTimeSchema,
   endDate: DateTimeSchema.optional(),
   rounds: z.number().int().min(1).optional().describe('Round count; golf defaults to 4.'),
-  releaseAt: DateTimeSchema,
-  fieldLocksAt: DateTimeSchema,
   autoLifecycleEnabled: z.boolean().optional(),
-}).describe('An admin-authored event. Created SCHEDULED with its default rounds and tiers, accepting no provider data.');
+}).describe('An admin-authored event. Created DRAFT with its default rounds and tiers, accepting no provider data; commissioners see it once it is released.');
 export type CreateSportEventRequest = z.infer<typeof CreateSportEventRequestSchema>;
 
 export const CreateSportEventFromProviderEventRequestSchema = z.object({
@@ -120,7 +116,7 @@ export const CreateSportEventFromProviderEventRequestSchema = z.object({
   providerId: z.string().min(1),
   externalId: z.string().min(1).describe('From a provider catalog browse (listProviderCatalogEvents).'),
   rounds: z.number().int().min(1).optional().describe('Round count; omitted, the provider schedule decides.'),
-}).describe('An event created from a provider event, linked to it for scores (SCORES_ONLY). The field is not touched.');
+}).describe('An event created from a provider event, linked to it for scores (SCORES_ONLY). Created DRAFT; the field is not touched.');
 export type CreateSportEventFromProviderEventRequest = z.infer<typeof CreateSportEventFromProviderEventRequestSchema>;
 
 /**
@@ -166,14 +162,12 @@ export const UpdateSportEventRequestSchema = z.object({
   startDate: DateTimeSchema.optional(),
   endDate: z.string().datetime().nullable().optional().describe('null clears it.'),
   rounds: z.number().int().min(1).optional(),
-  releaseAt: DateTimeSchema.optional(),
-  fieldLocksAt: DateTimeSchema.optional(),
   autoLifecycleEnabled: z.boolean().optional(),
 }).describe('Changes to an event; omitted fields are left alone.');
 export type UpdateSportEventRequest = z.infer<typeof UpdateSportEventRequestSchema>;
 
 export const TransitionSportEventRequestSchema = z.object({
-  toStatus: EventStatusDtoSchema.describe('One of the event\'s allowedTransitions.'),
+  toStatus: EventStatusDtoSchema.describe('One of the event\'s allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseEvent).'),
 }).describe('Moves an event to its next lifecycle status, activating or settling its contests as that status requires.');
 export type TransitionSportEventRequest = z.infer<typeof TransitionSportEventRequestSchema>;
 

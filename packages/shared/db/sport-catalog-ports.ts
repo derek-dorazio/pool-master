@@ -72,10 +72,12 @@ export interface SportEventFilters {
   eventYear?: number;
   /** Case-insensitive substring of the event name. */
   q?: string;
+  /** Leave out DRAFT events: what a non-admin may see (#431). */
+  releasedOnly?: boolean;
 }
 
 /** The sport league comes from the series, so it is not supplied. */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'fieldLocked' | 'metadata' | 'participantCount' | 'sportLeagueId'>;
+export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId'>;
 
 /** undefined leaves a field alone; null clears a nullable one. */
 export interface SportEventUpdate {
@@ -85,8 +87,6 @@ export interface SportEventUpdate {
   startDate?: Date;
   endDate?: Date | null;
   rounds?: number | null;
-  releaseAt?: Date;
-  fieldLocksAt?: Date;
   autoLifecycleEnabled?: boolean;
   status?: SportEventStatus;
   providerId?: string;
@@ -121,6 +121,11 @@ export interface SportEventRepository {
   delete(id: string): Promise<void>;
   /** Event participants per event, for each id asked about (0 where none). */
   countParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
+  /**
+   * Active event participants with no tier, per event, for each id asked about (0 where none).
+   * An event can't be released while any remain (#431).
+   */
+  countUntieredActiveParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Tiers per event, for each id asked about (0 where none). */
   countTiers(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Contests run on each event, for each id asked about (0 where none). */

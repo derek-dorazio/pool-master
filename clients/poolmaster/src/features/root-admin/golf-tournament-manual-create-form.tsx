@@ -31,8 +31,6 @@ const manualFormSchema = z.object({
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().optional(),
   rounds: z.coerce.number().int().min(1, 'At least one round'),
-  releaseAt: z.string().min(1, 'Release date is required'),
-  fieldLocksAt: z.string().min(1, 'Field-lock date is required'),
   autoLifecycleEnabled: z.boolean(),
 });
 
@@ -61,8 +59,6 @@ export function GolfTournamentManualCreateForm({
       startDate: '',
       endDate: '',
       rounds: 4,
-      releaseAt: '',
-      fieldLocksAt: '',
       autoLifecycleEnabled: true,
     },
   });
@@ -79,9 +75,6 @@ export function GolfTournamentManualCreateForm({
             ? { endDate: localDateTimeInputToIso(values.endDate) }
             : {}),
           rounds: values.rounds,
-          releaseAt: localDateTimeInputToIso(values.releaseAt) ?? values.releaseAt,
-          fieldLocksAt:
-            localDateTimeInputToIso(values.fieldLocksAt) ?? values.fieldLocksAt,
           sportLeagueId: edition.sportLeagueId,
           eventYear: parseEventYear(edition.eventYear) as number,
           autoLifecycleEnabled: values.autoLifecycleEnabled,
@@ -145,26 +138,6 @@ export function GolfTournamentManualCreateForm({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField error={form.formState.errors.releaseAt?.message} label="Field release">
-            <Input
-              data-testid="root-admin-golf-tournament-create-release"
-              type="datetime-local"
-              {...form.register('releaseAt')}
-            />
-          </FormField>
-          <FormField
-            error={form.formState.errors.fieldLocksAt?.message}
-            label="Field locks"
-          >
-            <Input
-              data-testid="root-admin-golf-tournament-create-locks"
-              type="datetime-local"
-              {...form.register('fieldLocksAt')}
-            />
-          </FormField>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
           <FormField error={form.formState.errors.rounds?.message} label="Rounds">
             <Input
               data-testid="root-admin-golf-tournament-create-rounds"
@@ -190,6 +163,11 @@ export function GolfTournamentManualCreateForm({
           Move this tournament through Live and Completed automatically from its round
           schedule.
         </label>
+
+        <p className="text-sm text-muted-foreground">
+          The tournament starts as a draft that only admins can see. Release it for contests
+          from its Workflow card once its field is loaded and every golfer is in a tier.
+        </p>
 
         <div className="flex justify-end gap-3">
           <Button

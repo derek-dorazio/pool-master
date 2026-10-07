@@ -42,11 +42,9 @@ describe("pool-master-pjr.8: contest configuration section components", () => {
       <EventReadinessPanel
         event={{
           contestEligible: true,
-          fieldLocksAt: "2026-04-10T12:00:00.000Z",
           participantCount: 80,
           readinessReasons: [],
           readinessStatus: "CONTEST_ELIGIBLE",
-          releaseAt: "2026-04-01T12:00:00.000Z",
           status: "SCHEDULED",
         } as never}
         formatDateTimeDisplay={(value) => value ?? "Unavailable"}

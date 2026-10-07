@@ -73,9 +73,6 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
         startDate: new Date('2026-05-28T12:00:00.000Z'),
         endDate: new Date('2026-05-31T22:00:00.000Z'),
         status: 'COMPLETED',
-        releaseAt: new Date('2026-05-20T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-05-27T16:00:00.000Z'),
-        fieldLocked: true,
       },
     });
     const participants = await Promise.all([

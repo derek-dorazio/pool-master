@@ -56,10 +56,13 @@ function toBody(draft: readonly TierDraft[]): TierBody[] {
 export function GolfTierDefinitionsPanel({
   assignmentCountByTierKey,
   eventId,
+  locked = false,
   tiers,
 }: {
   assignmentCountByTierKey: Record<string, number>;
   eventId: string;
+  /** Released for contests (#431): the definitions are read-only. */
+  locked?: boolean;
   tiers: SportEventTierDto[];
 }) {
   const logger = getLogger().child({
@@ -156,7 +159,7 @@ export function GolfTierDefinitionsPanel({
         <h3 className="text-base font-semibold text-foreground">Tiers</h3>
         <Button
           data-testid="root-admin-golf-tier-def-add"
-          disabled={draft.length >= 12}
+          disabled={locked || draft.length >= 12}
           onClick={addTier}
           size="sm"
           variant="secondary"
@@ -169,8 +172,8 @@ export function GolfTierDefinitionsPanel({
         <Alert className="mt-3" data-testid="root-admin-golf-tier-def-error" tone="danger">
           {extractErrorMessage(saveMutation.error, {
             codeMessages: {
-              TIERS_LOCKED_BY_ENTRIES:
-                'This tournament has contest entries — tier definitions are locked to keep existing picks consistent.',
+              SPORT_EVENT_TIERS_LOCKED:
+                'This tournament has been released for contests, so its tier definitions are locked.',
             },
             fallback: 'We could not save the tier definitions.',
           })}
@@ -189,20 +192,23 @@ export function GolfTierDefinitionsPanel({
             className="flex items-center gap-2 rounded-2xl border border-border bg-card p-3"
             data-testid={`root-admin-golf-tier-def-row-${tier.tierKey}`}
           >
-            <Button
-              aria-label={`Reorder ${tier.label}`}
-              className="shrink-0 cursor-grab px-2"
-              size="sm"
-              variant="ghost"
-              {...dragHandleProps}
-            >
-              <GripVertical aria-hidden className="h-4 w-4" />
-            </Button>
+            {locked ? null : (
+              <Button
+                aria-label={`Reorder ${tier.label}`}
+                className="shrink-0 cursor-grab px-2"
+                size="sm"
+                variant="ghost"
+                {...dragHandleProps}
+              >
+                <GripVertical aria-hidden className="h-4 w-4" />
+              </Button>
+            )}
             <div className="min-w-0 flex-1">
               <Input
                 aria-label={`Name for ${tier.tierKey}`}
                 className="h-8"
                 data-testid={`root-admin-golf-tier-def-label-${tier.tierKey}`}
+                disabled={locked}
                 onChange={(event) =>
                   setDraft((current) =>
                     current.map((row) =>
@@ -218,6 +224,7 @@ export function GolfTierDefinitionsPanel({
                 aria-label={`Pick count for ${tier.label}`}
                 className="h-8"
                 data-testid={`root-admin-golf-tier-def-picks-${tier.tierKey}`}
+                disabled={locked}
                 inputMode="numeric"
                 onChange={(event) =>
                   setDraft((current) =>
@@ -234,7 +241,7 @@ export function GolfTierDefinitionsPanel({
             <Button
               aria-label={`Delete ${tier.label}`}
               data-testid={`root-admin-golf-tier-def-delete-${tier.tierKey}`}
-              disabled={draft.length <= 2}
+              disabled={locked || draft.length <= 2}
               onClick={() => {
                 setDeleteTarget(tier);
                 setReassignTo(

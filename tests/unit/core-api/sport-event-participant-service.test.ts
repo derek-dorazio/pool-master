@@ -1,16 +1,17 @@
 import { expect, jest } from '@jest/globals';
-import { Sport } from '@poolmaster/shared/domain';
+import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 
 // The field's rules against an in-memory store: the one read every field screen uses,
 // seeding from the sport league, adding anyone, the all-or-none grid save, and removal.
 
-function setup(sportName: Sport = Sport.GOLF) {
+function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEventStatus.DRAFT) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(sportName);
   const sportLeague = store.addSportLeague(sport.id);
-  const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: sportName });
+  // A draft, so its prices are still editable (#431); pass a released status to lock them.
+  const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: sportName, status });
   const service = new SportEventParticipantService({
     sportEvents: store.sportEventRepo(),
     field: store.fieldRepo(),
@@ -117,6 +118,27 @@ describe('SportEventParticipantService — changing the field', () => {
 
     expect(view.entry.ranking).toBeUndefined();
     expect(view.valuation).toMatchObject({ price: 11, priceAssignedSource: 'MANUAL' });
+  });
+
+  it('refuses a price in the grid save once the event is released (409 SPORT_EVENT_TIERS_LOCKED), writing nothing', async () => {
+    const { store, service, sport, event } = setup(Sport.GOLF, SportEventStatus.SCHEDULED);
+    const entry = store.addToField(event.id, store.addParticipant(sport.id, 'A').id, { ranking: 4 });
+
+    await expect(service.updateParticipants(event.id, [{ sportEventParticipantId: entry.id, ranking: 1, price: 11 }]))
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_TIERS_LOCKED', statusCode: 409 });
+    expect(entry.ranking).toBe(4);
+    expect(store.valuationRows).toEqual([]);
+  });
+
+  it('still saves rank, odds, seed and withdrawals in the grid after the event is released', async () => {
+    const { store, service, sport, event } = setup(Sport.GOLF, SportEventStatus.SCHEDULED);
+    const entry = store.addToField(event.id, store.addParticipant(sport.id, 'A').id, { ranking: 4 });
+
+    const [view] = await service.updateParticipants(event.id, [
+      { sportEventParticipantId: entry.id, ranking: 1, oddsToWin: 12.5, seedNumber: 3, isActive: false, inactiveReason: 'WITHDRAWN' },
+    ]);
+
+    expect(view.entry).toMatchObject({ ranking: 1, oddsToWin: 12.5, seedNumber: 3, isActive: false, inactiveReason: 'WITHDRAWN' });
   });
 
   it('removes a field row, refusing one a contest entry has picked (409) or one on another event (404)', async () => {

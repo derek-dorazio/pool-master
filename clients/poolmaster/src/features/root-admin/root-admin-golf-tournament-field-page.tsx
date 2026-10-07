@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { AsyncPage, Button, LinkButton } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import { golfTournamentHasScoreSync } from './golf-admin-utils';
+import { golfTiersLocked, golfTournamentHasScoreSync } from './golf-admin-utils';
 import { GolfFieldGridCard } from './golf-field-grid-card';
 import { GolfFieldSeedAction } from './golf-field-seed-action';
 import { GolfFieldRefreshAction } from './golf-field-refresh-action';
@@ -105,6 +105,7 @@ export function RootAdminGolfTournamentFieldPage() {
                 : null
             }
             fieldLoading={fieldQuery.isLoading}
+            pricesLocked={golfTiersLocked(tournament.status)}
           />
 
           {addOpen ? (

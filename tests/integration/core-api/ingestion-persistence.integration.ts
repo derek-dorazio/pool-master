@@ -125,8 +125,6 @@ describe('IngestionPersistence', () => {
 
     expect(sportEventParticipant.isActive).toBe(true);
     expect(sportEventParticipant.inactiveReason).toBeNull();
-    expect(event.releaseAt.toISOString()).toBe('2026-04-15T12:00:00.000Z');
-    expect(event.fieldLocksAt.toISOString()).toBe('2026-04-15T12:00:00.000Z');
 
     // Per-participant source data (sportEventParticipantSourceData) was dropped
     // per plans/117 §13.2. rop.78.7 will rebuild the live-scoring path on

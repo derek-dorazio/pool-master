@@ -9,10 +9,8 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
     sport: 'GOLF',
     name: 'Mock Major',
     status: 'SCHEDULED',
-    startDate: new Date('2026-04-12T16:00:00.000Z'),
-    releaseAt: new Date('2000-01-01T00:00:00.000Z'),
-    fieldLocksAt: new Date('2999-01-01T00:00:00.000Z'),
-    fieldLocked: false,
+    // Far ahead, so the mapper's own clock always reads it as not yet started.
+    startDate: new Date('2999-04-12T16:00:00.000Z'),
     participantCount: 144,
     metadata: {},
     eventSeriesId: '22222222-2222-4222-8222-222222222222',
@@ -26,17 +24,26 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
   } as SportEvent;
 }
 
-function summary(sportEvent: SportEvent, loadedParticipantCount: number) {
-  return { event: sportEvent, loadedParticipantCount, tierCount: 0, contestCount: 0 };
+function summary(sportEvent: SportEvent, loadedParticipantCount: number, untieredParticipantCount = 0) {
+  return { event: sportEvent, loadedParticipantCount, untieredParticipantCount, tierCount: 0, contestCount: 0 };
 }
 
 describe('SportEvent readiness on the wire', () => {
-  it('is contest-eligible once released with a loaded field and before the field locks', () => {
+  it('is contest-eligible once released with a loaded field and before it starts', () => {
     expect(mapSportEventToDto(summary(event(), 72))).toMatchObject({
       loadedParticipantCount: 72,
       readinessStatus: 'CONTEST_ELIGIBLE',
       contestEligible: true,
-      fieldLocked: false,
+    });
+  });
+
+  it('is not released while the event is a draft, and carries how many active participants have no tier', () => {
+    expect(mapSportEventToDto(summary(event({ status: 'DRAFT' }), 72, 5))).toMatchObject({
+      status: 'DRAFT',
+      untieredParticipantCount: 5,
+      readinessStatus: 'NOT_RELEASED',
+      readinessReasons: ['EVENT_NOT_RELEASED'],
+      contestEligible: false,
     });
   });
 
@@ -49,10 +56,9 @@ describe('SportEvent readiness on the wire', () => {
     });
   });
 
-  it('reports the field locked when the provider has locked it, before fieldLocksAt', () => {
-    expect(mapSportEventToDto(summary(event({ fieldLocked: true }), 72))).toMatchObject({
-      fieldLocked: true,
-      readinessStatus: 'FIELD_LOCKED',
+  it('reports a released event whose start time has passed as started', () => {
+    expect(mapSportEventToDto(summary(event({ startDate: new Date('2000-04-12T16:00:00.000Z') }), 72))).toMatchObject({
+      readinessStatus: 'EVENT_STARTED',
       contestEligible: false,
     });
   });
@@ -79,11 +85,15 @@ describe('SportEvent readiness on the wire', () => {
 
 describe('SportEvent next statuses on the wire', () => {
   it('carries the declared transitions from the event\'s current status, and its counts', () => {
-    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), loadedParticipantCount: 0, tierCount: 6, contestCount: 2 })).toMatchObject({
+    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), loadedParticipantCount: 0, untieredParticipantCount: 0, tierCount: 6, contestCount: 2 })).toMatchObject({
       allowedTransitions: ['IN_PROGRESS', 'POSTPONED', 'CANCELLED'],
       tierCount: 6,
       contestCount: 2,
     });
     expect(mapSportEventToDto(summary(event({ status: 'COMPLETED' }), 0)).allowedTransitions).toEqual([]);
+  });
+
+  it('does not offer SCHEDULED from a draft: releasing it is its own action (#431)', () => {
+    expect(mapSportEventToDto(summary(event({ status: 'DRAFT' }), 0)).allowedTransitions).toEqual(['CANCELLED']);
   });
 });

@@ -87,7 +87,7 @@ export function contestsModule(fastify: FastifyInstance): void {
         403: zodToJsonSchema(ErrorEnvelopeSchema),
         422: {
           ...zodToJsonSchema(ErrorEnvelopeSchema),
-          description: 'The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_FIELD_LOCKED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).',
+          description: 'The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).',
         },
       },
     },

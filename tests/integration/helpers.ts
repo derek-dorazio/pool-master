@@ -386,22 +386,16 @@ export function buildCreateLeaguePayload(name: string, description?: string): {
  */
 export function buildContestEligibleEventTiming(now: Date = new Date()): {
   sourceReceivedAt: Date;
-  releaseAt: Date;
   entryLocksAt: Date;
-  fieldLocksAt: Date;
   startDate: Date;
 } {
   const sourceReceivedAt = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-  const releaseAt = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const entryLocksAt = new Date(now.getTime() + 12 * 60 * 60 * 1000);
-  const fieldLocksAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const startDate = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
   return {
     sourceReceivedAt,
-    releaseAt,
     entryLocksAt,
-    fieldLocksAt,
     startDate,
   };
 }

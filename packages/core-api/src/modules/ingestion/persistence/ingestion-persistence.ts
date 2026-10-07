@@ -58,8 +58,6 @@ export class IngestionPersistence {
         name: event.name,
         status: event.status,
         startDate: event.startDate.toISOString(),
-        releaseAt: event.metadata.releaseAt ?? null,
-        fieldLocksAt: event.metadata.fieldLocksAt ?? null,
       })),
     }, 'Persisting sport events from ingestion');
 
@@ -405,9 +403,6 @@ function normalizeSportEventRow(row: {
   status: string;
   rounds: number | null;
   participantCount: number | null;
-  releaseAt: Date;
-  fieldLocksAt: Date;
-  fieldLocked: boolean;
   metadata: Prisma.JsonValue;
 }): Record<string, unknown> {
   return {
@@ -422,9 +417,6 @@ function normalizeSportEventRow(row: {
     status: row.status,
     rounds: row.rounds,
     participantCount: row.participantCount,
-    releaseAt: row.releaseAt.toISOString(),
-    fieldLocksAt: row.fieldLocksAt.toISOString(),
-    fieldLocked: row.fieldLocked,
     metadata: jsonClone(row.metadata),
   };
 }

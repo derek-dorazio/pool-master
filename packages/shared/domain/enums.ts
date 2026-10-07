@@ -197,6 +197,8 @@ export type DraftStatus = (typeof DraftStatus)[keyof typeof DraftStatus];
 
 /** SportEvent lifecycle status. `OFFICIAL` intentionally dropped — see plans/124 §4.1. */
 export const SportEventStatus = {
+  /** Being prepared by an admin and hidden from commissioners until released (#431). */
+  DRAFT: 'DRAFT',
   SCHEDULED: 'SCHEDULED',
   IN_PROGRESS: 'IN_PROGRESS',
   COMPLETED: 'COMPLETED',

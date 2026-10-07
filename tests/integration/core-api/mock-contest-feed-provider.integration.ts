@@ -34,7 +34,9 @@ const syncVerificationNow = new Date('2026-05-30T12:00:00.000Z');
 const syncVerificationConfig: IngestionScheduleConfig = {
   scheduledSports: [Sport.GOLF],
   healthCheck: { enabled: true, intervalMinutes: 5 },
-  eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
+  // Every unstarted event in the lookahead takes field syncs (#431 removed the release
+  // window), so a week keeps the scheduled pass to the one event this suite asserts on.
+  eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 7 },
   eventLiveScores: { enabled: false, intervalSeconds: 30 },
   perSportOverrides: {},
 };
@@ -178,8 +180,6 @@ async function linkProviderGolfEvents(from: Date, to: Date): Promise<number> {
       externalId: event.externalId,
       name: event.name,
       startDate: event.startDate,
-      releaseAt: new Date(String(event.metadata.releaseAt)),
-      fieldLocksAt: new Date(String(event.metadata.fieldLocksAt)),
     });
   }
   return events.length;
@@ -592,8 +592,6 @@ describe('mock contest feed provider event-first verification', () => {
     expect(mastersEvent).toBeDefined();
     expect(mastersEvent?.metadata).toMatchObject({
       eventType: expect.any(String),
-      releaseAt: expect.any(String),
-      fieldLocksAt: expect.any(String),
     });
 
     const detail = await adapter.getEventDetails(eventExternalId);
@@ -777,7 +775,7 @@ describe('mock contest feed provider event-first verification', () => {
       sport: Sport.GOLF,
       feed: 'EVENTPARTICIPANTS',
       from: syncVerificationNow,
-      to: new Date(syncVerificationNow.getTime() + 14 * 24 * 60 * 60 * 1000),
+      to: new Date(syncVerificationNow.getTime() + 7 * 24 * 60 * 60 * 1000),
       now: syncVerificationNow,
     });
     expect(eligibleEventIds).toEqual([

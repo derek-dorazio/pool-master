@@ -534,8 +534,6 @@ function toSportEvent(
       eventType: detail.event.metadata?.eventType,
       tour: detail.event.metadata?.tour,
       scenarioId,
-      releaseAt: detail.event.schedule.releaseAt,
-      fieldLocksAt: detail.event.schedule.fieldLocksAt,
     },
   };
 }

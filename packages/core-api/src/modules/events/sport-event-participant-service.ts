@@ -53,6 +53,7 @@ import {
   type ParticipantRowResolution,
 } from '../sport-catalog/participant-row-resolver';
 import { SportEventError } from './errors';
+import { assertTiersAndPricesEditable } from './sport-event-tier-service';
 
 /** A round row with its sport extension, when the sport has one and it has been scored. */
 export interface ParticipantRoundView {
@@ -289,9 +290,21 @@ export class SportEventParticipantService {
     return { added: toAdd.length, skipped: participantIds.length - toAdd.length, total: participantIds.length };
   }
 
-  /** One save of the field grid: every patched row and its manual price, all or none. */
+  /**
+   * One save of the field grid: every patched row and its manual price, all or none. Rank,
+   * odds, seed and withdrawals stay editable after release; a price does not (409
+   * SPORT_EVENT_TIERS_LOCKED, #431).
+   */
   async updateParticipants(sportEventId: string, updates: readonly FieldEntryUpdate[]): Promise<SportEventParticipantView[]> {
-    await this.requireEvent(sportEventId);
+    const event = await this.requireEvent(sportEventId);
+    if (updates.some((update) => update.price !== undefined)) {
+      try {
+        assertTiersAndPricesEditable(event);
+      } catch (error) {
+        this.deps.logger?.warn({ sportEventId, status: event.status }, 'Refused a price change on a released sport event');
+        throw error;
+      }
+    }
     const onField = new Set((await this.deps.field.findBySportEvent(sportEventId)).map((entry) => entry.id));
     const notOnField = updates.filter((update) => !onField.has(update.sportEventParticipantId));
     if (notOnField.length > 0) {

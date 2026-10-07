@@ -85,7 +85,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
     expect(prisma.sportEvent.findMany).not.toHaveBeenCalled();
   });
 
-  it('pool-master-rop.68.1.2 lists only field-available scheduled events inside the configured window for participant hydration', async () => {
+  it('pool-master-rop.68.1.2 asks only for draft or released events starting inside the configured window for participant hydration', async () => {
     const prisma = createPrisma();
     const registry = {
       getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }),
@@ -105,10 +105,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
         sport: 'GOLF',
         providerId: 'mock-contest-feed',
         externalId: { not: '' },
-        status: 'SCHEDULED',
-        releaseAt: { lte: new Date('2026-04-26T22:30:00.000Z') },
-        fieldLocked: false,
-        fieldLocksAt: { gt: new Date('2026-04-26T22:30:00.000Z') },
+        status: { in: ['DRAFT', 'SCHEDULED'] },
         startDate: {
           gte: new Date('2026-04-26T22:30:00.000Z'),
           lte: new Date('2026-05-03T22:30:00.000Z'),
@@ -126,110 +123,37 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
     });
   });
 
-  it('pool-master-rop.68.1.5 excludes unreleased, locked, in-progress, and completed events from participant hydration candidates', async () => {
+  it('offers draft and released events that have not started for participant hydration, never in-progress or completed ones', async () => {
     const now = new Date('2026-04-26T22:30:00.000Z');
     const from = new Date('2026-04-26T22:30:00.000Z');
     const to = new Date('2026-05-03T22:30:00.000Z');
     const rows = [
-      {
-        externalId: 'released-field-event',
-        sport: 'GOLF',
-        providerId: 'mock-contest-feed',
-        status: 'SCHEDULED',
-        releaseAt: new Date('2026-04-26T22:00:00.000Z'),
-        fieldLocked: false,
-        fieldLocksAt: new Date('2026-04-29T16:00:00.000Z'),
-        startDate: new Date('2026-04-30T12:00:00.000Z'),
-      },
-      {
-        externalId: 'second-released-field-event',
-        sport: 'GOLF',
-        providerId: 'mock-contest-feed',
-        status: 'SCHEDULED',
-        releaseAt: new Date('2026-04-26T22:00:00.000Z'),
-        fieldLocked: false,
-        fieldLocksAt: new Date('2026-05-01T16:00:00.000Z'),
-        startDate: new Date('2026-05-02T12:00:00.000Z'),
-      },
-      {
-        externalId: 'third-released-field-event',
-        sport: 'GOLF',
-        providerId: 'mock-contest-feed',
-        status: 'SCHEDULED',
-        releaseAt: new Date('2026-04-26T22:00:00.000Z'),
-        fieldLocked: false,
-        fieldLocksAt: new Date('2026-05-02T16:00:00.000Z'),
-        startDate: new Date('2026-05-03T12:00:00.000Z'),
-      },
-      {
-        externalId: 'unreleased-field-event',
-        sport: 'GOLF',
-        providerId: 'mock-contest-feed',
-        status: 'SCHEDULED',
-        releaseAt: new Date('2026-04-27T22:00:00.000Z'),
-        fieldLocked: false,
-        fieldLocksAt: new Date('2026-04-29T16:00:00.000Z'),
-        startDate: new Date('2026-04-30T12:00:00.000Z'),
-      },
-      {
-        externalId: 'locked-field-event',
-        sport: 'GOLF',
-        providerId: 'mock-contest-feed',
-        status: 'SCHEDULED',
-        releaseAt: new Date('2026-04-20T22:00:00.000Z'),
-        fieldLocked: true,
-        fieldLocksAt: new Date('2026-04-25T16:00:00.000Z'),
-        startDate: new Date('2026-04-30T12:00:00.000Z'),
-      },
-      {
-        externalId: 'completed-event',
-        sport: 'GOLF',
-        providerId: 'mock-contest-feed',
-        status: 'COMPLETED',
-        releaseAt: new Date('2026-04-20T22:00:00.000Z'),
-        fieldLocked: true,
-        fieldLocksAt: new Date('2026-04-23T16:00:00.000Z'),
-        startDate: new Date('2026-04-24T12:00:00.000Z'),
-      },
-      {
-        externalId: 'in-progress-event',
-        sport: 'GOLF',
-        providerId: 'mock-contest-feed',
-        status: 'IN_PROGRESS',
-        releaseAt: new Date('2026-04-20T22:00:00.000Z'),
-        fieldLocked: true,
-        fieldLocksAt: new Date('2026-04-23T16:00:00.000Z'),
-        startDate: new Date('2026-04-24T12:00:00.000Z'),
-      },
-    ];
+      { externalId: 'draft-event', status: 'DRAFT', startDate: new Date('2026-04-30T12:00:00.000Z') },
+      { externalId: 'released-event', status: 'SCHEDULED', startDate: new Date('2026-05-02T12:00:00.000Z') },
+      { externalId: 'third-event', status: 'SCHEDULED', startDate: new Date('2026-05-03T12:00:00.000Z') },
+      { externalId: 'completed-event', status: 'COMPLETED', startDate: new Date('2026-04-27T12:00:00.000Z') },
+      { externalId: 'in-progress-event', status: 'IN_PROGRESS', startDate: new Date('2026-04-27T12:00:00.000Z') },
+      { externalId: 'already-started-event', status: 'SCHEDULED', startDate: new Date('2026-04-26T12:00:00.000Z') },
+    ].map((row) => ({ ...row, sport: 'GOLF', providerId: 'mock-contest-feed' }));
     /** The slice of `sportEvent.findMany`'s argument this stand-in evaluates. */
-    interface ReleasedFieldQuery {
+    interface FieldHydrationQuery {
       where: {
         sport: string;
         providerId: string;
-        status: string;
-        releaseAt: { lte: Date };
-        fieldLocked: boolean;
-        fieldLocksAt: { gt: Date };
+        status: { in: string[] };
         startDate: { gte: Date; lte: Date };
       };
     }
     const prisma = {
       sportEvent: {
-        findMany: jest.fn(async ({ where }: ReleasedFieldQuery) => rows
-          .filter((row) => {
-            return (
-              row.sport === where.sport
-              && row.providerId === where.providerId
-              && row.externalId !== ''
-              && row.status === where.status
-              && row.releaseAt.getTime() <= where.releaseAt.lte.getTime()
-              && row.fieldLocked === where.fieldLocked
-              && row.fieldLocksAt.getTime() > where.fieldLocksAt.gt.getTime()
-              && row.startDate.getTime() >= where.startDate.gte.getTime()
-              && row.startDate.getTime() <= where.startDate.lte.getTime()
-            );
-          })
+        findMany: jest.fn(async ({ where }: FieldHydrationQuery) => rows
+          .filter((row) => (
+            row.sport === where.sport
+            && row.providerId === where.providerId
+            && where.status.in.includes(row.status)
+            && row.startDate.getTime() >= where.startDate.gte.getTime()
+            && row.startDate.getTime() <= where.startDate.lte.getTime()
+          ))
           .sort((left, right) => left.startDate.getTime() - right.startDate.getTime()
             || left.externalId.localeCompare(right.externalId))
           .slice(0, 2)
@@ -249,7 +173,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
       to,
     });
 
-    expect(eventIds).toEqual(['released-field-event', 'second-released-field-event']);
+    expect(eventIds).toEqual(['draft-event', 'released-event']);
   });
 });
 

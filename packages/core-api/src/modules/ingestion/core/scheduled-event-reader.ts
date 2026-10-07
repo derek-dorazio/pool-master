@@ -71,10 +71,8 @@ function toFeedWhere(
 ) {
   if (feed === 'EVENTPARTICIPANTS') {
     return {
-      status: SportEventStatus.SCHEDULED,
-      releaseAt: { lte: now },
-      fieldLocked: false,
-      fieldLocksAt: { gt: now },
+      // A field loads while the event is a draft or released and not yet started (#431).
+      status: { in: [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] },
       startDate: {
         gte: from ?? now,
         ...(to ? { lte: to } : {}),

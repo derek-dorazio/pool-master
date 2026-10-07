@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentHomePage } from './root-admin-golf-tournament-home-page';
 import { sportEventFixture, sportLeagueFixture } from './golf-test-fixtures';
@@ -17,6 +17,7 @@ const {
   linkEventScoreSourceMock,
   listProviderCatalogEventsMock,
   listProvidersMock,
+  releaseEventMock,
   startEventLiveSimulationMock,
   transitionEventMock,
   unlinkEventScoreSourceMock,
@@ -41,6 +42,7 @@ const {
     linkEventScoreSourceMock: vi.fn(),
     listProviderCatalogEventsMock: vi.fn(),
     listProvidersMock: vi.fn(),
+    releaseEventMock: vi.fn(),
     startEventLiveSimulationMock: vi.fn(),
     transitionEventMock: vi.fn(),
     unlinkEventScoreSourceMock: vi.fn(),
@@ -58,6 +60,7 @@ bindApiMocks({
   linkEventScoreSource: linkEventScoreSourceMock,
   listProviderCatalogEvents: listProviderCatalogEventsMock,
   listProviders: listProvidersMock,
+  releaseEvent: releaseEventMock,
   startEventLiveSimulation: startEventLiveSimulationMock,
   transitionEvent: transitionEventMock,
   unlinkEventScoreSource: unlinkEventScoreSourceMock,
@@ -81,9 +84,6 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     endDate: '2026-05-10T22:00:00.000Z',
     status: 'SCHEDULED',
     rounds: 4,
-    releaseAt: '2026-04-23T12:00:00.000Z',
-    fieldLocksAt: '2026-05-06T16:00:00.000Z',
-    fieldLocked: false,
     eventSeriesId: 'event-series-1',
     eventYear: 2026,
     sportLeagueId: 'league-1',
@@ -149,8 +149,11 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     expect(screen.getByText('Event year')).toBeInTheDocument();
 
     const rail = screen.getByTestId('root-admin-golf-tournament-workflow-rail');
-    expect(within(rail).getByText('Setup')).toBeInTheDocument();
+    expect(within(rail).getByText('Draft')).toBeInTheDocument();
+    expect(within(rail).getByText('Released for contests')).toHaveTextContent('current');
     expect(within(rail).getByText('Completed')).toBeInTheDocument();
+    // Released already, so there is nothing to release.
+    expect(screen.queryByTestId('root-admin-golf-tournament-release')).not.toBeInTheDocument();
 
     // SCHEDULED + autoLifecycleEnabled + round 1 in the schedule -> hint present.
     expect(
@@ -169,6 +172,63 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
       'href',
       '/manage/golf/tournaments/tour-1/scores',
     );
+  });
+
+  describe('Release for contests', () => {
+    // The release checks compare against the start time, so the clock is pinned before it.
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-04-01T00:00:00.000Z'));
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('lists what is missing and keeps the button disabled while a draft has untiered golfers', async () => {
+      seedDefaults();
+      getEventMock.mockResolvedValue({
+        data: { event: tournament({ status: 'DRAFT', allowedTransitions: ['CANCELLED'], untieredParticipantCount: 3 }) },
+      });
+      renderPage();
+
+      expect(await screen.findByTestId('root-admin-golf-tournament-release-missing')).toHaveTextContent(
+        'Put the 3 active golfers without a tier into tiers.',
+      );
+      expect(screen.getByTestId('root-admin-golf-tournament-release')).toBeDisabled();
+    });
+
+    it('releases a ready draft after the admin confirms', async () => {
+      seedDefaults();
+      getEventMock.mockResolvedValue({
+        data: { event: tournament({ status: 'DRAFT', allowedTransitions: ['CANCELLED'] }) },
+      });
+      releaseEventMock.mockResolvedValue({ data: { event: tournament({ status: 'SCHEDULED' }) } });
+      renderPage();
+
+      fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-release'));
+      const modal = await screen.findByTestId('root-admin-golf-tournament-release-modal');
+      fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-release-confirm'));
+
+      await waitFor(() => expect(releaseEventMock).toHaveBeenCalledWith({ path: { eventId: 'tour-1' } }));
+    });
+
+    it('explains a refused release in plain words', async () => {
+      seedDefaults();
+      getEventMock.mockResolvedValue({
+        data: { event: tournament({ status: 'DRAFT', allowedTransitions: ['CANCELLED'] }) },
+      });
+      releaseEventMock.mockResolvedValue({
+        error: { code: 'SPORT_EVENT_ALREADY_STARTED', message: 'Sport event has already started.' },
+      });
+      renderPage();
+
+      fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-release'));
+      fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-release-confirm'));
+
+      expect(
+        await screen.findByText('This tournament has already started, so it can no longer be released.'),
+      ).toBeInTheDocument();
+    });
   });
 
   it('pool-master-3dg confirms and applies an allowed lifecycle transition', async () => {

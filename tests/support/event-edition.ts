@@ -55,9 +55,8 @@ export async function cleanupFreshEventEditions(prisma: Pick<PrismaClient, 'even
 /**
  * plans/147 — sync updates only an event already linked to the provider event; it never
  * creates one. This is the row a sync test starts from: an event in a fresh series, holding
- * the provider identity, as an admin creating and linking it would leave it. The field
- * release and lock times default to the start; pass the admin's own when a test needs a field
- * that is open (#126: no schedule sync sets them any more). Like an admin-created event it is
+ * the provider identity, as an admin creating and linking it would leave it, already released
+ * (the column default, SCHEDULED). Like an admin-created event it is
  * linked for scores (SCORES_ONLY) and has a four-round schedule, a round a day from the start,
  * because a feed never creates a round (#435).
  */
@@ -69,8 +68,6 @@ export async function linkedProviderEvent(
     name: string;
     startDate: Date;
     sport?: string;
-    releaseAt?: Date;
-    fieldLocksAt?: Date;
   },
 ) {
   return prisma.sportEvent.create({
@@ -81,8 +78,6 @@ export async function linkedProviderEvent(
       sport: input.sport ?? 'GOLF',
       name: input.name,
       startDate: input.startDate,
-      releaseAt: input.releaseAt ?? input.startDate,
-      fieldLocksAt: input.fieldLocksAt ?? input.startDate,
       syncScope: 'SCORES_ONLY',
       rounds: LINKED_EVENT_ROUNDS,
       roundSchedule: {

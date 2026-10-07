@@ -32,8 +32,8 @@ changes.
 ## First Pass Product Loop
 
 1. A provider exposes a sporting event and participant field.
-2. PoolMaster imports the event and participants and resolves operational
-   timing such as `releaseAt` and `fieldLocksAt` from default relative rules.
+2. PoolMaster imports the event and participants as a draft; the root admin
+   tiers the field and releases the event for contests.
 3. A commissioner creates a contest quickly from a seeded template.
 4. Teams create one or more entries and make selections against the contest's
    frozen field interpretation.

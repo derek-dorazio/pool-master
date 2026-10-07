@@ -4,7 +4,12 @@
  * readiness and the allowed next statuses are derived for the wire.
  */
 
-import { SPORT_EVENT_STATUS_TRANSITIONS, type SportEventRound, type SportEventTier } from '@poolmaster/shared/domain';
+import {
+  SPORT_EVENT_STATUS_TRANSITIONS,
+  SportEventStatus,
+  type SportEventRound,
+  type SportEventTier,
+} from '@poolmaster/shared/domain';
 import type {
   EventReadinessReasonDto,
   ImportSportEventYearFromProviderResponse,
@@ -18,12 +23,27 @@ import type { LiveSimulationStatus } from '../modules/ingestion/core/provider-in
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 import type { ProviderEventYearImport, SportEventSummary } from '../modules/events/service';
 
-export function mapSportEventToDto({ event, loadedParticipantCount, tierCount, contestCount }: SportEventSummary): SportEventDto {
+/**
+ * The statuses the generic transition may move an event to. DRAFT → SCHEDULED is declared,
+ * but it is the release, which only the release action takes (#431), so it is not offered.
+ */
+function genericTransitionsFrom(status: SportEventStatus): SportEventStatus[] {
+  return SPORT_EVENT_STATUS_TRANSITIONS[status].filter(
+    (toStatus) => !(status === SportEventStatus.DRAFT && toStatus === SportEventStatus.SCHEDULED),
+  );
+}
+
+export function mapSportEventToDto({
+  event,
+  loadedParticipantCount,
+  untieredParticipantCount,
+  tierCount,
+  contestCount,
+}: SportEventSummary): SportEventDto {
   const operationalState = evaluateEventOperationalState({
+    status: event.status,
+    startDate: event.startDate,
     participantCount: loadedParticipantCount,
-    releaseAt: event.releaseAt,
-    fieldLocksAt: event.fieldLocksAt,
-    providerFieldLocked: event.fieldLocked,
   });
 
   return {
@@ -40,9 +60,7 @@ export function mapSportEventToDto({ event, loadedParticipantCount, tierCount, c
     rounds: event.rounds ?? null,
     participantCount: event.participantCount ?? null,
     loadedParticipantCount,
-    releaseAt: event.releaseAt.toISOString(),
-    fieldLocksAt: event.fieldLocksAt.toISOString(),
-    fieldLocked: operationalState.fieldLocked,
+    untieredParticipantCount,
     readinessStatus: operationalState.readinessStatus as EventReadinessStatusDto,
     readinessReasons: operationalState.readinessReasons as EventReadinessReasonDto[],
     contestEligible: operationalState.contestEligible,
@@ -53,7 +71,7 @@ export function mapSportEventToDto({ event, loadedParticipantCount, tierCount, c
     autoLifecycleEnabled: event.autoLifecycleEnabled,
     tierCount,
     contestCount,
-    allowedTransitions: [...SPORT_EVENT_STATUS_TRANSITIONS[event.status]],
+    allowedTransitions: genericTransitionsFrom(event.status),
     metadata: event.metadata,
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),

@@ -114,8 +114,8 @@ function formatReadinessLabel(event: SportEventDto) {
       return 'Contest ready';
     case 'PENDING_FIELD':
       return 'Waiting for field';
-    case 'FIELD_LOCKED':
-      return 'Field locked';
+    case 'EVENT_STARTED':
+      return 'Already started';
     case 'NOT_RELEASED':
     default:
       return 'Not released yet';
@@ -134,8 +134,8 @@ function formatReadinessReasons(event: SportEventDto) {
           return 'not released yet';
         case 'FIELD_NOT_LOADED':
           return 'field not loaded';
-        case 'FIELD_LOCKED':
-          return 'field already locked';
+        case 'EVENT_STARTED':
+          return 'already started';
         default:
           return 'readiness status unavailable';
       }
@@ -521,10 +521,7 @@ export function CreateContestPage() {
             name: event.name,
             status: event.status,
             startDate: event.startDate,
-            releaseAt: event.releaseAt,
-            fieldLocksAt: event.fieldLocksAt,
             participantCount: event.participantCount,
-            fieldLocked: event.fieldLocked,
             readinessStatus: event.readinessStatus,
             readinessReasons: event.readinessReasons,
             contestEligible: event.contestEligible,
@@ -1159,11 +1156,7 @@ export function CreateContestPage() {
               commissioner can continue.
             </Alert>
           ) : !eligibleEvents.length ? (
-            <NoEligibleEventsAlert
-              events={unavailableEvents}
-              formatReadinessLabel={formatReadinessLabel}
-              formatReadinessReasons={formatReadinessReasons}
-            />
+            <NoEligibleEventsAlert />
           ) : null}
           </>
         )}

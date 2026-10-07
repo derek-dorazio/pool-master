@@ -264,11 +264,8 @@ describe('Contract verification (web)', () => {
         name: 'Contract Events Major',
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
-        releaseAt: eventTiming.releaseAt,
-        fieldLocksAt: eventTiming.fieldLocksAt,
         status: 'SCHEDULED',
         participantCount: 144,
-        fieldLocked: false,
         metadata: {},
       },
     });
@@ -347,11 +344,8 @@ describe('Contract verification (web)', () => {
         name: 'Contract Shallow Event',
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
-        releaseAt: eventTiming.releaseAt,
-        fieldLocksAt: eventTiming.fieldLocksAt,
         status: 'SCHEDULED',
         participantCount: 144,
-        fieldLocked: false,
         metadata: {},
       },
     });
@@ -503,8 +497,6 @@ describe('Contract verification (web)', () => {
         sport: Sport.GOLF,
         name: 'Contract Event',
         startDate: eventTiming.startDate,
-        releaseAt: eventTiming.releaseAt,
-        fieldLocksAt: eventTiming.fieldLocksAt,
         status: 'SCHEDULED',
       },
     });

@@ -1,66 +1,45 @@
-import type { SportEventReadinessReason, SportEventReadinessStatus } from '@poolmaster/shared/domain';
+import {
+  SportEventStatus,
+  type SportEventReadinessReason,
+  type SportEventReadinessStatus,
+} from '@poolmaster/shared/domain';
 
-interface EventTimingInput {
-  startDate: Date;
-  metadata: Record<string, unknown>;
-}
-
-interface ResolvedEventTiming {
-  releaseAt: Date;
-  fieldLocksAt: Date;
-}
-
-export interface EventOperationalState extends ResolvedEventTiming {
-  fieldLocked: boolean;
+export interface EventOperationalState {
   readinessStatus: SportEventReadinessStatus;
   readinessReasons: SportEventReadinessReason[];
   contestEligible: boolean;
 }
 
+/** Statuses an event reaches only once it has started (or been called off). */
+const STARTED_STATUSES: readonly SportEventStatus[] = [
+  SportEventStatus.IN_PROGRESS,
+  SportEventStatus.COMPLETED,
+  SportEventStatus.CANCELLED,
+];
+
 /**
- * An event's release and field-lock times: the provider's own timestamps when its metadata
- * carries them, otherwise the event's start. #263 removed the seeded timing policies that
- * could have supplied rule-based defaults ("N days prior at HH:MM") — nothing ever seeded
- * one; plans/145 records the rule language.
+ * Whether the event is past its contest cutoff: its start time has passed, or its status
+ * says it has started or been called off. A contest can't be created or opened on it (#117,
+ * #431).
  */
-export function resolveEventTiming(input: EventTimingInput): ResolvedEventTiming {
-  const releaseAt = readMetadataDate(input.metadata, 'releaseAt') ?? new Date(input.startDate);
-  const fieldLocksAt = readMetadataDate(input.metadata, 'fieldLocksAt') ?? new Date(input.startDate);
-
-  return {
-    releaseAt,
-    fieldLocksAt,
-  };
+export function hasSportEventStarted(event: { status: SportEventStatus; startDate: Date }, now: Date): boolean {
+  return event.startDate <= now || STARTED_STATUSES.includes(event.status);
 }
 
-function readMetadataDate(
-  metadata: Record<string, unknown>,
-  key: 'releaseAt' | 'fieldLocksAt',
-): Date | null {
-  const value = metadata[key];
-  if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return value;
-  }
-
-  if (typeof value !== 'string' || value.trim() === '') {
-    return null;
-  }
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
+/**
+ * Whether a contest can be built on the event right now (#431): an admin has released it
+ * (it is no longer `DRAFT`), its field is loaded, and it hasn't started.
+ */
 export function evaluateEventOperationalState(input: {
+  status: SportEventStatus;
+  startDate: Date;
   participantCount?: number | null;
-  releaseAt: Date;
-  fieldLocksAt: Date;
-  providerFieldLocked: boolean;
   now?: Date;
 }): EventOperationalState {
   const now = input.now ?? new Date();
   const readinessReasons: SportEventReadinessReason[] = [];
 
-  if (now < input.releaseAt) {
+  if (input.status === SportEventStatus.DRAFT) {
     readinessReasons.push('EVENT_NOT_RELEASED');
   }
 
@@ -68,13 +47,13 @@ export function evaluateEventOperationalState(input: {
     readinessReasons.push('FIELD_NOT_LOADED');
   }
 
-  if (input.providerFieldLocked || now >= input.fieldLocksAt) {
-    readinessReasons.push('FIELD_LOCKED');
+  if (hasSportEventStarted(input, now)) {
+    readinessReasons.push('EVENT_STARTED');
   }
 
   let readinessStatus: SportEventReadinessStatus = 'CONTEST_ELIGIBLE';
-  if (readinessReasons.includes('FIELD_LOCKED')) {
-    readinessStatus = 'FIELD_LOCKED';
+  if (readinessReasons.includes('EVENT_STARTED')) {
+    readinessStatus = 'EVENT_STARTED';
   } else if (readinessReasons.includes('EVENT_NOT_RELEASED')) {
     readinessStatus = 'NOT_RELEASED';
   } else if (readinessReasons.includes('FIELD_NOT_LOADED')) {
@@ -82,9 +61,6 @@ export function evaluateEventOperationalState(input: {
   }
 
   return {
-    releaseAt: input.releaseAt,
-    fieldLocksAt: input.fieldLocksAt,
-    fieldLocked: readinessReasons.includes('FIELD_LOCKED'),
     readinessStatus,
     readinessReasons,
     contestEligible: readinessReasons.length === 0,

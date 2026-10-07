@@ -704,9 +704,6 @@ describe('Contract verification (root admin)', () => {
         status: 'SCHEDULED',
         rounds: 4,
         participantCount: 2,
-        releaseAt: new Date('2026-04-07T16:00:00.000Z'),
-        fieldLocksAt: new Date('2026-04-09T16:00:00.000Z'),
-        fieldLocked: false,
         metadata: {},
       },
       update: {
@@ -719,9 +716,6 @@ describe('Contract verification (root admin)', () => {
         status: 'SCHEDULED',
         rounds: 4,
         participantCount: 2,
-        releaseAt: new Date('2026-04-07T16:00:00.000Z'),
-        fieldLocksAt: new Date('2026-04-09T16:00:00.000Z'),
-        fieldLocked: false,
         metadata: {},
       },
     });
@@ -1205,8 +1199,6 @@ describe('Contract verification (root admin)', () => {
           startDate: '2081-07-16T08:00:00.000Z',
           endDate: '2081-07-19T20:00:00.000Z',
           rounds: 4,
-          releaseAt: '2081-07-01T00:00:00.000Z',
-          fieldLocksAt: '2081-07-15T00:00:00.000Z',
           sportLeagueId: leagueId,
           eventYear: 2081,
           autoLifecycleEnabled: false,
@@ -1314,6 +1306,33 @@ describe('Contract verification (root admin)', () => {
       expect(roundsRes.statusCode).toBe(200);
       expect(SportEventRoundListResponseSchema.safeParse(roundsRes.json()).success).toBe(true);
       expect(roundsRes.json<SportEventRoundListResponse>().rounds).toHaveLength(4);
+
+      // --- releaseEvent (422 while golfers lack a tier, then 200 once tiered) -
+      const releaseRefusedRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/release`,
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(releaseRefusedRes.statusCode).toBe(422);
+      expect(ErrorEnvelopeSchema.safeParse(releaseRefusedRes.json()).success).toBe(true);
+      expect(releaseRefusedRes.json<ErrorEnvelope>().error.code).toBe('SPORT_EVENT_NOT_READY');
+
+      const autoTierRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/tiers/auto-assign`,
+        headers: rootAdmin.headers,
+        payload: { source: 'RANKING' },
+      });
+      expect(autoTierRes.statusCode).toBe(200);
+
+      const releaseRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/release`,
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(releaseRes.statusCode).toBe(200);
+      expect(SportEventResponseSchema.safeParse(releaseRes.json()).success).toBe(true);
+      expect(releaseRes.json<SportEventResponse>().event.status).toBe('SCHEDULED');
 
       // --- updateSportLeague: set as current (200: { sportLeague }) ------------
       const setCurrentRes = await getApp().inject({
@@ -1456,8 +1475,6 @@ describe('Contract verification (root admin)', () => {
           startDate: '2083-06-16T08:00:00.000Z',
           endDate: '2083-06-19T20:00:00.000Z',
           rounds: 4,
-          releaseAt: '2083-06-01T00:00:00.000Z',
-          fieldLocksAt: '2083-06-15T00:00:00.000Z',
           sportLeagueId: created.sportLeagueId,
           eventYear: 2083,
           autoLifecycleEnabled: false,
@@ -1554,8 +1571,6 @@ describe('Contract verification (root admin)', () => {
           startDate: '2084-06-16T08:00:00.000Z',
           endDate: '2084-06-19T20:00:00.000Z',
           rounds: 4,
-          releaseAt: '2084-06-01T00:00:00.000Z',
-          fieldLocksAt: '2084-06-15T00:00:00.000Z',
           sportLeagueId: created.sportLeagueId,
           eventYear: 2084,
           autoLifecycleEnabled: false,

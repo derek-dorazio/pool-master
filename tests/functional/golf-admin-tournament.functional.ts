@@ -19,6 +19,7 @@ import {
   listSports,
   previewEventGolfRoundScores,
   previewEventParticipantUpload,
+  releaseEvent,
   replaceEventTierAssignments,
   replaceEventTiers,
   seedEventParticipants,
@@ -185,11 +186,10 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
         name: `The ${RUN} Open`,
         venue: 'Royal Functional',
         location: 'Testshire',
-        startDate: '2026-07-16T08:00:00.000Z',
-        endDate: '2026-07-19T20:00:00.000Z',
+        // Far future so the release step below never meets a start that has passed.
+        startDate: '2099-07-16T08:00:00.000Z',
+        endDate: '2099-07-19T20:00:00.000Z',
         rounds: 4,
-        releaseAt: '2026-07-01T00:00:00.000Z',
-        fieldLocksAt: '2026-07-15T00:00:00.000Z',
         sportLeagueId,
         eventYear: 2026,
         autoLifecycleEnabled: false,
@@ -342,6 +342,19 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const moved = replaced.data!.participants.find((e) => e.id === mover.id)!;
     expect(tierKeyById.get(moved.valuation!.sportEventTierId!)).toBe('tier-4');
 
+    // --- Release for contests (#431): DRAFT -> SCHEDULED, then the tiers lock ---
+    expectFunctionalError(
+      await transitionEvent({ client: c, path: { eventId }, body: { toStatus: 'SCHEDULED' } }),
+      { status: 409, code: 'SPORT_EVENT_RELEASE_REQUIRED' },
+    );
+    const released = await releaseEvent({ client: c, path: { eventId } });
+    expect(released.response?.status).toBe(200);
+    expect(released.data!.event.status).toBe('SCHEDULED');
+    expectFunctionalError(
+      await autoAssignEventTiers({ client: c, path: { eventId }, body: { source: 'ODDS', tierSize: 6 } }),
+      { status: 409, code: 'SPORT_EVENT_TIERS_LOCKED' },
+    );
+
     // --- Lifecycle: SCHEDULED -> IN_PROGRESS ------------------------------------
     const detail = await getEvent({ client: c, path: { eventId } });
     expect(detail.data!.event.allowedTransitions).toContain('IN_PROGRESS');
@@ -406,7 +419,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       loadedParticipantCount: 0,
       tierCount: 6,
     });
-    expect(clonedEvent.startDate.startsWith('2027-07-16')).toBe(true);
+    expect(clonedEvent.startDate.startsWith('2100-07-16')).toBe(true);
 
     // The current year is unchanged by the clone.
     const leagueAfter = await getSportLeague({ client: c, path: { sportLeagueId } });
@@ -441,8 +454,6 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
         eventYear,
         name: `The ${RUN} Masters`,
         startDate: `${eventYear}-04-09T12:00:00.000Z`,
-        releaseAt: `${eventYear}-03-26T12:00:00.000Z`,
-        fieldLocksAt: `${eventYear}-04-08T12:00:00.000Z`,
       },
     });
 
@@ -521,7 +532,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await updateEventParticipantGolfRoundScore({ client: c, path: { eventId: 'x', roundNumber: 1, sportEventParticipantId: 'x' }, body: { strokes: 70 } }), deny);
     expectFunctionalError(await createEvent({
       client: c,
-      body: { sportLeagueId: ANY_UUID, eventYear: 2030, name: 'x', startDate: '2030-01-01T00:00:00.000Z', releaseAt: '2030-01-01T00:00:00.000Z', fieldLocksAt: '2030-01-01T00:00:00.000Z' },
+      body: { sportLeagueId: ANY_UUID, eventYear: 2030, name: 'x', startDate: '2030-01-01T00:00:00.000Z' },
     }), deny);
     expectFunctionalError(await createParticipant({ client: c, body: { sportId: ANY_UUID, participantType: 'INDIVIDUAL', name: `denied-${RUN}` } }), deny);
   });

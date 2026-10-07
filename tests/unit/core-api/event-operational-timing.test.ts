@@ -1,103 +1,61 @@
 import {
   evaluateEventOperationalState,
-  resolveEventTiming,
+  hasSportEventStarted,
 } from '../../../packages/core-api/src/modules/events/operational-timing';
 
-describe('event operational timing', () => {
-  it('falls back to the event start date when the provider gives no times', () => {
-    const startDate = new Date('2026-05-01T14:00:00.000Z');
+// #431 — readiness comes from the event's status and start time, not from release and
+// field-lock timestamps. `now` is always passed, so nothing here depends on today's date.
+const now = new Date('2026-04-01T12:00:00.000Z');
+const beforeStart = new Date('2026-04-10T12:00:00.000Z');
 
-    const resolved = resolveEventTiming({
-      startDate,
-      metadata: {},
-    });
+describe('event operational state', () => {
+  it('is contest-eligible once released (SCHEDULED) with a loaded field, before the start time', () => {
+    const state = evaluateEventOperationalState({ status: 'SCHEDULED', startDate: beforeStart, participantCount: 72, now });
 
-    expect(resolved.releaseAt.toISOString()).toBe(startDate.toISOString());
-    expect(resolved.fieldLocksAt.toISOString()).toBe(startDate.toISOString());
+    expect(state).toEqual({ readinessStatus: 'CONTEST_ELIGIBLE', readinessReasons: [], contestEligible: true });
   });
 
-  it('pool-master-940 honors provider release and field-lock timestamps', () => {
-    const startDate = new Date('2026-05-01T14:00:00.000Z');
+  it('is not released while the event is a DRAFT, however ready its field is', () => {
+    const state = evaluateEventOperationalState({ status: 'DRAFT', startDate: beforeStart, participantCount: 72, now });
 
-    const resolved = resolveEventTiming({
-      startDate,
-      metadata: {
-        releaseAt: '2026-04-26T16:00:00.000Z',
-        fieldLocksAt: '2026-04-30T16:00:00.000Z',
-      },
-    });
-
-    expect(resolved.releaseAt.toISOString()).toBe('2026-04-26T16:00:00.000Z');
-    expect(resolved.fieldLocksAt.toISOString()).toBe('2026-04-30T16:00:00.000Z');
+    expect(state).toEqual({ readinessStatus: 'NOT_RELEASED', readinessReasons: ['EVENT_NOT_RELEASED'], contestEligible: false });
   });
 
-  it('marks events contest-eligible only after release, before field lock, and with a field loaded', () => {
+  it('is pending its field when a released event has no participants loaded', () => {
+    const state = evaluateEventOperationalState({ status: 'SCHEDULED', startDate: beforeStart, participantCount: 0, now });
+
+    expect(state).toEqual({ readinessStatus: 'PENDING_FIELD', readinessReasons: ['FIELD_NOT_LOADED'], contestEligible: false });
+  });
+
+  it('is started once the start time has passed, even while the status still says SCHEDULED', () => {
+    const state = evaluateEventOperationalState({ status: 'SCHEDULED', startDate: now, participantCount: 72, now });
+
+    expect(state).toEqual({ readinessStatus: 'EVENT_STARTED', readinessReasons: ['EVENT_STARTED'], contestEligible: false });
+  });
+
+  it('reports every blocker and ranks started above not released above pending field', () => {
     const state = evaluateEventOperationalState({
-      participantCount: 144,
-      releaseAt: new Date('2026-04-09T12:00:00.000Z'),
-      fieldLocksAt: new Date('2026-04-11T12:00:00.000Z'),
-      providerFieldLocked: false,
-      now: new Date('2026-04-10T12:00:00.000Z'),
-    });
-
-    expect(state.readinessStatus).toBe('CONTEST_ELIGIBLE');
-    expect(state.readinessReasons).toEqual([]);
-    expect(state.contestEligible).toBe(true);
-    expect(state.fieldLocked).toBe(false);
-  });
-
-  it('surfaces release, field, and lock reasons when the event is not eligible', () => {
-    const state = evaluateEventOperationalState({
+      status: 'DRAFT',
+      startDate: new Date('2026-03-01T12:00:00.000Z'),
       participantCount: 0,
-      releaseAt: new Date('2026-04-09T12:00:00.000Z'),
-      fieldLocksAt: new Date('2026-04-11T12:00:00.000Z'),
-      providerFieldLocked: false,
-      now: new Date('2026-04-08T12:00:00.000Z'),
+      now,
     });
 
-    expect(state.readinessStatus).toBe('NOT_RELEASED');
-    expect(state.readinessReasons).toEqual([
-      'EVENT_NOT_RELEASED',
-      'FIELD_NOT_LOADED',
-    ]);
-    expect(state.contestEligible).toBe(false);
+    expect(state.readinessReasons).toEqual(['EVENT_NOT_RELEASED', 'FIELD_NOT_LOADED', 'EVENT_STARTED']);
+    expect(state.readinessStatus).toBe('EVENT_STARTED');
+  });
+});
+
+describe('hasSportEventStarted', () => {
+  it('is false for a scheduled or postponed event whose start is still ahead', () => {
+    expect(hasSportEventStarted({ status: 'SCHEDULED', startDate: beforeStart }, now)).toBe(false);
+    expect(hasSportEventStarted({ status: 'POSTPONED', startDate: beforeStart }, now)).toBe(false);
   });
 
-  it('marks the event field locked when the provider says the field is locked', () => {
-    const state = evaluateEventOperationalState({
-      participantCount: 144,
-      releaseAt: new Date('2026-04-09T12:00:00.000Z'),
-      fieldLocksAt: new Date('2026-04-11T12:00:00.000Z'),
-      providerFieldLocked: true,
-      now: new Date('2026-04-10T12:00:00.000Z'),
-    });
-
-    expect(state.readinessStatus).toBe('FIELD_LOCKED');
-    expect(state.readinessReasons).toEqual(['FIELD_LOCKED']);
-    expect(state.fieldLocked).toBe(true);
-    expect(state.contestEligible).toBe(false);
-  });
-
-  it('prioritizes FIELD_LOCKED when multiple readiness blockers apply', () => {
-    const state = evaluateEventOperationalState({
-      participantCount: 0,
-      releaseAt: new Date('2026-04-09T12:00:00.000Z'),
-      fieldLocksAt: new Date('2026-04-11T12:00:00.000Z'),
-      providerFieldLocked: false,
-      now: new Date('2026-04-08T12:00:00.000Z'),
-    });
-
-    const afterLock = evaluateEventOperationalState({
-      ...state,
-      participantCount: 0,
-      providerFieldLocked: false,
-      now: new Date('2026-04-11T12:00:00.000Z'),
-    });
-
-    expect(afterLock.readinessStatus).toBe('FIELD_LOCKED');
-    expect(afterLock.readinessReasons).toEqual([
-      'FIELD_NOT_LOADED',
-      'FIELD_LOCKED',
-    ]);
+  it('is true at the start time, and for an event in progress, completed or cancelled whatever its start', () => {
+    expect(hasSportEventStarted({ status: 'SCHEDULED', startDate: now }, now)).toBe(true);
+    expect(hasSportEventStarted({ status: 'IN_PROGRESS', startDate: beforeStart }, now)).toBe(true);
+    expect(hasSportEventStarted({ status: 'COMPLETED', startDate: beforeStart }, now)).toBe(true);
+    expect(hasSportEventStarted({ status: 'CANCELLED', startDate: beforeStart }, now)).toBe(true);
   });
 });

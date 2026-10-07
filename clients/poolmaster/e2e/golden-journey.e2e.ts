@@ -107,7 +107,7 @@ function requireJourney(): Required<JourneyState> {
 }
 
 test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
-  test('act 1: the root admin builds a golf catalog — tour, six players, a tournament, its field and tiers', async ({ page }) => {
+  test('act 1: the root admin builds a golf catalog — tour, six players, a tournament, its field and tiers — and releases it', async ({ page }) => {
     test.setTimeout(180_000);
     const credentials = readAdminCredentials();
     admin = credentials;
@@ -207,10 +207,6 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await page.getByTestId('root-admin-golf-tournament-create-event-year').fill(String(start.getFullYear()));
       await page.getByTestId('root-admin-golf-tournament-create-name').fill(run.tournamentName);
       await page.getByTestId('root-admin-golf-tournament-create-start').fill(dateTimeInput(start));
-      // Released already and locking at the start: act 2 can only create a contest on an event
-      // that is released, has a field, and has not locked it (`contestEligible`).
-      await page.getByTestId('root-admin-golf-tournament-create-release').fill(dateTimeInput(addDays(now, -1)));
-      await page.getByTestId('root-admin-golf-tournament-create-locks').fill(dateTimeInput(start));
       await page.getByTestId('root-admin-golf-tournament-create-rounds').fill('4');
       const created = await submitAndRead<{ event: { id: string } }>(
         page,
@@ -293,6 +289,28 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         ).toBeVisible();
       }
       return entryIds;
+    });
+
+    // #431 — a new tournament is a draft commissioners can't see. Act 2 can only create a
+    // contest on one that is released, has a field, and has not started (`contestEligible`).
+    const firstFieldEntryId = journey.fieldEntryIds[0];
+    await test.step('release the tournament for contests, which locks its tiers', async () => {
+      await page.goto(`/manage/golf/tournaments/${eventId}`);
+      await expect(page.getByTestId('root-admin-golf-tournament-release')).toBeEnabled();
+      await page.getByTestId('root-admin-golf-tournament-release').click();
+      await expect(page.getByTestId('root-admin-golf-tournament-release-modal')).toBeVisible();
+      const released = await submitAndRead<{ event: { status: string } }>(
+        page,
+        'root-admin-golf-tournament-release-confirm',
+        'POST',
+        `/api/v1/events/${eventId}/release`,
+      );
+      expect(released.event.status).toBe('SCHEDULED');
+      await expect(page.getByTestId('root-admin-golf-tournament-release')).toHaveCount(0);
+
+      await page.goto(`/manage/golf/tournaments/${eventId}/tiers`);
+      await expect(page.getByTestId('root-admin-golf-tiers-locked')).toBeVisible();
+      await expect(page.getByTestId(`root-admin-golf-tier-move-${firstFieldEntryId}`)).toBeDisabled();
     });
 
     await test.step('root admin logs out', async () => {
