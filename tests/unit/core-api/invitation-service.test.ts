@@ -463,6 +463,26 @@ describe('InvitationService', () => {
       });
     });
 
+    it.each([InvitationStatus.ACCEPTED, InvitationStatus.REVOKED])(
+      'refuses to cancel an invitation that is already %s and leaves it unchanged',
+      async (status) => {
+        const invitation = buildInvitation({ leagueId: 'league-1', inviteCode: 'abc123', status });
+        const invitationRepo = createMockInvitationRepo({
+          findByCode: jest.fn().mockResolvedValue(invitation),
+        });
+        const service = new InvitationService({
+          invitations: invitationRepo,
+          memberships: createMockMembershipRepo(),
+          leagues: createMockLeagueRepo(),
+          users: fakeUserRepo(),
+        });
+        await expect(service.revokeInviteLink('league-1', 'abc123')).rejects.toMatchObject({
+          code: 'LEAGUE_INVITATION_NOT_CANCELLABLE',
+        });
+        expect(invitationRepo.update).not.toHaveBeenCalled();
+      },
+    );
+
     it('throws InvitationNotFoundError for unknown code', async () => {
       const service = new InvitationService({
         invitations: createMockInvitationRepo(),

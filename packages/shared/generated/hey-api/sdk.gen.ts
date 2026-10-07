@@ -436,7 +436,7 @@ export const generateInviteLink = <ThrowOnError extends boolean = false>(options
 /**
  * Cancel an invitation
  *
- * Cancels an invitation by its invite code, a shareable join link or an email invite, so the code can no longer be accepted. The invitation becomes REVOKED.
+ * Cancels an outstanding invitation by its invite code, a shareable join link or an email invite, so the code can no longer be accepted. The invitation becomes REVOKED. An invitation already accepted or cancelled is refused with 409 LEAGUE_INVITATION_NOT_CANCELLABLE.
  */
 export const revokeInviteLink = <ThrowOnError extends boolean = false>(options: Options<RevokeInviteLinkData, ThrowOnError>) => (options.client ?? client).delete<RevokeInviteLinkResponses, RevokeInviteLinkErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

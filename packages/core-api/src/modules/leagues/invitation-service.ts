@@ -383,6 +383,16 @@ export class InvitationService {
       }, 'Cannot revoke missing league invite link');
       throw new InvitationNotFoundError(inviteCode);
     }
+    if (!isOutstanding(invitation)) {
+      this.logger?.warn({
+        action: 'leagueInvitation.revoke.notCancellable',
+        data: { leagueId, invitationId: invitation.id, status: invitation.status },
+      }, 'Cannot cancel an invitation that is already accepted or cancelled');
+      throw new InvitationInvalidError(
+        'Only an outstanding invitation can be cancelled.',
+        'LEAGUE_INVITATION_NOT_CANCELLABLE',
+      );
+    }
     await this.deps.invitations.update(invitation.id, {
       status: InvitationStatus.REVOKED,
     });

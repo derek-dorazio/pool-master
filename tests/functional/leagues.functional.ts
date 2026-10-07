@@ -216,7 +216,7 @@ describe('SDK Functional: Leagues', () => {
     });
   });
 
-  it('lists a league\'s pending invites to its commissioner until each is accepted or cancelled', async () => {
+  it('lists a league\'s pending invites to its commissioner until each is accepted or cancelled, and refuses to cancel one already accepted', async () => {
     const commissioner = await buildRegisteredUser({ displayName: 'Listing Commissioner' });
     const invitee = await buildRegisteredUser({ displayName: 'Accepting Invitee' });
     const createResponse = await createLeague({
@@ -259,6 +259,18 @@ describe('SDK Functional: Leagues', () => {
       body: { inviteCode: cancelledInvite.inviteCode },
     });
     expect(cancelledAccept.response.status).toBe(400);
+
+    // An accepted invite cannot be cancelled after the fact; it stays ACCEPTED.
+    const lateCancel = await revokeInviteLink({
+      client: commissioner.client,
+      path: { id: leagueId, code: acceptedInvite.inviteCode },
+    });
+    expect(lateCancel.response.status).toBe(409);
+    expect(lateCancel.error?.error.code).toBe('LEAGUE_INVITATION_NOT_CANCELLABLE');
+    const acceptedRow = await getFunctionalPrisma().leagueInvitation.findUniqueOrThrow({
+      where: { id: acceptedInvite.id },
+    });
+    expect(acceptedRow.status).toBe('ACCEPTED');
   });
 
   it('refuses a plain member the pending invites list', async () => {

@@ -147,6 +147,36 @@ describe('LeagueInvitations', () => {
     expect(await screen.findByTestId('league-invitation-resend-error')).toBeInTheDocument();
   });
 
+  it('reloads the list after a failed resend, since the server may already have replaced the invite code', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
+    resendLeagueInvitationMock.mockResolvedValue({
+      error: { error: { code: 'LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED', message: 'Invitation email delivery failed.' } },
+      status: 502,
+    });
+
+    renderInvitations();
+    fireEvent.click(await screen.findByTestId('league-invitation-resend-email-1'));
+
+    await screen.findByTestId('league-invitation-resend-error');
+    await waitFor(() => expect(listLeagueInvitationsMock).toHaveBeenCalledTimes(2));
+  });
+
+  it('shows the reason and reloads the list when a cancel is refused because the invite was already settled', async () => {
+    listLeagueInvitationsMock
+      .mockResolvedValueOnce({ data: { invitations: [emailInvite()] } })
+      .mockResolvedValue({ data: { invitations: [] } });
+    revokeInviteLinkMock.mockResolvedValue({
+      error: { error: { code: 'LEAGUE_INVITATION_NOT_CANCELLABLE', message: 'Only an outstanding invitation can be cancelled.' } },
+      status: 409,
+    });
+
+    renderInvitations();
+    fireEvent.click(await screen.findByTestId('league-invitation-cancel-email-1'));
+
+    expect(await screen.findByTestId('league-invitation-cancel-error')).toBeInTheDocument();
+    expect(await screen.findByTestId('league-invitations-empty')).toBeInTheDocument();
+  });
+
   it('creates a copyable join URL from the Invite members modal and refreshes the pending list', async () => {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
     generateInviteLinkMock.mockResolvedValue({ data: { invitation: buildGeneratedInviteLink({ inviteCode: 'invite-abc' }) } });

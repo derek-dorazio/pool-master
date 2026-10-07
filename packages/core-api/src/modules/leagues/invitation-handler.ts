@@ -216,6 +216,13 @@ export function createInvitationHandlers(
         }, 'Cannot revoke missing league invitation');
         return sendError(reply, 404, 'LEAGUE_INVITATION_NOT_FOUND', err.message);
       }
+      if (err instanceof InvitationInvalidError) {
+        logger.warn({
+          action: 'leagueInvitationRoute.revoke.notCancellable',
+          data: { leagueId: request.params.id, code: err.code },
+        }, 'Cannot cancel a settled league invitation');
+        return sendError(reply, 409, err.code, err.message);
+      }
       throw err;
     }
   }

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { InvitationStatus, InviteType } from '@poolmaster/shared/domain';
 import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
@@ -99,6 +99,11 @@ export function LeagueInvitations({
     invalidates: [invitationsKey],
   });
 
+  // A failed resend or cancel can still mean the list is stale: a resend replaces the code before
+  // sending, and a refused cancel means the invite was settled elsewhere. Reload either way.
+  const queryClient = useQueryClient();
+  const reloadInvitations = () => queryClient.invalidateQueries({ queryKey: invitationsKey });
+
   const resendMutation = useInvalidatingMutation({
     mutationFn: async (invitationId: string) => {
       const response = await resendLeagueInvitation({ path: { id: leagueId, invitationId } });
@@ -113,6 +118,7 @@ export function LeagueInvitations({
         'Resent a league invitation',
       );
     },
+    onError: reloadInvitations,
     invalidates: [invitationsKey],
   });
 
@@ -124,6 +130,7 @@ export function LeagueInvitations({
       }
       return response.data;
     },
+    onError: reloadInvitations,
     invalidates: [invitationsKey],
   });
 
