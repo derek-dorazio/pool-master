@@ -79,13 +79,13 @@ function toFeedWhere(
         gte: from ?? now,
         ...(to ? { lte: to } : {}),
       },
-      syncScope: SportEventSyncScope.FULL,
+      syncScope: SportEventSyncScope.SCORES_ONLY,
     };
   }
 
   return {
     status: { in: [SportEventStatus.IN_PROGRESS] },
     sportEventParticipants: { some: {} },
-    syncScope: { in: [SportEventSyncScope.FULL, SportEventSyncScope.SCORES_ONLY] },
+    syncScope: SportEventSyncScope.SCORES_ONLY,
   };
 }

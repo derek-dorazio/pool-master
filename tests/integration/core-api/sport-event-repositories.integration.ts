@@ -164,7 +164,7 @@ describe('SportEventRepository — writes', () => {
     expect(fixture.contestId).toBeDefined();
   });
 
-  it('finds the lifecycle scheduler\'s candidates: auto lifecycle on, not provider-owned, scheduled or in progress', async () => {
+  it('finds the lifecycle scheduler\'s candidates: auto lifecycle on and scheduled or in progress, linked to a provider or not', async () => {
     const { events } = repos();
     const scheduled = await createEvent('Scheduled');
     const inProgress = await createEvent('In Progress');
@@ -173,12 +173,10 @@ describe('SportEventRepository — writes', () => {
     await events.update(completed.id, { status: 'COMPLETED' });
     const manualOverride = await createEvent('Manual Override');
     await events.update(manualOverride.id, { autoLifecycleEnabled: false });
-    const providerOwned = await createEvent('Provider Owned');
-    await events.update(providerOwned.id, { syncScope: 'FULL' });
     const scoresOnly = await createEvent('Scores Only');
     await events.update(scoresOnly.id, { syncScope: 'SCORES_ONLY' });
 
-    const created = new Set([scheduled.id, inProgress.id, completed.id, manualOverride.id, providerOwned.id, scoresOnly.id]);
+    const created = new Set([scheduled.id, inProgress.id, completed.id, manualOverride.id, scoresOnly.id]);
     const candidates = (await events.findAutoLifecycleCandidates()).filter((event) => created.has(event.id));
 
     expect(candidates.map((event) => event.name).sort()).toEqual(['In Progress', 'Scheduled', 'Scores Only']);

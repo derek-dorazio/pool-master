@@ -5,9 +5,8 @@
  *
  * Runs on its own fixed 5-minute interval, platform-wide and not
  * admin-configurable (confirmed §9) — deliberately not folded into
- * `IngestionScheduler`, since no provider is involved. Scoped to
- * admin-managed events only (`syncScope !== 'FULL'`); a still-provider-owned
- * event's status remains exclusively the provider's to set, unchanged.
+ * `IngestionScheduler`, since no provider is involved. Covers every event,
+ * linked to a provider or not: a provider never sets an event's status (ADR-0009).
  * Skips any event with `autoLifecycleEnabled = false` — the admin's manual
  * override for a rain delay, a dispute, or any other reason the recorded
  * schedule no longer reflects reality.

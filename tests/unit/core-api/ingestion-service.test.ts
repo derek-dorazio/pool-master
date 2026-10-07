@@ -216,33 +216,16 @@ describe('IngestionService manual sync submission', () => {
     });
 
     it('pool-master-5h3: allows EVENTPARTICIPANTS (not only EVENTLIVESCORES) when syncScope is SCORES_ONLY', async () => {
-      // EVENTPARTICIPANTS (the field/"details" feed) is a separate concern
-      // from the scores feeds and is gated by syncScope != 'NONE', not
-      // restricted to FULL (plans/125 §3.2) — plans/124 §4.4a's admin
-      // Load/Refresh Participant Field action depends on this for a
-      // SCORES_ONLY-linked tournament. Every one of the manual-sync
-      // feeds is a valid combination for SCORES_ONLY; only NONE (covered
-      // above) rejects a manual-sync feed outright.
+      // EVENTPARTICIPANTS (the field feed) is gated by syncScope != 'NONE':
+      // the admin's Load/Refresh field action depends on it for a linked
+      // (SCORES_ONLY) tournament. Only NONE (covered above) rejects a
+      // manual-sync feed outright.
       const service = buildManualSyncService(
         jest.fn().mockResolvedValue({ syncScope: 'SCORES_ONLY' }),
       );
       await expect(
         service.syncEventData(
           { sport: Sport.GOLF, eventId: 'linked-event', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
-          'admin-1',
-          'admin@example.com',
-        ),
-      ).resolves.toBeDefined();
-    });
-
-    it('pool-master-cgb: allows every feed when syncScope is FULL', async () => {
-      const service = buildManualSyncService(
-        jest.fn().mockResolvedValue({ syncScope: 'FULL' }),
-      );
-
-      await expect(
-        service.syncEventData(
-          { sport: Sport.GOLF, eventId: 'legacy-event', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
           'admin-1',
           'admin@example.com',
         ),

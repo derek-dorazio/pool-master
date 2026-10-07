@@ -24,8 +24,7 @@ import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 
 /**
  * plans/124 §6.3 block 2 — the workflow rail, allowed transitions, the
- * automatic-lifecycle toggle, and the round schedule editor. Hidden entirely for
- * a fully provider-owned event (the caller renders nothing then).
+ * automatic-lifecycle toggle, and the round schedule editor.
  */
 export function GolfTournamentWorkflowCard({
   eventId,

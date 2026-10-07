@@ -16,7 +16,6 @@ import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import {
   golfRoundScoreRows,
   golfTournamentHasScoreSync,
-  isAdminManagedGolfTournament,
 } from './golf-admin-utils';
 import { GolfRoundScoreCorrectionsCard } from './golf-round-score-corrections-card';
 import { GolfRoundScoreUploadCard } from './golf-round-score-upload-card';
@@ -89,10 +88,6 @@ export function RootAdminGolfTournamentScoresPage() {
       ? 'error'
       : 'ready';
 
-  const readOnly = tournament
-    ? !isAdminManagedGolfTournament(tournament.syncScope)
-    : false;
-
   return (
     <AsyncPage
       errorBody={extractErrorMessage(tournamentQuery.error, {
@@ -115,11 +110,7 @@ export function RootAdminGolfTournamentScoresPage() {
             </LinkButton>
           </div>
 
-          {readOnly ? (
-            <Alert tone="warning">
-              This tournament is fully provider-owned. Round scores are read-only here.
-            </Alert>
-          ) : golfTournamentHasScoreSync(tournament.syncScope) ? (
+          {golfTournamentHasScoreSync(tournament.syncScope) ? (
             <Alert data-testid="root-admin-golf-scores-sync-alert" tone="warning">
               Scores for this tournament sync automatically from the linked provider.
               Manual edits here are corrections and may be overwritten by the next sync
@@ -135,7 +126,7 @@ export function RootAdminGolfTournamentScoresPage() {
               })}
             </Alert>
           ) : null}
-          {!readOnly && fieldQuery.isError ? (
+          {fieldQuery.isError ? (
             <Alert data-testid="root-admin-golf-scores-field-error" tone="danger">
               {extractErrorMessage(fieldQuery.error, {
                 fallback:
@@ -159,17 +150,14 @@ export function RootAdminGolfTournamentScoresPage() {
 
           {roundOptions.length > 0 ? (
             <>
-              {!readOnly ? (
-                <GolfRoundScoreUploadCard
-                  eventId={eventId}
-                  fieldPlayers={fieldPlayers}
-                  round={round}
-                />
-              ) : null}
+              <GolfRoundScoreUploadCard
+                eventId={eventId}
+                fieldPlayers={fieldPlayers}
+                round={round}
+              />
 
               <GolfRoundScoreCorrectionsCard
                 eventId={eventId}
-                readOnly={readOnly}
                 round={round}
                 rows={roundScoreRows}
                 rowsError={

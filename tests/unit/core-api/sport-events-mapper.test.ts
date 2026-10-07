@@ -18,7 +18,7 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
     eventSeriesId: '22222222-2222-4222-8222-222222222222',
     eventYear: 2026,
     sportLeagueId: '33333333-3333-4333-8333-333333333333',
-    syncScope: 'FULL',
+    syncScope: 'SCORES_ONLY',
     autoLifecycleEnabled: true,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-02T00:00:00.000Z'),

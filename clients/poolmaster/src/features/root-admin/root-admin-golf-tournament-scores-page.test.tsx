@@ -357,23 +357,6 @@ describe('pool-master-r11 RootAdminGolfTournamentScoresPage', () => {
     expect(screen.getByRole('radio', { name: 'Round 1' })).toBeInTheDocument();
   });
 
-  it('pool-master-r11 renders read-only for a FULL provider-owned tournament', async () => {
-    seed({ tournament: { syncScope: 'FULL' } });
-    renderPage();
-
-    expect(await screen.findByText(/fully provider-owned/i)).toBeInTheDocument();
-    expect(
-      screen.queryByTestId('root-admin-golf-scores-upload-textarea'),
-    ).not.toBeInTheDocument();
-    // corrections grid still visible but non-interactive.
-    expect(screen.getByText('Rory McIlroy')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-golf-scores-strokes-sep-1')).toBeDisabled();
-    expect(screen.getByTestId('root-admin-golf-scores-status-sep-1')).toBeDisabled();
-    expect(
-      screen.queryByTestId('root-admin-golf-scores-save-sep-1'),
-    ).not.toBeInTheDocument();
-  });
-
   it('pool-master-r11 surfaces the tournament load error', async () => {
     getEventMock.mockResolvedValue({
       error: { code: 'NOT_FOUND', message: 'No such tournament' },

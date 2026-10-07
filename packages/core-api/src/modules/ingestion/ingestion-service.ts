@@ -293,14 +293,10 @@ export class IngestionService {
    * scheduled feeds can (plans/124 §4.4). No-op when no local SportEvent row
    * exists yet for (providerId, externalId) — there is no scope to violate.
    *
-   * EVENTPARTICIPANTS (the field/"details" feed) is allowed for any linked
-   * event (`syncScope != 'NONE'`), not only `FULL` — plans/125 §3.2's
-   * already-decided design, which plans/124 §4.4a's admin-triggered
-   * Load/Refresh Participant Field action depends on. It is a separate
-   * concern from the scores feed (EVENTLIVESCORES): a
-   * `SCORES_ONLY` tournament is still admin-managed for setup/field/tiers
-   * (§3.5), so an explicit, on-demand field refresh must not be blocked the
-   * way an automatic sync of a provider-owned event's header correctly is.
+   * A linked event (`SCORES_ONLY`) accepts both event feeds: live scores, and the field
+   * feed (EVENTPARTICIPANTS) behind the admin's Load/Refresh field action. The field feed
+   * writes only the field and its size, never the event's details or status (ADR-0009).
+   * An unlinked event (`NONE`) accepts neither.
    */
   private async assertFeedsAllowedForSyncScope(
     providerId: string,

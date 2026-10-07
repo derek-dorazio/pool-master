@@ -169,7 +169,7 @@ export const UpdateSportEventRequestSchema = z.object({
   releaseAt: DateTimeSchema.optional(),
   fieldLocksAt: DateTimeSchema.optional(),
   autoLifecycleEnabled: z.boolean().optional(),
-}).describe('Changes to an admin-managed event; omitted fields are left alone.');
+}).describe('Changes to an event; omitted fields are left alone.');
 export type UpdateSportEventRequest = z.infer<typeof UpdateSportEventRequestSchema>;
 
 export const TransitionSportEventRequestSchema = z.object({

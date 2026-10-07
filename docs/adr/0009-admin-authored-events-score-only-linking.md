@@ -19,9 +19,10 @@ what an admin deliberately set. The golf admin work kept narrowing what sync was
 and epic #122 settled it: the admin creates and links events, and sync's only indispensable
 job is live scores for an event that is already linked.
 
-Epic #122 carried most of that out: field sync defaulted off (#123), the rankings feed and its
-table deleted (#125), the schedule and results feeds and sport-level sync deleted (#126), and
-the sync pages reduced to per-event sync (#130).
+Epic #122 carried that out: field sync defaulted off (#123), the rankings feed and its table
+deleted (#125), the schedule and results feeds and sport-level sync deleted (#126), the sync
+pages reduced to per-event sync (#130), and the provider-owned `FULL` sync scope retired
+(#435).
 
 ## Decision
 
@@ -45,30 +46,25 @@ Sync-driven event creation, scheduled event lists, scheduled results and the ran
 **removed, not legacy**. There is no switch to turn them back on, and they are not kept as a
 fallback.
 
-## Current state: one provider-owned path remains
+## How the code enforces it
 
-The decision is not fully true on `main` yet. The provider-owned sync scope
-(`SportEventSyncScope.FULL`) still exists:
+`SportEventSyncScope` has two values: `NONE` for an unlinked event and `SCORES_ONLY` for a
+linked one. The provider-owned `FULL` scope, under which a field sync overwrote an event's
+details and moved its status, was removed by #435. Its events were moved to `SCORES_ONLY` (or
+`NONE` when unlinked) and given a default round schedule. Since then:
 
-- It is the column default, and every event that existed before the sync scopes were added
-  was set to it.
-- For a `FULL` event, every field load or refresh (`EVENTPARTICIPANTS`) overwrites the
-  event's name, venue, dates, rounds and timing, and moves its status with a provider actor.
-- The scheduled field sync targets only `FULL` events.
-- Admins cannot edit a `FULL` event, and the automatic lifecycle skips it.
-
-`FULL` is the one remaining provider-owned path. It is due for removal under #435, which
-backfills existing events to `SCORES_ONLY` or `NONE`, changes the default and deletes the
-provider-owned branches. Until then, no new event may be created as `FULL`, and no new code may
-depend on it.
+- A field load or refresh writes the field and its size, never the event's details or status.
+- A score for a round the admin did not schedule is skipped; a feed never creates a round.
+- A provider never moves an event's status; only the admin and the lifecycle scheduler do,
+  and the scheduler covers every event whose admin left automatic lifecycle on.
+- Every event can be edited by an admin.
 
 ## Consequences
 
-- Once #435 lands, one path creates events and one path feeds them scores, so a reader of the
-  sync code or the data never has to ask whether a row came from an admin or a feed.
+- One path creates events and one path feeds them scores, so a reader of the sync code or
+  the data never has to ask whether a row came from an admin or a feed.
 - Admin edits to an event, its field or its rankings stay put; nothing on a schedule
-  overwrites them except a feed an admin turned on. Until #435, `FULL` events are the
-  exception.
+  overwrites them except a feed an admin turned on.
 - A sport or league whose provider has no field or odds feed is a normal case, not an error.
 - Admins do more by hand: they create or import each season's events and load each field.
   The tour year import (#385) and field load (#384) keep that cheap.

@@ -84,7 +84,7 @@ export async function publishLiveScoreUpdate(
   // to one event, then dispatch to the per-category persistence path.
   const sportEvent = await deps.prisma.sportEvent.findUnique({
     where: { providerId_externalId: { providerId: deps.providerId, externalId: validated.externalEventId } },
-    select: { id: true, syncScope: true, rounds: true },
+    select: { id: true, rounds: true },
   });
   if (!sportEvent) {
     deps.logger?.warn(
@@ -110,7 +110,6 @@ export async function publishLiveScoreUpdate(
         sportEvent.id,
         validated.rounds,
         deps.providerId,
-        sportEvent.syncScope,
         sportEvent.rounds,
       );
       break;

@@ -245,11 +245,11 @@ describe('SportEventService — read, update, delete', () => {
     expect(updated.event).toMatchObject({ name: 'Renamed', venue: undefined });
   });
 
-  it('refuses to edit an event a provider owns in full with 409, and an unknown one with 404', async () => {
+  it('edits an event linked to a provider for scores, since every event is admin-owned, and 404s an unknown one', async () => {
     const { store, service } = setup();
-    const owned = store.addEvent({ syncScope: 'FULL' });
+    const linked = store.addEvent({ syncScope: 'SCORES_ONLY' });
 
-    await expect(service.updateEvent(owned.id, { name: 'x' })).rejects.toMatchObject({ code: 'EVENT_NOT_ADMIN_MANAGED', statusCode: 409 });
+    await expect(service.updateEvent(linked.id, { name: 'Renamed Open' })).resolves.toMatchObject({ event: { name: 'Renamed Open' } });
     await expect(service.updateEvent('missing', { name: 'x' })).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
   });
 

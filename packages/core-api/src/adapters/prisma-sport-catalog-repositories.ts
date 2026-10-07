@@ -374,7 +374,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         autoLifecycleEnabled: true,
-        syncScope: { not: SportEventSyncScope.FULL },
         status: { in: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] },
       },
       include: SPORT_EVENT_INCLUDE,

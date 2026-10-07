@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { getEvent, listEventRounds } from '@/lib/api';
 import {
-  Alert,
   AsyncPage,
   Callout,
   LinkButton,
@@ -14,9 +13,6 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import {
-  isAdminManagedGolfTournament,
-} from './golf-admin-utils';
 import { GolfTournamentScoreSourceCard } from './golf-tournament-score-source-card';
 import { GolfTournamentSummaryCard } from './golf-tournament-summary-card';
 import { GolfTournamentWorkflowCard } from './golf-tournament-workflow-card';
@@ -72,10 +68,6 @@ export function RootAdminGolfTournamentHomePage() {
       ? 'error'
       : 'ready';
 
-  const isReadOnly = tournament
-    ? !isAdminManagedGolfTournament(tournament.syncScope)
-    : false;
-
   return (
     <AsyncPage
       errorBody={extractErrorMessage(tournamentQuery.error, {
@@ -87,13 +79,6 @@ export function RootAdminGolfTournamentHomePage() {
     >
       {tournament ? (
         <div className="space-y-6">
-          {isReadOnly ? (
-            <Alert tone="warning">
-              This tournament is fully provider-owned. Setup, workflow, and score source
-              are read-only here.
-            </Alert>
-          ) : null}
-
           {tournament.syncScope !== SportEventSyncScope.NONE && tournament.loadedParticipantCount === 0 ? (
             <Callout tone="info">
               <p className="font-medium">The participant field is not loaded yet</p>
@@ -115,23 +100,18 @@ export function RootAdminGolfTournamentHomePage() {
 
           <GolfTournamentSummaryCard
             eventId={eventId}
-            readOnly={isReadOnly}
             tourName={tourName}
             tournament={tournament}
           />
 
-          {!isReadOnly ? (
-            <GolfTournamentWorkflowCard
-              eventId={eventId}
-              rounds={rounds}
-              roundsError={roundsQuery.isError ? roundsQuery.error : null}
-              tournament={tournament}
-            />
-          ) : null}
+          <GolfTournamentWorkflowCard
+            eventId={eventId}
+            rounds={rounds}
+            roundsError={roundsQuery.isError ? roundsQuery.error : null}
+            tournament={tournament}
+          />
 
-          {!isReadOnly ? (
-            <GolfTournamentScoreSourceCard eventId={eventId} tournament={tournament} />
-          ) : null}
+          <GolfTournamentScoreSourceCard eventId={eventId} tournament={tournament} />
 
           <div className="grid gap-4 sm:grid-cols-3">
             <ListCard

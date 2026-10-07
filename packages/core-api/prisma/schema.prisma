@@ -234,7 +234,6 @@ enum ParticipantInactiveReason {
 enum PrismaSportEventSyncScope {
   NONE
   SCORES_ONLY
-  FULL
 }
 
 /// How a SportEventParticipantValuation's tier or price was set.
@@ -958,11 +957,10 @@ model SportEvent {
   // always the year it starts in; startDate carries the real dates (plans/147
   // decision 3).
   eventYear            Int                       @map("event_year")
-  // Sync eligibility, separate from providerId/externalId identity — see
-  // plans/124 §3.5/§4.4. @default(FULL) keeps every ingestion-created row
-  // behaving exactly as it does today; only admin-authored tournaments
-  // start at NONE.
-  syncScope            PrismaSportEventSyncScope @default(FULL) @map("sync_scope")
+  // Sync eligibility, separate from providerId/externalId identity: NONE for an
+  // unlinked event, SCORES_ONLY once an admin links it to a provider event. Every
+  // event is admin-owned; a provider never owns one (ADR-0009, #435).
+  syncScope            PrismaSportEventSyncScope @default(NONE) @map("sync_scope")
   // Admin escape hatch: false stops the lifecycle scheduler (plans/124 §3.6)
   // from ever touching this event's status, no matter what the recorded
   // round schedule says — a rain delay, a dispute, etc.

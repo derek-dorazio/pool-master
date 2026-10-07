@@ -327,15 +327,6 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     );
   });
 
-  it('pool-master-dyb renders read-only for a FULL provider-owned tournament', async () => {
-    seed({ tournament: { syncScope: 'FULL' } });
-    renderPage();
-
-    expect(await screen.findByText(/fully provider-owned/i)).toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-golf-tier-auto-rank')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-golf-tier-move-sep-1')).not.toBeInTheDocument();
-  });
-
   it('pool-master-dyb warns when the tournament already has contests', async () => {
     seed({ tournament: { contestCount: 2 } });
     renderPage();

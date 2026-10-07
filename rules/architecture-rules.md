@@ -223,10 +223,10 @@ flag, or keep them as a fallback. The decision and its alternatives are
   import). It never creates, updates or changes the status of an event by itself.
 - A new feed that would create events or write across events on a schedule needs a new ADR
   first.
-- **The one exception still in the code** is the provider-owned sync scope
-  (`SportEventSyncScope.FULL`): a field load on a `FULL` event still overwrites its details
-  and moves its status. It is due for removal under #435. Do not create new `FULL` events
-  or build on that path.
+- A sync writes only what it feeds — scores, the field and the field size. It never writes
+  an event's name, venue, dates, rounds, timing or status, and never creates a round; those
+  are the admin's. `SportEventSyncScope` has two values: `NONE` (unlinked) and `SCORES_ONLY`
+  (linked). There is no provider-owned scope; do not add one.
 
 ---
 

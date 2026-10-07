@@ -7,7 +7,6 @@ import {
   golfSyncScopeTone,
   sportEventStatusTone,
   golfParticipantFieldActionLabel,
-  isAdminManagedGolfTournament,
   localDateTimeInputToIso,
   parseGolfRosterUpload,
   parseGolfRoundScoreUpload,
@@ -32,17 +31,9 @@ describe('pool-master-3dg golf-admin-utils: sync scope', () => {
   it('pool-master-3dg maps every sync scope to a label and tone', () => {
     expect(golfSyncScopeLabel('NONE')).toBe('Manual');
     expect(golfSyncScopeLabel('SCORES_ONLY')).toBe('Scores synced');
-    expect(golfSyncScopeLabel('FULL')).toBe('Fully synced');
 
     expect(golfSyncScopeTone('NONE')).toBe('active');
     expect(golfSyncScopeTone('SCORES_ONLY')).toBe('info');
-    expect(golfSyncScopeTone('FULL')).toBe('neutral');
-  });
-
-  it('pool-master-3dg treats only FULL as not admin-managed (§3.5)', () => {
-    expect(isAdminManagedGolfTournament('NONE')).toBe(true);
-    expect(isAdminManagedGolfTournament('SCORES_ONLY')).toBe(true);
-    expect(isAdminManagedGolfTournament('FULL')).toBe(false);
   });
 });
 
@@ -122,7 +113,6 @@ describe('pool-master-3dg golf-admin-utils: resolveGolfLifecycleStage', () => {
 describe('pool-master-3dg golf-admin-utils: deriveGolfAutoTransition', () => {
   const base = {
     autoLifecycleEnabled: true,
-    syncScope: 'NONE' as const,
     startDate: '2026-03-12T13:00:00.000Z',
     endDate: '2026-03-15T22:00:00.000Z',
     rounds: [
@@ -131,12 +121,9 @@ describe('pool-master-3dg golf-admin-utils: deriveGolfAutoTransition', () => {
     ],
   };
 
-  it('pool-master-3dg returns null when auto-lifecycle is off or the event is FULL', () => {
+  it('pool-master-3dg returns null when auto-lifecycle is off or the status is terminal', () => {
     expect(
       deriveGolfAutoTransition({ ...base, status: 'SCHEDULED', autoLifecycleEnabled: false }),
-    ).toBeNull();
-    expect(
-      deriveGolfAutoTransition({ ...base, status: 'SCHEDULED', syncScope: 'FULL' }),
     ).toBeNull();
     expect(
       deriveGolfAutoTransition({ ...base, status: 'COMPLETED' }),

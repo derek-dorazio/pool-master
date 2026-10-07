@@ -7,7 +7,7 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { getDefaultTournamentFormatForSport, SportEventSyncScope, type SportEventStatus } from '@poolmaster/shared/domain';
+import { getDefaultTournamentFormatForSport } from '@poolmaster/shared/domain';
 import type {
   SportEvent,
   SportEventDetail,
@@ -15,20 +15,6 @@ import type {
 } from '../core/provider-interface';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
-import { resolveEventTiming } from '../../events/operational-timing';
-
-/**
- * Narrow interface onto EventLifecycleService.applySportEventStatusTransition
- * (plans/124 §3.3) — keeps this module decoupled from the full service/actor
- * union, matching the CompletedSportEventSettlement pattern this replaces.
- */
-interface SportEventLifecycleApplier {
-  applySportEventStatusTransition(input: {
-    sportEventId: string;
-    toStatus: SportEventStatus;
-    actor: { type: 'PROVIDER' };
-  }): Promise<unknown>;
-}
 
 interface PersistenceDiagnosticsResult<T> {
   count: number;
@@ -40,12 +26,14 @@ export class IngestionPersistence {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
-    private readonly eventLifecycleService?: SportEventLifecycleApplier,
   ) {}
 
   /**
    * Update the sport events already linked to these provider events, by (providerId,
    * externalId). Returns the number of events persisted.
+   *
+   * Only the field size is written. An admin owns every event's name, venue, dates, rounds,
+   * timing and status, so a provider's copy of them is ignored (ADR-0009, #435).
    *
    * Sync never creates a SportEvent (plans/147). An event is an edition of a series in a
    * sport league, and a provider event names neither, so a row created here would have
@@ -76,10 +64,6 @@ export class IngestionPersistence {
     }, 'Persisting sport events from ingestion');
 
     for (const event of events) {
-      const resolvedTiming = resolveEventTiming({
-        startDate: event.startDate,
-        metadata: event.metadata,
-      });
       const existingEvent = await this.prisma.sportEvent.findUnique({
         where: {
           providerId_externalId: {
@@ -97,32 +81,12 @@ export class IngestionPersistence {
         continue;
       }
       const before = normalizeSportEventRow(existingEvent);
-      // An admin owns the header, rounds and status of an event it linked for scores only
-      // (SCORES_ONLY) or not at all (NONE); sync refreshes the field size and nothing else (#118).
-      const providerOwned = existingEvent.syncScope === SportEventSyncScope.FULL;
-      const after = providerOwned
-        ? normalizeSportEventInput(event, resolvedTiming)
-        : { ...before, participantCount: event.participantCount ?? before.participantCount };
+      const participantCount = event.participantCount ?? existingEvent.participantCount;
+      const after = { ...before, participantCount };
 
       const persistedEvent = await this.prisma.sportEvent.update({
         where: { id: existingEvent.id },
-        data: providerOwned
-          ? {
-            name: event.name,
-            venue: event.venue ?? null,
-            location: event.location ?? null,
-            startDate: event.startDate,
-            endDate: event.endDate ?? null,
-            // status intentionally omitted — applySportEventStatusTransition below is the
-            // one place that ever writes SportEvent.status (plans/124 §3.3).
-            rounds: event.rounds ?? null,
-            participantCount: event.participantCount ?? null,
-            releaseAt: resolvedTiming.releaseAt,
-            fieldLocksAt: resolvedTiming.fieldLocksAt,
-            fieldLocked: event.fieldLocked,
-            metadata: toPrismaJson(event.metadata),
-          }
-          : { participantCount: event.participantCount ?? existingEvent.participantCount },
+        data: { participantCount },
       });
       detailRows.push({
         id: `sport-event:${event.providerId}:${event.externalId}`,
@@ -135,22 +99,13 @@ export class IngestionPersistence {
         before,
         after,
       });
-      if (providerOwned) {
-        await this.eventLifecycleService?.applySportEventStatusTransition({
-          sportEventId: persistedEvent.id,
-          toStatus: event.status,
-          actor: { type: 'PROVIDER' },
-        });
-      }
       count++;
       this.logger?.debug({
         providerId: event.providerId,
         externalId: event.externalId,
         sport: event.sport,
         name: event.name,
-        releaseAt: resolvedTiming.releaseAt.toISOString(),
-        fieldLocksAt: resolvedTiming.fieldLocksAt.toISOString(),
-        providerFieldLocked: event.fieldLocked,
+        participantCount,
       }, 'Persisted sport event from ingestion');
     }
 
@@ -436,29 +391,6 @@ function resolveDisposition(
   }
 
   return stableJson(before) === stableJson(after) ? 'UNCHANGED' : 'UPDATED';
-}
-
-function normalizeSportEventInput(
-  event: SportEvent,
-  timing: { releaseAt: Date; fieldLocksAt: Date },
-): Record<string, unknown> {
-  return {
-    externalId: event.externalId,
-    providerId: event.providerId,
-    sport: event.sport,
-    name: event.name,
-    venue: event.venue ?? null,
-    location: event.location ?? null,
-    startDate: event.startDate.toISOString(),
-    endDate: event.endDate?.toISOString() ?? null,
-    status: event.status,
-    rounds: event.rounds ?? null,
-    participantCount: event.participantCount ?? null,
-    releaseAt: timing.releaseAt.toISOString(),
-    fieldLocksAt: timing.fieldLocksAt.toISOString(),
-    fieldLocked: event.fieldLocked,
-    metadata: jsonClone(event.metadata),
-  };
 }
 
 function normalizeSportEventRow(row: {

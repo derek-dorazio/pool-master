@@ -238,15 +238,14 @@ describe('GolfScoreService — event-side position', () => {
   });
 });
 
-// #118 — a playoff is not a round. Provider sync writes only the rounds an admin scheduled on
-// an admin-owned (SCORES_ONLY or NONE) event, so a stray round 5 from a feed never becomes a
-// fifth round row or moves anyone's 72-hole score. A provider-owned (FULL) event has no admin
-// schedule, so its rounds are still created from the feed.
+// #118, #435 — a playoff is not a round. Provider sync writes only the rounds an admin
+// scheduled, so a stray round 5 from a feed never becomes a fifth round row or moves anyone's
+// 72-hole score. Every event is admin-owned; a feed never creates a round.
 describe('GolfScoreService — provider sync', () => {
-  async function syncSetup(syncScope: 'FULL' | 'SCORES_ONLY') {
+  async function syncSetup() {
     const store = new InMemorySportEvents();
     const sport = store.addSport(Sport.GOLF);
-    const event = store.addEvent({ providerId: 'feed', syncScope });
+    const event = store.addEvent({ providerId: 'feed', syncScope: 'SCORES_ONLY' });
     const ana = store.addParticipant(sport.id, 'Ana Park');
     const ben = store.addParticipant(sport.id, 'Ben Cole');
     const anaEntry = store.addToField(event.id, ana.id);
@@ -273,14 +272,13 @@ describe('GolfScoreService — provider sync', () => {
   });
 
   it('skips and logs a round an admin did not schedule on a SCORES_ONLY event, so the golfer keeps their 72-hole score', async () => {
-    const { store, service, event, anaEntry, logger } = await syncSetup('SCORES_ONLY');
+    const { store, service, event, anaEntry, logger } = await syncSetup();
     await store.roundRepo().createMany(event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
 
     const result = await service.persistRoundUpdatesForSportEvent(
       event.id,
       [1, 2, 3, 4].map((round) => update('ext-ana', round, -2)).concat(update('ext-ana', 5, -1)),
       'feed',
-      'SCORES_ONLY',
       null,
     );
 
@@ -294,36 +292,40 @@ describe('GolfScoreService — provider sync', () => {
     );
   });
 
-  it('still creates a round the feed reports on a FULL event, which has no admin schedule', async () => {
-    const { store, service, event } = await syncSetup('FULL');
+  it('skips a score for a round on an event with no round schedule rather than creating the round', async () => {
+    const { store, service, event, logger } = await syncSetup();
 
-    const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'feed', 'FULL', null);
+    const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'feed', null);
 
-    expect(result).toMatchObject({ updatesPersisted: 1, updatesSkipped: 0 });
-    expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1]);
+    expect(result).toMatchObject({ updatesPersisted: 0, updatesSkipped: 1 });
+    expect(store.roundRows.filter((round) => round.sportEventId === event.id)).toEqual([]);
+    expect(logger.warn).toHaveBeenCalledWith(
+      { action: 'liveScore.golf.unscheduledRoundSkipped', data: { sportEventId: event.id, roundNumbers: [1] } },
+      expect.any(String),
+    );
   });
 
   it('gives two golfers tied after 72 holes the same event score and both "T1"', async () => {
-    const { store, service, event, anaEntry, benEntry } = await syncSetup('SCORES_ONLY');
+    const { store, service, event, anaEntry, benEntry } = await syncSetup();
     await store.roundRepo().createMany(event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
 
     await service.persistRoundUpdatesForSportEvent(event.id, [
       update('ext-ana', 1, -3), update('ext-ana', 2, -3), update('ext-ana', 3, -3), update('ext-ana', 4, -3),
       update('ext-ben', 1, -6), update('ext-ben', 2, -2), update('ext-ben', 3, -2), update('ext-ben', 4, -2),
-    ], 'feed', 'SCORES_ONLY', null);
+    ], 'feed', null);
 
     const standings = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id, benEntry.id]);
     expect(standings.map((result) => [result.golf.eventScoreToPar, result.standing.displayPosition])).toEqual([[-12, 'T1'], [-12, 'T1']]);
   });
 
-  it('skips and logs a round beyond the event\'s scheduled rounds even on a FULL event, so a playoff never becomes round 5', async () => {
-    const { store, service, event, anaEntry, logger } = await syncSetup('FULL');
+  it('skips and logs a round beyond the event\'s scheduled round count, so a playoff never becomes round 5', async () => {
+    const { store, service, event, anaEntry, logger } = await syncSetup();
+    await store.roundRepo().createMany(event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
 
     const result = await service.persistRoundUpdatesForSportEvent(
       event.id,
       [1, 2, 3, 4].map((round) => update('ext-ana', round, -2)).concat(update('ext-ana', 5, -1)),
       'feed',
-      'FULL',
       4,
     );
 
@@ -338,13 +340,13 @@ describe('GolfScoreService — provider sync', () => {
   });
 
   it('skips and logs an update past the 18th hole, so playoff holes never reach a round score', async () => {
-    const { store, service, event, logger } = await syncSetup('FULL');
+    const { store, service, event, logger } = await syncSetup();
+    await store.roundRepo().createMany(event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
 
     const result = await service.persistRoundUpdatesForSportEvent(
       event.id,
       [update('ext-ana', 4, -2), { ...update('ext-ben', 4, -3), thru: 19 }],
       'feed',
-      'FULL',
       4,
     );
 
