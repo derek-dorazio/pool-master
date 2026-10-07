@@ -51,7 +51,8 @@ fallback.
 `SportEventSyncScope` has two values: `NONE` for an unlinked event and `SCORES_ONLY` for a
 linked one. The provider-owned `FULL` scope, under which a field sync overwrote an event's
 details and moved its status, was removed by #435. Its events were moved to `SCORES_ONLY` (or
-`NONE` when unlinked) and given a default round schedule. Since then:
+`NONE` when unlinked) and given a default round schedule, with automatic lifecycle turned off
+so the scheduler, which had never moved them, did not catch up stale ones on deploy. Since then:
 
 - A field load or refresh writes the field and its size, never the event's details or status.
 - A score for a round the admin did not schedule is skipped; a feed never creates a round.
