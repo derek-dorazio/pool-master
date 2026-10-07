@@ -889,6 +889,83 @@ export type ParticipantResponse = {
 };
 
 /**
+ * Fields to change on a participant. Omitted fields keep their current values.
+ */
+export type UpdateParticipantRequest = {
+    /**
+     * Primary participant display name.
+     */
+    name?: string;
+    /**
+     * First name when the participant is a person.
+     */
+    firstName?: string;
+    /**
+     * Last name when the participant is a person.
+     */
+    lastName?: string;
+    /**
+     * Short-form display name for compact UI surfaces.
+     */
+    shortName?: string;
+    /**
+     * Participant nationality or country code.
+     */
+    nationality?: string;
+    /**
+     * Playing role ("GOLFER", "QB").
+     */
+    role?: string;
+    /**
+     * Current team affiliation.
+     */
+    teamAffiliation?: string;
+    /**
+     * Participant lifecycle or availability status.
+     */
+    status?: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+    /**
+     * Normalized participant injury or availability state.
+     */
+    injuryStatus?: {
+        /**
+         * Current injury or availability status code.
+         */
+        status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
+        /**
+         * Optional injury-status detail or summary.
+         */
+        detail?: string;
+        /**
+         * Expected return timestamp when known.
+         */
+        expectedReturn?: string;
+        /**
+         * Expected return timestamp when known.
+         */
+        updatedAt?: string;
+        /**
+         * Source that provided the injury-status update.
+         */
+        source?: string;
+    };
+    /**
+     * Participant image URL.
+     */
+    photoUrl?: string;
+    /**
+     * Primary provider identifier.
+     */
+    externalId?: string;
+    /**
+     * Map of provider identifiers keyed by provider code.
+     */
+    externalIds?: {
+        [key: string]: string;
+    };
+};
+
+/**
  * A sport the platform runs contests on.
  */
 export type SportDto = {
@@ -4269,79 +4346,6 @@ export type ContestConfigurationDetailDto = {
      * How many roster scores count toward the entry total in managed golf contests.
      */
     countedScores?: number;
-    /**
-     * Tier source used for managed golf contests.
-     */
-    tierSource?: string;
-    tierGeneration?: {
-        /**
-         * Default managed tier size used to seed tier generation.
-         */
-        defaultTierSize: number;
-    };
-    /**
-     * Resolved managed-golf tier definitions when the contest stores typed tiered configuration.
-     */
-    tiers?: Array<{
-        /**
-         * Stable tier key such as A, B, or C.
-         */
-        tierKey: string;
-        /**
-         * Commissioner-facing tier label.
-         */
-        label: string;
-        /**
-         * How many golfers must be picked from the tier.
-         */
-        pickCount: number;
-        /**
-         * Starting resolved rank/odds position for the tier.
-         */
-        startPosition: number;
-        /**
-         * Ending resolved rank/odds position for the tier. Null means remainder of field.
-         */
-        endPosition: number | null;
-    }>;
-    /**
-     * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
-     */
-    cutRule?: {
-        type: 'FIXED_SCORE';
-        /**
-         * Fallback score assigned when a golfer misses the cut.
-         */
-        fixedScore: number;
-    };
-    /**
-     * Managed-golf playoff handling strategy.
-     */
-    playoffHandling?: string;
-    /**
-     * Managed-golf leaderboard display scoring mode.
-     */
-    displayScoring?: string;
-    /**
-     * Managed-golf tiebreaker configuration.
-     */
-    tiebreaker?: {
-        type: 'PREDICT_WINNING_SCORE';
-    };
-    /**
-     * Managed-golf category slot definitions when the contest uses category picks.
-     */
-    categories?: Array<{
-        categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
-        /**
-         * Commissioner-facing category label.
-         */
-        label: string;
-        /**
-         * How many golfers must be picked for the category.
-         */
-        pickCount: number;
-    }>;
 };
 
 /**
@@ -4441,79 +4445,6 @@ export type ContestResponse = {
          * How many roster scores count toward the entry total in managed golf contests.
          */
         countedScores?: number;
-        /**
-         * Tier source used for managed golf contests.
-         */
-        tierSource?: string;
-        tierGeneration?: {
-            /**
-             * Default managed tier size used to seed tier generation.
-             */
-            defaultTierSize: number;
-        };
-        /**
-         * Resolved managed-golf tier definitions when the contest stores typed tiered configuration.
-         */
-        tiers?: Array<{
-            /**
-             * Stable tier key such as A, B, or C.
-             */
-            tierKey: string;
-            /**
-             * Commissioner-facing tier label.
-             */
-            label: string;
-            /**
-             * How many golfers must be picked from the tier.
-             */
-            pickCount: number;
-            /**
-             * Starting resolved rank/odds position for the tier.
-             */
-            startPosition: number;
-            /**
-             * Ending resolved rank/odds position for the tier. Null means remainder of field.
-             */
-            endPosition: number | null;
-        }>;
-        /**
-         * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
-         */
-        cutRule?: {
-            type: 'FIXED_SCORE';
-            /**
-             * Fallback score assigned when a golfer misses the cut.
-             */
-            fixedScore: number;
-        };
-        /**
-         * Managed-golf playoff handling strategy.
-         */
-        playoffHandling?: string;
-        /**
-         * Managed-golf leaderboard display scoring mode.
-         */
-        displayScoring?: string;
-        /**
-         * Managed-golf tiebreaker configuration.
-         */
-        tiebreaker?: {
-            type: 'PREDICT_WINNING_SCORE';
-        };
-        /**
-         * Managed-golf category slot definitions when the contest uses category picks.
-         */
-        categories?: Array<{
-            categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
-            /**
-             * Commissioner-facing category label.
-             */
-            label: string;
-            /**
-             * How many golfers must be picked for the category.
-             */
-            pickCount: number;
-        }>;
     } | null;
 };
 
@@ -6698,10 +6629,34 @@ export type LeagueDashboardResponse = {
 };
 
 /**
- * Arbitrary JSON object payload.
+ * Result of a bulk CSV member import.
  */
 export type LeagueBulkOperationResponse = {
-    [key: string]: unknown;
+    /**
+     * How many rows the import received.
+     */
+    total: number;
+    /**
+     * How many invitations the import created.
+     */
+    sent: number;
+    /**
+     * Rows that were not imported, with the reason for each.
+     */
+    failed: Array<{
+        /**
+         * Email address on the row that failed.
+         */
+        email: string;
+        /**
+         * Why the row was not imported.
+         */
+        reason: string;
+    }>;
+    /**
+     * Email addresses skipped because they already have an invitation to this league.
+     */
+    duplicates: Array<string>;
 };
 
 /**
@@ -7480,9 +7435,18 @@ export type ProviderSyncRunDto = {
              */
             errors: number;
             /**
-             * Raw ingestion error-log entries for root-admin investigation.
+             * Ingestion error-log entries for root-admin investigation.
              */
-            errorLog: Array<unknown>;
+            errorLog: Array<{
+                /**
+                 * Failure message the ingestion job recorded.
+                 */
+                error: string;
+                /**
+                 * When the failure was recorded.
+                 */
+                at: string;
+            }>;
         };
         /**
          * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
@@ -7532,13 +7496,17 @@ export type ProviderSyncRunDto = {
                  */
                 name?: string;
                 /**
-                 * Normalized before-state JSON for UPDATED or DELETED rows.
+                 * Normalized request context that submitted the sync run, including source and actor diagnostics.
                  */
-                before?: unknown;
+                before?: {
+                    [key: string]: unknown;
+                };
                 /**
-                 * Normalized after-state JSON for CREATED or UPDATED rows.
+                 * Normalized request context that submitted the sync run, including source and actor diagnostics.
                  */
-                after?: unknown;
+                after?: {
+                    [key: string]: unknown;
+                };
             }>;
         };
         /**
@@ -7717,9 +7685,18 @@ export type ProviderSyncRunListResponse = {
                  */
                 errors: number;
                 /**
-                 * Raw ingestion error-log entries for root-admin investigation.
+                 * Ingestion error-log entries for root-admin investigation.
                  */
-                errorLog: Array<unknown>;
+                errorLog: Array<{
+                    /**
+                     * Failure message the ingestion job recorded.
+                     */
+                    error: string;
+                    /**
+                     * When the failure was recorded.
+                     */
+                    at: string;
+                }>;
             };
             /**
              * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
@@ -7769,13 +7746,17 @@ export type ProviderSyncRunListResponse = {
                      */
                     name?: string;
                     /**
-                     * Normalized before-state JSON for UPDATED or DELETED rows.
+                     * Normalized request context that submitted the sync run, including source and actor diagnostics.
                      */
-                    before?: unknown;
+                    before?: {
+                        [key: string]: unknown;
+                    };
                     /**
-                     * Normalized after-state JSON for CREATED or UPDATED rows.
+                     * Normalized request context that submitted the sync run, including source and actor diagnostics.
                      */
-                    after?: unknown;
+                    after?: {
+                        [key: string]: unknown;
+                    };
                 }>;
             };
             /**
@@ -7948,9 +7929,18 @@ export type ProviderManualSyncSubmissionResponse = {
                  */
                 errors: number;
                 /**
-                 * Raw ingestion error-log entries for root-admin investigation.
+                 * Ingestion error-log entries for root-admin investigation.
                  */
-                errorLog: Array<unknown>;
+                errorLog: Array<{
+                    /**
+                     * Failure message the ingestion job recorded.
+                     */
+                    error: string;
+                    /**
+                     * When the failure was recorded.
+                     */
+                    at: string;
+                }>;
             };
             /**
              * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
@@ -8000,13 +7990,17 @@ export type ProviderManualSyncSubmissionResponse = {
                      */
                     name?: string;
                     /**
-                     * Normalized before-state JSON for UPDATED or DELETED rows.
+                     * Normalized request context that submitted the sync run, including source and actor diagnostics.
                      */
-                    before?: unknown;
+                    before?: {
+                        [key: string]: unknown;
+                    };
                     /**
-                     * Normalized after-state JSON for CREATED or UPDATED rows.
+                     * Normalized request context that submitted the sync run, including source and actor diagnostics.
                      */
-                    after?: unknown;
+                    after?: {
+                        [key: string]: unknown;
+                    };
                 }>;
             };
             /**
@@ -11535,7 +11529,7 @@ export type ImportMembersError = ImportMembersErrors[keyof ImportMembersErrors];
 
 export type ImportMembersResponses = {
     /**
-     * Arbitrary JSON object payload.
+     * Result of a bulk CSV member import.
      */
     201: LeagueBulkOperationResponse;
 };
@@ -20081,24 +20075,7 @@ export type GetParticipantResponses = {
 export type GetParticipantResponse = GetParticipantResponses[keyof GetParticipantResponses];
 
 export type UpdateParticipantData = {
-    body: {
-        name?: string;
-        firstName?: string;
-        lastName?: string;
-        shortName?: string;
-        nationality?: string;
-        role?: string;
-        teamAffiliation?: string;
-        status?: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
-        injuryStatus?: {
-            [key: string]: unknown;
-        };
-        photoUrl?: string;
-        externalId?: string;
-        externalIds?: {
-            [key: string]: unknown;
-        };
-    };
+    body: UpdateParticipantRequest;
     path: {
         id: string;
     };

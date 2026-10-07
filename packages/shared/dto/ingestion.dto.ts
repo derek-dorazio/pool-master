@@ -98,6 +98,12 @@ export const ProviderSyncProviderPayloadDtoSchema = z.object({
 }).passthrough().describe('Raw/debug provider payload captured for a provider sync run.');
 export type ProviderSyncProviderPayloadDto = z.infer<typeof ProviderSyncProviderPayloadDtoSchema>;
 
+export const IngestionErrorLogEntryDtoSchema = z.object({
+  error: z.string().describe('Failure message the ingestion job recorded.'),
+  at: z.string().datetime().describe('When the failure was recorded.'),
+}).describe('One ingestion job error-log entry.');
+export type IngestionErrorLogEntryDto = z.infer<typeof IngestionErrorLogEntryDtoSchema>;
+
 export const ProviderSyncJobPayloadDtoSchema = z.object({
   jobType: z.string().describe('Internal ingestion job type that executed this sync feed.'),
   providerId: z.string().describe('Provider that executed the ingestion job.'),
@@ -108,7 +114,7 @@ export const ProviderSyncJobPayloadDtoSchema = z.object({
   completedAt: z.string().datetime().optional().describe('When the ingestion job completed.'),
   recordsProcessed: z.number().int().min(0).describe('Canonical records processed by the ingestion job.'),
   errors: z.number().int().min(0).describe('Error count captured by the ingestion job.'),
-  errorLog: z.array(z.unknown()).describe('Raw ingestion error-log entries for root-admin investigation.'),
+  errorLog: z.array(IngestionErrorLogEntryDtoSchema).describe('Ingestion error-log entries for root-admin investigation.'),
 }).describe('Serialized ingestion job details for a provider sync run.');
 export type ProviderSyncJobPayloadDto = z.infer<typeof ProviderSyncJobPayloadDtoSchema>;
 
@@ -124,8 +130,8 @@ export const ProviderSyncWriteDetailRowDtoSchema = z.object({
   participantExternalId: z.string().optional().describe('Provider participant id associated with this row, when applicable.'),
   internalId: z.string().optional().describe('PoolMaster internal id associated with this row, when known.'),
   name: z.string().optional().describe('Display name for the row, when known.'),
-  before: z.unknown().optional().describe('Normalized before-state JSON for UPDATED or DELETED rows.'),
-  after: z.unknown().optional().describe('Normalized after-state JSON for CREATED or UPDATED rows.'),
+  before: JsonObjectSchema.optional().describe('Normalized before-state JSON for UPDATED or DELETED rows.'),
+  after: JsonObjectSchema.optional().describe('Normalized after-state JSON for CREATED or UPDATED rows.'),
 }).describe('Single normalized write diagnostic row for a provider sync run.');
 export type ProviderSyncWriteDetailRowDto = z.infer<typeof ProviderSyncWriteDetailRowDtoSchema>;
 

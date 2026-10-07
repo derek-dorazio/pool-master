@@ -1189,3 +1189,16 @@ model PlatformRuntimeConfig {
 
   @@map("platform_runtime_configs")
 }
+
+/// One saved change to a platform_runtime_configs row (#450). Append-only.
+model PlatformRuntimeConfigHistory {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  configKey    String   @map("config_key") @db.VarChar(100)
+  previousJson Json?    @map("previous_json")
+  newJson      Json     @map("new_json")
+  changedById  String?  @map("changed_by_id") @db.Uuid
+  changedAt    DateTime @default(now()) @map("changed_at") @db.Timestamptz
+
+  @@index([configKey, changedAt(sort: Desc)])
+  @@map("platform_runtime_config_history")
+}

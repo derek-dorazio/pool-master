@@ -42,6 +42,7 @@ export interface UpdateParticipantInput {
   status?: Participant['status'];
   injuryStatus?: InjuryStatus;
   photoUrl?: string;
+  externalId?: string;
   externalIds?: Record<string, string>;
 }
 
