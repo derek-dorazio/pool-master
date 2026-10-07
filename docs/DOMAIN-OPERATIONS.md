@@ -756,7 +756,11 @@ went with it.
 
 ### PlatformRuntimeConfig — `platform`
 
-Two runtime-tunable documents: the client poll intervals and the ingestion schedule.
+Runtime-tunable settings groups, one JSON document each: the client poll intervals and the
+ingestion schedule. Every group is owned by `AppSettingsService` (#450): each core-api task
+refreshes them from the database every 30 seconds, and every save is recorded in
+`platform_runtime_config_history`. Which settings belong here and which stay in env is
+`rules/architecture-rules.md` §6 *Runtime settings live in the database, not in env*.
 
 | Operation | Role | Notes |
 |---|---|---|

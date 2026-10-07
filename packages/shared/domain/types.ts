@@ -365,6 +365,17 @@ export interface PlatformRuntimeConfig extends DomainEntity {
   updatedById: string | null;
 }
 
+/** One saved change to a platform setting (#450). Append-only. */
+export interface PlatformRuntimeConfigChange {
+  id: string;
+  configKey: string;
+  /** Null when the save created the setting's first stored value. */
+  previousJson: unknown;
+  newJson: unknown;
+  changedById: string | null;
+  changedAt: Date;
+}
+
 // --- Commissioner Dashboard ---
 
 export interface CommissionerDashboard {

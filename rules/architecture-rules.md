@@ -398,8 +398,36 @@ that it was already there.
 
 **The test for "is this reference data" is whether the app breaks without it, not whether it is
 convenient to have.** A row the app merely starts empty without — `platform_runtime_configs`,
-which has `DEFAULT_INGESTION_CONFIG` in code and creates its row on demand — is not reference
-data and needs no migration.
+whose settings groups have their defaults in code and create their row on the first save — is
+not reference data and needs no migration.
+
+### Runtime settings live in the database, not in env
+
+How the app *behaves* must be changeable without a Terraform apply or a redeploy (#450). So:
+
+- **Env / Terraform holds secrets and how this deployment is wired:** `DATABASE_URL`,
+  `JWT_SECRET`, cloud region and credentials, the mail transport and sender identity, SMTP
+  host/port/credentials, `APP_BASE_URL`, and the sports data provider settings.
+- **A settings group in the database holds behaviour:** on/off switches, intervals, and
+  choices between things the deployment already has.
+- **A settings group never holds a secret.** Its payload is served to root-admin screens and
+  copied into the change history.
+
+A group is declared once with `defineSettingsGroup` (key, title, description, Zod schema,
+code defaults that may depend on the environment) and added to `SETTINGS_GROUPS`;
+`AppSettingsService` owns all of them. What that buys, and what a new group must not undo:
+
+- **Reads are synchronous and never write.** A missing row means the defaults; an invalid
+  stored row is logged and served as the defaults, and left for an admin to fix. Nothing creates
+  or rewrites a row except a save, so two tasks booting together cannot race.
+- **Every task converges within 30 seconds.** Production runs more than one core-api task; a
+  value cached once at boot is how a save on one task never reached the other. The cache is
+  refreshed from one query on a timer, with no pub/sub.
+- **Stored payloads are read over the defaults, and unknown keys are dropped**, so adding or
+  retiring a field never invalidates an old row. Cleaning up an old row's shape is a migration,
+  not a boot-time rewrite.
+- **Every save is validated whole and recorded** in `platform_runtime_config_history` in the
+  same transaction, and can be checked against the `updatedAt` the admin last saw.
 
 ### Fixture data goes in a bootstrap script
 

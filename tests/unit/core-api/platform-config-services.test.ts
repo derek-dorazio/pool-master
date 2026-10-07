@@ -1,192 +1,340 @@
 import { expect } from '@jest/globals';
-import { IngestionConfigService } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
-import { PollConfigService } from '../../../packages/core-api/src/modules/platform/poll-config-service';
+import { z } from 'zod';
+import {
+  AppSettingsService,
+  SettingsConflictError,
+  SettingsValidationError,
+} from '../../../packages/core-api/src/modules/platform/app-settings-service';
+import {
+  INGESTION_SCHEDULE_SETTINGS,
+  IngestionConfigService,
+} from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
+import { PollConfigService, POLL_INTERVAL_SETTINGS } from '../../../packages/core-api/src/modules/platform/poll-config-service';
+import { defineSettingsGroup } from '../../../packages/core-api/src/modules/platform/settings-group';
+import type { SettingsGroup } from '../../../packages/core-api/src/modules/platform/settings-group';
+import { SETTINGS_GROUPS } from '../../../packages/core-api/src/modules/platform/settings-groups';
 import { fakeLogger } from '../../support/fake-logger';
-import type { PlatformRuntimeConfigRepository } from '@poolmaster/shared/db';
-import type { PlatformRuntimeConfig } from '@poolmaster/shared/domain';
-import { IngestionScheduleConfigSchema } from '@poolmaster/shared/dto/config.dto';
+import { inMemoryRuntimeConfigs } from '../../support/in-memory-runtime-configs';
+import type { InMemoryRuntimeConfigs } from '../../support/in-memory-runtime-configs';
 
-/** An in-memory runtime-config store holding one persisted document. */
-function storedConfigRepository(configJson: unknown): PlatformRuntimeConfigRepository & {
-  writes: unknown[];
-} {
-  const writes: unknown[] = [];
-  const row = (json: unknown): PlatformRuntimeConfig => ({
-    id: 'runtime-config-1',
-    configKey: 'INGESTION_SCHEDULE_CONFIG',
-    configJson: json,
-    updatedById: 'admin-1',
-    createdAt: new Date('2026-09-01T00:00:00.000Z'),
-    updatedAt: new Date('2026-09-01T00:00:00.000Z'),
+const SampleSchema = z.object({
+  enabled: z.boolean(),
+  limit: z.number().int().min(1),
+  label: z.string().nullable(),
+});
+type Sample = z.infer<typeof SampleSchema>;
+
+function sampleGroup(onChange?: (next: Sample, previous: Sample) => void): SettingsGroup<Sample> {
+  return defineSettingsGroup<Sample>({
+    key: 'SAMPLE_CONFIG',
+    title: 'Sample',
+    description: 'A group for exercising the settings service.',
+    schema: SampleSchema,
+    defaults: (env) => ({ enabled: env.POOLMASTER_ENVIRONMENT !== 'qa', limit: 5, label: null }),
+    onChange,
   });
-  return {
-    writes,
-    findByKey: async () => row(configJson),
-    create: async (input) => row(input.configJson),
-    update: async (input) => {
-      writes.push(JSON.parse(JSON.stringify(input.configJson)));
-      return row(input.configJson);
-    },
-  };
 }
 
-const RETIRED_FEED_POLICY_KEYS = ['participantRankings', 'eventSchedule', 'eventResults'] as const;
-
-/**
- * The shape every environment persisted before #125 retired the PARTICIPANTRANKINGS feed and
- * #126 retired the EVENTSCHEDULE and EVENTRESULTS feeds.
- */
-function configPersistedBeforeFeedsRetired() {
-  return {
-    scheduledSports: ['GOLF'],
-    healthCheck: { enabled: true, intervalMinutes: 5 },
-    eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
-    eventParticipants: { enabled: true, intervalMinutes: 720, lookaheadDays: 21 },
-    participantRankings: { enabled: true, intervalMinutes: 1440 },
-    eventLiveScores: { enabled: true, intervalSeconds: 45 },
-    eventResults: { enabled: false, intervalMinutes: 30 },
-    perSportOverrides: {
-      GOLF: {
-        participantRankings: { enabled: false },
-        eventSchedule: { lookaheadDays: 90 },
-        eventResults: { enabled: true },
-        eventLiveScores: { intervalSeconds: 20 },
-      },
-      TENNIS: {
-        participantRankings: { intervalMinutes: 60 },
-      },
-      NFL: {
-        eventSchedule: { enabled: false },
-        eventResults: { intervalMinutes: 10 },
-      },
-    },
-  };
+function settingsFor(
+  repository: InMemoryRuntimeConfigs,
+  groups: readonly SettingsGroup<unknown>[],
+  env: Record<string, string> = { POOLMASTER_ENVIRONMENT: 'production' },
+  logger = fakeLogger(),
+) {
+  return new AppSettingsService({ repository, groups, env, logger });
 }
 
-describe('platform config services', () => {
-    it('updates and resets poll config', async () => {
-      const service = new PollConfigService(fakeLogger());
+const asGroups = (...groups: SettingsGroup<Sample>[]): SettingsGroup<unknown>[] => groups;
 
-      await expect(service.updateConfig({ draft: 15000 }, 'admin-1')).resolves.toEqual(
-        expect.objectContaining({ draft: 15000 }),
-      );
-      await expect(service.resetDefaults('admin-1')).resolves.toEqual(
-        expect.objectContaining({ draft: 10000 }),
-      );
+describe('AppSettingsService', () => {
+  it('serves the defaults, marked as defaults, when nothing is stored, and boot writes nothing', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    const group = sampleGroup();
+    const settings = settingsFor(repository, asGroups(group));
+
+    await settings.load();
+
+    expect(settings.get(group)).toEqual({ enabled: true, limit: 5, label: null });
+    expect(settings.getState(group)).toEqual(expect.objectContaining({ source: 'defaults', updatedAt: null }));
+    expect(repository.rows.size).toBe(0);
+    expect(repository.history).toHaveLength(0);
+  });
+
+  it('computes defaults from the environment, so the same group can default differently on QA', async () => {
+    const group = sampleGroup();
+    const settings = settingsFor(inMemoryRuntimeConfigs(), asGroups(group), { POOLMASTER_ENVIRONMENT: 'qa' });
+
+    await settings.load();
+
+    expect(settings.get(group).enabled).toBe(false);
+  });
+
+  it('fills a field missing from a stored payload with its default instead of rejecting the row', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    repository.put('SAMPLE_CONFIG', { enabled: false });
+    const group = sampleGroup();
+    const settings = settingsFor(repository, asGroups(group));
+
+    await settings.load();
+
+    expect(settings.get(group)).toEqual({ enabled: false, limit: 5, label: null });
+    expect(settings.getState(group).source).toBe('stored');
+  });
+
+  it('drops keys the group no longer has from a stored payload and keeps the rest', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    repository.put('SAMPLE_CONFIG', { enabled: false, limit: 9, label: 'x', retiredField: true });
+    const group = sampleGroup();
+    const settings = settingsFor(repository, asGroups(group));
+
+    await settings.load();
+
+    expect(settings.get(group)).toEqual({ enabled: false, limit: 9, label: 'x' });
+  });
+
+  it('uses the defaults for an invalid stored payload, logs it once, and leaves the row for an admin to fix', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    const stored = repository.put('SAMPLE_CONFIG', { enabled: false, limit: 0, label: null });
+    const group = sampleGroup();
+    const logger = fakeLogger();
+    const settings = settingsFor(repository, asGroups(group), undefined, logger);
+
+    await settings.load();
+    await settings.refresh();
+
+    expect(settings.get(group)).toEqual({ enabled: true, limit: 5, label: null });
+    expect(settings.getState(group)).toEqual(expect.objectContaining({
+      source: 'defaults',
+      updatedAt: stored.updatedAt,
+    }));
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(repository.rows.get('SAMPLE_CONFIG')?.configJson).toEqual({ enabled: false, limit: 0, label: null });
+    expect(repository.history).toHaveLength(0);
+  });
+
+  it('picks up a value another task saved at its next refresh, not before', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    const group = sampleGroup();
+    const saver = settingsFor(repository, asGroups(group));
+    const reader = settingsFor(repository, asGroups(group));
+    await saver.load();
+    await reader.load();
+
+    await saver.save(group, { enabled: true, limit: 7, label: null }, { changedById: 'admin-1' });
+
+    expect(saver.get(group).limit).toBe(7);
+    expect(reader.get(group).limit).toBe(5);
+    await reader.refresh();
+    expect(reader.get(group).limit).toBe(7);
+  });
+
+  it('keeps the last loaded values and warns when a refresh cannot reach the database', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    repository.put('SAMPLE_CONFIG', { enabled: false, limit: 3, label: null });
+    const group = sampleGroup();
+    const logger = fakeLogger();
+    const settings = settingsFor(repository, asGroups(group), undefined, logger);
+    await settings.load();
+
+    repository.failNextRead();
+    await settings.refresh();
+
+    expect(settings.get(group).limit).toBe(3);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'appSettings.refresh.failed' }),
+      expect.any(String),
+    );
+  });
+
+  it('records each save in the history with the previous value, the new value and who saved it', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    const group = sampleGroup();
+    const settings = settingsFor(repository, asGroups(group));
+    await settings.load();
+
+    await settings.save(group, { enabled: true, limit: 7, label: null }, { changedById: 'admin-1' });
+    await settings.save(group, { enabled: false, limit: 7, label: null }, { changedById: 'admin-2' });
+
+    expect(repository.history).toEqual([
+      expect.objectContaining({ previousJson: null, newJson: { enabled: true, limit: 7, label: null }, changedById: 'admin-1' }),
+      expect.objectContaining({
+        previousJson: { enabled: true, limit: 7, label: null },
+        newJson: { enabled: false, limit: 7, label: null },
+        changedById: 'admin-2',
+      }),
+    ]);
+  });
+
+  it('refuses a save made against a version someone else has since replaced, and stores nothing', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    const group = sampleGroup();
+    const first = settingsFor(repository, asGroups(group));
+    const second = settingsFor(repository, asGroups(group));
+    await first.load();
+    await second.load();
+    const seenBySecond = second.getState(group).updatedAt;
+
+    await first.save(group, { enabled: true, limit: 7, label: null }, { changedById: 'admin-1', expectedUpdatedAt: null });
+    const attempt = second.save(group, { enabled: true, limit: 9, label: null }, {
+      changedById: 'admin-2',
+      expectedUpdatedAt: seenBySecond,
     });
 
-    it('ingestion config defaults the scheduled field sync to off, keeps live scores on, and has no schedule or results feed', async () => {
-      const service = new IngestionConfigService(fakeLogger());
+    await expect(attempt).rejects.toBeInstanceOf(SettingsConflictError);
+    await expect(attempt).rejects.toMatchObject({ statusCode: 409, code: 'SETTINGS_CONFLICT' });
+    expect(repository.rows.get('SAMPLE_CONFIG')?.configJson).toEqual({ enabled: true, limit: 7, label: null });
+    expect(repository.history).toHaveLength(1);
+  });
 
-      const config = await service.getConfig();
+  it('rejects an invalid payload with a 400 before anything is stored', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    const group = sampleGroup();
+    const settings = settingsFor(repository, asGroups(group));
+    await settings.load();
 
-      expect(config.eventParticipants.enabled).toBe(false);
-      expect(config.eventLiveScores.enabled).toBe(true);
-      expect(Object.keys(config).sort()).toEqual([
-        'eventLiveScores',
-        'eventParticipants',
-        'healthCheck',
-        'perSportOverrides',
-        'scheduledSports',
-      ]);
-      await expect(service.resetDefaults('admin-1')).resolves.toEqual(expect.objectContaining({
-        eventParticipants: expect.objectContaining({ enabled: false }),
-      }));
-    });
+    await expect(settings.save(group, { enabled: true, limit: 0, label: null }, { changedById: 'admin-1' }))
+      .rejects.toMatchObject({ statusCode: 400, code: 'SETTINGS_INVALID' });
+    await expect(settings.save(group, { enabled: true, limit: 0, label: null }, { changedById: 'admin-1' }))
+      .rejects.toBeInstanceOf(SettingsValidationError);
+    expect(repository.rows.size).toBe(0);
+  });
 
-    it('updates ingestion config, resolves per-sport overrides, and resets defaults', async () => {
-      const service = new IngestionConfigService(fakeLogger());
+  it('runs the change hook when a refresh brings in a different value, and not for the first load or an unchanged one', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    repository.put('SAMPLE_CONFIG', { enabled: true, limit: 2, label: null });
+    const onChange = jest.fn();
+    const group = sampleGroup(onChange);
+    const settings = settingsFor(repository, asGroups(group));
 
-      await expect(
-        service.updateConfig({
-          scheduledSports: ['GOLF', 'TENNIS'],
-          eventLiveScores: { intervalSeconds: 45 },
-        }, 'admin-1'),
-      ).resolves.toEqual(expect.objectContaining({
+    await settings.load();
+    await settings.refresh();
+    expect(onChange).not.toHaveBeenCalled();
+
+    repository.put('SAMPLE_CONFIG', { enabled: true, limit: 4, label: null });
+    await settings.refresh();
+    expect(onChange).toHaveBeenCalledWith(
+      { enabled: true, limit: 4, label: null },
+      { enabled: true, limit: 2, label: null },
+    );
+  });
+
+  it('hands out copies, so changing a value read from the cache changes nothing stored or served', async () => {
+    const group = sampleGroup();
+    const settings = settingsFor(inMemoryRuntimeConfigs(), asGroups(group));
+    await settings.load();
+
+    const value = settings.get(group);
+    value.limit = 99;
+
+    expect(settings.get(group).limit).toBe(5);
+  });
+
+  it('refuses two groups declared with the same key', () => {
+    expect(() => settingsFor(inMemoryRuntimeConfigs(), asGroups(sampleGroup(), sampleGroup())))
+      .toThrow('Settings group SAMPLE_CONFIG is declared twice');
+  });
+
+  it('every registered group has defaults its own schema accepts', () => {
+    for (const env of [{ POOLMASTER_ENVIRONMENT: 'qa' }, { POOLMASTER_ENVIRONMENT: 'production' }]) {
+      expect(() => settingsFor(inMemoryRuntimeConfigs(), SETTINGS_GROUPS, env)).not.toThrow();
+    }
+  });
+});
+
+describe('platform config services on the settings registry', () => {
+  async function loaded(repository = inMemoryRuntimeConfigs()) {
+    const settings = settingsFor(repository, SETTINGS_GROUPS);
+    await settings.load();
+    return { repository, settings };
+  }
+
+  it('updates and resets poll config, storing each change', async () => {
+    const { repository, settings } = await loaded();
+    const service = new PollConfigService(settings, fakeLogger());
+
+    await expect(service.updateConfig({ draft: 15000 }, 'admin-1')).resolves.toEqual(
+      expect.objectContaining({ draft: 15000, standings: 10000 }),
+    );
+    await expect(service.resetDefaults('admin-1')).resolves.toEqual(
+      expect.objectContaining({ draft: 10000 }),
+    );
+    expect(repository.rows.get(POLL_INTERVAL_SETTINGS.key)?.configJson).toEqual(expect.objectContaining({ draft: 10000 }));
+    expect(repository.history).toHaveLength(2);
+  });
+
+  it('ingestion config defaults the scheduled field sync to off, keeps live scores on, and has no schedule or results feed', async () => {
+    const { settings } = await loaded();
+    const service = new IngestionConfigService(settings, fakeLogger());
+
+    const config = await service.getConfig();
+
+    expect(config.eventParticipants.enabled).toBe(false);
+    expect(config.eventLiveScores.enabled).toBe(true);
+    expect(Object.keys(config).sort()).toEqual([
+      'eventLiveScores',
+      'eventParticipants',
+      'healthCheck',
+      'perSportOverrides',
+      'scheduledSports',
+    ]);
+    await expect(service.resetDefaults('admin-1')).resolves.toEqual(expect.objectContaining({
+      eventParticipants: expect.objectContaining({ enabled: false }),
+    }));
+  });
+
+  it('updates ingestion config, resolves per-sport overrides, and resets defaults', async () => {
+    const { settings } = await loaded();
+    const service = new IngestionConfigService(settings, fakeLogger());
+
+    await expect(
+      service.updateConfig({
         scheduledSports: ['GOLF', 'TENNIS'],
-        eventLiveScores: expect.objectContaining({ intervalSeconds: 45 }),
-      }));
-      await expect(
-        service.setPerSportOverride('GOLF', { eventParticipants: { intervalMinutes: 720 } }, 'admin-1'),
-      ).resolves.toEqual(expect.objectContaining({
-        perSportOverrides: expect.objectContaining({
-          GOLF: expect.objectContaining({
-            eventParticipants: expect.objectContaining({ intervalMinutes: 720 }),
-          }),
-        }),
-      }));
-      await expect(service.getPerSportConfig('GOLF')).resolves.toEqual(
-        expect.objectContaining({
+        eventLiveScores: { intervalSeconds: 45 },
+      }, 'admin-1'),
+    ).resolves.toEqual(expect.objectContaining({
+      scheduledSports: ['GOLF', 'TENNIS'],
+      eventLiveScores: expect.objectContaining({ intervalSeconds: 45 }),
+    }));
+    await expect(
+      service.setPerSportOverride('GOLF', { eventParticipants: { intervalMinutes: 720 } }, 'admin-1'),
+    ).resolves.toEqual(expect.objectContaining({
+      perSportOverrides: expect.objectContaining({
+        GOLF: expect.objectContaining({
           eventParticipants: expect.objectContaining({ intervalMinutes: 720 }),
         }),
-      );
-      await expect(service.resetDefaults('admin-1')).resolves.toEqual(
-        expect.objectContaining({
-          scheduledSports: ['GOLF'],
-          eventLiveScores: expect.objectContaining({ intervalSeconds: 300 }),
-        }),
-      );
+      }),
+    }));
+    await expect(service.getPerSportConfig('GOLF')).resolves.toEqual(
+      expect.objectContaining({
+        eventParticipants: expect.objectContaining({ intervalMinutes: 720 }),
+      }),
+    );
+    await expect(service.clearPerSportOverride('GOLF', 'admin-1')).resolves.toEqual(
+      expect.objectContaining({ perSportOverrides: {} }),
+    );
+    await expect(service.resetDefaults('admin-1')).resolves.toEqual(
+      expect.objectContaining({
+        scheduledSports: ['GOLF'],
+        eventLiveScores: expect.objectContaining({ intervalSeconds: 300 }),
+      }),
+    );
+  });
+
+  it('a stored ingestion config loads with its live settings intact and is not rewritten on boot', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    repository.put(INGESTION_SCHEDULE_SETTINGS.key, {
+      scheduledSports: ['GOLF'],
+      healthCheck: { enabled: true, intervalMinutes: 5 },
+      eventParticipants: { enabled: true, intervalMinutes: 720, lookaheadDays: 21 },
+      eventLiveScores: { enabled: true, intervalSeconds: 45 },
+      perSportOverrides: { GOLF: { eventLiveScores: { intervalSeconds: 20 } } },
     });
+    const { settings } = await loaded(repository);
+    const service = new IngestionConfigService(settings, fakeLogger());
 
-    describe('a persisted ingestion config that still carries the retired participantRankings (#125), eventSchedule and eventResults (#126) policies', () => {
-      it('loads with the admin\'s live-score and participant settings intact instead of reverting to defaults', async () => {
-        const repository = storedConfigRepository(configPersistedBeforeFeedsRetired());
-        const service = new IngestionConfigService(repository, fakeLogger());
-
-        const config = await service.getConfig();
-
-        expect(config.eventLiveScores).toEqual({ enabled: true, intervalSeconds: 45 });
-        expect(config.eventParticipants).toEqual({ enabled: true, intervalMinutes: 720, lookaheadDays: 21 });
-        expect(config.perSportOverrides.GOLF).toEqual({ eventLiveScores: { intervalSeconds: 20 } });
-        await expect(service.getPerSportConfig('GOLF')).resolves.toEqual(
-          expect.objectContaining({ eventLiveScores: { enabled: true, intervalSeconds: 20 } }),
-        );
-      });
-
-      it('drops every retired key everywhere, and drops a per-sport override that held nothing else', async () => {
-        const repository = storedConfigRepository(configPersistedBeforeFeedsRetired());
-        const service = new IngestionConfigService(repository, fakeLogger());
-
-        const config = await service.getConfig();
-
-        for (const key of RETIRED_FEED_POLICY_KEYS) {
-          expect(config).not.toHaveProperty(key);
-          expect(config.perSportOverrides.GOLF).not.toHaveProperty(key);
-        }
-        expect(config.perSportOverrides).not.toHaveProperty('TENNIS');
-        expect(config.perSportOverrides).not.toHaveProperty('NFL');
-        expect(IngestionScheduleConfigSchema.strict().safeParse(config).success).toBe(true);
-      });
-
-      it('rewrites the stored document without the retired keys, keeping every live setting', async () => {
-        const repository = storedConfigRepository(configPersistedBeforeFeedsRetired());
-        const service = new IngestionConfigService(repository, fakeLogger());
-
-        await service.bootstrap();
-
-        expect(repository.writes).toHaveLength(1);
-        for (const key of RETIRED_FEED_POLICY_KEYS) {
-          expect(repository.writes[0]).not.toHaveProperty(key);
-        }
-        expect(repository.writes[0]).toEqual(expect.objectContaining({
-          eventParticipants: { enabled: true, intervalMinutes: 720, lookaheadDays: 21 },
-          eventLiveScores: { enabled: true, intervalSeconds: 45 },
-          perSportOverrides: { GOLF: { eventLiveScores: { intervalSeconds: 20 } } },
-        }));
-      });
-    });
-
-    it('a persisted ingestion config with no retired key loads as stored and is not rewritten', async () => {
-      const current: Record<string, unknown> = { ...configPersistedBeforeFeedsRetired(), perSportOverrides: {} };
-      for (const key of RETIRED_FEED_POLICY_KEYS) {
-        delete current[key];
-      }
-      const repository = storedConfigRepository(current);
-      const service = new IngestionConfigService(repository, fakeLogger());
-
-      await expect(service.getConfig()).resolves.toEqual(expect.objectContaining({
-        eventLiveScores: { enabled: true, intervalSeconds: 45 },
-      }));
-      expect(repository.writes).toHaveLength(0);
-    });
+    await expect(service.getPerSportConfig('GOLF')).resolves.toEqual(
+      expect.objectContaining({ eventLiveScores: { enabled: true, intervalSeconds: 20 } }),
+    );
+    expect(repository.history).toHaveLength(0);
+  });
 });

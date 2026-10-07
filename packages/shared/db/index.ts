@@ -34,6 +34,8 @@ export type {
 } from './ports';
 export type {
   PlatformRuntimeConfigRepository,
+  PlatformRuntimeConfigSave,
+  PlatformRuntimeConfigSaveResult,
   ProviderSyncRunCreate,
   ProviderSyncRunFilters,
   ProviderSyncRunRepository,
