@@ -7,7 +7,8 @@ type DateDisplayProps = {
   className?: string;
   dateStyle?: Intl.DateTimeFormatOptions["dateStyle"];
   emptyLabel?: string;
-  timeStyle?: Intl.DateTimeFormatOptions["timeStyle"];
+  /** `null` shows the date alone. */
+  timeStyle?: Intl.DateTimeFormatOptions["timeStyle"] | null;
   value: Date | string | null | undefined;
 };
 
@@ -23,9 +24,10 @@ export function DateDisplay({
   return (
     <span className={cn("text-foreground", className)}>
       {date
-        ? new Intl.DateTimeFormat(undefined, { dateStyle, timeStyle }).format(
-            date,
-          )
+        ? new Intl.DateTimeFormat(undefined, {
+            dateStyle,
+            timeStyle: timeStyle ?? undefined,
+          }).format(date)
         : emptyLabel}
     </span>
   );
