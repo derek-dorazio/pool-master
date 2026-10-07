@@ -1255,7 +1255,7 @@ export interface paths {
         put?: never;
         /**
          * Close a contest early
-         * @description Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop.
+         * @description Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop. A draft is refused with 409 CONTEST_CLOSE_STATUS_INVALID: open it to the league or delete it instead.
          */
         post: operations["closeContest"];
         delete?: never;

@@ -918,7 +918,7 @@ export const reopenContest = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Close a contest early
  *
- * Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop.
+ * Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop. A draft is refused with 409 CONTEST_CLOSE_STATUS_INVALID: open it to the league or delete it instead.
  */
 export const closeContest = <ThrowOnError extends boolean = false>(options: Options<CloseContestData, ThrowOnError>) => (options.client ?? client).post<CloseContestResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
