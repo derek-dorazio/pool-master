@@ -1,7 +1,7 @@
 /**
  * #193, #292 — the routes with a path parameter, by-id or nested, that declare no `preHandler`
- * or `onRequest` hook, and where each one authorizes instead. Read by `scripts/check-route-authorization.mjs`; the rule and its reasoning
- * are in that file's header.
+ * or `onRequest` hook, and where each one authorizes instead. Read by
+ * `scripts/check-route-authorization.mjs`; the rule and its reasoning are in that file's header.
  *
  * A hook is the default. Authorizing in the handler or service is the declared exception, taken
  * when the check needs what a hook cannot see — the request body, or which sub-resource is being
