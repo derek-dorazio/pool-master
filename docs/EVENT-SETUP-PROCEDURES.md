@@ -82,8 +82,9 @@ the mock's 80 golfers and records each one's mock id, which is what the score sy
 on. Then:
 
 - each golfer arrives with the mock's ranking, so tiers can be auto-assigned straight away;
-  you can change rankings or odds in the field grid, but a later *Refresh Participant
-  Field* replaces them with the provider's values (it asks you to confirm first);
+  you can change rankings, odds, seeds or withdrawals in the field grid, but a later
+  *Refresh Participant Field* replaces them with the provider's values for every golfer
+  it reports (it asks you to confirm first);
 - do not use *Add more participants* or *Seed field from league roster*: the golfers they
   add have no mock id and will never score.
 
@@ -96,8 +97,8 @@ page. Paste or upload CSV or JSON with `externalId` or `playerName` per row, pre
 then apply. It only changes golfers already on the field: a golfer it cannot find shows as
 unresolved, and Apply stays disabled until every row matches one golfer, once. A blank cell
 leaves a value alone; `null` clears it. Load the field first — the upload never adds a
-golfer. A later *Refresh Participant Field* replaces rankings and odds with the provider's
-again, as it does grid edits (#415).
+golfer. A later *Refresh Participant Field* replaces rankings, odds, seeds and withdrawals
+with the provider's again, as it does grid edits (#415).
 
 ## 5. Build tiers
 

@@ -185,7 +185,7 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
     expect(refresh).toHaveTextContent('Load Participant Field');
   });
 
-  it('warns that grid-edited rankings and odds are replaced before refreshing a loaded field, and refreshes only on confirm', async () => {
+  it('warns that hand-set rankings, odds, seeds and withdrawals are replaced before refreshing a loaded field, and refreshes only on confirm', async () => {
     seed({ tournament: { syncScope: 'SCORES_ONLY' } });
     refreshEventParticipantsMock.mockResolvedValue({ data: { syncRuns: [] } });
     renderPage();
@@ -196,7 +196,7 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
 
     const modal = await screen.findByTestId('root-admin-golf-field-refresh-modal');
     expect(modal).toHaveTextContent(
-      "Rankings and odds you edited in the field grid or by bulk upload are replaced with the provider's values",
+      "rankings, odds, seeds and withdrawals you set in the field grid or by bulk upload are replaced with the provider's values",
     );
     expect(refreshEventParticipantsMock).not.toHaveBeenCalled();
 
