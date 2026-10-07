@@ -34,7 +34,6 @@ function createMockCallbacks(): IngestionCallbacks {
   return {
     onEvents: jest.fn().mockResolvedValue(undefined),
     onEventDetail: jest.fn().mockResolvedValue(undefined),
-    onRankings: jest.fn().mockResolvedValue(undefined),
     onLiveScores: jest.fn().mockResolvedValue(emptyLiveScorePersistenceResult()),
   };
 }
@@ -79,7 +78,6 @@ function createEnabledScheduleConfig() {
     healthCheck: { enabled: true, intervalMinutes: 5 },
     eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
     eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
-    participantRankings: { enabled: true, intervalMinutes: 1440 },
     eventLiveScores: { enabled: true, intervalSeconds: 30 },
     eventResults: { enabled: true, intervalMinutes: 30 },
     perSportOverrides: {},
@@ -161,7 +159,6 @@ class DeferredPayloadCaptureProvider implements SportDataProvider, ProviderPaylo
 
   getEventDetails = jest.fn().mockResolvedValue(null);
   getParticipants = jest.fn().mockResolvedValue([]);
-  getRankings = jest.fn().mockResolvedValue([]);
   getLiveScores = jest.fn().mockResolvedValue({ category: 'GOLF', externalEventId: 'evt-ext', rounds: [] } satisfies LiveScoreResult);
   getEventResults = jest.fn().mockResolvedValue(null);
   healthCheck = jest.fn().mockResolvedValue({
@@ -466,32 +463,22 @@ describe('IngestionScheduler', () => {
             metadata: {},
           },
         ]),
-        getRankings: jest.fn().mockResolvedValue([
-          {
-            providerId: 'mock-provider',
-            participantExternalId: 'player-1',
-            rankingType: 'OWGR',
-            rank: 1,
-            asOfDate: new Date('2026-04-09T12:00:00.000Z'),
-          },
-        ]),
       });
       const registry = createMockRegistry(provider);
       const scheduler = new IngestionScheduler(registry, mockCallbacks);
 
       const jobs = await scheduler.runSportSync({
         sport: 'GOLF' as Sport,
-        feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
+        feeds: ['EVENTSCHEDULE'],
         from: new Date('2026-04-01T00:00:00.000Z'),
         to: new Date('2026-04-30T23:59:59.999Z'),
       });
 
       expect(provider.getUpcomingEvents).toHaveBeenCalledTimes(1);
       expect(provider.getEventDetails).not.toHaveBeenCalled();
-      expect(provider.getRankings).toHaveBeenCalledWith('GOLF', 'OWGR');
       expect(mockCallbacks.onEvents).toHaveBeenCalled();
       expect(mockCallbacks.onEventDetail).not.toHaveBeenCalled();
-      expect(jobs.map((job) => job.jobType)).toEqual(['EVENT_SCHEDULE_SYNC', 'PARTICIPANT_RANKINGS_SYNC']);
+      expect(jobs.map((job) => job.jobType)).toEqual(['EVENT_SCHEDULE_SYNC']);
     });
   });
 
@@ -730,7 +717,6 @@ describe('IngestionScheduler', () => {
     it('pool-master-rop.68.2.2 submits configured sport loops as scheduled system sync requests', async () => {
       const now = new Date('2026-04-28T12:00:00.000Z');
       const provider = fakeSportDataProvider({
-        getRankings: jest.fn().mockResolvedValue([]),
         getUpcomingEvents: jest.fn().mockResolvedValue([]),
       });
       const config = createEnabledScheduleConfig();
@@ -756,7 +742,6 @@ describe('IngestionScheduler', () => {
       ) as (sport: Sport) => Promise<void>;
       await runConfiguredSportScheduleSync.call(scheduler, 'GOLF' as Sport);
       await scheduler['runConfiguredSportFieldSync']('GOLF' as Sport);
-      await scheduler['runConfiguredSportRankingSync']('GOLF' as Sport);
 
       expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith(expect.objectContaining({
         source: 'SCHEDULED',
@@ -768,22 +753,15 @@ describe('IngestionScheduler', () => {
           windowPolicy: { defaultLookaheadDays: 365 },
         }),
       }));
-      expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith(expect.objectContaining({
-        source: 'SCHEDULED',
-        actor: { type: 'SYSTEM', name: 'scheduler' },
-        scope: expect.objectContaining({
-          type: 'SPORT',
-          sport: 'GOLF',
-          feeds: ['PARTICIPANTRANKINGS'],
-        }),
-      }));
       expect(syncOrchestrator.normalizeRequest).not.toHaveBeenCalledWith(expect.objectContaining({
         scope: expect.objectContaining({
           type: 'SPORT',
           feeds: ['EVENTPARTICIPANTS'],
         }),
       }));
-      expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledTimes(2);
+      expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledTimes(1);
+      // #125 — the PARTICIPANTRANKINGS feed is retired: the scheduler has no ranking loop to run.
+      expect(Reflect.get(scheduler, 'runConfiguredSportRankingSync')).toBeUndefined();
     });
 
     it('pool-master-rop.68.2.4 records configured sport syncs in the provider sync run ledger once per ingestion job', async () => {
@@ -1101,7 +1079,6 @@ describe('IngestionScheduler', () => {
           healthCheck: { enabled: true, intervalMinutes: 5 },
           eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
           eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
-          participantRankings: { enabled: true, intervalMinutes: 1440 },
           eventLiveScores: { enabled: true, intervalSeconds: 30 },
           eventResults: { enabled: true, intervalMinutes: 30 },
           perSportOverrides: {},
@@ -1111,7 +1088,6 @@ describe('IngestionScheduler', () => {
           healthCheck: { enabled: true, intervalMinutes: 5 },
           eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
           eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
-          participantRankings: { enabled: true, intervalMinutes: 1440 },
           eventLiveScores: { enabled: true, intervalSeconds: 30 },
           eventResults: { enabled: true, intervalMinutes: 30 },
           perSportOverrides: {},
@@ -1247,7 +1223,7 @@ describe('IngestionScheduler', () => {
       );
     });
 
-    it('start() with the field sync enabled in config runs startup schedule, field, and ranking syncs', async () => {
+    it('start() with the field sync enabled in config runs the startup schedule and field syncs', async () => {
       const provider = fakeSportDataProvider({
         getUpcomingEvents: jest.fn().mockResolvedValue([
           {
@@ -1307,10 +1283,8 @@ describe('IngestionScheduler', () => {
         feed: 'EVENTPARTICIPANTS',
       }));
       expect(provider.getEventDetails).toHaveBeenCalled();
-      expect(provider.getRankings).toHaveBeenCalledWith('GOLF', 'OWGR');
       expect(mockCallbacks.onEvents).toHaveBeenCalled();
       expect(mockCallbacks.onEventDetail).toHaveBeenCalled();
-      expect(mockCallbacks.onRankings).toHaveBeenCalled();
     });
 
     it('start() with the default config runs no scheduled field sync: fields load only when an admin asks', async () => {
@@ -1352,7 +1326,6 @@ describe('IngestionScheduler', () => {
           healthCheck: { enabled: true, intervalMinutes: 5 },
           eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
           eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
-          participantRankings: { enabled: true, intervalMinutes: 1440 },
           eventLiveScores: { enabled: false, intervalSeconds: 30 },
           eventResults: { enabled: false, intervalMinutes: 30 },
           perSportOverrides: {},
@@ -1362,7 +1335,6 @@ describe('IngestionScheduler', () => {
           healthCheck: { enabled: true, intervalMinutes: 5 },
           eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
           eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
-          participantRankings: { enabled: true, intervalMinutes: 1440 },
           eventLiveScores: { enabled: false, intervalSeconds: 30 },
           eventResults: { enabled: false, intervalMinutes: 30 },
           perSportOverrides: {},

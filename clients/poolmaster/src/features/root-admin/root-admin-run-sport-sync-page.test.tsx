@@ -76,7 +76,7 @@ describe('RootAdminRunSportSyncPage', () => {
     submitSportSyncMock.mockResolvedValue({
       data: {
         sport: 'GOLF',
-        requestedFeeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
+        requestedFeeds: ['EVENTSCHEDULE'],
         syncRuns: [{ id: 'sync-run-1' }],
       },
     });
@@ -106,7 +106,7 @@ describe('RootAdminRunSportSyncPage', () => {
       expect(submitSportSyncMock).toHaveBeenCalledWith({
         path: { sport: 'GOLF' },
         body: {
-          feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
+          feeds: ['EVENTSCHEDULE'],
         },
       });
     });

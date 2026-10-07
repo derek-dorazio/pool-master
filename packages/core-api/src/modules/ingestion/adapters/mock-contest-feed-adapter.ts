@@ -15,7 +15,6 @@ import type {
   ProviderPayloadCapture,
   ProviderPayloadCaptureSession,
   ProviderPayloadDiagnostics,
-  ProviderRanking,
   SportDataProvider,
   SportEvent,
   SportEventDetail,
@@ -150,32 +149,6 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     }
 
     return Array.from(seen.values());
-  }
-
-  async getRankings(sport: Sport, rankingType: string): Promise<ProviderRanking[]> {
-    const eventRankings = await this.mapScenarioEventDetails(sport, undefined, (_scenarioId, detail) => {
-      const asOfDate = new Date(detail.event.feeds.rankings.asOf);
-      return detail.event.feeds.rankings.contestants.flatMap((contestant): ProviderRanking[] =>
-        typeof contestant.ranking === 'number'
-          ? [{
-              providerId: this.providerId,
-              participantExternalId: contestant.contestantId,
-              rankingType,
-              rank: contestant.ranking,
-              asOfDate,
-            }]
-          : [],
-      );
-    });
-    const rankings = new Map<string, ProviderRanking>();
-
-    for (const eventRanking of eventRankings) {
-      for (const ranking of eventRanking) {
-        rankings.set(ranking.participantExternalId, ranking);
-      }
-    }
-
-    return Array.from(rankings.values()).sort((left, right) => left.rank - right.rank);
   }
 
   // Thin mapper only — no branching on `options.mockEventState`, no score

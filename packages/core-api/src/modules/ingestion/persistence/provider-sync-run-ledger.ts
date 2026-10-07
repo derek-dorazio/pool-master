@@ -252,8 +252,6 @@ function mapJobTypeToFeed(jobType: IngestionJobRecord['jobType']): IngestionFeed
       return 'EVENTSCHEDULE';
     case 'EVENT_PARTICIPANTS_SYNC':
       return 'EVENTPARTICIPANTS';
-    case 'PARTICIPANT_RANKINGS_SYNC':
-      return 'PARTICIPANTRANKINGS';
     case 'EVENT_LIVE_SCORES_SYNC':
       return 'EVENTLIVESCORES';
     case 'EVENT_RESULTS_SYNC':
@@ -331,8 +329,6 @@ function formatFeedLabel(feed: IngestionFeedType): string {
       return 'event schedule';
     case 'EVENTPARTICIPANTS':
       return 'event participants';
-    case 'PARTICIPANTRANKINGS':
-      return 'participant rankings';
     case 'EVENTLIVESCORES':
       return 'event live scores';
     case 'EVENTRESULTS':
@@ -398,8 +394,7 @@ export function buildNormalizedSyncRequestContext(normalized: NormalizedSyncRequ
 export function isSportSyncFeedType(
   feed: unknown,
 ): feed is SportSyncRequest['feeds'][number] {
-  return feed === 'EVENTSCHEDULE'
-    || feed === 'PARTICIPANTRANKINGS';
+  return feed === 'EVENTSCHEDULE';
 }
 
 export function isEventSyncFeedType(

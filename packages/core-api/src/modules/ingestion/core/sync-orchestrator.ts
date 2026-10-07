@@ -15,7 +15,6 @@ export type { IngestionFeedType } from '@poolmaster/shared/dto';
 
 export const SPORT_SYNC_FEEDS = [
   'EVENTSCHEDULE',
-  'PARTICIPANTRANKINGS',
 ] as const satisfies readonly IngestionFeedType[];
 
 export const EVENT_SYNC_FEEDS = [

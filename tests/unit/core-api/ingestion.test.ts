@@ -27,7 +27,6 @@ function createMockProvider(overrides: Partial<SportDataProvider> = {}): SportDa
     getUpcomingEvents: jest.fn().mockResolvedValue([]),
     getEventDetails: jest.fn().mockResolvedValue(null),
     getParticipants: jest.fn().mockResolvedValue([]),
-    getRankings: jest.fn().mockResolvedValue([]),
     getLiveScores: jest.fn().mockResolvedValue({ category: 'GOLF', externalEventId: 'evt-ext', rounds: [] } satisfies LiveScoreResult),
     getEventResults: jest.fn().mockResolvedValue(null),
     healthCheck: jest.fn().mockResolvedValue({
@@ -44,7 +43,6 @@ function createMockCallbacks(overrides: Partial<IngestionCallbacks> = {}): Inges
   return {
     onEvents: jest.fn().mockResolvedValue(undefined),
     onEventDetail: jest.fn().mockResolvedValue(undefined),
-    onRankings: jest.fn().mockResolvedValue(undefined),
     onLiveScores: jest.fn().mockResolvedValue(emptyLiveScorePersistenceResult()),
     ...overrides,
   };

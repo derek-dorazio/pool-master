@@ -4,7 +4,6 @@
  * Schedules jobs for:
  * - Event schedule sync (daily)
  * - Event participant hydration (every 6h for the next unlocked field-ready events)
- * - Ranking updates (daily)
  * - Live score polling (every 30s during active events)
  * - Provider health checks (every 5 min)
  */
@@ -13,7 +12,6 @@ import type { Sport } from '@poolmaster/shared/domain';
 import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
-import { resolveRankingType } from './ranking-types';
 import { SyncOrchestrator, resolveSportSyncWindowPolicy } from './sync-orchestrator';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { syncWriteStats } from './sync-write-diagnostics';
@@ -32,7 +30,6 @@ import type {
   ProviderEventSyncOptions,
   ProviderPayloadCapture,
   ProviderPayloadCaptureSession,
-  ProviderRanking,
   SportDataProvider,
   SportEvent,
   SportEventDetail,
@@ -47,7 +44,6 @@ export type { IngestionFeedType } from './sync-orchestrator';
 export type JobType =
   | 'EVENT_SCHEDULE_SYNC'
   | 'EVENT_PARTICIPANTS_SYNC'
-  | 'PARTICIPANT_RANKINGS_SYNC'
   | 'EVENT_LIVE_SCORES_SYNC'
   | 'EVENT_RESULTS_SYNC'
   | 'HEALTH_CHECK';
@@ -90,7 +86,7 @@ interface IngestionJobWorkResult {
 
 export interface SportSyncRequest {
   sport: Sport;
-  feeds: Array<'EVENTSCHEDULE' | 'PARTICIPANTRANKINGS'>;
+  feeds: Array<'EVENTSCHEDULE'>;
   from?: Date;
   to?: Date;
   workflowContext?: Record<string, unknown>;
@@ -107,7 +103,6 @@ export interface EventSyncRequest {
 export interface IngestionCallbacks {
   onEvents(events: SportEvent[]): Promise<SyncWriteDiagnostics | void>;
   onEventDetail(detail: SportEventDetail): Promise<SyncWriteDiagnostics | void>;
-  onRankings(rankings: ProviderRanking[]): Promise<SyncWriteDiagnostics | void>;
   onLiveScores(result: LiveScoreResult, providerId: string): Promise<LiveScorePersistenceResult>;
 }
 
@@ -201,11 +196,6 @@ export class IngestionScheduler {
           async () => this.getSportDelayMs(sport, 'eventParticipants'),
         );
         this.startRecurringLoop(
-          `${sport} ranking sync`,
-          async () => this.runConfiguredSportRankingSync(sport),
-          async () => this.getSportDelayMs(sport, 'participantRankings'),
-        );
-        this.startRecurringLoop(
           `${sport} live score sync`,
           async () => this.runConfiguredEventSyncSweep(sport, 'EVENTLIVESCORES'),
           async () => this.getSportDelayMs(sport, 'eventLiveScores'),
@@ -258,10 +248,7 @@ export class IngestionScheduler {
     for (const feed of dedupe(request.feeds)) {
       if (feed === 'EVENTSCHEDULE') {
         jobs.push(await this.runScheduleSync(request.sport, request.from, request.to));
-        continue;
       }
-
-      jobs.push(await this.runRankingSync(request.sport));
     }
 
     this.logger?.info({
@@ -553,27 +540,6 @@ export class IngestionScheduler {
     }
   }
 
-  private async runConfiguredSportRankingSync(sport: Sport): Promise<void> {
-    if (!(await this.isSportScheduled(sport))) {
-      this.logger?.debug({ sport }, 'Skipping scheduled ranking sync because sport is not configured');
-      return;
-    }
-
-    const config = await this.getSportConfig(sport);
-    if (!config.participantRankings.enabled) {
-      this.logger?.debug({ sport }, 'Skipping scheduled ranking sync because it is disabled');
-      return;
-    }
-
-    this.logger?.debug({ sport }, 'Running configured sport ranking sync');
-    const normalized = this.normalizeScheduledSportSync({
-      sport,
-      feeds: ['PARTICIPANTRANKINGS'],
-    });
-    const scope = assertScheduledSportScope(normalized);
-    await this.executeScheduledSyncRun(normalized, () => this.runRankingSync(scope.sport));
-  }
-
   private async runConfiguredEventSyncSweep(
     sport: Sport,
     feed: 'EVENTLIVESCORES' | 'EVENTRESULTS',
@@ -821,47 +787,6 @@ export class IngestionScheduler {
           : [],
       };
     }, eventId);
-  }
-
-  private async runRankingSync(sport: Sport): Promise<IngestionJobRecord> {
-    const provider = this.registry.getProvider(sport);
-    if (!provider) {
-      this.logger?.warn({ sport }, 'No provider registered for ranking sync');
-      return createFailedJob('PARTICIPANT_RANKINGS_SYNC', 'none', sport, 'No provider registered');
-    }
-
-    return this.runJob('PARTICIPANT_RANKINGS_SYNC', provider.providerId, sport, 'PARTICIPANTRANKINGS', provider, async () => {
-      const rankingType = resolveRankingType(sport);
-      const rankings = await provider.getRankings(sport, rankingType);
-      this.logger?.debug({
-        sport,
-        providerId: provider.providerId,
-        rankingType,
-        rankingsReturned: rankings.length,
-      }, 'Provider returned rankings');
-      const writeDiagnostics = await this.callbacks.onRankings(rankings);
-      this.logger?.info({
-        sport,
-        providerId: provider.providerId,
-        rankingsProcessed: rankings.length,
-      }, 'Completed ranking sync for sport');
-      return {
-        recordsProcessed: rankings.length,
-        stats: {
-          providerRecordsReturned: rankings.length,
-          rankingsFetched: rankings.length,
-          rankingsProcessed: rankings.length,
-          ...syncWriteStats(writeDiagnostics ?? undefined),
-        },
-        writeDiagnostics: writeDiagnostics ?? undefined,
-        warnings: rankings.length === 0
-          ? [{
-              code: 'NO_PROVIDER_RANKINGS',
-              message: 'Provider returned no participant rankings.',
-            }]
-          : [],
-      };
-    });
   }
 
   private async runJob(
@@ -1288,10 +1213,6 @@ function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
         enabled: false,
         intervalMinutes: 360,
         lookaheadDays: 14,
-      },
-    participantRankings: {
-        enabled: true,
-        intervalMinutes: 1440,
       },
     eventLiveScores: {
         enabled: true,

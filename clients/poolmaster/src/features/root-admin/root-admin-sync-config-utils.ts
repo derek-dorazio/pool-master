@@ -29,12 +29,6 @@ export const INGESTION_POLICY_FIELDS = [
     extraLabel: 'Field lookahead days',
   },
   {
-    key: 'participantRankings',
-    label: 'Participant rankings',
-    intervalLabel: 'Minutes',
-    intervalKey: 'intervalMinutes',
-  },
-  {
     key: 'eventLiveScores',
     label: 'Event live scores',
     intervalLabel: 'Seconds',
@@ -87,7 +81,6 @@ export function cloneIngestionConfig(
     healthCheck: { ...config.healthCheck },
     eventSchedule: { ...config.eventSchedule },
     eventParticipants: { ...config.eventParticipants },
-    participantRankings: { ...config.participantRankings },
     eventLiveScores: { ...config.eventLiveScores },
     eventResults: { ...config.eventResults },
     perSportOverrides: Object.fromEntries(
@@ -98,9 +91,6 @@ export function cloneIngestionConfig(
           ...(override.eventSchedule && { eventSchedule: { ...override.eventSchedule } }),
           ...(override.eventParticipants && {
             eventParticipants: { ...override.eventParticipants },
-          }),
-          ...(override.participantRankings && {
-            participantRankings: { ...override.participantRankings },
           }),
           ...(override.eventLiveScores && {
             eventLiveScores: { ...override.eventLiveScores },

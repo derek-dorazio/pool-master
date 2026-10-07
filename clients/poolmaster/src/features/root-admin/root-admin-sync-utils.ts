@@ -35,19 +35,9 @@ export type SyncStatus = (typeof SYNC_STATUS_OPTIONS)[number];
 
 export const SPORT_SYNC_PRESETS = [
   {
-    id: 'PREPARE_EVENT_DATA',
-    label: 'Prepare schedule and rankings',
-    feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'] as const,
-  },
-  {
     id: 'EVENTSCHEDULE_ONLY',
     label: 'Refresh schedule only',
     feeds: ['EVENTSCHEDULE'] as const,
-  },
-  {
-    id: 'PARTICIPANTRANKINGS_ONLY',
-    label: 'Refresh rankings only',
-    feeds: ['PARTICIPANTRANKINGS'] as const,
   },
 ] as const;
 export type SportSyncPresetId = (typeof SPORT_SYNC_PRESETS)[number]['id'];
@@ -74,7 +64,6 @@ export type EventSyncPresetId = (typeof EVENT_SYNC_PRESETS)[number]['id'];
 export const FEED_LABELS = {
   EVENTSCHEDULE: 'Schedule',
   EVENTPARTICIPANTS: 'Participants',
-  PARTICIPANTRANKINGS: 'World rankings',
   EVENTLIVESCORES: 'Live scores',
   EVENTRESULTS: 'Final results',
 } as const;

@@ -14,14 +14,13 @@ const SportDtoSchema = z.nativeEnum(Sport);
 export const IngestionFeedTypeSchema = z.enum([
   'EVENTSCHEDULE',
   'EVENTPARTICIPANTS',
-  'PARTICIPANTRANKINGS',
   'EVENTLIVESCORES',
   'EVENTRESULTS',
 ]).describe('Explicit ingestion feed type requested by the caller.');
 export type IngestionFeedType = z.infer<typeof IngestionFeedTypeSchema>;
 
 export const SportSyncRequestSchema = z.object({
-  feeds: z.array(z.enum(['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'])).min(1).describe(
+  feeds: z.array(z.enum(['EVENTSCHEDULE'])).min(1).describe(
     'Feed types to run for a sport-level sync request. Event participant, live-score, result, and odds hydration are event-scoped and must use the event sync endpoint.',
   ),
   from: DateTimeSchema.optional().describe('Optional lower bound for sport-level event discovery.'),

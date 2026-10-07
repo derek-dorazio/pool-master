@@ -32,7 +32,7 @@ export function RootAdminRunSportSyncPage() {
   });
   const [sportSyncSport, setSportSyncSport] = useState<SyncSport>('GOLF');
   const [sportSyncPresetId, setSportSyncPresetId] = useState<SportSyncPresetId>(
-    'PREPARE_EVENT_DATA',
+    'EVENTSCHEDULE_ONLY',
   );
 
   const providersQuery = useQuery({

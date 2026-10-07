@@ -13013,32 +13013,6 @@
             "additionalProperties": false,
             "description": "Partial feed-scheduling override payload."
           },
-          "participantRankings": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-              },
-              "intervalSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-              },
-              "lookaheadDays": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-              }
-            },
-            "additionalProperties": false,
-            "description": "Partial feed-scheduling override payload."
-          },
           "eventLiveScores": {
             "type": "object",
             "properties": {
@@ -13212,35 +13186,6 @@
             "additionalProperties": false,
             "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
           },
-          "participantRankings": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-              },
-              "intervalSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-              },
-              "lookaheadDays": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "additionalProperties": false,
-            "description": "Scheduling policy for ranking refreshes."
-          },
           "eventLiveScores": {
             "type": "object",
             "properties": {
@@ -13405,32 +13350,6 @@
                   "additionalProperties": false,
                   "description": "Partial feed-scheduling override payload."
                 },
-                "participantRankings": {
-                  "type": "object",
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean",
-                      "description": "Whether the feed should be scheduled automatically."
-                    },
-                    "intervalMinutes": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                    },
-                    "intervalSeconds": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                    },
-                    "lookaheadDays": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                    }
-                  },
-                  "additionalProperties": false,
-                  "description": "Partial feed-scheduling override payload."
-                },
                 "eventLiveScores": {
                   "type": "object",
                   "properties": {
@@ -13494,7 +13413,6 @@
           "healthCheck",
           "eventSchedule",
           "eventParticipants",
-          "participantRankings",
           "eventLiveScores",
           "eventResults",
           "perSportOverrides"
@@ -15123,8 +15041,7 @@
             "items": {
               "type": "string",
               "enum": [
-                "EVENTSCHEDULE",
-                "PARTICIPANTRANKINGS"
+                "EVENTSCHEDULE"
               ]
             },
             "minItems": 1,
@@ -15446,7 +15363,6 @@
                   "enum": [
                     "EVENTSCHEDULE",
                     "EVENTPARTICIPANTS",
-                    "PARTICIPANTRANKINGS",
                     "EVENTLIVESCORES",
                     "EVENTRESULTS"
                   ],
@@ -15459,7 +15375,6 @@
                 "enum": [
                   "EVENTSCHEDULE",
                   "EVENTPARTICIPANTS",
-                  "PARTICIPANTRANKINGS",
                   "EVENTLIVESCORES",
                   "EVENTRESULTS"
                 ],
@@ -15478,7 +15393,6 @@
                     "enum": [
                       "EVENTSCHEDULE",
                       "EVENTPARTICIPANTS",
-                      "PARTICIPANTRANKINGS",
                       "EVENTLIVESCORES",
                       "EVENTRESULTS"
                     ],
@@ -15916,7 +15830,6 @@
                         "enum": [
                           "EVENTSCHEDULE",
                           "EVENTPARTICIPANTS",
-                          "PARTICIPANTRANKINGS",
                           "EVENTLIVESCORES",
                           "EVENTRESULTS"
                         ],
@@ -15929,7 +15842,6 @@
                       "enum": [
                         "EVENTSCHEDULE",
                         "EVENTPARTICIPANTS",
-                        "PARTICIPANTRANKINGS",
                         "EVENTLIVESCORES",
                         "EVENTRESULTS"
                       ],
@@ -15948,7 +15860,6 @@
                           "enum": [
                             "EVENTSCHEDULE",
                             "EVENTPARTICIPANTS",
-                            "PARTICIPANTRANKINGS",
                             "EVENTLIVESCORES",
                             "EVENTRESULTS"
                           ],
@@ -16295,7 +16206,6 @@
               "enum": [
                 "EVENTSCHEDULE",
                 "EVENTPARTICIPANTS",
-                "PARTICIPANTRANKINGS",
                 "EVENTLIVESCORES",
                 "EVENTRESULTS"
               ],
@@ -16389,7 +16299,6 @@
                         "enum": [
                           "EVENTSCHEDULE",
                           "EVENTPARTICIPANTS",
-                          "PARTICIPANTRANKINGS",
                           "EVENTLIVESCORES",
                           "EVENTRESULTS"
                         ],
@@ -16402,7 +16311,6 @@
                       "enum": [
                         "EVENTSCHEDULE",
                         "EVENTPARTICIPANTS",
-                        "PARTICIPANTRANKINGS",
                         "EVENTLIVESCORES",
                         "EVENTRESULTS"
                       ],
@@ -16421,7 +16329,6 @@
                           "enum": [
                             "EVENTSCHEDULE",
                             "EVENTPARTICIPANTS",
-                            "PARTICIPANTRANKINGS",
                             "EVENTLIVESCORES",
                             "EVENTRESULTS"
                           ],

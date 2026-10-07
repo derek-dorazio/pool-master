@@ -34,7 +34,6 @@ import {
 import {
   buildMockGolfFieldContestants,
   buildMockGolfOddsContestants,
-  buildMockGolfRankingContestants,
   type GolfPoolPlayerRecord,
 } from './golf-player-pool';
 import {
@@ -329,7 +328,6 @@ function parseFeeds(record: unknown, field: string): EventFeedsRecord {
 
   return {
     odds: parseFeedSnapshot(record.odds, `${field}.odds`),
-    rankings: parseFeedSnapshot(record.rankings, `${field}.rankings`),
     results: parseFeedSnapshot(record.results, `${field}.results`),
   };
 }
@@ -408,7 +406,7 @@ function validateFeedReferences(
     knownContestantIds.add(contestant.contestantId);
   };
 
-  for (const feedKey of ['odds', 'rankings', 'results'] as const) {
+  for (const feedKey of ['odds', 'results'] as const) {
     for (const contestant of feeds[feedKey].contestants) {
       ensureKnownOrNamed(contestant, `${field}.feeds.${feedKey}.contestants`);
     }
@@ -519,7 +517,7 @@ function normalizeScenario(
 }
 
 /**
- * Fills a golf event's field, odds, rankings and results from a player pool: the shared
+ * Fills a golf event's field, odds and results from a player pool: the shared
  * 80-player pool by default, or a tour's own ranked players for the tour seeds (#383).
  */
 export function normalizeGolfEvent(
@@ -528,13 +526,11 @@ export function normalizeGolfEvent(
 ): ContestFeedEventRecord {
   const fieldContestants = buildMockGolfFieldContestants(pool);
   const oddsContestants = buildMockGolfOddsContestants(event.eventId, pool);
-  const rankingContestants = buildMockGolfRankingContestants(pool);
   const usesExplicitRoundScores = event.feeds.results.contestants.some(
     (contestant) => typeof contestant.strokes === 'number',
   );
   const fieldAsOf = event.schedule.releaseAt
     ?? new Date(Date.parse(event.schedule.startsAt) - (7 * 24 * 60 * 60 * 1000)).toISOString();
-  const rankingAsOf = new Date(Date.parse(fieldAsOf) + (2 * 60 * 60 * 1000)).toISOString();
   const resultsAsOf = event.status === 'scheduled' || event.status === 'field_announced'
     ? fieldAsOf
     : event.schedule.endsAt
@@ -553,11 +549,6 @@ export function normalizeGolfEvent(
         ...event.feeds.odds,
         asOf: fieldAsOf,
         contestants: oddsContestants,
-      },
-      rankings: {
-        ...event.feeds.rankings,
-        asOf: rankingAsOf,
-        contestants: rankingContestants,
       },
       results: {
         ...event.feeds.results,
@@ -1110,10 +1101,6 @@ function emptyFeeds(asOf: string): EventFeedsRecord {
       asOf,
       contestants: [],
     },
-    rankings: {
-      asOf,
-      contestants: [],
-    },
     results: {
       asOf,
       contestants: [],
@@ -1229,8 +1216,6 @@ function buildSandboxGolfEvent(eventId: string): ContestFeedEventRecord {
 export interface ScenarioStoreOptions {
   /** The replay clock; defaults to the system clock. */
   readonly now?: () => Date;
-  /** Load the PGA TOUR and LPGA season slates from `tours/` (#383). On unless set to false. */
-  readonly includeTourSeeds?: boolean;
 }
 
 const minuteMs = 60 * 1000;
@@ -1270,7 +1255,7 @@ export class ScenarioStore {
       ...readdirSync(scenarioDir, { withFileTypes: true })
         .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
         .map((entry) => loadJsonFile(join(scenarioDir, entry.name))),
-      ...(options.includeTourSeeds === false ? [] : loadTourSeedScenarios(scenarioDir))
+      ...loadTourSeedScenarios(scenarioDir)
         .map(({ scenario, pool }) => normalizeScenario(scenario, pool)),
     ];
     const allScenarios = [...entries, buildSandboxGolfScenario()]

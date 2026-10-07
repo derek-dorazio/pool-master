@@ -130,15 +130,6 @@ export function buildMockGolfFieldContestants(
   }));
 }
 
-export function buildMockGolfRankingContestants(
-  pool: readonly GolfPoolPlayerRecord[] = GOLF_PLAYER_POOL,
-): readonly ContestantDeltaRecord[] {
-  return pool.map((player) => ({
-    contestantId: player.contestantId,
-    ranking: player.ranking,
-  }));
-}
-
 export function buildMockGolfOddsContestants(
   eventId: string,
   pool: readonly GolfPoolPlayerRecord[] = GOLF_PLAYER_POOL,

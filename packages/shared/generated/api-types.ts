@@ -7132,17 +7132,6 @@ export interface components {
                 lookaheadDays?: number;
             };
             /** @description Partial feed-scheduling override payload. */
-            participantRankings?: {
-                /** @description Whether the feed should be scheduled automatically. */
-                enabled?: boolean;
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
-                lookaheadDays?: number;
-            };
-            /** @description Partial feed-scheduling override payload. */
             eventLiveScores?: {
                 /** @description Whether the feed should be scheduled automatically. */
                 enabled?: boolean;
@@ -7207,17 +7196,6 @@ export interface components {
                 /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                 lookaheadDays?: number;
             };
-            /** @description Scheduling policy for ranking refreshes. */
-            participantRankings: {
-                /** @description Whether the feed should be scheduled automatically. */
-                enabled: boolean;
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
-                lookaheadDays?: number;
-            };
             /** @description Scheduling policy for live score polling. */
             eventLiveScores: {
                 /** @description Whether the feed should be scheduled automatically. */
@@ -7268,17 +7246,6 @@ export interface components {
                     };
                     /** @description Partial feed-scheduling override payload. */
                     eventParticipants?: {
-                        /** @description Whether the feed should be scheduled automatically. */
-                        enabled?: boolean;
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
-                        lookaheadDays?: number;
-                    };
-                    /** @description Partial feed-scheduling override payload. */
-                    participantRankings?: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled?: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -7988,7 +7955,7 @@ export interface components {
         /** @description Feed-aware sport sync request. */
         SportSyncRequest: {
             /** @description Feed types to run for a sport-level sync request. Event participant, live-score, result, and odds hydration are event-scoped and must use the event sync endpoint. */
-            feeds: ("EVENTSCHEDULE" | "PARTICIPANTRANKINGS")[];
+            feeds: "EVENTSCHEDULE"[];
             /**
              * Format: date-time
              * @description Optional lower bound for sport-level event discovery.
@@ -8096,12 +8063,12 @@ export interface components {
                 /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
                 runType?: string;
                 /** @description Feeds represented by the originating manual or scheduled sync request. */
-                requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
                 /**
                  * @description Explicit ingestion feed type requested by the caller.
                  * @enum {string}
                  */
-                requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS";
                 /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design. */
                 requestPayload?: {
                     [key: string]: unknown;
@@ -8112,7 +8079,7 @@ export interface components {
                      * @description Provider feed operation represented by this payload.
                      * @enum {string}
                      */
-                    operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                    operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS";
                     /** @description Whether raw provider response JSON was captured for this run. */
                     rawCaptured: boolean;
                     /** @description Whether the captured raw provider payload was truncated before storage. */
@@ -8272,12 +8239,12 @@ export interface components {
                     /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
                     runType?: string;
                     /** @description Feeds represented by the originating manual or scheduled sync request. */
-                    requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                    requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
                     /**
                      * @description Explicit ingestion feed type requested by the caller.
                      * @enum {string}
                      */
-                    requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                    requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS";
                     /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design. */
                     requestPayload?: {
                         [key: string]: unknown;
@@ -8288,7 +8255,7 @@ export interface components {
                          * @description Provider feed operation represented by this payload.
                          * @enum {string}
                          */
-                        operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                        operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS";
                         /** @description Whether raw provider response JSON was captured for this run. */
                         rawCaptured: boolean;
                         /** @description Whether the captured raw provider payload was truncated before storage. */
@@ -8405,7 +8372,7 @@ export interface components {
             /** @enum {string} */
             sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
             eventId: string | null;
-            requestedFeeds: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+            requestedFeeds: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.
@@ -8440,12 +8407,12 @@ export interface components {
                     /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
                     runType?: string;
                     /** @description Feeds represented by the originating manual or scheduled sync request. */
-                    requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                    requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
                     /**
                      * @description Explicit ingestion feed type requested by the caller.
                      * @enum {string}
                      */
-                    requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                    requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS";
                     /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design. */
                     requestPayload?: {
                         [key: string]: unknown;
@@ -8456,7 +8423,7 @@ export interface components {
                          * @description Provider feed operation represented by this payload.
                          * @enum {string}
                          */
-                        operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                        operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS";
                         /** @description Whether raw provider response JSON was captured for this run. */
                         rawCaptured: boolean;
                         /** @description Whether the captured raw provider payload was truncated before storage. */

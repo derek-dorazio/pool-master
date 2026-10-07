@@ -306,7 +306,7 @@ export class IngestionService {
    * concern from the scores feeds (EVENTLIVESCORES/EVENTRESULTS): a
    * `SCORES_ONLY` tournament is still admin-managed for setup/field/tiers
    * (§3.5), so an explicit, on-demand field refresh must not be blocked the
-   * way an automatic schedule/rankings sync correctly is.
+   * way an automatic schedule sync correctly is.
    */
   private async assertFeedsAllowedForSyncScope(
     providerId: string,
@@ -319,7 +319,7 @@ export class IngestionService {
     }
 
     const allowedFeeds: string[] = event.syncScope === SportEventSyncScope.FULL
-      ? ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS', 'EVENTLIVESCORES', 'EVENTRESULTS']
+      ? ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTRESULTS']
       : event.syncScope === SportEventSyncScope.SCORES_ONLY
       ? ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTRESULTS']
       : [];

@@ -72,7 +72,6 @@ export function RootAdminSportOverridesPage() {
           healthCheck: { enabled: input.draft.healthCheck },
           eventSchedule: { enabled: input.draft.eventSchedule },
           eventParticipants: { enabled: input.draft.eventParticipants },
-          participantRankings: { enabled: input.draft.participantRankings },
           eventLiveScores: { enabled: input.draft.eventLiveScores },
           eventResults: { enabled: input.draft.eventResults },
         },

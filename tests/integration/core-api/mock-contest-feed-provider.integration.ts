@@ -36,7 +36,6 @@ const syncVerificationConfig: IngestionScheduleConfig = {
   healthCheck: { enabled: true, intervalMinutes: 5 },
   eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
   eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
-  participantRankings: { enabled: true, intervalMinutes: 1440 },
   eventLiveScores: { enabled: false, intervalSeconds: 30 },
   eventResults: { enabled: false, intervalMinutes: 30 },
   perSportOverrides: {},
@@ -136,12 +135,6 @@ async function cleanupMockProviderImportData(): Promise<void> {
       },
     },
   });
-  await prisma.participantRankingSnapshot.deleteMany({
-    where: {
-      providerId,
-      participantId: { in: participantIds },
-    },
-  });
   await prisma.sportEvent.deleteMany({
     where: {
       providerId,
@@ -168,11 +161,14 @@ async function cleanupMockProviderImportData(): Promise<void> {
 // change on that path. A stuck run still fails here, well inside Jest's 30 s test timeout.
 /**
  * plans/147 — sync updates the events already linked to provider events and never creates
- * one, so a sync scenario starts where an admin would leave it: every provider golf event in
- * the window created and linked.
+ * one, so a sync scenario starts where an admin would leave it: the `golf-major-2026`
+ * scenario's events in the window created and linked. That is the fixed season these tests are
+ * written against. The mock also serves the PGA TOUR and LPGA tour seeds (#383); they are left
+ * unlinked, so they stay out of every sync these tests run.
  */
 async function linkProviderGolfEvents(from: Date, to: Date): Promise<number> {
-  const events = await new MockContestFeedAdapter(mockProvider.baseUrl).getUpcomingEvents(Sport.GOLF, { from, to });
+  const events = (await new MockContestFeedAdapter(mockProvider.baseUrl).getUpcomingEvents(Sport.GOLF, { from, to }))
+    .filter((event) => event.metadata.scenarioId === 'golf-major-2026');
   for (const event of events) {
     await linkedProviderEvent(getPrisma(), {
       providerId: event.providerId,
@@ -480,11 +476,6 @@ beforeAll(async () => {
     routes: {
       scenarioStoreOptions: {
         now: () => syncVerificationNow,
-        // Temporary opt-out: with the tour seeds (#383) on, the legacy PARTICIPANTRANKINGS sweep
-        // merges every golf scenario, so LPGA (Rolex) players land in the "OWGR" list with
-        // colliding rank numbers, and the sweep walks every seeded event. That feed retires in
-        // #125 and EVENTSCHEDULE in #126; drop this option when they do.
-        includeTourSeeds: false,
       },
     },
   });
@@ -507,7 +498,7 @@ afterAll(async () => {
 });
 
 describe('mock contest feed provider event-first verification', () => {
-  it('serves event detail and feed endpoints with schedule, field, and update data', async () => {
+  it('serves event detail and feed endpoints with schedule, field, and update data, and no longer serves a rankings feed', async () => {
     const app = mockProvider.app;
 
     const eventListResponse = await app.inject({
@@ -562,10 +553,6 @@ describe('mock contest feed provider event-first verification', () => {
             asOf: expect.any(String),
             contestants: expect.any(Array),
           }),
-          rankings: expect.objectContaining({
-            asOf: expect.any(String),
-            contestants: expect.any(Array),
-          }),
           results: expect.objectContaining({
             asOf: expect.any(String),
             contestants: expect.any(Array),
@@ -573,6 +560,14 @@ describe('mock contest feed provider event-first verification', () => {
         }),
       }),
     });
+
+    // #125 — the rankings feed is retired, not demoted: no feed snapshot, no route.
+    expect(detailResponse.json<{ event: { feeds: Record<string, unknown> } }>().event.feeds).not.toHaveProperty('rankings');
+    const retiredRankingsResponse = await app.inject({
+      method: 'GET',
+      url: `/v1/scenarios/golf-major-2026/events/${eventExternalId}/rankings`,
+    });
+    expect(retiredRankingsResponse.statusCode).toBe(404);
 
     const updatesResponse = await app.inject({
       method: 'GET',
@@ -592,7 +587,7 @@ describe('mock contest feed provider event-first verification', () => {
     });
   });
 
-  it('pool-master-rop.68.1.3 bridges the real mock provider into adapter ingestion persistence and ranking persistence', async () => {
+  it('pool-master-rop.68.1.3 bridges the real mock provider into adapter ingestion persistence, each golfer\'s ranking taken from the field', async () => {
     const prisma = getPrisma();
     const adapter = new MockContestFeedAdapter(mockProvider.baseUrl);
     const persistence = new IngestionPersistence(prisma);
@@ -615,9 +610,6 @@ describe('mock contest feed provider event-first verification', () => {
     expect(detail?.participants.length).toBeGreaterThan(0);
 
     importedParticipantExternalIds = detail?.participants.map((participant) => participant.externalId) ?? [];
-
-    const rankings = await adapter.getRankings(Sport.GOLF, 'OWGR');
-    expect(rankings.length).toBeGreaterThan(0);
 
     // pool-master-rop.78.3 + pool-master-33l.8.8 — typed LiveScoreResult contract
     // per plans/117 §10.2, now driven through explicit mock live-state control.
@@ -654,7 +646,6 @@ describe('mock contest feed provider event-first verification', () => {
     expect(persistDetailResult.participantsPersisted).toBe(detail?.participants.length);
     expect(persistDetailResult.sportEventParticipantsPersisted).toBe(detail?.participants.length);
 
-    await expect(persistence.persistRankings(rankings)).resolves.toBe(rankings.length);
     await expect(persistence.persistEventDetail(detail!)).resolves.toEqual({
       eventsPersisted: 1,
       participantsPersisted: detail?.participants.length,
@@ -778,7 +769,6 @@ describe('mock contest feed provider event-first verification', () => {
     const scheduler = new IngestionScheduler(registry, {
       onEvents: async (events) => (await persistence.persistEventsWithDiagnostics(events)).writeDiagnostics,
       onEventDetail: async (detail) => (await persistence.persistEventDetailWithDiagnostics(detail)).writeDiagnostics,
-      onRankings: async (rankings) => (await persistence.persistRankingsWithDiagnostics(rankings)).writeDiagnostics,
       onLiveScores: async () => emptyLiveScorePersistenceResult(),
     }, undefined, {
       configReader,
@@ -852,17 +842,7 @@ describe('mock contest feed provider event-first verification', () => {
     );
     await waitForProviderSyncRuns(manualField.syncRuns.map((run) => run.id));
 
-    const manualRankings = await providerService.prepareSportSync(
-      {
-        sport: Sport.GOLF,
-        feeds: ['PARTICIPANTRANKINGS'],
-      },
-      rootAdmin.user.id,
-      rootAdmin.user.email,
-    );
-    await waitForProviderSyncRuns(manualRankings.syncRuns.map((run) => run.id));
-
-    const manualFieldAfterRankings = await providerService.syncEventData(
+    const manualFieldRefresh = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
         eventId: eventExternalId,
@@ -871,7 +851,7 @@ describe('mock contest feed provider event-first verification', () => {
       rootAdmin.user.id,
       rootAdmin.user.email,
     );
-    const fieldRuns = await waitForProviderSyncRuns(manualFieldAfterRankings.syncRuns.map((run) => run.id));
+    const fieldRuns = await waitForProviderSyncRuns(manualFieldRefresh.syncRuns.map((run) => run.id));
     expect(fieldRuns[0].payloadJson).toEqual(expect.objectContaining({
       requestedFeed: 'EVENTPARTICIPANTS',
       jobPayload: expect.objectContaining({ status: 'COMPLETED' }),
@@ -892,7 +872,7 @@ describe('mock contest feed provider event-first verification', () => {
     scheduler.start();
     let scheduledRuns: Awaited<ReturnType<typeof waitForScheduledProviderSyncRuns>>;
     try {
-      scheduledRuns = await waitForScheduledProviderSyncRuns(providerId, 3);
+      scheduledRuns = await waitForScheduledProviderSyncRuns(providerId, 2);
     } finally {
       scheduler.stop();
     }
@@ -919,7 +899,6 @@ describe('mock contest feed provider event-first verification', () => {
     expect(scheduledRunPayloads.map((payload) => String(payload?.requestedFeed)).sort()).toEqual([
       'EVENTSCHEDULE',
       'EVENTPARTICIPANTS',
-      'PARTICIPANTRANKINGS',
     ].sort());
 
     const scheduledPayloadPaths = scheduledRuns
@@ -927,7 +906,6 @@ describe('mock contest feed provider event-first verification', () => {
     expect(scheduledPayloadPaths).toEqual(expect.arrayContaining([
       '/v1/scenarios',
       '/v1/scenarios/golf-major-2026/events',
-      '/v1/scenarios/golf-major-2026/events/golf-masters-2026/detail',
       '/v1/scenarios/golf-major-2026/events/golf-genesis-scottish-open-2026/detail',
     ]));
 
@@ -940,7 +918,6 @@ describe('mock contest feed provider event-first verification', () => {
     // #205 — each run carries the job it executed (`jobPayload`); the separate job table is gone.
     expect(scheduledRunPayloads.map((payload) => payload?.jobPayload)).toEqual(expect.arrayContaining([
       expect.objectContaining({ jobType: 'EVENT_SCHEDULE_SYNC' }),
-      expect.objectContaining({ jobType: 'PARTICIPANT_RANKINGS_SYNC' }),
       expect.objectContaining({ jobType: 'EVENT_PARTICIPANTS_SYNC' }),
     ]));
   });
@@ -965,7 +942,6 @@ describe('mock contest feed provider event-first verification', () => {
     const scheduler = new IngestionScheduler(registry, {
       onEvents: async (events) => (await persistence.persistEventsWithDiagnostics(events)).writeDiagnostics,
       onEventDetail: async (detail) => (await persistence.persistEventDetailWithDiagnostics(detail)).writeDiagnostics,
-      onRankings: async (rankings) => (await persistence.persistRankingsWithDiagnostics(rankings)).writeDiagnostics,
       onLiveScores: async (result, providerIdForResult) =>
         publishLiveScoreUpdate(result, { prisma, providerId: providerIdForResult }),
     }, undefined, {
@@ -1218,8 +1194,6 @@ describe('mock contest feed provider event-first verification', () => {
       }));
     const getParticipantsSpy = jest.spyOn(provider, 'getParticipants').mockImplementation(async () =>
       new MockContestFeedAdapter(mockProvider.baseUrl).getParticipants(Sport.GOLF));
-    const getRankingsSpy = jest.spyOn(provider, 'getRankings').mockImplementation(async (_sport: Sport, rankingType: string) =>
-      new MockContestFeedAdapter(mockProvider.baseUrl).getRankings(Sport.GOLF, rankingType));
     const getEventDetailsSpy = jest.spyOn(provider, 'getEventDetails');
     registry.register(Sport.GOLF, provider, 'PRIMARY');
 
@@ -1231,7 +1205,6 @@ describe('mock contest feed provider event-first verification', () => {
       onEventDetail: async (detail) => {
         await persistence.persistEventDetail(detail);
       },
-      onRankings: async () => undefined,
       onLiveScores: async () => emptyLiveScorePersistenceResult(),
     });
 
@@ -1241,8 +1214,6 @@ describe('mock contest feed provider event-first verification', () => {
 
     const startupParticipants = await provider.getParticipants(Sport.GOLF);
     await persistence.persistParticipants(startupParticipants);
-    const startupRankings = await provider.getRankings(Sport.GOLF, 'OWGR');
-    await persistence.persistRankings(startupRankings);
 
     const shallowEvent = await prisma.sportEvent.findUniqueOrThrow({
       where: {
@@ -1262,7 +1233,6 @@ describe('mock contest feed provider event-first verification', () => {
     expect(shallowEventParticipantCount).toBe(0);
     expect(getUpcomingEventsSpy).toHaveBeenCalled();
     expect(getParticipantsSpy).toHaveBeenCalledWith(Sport.GOLF);
-    expect(getRankingsSpy).toHaveBeenCalledWith(Sport.GOLF, 'OWGR');
     expect(getEventDetailsSpy).not.toHaveBeenCalled();
 
     // #205 deleted the one-off re-ingest; the event field sync (`submitEventSync`) is how an

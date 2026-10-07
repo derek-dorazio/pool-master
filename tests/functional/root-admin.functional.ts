@@ -96,7 +96,7 @@ describe('SDK Functional: Root Admin', () => {
         sport: 'GOLF',
       },
       body: {
-        feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
+        feeds: ['EVENTSCHEDULE'],
       },
     });
 
