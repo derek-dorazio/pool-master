@@ -66,8 +66,6 @@ async function seedScheduledGolfEvent(eventName: string): Promise<{
       sport: Sport.GOLF,
       name: eventName,
       startDate: new Date(now + 2 * day),
-      releaseAt: new Date(now - day),
-      fieldLocksAt: new Date(now + day),
       status: 'SCHEDULED',
     },
   });
