@@ -341,7 +341,7 @@ export class SportEventService {
       await this.deps.rounds.shiftSchedule(sportEventId, shiftMs);
     }
     if (updates.rounds && updates.rounds > (roundCount ?? 0)) {
-      await this.deps.rounds.ensureRounds({ sportEventId, rounds: updates.rounds, startDate });
+      await this.deps.rounds.extendTo({ sportEventId, rounds: updates.rounds, startDate });
     }
     return this.requireSummary(sportEventId);
   }

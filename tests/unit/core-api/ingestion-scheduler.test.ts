@@ -1158,3 +1158,139 @@ describe('IngestionScheduler provider health checks', () => {
     expect(registry.updateHealth).toHaveBeenCalledWith('mock-provider', expect.objectContaining({ status: 'HEALTHY' }));
   });
 });
+
+describe('IngestionScheduler job outcomes', () => {
+  const detail = (participants: SportEventDetail['participants']): SportEventDetail => ({
+    externalId: 'evt-1',
+    providerId: 'mock-provider',
+    sport: 'GOLF' as Sport,
+    name: 'The Masters',
+    startDate: new Date('2026-04-10T12:00:00.000Z'),
+    status: 'SCHEDULED',
+    fieldLocked: false,
+    metadata: {},
+    participants,
+  });
+
+  it('fails a field sync with "No provider registered" when no provider serves the sport, without calling back', async () => {
+    const callbacks = createMockCallbacks();
+    const scheduler = new IngestionScheduler(createMockRegistry(null), callbacks);
+
+    const [job] = await scheduler.runEventSync({ sport: 'GOLF' as Sport, eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS'] });
+
+    expect(job).toMatchObject({ status: 'FAILED', providerId: 'none', errorLog: [expect.objectContaining({ error: 'No provider registered' })] });
+    expect(callbacks.onEventDetail).not.toHaveBeenCalled();
+  });
+
+  it('completes a field sync of an empty field with a NO_PROVIDER_PARTICIPANTS warning, so an admin sees why nothing loaded', async () => {
+    const provider = fakeSportDataProvider({ getEventDetails: jest.fn().mockResolvedValue(detail([])) });
+    const scheduler = new IngestionScheduler(createMockRegistry(provider), createMockCallbacks());
+
+    const [job] = await scheduler.runEventSync({ sport: 'GOLF' as Sport, eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS'] });
+
+    expect(job).toMatchObject({
+      status: 'COMPLETED',
+      recordsProcessed: 0,
+      warnings: [expect.objectContaining({ code: 'NO_PROVIDER_PARTICIPANTS' })],
+    });
+  });
+
+  it('records a non-Error thrown by a provider as the failed job\'s message', async () => {
+    const provider = fakeSportDataProvider({ getLiveScores: jest.fn().mockRejectedValue('socket hang up') });
+    const scheduler = new IngestionScheduler(createMockRegistry(provider), createMockCallbacks(), fakeLogger());
+
+    const job = await scheduler.pollLiveScores('GOLF' as Sport, 'evt-1');
+
+    expect(job).toMatchObject({ status: 'FAILED', errors: 1, errorLog: [expect.objectContaining({ error: 'socket hang up' })] });
+  });
+
+  it.each([
+    [{ category: 'BASKETBALL', externalEventId: 'evt-1', games: [{}, {}] }, 2],
+    [{ category: 'NFL', externalEventId: 'evt-1', games: [{}] }, 1],
+    [{ category: 'F1', externalEventId: 'evt-1', results: [{}, {}, {}] }, 3],
+    [{ category: 'NASCAR', externalEventId: 'evt-1', results: [] }, 0],
+    [{ category: 'TENNIS', externalEventId: 'evt-1', matches: [{}] }, 1],
+    [{ category: 'SOCCER', externalEventId: 'evt-1', matches: [{}, {}] }, 2],
+  ])('counts a %o live-score result\'s updates as the records the job processed', async (result, expected) => {
+    const provider = fakeSportDataProvider({ getLiveScores: jest.fn().mockResolvedValue(result) });
+    const scheduler = new IngestionScheduler(createMockRegistry(provider), createMockCallbacks());
+
+    const job = await scheduler.pollLiveScores('GOLF' as Sport, 'evt-1');
+
+    expect(job).toMatchObject({ status: 'COMPLETED', recordsProcessed: expected });
+  });
+});
+
+describe('IngestionScheduler scheduled loops', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('warns about a scheduled sport no provider is registered for, and runs no feed for it', async () => {
+    const logger = fakeLogger();
+    const config = { ...createEnabledScheduleConfig(), scheduledSports: ['GOLF', 'TENNIS'] };
+    const configReader = { getConfig: jest.fn().mockResolvedValue(config), getPerSportConfig: jest.fn().mockResolvedValue(config) };
+    const eventReader = { listEventIdsForFeed: jest.fn().mockResolvedValue([]) };
+    const scheduler = new IngestionScheduler(createMockRegistry(fakeSportDataProvider(), ['GOLF' as Sport]), createMockCallbacks(), logger, { configReader, eventReader });
+
+    scheduler.start();
+    await jest.advanceTimersByTimeAsync(1000);
+    scheduler.stop();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ unregisteredSports: ['TENNIS'] }),
+      'Configured scheduled ingestion sports have no registered provider',
+    );
+    expect(eventReader.listEventIdsForFeed).not.toHaveBeenCalledWith(expect.objectContaining({ sport: 'TENNIS' }));
+  });
+
+  it('keeps every loop alive on the one-minute recheck when the ingestion config cannot be read', async () => {
+    const logger = fakeLogger();
+    const configReader = {
+      getConfig: jest.fn().mockRejectedValue(new Error('config table missing')),
+      getPerSportConfig: jest.fn().mockRejectedValue(new Error('config table missing')),
+    };
+    const scheduler = new IngestionScheduler(createMockRegistry(fakeSportDataProvider(), ['GOLF' as Sport]), createMockCallbacks(), logger, { configReader });
+
+    scheduler.start();
+    await jest.advanceTimersByTimeAsync(2 * 60 * 1000 + 1);
+    scheduler.stop();
+
+    expect(logger.error).toHaveBeenCalledWith(expect.anything(), 'Failed to reconcile configured sport ingestion loops');
+    expect(logger.error).toHaveBeenCalledWith(expect.anything(), 'Falling back to config recheck delay because policy resolution failed');
+    // Start, then a recheck at one and two minutes.
+    expect(configReader.getConfig.mock.calls.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('runs no scheduled live-score sweep when no event reader is wired, since it has no events to poll', async () => {
+    const provider = fakeSportDataProvider();
+    const scheduler = new IngestionScheduler(createMockRegistry(provider, ['GOLF' as Sport]), createMockCallbacks());
+
+    scheduler.start();
+    await jest.advanceTimersByTimeAsync(1000);
+    scheduler.stop();
+
+    expect(provider.getLiveScores).not.toHaveBeenCalled();
+  });
+
+  it('polls live scores on an interval given in minutes when no seconds interval is set', async () => {
+    const provider = fakeSportDataProvider();
+    const config = { ...createEnabledScheduleConfig(), eventLiveScores: { enabled: true, intervalMinutes: 10 } };
+    const configReader = { getConfig: jest.fn().mockResolvedValue(config), getPerSportConfig: jest.fn().mockResolvedValue(config) };
+    const eventReader = { listEventIdsForFeed: jest.fn().mockImplementation(async ({ feed }) => (feed === 'EVENTLIVESCORES' ? ['evt-1'] : [])) };
+    const scheduler = new IngestionScheduler(createMockRegistry(provider, ['GOLF' as Sport]), createMockCallbacks(), undefined, { configReader, eventReader });
+
+    scheduler.start();
+    await jest.advanceTimersByTimeAsync(9 * 60 * 1000);
+    const beforeTenMinutes = (provider.getLiveScores as jest.Mock).mock.calls.length;
+    await jest.advanceTimersByTimeAsync(2 * 60 * 1000);
+    scheduler.stop();
+
+    expect(beforeTenMinutes).toBe(1);
+    expect(provider.getLiveScores).toHaveBeenCalledTimes(2);
+  });
+});

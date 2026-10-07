@@ -4,7 +4,8 @@
  *
  * `ensureRounds` is a default, not a requirement: sequential daily dates from the event's
  * start, each editable afterwards, and idempotent — a round that already exists is never
- * overwritten. `reschedule` and `shiftSchedule` only move existing rounds; neither creates one.
+ * overwritten. `extendTo` adds rounds after the last one. `reschedule` and `shiftSchedule` only
+ * move existing rounds; neither creates one.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -40,6 +41,34 @@ export class SportEventRoundService {
       this.deps.logger?.info(
         { sportEventId: input.sportEventId, createdRoundNumbers: missing.map((round) => round.roundNumber) },
         'Created default round schedule',
+      );
+    }
+    return this.deps.rounds.findBySportEvent(input.sportEventId);
+  }
+
+  /**
+   * Adds rounds up to `rounds` when an admin raises an event's round count: each added round a
+   * day after the round before it, so it follows an irregular schedule rather than landing on
+   * one of its days. Rounds that exist are left alone.
+   */
+  async extendTo(input: { sportEventId: string; rounds: number; startDate: Date }): Promise<SportEventRound[]> {
+    const existing = await this.deps.rounds.findBySportEvent(input.sportEventId);
+    const dateByRound = new Map(existing.map((round) => [round.roundNumber, round.scheduledDate]));
+    const added: SportEventRoundSchedule[] = [];
+    for (let roundNumber = 1; roundNumber <= input.rounds; roundNumber += 1) {
+      if (dateByRound.has(roundNumber)) continue;
+      const previous = dateByRound.get(roundNumber - 1);
+      const scheduledDate = previous
+        ? new Date(previous.getTime() + MS_PER_DAY)
+        : new Date(input.startDate.getTime() + (roundNumber - 1) * MS_PER_DAY);
+      dateByRound.set(roundNumber, scheduledDate);
+      added.push({ roundNumber, scheduledDate });
+    }
+    if (added.length > 0) {
+      await this.deps.rounds.createMany(input.sportEventId, added);
+      this.deps.logger?.info(
+        { sportEventId: input.sportEventId, createdRoundNumbers: added.map((round) => round.roundNumber) },
+        'Added rounds to the schedule',
       );
     }
     return this.deps.rounds.findBySportEvent(input.sportEventId);

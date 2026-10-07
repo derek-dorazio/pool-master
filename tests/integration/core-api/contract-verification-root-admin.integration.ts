@@ -1511,10 +1511,10 @@ describe('Contract verification (root admin)', () => {
       expect(tournamentRes.json<SportEventResponse>().event.syncScope).toBe('NONE');
 
       // --- linkEventScoreSource (200) ------------------------------------------
-      // A shape test: linkScoreSource only guards against an externalId already
-      // held by another SportEvent (409 EXTERNAL_EVENT_ALREADY_LINKED), not
-      // against provider-event existence — so a synthetic externalId links fine.
-      const linkRes = await getApp().inject({
+      // A shape test: linkScoreSource checks the provider is registered for the event's
+      // sport, so the link goes through the app that registers contract-provider. It does
+      // not check the provider event exists, so a synthetic externalId links fine.
+      const linkRes = await app.inject({
         method: 'PUT',
         url: `/api/v1/events/${eventId}/score-source`,
         headers: rootAdmin.headers,

@@ -161,7 +161,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Update a sport event',
-      description: 'Edits any event, linked to a provider or not; a provider never overwrites these fields. Root admin only.',
+      description: 'Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. Root admin only.',
       operationId: 'updateEvent',
       params: EVENT_PARAMS,
       body: schemaRef('UpdateSportEventRequest'),
