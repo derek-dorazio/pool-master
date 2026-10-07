@@ -45,6 +45,14 @@ export const draftErrors = {
    * Two wordings, one code: the draft-state read says "draft-room endpoints", the submission
    * says "pick submission". Both were inline in the route and both are kept verbatim.
    */
+  /** Same code and wording as a locked entry change: picks are part of the entry (#117). */
+  contestLocked: (contestId: string) =>
+    new DraftError(
+      `Contest ${contestId} entries can only be changed before the contest starts`,
+      'CONTEST_ENTRY_LOCKED',
+      409,
+    ),
+
   draftModeUnsupportedForRead: (selectionType: string) =>
     new DraftError(
       `${selectionType} draft-room endpoints are not implemented yet`,

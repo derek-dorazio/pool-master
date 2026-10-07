@@ -2425,7 +2425,7 @@ export interface paths {
         put?: never;
         /**
          * Submit a draft pick
-         * @description Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed.
+         * @description Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks change only while the contest is OPEN: 409 CONTEST_ENTRY_LOCKED once it has moved on.
          */
         post: operations["submitContestSelection"];
         delete?: never;
@@ -22222,6 +22222,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

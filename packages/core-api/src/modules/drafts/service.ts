@@ -26,6 +26,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import {
+  ContestStatus,
   DraftStatus,
   SelectionType,
   type ContestEntry,
@@ -148,6 +149,11 @@ export class DraftService {
 
     if (!isRosterSelectionType(context.contest.selectionType)) {
       throw draftErrors.draftModeUnsupportedForSubmission(context.contest.selectionType);
+    }
+    // A pick is part of the entry, so it changes only while entries do: in an OPEN contest (#117).
+    // Once the event starts, a place, replace or toggle-off would rewrite a locked lineup.
+    if (context.contest.status !== ContestStatus.OPEN) {
+      throw draftErrors.contestLocked(contestId);
     }
 
     const isTiered = context.contest.selectionType === SelectionType.TIERED;
@@ -384,9 +390,11 @@ export class DraftService {
         : false;
     const status = mapContestStatusToDraftStatus(contest.status, isComplete);
     // Against `status`, not `isComplete`: a COMPLETED contest closes submission even while
-    // some roster is still short, which is the whole difference between the two.
+    // some roster is still short, which is the whole difference between the two. And only an
+    // OPEN contest takes picks at all, the same rule submitSelection enforces.
     const canCurrentUserSubmit =
-      myEntryId !== null
+      contest.status === ContestStatus.OPEN
+      && myEntryId !== null
       && rosterSize > 0
       && myEntryPickCount < rosterSize
       && status !== DraftStatus.COMPLETE;

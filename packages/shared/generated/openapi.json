@@ -44174,7 +44174,7 @@
         "tags": [
           "Drafts"
         ],
-        "description": "Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed.",
+        "description": "Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks change only while the contest is OPEN: 409 CONTEST_ENTRY_LOCKED once it has moved on.",
         "requestBody": {
           "required": true,
           "content": {
@@ -44964,6 +44964,45 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

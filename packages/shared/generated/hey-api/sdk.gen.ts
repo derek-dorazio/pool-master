@@ -1880,7 +1880,7 @@ export const getDraftState = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Submit a draft pick
  *
- * Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed.
+ * Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks change only while the contest is OPEN: 409 CONTEST_ENTRY_LOCKED once it has moved on.
  */
 export const submitContestSelection = <ThrowOnError extends boolean = false>(options: Options<SubmitContestSelectionData, ThrowOnError>) => (options.client ?? client).post<SubmitContestSelectionResponses, SubmitContestSelectionErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

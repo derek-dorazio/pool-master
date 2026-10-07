@@ -72,13 +72,14 @@ export function draftsModule(fastify: FastifyInstance): void {
       tags: ['Drafts'],
       summary: 'Submit a draft pick',
       description:
-        'Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed.',
+        'Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. '
+        + 'Picks change only while the contest is OPEN: 409 CONTEST_ENTRY_LOCKED once it has moved on.',
       operationId: 'submitContestSelection',
       params: contestIdParams,
       body: zodToJsonSchema(SubmitPickRequestSchema),
       response: {
         200: zodToJsonSchema(DraftPickResponseSchema),
-        ...draftErrorResponses(400, 401, 403, 404, 501),
+        ...draftErrorResponses(400, 401, 403, 404, 409, 501),
       },
     },
     handler: handlers.submitContestSelection,
