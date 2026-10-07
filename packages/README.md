@@ -120,7 +120,6 @@ Polls configured sports data providers, upserts normalized event data, and store
 
 | Package | Purpose |
 |---------|---------|
-| `push-mock-server` | Local APNs/FCM capture service for push integration testing |
 | `mock-contest-feed-provider` | Local/QA-only contest feed simulator for event fields, odds, and live-score scenarios |
 
 ---
