@@ -228,6 +228,55 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       where: { contestEntryStanding: { contestId: directContest.id } },
     })).resolves.toBe(2);
   });
+  it('leaves a never-opened draft contest as a draft with no standings when its event completes', async () => {
+    const prisma = getPrisma();
+    const service = createGolfContestSettlementService(prisma);
+    const suffix = randomUUID().slice(0, 8);
+    const owner = await createTestUser({ displayName: `Draft Settlement ${suffix}` });
+    const sport = await prisma.sport.upsert({
+      where: { name: Sport.GOLF },
+      create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
+    });
+    const league = await prisma.league.create({
+      data: { leagueCode: `GSD${suffix.toUpperCase()}`, name: `Draft Settlement League ${suffix}` },
+    });
+    await prisma.leagueMembership.create({
+      data: { leagueId: league.id, userId: owner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },
+    });
+    const event = await prisma.sportEvent.create({
+      data: {
+        ...(await freshEventEdition(prisma)),
+        externalId: `golf-draft-settlement-event-${suffix}`,
+        providerId: 'integration-test',
+        sport: Sport.GOLF,
+        name: `Draft Settlement Open ${suffix}`,
+        startDate: new Date('2026-05-28T12:00:00.000Z'),
+        endDate: new Date('2026-05-31T22:00:00.000Z'),
+        status: 'COMPLETED',
+      },
+    });
+    await createSettlementParticipant({
+      sportId: sport.id,
+      sportEventId: event.id,
+      name: `Solo ${suffix}`,
+      scoreToPar: -4,
+      strokes: 284,
+    });
+    const draft = await createSettlementContest({
+      leagueId: league.id,
+      sportEventId: event.id,
+      name: `Never Opened ${suffix}`,
+      status: 'DRAFT',
+    });
+
+    const summary = await service.settleCompletedSportEvent(event.id);
+
+    expect(summary).toMatchObject({ contestsSettled: 0, contestsCompleted: 0 });
+    await expect(prisma.contest.findUniqueOrThrow({ where: { id: draft.id }, select: { status: true } }))
+      .resolves.toEqual({ status: 'DRAFT' });
+    await expect(prisma.contestEntryStanding.count({ where: { contestId: draft.id } })).resolves.toBe(0);
+  });
 });
 
 async function createSettlementParticipant(input: {
@@ -273,6 +322,7 @@ async function createSettlementContest(input: {
   name: string;
   /** Every real configuration carries a scoring rule (#246); false builds one that does not. */
   withScoringRule?: boolean;
+  status?: string;
 }) {
   const prisma = getPrisma();
   const contest = await prisma.contest.create({
@@ -280,7 +330,7 @@ async function createSettlementContest(input: {
       leagueId: input.leagueId,
       sportEventId: input.sportEventId,
       name: input.name,
-      status: 'ACTIVE',
+      status: input.status ?? 'ACTIVE',
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       scoringEngine: 'STROKE_PLAY',
