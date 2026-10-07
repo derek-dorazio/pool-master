@@ -359,3 +359,54 @@ describe('SportEventService — read, update, delete', () => {
     await expect(service.deleteEvent('missing')).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
   });
 });
+
+describe('SportEventService.updateEvent keeps the round schedule in step with the event', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  function roundsOf(store: InMemorySportEvents, sportEventId: string) {
+    return store.roundRows
+      .filter((round) => round.sportEventId === sportEventId)
+      .sort((left, right) => left.roundNumber - right.roundNumber)
+      .map((round) => ({ roundNumber: round.roundNumber, scheduledDate: round.scheduledDate.toISOString() }));
+  }
+
+  it('schedules the added rounds a day apart when an admin raises the round count, so their live scores are kept', async () => {
+    const { store, service, sportLeague } = setup();
+    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, rounds: 3 });
+
+    await service.updateEvent(event.id, { rounds: 4 });
+
+    expect(roundsOf(store, event.id)).toEqual([
+      { roundNumber: 1, scheduledDate: '2026-06-04T12:00:00.000Z' },
+      { roundNumber: 2, scheduledDate: '2026-06-05T12:00:00.000Z' },
+      { roundNumber: 3, scheduledDate: '2026-06-06T12:00:00.000Z' },
+      { roundNumber: 4, scheduledDate: '2026-06-07T12:00:00.000Z' },
+    ]);
+  });
+
+  it('moves every round by the same amount when an admin moves the start date, so automatic lifecycle starts it on the new date', async () => {
+    const { store, service, sportLeague } = setup();
+    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, rounds: 2 });
+    // An irregular schedule the admin set: round 2 two days after round 1.
+    await new SportEventRoundService({ rounds: store.roundRepo() }).reschedule(event.id, [
+      { roundNumber: 2, scheduledDate: new Date(MANUAL_INPUT.startDate.getTime() + 2 * DAY) },
+    ]);
+
+    await service.updateEvent(event.id, { startDate: new Date(MANUAL_INPUT.startDate.getTime() + 7 * DAY) });
+
+    expect(roundsOf(store, event.id)).toEqual([
+      { roundNumber: 1, scheduledDate: '2026-06-11T12:00:00.000Z' },
+      { roundNumber: 2, scheduledDate: '2026-06-13T12:00:00.000Z' },
+    ]);
+  });
+
+  it('leaves the round schedule alone when an edit changes neither the start date nor the round count', async () => {
+    const { store, service, sportLeague } = setup();
+    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, rounds: 2 });
+    const before = roundsOf(store, event.id);
+
+    await service.updateEvent(event.id, { name: 'Renamed', startDate: MANUAL_INPUT.startDate, rounds: 2 });
+
+    expect(roundsOf(store, event.id)).toEqual(before);
+  });
+});

@@ -1101,3 +1101,60 @@ describe('IngestionScheduler', () => {
     });
   });
 });
+
+describe('IngestionScheduler provider health checks', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  function configWithHealthCheck(enabled: boolean) {
+    return { ...createEnabledScheduleConfig(), healthCheck: { enabled, intervalMinutes: 5 } };
+  }
+
+  it('never calls a provider\'s health check while health checks are switched off in config', async () => {
+    const provider = fakeSportDataProvider();
+    const registry = createMockRegistry(provider, ['GOLF' as Sport]);
+    const config = configWithHealthCheck(false);
+    const configReader = {
+      getConfig: jest.fn().mockResolvedValue(config),
+      getPerSportConfig: jest.fn().mockResolvedValue(config),
+    };
+    const scheduler = new IngestionScheduler(registry, createMockCallbacks(), undefined, {
+      configReader,
+      eventReader: { listEventIdsForFeed: jest.fn().mockResolvedValue([]) },
+    });
+
+    scheduler.start();
+    await jest.advanceTimersByTimeAsync(10 * 60 * 1000);
+    scheduler.stop();
+
+    expect(provider.healthCheck).not.toHaveBeenCalled();
+    expect(registry.updateHealth).not.toHaveBeenCalled();
+  });
+
+  it('checks provider health on the configured interval while health checks are on', async () => {
+    const provider = fakeSportDataProvider();
+    const registry = createMockRegistry(provider, ['GOLF' as Sport]);
+    const config = configWithHealthCheck(true);
+    const configReader = {
+      getConfig: jest.fn().mockResolvedValue(config),
+      getPerSportConfig: jest.fn().mockResolvedValue(config),
+    };
+    const scheduler = new IngestionScheduler(registry, createMockCallbacks(), undefined, {
+      configReader,
+      eventReader: { listEventIdsForFeed: jest.fn().mockResolvedValue([]) },
+    });
+
+    scheduler.start();
+    await jest.advanceTimersByTimeAsync(10 * 60 * 1000 + 1);
+    scheduler.stop();
+
+    // Once at start, then every five minutes: at 5 and 10 minutes.
+    expect(provider.healthCheck).toHaveBeenCalledTimes(3);
+    expect(registry.updateHealth).toHaveBeenCalledWith('mock-provider', expect.objectContaining({ status: 'HEALTHY' }));
+  });
+});
