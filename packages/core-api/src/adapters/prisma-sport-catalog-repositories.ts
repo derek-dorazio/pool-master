@@ -51,12 +51,13 @@ import type {
   SportEventParticipantStanding,
   SportEventParticipantValuation,
   SportEventRound,
+  SportEventSyncScope,
   SportEventTier,
   SportLeague,
   TournamentFormat,
   ValuationSource,
 } from '@poolmaster/shared/domain';
-import { SportEventStatus, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { SportEventStatus } from '@poolmaster/shared/domain';
 import { mapToParticipant } from './prisma-participant-repository';
 
 type Db = PrismaClient;
