@@ -30,7 +30,7 @@ function setup(): Setup {
   const owner = world.addUser({ firstName: 'Olive', lastName: 'Owner' });
   world.addMember({ league, user: commissioner, role: LeagueRole.COMMISSIONER });
   const { squad: ownerSquad } = world.addMember({ league, user: owner });
-  const service = new SquadService(world.squads, world.squadMemberships, world.memberships, world.users, asPrismaClient({}));
+  const service = new SquadService(world.squads, world.squadMemberships, world.memberships, world.users, asPrismaClient({}), world.ownerInvitations);
   return { world, league, commissioner, owner, ownerSquad, handlers: createSquadHandlers(service) };
 }
 

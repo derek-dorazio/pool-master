@@ -3,6 +3,7 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
+  SquadOwnerInvitationStatus,
   TeamIconKey,
   type League,
   type Squad,
@@ -46,6 +47,7 @@ function leagueWithTwoTeams(): TwoTeamLeague {
     world.users,
     // Only `deleteInactiveSquad` reaches Prisma; these tests stop before its transaction.
     asPrismaClient({}),
+    world.ownerInvitations,
   );
   return { world, league, commissioner, commissionerSquad, owner, ownerSquad, service };
 }
@@ -284,6 +286,29 @@ describe('Team use cases', () => {
       expect(world.membershipOf(league.id, owner.id)?.status).toBe(LeagueMembershipStatus.INACTIVE);
       expect(world.membershipOf(league.id, coOwner.id)?.status).toBe(LeagueMembershipStatus.INACTIVE);
       expect(world.membershipOf(league.id, commissioner.id)?.status).toBe(LeagueMembershipStatus.ACTIVE);
+    });
+
+    it('revokes the team\'s pending co-owner invitations, so accepting an old invite cannot revive the team', async () => {
+      const { world, league, commissioner, owner, ownerSquad, commissionerSquad, service } = leagueWithTwoTeams();
+      const invite = (squadId: string, status: SquadOwnerInvitationStatus, code: string) =>
+        world.tables.ownerInvitations.insert({
+          leagueId: league.id,
+          squadId,
+          email: `${code}@example.com`,
+          inviteCode: code,
+          status,
+          invitedBy: owner.id,
+          expiresAt: new Date(Date.now() + 86_400_000),
+        });
+      const pending = invite(ownerSquad.id, SquadOwnerInvitationStatus.PENDING, 'pending1');
+      const accepted = invite(ownerSquad.id, SquadOwnerInvitationStatus.ACCEPTED, 'accepted1');
+      const otherTeamPending = invite(commissionerSquad.id, SquadOwnerInvitationStatus.PENDING, 'pending2');
+
+      await service.inactivateSquad(league.id, ownerSquad.id, commissioner.id);
+
+      expect(world.tables.ownerInvitations.get(pending.id)?.status).toBe(SquadOwnerInvitationStatus.REVOKED);
+      expect(world.tables.ownerInvitations.get(accepted.id)?.status).toBe(SquadOwnerInvitationStatus.ACCEPTED);
+      expect(world.tables.ownerInvitations.get(otherTeamPending.id)?.status).toBe(SquadOwnerInvitationStatus.PENDING);
     });
 
     it('returns an already inactive team unchanged instead of failing', async () => {
