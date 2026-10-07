@@ -38,9 +38,28 @@ export interface ProviderSyncRunRepository {
   findAll(filters: ProviderSyncRunFilters): Promise<ProviderSyncRun[]>;
 }
 
+/**
+ * A save of one settings group. `expectedUpdatedAt` is the stored row's `updatedAt` the caller
+ * last saw, or `null` when it saw no stored row; when it no longer matches, nothing is written.
+ * Omitted, the save does not check.
+ */
+export interface PlatformRuntimeConfigSave {
+  configKey: string;
+  configJson: unknown;
+  changedById: string | null;
+  expectedUpdatedAt?: Date | null;
+}
+
+export type PlatformRuntimeConfigSaveResult =
+  | { status: 'saved'; config: PlatformRuntimeConfig }
+  | { status: 'conflict'; current: PlatformRuntimeConfig | null };
+
 export interface PlatformRuntimeConfigRepository {
-  findByKey(configKey: string): Promise<PlatformRuntimeConfig | null>;
-  create(input: { configKey: string; configJson: unknown; updatedById?: string | null }): Promise<PlatformRuntimeConfig>;
-  /** Writes the document for `configKey`, creating it on first write. */
-  update(input: { configKey: string; configJson: unknown; updatedById?: string | null }): Promise<PlatformRuntimeConfig>;
+  /** Every stored settings document, in one query. */
+  findAll(): Promise<PlatformRuntimeConfig[]>;
+  /**
+   * Writes the document for `configKey`, creating it on first save, and records one change in
+   * the history, in one transaction.
+   */
+  save(input: PlatformRuntimeConfigSave): Promise<PlatformRuntimeConfigSaveResult>;
 }

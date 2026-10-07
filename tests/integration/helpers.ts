@@ -42,6 +42,8 @@ import { sportLeaguesModule } from '../../packages/core-api/src/modules/sport-le
 import { platformModule } from '../../packages/core-api/src/modules/platform/routes';
 import { PollConfigService } from '../../packages/core-api/src/modules/platform/poll-config-service';
 import { IngestionConfigService } from '../../packages/core-api/src/modules/platform/ingestion-config-service';
+import { AppSettingsService } from '../../packages/core-api/src/modules/platform/app-settings-service';
+import { SETTINGS_GROUPS } from '../../packages/core-api/src/modules/platform/settings-groups';
 import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
@@ -125,8 +127,14 @@ async function buildTestApp(): Promise<FastifyInstance> {
   // The ingestion and platform services index.ts builds, without the background scheduler.
   const providerRegistry = new ProviderRegistry();
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
-  const pollConfigService = new PollConfigService(runtimeConfigRepository);
-  const ingestionConfigService = new IngestionConfigService(runtimeConfigRepository);
+  const appSettings = new AppSettingsService({
+    repository: runtimeConfigRepository,
+    groups: SETTINGS_GROUPS,
+    env: process.env,
+  });
+  await appSettings.load();
+  const pollConfigService = new PollConfigService(appSettings);
+  const ingestionConfigService = new IngestionConfigService(appSettings);
   const ingestionService = new IngestionService({
     registry: providerRegistry,
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -669,6 +677,7 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.sport.deleteMany();
 
   await prisma.platformRuntimeConfig.deleteMany();
+  await prisma.platformRuntimeConfigHistory.deleteMany();
   if (userIds.length > 0) {
     await prisma.refreshToken.deleteMany({
       where: { userId: { in: userIds } },
