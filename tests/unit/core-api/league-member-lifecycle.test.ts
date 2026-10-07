@@ -2,6 +2,7 @@ import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
   SquadRepository,
+  UserRepository,
 } from '@poolmaster/shared/db';
 import {
   LeagueMembershipStatus,
@@ -12,13 +13,13 @@ import {
 import { inactivateLeagueMemberUnit } from '../../../packages/core-api/src/modules/leagues/member-lifecycle';
 import { deactivateSquadMembershipForLeagueMember } from '../../../packages/core-api/src/modules/squads/owner-membership';
 import { ensureDefaultSquadForLeagueMember } from '../../../packages/core-api/src/modules/squads/default-squad';
-import { buildMembership } from '../../factories';
+import { buildMembership, buildUser } from '../../factories';
 import {
   fakeLeagueMembershipRepo,
   fakeSquadMembershipRepo,
   fakeSquadRepo,
+  fakeUserRepo,
 } from '../../support/repo-fakes';
-import { asPrismaClient } from '../../support/prisma-double';
 
 function createMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
@@ -42,24 +43,10 @@ function createSquadMembershipRepo(
   });
 }
 
-function createPrisma() {
-  const tx = {
-    user: { update: jest.fn().mockResolvedValue(undefined) },
-    refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
-  };
-  return {
-    user: {
-      findUnique: jest.fn().mockResolvedValue({
-        id: 'user-1',
-        firstName: 'Casey',
-        lastName: 'Jones',
-        isActive: true,
-        isRootAdmin: false,
-      }),
-    },
-    $transaction: jest.fn(async (callback: (transaction: typeof tx) => Promise<void>) => callback(tx)),
-    __tx: tx,
-  };
+function createUsers(): UserRepository {
+  return fakeUserRepo({
+    findById: jest.fn().mockResolvedValue(buildUser({ id: 'user-1', firstName: 'Casey', lastName: 'Jones' })),
+  });
 }
 
 describe('league member lifecycle helpers', () => {
@@ -84,14 +71,12 @@ describe('league member lifecycle helpers', () => {
       findByLeagueAndUser: jest.fn().mockResolvedValue(null),
       create: jest.fn().mockResolvedValue(undefined),
     });
-    const prisma = createPrisma();
-
     const squad = await ensureDefaultSquadForLeagueMember({
       leagueId: 'league-1',
       userId: 'user-1',
       squadRepo,
       squadMembershipRepo,
-      prisma: asPrismaClient(prisma),
+      users: createUsers(),
     });
 
     expect(squadRepo.create).toHaveBeenCalledWith(expect.objectContaining({
@@ -147,7 +132,7 @@ describe('league member lifecycle helpers', () => {
       userId: 'user-1',
       squadRepo,
       squadMembershipRepo,
-      prisma: asPrismaClient(createPrisma()),
+      users: createUsers(),
     });
 
     expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { isActive: true });

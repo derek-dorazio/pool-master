@@ -51,6 +51,7 @@ export function invitationsModule(fastify: FastifyInstance): void {
     leagues: leagueRepo,
     squads: squadRepo,
     squadMemberships: squadMembershipRepo,
+    users: userRepo,
     prisma,
     logger: fastify.log,
     mailDelivery,

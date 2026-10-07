@@ -63,6 +63,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
     memberships: membershipRepo,
     squads: squadRepo,
     squadMemberships: squadMembershipRepo,
+    users: userRepo,
     prisma,
     logger: fastify.log,
   });
@@ -72,6 +73,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
     leagues: leagueRepo,
     squads: squadRepo,
     squadMemberships: squadMembershipRepo,
+    users: userRepo,
     prisma,
     logger: fastify.log,
     mailDelivery,

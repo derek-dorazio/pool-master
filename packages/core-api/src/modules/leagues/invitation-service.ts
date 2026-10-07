@@ -8,6 +8,7 @@ import type {
   LeagueRepository,
   SquadMembershipRepository,
   SquadRepository,
+  UserRepository,
 } from '@poolmaster/shared/db';
 import type { LeagueInvitation, LeagueMembership } from '@poolmaster/shared/domain';
 import type { PrismaClient } from '@prisma/client';
@@ -80,6 +81,7 @@ export interface InvitationServiceDeps {
   leagues: LeagueRepository;
   squads?: SquadRepository;
   squadMemberships?: SquadMembershipRepository;
+  users: UserRepository;
   prisma?: PrismaClient;
   logger?: FastifyBaseLogger;
   mailDelivery?: MailDeliveryProvider;
@@ -238,16 +240,7 @@ export class InvitationService {
   }
 
   private async resolveInviterName(userId: string): Promise<string> {
-    if (!this.deps.prisma) return DEFAULT_INVITER_NAME;
-    const user = await this.deps.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        firstName: true,
-        lastName: true,
-        username: true,
-        email: true,
-      },
-    });
+    const user = await this.deps.users.findById(userId);
     if (!user) return DEFAULT_INVITER_NAME;
     const fullName = [user.firstName, user.lastName]
       .map((part) => part.trim())
@@ -503,16 +496,7 @@ export class InvitationService {
   }
 
   private async resolveRecipientUser(userId: string): Promise<{ email: string; name: string } | null> {
-    if (!this.deps.prisma) return null;
-    const user = await this.deps.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        email: true,
-        firstName: true,
-        lastName: true,
-        username: true,
-      },
-    });
+    const user = await this.deps.users.findById(userId);
     if (!user) return null;
     const fullName = [user.firstName, user.lastName]
       .map((part) => part.trim())
@@ -538,7 +522,7 @@ export class InvitationService {
   }
 
   private async ensureDefaultSquad(leagueId: string, userId: string): Promise<void> {
-    if (!this.deps.squads || !this.deps.squadMemberships || !this.deps.prisma) {
+    if (!this.deps.squads || !this.deps.squadMemberships) {
       this.logger?.debug({
         action: 'leagueInvitation.ensureDefaultSquad.skipped',
         data: { leagueId, userId },
@@ -551,7 +535,7 @@ export class InvitationService {
       userId,
       squadRepo: this.deps.squads,
       squadMembershipRepo: this.deps.squadMemberships,
-      prisma: this.deps.prisma,
+      users: this.deps.users,
       logger: this.logger,
     });
   }

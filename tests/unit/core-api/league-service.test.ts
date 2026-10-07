@@ -6,12 +6,13 @@ import type {
   SquadRepository,
 } from '@poolmaster/shared/db';
 import { JoinPolicy, LeagueIconKey, LeagueRole, SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
-import { buildLeague, buildMembership } from '../../factories';
+import { buildLeague, buildMembership, buildUser } from '../../factories';
 import {
   fakeLeagueMembershipRepo,
   fakeLeagueRepo,
   fakeSquadMembershipRepo,
   fakeSquadRepo,
+  fakeUserRepo,
 } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
 import { mockFn } from '../../support/mock-fn';
@@ -95,15 +96,10 @@ function createMockSquadMembershipRepo(
   });
 }
 
-function createMockProvisioningPrisma() {
-  return {
-    user: {
-      findUnique: jest.fn().mockResolvedValue({
-        firstName: 'User',
-        lastName: 'One',
-      }),
-    },
-  };
+function createProvisioningUsers() {
+  return fakeUserRepo({
+    findById: jest.fn().mockResolvedValue(buildUser({ firstName: 'User', lastName: 'One' })),
+  });
 }
 
 function createMockLifecyclePrisma() {
@@ -144,7 +140,7 @@ describe('LeagueService', () => {
         memberships: membershipRepo,
         squads: squadRepo,
         squadMemberships: squadMembershipRepo,
-        prisma: asPrismaClient(createMockProvisioningPrisma()),
+        users: createProvisioningUsers(),
       });
       const result = await service.createLeague({
         createdBy: 'user-1',
@@ -172,7 +168,7 @@ describe('LeagueService', () => {
         memberships: membershipRepo,
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo(),
-        prisma: asPrismaClient(createMockProvisioningPrisma()),
+        users: createProvisioningUsers(),
       });
       await service.createLeague({
         createdBy: 'user-1',
@@ -195,7 +191,7 @@ describe('LeagueService', () => {
         memberships: membershipRepo,
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo(),
-        prisma: asPrismaClient(createMockProvisioningPrisma()),
+        users: createProvisioningUsers(),
       });
 
       await expect(
@@ -242,6 +238,7 @@ describe('LeagueService', () => {
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo(),
         prisma: asPrismaClient(options.prisma ?? createCountingPrisma()),
+        users: fakeUserRepo(),
       });
     }
 
@@ -451,7 +448,7 @@ describe('LeagueService', () => {
       const leagueRepo = createMockLeagueRepo({
         findById: jest.fn().mockResolvedValue(existingLeague),
       });
-      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo() });
+      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo(), users: fakeUserRepo() });
 
       await service.inactivateLeague('league-1');
 
@@ -470,7 +467,7 @@ describe('LeagueService', () => {
           isActive: false,
         })),
       });
-      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo() });
+      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo(), users: fakeUserRepo() });
 
       await expect(service.inactivateLeague('league-1')).rejects.toMatchObject({
         code: 'LEAGUE_ALREADY_INACTIVE',
@@ -488,7 +485,7 @@ describe('LeagueService', () => {
       const leagueRepo = createMockLeagueRepo({
         findById: jest.fn().mockResolvedValue(existingLeague),
       });
-      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo() });
+      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo(), users: fakeUserRepo() });
 
       await service.activateLeague('league-1');
 
@@ -507,7 +504,7 @@ describe('LeagueService', () => {
           isActive: true,
         })),
       });
-      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo() });
+      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo(), users: fakeUserRepo() });
 
       await expect(service.activateLeague('league-1')).rejects.toMatchObject({
         code: 'LEAGUE_ALREADY_ACTIVE',
@@ -524,7 +521,7 @@ describe('LeagueService', () => {
           isActive: true,
         })),
       });
-      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo() });
+      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo(), users: fakeUserRepo() });
 
       await service.updateLeagueDetails('league-1', {
         name: 'Updated League',
@@ -547,7 +544,7 @@ describe('LeagueService', () => {
           isActive: false,
         })),
       });
-      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo() });
+      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo(), users: fakeUserRepo() });
 
       await expect(
         service.updateLeagueDetails('league-1', {
@@ -569,7 +566,7 @@ describe('LeagueService', () => {
           isActive: true,
         })),
       });
-      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo() });
+      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo(), users: fakeUserRepo() });
 
       await service.updateLeagueIcon('league-1', {
         iconKey: LeagueIconKey.SOCCER_BALL,
@@ -590,7 +587,7 @@ describe('LeagueService', () => {
           isActive: false,
         })),
       });
-      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo() });
+      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo(), users: fakeUserRepo() });
 
       await expect(
         service.updateLeagueIcon('league-1', {
@@ -617,6 +614,7 @@ describe('LeagueService', () => {
         leagues: leagueRepo,
         memberships: createMockMembershipRepo(),
         prisma: prisma as never,
+        users: fakeUserRepo(),
       });
 
       await expect(service.deleteInactiveLeague('league-1', 'ACTIVE1')).rejects.toMatchObject({
@@ -638,6 +636,7 @@ describe('LeagueService', () => {
         leagues: leagueRepo,
         memberships: createMockMembershipRepo(),
         squads: prisma as never,
+        users: fakeUserRepo(),
       });
 
       await expect(service.deleteInactiveLeague('league-1', 'WRONG123')).rejects.toMatchObject({
@@ -659,6 +658,7 @@ describe('LeagueService', () => {
         leagues: leagueRepo,
         memberships: createMockMembershipRepo(),
         prisma: prisma as never,
+        users: fakeUserRepo(),
       });
 
       await service.deleteInactiveLeague('league-1', 'DELETE01');
@@ -680,7 +680,7 @@ describe('LeagueService', () => {
       const membershipRepo = createMockMembershipRepo({
         findByLeague: jest.fn().mockResolvedValue(members),
       });
-      const service = new LeagueService({ leagues: leagueRepo, memberships: membershipRepo });
+      const service = new LeagueService({ leagues: leagueRepo, memberships: membershipRepo, users: fakeUserRepo() });
       const result = await service.getLeagueWithMembers('league-1');
       expect(result).not.toBeNull();
       expect(result!.league.id).toBe('league-1');
@@ -689,7 +689,7 @@ describe('LeagueService', () => {
 
     it('returns null for missing league', async () => {
       const leagueRepo = createMockLeagueRepo();
-      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo() });
+      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo(), users: fakeUserRepo() });
       const result = await service.getLeagueWithMembers('missing');
       expect(result).toBeNull();
     });

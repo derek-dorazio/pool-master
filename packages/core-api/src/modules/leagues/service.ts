@@ -10,6 +10,7 @@ import type {
   LeagueSearchFilters,
   SquadMembershipRepository,
   SquadRepository,
+  UserRepository,
 } from '@poolmaster/shared/db';
 import type {
   League,
@@ -77,6 +78,7 @@ export interface LeagueServiceDeps {
   memberships: LeagueMembershipRepository;
   squads?: SquadRepository;
   squadMemberships?: SquadMembershipRepository;
+  users: UserRepository;
   prisma?: PrismaClient;
   logger?: FastifyBaseLogger;
 }
@@ -546,7 +548,7 @@ export class LeagueService {
   }
 
   private async ensureDefaultSquad(leagueId: string, userId: string): Promise<void> {
-    if (!this.deps.squads || !this.deps.squadMemberships || !this.deps.prisma) {
+    if (!this.deps.squads || !this.deps.squadMemberships) {
       this.logger?.debug({
         action: 'league.ensureDefaultSquad.skipped',
         data: { leagueId, userId },
@@ -559,7 +561,7 @@ export class LeagueService {
       userId,
       squadRepo: this.deps.squads,
       squadMembershipRepo: this.deps.squadMemberships,
-      prisma: this.deps.prisma,
+      users: this.deps.users,
       logger: this.logger,
     });
   }
