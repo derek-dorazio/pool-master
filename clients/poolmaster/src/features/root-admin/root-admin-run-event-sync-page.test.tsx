@@ -105,6 +105,7 @@ describe('RootAdminRunEventSyncPage', () => {
             readinessStatus: 'CONTEST_ELIGIBLE',
             readinessReasons: [],
             contestEligible: true,
+            syncScope: 'SCORES_ONLY',
           },
         ],
       },
@@ -154,6 +155,38 @@ describe('RootAdminRunEventSyncPage', () => {
     expect(
       screen.getByTestId('root-admin-event-sync-response'),
     ).toHaveTextContent('golf-masters-2026');
+  });
+
+  it('offers only events linked to a provider event, and explains the empty list when none is linked', async () => {
+    listEventsMock.mockResolvedValue({
+      data: {
+        events: [
+          {
+            id: 'event-internal-2',
+            externalId: 'manual-admin-unlinked',
+            sport: 'GOLF',
+            name: 'Unlinked Golf Tournament',
+            venue: 'QA Course',
+            location: 'Test City',
+            status: 'SCHEDULED',
+            startDate: '2026-04-27T16:00:00.000Z',
+            endDate: null,
+            participantCount: 0,
+            fieldLocked: false,
+            readinessStatus: 'CONTEST_ELIGIBLE',
+            readinessReasons: [],
+            contestEligible: true,
+            syncScope: 'NONE',
+          },
+        ],
+      },
+    });
+
+    renderPage();
+
+    expect(await screen.findByText(/No linked GOLF events match this preset/)).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /Unlinked Golf Tournament/ })).not.toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
   });
 
   it('pool-master-33l.8.8 submits mock event state controls for scheduled golf live-score syncs', async () => {

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import { listProviders, submitEventSync, listEvents, type SportEventDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
@@ -13,6 +14,7 @@ import {
 } from '@/features/shared/ui';
 import {
   EVENT_SYNC_PRESETS,
+  FEED_LABELS,
   formatJsonPayload,
   getEventSyncPreset,
   getSupportedSyncSports,
@@ -149,8 +151,9 @@ export function RootAdminRunEventSyncPage() {
       eventSyncPresetId,
       supportsMockEventState && mockEventState !== '',
     );
+    // Only an event linked to a provider event can sync; the server refuses an unlinked one.
     return (eventsQuery.data ?? []).filter((event) =>
-      validStatuses.includes(event.status),
+      event.syncScope !== SportEventSyncScope.NONE && validStatuses.includes(event.status),
     );
   }, [eventSyncPresetId, eventsQuery.data, mockEventState, supportsMockEventState]);
   const selectedEvent = selectableEvents.find((event) =>
@@ -270,7 +273,7 @@ export function RootAdminRunEventSyncPage() {
             Back to Sync dashboard
           </LinkButton>
         )}
-        description="Use this action when a specific event needs a targeted refresh for participants, live scores, or final results."
+        description="Use this action when a linked event needs a targeted refresh of its field or live scores."
         eyebrow="Sync"
         title="Run event sync"
       />
@@ -347,7 +350,7 @@ export function RootAdminRunEventSyncPage() {
 
           <Tile radius="lg">
             <p className="font-medium text-foreground">Requested feeds</p>
-            <p className="mt-2">{selectedPreset.feeds.join(' · ')}</p>
+            <p className="mt-2">{selectedPreset.feeds.map((feed) => FEED_LABELS[feed]).join(' · ')}</p>
             {mockEventState ? (
               <p className="mt-2 text-sm text-muted-foreground">
                 Mock event state: {mockEventState}
@@ -375,7 +378,8 @@ export function RootAdminRunEventSyncPage() {
 
           {!eventsQuery.isLoading && !eventsQuery.isError && selectableEvents.length === 0 ? (
             <Alert>
-              No loaded events match this sport and event-sync preset.
+              No linked {eventSyncSport} events match this preset. Link a tournament to a score
+              source on its page first; an unlinked event has nothing to sync.
             </Alert>
           ) : null}
 
