@@ -39,11 +39,9 @@ describe('RosterPick CRUD integration', () => {
   let contestId: string;
   let entryId: string;
   let sportEventParticipantId: string;
-  let entryLocksAt: string;
 
   beforeAll(async () => {
     const eventTiming = buildContestEligibleEventTiming();
-    entryLocksAt = eventTiming.entryLocksAt.toISOString();
     const owner = await createTestUser({ displayName: 'Roster Pick CRUD Owner' });
     ownerHeaders = owner.headers;
 
@@ -108,7 +106,6 @@ describe('RosterPick CRUD integration', () => {
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         configuration: {
-          locksAt: entryLocksAt,
           maxEntriesPerSquad: 1,
           rosterSize: 1,
           countedScores: 1,

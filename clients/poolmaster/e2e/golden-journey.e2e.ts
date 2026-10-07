@@ -1283,7 +1283,6 @@ type ManagedContestRead = {
   contest: {
     status: string;
     configuration: {
-      locksAt?: string | null;
       maxEntriesPerSquad?: number | null;
       rosterSize: number;
       countedScores: number;
@@ -1297,7 +1296,7 @@ type ManagedContestRead = {
  *
  * Unchanged on purpose. Act 2 sends it twice — while the contest is a draft and after it is
  * opened to the league — and a request that alters nothing makes the second answer attributable
- * to the contest's status alone. The body carries only the four
+ * to the contest's status alone. The body carries only the three
  * fields the request schema defines, so the configuration's own `id` and `contestId` are
  * dropped rather than sent back as unexpected properties.
  *
@@ -1310,13 +1309,12 @@ async function putContestConfigurationUnchanged(
   contestId: string,
 ): Promise<{ status: number; errorCode: string | null }> {
   const { contest } = await readManagedContest(page, leagueId, contestId);
-  const { locksAt, maxEntriesPerSquad, rosterSize, countedScores } = contest.configuration;
+  const { maxEntriesPerSquad, rosterSize, countedScores } = contest.configuration;
   const response = await page.request.put(
     `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}/configuration`,
     {
       headers: { 'x-csrf-token': await readCsrfToken(page) },
       data: {
-        ...(locksAt === undefined ? {} : { locksAt }),
         ...(maxEntriesPerSquad === undefined ? {} : { maxEntriesPerSquad }),
         rosterSize,
         countedScores,

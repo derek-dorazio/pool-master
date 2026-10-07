@@ -59,15 +59,11 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type ManagedContest = GetContestConfigurationResponses[200]['contest'];
 type ContestConfigTemplate = ListContestConfigTemplatesResponses[200]['templates'][number];
-type LockPreset = 'FIVE_MINUTES' | 'ONE_HOUR' | 'CUSTOM';
 
 const contestSetupFormSchema = z.object({
   contestName: z.string().trim().min(1, 'Contest name is required.'),
   sportEventId: z.string().trim().min(1, 'Select an event before creating the contest.'),
   selectedTemplateId: z.string(),
-  lockPreset: z.enum(['FIVE_MINUTES', 'ONE_HOUR', 'CUSTOM']),
-  customLockHours: z.string(),
-  customLockMinutes: z.string(),
   unlimitedEntries: z.boolean(),
   maxEntriesPerTeam: z.string(),
   rosterSize: z.string(),
@@ -84,16 +80,6 @@ function getContestFormErrorMessage(errors: FieldErrors<ContestSetupFormValues>)
     ?? 'Review the contest setup fields before saving.'
   );
 }
-
-const LOCK_PRESET_OPTIONS: Array<{
-  value: LockPreset;
-  label: string;
-  minutes: number | null;
-}> = [
-  { value: 'FIVE_MINUTES', label: '5 minutes before start', minutes: 5 },
-  { value: 'ONE_HOUR', label: '1 hour before start', minutes: 60 },
-  { value: 'CUSTOM', label: 'Custom', minutes: null },
-];
 
 function formatDateTimeDisplay(isoString: string | null) {
   if (!isoString) {
@@ -143,68 +129,6 @@ function formatReadinessReasons(event: SportEventDto) {
     .join(', ');
 }
 
-function subtractMinutesFromIso(isoString: string, minutes: number) {
-  const parsed = Date.parse(isoString);
-  if (Number.isNaN(parsed)) {
-    return null;
-  }
-
-  return new Date(parsed - minutes * 60 * 1000).toISOString();
-}
-
-function resolveLockPresetFromMinutes(
-  minutesBeforeStart: number,
-): { preset: LockPreset; customHours: string; customMinutes: string } {
-  if (minutesBeforeStart === 5) {
-    return { preset: 'FIVE_MINUTES', customHours: '0', customMinutes: '5' };
-  }
-
-  if (minutesBeforeStart === 60) {
-    return { preset: 'ONE_HOUR', customHours: '1', customMinutes: '0' };
-  }
-
-  if (minutesBeforeStart < 0) {
-    return { preset: 'CUSTOM', customHours: '0', customMinutes: '0' };
-  }
-
-  return {
-    preset: 'CUSTOM',
-    customHours: String(Math.floor(minutesBeforeStart / 60)),
-    customMinutes: String(minutesBeforeStart % 60),
-  };
-}
-
-function getLockOffsetMinutes(
-  lockPreset: LockPreset,
-  customLockHours: string,
-  customLockMinutes: string,
-) {
-  const preset = LOCK_PRESET_OPTIONS.find((option) => option.value === lockPreset);
-  if (preset?.minutes != null) {
-    return preset.minutes;
-  }
-
-  const hours = Math.max(0, Number(customLockHours) || 0);
-  const minutes = Math.max(0, Number(customLockMinutes) || 0);
-  return hours * 60 + minutes;
-}
-
-function deriveLockAtFromEvent(
-  eventStartIso: string | null | undefined,
-  lockPreset: LockPreset,
-  customLockHours: string,
-  customLockMinutes: string,
-) {
-  if (!eventStartIso) {
-    return null;
-  }
-
-  return subtractMinutesFromIso(
-    eventStartIso,
-    getLockOffsetMinutes(lockPreset, customLockHours, customLockMinutes),
-  );
-}
-
 function sortEventsForPicker(events: SportEventDto[]) {
   return [...events].sort((left, right) => {
     const leftTime = Date.parse(left.startDate);
@@ -228,9 +152,6 @@ export function CreateContestPage() {
       contestName: '',
       sportEventId: '',
       selectedTemplateId: '',
-      lockPreset: 'FIVE_MINUTES',
-      customLockHours: '0',
-      customLockMinutes: '5',
       unlimitedEntries: false,
       maxEntriesPerTeam: '1',
       rosterSize: '6',
@@ -241,9 +162,6 @@ export function CreateContestPage() {
     contestName,
     sportEventId,
     selectedTemplateId,
-    lockPreset,
-    customLockHours,
-    customLockMinutes,
     unlimitedEntries,
     maxEntriesPerTeam,
     rosterSize,
@@ -370,17 +288,6 @@ export function CreateContestPage() {
     () => (templatesQuery.data ?? []).filter((template) => template.selectionType === SelectionType.TIERED),
     [templatesQuery.data],
   );
-  const derivedLockAt = useMemo(
-    () =>
-      deriveLockAtFromEvent(
-        selectedEvent?.startDate ?? null,
-        lockPreset,
-        customLockHours,
-        customLockMinutes,
-      ),
-    [customLockHours, customLockMinutes, lockPreset, selectedEvent?.startDate],
-  );
-
   const applyTemplateConfiguration = useCallback((
     configuration: ContestConfigTemplate['configuration'],
   ) => {
@@ -425,20 +332,8 @@ export function CreateContestPage() {
     setContestFormValue('rosterSize', String(configuration.rosterSize));
     setContestFormValue('countedScores', String(configuration.countedScores));
 
-    const eventStart = eventsQuery.data?.find((event) => event.id === contest.sportEventId)?.startDate;
-    if (eventStart && configuration.locksAt) {
-      const minutesBeforeStart = Math.max(
-        0,
-        Math.round((Date.parse(eventStart) - Date.parse(configuration.locksAt)) / 60000),
-      );
-      const resolvedLockPreset = resolveLockPresetFromMinutes(minutesBeforeStart);
-      setContestFormValue('lockPreset', resolvedLockPreset.preset);
-      setContestFormValue('customLockHours', resolvedLockPreset.customHours);
-      setContestFormValue('customLockMinutes', resolvedLockPreset.customMinutes);
-    }
-
     setIsHydratedFromManagedContest(true);
-  }, [eventsQuery.data, isHydratedFromManagedContest, managedContestQuery.data, setContestFormValue]);
+  }, [isHydratedFromManagedContest, managedContestQuery.data, setContestFormValue]);
 
   useEffect(() => {
     if (!sportEventId && eligibleEvents.length) {
@@ -574,12 +469,6 @@ export function CreateContestPage() {
       const selectedTemplateForSubmission =
         templatesQuery.data?.find((template) => template.id === values.selectedTemplateId) ?? null;
       const trimmedName = values.contestName.trim();
-      const parsedLockAt = deriveLockAtFromEvent(
-        selectedEventForSubmission?.startDate ?? null,
-        values.lockPreset,
-        values.customLockHours,
-        values.customLockMinutes,
-      );
       const parsedMaxEntries = values.unlimitedEntries ? undefined : Number(values.maxEntriesPerTeam);
 
       if (!trimmedName) {
@@ -592,10 +481,6 @@ export function CreateContestPage() {
 
       if (!selectedEventForSubmission.contestEligible) {
         throw new Error('Select a contest-ready event before creating the contest.');
-      }
-
-      if (!parsedLockAt) {
-        throw new Error('A valid event-relative lock time is required.');
       }
 
       if (
@@ -623,7 +508,6 @@ export function CreateContestPage() {
       const configuration = {
         rosterSize: parsedRosterSize,
         countedScores: parsedCountedScores,
-        locksAt: parsedLockAt,
         ...(parsedMaxEntries !== undefined
           ? { maxEntriesPerSquad: parsedMaxEntries }
           : {}),
@@ -656,7 +540,6 @@ export function CreateContestPage() {
 
       const metadataBody: UpdateContestRequest = {
         name: trimmedName,
-        lockAt: parsedLockAt,
       };
 
       const metadataResponse = await updateContest({
@@ -958,56 +841,6 @@ export function CreateContestPage() {
               />
             ) : null}
 
-            <Tile className="space-y-3" padding="sm" radius="lg" variant="subtle">
-              <div>
-                <div className="text-sm font-medium">Lock time</div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Prime Time Commissioner stores an exact lock timestamp, but commissioners configure it
-                  relative to the event start.
-                </p>
-              </div>
-              <FormField label="Lock entries">
-                <Select
-                  data-testid="contest-lock-preset"
-                  onChange={(event) => setContestFormValue('lockPreset', event.target.value as LockPreset)}
-                  value={lockPreset}
-                >
-                  {LOCK_PRESET_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
-              </FormField>
-              {lockPreset === 'CUSTOM' ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField label="Hours before start">
-                    <Input
-                      data-testid="contest-lock-custom-hours"
-                      min={0}
-                      onChange={(event) => setContestFormValue('customLockHours', event.target.value)}
-                      type="number"
-                      value={customLockHours}
-                    />
-                  </FormField>
-                  <FormField label="Minutes before start">
-                    <Input
-                      data-testid="contest-lock-custom-minutes"
-                      min={0}
-                      onChange={(event) => setContestFormValue('customLockMinutes', event.target.value)}
-                      type="number"
-                      value={customLockMinutes}
-                    />
-                  </FormField>
-                </div>
-              ) : null}
-              <Alert title="Resolved lock timestamp">
-                <div data-testid="contest-lock-summary">
-                  {derivedLockAt ? formatDateTimeDisplay(derivedLockAt) : 'Select a golf event first'}
-                </div>
-              </Alert>
-            </Tile>
-
             <div className="space-y-3">
               <div className="text-sm font-medium">Entries per team</div>
               <label className="flex items-center gap-3 text-sm text-foreground">
@@ -1133,7 +966,6 @@ export function CreateContestPage() {
                 label: 'Event starts',
                 value: selectedEvent ? formatDateTimeDisplay(selectedEvent.startDate) : 'Choose a golf event',
               },
-              { id: 'locks', label: 'Locks', value: derivedLockAt ? formatDateTimeDisplay(derivedLockAt) : 'Choose a golf event' },
               { id: 'entries-per-team', label: 'Entries per team', value: unlimitedEntries ? 'Unlimited' : maxEntriesPerTeam || '1' },
               { id: 'golfers-picked', label: 'Golfers picked', value: rosterSize },
               { id: 'count-best', label: 'Count best', value: countedScores },
@@ -1145,7 +977,7 @@ export function CreateContestPage() {
             <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
               <li>A new contest is a draft: only commissioners see it, and nobody can enter yet.</li>
               <li>Open it to the league when it is ready. Its settings lock for good at that point.</li>
-              <li>Lock time is configured relative to the event start, then stored as an exact timestamp.</li>
+              <li>Entries close when the event starts.</li>
               <li>Locked, in-progress, and completed states should follow event timing and feed updates automatically.</li>
             </ul>
           </Tile>

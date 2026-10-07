@@ -42,7 +42,6 @@ export function createDashboardHandlers(dashboardService: DashboardService) {
         isExclusive: contest.isExclusive,
         startsAt: contest.startsAt,
         endsAt: contest.endsAt,
-        lockAt: contest.lockAt,
         createdAt: contest.createdAt,
         updatedAt: contest.updatedAt,
       })),

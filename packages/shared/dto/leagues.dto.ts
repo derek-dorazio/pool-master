@@ -272,7 +272,7 @@ export const UpcomingEventDtoSchema = z.object({
   contestId: z.string().optional(),
   title: z.string(),
   date: DateTimeSchema,
-  eventType: z.enum(['DRAFT_START', 'CONTEST_START', 'CONTEST_END', 'LOCK_TIME']).describe('Upcoming event category.'),
+  eventType: z.enum(['DRAFT_START', 'CONTEST_START', 'CONTEST_END']).describe('Upcoming event category.'),
 }).describe('Upcoming league event summary.');
 export type UpcomingEventDto = z.infer<typeof UpcomingEventDtoSchema>;
 
