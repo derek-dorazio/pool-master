@@ -9,6 +9,19 @@ import { Sport } from '@poolmaster/shared/domain';
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { freshEventEdition } from '../../support/event-edition';
 
+// #435 — scores land only in rounds an admin scheduled, so each event gets the four-round
+// schedule an admin-created event starts with.
+const fourRoundSchedule = () => ({
+  syncScope: 'SCORES_ONLY' as const,
+  rounds: 4,
+  roundSchedule: {
+    create: [1, 2, 3, 4].map((roundNumber) => ({
+      roundNumber,
+      scheduledDate: new Date(Date.UTC(2026, 4, 6 + roundNumber, 12)),
+    })),
+  },
+});
+
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
   await cleanupTestData();
@@ -57,6 +70,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
         fieldLocked: true,
         releaseAt: new Date('2026-05-01T12:00:00.000Z'),
         fieldLocksAt: new Date('2026-05-06T16:00:00.000Z'),
+        ...fourRoundSchedule(),
       },
     });
     const sportEventParticipant = await prisma.sportEventParticipant.create({
@@ -171,6 +185,7 @@ describe('Golf live-score persistence', () => {
         status: 'IN_PROGRESS',
         releaseAt: new Date('2026-05-01T12:00:00.000Z'),
         fieldLocksAt: new Date('2026-05-06T16:00:00.000Z'),
+        ...fourRoundSchedule(),
       },
     });
     const [event, otherEvent] = [await createEvent('a'), await createEvent('b')];

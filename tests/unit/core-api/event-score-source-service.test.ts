@@ -304,19 +304,6 @@ describe('EventScoreSourceService.linkScoreSource', () => {
     ).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
   });
 
-  it('pool-master-753 409s EVENT_NOT_ADMIN_MANAGED when the event is already provider-owned (syncScope=FULL)', async () => {
-    const prisma = {
-      sportEvent: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'event-1', syncScope: 'FULL' }),
-      },
-    };
-    const service = new EventScoreSourceService(asPrismaClient(prisma));
-
-    await expect(
-      service.linkScoreSource('event-1', { providerId: 'mock-golf', externalId: 'ext-1' }),
-    ).rejects.toMatchObject({ code: 'EVENT_NOT_ADMIN_MANAGED', statusCode: 409 });
-  });
-
   it('pool-master-753 409s EXTERNAL_EVENT_ALREADY_LINKED when another sport event already holds that identity', async () => {
     const prisma = {
       sportEvent: {
@@ -363,20 +350,6 @@ describe('EventScoreSourceService.unlinkScoreSource', () => {
     await expect(service.unlinkScoreSource('missing')).rejects.toMatchObject({
       code: 'EVENT_NOT_FOUND',
       statusCode: 404,
-    });
-  });
-
-  it('pool-master-753 409s EVENT_NOT_ADMIN_MANAGED when the event is provider-owned (syncScope=FULL)', async () => {
-    const prisma = {
-      sportEvent: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'event-1', syncScope: 'FULL' }),
-      },
-    };
-    const service = new EventScoreSourceService(asPrismaClient(prisma));
-
-    await expect(service.unlinkScoreSource('event-1')).rejects.toMatchObject({
-      code: 'EVENT_NOT_ADMIN_MANAGED',
-      statusCode: 409,
     });
   });
 

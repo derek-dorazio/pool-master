@@ -49,17 +49,12 @@ import {
 // UC-GOLF-ADMIN-03 (link a live score source), UC-GOLF-ADMIN-04 (sync-driven
 // live scoring + settlement), BR-GOLF-ADMIN-AUTHZ (root-admin-only ops).
 //
-// NOT covered here, and why: the "a scheduled EVENTPARTICIPANTS sweep skips a
-// SCORES_ONLY event" assertion the epic narrative mentions is a
-// scheduled-event-reader concern, not reachable through the SDK — the manual
-// event-sync endpoint deliberately *permits* EVENTPARTICIPANTS for SCORES_ONLY
-// (plans/125 §3.2). Existing coverage for the real behaviour:
+// NOT covered here: which events the *scheduled* feeds pick is a
+// scheduled-event-reader concern, not reachable through the SDK. Coverage:
 //   - ingestion-service.test.ts "pool-master-5h3" — the manual event-sync
 //     guard permits EVENTPARTICIPANTS for SCORES_ONLY (rejects only NONE).
-//   - scheduled-event-reader.test.ts "pool-master-cgb" — the *scheduled* per-feed
-//     syncScope gate: EVENTPARTICIPANTS never returns a NONE/SCORES_ONLY event.
-//   - mock-contest-feed-provider.integration.ts "pool-master-rop.68.1.7" — the
-//     same gate end to end through listEventIdsForFeed.
+//   - scheduled-event-reader.test.ts — both scheduled feeds pick only linked
+//     (SCORES_ONLY) events, never an unlinked NONE one (#435).
 
 const MOCK_PROVIDER_ID = 'mock-contest-feed';
 // A fixed, dateable event from the static golf-major-2026 scenario, so the catalog

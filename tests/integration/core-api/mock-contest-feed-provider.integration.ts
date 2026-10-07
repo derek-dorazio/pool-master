@@ -644,11 +644,8 @@ describe('mock contest feed provider event-first verification', () => {
         },
       },
     });
-    expect(persistedEvent.metadata).toMatchObject({
-      eventType: expect.any(String),
-      releaseAt: expect.any(String),
-      fieldLocksAt: expect.any(String),
-    });
+    // #435 — the provider's metadata never reaches the admin-owned event; only the field size does.
+    expect(persistedEvent.metadata).toEqual({});
     expect(persistedEvent.participantCount).toBe(detail?.participants.length);
 
     const participantMappings = await prisma.participantProviderMapping.findMany({
@@ -687,7 +684,7 @@ describe('mock contest feed provider event-first verification', () => {
   it('loads the provider field into a SCORES_ONLY event without overwriting its admin-authored header, schedule or status', async () => {
     const prisma = getPrisma();
     const adapter = new MockContestFeedAdapter(mockProvider.baseUrl);
-    const persistence = new IngestionPersistence(prisma, undefined, createEventLifecycleService(prisma));
+    const persistence = new IngestionPersistence(prisma);
     const detail = await adapter.getEventDetails(eventExternalId);
     expect(detail).not.toBeNull();
 
@@ -886,11 +883,7 @@ describe('mock contest feed provider event-first verification', () => {
       appBaseUrl: 'http://localhost:5173',
       golfContestSettlement: settlement,
     });
-    const persistence = new IngestionPersistence(
-      prisma,
-      undefined,
-      eventLifecycleService,
-    );
+    const persistence = new IngestionPersistence(prisma);
     const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(prisma));
     const eventReader = createScheduledEventReader({ prisma, registry });
     const scheduler = new IngestionScheduler(registry, {
@@ -1037,17 +1030,15 @@ describe('mock contest feed provider event-first verification', () => {
       where: { contestId: { in: [directContest.id] } },
     })).resolves.toBe(0);
 
-    const completedDetail = await providerService.syncEventData(
-      {
-        sport: Sport.GOLF,
-        eventId: eventExternalId,
-        feeds: ['EVENTPARTICIPANTS'],
-        mockEventState: 'golf-completed',
-      },
-      rootAdmin.user.id,
-      rootAdmin.user.email,
-    );
-    await waitForProviderSyncRuns(completedDetail.syncRuns.map((run) => run.id));
+    // #435 — the provider never moves an event's status; the admin (or the lifecycle
+    // scheduler) does, and completing the event settles its contests.
+    for (const toStatus of ['IN_PROGRESS', 'COMPLETED'] as const) {
+      await eventLifecycleService.applySportEventStatusTransition({
+        sportEventId: event.id,
+        toStatus,
+        actor: { type: 'ROOT_ADMIN' },
+      });
+    }
 
     await expect(prisma.sportEvent.findUniqueOrThrow({
       where: {

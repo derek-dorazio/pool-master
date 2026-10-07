@@ -39,6 +39,9 @@ afterAll(async () => {
       sportEvent: { externalId: { in: rankedEventIds } },
     },
   });
+  await prisma.sportEventRound.deleteMany({
+    where: { sportEvent: { externalId: { in: rankedEventIds } } },
+  });
   await prisma.sportEvent.deleteMany({
     where: { externalId: { in: rankedEventIds } },
   });

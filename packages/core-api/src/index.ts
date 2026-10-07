@@ -83,11 +83,7 @@ export function buildApp() {
     appBaseUrl,
     golfContestSettlement,
   });
-  const ingestionPersistence = new IngestionPersistence(
-    prisma,
-    app.log,
-    eventLifecycleService,
-  );
+  const ingestionPersistence = new IngestionPersistence(prisma, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler(
     new PrismaSportEventRepository(prisma),
     new PrismaSportEventRoundRepository(prisma),

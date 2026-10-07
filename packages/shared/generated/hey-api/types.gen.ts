@@ -1712,7 +1712,7 @@ export type SportEventDto = {
     /**
      * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
      */
-    syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+    syncScope: 'NONE' | 'SCORES_ONLY';
     /**
      * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
      */
@@ -1870,7 +1870,7 @@ export type SportEventListResponse = {
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
-        syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+        syncScope: 'NONE' | 'SCORES_ONLY';
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
@@ -2003,7 +2003,7 @@ export type SportEventResponse = {
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
-        syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+        syncScope: 'NONE' | 'SCORES_ONLY';
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
@@ -2235,7 +2235,7 @@ export type ImportSportEventYearFromProviderResponse = {
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
-        syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+        syncScope: 'NONE' | 'SCORES_ONLY';
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
@@ -2284,7 +2284,7 @@ export type ImportSportEventYearFromProviderResponse = {
 };
 
 /**
- * Changes to an admin-managed event; omitted fields are left alone.
+ * Changes to an event; omitted fields are left alone.
  */
 export type UpdateSportEventRequest = {
     name?: string;
@@ -15751,28 +15751,6 @@ export type UpdateEventErrors = {
             details?: unknown;
         };
     };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
 };
 
 export type UpdateEventError = UpdateEventErrors[keyof UpdateEventErrors];
@@ -16326,28 +16304,6 @@ export type UnlinkEventScoreSourceErrors = {
      * Standard API error envelope.
      */
     404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
         /**
          * Error payload object.
          */

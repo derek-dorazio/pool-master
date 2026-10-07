@@ -31,7 +31,6 @@ export function GolfTournamentWorkflowRail({
   const auto = deriveGolfAutoTransition({
     status: tournament.status,
     autoLifecycleEnabled: tournament.autoLifecycleEnabled,
-    syncScope: tournament.syncScope,
     startDate: tournament.startDate,
     endDate: tournament.endDate || null,
     rounds,

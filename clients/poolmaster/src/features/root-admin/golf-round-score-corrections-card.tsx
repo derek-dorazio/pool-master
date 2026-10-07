@@ -31,7 +31,6 @@ type CorrectionsMeta = {
   setDraft: Dispatch<SetStateAction<Record<string, RowDraft>>>;
   savingId: string | null;
   onSave: (row: ScoreRow) => void;
-  readOnly: boolean;
 };
 
 const columnHelper = createColumnHelper<ScoreRow>();
@@ -48,7 +47,7 @@ const correctionColumns = [
     id: 'strokes',
     header: 'Strokes',
     cell: ({ row, table }) => {
-      const { draft, setDraft, readOnly } = table.options.meta as CorrectionsMeta;
+      const { draft, setDraft } = table.options.meta as CorrectionsMeta;
       const entry = row.original;
       const raw = draft[entry.sportEventParticipantId]?.strokes ?? String(entry.strokes);
       return (
@@ -58,7 +57,6 @@ const correctionColumns = [
             aria-label={`Strokes for ${entry.participantName}`}
             className="h-8"
             data-testid={`root-admin-golf-scores-strokes-${entry.sportEventParticipantId}`}
-            disabled={readOnly}
             inputMode="numeric"
             onChange={(event) =>
               setDraft((current) => ({
@@ -81,7 +79,7 @@ const correctionColumns = [
     id: 'scoreToPar',
     header: 'To par',
     cell: ({ row, table }) => {
-      const { draft, setDraft, readOnly } = table.options.meta as CorrectionsMeta;
+      const { draft, setDraft } = table.options.meta as CorrectionsMeta;
       const entry = row.original;
       const raw = draft[entry.sportEventParticipantId]?.scoreToPar ?? String(entry.scoreToPar);
       return (
@@ -91,7 +89,6 @@ const correctionColumns = [
             aria-label={`Score to par for ${entry.participantName}`}
             className="h-8"
             data-testid={`root-admin-golf-scores-to-par-${entry.sportEventParticipantId}`}
-            disabled={readOnly}
             onChange={(event) =>
               setDraft((current) => ({
                 ...current,
@@ -113,7 +110,7 @@ const correctionColumns = [
     id: 'thru',
     header: 'Thru',
     cell: ({ row, table }) => {
-      const { draft, setDraft, readOnly } = table.options.meta as CorrectionsMeta;
+      const { draft, setDraft } = table.options.meta as CorrectionsMeta;
       const entry = row.original;
       const raw = draft[entry.sportEventParticipantId]?.thru ?? String(entry.thru);
       return (
@@ -123,7 +120,6 @@ const correctionColumns = [
             aria-label={`Holes completed for ${entry.participantName}`}
             className="h-8"
             data-testid={`root-admin-golf-scores-thru-${entry.sportEventParticipantId}`}
-            disabled={readOnly}
             inputMode="numeric"
             onChange={(event) =>
               setDraft((current) => ({
@@ -146,7 +142,7 @@ const correctionColumns = [
     id: 'status',
     header: 'Status',
     cell: ({ row, table }) => {
-      const { draft, setDraft, readOnly } = table.options.meta as CorrectionsMeta;
+      const { draft, setDraft } = table.options.meta as CorrectionsMeta;
       const entry = row.original;
       const raw =
         draft[entry.sportEventParticipantId]?.status ??
@@ -158,7 +154,6 @@ const correctionColumns = [
           aria-label={`Status for ${entry.participantName}`}
           className="h-8"
           data-testid={`root-admin-golf-scores-status-${entry.sportEventParticipantId}`}
-          disabled={readOnly}
           onChange={(event) =>
             setDraft((current) => ({
               ...current,
@@ -185,7 +180,7 @@ const correctionColumns = [
     id: 'completedAt',
     header: 'Completed at',
     cell: ({ row, table }) => {
-      const { draft, setDraft, readOnly } = table.options.meta as CorrectionsMeta;
+      const { draft, setDraft } = table.options.meta as CorrectionsMeta;
       const entry = row.original;
       const raw = draft[entry.sportEventParticipantId]?.completedAt ?? toDateTimeInput(entry.completedAt);
       return (
@@ -194,7 +189,6 @@ const correctionColumns = [
           aria-label={`Completed at for ${entry.participantName}`}
           className="h-8"
           data-testid={`root-admin-golf-scores-completed-at-${entry.sportEventParticipantId}`}
-          disabled={readOnly}
           onChange={(event) =>
             setDraft((current) => ({
               ...current,
@@ -239,8 +233,6 @@ const correctionColumns = [
   }),
 ];
 
-const readOnlyColumns = correctionColumns.filter((column) => column.id !== 'save');
-
 /**
  * plans/124 §6.3 Round scores section 2 — inline corrections for one round, saved
  * one row at a time via `updateEventParticipantGolfRoundScore`. #116: a row edits
@@ -253,14 +245,12 @@ export function GolfRoundScoreCorrectionsCard({
   rows,
   rowsError,
   rowsLoading,
-  readOnly,
 }: {
   eventId: string;
   round: number;
   rows: ScoreRow[];
   rowsError: string | null;
   rowsLoading: boolean;
-  readOnly: boolean;
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-scores-page',
@@ -325,9 +315,8 @@ export function GolfRoundScoreCorrectionsCard({
           saveMutation.mutate({ sportEventParticipantId: row.sportEventParticipantId, body });
         }
       },
-      readOnly,
     }),
-    [draft, readOnly, saveMutation],
+    [draft, saveMutation],
   );
 
   return (
@@ -353,7 +342,7 @@ export function GolfRoundScoreCorrectionsCard({
 
       <div className="mt-4">
         <DataGrid
-          columns={readOnly ? readOnlyColumns : correctionColumns}
+          columns={correctionColumns}
           data={rows}
           emptyMessage={
             rowsLoading

@@ -159,11 +159,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Update a sport event',
-      description: '409 EVENT_NOT_ADMIN_MANAGED for an event a provider owns in full. Root admin only.',
+      description: 'Edits any event, linked to a provider or not; a provider never overwrites these fields. Root admin only.',
       operationId: 'updateEvent',
       params: EVENT_PARAMS,
       body: schemaRef('UpdateSportEventRequest'),
-      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409) },
+      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404) },
     },
     handler: handler.updateEvent,
   });
@@ -200,7 +200,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Link a sport event to a provider event for scores',
-      description: 'Root admin only.',
+      description: '409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.',
       operationId: 'linkEventScoreSource',
       params: EVENT_PARAMS,
       body: schemaRef('LinkSportEventScoreSourceRequest'),
@@ -217,7 +217,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       description: 'Root admin only.',
       operationId: 'unlinkEventScoreSource',
       params: EVENT_PARAMS,
-      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409) },
+      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404) },
     },
     handler: handler.unlinkScoreSource,
   });

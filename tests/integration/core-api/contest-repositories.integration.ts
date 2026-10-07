@@ -422,7 +422,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
 
     // The provider re-sending IN_PROGRESS finds nothing left to start, so nobody is told twice.
     await lifecycle.applySportEventStatusTransition({
-      sportEventId: event.id, toStatus: 'IN_PROGRESS', actor: { type: 'PROVIDER' },
+      sportEventId: event.id, toStatus: 'IN_PROGRESS', actor: { type: 'SYSTEM' },
     });
     expect(send).toHaveBeenCalledTimes(2);
   });

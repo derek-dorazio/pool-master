@@ -400,20 +400,20 @@ ruleTester.run('no-widened-enum-fields', noWidenedEnumFields, {
 ruleTester.run('no-bare-enum-literals', noBareEnumLiterals, {
   valid: [
     // Naming the member is the point of the rule.
-    'const a = x.syncScope === SportEventSyncScope.FULL;',
+    'const a = x.syncScope === SportEventSyncScope.SCORES_ONLY;',
     // `status` is String on six models, so a literal there has no enum to name.
     "const a = x.status === 'ACTIVE';",
     // Not an enum-backed column.
-    "const a = x.name === 'FULL';",
+    "const a = x.name === 'SCORES_ONLY';",
     // A value that is not a member of the column's enum is a different bug (tsc's).
     "const a = x.syncScope === 'NOT_A_MEMBER';",
     // Not a comparison this rule owns.
-    "const a = x.syncScope > 'FULL';",
+    "const a = x.syncScope > 'SCORES_ONLY';",
   ],
   invalid: [
     {
-      code: "const a = x.syncScope === 'FULL';",
-      errors: [{ messageId: 'bareLiteral', data: { field: 'syncScope', value: 'FULL' } }],
+      code: "const a = x.syncScope === 'SCORES_ONLY';",
+      errors: [{ messageId: 'bareLiteral', data: { field: 'syncScope', value: 'SCORES_ONLY' } }],
     },
     {
       code: "const a = x.confidence !== 'EXACT';",

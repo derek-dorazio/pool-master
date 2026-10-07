@@ -34,7 +34,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
         externalId: { not: '' },
         status: { in: ['IN_PROGRESS'] },
         sportEventParticipants: { some: {} },
-        syncScope: { in: ['FULL', 'SCORES_ONLY'] },
+        syncScope: 'SCORES_ONLY',
       },
       orderBy: undefined,
       take: undefined,
@@ -113,7 +113,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
           gte: new Date('2026-04-26T22:30:00.000Z'),
           lte: new Date('2026-05-03T22:30:00.000Z'),
         },
-        syncScope: 'FULL',
+        syncScope: 'SCORES_ONLY',
       },
       orderBy: [
         { startDate: 'asc' },
@@ -275,10 +275,9 @@ describe('pool-master-cgb: syncScope gating', () => {
   const rowsByScope = [
     { externalId: 'none-event', syncScope: 'NONE' },
     { externalId: 'scores-only-event', syncScope: 'SCORES_ONLY' },
-    { externalId: 'full-event', syncScope: 'FULL' },
   ];
 
-  it('pool-master-cgb: EVENTPARTICIPANTS never returns a NONE or SCORES_ONLY event — FULL only', async () => {
+  it('EVENTPARTICIPANTS returns only linked (SCORES_ONLY) events, never an unlinked NONE one', async () => {
     const prisma = createPrismaWithSyncScopeAwareFilter(rowsByScope);
     const registry = { getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }) };
     const reader = createScheduledEventReader({ prisma: prisma as never, registry: registry as never });
@@ -289,10 +288,10 @@ describe('pool-master-cgb: syncScope gating', () => {
       now: new Date('2026-04-26T22:30:00.000Z'),
     });
 
-    expect(eventIds).toEqual(['full-event']);
+    expect(eventIds).toEqual(['scores-only-event']);
   });
 
-  it('EVENTLIVESCORES never returns a NONE event, but does return SCORES_ONLY and FULL', async () => {
+  it('EVENTLIVESCORES returns only linked (SCORES_ONLY) events, never an unlinked NONE one', async () => {
     const prisma = createPrismaWithSyncScopeAwareFilter(rowsByScope);
     const registry = { getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }) };
     const reader = createScheduledEventReader({ prisma: prisma as never, registry: registry as never });
@@ -303,6 +302,6 @@ describe('pool-master-cgb: syncScope gating', () => {
       now: new Date('2026-04-26T22:30:00.000Z'),
     });
 
-    expect(eventIds.sort()).toEqual(['full-event', 'scores-only-event']);
+    expect(eventIds).toEqual(['scores-only-event']);
   });
 });

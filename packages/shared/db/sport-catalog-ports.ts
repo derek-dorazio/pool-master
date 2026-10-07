@@ -138,8 +138,8 @@ export interface SportEventRepository {
    */
   countFieldRecords(sportEventIds: readonly string[]): Promise<Map<string, SportEventFieldRecordCounts>>;
   /**
-   * The events the lifecycle scheduler may move on: auto lifecycle on, not provider-owned
-   * (`syncScope` other than `FULL`), and `SCHEDULED` or `IN_PROGRESS`. Unordered.
+   * The events the lifecycle scheduler may move on: auto lifecycle on, and `SCHEDULED` or
+   * `IN_PROGRESS`. Unordered.
    */
   findAutoLifecycleCandidates(): Promise<SportEvent[]>;
 }

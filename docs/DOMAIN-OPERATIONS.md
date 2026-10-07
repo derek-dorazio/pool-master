@@ -578,7 +578,7 @@ are gone (#236).
 | Create | `rootAdmin` | `createEvent` (manual) or `createEventFromProviderEvent` (linked for scores), on a sport league in an event year. The series is found or created by name; a second edition of a series in one year is 409 `EVENT_EDITION_ALREADY_EXISTS` — the database's `(eventSeriesId, eventYear)` constraint. The sport comes from the sport league; golf only for now, 422 `SPORT_NOT_SUPPORTED` otherwise. Seeds the rounds and the default tiers. Provider sync never creates an event: it updates the one linked to a provider event and skips the rest |
 | Clone an event year | `rootAdmin` | `cloneEventYear` re-creates each of a sport league's events in one year as next year's edition (or `targetYear`'s), dates shifted; never the field, tiers, scores or provider link. 422 `EVENT_YEAR_HAS_NO_EVENTS` for an empty source year, 409 `EVENT_YEAR_NOT_EMPTY` for a target year that has events. Leaves the current event year alone |
 | Import an event year from a provider | `rootAdmin` | `importEventYearFromProvider` creates each provider event for a sport league's tour starting in that calendar year that PoolMaster lacks, each as `createEventFromProviderEvent` would, linked for scores. A provider event belongs to the tour when its tour name equals the sport league's `matchKeyword`, ignoring case. Events already linked, and series that already have an edition that year, are skipped and reported, so a re-run creates nothing. 422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD`; 404 `PROVIDER_NOT_FOUND` or `SPORT_LEAGUE_NOT_FOUND` (#385) |
-| Update | `rootAdmin` | 409 `EVENT_NOT_ADMIN_MANAGED` once a provider owns the event in full |
+| Update | `rootAdmin` | `updateEvent` edits any event, linked to a provider or not. A provider sync never overwrites these fields (#435) |
 | Delete | `rootAdmin` | 409 `EVENT_HAS_CONTESTS`. Deletes the event's rounds and tiers first — before #236 it failed on the foreign key for any event that had them |
 | Transition, link / unlink the score source | `rootAdmin` | `transitionEvent`, `linkEventScoreSource`, `unlinkEventScoreSource` |
 | Start simulated live scoring | `rootAdmin` | `startEventLiveSimulation` asks the linked provider to play the event's four rounds forward on its own clock, so a live contest's leaderboard can be tested; calling again restarts from round 1. Scores still arrive through the live-score sync, which polls only while the event is `IN_PROGRESS`. 409 `EVENT_NOT_LINKED` when unlinked, 422 `LIVE_SIMULATION_UNSUPPORTED` unless the event is golf and the provider reports `supportsLiveSimulation` (only the QA mock feed does), 404 `PROVIDER_EVENT_NOT_FOUND` when the provider no longer has the linked event |
@@ -678,8 +678,10 @@ carries none leaves the ranking already on the row.
 The `EVENTSCHEDULE` and `EVENTRESULTS` feeds were retired in #126, and with them the sport-level
 sync (`submitSportSync`). Events are created and linked by the root admin; the provider's
 upcoming-event catalog is read only on demand. The two remaining feeds, `EVENTPARTICIPANTS` and
-`EVENTLIVESCORES`, are event-scoped, and an event's lifecycle is moved by the admin or, for
-non-`FULL` events, by the date-driven lifecycle scheduler. Sync-run history rows for the retired
+`EVENTLIVESCORES`, are event-scoped and reach only linked (`SCORES_ONLY`) events. A field sync
+writes the field and its size, never the event's details or status, and a score for a round the
+admin did not schedule is skipped, never creating the round (#435). An event's lifecycle is moved
+by the admin or by the date-driven lifecycle scheduler. Sync-run history rows for the retired
 feeds were deleted by migration, and stored ingestion config drops their keys on boot.
 
 ## Contests and entries

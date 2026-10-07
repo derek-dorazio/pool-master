@@ -2887,8 +2887,7 @@
             "type": "string",
             "enum": [
               "NONE",
-              "SCORES_ONLY",
-              "FULL"
+              "SCORES_ONLY"
             ],
             "description": "How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)"
           },
@@ -3179,8 +3178,7 @@
                   "type": "string",
                   "enum": [
                     "NONE",
-                    "SCORES_ONLY",
-                    "FULL"
+                    "SCORES_ONLY"
                   ],
                   "description": "How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)"
                 },
@@ -3427,8 +3425,7 @@
                 "type": "string",
                 "enum": [
                   "NONE",
-                  "SCORES_ONLY",
-                  "FULL"
+                  "SCORES_ONLY"
                 ],
                 "description": "How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)"
               },
@@ -3832,8 +3829,7 @@
                   "type": "string",
                   "enum": [
                     "NONE",
-                    "SCORES_ONLY",
-                    "FULL"
+                    "SCORES_ONLY"
                   ],
                   "description": "How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)"
                 },
@@ -4007,7 +4003,7 @@
           }
         },
         "additionalProperties": false,
-        "description": "Changes to an admin-managed event; omitted fields are left alone."
+        "description": "Changes to an event; omitted fields are left alone."
       },
       "TransitionSportEventRequest": {
         "type": "object",
@@ -29977,7 +29973,7 @@
         "tags": [
           "Events"
         ],
-        "description": "409 EVENT_NOT_ADMIN_MANAGED for an event a provider owns in full. Root admin only.",
+        "description": "Edits any event, linked to a provider or not; a provider never overwrites these fields. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -30089,45 +30085,6 @@
             }
           },
           "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -31197,7 +31154,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Root admin only.",
+        "description": "409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -31496,45 +31453,6 @@
             }
           },
           "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

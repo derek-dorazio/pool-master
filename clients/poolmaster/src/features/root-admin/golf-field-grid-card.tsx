@@ -169,13 +169,11 @@ export function GolfFieldGridCard({
   eventId,
   fieldError,
   fieldLoading,
-  readOnly,
 }: {
   entries: GolfFieldEntry[];
   eventId: string;
   fieldError: string | null;
   fieldLoading: boolean;
-  readOnly: boolean;
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-field-page',
@@ -266,7 +264,7 @@ export function GolfFieldGridCard({
         />
       </div>
 
-      {!readOnly && (patches.length > 0 || invalidCount > 0) ? (
+      {patches.length > 0 || invalidCount > 0 ? (
         <div
           className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3"
           data-testid="root-admin-golf-field-dirty-bar"

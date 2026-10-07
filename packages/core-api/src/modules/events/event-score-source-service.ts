@@ -195,8 +195,7 @@ export class EventScoreSourceService {
     sportEventId: string,
     input: { providerId: string; externalId: string },
   ): Promise<void> {
-    const existing = await this.requireSportEvent(sportEventId);
-    this.assertAdminManaged(existing);
+    await this.requireSportEvent(sportEventId);
 
     const conflict = await this.prisma.sportEvent.findFirst({
       where: {
@@ -234,8 +233,7 @@ export class EventScoreSourceService {
    * receiving further automatic score updates (plans/124 §4.4).
    */
   async unlinkScoreSource(sportEventId: string): Promise<void> {
-    const existing = await this.requireSportEvent(sportEventId);
-    this.assertAdminManaged(existing);
+    await this.requireSportEvent(sportEventId);
 
     await this.prisma.sportEvent.update({
       where: { id: sportEventId },
@@ -332,15 +330,5 @@ export class EventScoreSourceService {
       throw new EventScoreSourceError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
     return existing;
-  }
-
-  private assertAdminManaged(sportEvent: { syncScope: SportEventSyncScope }): void {
-    if (sportEvent.syncScope === SportEventSyncScope.FULL) {
-      throw new EventScoreSourceError(
-        'This sport event is provider-owned and cannot be edited through admin routes.',
-        'EVENT_NOT_ADMIN_MANAGED',
-        409,
-      );
-    }
   }
 }

@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import {
   parseDelimitedRecords,
   type BulkUploadFormat,
@@ -42,7 +41,6 @@ export type GolfTournamentStatus = SportEventDto['status'];
 export const GOLF_SYNC_SCOPE_LABELS: Record<GolfSyncScope, string> = {
   NONE: 'Manual',
   SCORES_ONLY: 'Scores synced',
-  FULL: 'Fully synced',
 };
 
 export function golfSyncScopeLabel(scope: GolfSyncScope): string {
@@ -51,13 +49,7 @@ export function golfSyncScopeLabel(scope: GolfSyncScope): string {
 
 export function golfSyncScopeTone(scope: GolfSyncScope): BadgeTone {
   if (scope === 'SCORES_ONLY') return 'info';
-  if (scope === 'FULL') return 'neutral';
   return 'active';
-}
-
-/** A `FULL` tournament is fully provider-owned — read-only in the admin UI (§3.5). */
-export function isAdminManagedGolfTournament(scope: GolfSyncScope): boolean {
-  return scope !== 'FULL';
 }
 
 /**
@@ -174,19 +166,17 @@ function firstNonEmpty(...values: Array<string | null | undefined>): string | nu
  * roughly when — mirrors the scheduler's own comparison: SCHEDULED → IN_PROGRESS
  * at round 1's scheduled date (falling back to the tournament start), IN_PROGRESS
  * → COMPLETED at the last round's scheduled end (falling back to the tournament
- * end). Returns null when auto-lifecycle is off, the tournament is fully
- * provider-owned, the status is terminal, or no date is available to compare
- * against.
+ * end). Returns null when auto-lifecycle is off, the status is terminal, or no
+ * date is available to compare against.
  */
 export function deriveGolfAutoTransition(input: {
   status: GolfTournamentStatus;
   autoLifecycleEnabled: boolean;
-  syncScope: GolfSyncScope;
   startDate: string;
   endDate: string | null;
   rounds: readonly SportEventRoundDto[];
 }): GolfAutoTransition | null {
-  if (!input.autoLifecycleEnabled || input.syncScope === SportEventSyncScope.FULL) {
+  if (!input.autoLifecycleEnabled) {
     return null;
   }
 

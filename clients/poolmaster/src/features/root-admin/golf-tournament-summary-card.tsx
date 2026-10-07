@@ -67,16 +67,14 @@ function toRequestBody(values: EditFormValues): UpdateSportEventRequest {
 
 /**
  * plans/124 §6.3 block 1 — the Tournament Home summary: read-only detail list
- * plus an inline "Edit details" modal (hidden for a fully provider-owned event).
+ * plus an inline "Edit details" modal.
  */
 export function GolfTournamentSummaryCard({
   eventId,
-  readOnly,
   tourName,
   tournament,
 }: {
   eventId: string;
-  readOnly: boolean;
   tourName: string | undefined;
   tournament: SportEventDto;
 }) {
@@ -120,20 +118,18 @@ export function GolfTournamentSummaryCard({
     <Tile>
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-lg font-semibold text-foreground">Summary</h2>
-        {!readOnly ? (
-          <Button
-            data-testid="root-admin-golf-tournament-home-edit"
-            onClick={() => {
-              form.reset(toDefaults(tournament));
-              setOpen(true);
-            }}
-            size="sm"
-            type="button"
-            variant="secondary"
-          >
-            Edit details
-          </Button>
-        ) : null}
+        <Button
+          data-testid="root-admin-golf-tournament-home-edit"
+          onClick={() => {
+            form.reset(toDefaults(tournament));
+            setOpen(true);
+          }}
+          size="sm"
+          type="button"
+          variant="secondary"
+        >
+          Edit details
+        </Button>
       </div>
 
       <DefinitionList

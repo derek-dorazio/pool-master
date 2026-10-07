@@ -206,15 +206,14 @@ export const SportEventStatus = {
 export type SportEventStatus = (typeof SportEventStatus)[keyof typeof SportEventStatus];
 
 /**
- * Which scheduled sync feeds may touch a SportEvent — separate from
- * providerId/externalId identity (plans/124 §3.5/§4.4). `@default(FULL)`
- * on the column means every ingestion-created row keeps today's behavior
- * unchanged; only admin-authored tournaments start at NONE.
+ * Whether provider sync may touch a SportEvent — separate from providerId/externalId
+ * identity. NONE: unlinked, nothing syncs. SCORES_ONLY: an admin linked it to a provider
+ * event, so live scores (and an admin-triggered field load) reach it. Every event is
+ * admin-owned; a provider never sets its details or status (ADR-0009).
  */
 export const SportEventSyncScope = {
   NONE: 'NONE',
   SCORES_ONLY: 'SCORES_ONLY',
-  FULL: 'FULL',
 } as const;
 export type SportEventSyncScope = (typeof SportEventSyncScope)[keyof typeof SportEventSyncScope];
 

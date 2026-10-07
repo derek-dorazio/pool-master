@@ -305,13 +305,16 @@ describe('Golf round scores — admin correction surface', () => {
   });
 });
 
-// #375 — nothing is scored after the 18th hole of the event's last scheduled round, whatever
-// the sync scope: a playoff reported as a fifth round never becomes a round row or a score.
+// #375 — nothing is scored after the 18th hole of the event's last scheduled round: a playoff
+// reported as a fifth round never becomes a round row or a score.
 describe('Golf round scores — bounded by the event\'s scheduled rounds', () => {
-  it('a FULL sync of a 4-round event skips round 5 and holes past 18, so the 72-hole score stands', async () => {
+  it('a score sync of a 4-round event skips round 5 and holes past 18, so the 72-hole score stands', async () => {
     const { event, rory, jordan } = await createField('beyond-schedule-sync');
     const prisma = getPrisma();
-    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4, syncScope: 'FULL' } });
+    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4, syncScope: 'SCORES_ONLY' } });
+    await prisma.sportEventRound.createMany({
+      data: [2, 3, 4].map((roundNumber) => ({ sportEventId: event.id, roundNumber, scheduledDate: new Date('2026-05-07T12:00:00.000Z') })),
+    });
     await prisma.participantProviderMapping.createMany({
       data: [
         { providerId: 'integration-test', externalId: 'ext-rory', participantId: rory.participant.id },

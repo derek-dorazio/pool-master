@@ -188,17 +188,6 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
     expect(refresh).toHaveTextContent('Load Participant Field');
   });
 
-  it('pool-master-za4 renders read-only for a FULL provider-owned tournament', async () => {
-    seed({ tournament: { syncScope: 'FULL' } });
-    renderPage();
-
-    expect(
-      await screen.findByText(/fully provider-owned/i),
-    ).toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-golf-field-seed')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-golf-field-add')).not.toBeInTheDocument();
-  });
-
   it('pool-master-za4 surfaces the tournament load error', async () => {
     getEventMock.mockResolvedValue({
       error: { code: 'NOT_FOUND', message: 'No such tournament' },
@@ -280,14 +269,6 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
 
     await userEvent.click(screen.getByTestId('root-admin-golf-field-upload-close'));
     expect(screen.queryByTestId('root-admin-golf-field-upload-card')).not.toBeInTheDocument();
-  });
-
-  it('offers no Bulk upload action on a read-only, fully provider-owned tournament', async () => {
-    seed({ tournament: { syncScope: 'FULL' } });
-    renderPage();
-
-    expect(await screen.findByText(/fully provider-owned/i)).toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-golf-field-upload-open')).not.toBeInTheDocument();
   });
 
   it('pool-master-za4 seeds the field from the league roster behind a confirmation', async () => {

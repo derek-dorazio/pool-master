@@ -6,11 +6,10 @@
  * produce byte-identical downstream behavior — there is exactly one code
  * path for "what happens when a sport event's status changes."
  *
- * Provider-driven transitions (`actor.type === 'PROVIDER'`) stay permissive:
- * an undeclared jump in SPORT_EVENT_STATUS_TRANSITIONS is applied anyway,
- * only logged. Admin- and scheduler-driven transitions (`actor.type ===
- * 'ROOT_ADMIN'` or `'SYSTEM'`) are strict and throw EventLifecycleError
- * (422 SPORT_EVENT_INVALID_TRANSITION) on an undeclared jump.
+ * Every transition is driven by an admin or the lifecycle scheduler; a provider never
+ * moves an event's status (ADR-0009). An undeclared jump in
+ * SPORT_EVENT_STATUS_TRANSITIONS throws EventLifecycleError
+ * (422 SPORT_EVENT_INVALID_TRANSITION).
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -44,9 +43,8 @@ export interface CompletedSportEventSettlement {
   ): Promise<unknown>;
 }
 
-/** Who drove the transition. Only the kind is read: it decides strict versus permissive. */
+/** Who drove the transition: an admin by hand, or the lifecycle scheduler. */
 export type SportEventStatusTransitionActor =
-  | { type: 'PROVIDER' }
   | { type: 'ROOT_ADMIN' }
   | { type: 'SYSTEM' };
 
@@ -115,20 +113,10 @@ export class EventLifecycleService {
       throw new EventLifecycleError(`Sport event ${input.sportEventId} not found`, 'SPORT_EVENT_NOT_FOUND', 404);
     }
     const fromStatus = before.status;
-    const isStrict = input.actor.type !== 'PROVIDER';
-
     if (fromStatus !== input.toStatus && !isDeclaredSportEventTransition(fromStatus, input.toStatus)) {
-      if (isStrict) {
-        throw new EventLifecycleError(
-          `Sport event ${input.sportEventId} cannot transition from ${fromStatus} to ${input.toStatus}`,
-        );
-      }
-      this.logger?.warn({
-        sportEventId: input.sportEventId,
-        fromStatus,
-        toStatus: input.toStatus,
-        actor: input.actor.type,
-      }, 'Provider-driven sport event transition is not in the declared transition map; applying it anyway');
+      throw new EventLifecycleError(
+        `Sport event ${input.sportEventId} cannot transition from ${fromStatus} to ${input.toStatus}`,
+      );
     }
 
     const updated = await this.sportEvents.update(input.sportEventId, {

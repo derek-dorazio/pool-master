@@ -61,12 +61,10 @@ function findCard(
 export function GolfTierBoard({
   eventId,
   field,
-  readOnly,
   tiers,
 }: {
   eventId: string;
   field: SportEventParticipantDto[];
-  readOnly: boolean;
   tiers: SportEventTierDto[];
 }) {
   const logger = getLogger().child({
@@ -202,8 +200,6 @@ export function GolfTierBoard({
     label: column.tierKey === null ? 'Unassigned' : column.label,
   }));
 
-  const editable = !readOnly;
-
   function renderCard(column: TierColumn, card: TierCard, index: number) {
     const priceRaw =
       priceDraft[card.sportEventParticipantId] ??
@@ -230,7 +226,6 @@ export function GolfTierBoard({
             aria-label={`Price for ${card.name}`}
             className="h-8"
             data-testid={`root-admin-golf-tier-price-${card.sportEventParticipantId}`}
-            disabled={!editable}
             id={`price-${card.sportEventParticipantId}`}
             inputMode="numeric"
             onChange={(event) =>
@@ -242,51 +237,49 @@ export function GolfTierBoard({
             value={priceRaw}
           />
         </div>
-        {editable ? (
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Select
-              aria-label={`Move ${card.name} to tier`}
-              className="h-8"
-              data-testid={`root-admin-golf-tier-move-${card.sportEventParticipantId}`}
-              onChange={(event) =>
-                setBoard((current) =>
-                  moveCard(current, card.sportEventParticipantId, event.target.value),
-                )
-              }
-              value={column.key}
-            >
-              {moveOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-            <Button
-              aria-label={`Move ${card.name} up`}
-              data-testid={`root-admin-golf-tier-up-${card.sportEventParticipantId}`}
-              disabled={index === 0}
-              onClick={() =>
-                setBoard((current) => nudgeCard(current, card.sportEventParticipantId, -1))
-              }
-              size="sm"
-              variant="secondary"
-            >
-              <span aria-hidden>↑</span>
-            </Button>
-            <Button
-              aria-label={`Move ${card.name} down`}
-              data-testid={`root-admin-golf-tier-down-${card.sportEventParticipantId}`}
-              disabled={index === column.cards.length - 1}
-              onClick={() =>
-                setBoard((current) => nudgeCard(current, card.sportEventParticipantId, 1))
-              }
-              size="sm"
-              variant="secondary"
-            >
-              <span aria-hidden>↓</span>
-            </Button>
-          </div>
-        ) : null}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <Select
+            aria-label={`Move ${card.name} to tier`}
+            className="h-8"
+            data-testid={`root-admin-golf-tier-move-${card.sportEventParticipantId}`}
+            onChange={(event) =>
+              setBoard((current) =>
+                moveCard(current, card.sportEventParticipantId, event.target.value),
+              )
+            }
+            value={column.key}
+          >
+            {moveOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+          <Button
+            aria-label={`Move ${card.name} up`}
+            data-testid={`root-admin-golf-tier-up-${card.sportEventParticipantId}`}
+            disabled={index === 0}
+            onClick={() =>
+              setBoard((current) => nudgeCard(current, card.sportEventParticipantId, -1))
+            }
+            size="sm"
+            variant="secondary"
+          >
+            <span aria-hidden>↑</span>
+          </Button>
+          <Button
+            aria-label={`Move ${card.name} down`}
+            data-testid={`root-admin-golf-tier-down-${card.sportEventParticipantId}`}
+            disabled={index === column.cards.length - 1}
+            onClick={() =>
+              setBoard((current) => nudgeCard(current, card.sportEventParticipantId, 1))
+            }
+            size="sm"
+            variant="secondary"
+          >
+            <span aria-hidden>↓</span>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -295,7 +288,7 @@ export function GolfTierBoard({
     <Tile>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-base font-semibold text-foreground">Tier assignments</h3>
-        {editable && (dirty || priceInvalid) ? (
+        {dirty || priceInvalid ? (
           <div
             className="flex items-center gap-2"
             data-testid="root-admin-golf-tier-board-dirty-bar"
@@ -342,7 +335,6 @@ export function GolfTierBoard({
         {board.map((column) => (
           <TierBoardColumn
             column={column}
-            editable={editable}
             key={column.key}
             onReorder={(orderedIds) =>
               setBoard((current) => reorderColumn(current, column.key, orderedIds))
@@ -357,12 +349,10 @@ export function GolfTierBoard({
 
 function TierBoardColumn({
   column,
-  editable,
   onReorder,
   renderCard,
 }: {
   column: TierColumn;
-  editable: boolean;
   onReorder: (orderedIds: string[]) => void;
   renderCard: (column: TierColumn, card: TierCard, index: number) => ReactNode;
 }) {
@@ -383,7 +373,7 @@ function TierBoardColumn({
       </h4>
       {column.cards.length === 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">No golfers.</p>
-      ) : editable ? (
+      ) : (
         <SortableList
           aria-label={`${column.label} golfers`}
           className="mt-3"
@@ -404,14 +394,6 @@ function TierBoardColumn({
             </div>
           )}
         />
-      ) : (
-        <ul className="mt-3 space-y-2">
-          {column.cards.map((card, index) => (
-            <li key={card.sportEventParticipantId}>
-              {renderCard(column, card, index)}
-            </li>
-          ))}
-        </ul>
       )}
     </section>
   );

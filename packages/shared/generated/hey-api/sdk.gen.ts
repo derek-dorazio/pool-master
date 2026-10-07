@@ -1020,7 +1020,7 @@ export const getEvent = <ThrowOnError extends boolean = false>(options: Options<
 /**
  * Update a sport event
  *
- * 409 EVENT_NOT_ADMIN_MANAGED for an event a provider owns in full. Root admin only.
+ * Edits any event, linked to a provider or not; a provider never overwrites these fields. Root admin only.
  */
 export const updateEvent = <ThrowOnError extends boolean = false>(options: Options<UpdateEventData, ThrowOnError>) => (options.client ?? client).patch<UpdateEventResponses, UpdateEventErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1106,7 +1106,7 @@ export const unlinkEventScoreSource = <ThrowOnError extends boolean = false>(opt
 /**
  * Link a sport event to a provider event for scores
  *
- * Root admin only.
+ * 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.
  */
 export const linkEventScoreSource = <ThrowOnError extends boolean = false>(options: Options<LinkEventScoreSourceData, ThrowOnError>) => (options.client ?? client).put<LinkEventScoreSourceResponses, LinkEventScoreSourceErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
