@@ -145,7 +145,7 @@ export const ProviderSyncWriteDiagnosticsDtoSchema = z.object({
 export type ProviderSyncWriteDiagnosticsDto = z.infer<typeof ProviderSyncWriteDiagnosticsDtoSchema>;
 
 export const ProviderSyncRunPayloadDtoSchema = z.object({
-  runType: z.string().optional().describe('Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.'),
+  runType: z.string().optional().describe('Sync run source: a manual or scheduled event sync.'),
   requestedFeeds: z.array(IngestionFeedTypeSchema).optional().describe('Feeds represented by the originating manual or scheduled sync request.'),
   requestedFeed: IngestionFeedTypeSchema.optional().describe('Single feed represented by this sync run row.'),
   requestPayload: JsonObjectSchema.optional().describe('Normalized request context that submitted the sync run, including source and actor diagnostics.'),

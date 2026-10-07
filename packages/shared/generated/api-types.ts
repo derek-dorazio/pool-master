@@ -7959,7 +7959,7 @@ export interface components {
             createdAt: string;
             /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
             payload: {
-                /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
+                /** @description Sync run source: a manual or scheduled event sync. */
                 runType?: string;
                 /** @description Feeds represented by the originating manual or scheduled sync request. */
                 requestedFeeds?: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
@@ -8135,7 +8135,7 @@ export interface components {
                 createdAt: string;
                 /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
                 payload: {
-                    /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
+                    /** @description Sync run source: a manual or scheduled event sync. */
                     runType?: string;
                     /** @description Feeds represented by the originating manual or scheduled sync request. */
                     requestedFeeds?: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
@@ -8304,7 +8304,7 @@ export interface components {
                 createdAt: string;
                 /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
                 payload: {
-                    /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
+                    /** @description Sync run source: a manual or scheduled event sync. */
                     runType?: string;
                     /** @description Feeds represented by the originating manual or scheduled sync request. */
                     requestedFeeds?: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];

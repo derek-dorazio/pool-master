@@ -15159,7 +15159,7 @@
             "properties": {
               "runType": {
                 "type": "string",
-                "description": "Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync."
+                "description": "Sync run source: a manual or scheduled event sync."
               },
               "requestedFeeds": {
                 "type": "array",
@@ -15620,7 +15620,7 @@
                   "properties": {
                     "runType": {
                       "type": "string",
-                      "description": "Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync."
+                      "description": "Sync run source: a manual or scheduled event sync."
                     },
                     "requestedFeeds": {
                       "type": "array",
@@ -16079,7 +16079,7 @@
                   "properties": {
                     "runType": {
                       "type": "string",
-                      "description": "Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync."
+                      "description": "Sync run source: a manual or scheduled event sync."
                     },
                     "requestedFeeds": {
                       "type": "array",

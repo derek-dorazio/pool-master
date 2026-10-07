@@ -7375,7 +7375,7 @@ export type ProviderSyncRunDto = {
      */
     payload: {
         /**
-         * Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.
+         * Sync run source: a manual or scheduled event sync.
          */
         runType?: string;
         /**
@@ -7612,7 +7612,7 @@ export type ProviderSyncRunListResponse = {
          */
         payload: {
             /**
-             * Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.
+             * Sync run source: a manual or scheduled event sync.
              */
             runType?: string;
             /**
@@ -7843,7 +7843,7 @@ export type ProviderManualSyncSubmissionResponse = {
          */
         payload: {
             /**
-             * Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.
+             * Sync run source: a manual or scheduled event sync.
              */
             runType?: string;
             /**
