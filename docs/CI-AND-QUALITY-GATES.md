@@ -91,6 +91,13 @@ hanging. The deploy limits are deliberately wide: stopping `deploy-qa` mid-rollo
 QA in the state the concurrency section above warns about. When a job's normal time grows,
 raise its limit rather than removing it.
 
+The Playwright Chromium install in both browser E2E jobs also has a step limit, because it
+depends on Ubuntu's apt mirrors: on 2026-10-07 it hung four times and each hang used the
+whole 25-minute job limit (#470). `scripts/ci-install-playwright-chromium.sh` gives apt
+network timeouts and bounds each attempt at three minutes, retrying twice, against a usual
+time of about 35 seconds. The browser download is cached per Playwright version, so only
+the system packages still come from the mirror.
+
 ## Repository setup — branch protection
 
 The CI gates only enforce discipline if `main` cannot be reached without going
