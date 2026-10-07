@@ -17,6 +17,10 @@ import {
   SettingsConflictError,
 } from '../../../packages/core-api/src/modules/platform/app-settings-service';
 import { POLL_INTERVAL_SETTINGS } from '../../../packages/core-api/src/modules/platform/poll-config-service';
+import {
+  INGESTION_SCHEDULE_SETTINGS,
+  IngestionConfigService,
+} from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
 import { SETTINGS_GROUPS } from '../../../packages/core-api/src/modules/platform/settings-groups';
 import {
   cleanupTestData,
@@ -66,6 +70,23 @@ describe('settings registry on Postgres', () => {
     expect(secondTask.get(POLL_INTERVAL_SETTINGS).standings).toBe(10000);
     await secondTask.refresh();
     expect(secondTask.get(POLL_INTERVAL_SETTINGS).standings).toBe(15000);
+  });
+
+  it('a sport override saved on one task survives a global schedule update made on a second task before its refresh', async () => {
+    const admin = await createTestUser({ displayName: 'Settings Race Admin', isRootAdmin: true });
+    const taskA = coreApiTask();
+    const taskB = coreApiTask();
+    await taskA.load();
+    await taskB.load();
+
+    await new IngestionConfigService(taskA).setPerSportOverride('GOLF', { eventLiveScores: { intervalSeconds: 20 } }, admin.user.id);
+    await new IngestionConfigService(taskB).updateConfig({ eventLiveScores: { intervalSeconds: 45 } }, admin.user.id);
+
+    const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: INGESTION_SCHEDULE_SETTINGS.key } });
+    expect(stored?.configJson).toEqual(expect.objectContaining({
+      eventLiveScores: { enabled: true, intervalSeconds: 45 },
+      perSportOverrides: { GOLF: { eventLiveScores: { intervalSeconds: 20 } } },
+    }));
   });
 
   it('records each save in the history with the previous value, the new value and the admin who saved it', async () => {

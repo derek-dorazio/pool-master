@@ -169,6 +169,8 @@ export class AppSettingsService {
       expectedUpdatedAt: options.expectedUpdatedAt,
     });
     if (result.status === 'conflict') {
+      // The conflict carries the stored row that won, so this task is current again at once.
+      this.applyRow(entry, result.current);
       this.logger?.info({
         action: 'appSettings.save.conflict',
         data: { key: group.key },
@@ -182,6 +184,28 @@ export class AppSettingsService {
       data: { key: group.key },
     }, 'Saved settings group');
     return this.getState(group);
+  }
+
+  /**
+   * Changes part of a group's value. `change` is applied to the stored version this task holds
+   * and saved against that version, so a save another task made since this task's last refresh is
+   * never silently overwritten: on a conflict the cache takes the newer version and `change` is
+   * applied to it once more. A second conflict in a row is refused.
+   */
+  async update<T>(group: SettingsGroup<T>, change: (current: T) => T, options: { changedById: string }): Promise<SettingsState<T>> {
+    for (let attempt = 1; ; attempt += 1) {
+      const current = this.getState(group);
+      try {
+        return await this.save(group, change(current.value), {
+          changedById: options.changedById,
+          expectedUpdatedAt: current.updatedAt,
+        });
+      } catch (error) {
+        if (!(error instanceof SettingsConflictError) || attempt >= 2) {
+          throw error;
+        }
+      }
+    }
   }
 
   /** Stores the group's defaults as its value; recorded in the history like any other save. */
@@ -262,8 +286,9 @@ export class AppSettingsService {
 }
 
 /**
- * A stored payload is read over the defaults, so a field added to a group since the row was
- * saved takes its default instead of invalidating the row. Unknown keys are dropped by the schema.
+ * A stored payload is read over the defaults, nested objects included, so a field added to a
+ * group since the row was saved takes its default instead of invalidating the row. Unknown keys
+ * are dropped by the schema.
  */
 function parseStored<T>(
   group: SettingsGroup<T>,
@@ -273,10 +298,20 @@ function parseStored<T>(
   if (!isPlainObject(stored) || !isPlainObject(defaults)) {
     return { success: false, issues: [{ message: 'Stored settings value is not an object' }] };
   }
-  const parsed = group.schema.safeParse({ ...defaults, ...stored });
+  const parsed = group.schema.safeParse(overDefaults(defaults, stored));
   return parsed.success
     ? { success: true, data: parsed.data }
     : { success: false, issues: parsed.error.issues };
+}
+
+/** `stored` over `defaults`, object by object: a nested field missing from `stored` takes its default. Arrays replace. */
+function overDefaults(defaults: Record<string, unknown>, stored: Record<string, unknown>): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...defaults };
+  for (const [key, value] of Object.entries(stored)) {
+    const fallback = defaults[key];
+    merged[key] = isPlainObject(fallback) && isPlainObject(value) ? overDefaults(fallback, value) : value;
+  }
+  return merged;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

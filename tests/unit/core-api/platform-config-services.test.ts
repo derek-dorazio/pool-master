@@ -186,6 +186,57 @@ describe('AppSettingsService', () => {
     expect(repository.history).toHaveLength(1);
   });
 
+  it('a refused save leaves the task holding the version that won, so the next read is current', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    const group = sampleGroup();
+    const first = settingsFor(repository, asGroups(group));
+    const second = settingsFor(repository, asGroups(group));
+    await first.load();
+    await second.load();
+
+    await first.save(group, { enabled: true, limit: 7, label: null }, { changedById: 'admin-1', expectedUpdatedAt: null });
+    await expect(second.save(group, { enabled: true, limit: 9, label: null }, {
+      changedById: 'admin-2',
+      expectedUpdatedAt: null,
+    })).rejects.toBeInstanceOf(SettingsConflictError);
+
+    expect(second.get(group).limit).toBe(7);
+  });
+
+  it('a partial update applies its change over a save another task made since the last refresh', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    const group = sampleGroup();
+    const first = settingsFor(repository, asGroups(group));
+    const second = settingsFor(repository, asGroups(group));
+    await first.load();
+    await second.load();
+
+    await first.update(group, (current) => ({ ...current, limit: 7 }), { changedById: 'admin-1' });
+    await second.update(group, (current) => ({ ...current, label: 'kept' }), { changedById: 'admin-2' });
+
+    expect(repository.rows.get('SAMPLE_CONFIG')?.configJson).toEqual({ enabled: true, limit: 7, label: 'kept' });
+    expect(repository.history).toHaveLength(2);
+  });
+
+  it('fills a field missing from a nested object of a stored payload with its nested default', async () => {
+    const NestedSchema = z.object({ feed: z.object({ enabled: z.boolean(), every: z.number() }) });
+    const group = defineSettingsGroup<z.infer<typeof NestedSchema>>({
+      key: 'NESTED_CONFIG',
+      title: 'Nested',
+      description: 'A group with a nested object.',
+      schema: NestedSchema,
+      defaults: () => ({ feed: { enabled: true, every: 30 } }),
+    });
+    const repository = inMemoryRuntimeConfigs();
+    repository.put('NESTED_CONFIG', { feed: { enabled: false } });
+    const settings = new AppSettingsService({ repository, groups: [group], env: {}, logger: fakeLogger() });
+
+    await settings.load();
+
+    expect(settings.get(group)).toEqual({ feed: { enabled: false, every: 30 } });
+    expect(settings.getState(group).source).toBe('stored');
+  });
+
   it('rejects an invalid payload with a 400 before anything is stored', async () => {
     const repository = inMemoryRuntimeConfigs();
     const group = sampleGroup();
@@ -318,6 +369,30 @@ describe('platform config services on the settings registry', () => {
         eventLiveScores: expect.objectContaining({ intervalSeconds: 300 }),
       }),
     );
+  });
+
+  it('a partial update on a task that has not yet refreshed keeps another task\'s save from moments earlier', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    const taskA = await loaded(repository);
+    const taskB = await loaded(repository);
+    const ingestionOnA = new IngestionConfigService(taskA.settings, fakeLogger());
+    const ingestionOnB = new IngestionConfigService(taskB.settings, fakeLogger());
+    const pollOnA = new PollConfigService(taskA.settings, fakeLogger());
+    const pollOnB = new PollConfigService(taskB.settings, fakeLogger());
+
+    await ingestionOnA.setPerSportOverride('GOLF', { eventLiveScores: { intervalSeconds: 20 } }, 'admin-1');
+    await ingestionOnB.updateConfig({ eventLiveScores: { intervalSeconds: 45 } }, 'admin-2');
+    await pollOnA.updateConfig({ draft: 12000 }, 'admin-1');
+    await pollOnB.updateConfig({ standings: 15000 }, 'admin-2');
+
+    expect(repository.rows.get(INGESTION_SCHEDULE_SETTINGS.key)?.configJson).toEqual(expect.objectContaining({
+      eventLiveScores: { enabled: true, intervalSeconds: 45 },
+      perSportOverrides: { GOLF: { eventLiveScores: { intervalSeconds: 20 } } },
+    }));
+    expect(repository.rows.get(POLL_INTERVAL_SETTINGS.key)?.configJson).toEqual(expect.objectContaining({
+      draft: 12000,
+      standings: 15000,
+    }));
   });
 
   it('a stored ingestion config loads with its live settings intact and is not rewritten on boot', async () => {

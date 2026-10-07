@@ -48,15 +48,19 @@ export class IngestionConfigService {
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
+  // The reads return promises for the scheduler's and the routes' sake; the read itself is
+  // synchronous. Each is built in an executor so a throw still arrives as a rejection.
   getConfig(): Promise<IngestionScheduleConfig> {
-    this.logger?.debug({
-      action: 'adminIngestionConfig.get.start',
-    }, 'Loading ingestion config');
-    const config = this.current();
-    this.logger?.info({
-      action: 'adminIngestionConfig.get.success',
-    }, 'Loaded ingestion config');
-    return Promise.resolve(config);
+    return new Promise((resolve) => {
+      this.logger?.debug({
+        action: 'adminIngestionConfig.get.start',
+      }, 'Loading ingestion config');
+      const config = this.current();
+      this.logger?.info({
+        action: 'adminIngestionConfig.get.success',
+      }, 'Loaded ingestion config');
+      resolve(config);
+    });
   }
 
   async updateConfig(
@@ -70,11 +74,10 @@ export class IngestionConfigService {
       },
     }, 'Updating ingestion config');
 
-    const current = this.current();
-    const saved = await this.save({
+    const saved = await this.update((current) => ({
       ...mergeBasePolicies(current, partial),
       perSportOverrides: current.perSportOverrides,
-    }, rootAdminUserId);
+    }), rootAdminUserId);
 
     this.logger?.info({
       action: 'adminIngestionConfig.update.success',
@@ -86,6 +89,10 @@ export class IngestionConfigService {
   }
 
   getPerSportConfig(sport: string): Promise<IngestionScheduleConfig> {
+    return new Promise((resolve) => resolve(this.perSportConfig(sport)));
+  }
+
+  private perSportConfig(sport: string): IngestionScheduleConfig {
     this.logger?.debug({
       action: 'adminIngestionConfig.getPerSport.start',
       data: { sport },
@@ -98,7 +105,7 @@ export class IngestionConfigService {
         action: 'adminIngestionConfig.getPerSport.globalFallback',
         data: { sport },
       }, 'No per-sport override found; returning global ingestion config');
-      return Promise.resolve(baseConfig);
+      return baseConfig;
     }
 
     const merged = {
@@ -109,7 +116,7 @@ export class IngestionConfigService {
       action: 'adminIngestionConfig.getPerSport.success',
       data: { sport },
     }, 'Loaded per-sport ingestion config');
-    return Promise.resolve(merged);
+    return merged;
   }
 
   async setPerSportOverride(
@@ -125,15 +132,13 @@ export class IngestionConfigService {
       },
     }, 'Setting per-sport ingestion override');
 
-    const current = this.current();
-    const existingOverride = current.perSportOverrides[sport] ?? {};
-    const saved = await this.save({
+    const saved = await this.update((current) => ({
       ...current,
       perSportOverrides: {
         ...current.perSportOverrides,
-        [sport]: mergeOverride(existingOverride, config),
+        [sport]: mergeOverride(current.perSportOverrides[sport] ?? {}, config),
       },
-    }, rootAdminUserId);
+    }), rootAdminUserId);
 
     this.logger?.info({
       action: 'adminIngestionConfig.setOverride.success',
@@ -154,12 +159,10 @@ export class IngestionConfigService {
       data: { sport },
     }, 'Clearing per-sport ingestion override');
 
-    const current = this.current();
-    const remainingOverrides = { ...current.perSportOverrides };
-    delete remainingOverrides[sport];
-    const saved = await this.save({
-      ...current,
-      perSportOverrides: remainingOverrides,
+    const saved = await this.update((current) => {
+      const remainingOverrides = { ...current.perSportOverrides };
+      delete remainingOverrides[sport];
+      return { ...current, perSportOverrides: remainingOverrides };
     }, rootAdminUserId);
 
     this.logger?.info({
@@ -188,8 +191,12 @@ export class IngestionConfigService {
     return this.settings.get(INGESTION_SCHEDULE_SETTINGS);
   }
 
-  private async save(config: IngestionScheduleConfig, rootAdminUserId: string): Promise<IngestionScheduleConfig> {
-    const saved = await this.settings.save(INGESTION_SCHEDULE_SETTINGS, config, { changedById: rootAdminUserId });
+  /** Applies a partial change to the stored version, never over another task's newer save. */
+  private async update(
+    change: (current: IngestionScheduleConfig) => IngestionScheduleConfig,
+    rootAdminUserId: string,
+  ): Promise<IngestionScheduleConfig> {
+    const saved = await this.settings.update(INGESTION_SCHEDULE_SETTINGS, change, { changedById: rootAdminUserId });
     return saved.value;
   }
 }

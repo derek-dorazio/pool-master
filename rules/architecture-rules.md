@@ -423,11 +423,15 @@ code defaults that may depend on the environment) and added to `SETTINGS_GROUPS`
 - **Every task converges within 30 seconds.** Production runs more than one core-api task; a
   value cached once at boot is how a save on one task never reached the other. The cache is
   refreshed from one query on a timer, with no pub/sub.
-- **Stored payloads are read over the defaults, and unknown keys are dropped**, so adding or
-  retiring a field never invalidates an old row. Cleaning up an old row's shape is a migration,
+- **Stored payloads are read over the defaults, nested objects included, and unknown keys are
+  dropped**, so adding or retiring a field never invalidates an old row. Cleaning up an old row's shape is a migration,
   not a boot-time rewrite.
 - **Every save is validated whole and recorded** in `platform_runtime_config_history` in the
   same transaction, and can be checked against the `updatedAt` the admin last saw.
+- **A partial change goes through `update`, never `get` then `save`.** A task's cache can be up
+  to 30 seconds old, so merging onto it and saving the whole payload unchecked silently reverts
+  another task's recent save. `update` saves against the version it merged onto and, on a
+  conflict, merges onto the newer one once more.
 
 ### Fixture data goes in a bootstrap script
 

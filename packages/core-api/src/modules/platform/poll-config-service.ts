@@ -34,14 +34,18 @@ export class PollConfigService {
    * Returns the current poll interval configuration.
    */
   getConfig(): Promise<PollIntervalConfig> {
-    this.logger?.debug({
-      action: 'adminPollConfig.get.start',
-    }, 'Loading poll interval config');
-    const config = this.settings.get(POLL_INTERVAL_SETTINGS);
-    this.logger?.info({
-      action: 'adminPollConfig.get.success',
-    }, 'Loaded poll interval config');
-    return Promise.resolve(config);
+    // A promise for the routes' sake; the read itself is synchronous. Built in an executor so a
+    // throw still arrives as a rejection.
+    return new Promise((resolve) => {
+      this.logger?.debug({
+        action: 'adminPollConfig.get.start',
+      }, 'Loading poll interval config');
+      const config = this.settings.get(POLL_INTERVAL_SETTINGS);
+      this.logger?.info({
+        action: 'adminPollConfig.get.success',
+      }, 'Loaded poll interval config');
+      resolve(config);
+    });
   }
 
   /**
@@ -57,9 +61,9 @@ export class PollConfigService {
         keys: Object.keys(partial),
       },
     }, 'Updating poll interval config');
-    const saved = await this.settings.save(
+    const saved = await this.settings.update(
       POLL_INTERVAL_SETTINGS,
-      { ...this.settings.get(POLL_INTERVAL_SETTINGS), ...partial },
+      (current) => ({ ...current, ...partial }),
       { changedById: rootAdminUserId },
     );
 
