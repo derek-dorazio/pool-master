@@ -5,6 +5,7 @@
 
 import type {
   PlatformRuntimeConfig,
+  PlatformRuntimeConfigChange,
   ProviderSyncRun,
   ProviderSyncRunStatus,
   Sport,
@@ -62,4 +63,6 @@ export interface PlatformRuntimeConfigRepository {
    * the history, in one transaction.
    */
   save(input: PlatformRuntimeConfigSave): Promise<PlatformRuntimeConfigSaveResult>;
+  /** A setting's most recent changes, newest first. The limit is the bound: the history is append-only. */
+  findRecentChanges(configKey: string, limit: number): Promise<PlatformRuntimeConfigChange[]>;
 }

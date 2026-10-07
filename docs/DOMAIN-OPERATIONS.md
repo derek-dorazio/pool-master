@@ -764,6 +764,9 @@ refreshes them from the database every 30 seconds, and every save is recorded in
 
 | Operation | Role | Notes |
 |---|---|---|
+| List, read settings groups | `rootAdmin` | `listSettingsGroups`, `getSettingsGroup` — value in use, defaults, `stored` or `defaults`, who last saved it. The `/manage/settings` page |
+| Save, reset a settings group | `rootAdmin` | `updateSettingsGroup` (the whole value plus `expectedUpdatedAt`; 409 `SETTINGS_CONFLICT` if someone saved in between), `resetSettingsGroup` |
+| Read a group's recent changes | `rootAdmin` | `listSettingsGroupHistory` — newest first, at most 20; the limit is the bound on an append-only history |
 | Read, update, reset poll intervals | `rootAdmin` | `getPollIntervals`, `updatePollIntervals` (a partial patch), `resetPollIntervals` |
 | Read, update, reset the ingestion schedule | `rootAdmin` | `getIngestionSchedule`, `updateIngestionSchedule`, `resetIngestionSchedule` |
 | Set, reset one sport's override | `rootAdmin` | `setSportIngestionOverride`, `resetSportIngestionOverride` |

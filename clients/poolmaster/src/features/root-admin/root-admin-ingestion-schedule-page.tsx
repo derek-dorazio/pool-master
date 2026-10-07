@@ -74,7 +74,7 @@ export function RootAdminIngestionSchedulePage() {
     onSuccess: (data) => {
       setDraft(cloneIngestionConfig(data));
     },
-    invalidates: [QueryKeys.rootAdmin.ingestionConfig],
+    invalidates: [QueryKeys.rootAdmin.ingestionConfig, QueryKeys.rootAdmin.settings],
   });
 
   const resetIngestionConfigMutation = useInvalidatingMutation({
@@ -88,7 +88,7 @@ export function RootAdminIngestionSchedulePage() {
     onSuccess: (data) => {
       setDraft(cloneIngestionConfig(data));
     },
-    invalidates: [QueryKeys.rootAdmin.ingestionConfig],
+    invalidates: [QueryKeys.rootAdmin.ingestionConfig, QueryKeys.rootAdmin.settings],
   });
 
   function updateDraftValue(
