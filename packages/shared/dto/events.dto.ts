@@ -363,12 +363,15 @@ export const SeedSportEventParticipantsResponseSchema = z.object({
 export type SeedSportEventParticipantsResponse = z.infer<typeof SeedSportEventParticipantsResponseSchema>;
 
 /** The field-row values an admin patches — by the grid save and by the field upload alike. */
+/** The largest value the 32-bit integer columns behind ranking and seed number can hold (#437). */
+const MAX_INT32 = 2147483647;
+
 const SportEventParticipantPatchShape = {
   isActive: z.boolean().optional(),
   inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().optional(),
-  ranking: z.number().int().nullable().optional(),
+  ranking: z.number().int().min(1).max(MAX_INT32).nullable().optional(),
   oddsToWin: z.number().nullable().optional(),
-  seedNumber: z.number().int().nullable().optional(),
+  seedNumber: z.number().int().min(1).max(MAX_INT32).nullable().optional(),
 };
 
 export const UpdateSportEventParticipantsRequestSchema = z.object({

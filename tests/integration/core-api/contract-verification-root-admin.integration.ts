@@ -1280,6 +1280,31 @@ describe('Contract verification (root admin)', () => {
       expect(ErrorEnvelopeSchema.safeParse(uploadRefusedRes.json()).success).toBe(true);
       expect(uploadRefusedRes.json<ErrorEnvelope>().error.code).toBe('EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED');
 
+      // A ranking or seed past a 32-bit integer is refused as validation (400), not a 500 from
+      // the database, on both the upload preview and the grid save.
+      const oversizedPreviewRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/participants/upload/preview`,
+        headers: rootAdmin.headers,
+        payload: { rows: [{ participantId: created.participantIds[0], ranking: 2 ** 31 }] },
+      });
+      expect(oversizedPreviewRes.statusCode).toBe(400);
+      expect(ErrorEnvelopeSchema.safeParse(oversizedPreviewRes.json()).success).toBe(true);
+      const loadedFieldRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/events/${eventId}/participants`,
+        headers: rootAdmin.headers,
+      });
+      const fieldRowId = loadedFieldRes.json<{ participants: Array<{ id: string }> }>().participants[0].id;
+      const oversizedSaveRes = await getApp().inject({
+        method: 'PATCH',
+        url: `/api/v1/events/${eventId}/participants`,
+        headers: rootAdmin.headers,
+        payload: { participants: [{ sportEventParticipantId: fieldRowId, seedNumber: 2 ** 31 }] },
+      });
+      expect(oversizedSaveRes.statusCode).toBe(400);
+      expect(ErrorEnvelopeSchema.safeParse(oversizedSaveRes.json()).success).toBe(true);
+
       const uploadApplyRes = await getApp().inject({
         method: 'POST',
         url: `/api/v1/events/${eventId}/participants/upload`,
