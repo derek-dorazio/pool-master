@@ -90,8 +90,8 @@ function EntryBlock({
         size="auto"
         variant="ghost"
       >
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-baseline gap-2">
+        <span className="block min-w-0">
+          <span className="flex flex-wrap items-baseline gap-2">
             <span
               className="text-sm font-semibold text-muted-foreground"
               data-testid={`contest-leaderboard-position-${entry.entryId}`}
@@ -99,12 +99,12 @@ function EntryBlock({
               {entry.displayPosition ?? NO_SCORE}
             </span>
             <span className="font-medium text-foreground">{entry.entryName}</span>
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground">
+          </span>
+          <span className="mt-1 block text-xs text-muted-foreground">
             {entry.squadName} · best {entry.countingPickLimit} of {entry.picks.length} count ·{' '}
             {entry.scoredPickCount} scored
-          </div>
-        </div>
+          </span>
+        </span>
         <span
           className="text-lg font-semibold text-foreground"
           data-testid={`contest-leaderboard-total-${entry.entryId}`}
