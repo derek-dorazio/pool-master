@@ -13,6 +13,7 @@ export function createContestManagementHandlers(
   return {
     getContest,
     updateContestConfiguration,
+    openContest,
   };
 
   async function getContest(
@@ -64,6 +65,34 @@ export function createContestManagementHandlers(
         return sendError(reply, error.statusCode, error.code, error.message);
       }
       logger.error({ contestId: request.params.contestId, err: error }, 'contest management update route failed');
+      throw error;
+    }
+  }
+
+  async function openContest(
+    request: FastifyRequest<{ Params: { id: string; contestId: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = createRequestContextLogger(request);
+    logger.debug({ contestId: request.params.contestId }, 'contest management open route start');
+    try {
+      const contest = await contestManagementService.openContest(
+        request.params.id,
+        request.params.contestId,
+      );
+      logger.info({ contestId: request.params.contestId }, 'contest management open route completed');
+      return reply.send({ contest });
+    } catch (error) {
+      if (error instanceof ContestManagementError) {
+        logger.warn({
+          contestId: request.params.contestId,
+          error: error.message,
+          code: error.code,
+          statusCode: error.statusCode,
+        }, 'contest management open route rejected');
+        return sendError(reply, error.statusCode, error.code, error.message);
+      }
+      logger.error({ contestId: request.params.contestId, err: error }, 'contest management open route failed');
       throw error;
     }
   }

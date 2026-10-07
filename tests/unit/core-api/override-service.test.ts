@@ -45,6 +45,18 @@ describe('OverrideService', () => {
       const service = new OverrideService(contestRepo);
       await expect(service.closeContest('contest-1')).rejects.toThrow('already closed');
     });
+
+    it('refuses to close a draft with 409 CONTEST_CLOSE_STATUS_INVALID and leaves it a draft, because a draft leaves only by being opened or deleted', async () => {
+      const contestRepo = createMockContestRepo({
+        findById: jest.fn().mockResolvedValue(buildContest({ status: ContestStatus.DRAFT })),
+      });
+      const service = new OverrideService(contestRepo);
+      await expect(service.closeContest('contest-1')).rejects.toMatchObject({
+        code: 'CONTEST_CLOSE_STATUS_INVALID',
+        statusCode: 409,
+      });
+      expect(contestRepo.update).not.toHaveBeenCalled();
+    });
   });
 
 });

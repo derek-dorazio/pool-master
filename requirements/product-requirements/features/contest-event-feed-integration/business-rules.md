@@ -76,9 +76,9 @@
   contest.
 - `BR-207` `(Confirmed)` Unreleased or newly created contests may continue to
   use newer eligible event data until they are released.
-- `BR-208` `(Confirmed)` There is no separate commissioner release step in the
-  normal flow; once the commissioner completes setup and creates the contest,
-  the contest is immediately live and ready for entries.
+- `BR-208` `(Superseded by #117)` A created contest is a draft that only
+  commissioners see. The commissioner releases it with "Open to league", after
+  which members can enter and its settings are locked for good.
 - `BR-209` `(Confirmed)` In the normal flow, commissioners choose among seeded
   templates and only use advanced configuration when they intentionally want to
   override defaults.

@@ -13672,7 +13672,7 @@ export type UpdateContestConfigurationErrors = {
         };
     };
     /**
-     * CONTEST_CONFIGURATION_SETTLED — the contest is COMPLETED; reopen it before changing its configuration.
+     * CONTEST_CONFIGURATION_LOCKED — the contest has been opened to the league (it is not DRAFT), so its configuration can no longer change.
      */
     409: {
         /**
@@ -13837,6 +13837,272 @@ export type UpdateContestConfigurationResponses = {
 };
 
 export type UpdateContestConfigurationResponse = UpdateContestConfigurationResponses[keyof UpdateContestConfigurationResponses];
+
+export type OpenContestData = {
+    body?: never;
+    path: {
+        id: string;
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}/open';
+};
+
+export type OpenContestErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND when the contest's event is gone.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * CONTEST_NOT_DRAFT — the contest is already open, or past it. CONTEST_EVENT_ALREADY_STARTED — the event's start time has passed or it is IN_PROGRESS, COMPLETED or CANCELLED; the draft stays a draft.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event's tiers; edit the draft first.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type OpenContestError = OpenContestErrors[keyof OpenContestErrors];
+
+export type OpenContestResponses = {
+    /**
+     * Managed-contest detail response.
+     */
+    200: {
+        /**
+         * Golf-first contest-management detail returned to commissioner tooling.
+         */
+        contest: {
+            /**
+             * Contest identifier.
+             */
+            id: string;
+            /**
+             * League that owns the contest.
+             */
+            leagueId: string;
+            /**
+             * Sport event attached to the contest.
+             */
+            sportEventId: string;
+            /**
+             * Contest display name.
+             */
+            name: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            /**
+             * Current commissioner-managed contest configuration.
+             */
+            configuration: {
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string | null;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number | null;
+                /**
+                 * How many golfers each Team entry must pick.
+                 */
+                rosterSize: number;
+                /**
+                 * How many golfer scores count toward the Team total.
+                 */
+                countedScores: number;
+                /**
+                 * Contest-configuration identifier.
+                 */
+                id: string;
+                /**
+                 * Contest that owns the configuration.
+                 */
+                contestId: string;
+            };
+            /**
+             * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+             */
+            effectiveTiers: Array<{
+                /**
+                 * Stable per-event tier key.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * 1-based tier ordering.
+                 */
+                tierNumber: number;
+                /**
+                 * Default number of golfers picked from this tier.
+                 */
+                defaultPickCount: number;
+                /**
+                 * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
+                 */
+                assignments: Array<{
+                    /**
+                     * Field entry the assignment belongs to.
+                     */
+                    sportEventParticipantId: string;
+                    /**
+                     * Global golfer identity.
+                     */
+                    participantId: string;
+                    /**
+                     * Within-tier ordering position; null when the golfer has no explicit order.
+                     */
+                    tierOrderIndex: number | null;
+                    /**
+                     * Per-golfer budget price when the event defines one; null otherwise.
+                     */
+                    price: number | null;
+                }>;
+            }>;
+            /**
+             * When the contest was created.
+             */
+            createdAt: string;
+            /**
+             * When the contest was last updated.
+             */
+            updatedAt: string;
+            /**
+             * Seeded template chosen when the contest was created, if any.
+             */
+            templateId?: string | null;
+            /**
+             * Schema/template version captured when the contest was created, if any.
+             */
+            templateVersion?: number | null;
+        };
+    };
+};
+
+export type OpenContestResponse = OpenContestResponses[keyof OpenContestResponses];
 
 export type DeleteContestData = {
     body?: never;

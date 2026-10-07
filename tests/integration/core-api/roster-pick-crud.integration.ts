@@ -121,6 +121,14 @@ describe('RosterPick CRUD integration', () => {
     expect(contestRes.statusCode).toBe(201);
     contestId = contestRes.json<ContestResponse>().contest.id;
 
+    // A new contest is a draft (#117); members enter only once it is opened to the league.
+    const openRes = await getApp().inject({
+      method: 'POST',
+      url: `${API_ROUTES.contestManagement.detail(leagueId, contestId)}/open`,
+      headers: withoutJsonBodyHeaders(ownerHeaders),
+    });
+    expect(openRes.statusCode).toBe(200);
+
     const entryRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.contests.myEntry(contestId),

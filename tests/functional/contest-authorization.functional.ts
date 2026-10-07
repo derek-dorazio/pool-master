@@ -44,7 +44,7 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-async function buildContestWithMemberAndOutsider() {
+async function buildContestWithMemberAndOutsider(status: 'DRAFT' | 'OPEN' = 'OPEN') {
   const { commissioner, league } = await buildLeagueWithCommissioner({
     displayName: 'Authz Commissioner',
     leagueName: 'Contest Authorization League',
@@ -68,6 +68,7 @@ async function buildContestWithMemberAndOutsider() {
     name: 'Authorization Contest',
     selectionType: SelectionType.BUDGET_PICK,
     scoringEngine: ScoringEngine.POSITION,
+    status,
   });
 
   return { commissioner, member, outsider, league, contestId };
@@ -143,11 +144,11 @@ describe('SDK Functional: contest authorization by id (#193)', () => {
 
     expectFunctionalError(response, { status: 403, code: 'LEAGUE_PERMISSION_DENIED' });
     const reread = await getContest({ client: commissioner.client, path: { contestId } });
-    expect(reread.data?.contest.status).toBe('DRAFT');
+    expect(reread.data?.contest.status).toBe('OPEN');
   });
 
-  it('still lets the commissioner update and delete the contest', async () => {
-    const { commissioner, contestId } = await buildContestWithMemberAndOutsider();
+  it('still lets the commissioner update and delete the contest while it is a draft', async () => {
+    const { commissioner, contestId } = await buildContestWithMemberAndOutsider('DRAFT');
 
     const updateResponse = await updateContest({
       client: commissioner.client,

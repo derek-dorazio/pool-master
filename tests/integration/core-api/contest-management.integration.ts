@@ -12,9 +12,11 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+import { ContestManagementResponseSchema } from '@poolmaster/shared/dto';
 import type {
   ContestConfigTemplateListResponse,
   ContestEntryResponse,
+  ContestListResponse,
   ContestManagementResponse,
   ContestResponse,
   DraftStateResponse,
@@ -28,6 +30,11 @@ import { freshEventEdition } from '../../support/event-edition';
 // No api-routes manifest entry for the new template list (the manifest is not extended without
 // approval); the literal is the published path.
 const CONTEST_CONFIG_TEMPLATES_URL = '/api/v1/contest-config-templates/';
+
+// openContest (#117) — the api-routes manifest is not extended without approval either.
+function openContestUrl(leagueId: string, contestId: string): string {
+  return `${API_ROUTES.contestManagement.detail(leagueId, contestId)}/open`;
+}
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -186,7 +193,7 @@ describe('Contest management integration', () => {
     });
   });
 
-  it('pool-master-rop.68.1.3: creates, reads, and updates golf-first contest management configuration', async () => {
+  it('creates a contest as a draft that takes edits but no entries, then opens it so entries work and the configuration locks', async () => {
     const createRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.contests(leagueId),
@@ -208,7 +215,7 @@ describe('Contest management integration', () => {
     expect(createRes.statusCode).toBe(201);
     const createdContest = createRes.json<ContestResponse>().contest;
     contestId = createdContest.id;
-    expect(createdContest.status).toBe(ContestStatus.OPEN);
+    expect(createdContest.status).toBe(ContestStatus.DRAFT);
     expect(createdContest.sportEventId).toBe(sportEventId);
     // #245 — create answers with the canonical contest read, as every contest route does.
     expect(createRes.json<ContestResponse>().contestConfiguration?.countedScores).toBe(4);
@@ -232,6 +239,51 @@ describe('Contest management integration', () => {
     expect(managedContest.id).toBe(contestId);
     expect(managedContest.configuration.rosterSize).toBe(6);
     expect(managedContest.configuration.countedScores).toBe(4);
+
+    // #117 — a draft takes no entries, not even its commissioner's.
+    const draftEntryRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.contests.myEntry(contestId),
+      headers: withoutJsonBodyHeaders(ownerHeaders),
+    });
+    expect(draftEntryRes.statusCode).toBe(400);
+    expect(draftEntryRes.json<ErrorEnvelope>().error.code).toBe('CONTEST_ENTRY_LOCKED');
+
+    // A draft's configuration takes an edit.
+    const updateRes = await getApp().inject({
+      method: 'PUT',
+      url: API_ROUTES.contestManagement.configuration(leagueId, contestId),
+      headers: ownerHeaders,
+      payload: {
+        locksAt: entryLocksAt,
+        maxEntriesPerSquad: null,
+        rosterSize: 6,
+        countedScores: 5,
+      },
+    });
+
+    expect(updateRes.statusCode).toBe(200);
+    const updatedContest = updateRes.json<ContestManagementResponse>().contest;
+    expect(updatedContest.configuration.rosterSize).toBe(6);
+    expect(updatedContest.configuration.countedScores).toBe(5);
+    expect(updatedContest.configuration.maxEntriesPerSquad).toBeNull();
+
+    const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
+      where: { contestId },
+      include: {
+        participantScoringRules: true,
+      },
+    });
+
+    expect(configuration.participantScoringRules).toHaveLength(1);
+
+    const openRes = await getApp().inject({
+      method: 'POST',
+      url: openContestUrl(leagueId, contestId),
+      headers: withoutJsonBodyHeaders(ownerHeaders),
+    });
+    expect(openRes.statusCode).toBe(200);
+    expect(openRes.json<ContestManagementResponse>().contest.status).toBe(ContestStatus.OPEN);
 
     const entryRes = await getApp().inject({
       method: 'POST',
@@ -260,38 +312,8 @@ describe('Contest management integration', () => {
       }),
     ]);
 
-    // The update path is exercised by re-submitting the tiered shape with
-    // changed roster values.
-    const updateRes = await getApp().inject({
-      method: 'PUT',
-      url: API_ROUTES.contestManagement.configuration(leagueId, contestId),
-      headers: ownerHeaders,
-      payload: {
-        locksAt: entryLocksAt,
-        maxEntriesPerSquad: null,
-        rosterSize: 6,
-        countedScores: 5,
-      },
-    });
-
-    expect(updateRes.statusCode).toBe(200);
-    const updatedContest = updateRes.json<ContestManagementResponse>().contest;
-    expect(updatedContest.configuration.rosterSize).toBe(6);
-    expect(updatedContest.configuration.countedScores).toBe(5);
-    expect(updatedContest.configuration.maxEntriesPerSquad).toBeNull();
-
-    const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
-      where: { contestId },
-      include: {
-        participantScoringRules: true,
-      },
-    });
-
-    expect(configuration.participantScoringRules).toHaveLength(1);
-
-    // #246 — settled: the configuration is frozen with the result, 409 with its own code.
-    await getPrisma().contest.update({ where: { id: contestId }, data: { status: ContestStatus.COMPLETED } });
-    const settledUpdateRes = await getApp().inject({
+    // #117 — open: members enter against these rules, so they are locked, 409 with its own code.
+    const lockedUpdateRes = await getApp().inject({
       method: 'PUT',
       url: API_ROUTES.contestManagement.configuration(leagueId, contestId),
       headers: ownerHeaders,
@@ -302,11 +324,20 @@ describe('Contest management integration', () => {
         countedScores: 4,
       },
     });
-    expect(settledUpdateRes.statusCode).toBe(409);
-    expect(ErrorEnvelopeSchema.safeParse(settledUpdateRes.json()).success).toBe(true);
-    expect(settledUpdateRes.json<ErrorEnvelope>().error.code).toBe('CONTEST_CONFIGURATION_SETTLED');
+    expect(lockedUpdateRes.statusCode).toBe(409);
+    expect(ErrorEnvelopeSchema.safeParse(lockedUpdateRes.json()).success).toBe(true);
+    expect(lockedUpdateRes.json<ErrorEnvelope>().error.code).toBe('CONTEST_CONFIGURATION_LOCKED');
     await expect(getPrisma().contestConfiguration.findUniqueOrThrow({ where: { contestId } }))
       .resolves.toMatchObject({ configJson: expect.objectContaining({ countedScores: 5 }) });
+
+    // No undo: a second press is refused rather than repeated.
+    const reopenRes = await getApp().inject({
+      method: 'POST',
+      url: openContestUrl(leagueId, contestId),
+      headers: withoutJsonBodyHeaders(ownerHeaders),
+    });
+    expect(reopenRes.statusCode).toBe(409);
+    expect(reopenRes.json<ErrorEnvelope>().error.code).toBe('CONTEST_NOT_DRAFT');
   });
 
   it('lists seeded templates and creates a contest from a selected template', async () => {
@@ -344,7 +375,7 @@ describe('Contest management integration', () => {
 
     expect(createRes.statusCode).toBe(201);
     const createdContest = createRes.json<ContestResponse>().contest;
-    expect(createdContest.status).toBe(ContestStatus.OPEN);
+    expect(createdContest.status).toBe(ContestStatus.DRAFT);
     expect(createRes.json<ContestResponse>().contestConfiguration?.rosterSize).toBe(
       defaultTemplate.configuration.rosterSize,
     );
@@ -455,6 +486,128 @@ describe('Contest management integration', () => {
       locksAt: entryLocksAt,
       rosterSize: 6,
       countedScores: 3,
+    });
+  });
+
+  describe('a draft contest is the commissioner\'s alone until it is opened (#117)', () => {
+    let memberHeaders: Record<string, string>;
+
+    async function createDraft(name: string): Promise<string> {
+      const createRes = await getApp().inject({
+        method: 'POST',
+        url: API_ROUTES.leagues.contests(leagueId),
+        headers: ownerHeaders,
+        payload: {
+          name,
+          sportEventId,
+          contestFormat: 'ROSTER',
+          selectionType: 'TIERED',
+          configuration: { rosterSize: 6, countedScores: 4 },
+        },
+      });
+      expect(createRes.statusCode).toBe(201);
+      return createRes.json<ContestResponse>().contest.id;
+    }
+
+    beforeAll(async () => {
+      const member = await createTestUser({ displayName: 'Contest Management Member' });
+      memberHeaders = member.headers;
+      await getPrisma().leagueMembership.create({
+        data: {
+          leagueId,
+          userId: member.user.id,
+          role: 'MEMBER',
+          status: 'ACTIVE',
+          joinedAt: new Date(),
+        },
+      });
+    });
+
+    it('hides a draft from a member\'s contest list and answers its detail read 404, while the commissioner sees both', async () => {
+      const draftId = await createDraft('Hidden Draft');
+
+      const memberList = await getApp().inject({
+        method: 'GET',
+        url: API_ROUTES.leagues.contests(leagueId),
+        headers: memberHeaders,
+      });
+      expect(memberList.statusCode).toBe(200);
+      expect(memberList.json<ContestListResponse>().contests.map((contest) => contest.id))
+        .not.toContain(draftId);
+
+      const memberDetail = await getApp().inject({
+        method: 'GET',
+        url: API_ROUTES.contests.detail(draftId),
+        headers: memberHeaders,
+      });
+      expect(memberDetail.statusCode).toBe(404);
+      expect(memberDetail.json<ErrorEnvelope>().error.code).toBe('CONTEST_NOT_FOUND');
+
+      const ownerList = await getApp().inject({
+        method: 'GET',
+        url: API_ROUTES.leagues.contests(leagueId),
+        headers: ownerHeaders,
+      });
+      expect(ownerList.json<ContestListResponse>().contests.map((contest) => contest.id))
+        .toContain(draftId);
+      const ownerDetail = await getApp().inject({
+        method: 'GET',
+        url: API_ROUTES.contests.detail(draftId),
+        headers: ownerHeaders,
+      });
+      expect(ownerDetail.statusCode).toBe(200);
+    });
+
+    it('refuses a member opening a draft with 403 and leaves it a draft; once the commissioner opens it, the member sees it', async () => {
+      const draftId = await createDraft('Member Cannot Open');
+
+      const memberOpen = await getApp().inject({
+        method: 'POST',
+        url: openContestUrl(leagueId, draftId),
+        headers: withoutJsonBodyHeaders(memberHeaders),
+      });
+      expect(memberOpen.statusCode).toBe(403);
+      await expect(getPrisma().contest.findUniqueOrThrow({ where: { id: draftId } }))
+        .resolves.toMatchObject({ status: ContestStatus.DRAFT });
+
+      const ownerOpen = await getApp().inject({
+        method: 'POST',
+        url: openContestUrl(leagueId, draftId),
+        headers: withoutJsonBodyHeaders(ownerHeaders),
+      });
+      expect(ownerOpen.statusCode).toBe(200);
+      expect(ContestManagementResponseSchema.safeParse(ownerOpen.json()).success).toBe(true);
+
+      const memberDetail = await getApp().inject({
+        method: 'GET',
+        url: API_ROUTES.contests.detail(draftId),
+        headers: memberHeaders,
+      });
+      expect(memberDetail.statusCode).toBe(200);
+      expect(memberDetail.json<ContestResponse>().contest.status).toBe(ContestStatus.OPEN);
+    });
+
+    it('refuses opening a draft whose event start time has passed with 409 CONTEST_EVENT_ALREADY_STARTED, and it stays a draft', async () => {
+      const draftId = await createDraft('Too Late Draft');
+      const prisma = getPrisma();
+      const { startDate } = await prisma.sportEvent.findUniqueOrThrow({ where: { id: sportEventId } });
+      await prisma.sportEvent.update({
+        where: { id: sportEventId },
+        data: { startDate: new Date(Date.now() - 60 * 1000) },
+      });
+      try {
+        const openRes = await getApp().inject({
+          method: 'POST',
+          url: openContestUrl(leagueId, draftId),
+          headers: withoutJsonBodyHeaders(ownerHeaders),
+        });
+        expect(openRes.statusCode).toBe(409);
+        expect(openRes.json<ErrorEnvelope>().error.code).toBe('CONTEST_EVENT_ALREADY_STARTED');
+        await expect(prisma.contest.findUniqueOrThrow({ where: { id: draftId } }))
+          .resolves.toMatchObject({ status: ContestStatus.DRAFT });
+      } finally {
+        await prisma.sportEvent.update({ where: { id: sportEventId }, data: { startDate } });
+      }
     });
   });
 

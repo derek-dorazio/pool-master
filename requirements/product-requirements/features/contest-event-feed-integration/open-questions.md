@@ -27,11 +27,9 @@ These question IDs are intended to stay stable as the discussion evolves.
   - Members may create and edit entries before the field is locked.
   - Field lock is not a prerequisite for contest creation or entry creation.
 
-- `CEFI-003` Contest release readiness `(Resolved)`
-  - There is no separate intermediate release state in the normal commissioner
-    flow.
-  - Once the commissioner completes setup and creates the contest, it is
-    immediately live and ready for entries.
+- `CEFI-003` Contest release readiness `(Resolved, revised by #117)`
+  - A created contest is a draft only commissioners see; "Open to league"
+    releases it for entries and locks its settings.
 
 - `CEFI-004` Contest field freeze boundary `(Resolved)`
   - Once a contest is released, its derived contest field freezes.
