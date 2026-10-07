@@ -36,13 +36,6 @@ function authHeaders(userId: string, isRootAdmin: boolean): Record<string, strin
 
 function createIngestionServiceMock() {
   return {
-    prepareSportSync: jest.fn().mockResolvedValue({
-      sport: 'GOLF',
-      eventId: null,
-      requestedFeeds: ['EVENTSCHEDULE'],
-      submittedAt: new Date('2026-05-30T00:00:00.000Z'),
-      syncRuns: [],
-    }),
     syncEventData: jest.fn().mockResolvedValue({
       sport: 'GOLF',
       eventId: 'event-1',
@@ -76,22 +69,20 @@ async function buildIngestionSyncApp() {
 }
 
 describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
-  it('pool-master-rop.68.4.1 rejects non-root users before sport sync submission', async () => {
+  it('#126: there is no sport-level sync route — a root admin submitting one gets 404 and no sync runs', async () => {
     const { app, providerService } = await buildIngestionSyncApp();
 
     const res = await app.inject({
       method: 'POST',
       url: '/api/v1/ingestion/sports/GOLF/sync',
-      headers: authHeaders('member-user', false),
+      headers: authHeaders('root-admin-user', true),
       payload: {
         feeds: ['EVENTSCHEDULE'],
       },
     });
 
-    expect(res.statusCode).toBe(403);
-    expect(ErrorEnvelopeSchema.safeParse(res.json()).success).toBe(true);
-    expect(res.json<ErrorEnvelope>().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
-    expect(providerService.prepareSportSync).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(404);
+    expect(providerService.syncEventData).not.toHaveBeenCalled();
 
     await app.close();
   });
@@ -116,23 +107,8 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
     await app.close();
   });
 
-  it('pool-master-rop.68.4.1 allows root admins to submit sport and event syncs', async () => {
+  it('pool-master-rop.68.4.1 allows root admins to submit event syncs', async () => {
     const { app, providerService } = await buildIngestionSyncApp();
-
-    const sportRes = await app.inject({
-      method: 'POST',
-      url: '/api/v1/ingestion/sports/GOLF/sync',
-      headers: authHeaders('root-admin-user', true),
-      payload: {
-        feeds: ['EVENTSCHEDULE'],
-      },
-    });
-    expect(sportRes.statusCode).toBe(202);
-    expect(ProviderManualSyncSubmissionResponseSchema.safeParse(sportRes.json()).success).toBe(true);
-    expect(providerService.prepareSportSync).toHaveBeenCalledWith({
-      sport: 'GOLF',
-      feeds: ['EVENTSCHEDULE'],
-    }, 'root-admin-user', 'root-admin-user@example.test');
 
     const eventRes = await app.inject({
       method: 'POST',
@@ -155,29 +131,9 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
 
   it('pool-master-rop.68.2.3 maps sync request validation errors to 422 responses', async () => {
     const { app, providerService } = await buildIngestionSyncApp();
-    providerService.prepareSportSync.mockRejectedValueOnce(
-      new SyncRequestValidationError('INVALID_SYNC_WINDOW', 'Sync request window end must be greater than or equal to its start.'),
-    );
     providerService.syncEventData.mockRejectedValueOnce(
       new SyncRequestValidationError('INVALID_EVENT_ID', 'Event-scoped sync requests require a non-empty provider event ID.'),
     );
-
-    const sportRes = await app.inject({
-      method: 'POST',
-      url: '/api/v1/ingestion/sports/GOLF/sync',
-      headers: authHeaders('root-admin-user', true),
-      payload: {
-        feeds: ['EVENTSCHEDULE'],
-        from: '2026-06-15T00:00:00.000Z',
-        to: '2026-06-01T00:00:00.000Z',
-      },
-    });
-    expect(sportRes.statusCode).toBe(422);
-    expect(sportRes.json<ErrorEnvelope>().error).toEqual({
-      code: 'SYNC_REQUEST_INVALID',
-      message: 'Sync request window end must be greater than or equal to its start.',
-      details: { validationCode: 'INVALID_SYNC_WINDOW' },
-    });
 
     const eventRes = await app.inject({
       method: 'POST',

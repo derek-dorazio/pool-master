@@ -81,7 +81,6 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import type {
-  ProviderEventResult,
   ProviderHealthStatus,
   ProviderParticipant,
   ProviderPayloadCapture,
@@ -206,10 +205,6 @@ class OperationalContractProvider implements SportDataProvider {
     return { category: 'GOLF', externalEventId: 'unused', rounds: [] };
   }
 
-  async getEventResults(): Promise<ProviderEventResult | null> {
-    return null;
-  }
-
   async healthCheck(): Promise<ProviderHealthStatus> {
     return {
       providerId: this.providerId,
@@ -237,16 +232,16 @@ class EmptyDiagnosticsProvider extends OperationalContractProvider implements Pr
     return payloads;
   }
 
-  override async getUpcomingEvents(): Promise<SportEvent[]> {
+  override async getLiveScores(): Promise<LiveScoreResult> {
     this.payloads.push({
-      operation: 'test.schedule',
-      path: '/test/schedule',
+      operation: 'test.scores',
+      path: '/test/scores',
       capturedAt: '2026-04-05T12:00:00.000Z',
       raw: {
-        events: [],
+        contestants: [],
       },
     });
-    return [];
+    return { category: 'GOLF', externalEventId: 'empty-diagnostics-event', rounds: [] };
   }
 }
 
@@ -310,7 +305,6 @@ async function buildIngestionApp(provider: SportDataProvider): Promise<FastifyIn
   const registry = new ProviderRegistry();
   registry.register('GOLF', provider, 'PRIMARY');
   const scheduler = new IngestionScheduler(registry, {
-    onEvents: async () => undefined,
     onEventDetail: async () => undefined,
     onLiveScores: async () => emptyLiveScorePersistenceResult(),
   }, undefined, {
@@ -422,12 +416,12 @@ describe('Contract verification (root admin)', () => {
           id: '22222222-2222-2222-2222-222222222222',
           providerId: 'integration-test',
           sport: 'GOLF',
-          eventId: null,
+          eventId: 'event-2',
           status: 'FAILED',
           startedAt: new Date('2026-04-08T10:00:00.000Z'),
           completedAt: new Date('2026-04-08T10:00:30.000Z'),
           payloadJson: {
-            runType: 'EVENT_SCHEDULE_SYNC',
+            runType: 'SCHEDULED_EVENT_SYNC',
             errorCount: 1,
             detail: 'Transient provider timeout',
           },
@@ -804,7 +798,40 @@ describe('Contract verification (root admin)', () => {
         ),
       ).toBe(true);
 
-      const prepareSyncRes = await app.inject({
+      const eventSyncRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/ingestion/sports/GOLF/events/contract-sync-event/sync',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+        payload: {
+          feeds: ['EVENTLIVESCORES'],
+        },
+      });
+      expect(eventSyncRes.statusCode).toBe(202);
+      expect(ProviderManualSyncSubmissionResponseSchema.safeParse(eventSyncRes.json()).success).toBe(true);
+      expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().sport).toBe('GOLF');
+      expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().eventId).toBe('contract-sync-event');
+      expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().requestedFeeds).toEqual(['EVENTLIVESCORES']);
+      expect(typeof eventSyncRes.json<ProviderManualSyncSubmissionResponse>().submittedAt).toBe('string');
+      expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns.length).toBeGreaterThanOrEqual(1);
+      expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns[0]?.status).toBe('SUBMITTED');
+      await waitForProviderSyncRun(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns[0]?.id);
+
+      // #125 / #126 — PARTICIPANTRANKINGS, EVENTSCHEDULE and EVENTRESULTS are retired, not
+      // demoted: the event sync contract refuses each of them.
+      for (const retiredFeed of ['PARTICIPANTRANKINGS', 'EVENTSCHEDULE', 'EVENTRESULTS']) {
+        const retiredFeedRes = await app.inject({
+          method: 'POST',
+          url: '/api/v1/ingestion/sports/GOLF/events/contract-sync-event/sync',
+          headers: withoutJsonBodyHeaders(rootAdmin.headers),
+          payload: {
+            feeds: [retiredFeed],
+          },
+        });
+        expect(retiredFeedRes.statusCode).toBe(400);
+      }
+
+      // #126 — with every feed event-scoped, the sport-level sync route is gone.
+      const sportSyncRes = await app.inject({
         method: 'POST',
         url: '/api/v1/ingestion/sports/GOLF/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
@@ -812,23 +839,7 @@ describe('Contract verification (root admin)', () => {
           feeds: ['EVENTSCHEDULE'],
         },
       });
-      expect(prepareSyncRes.statusCode).toBe(202);
-      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().sport).toBe('GOLF');
-      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().requestedFeeds).toEqual(['EVENTSCHEDULE']);
-      expect(typeof prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().submittedAt).toBe('string');
-      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns.length).toBeGreaterThanOrEqual(1);
-      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns[0]?.status).toBe('SUBMITTED');
-
-      // #125 — PARTICIPANTRANKINGS is retired, not demoted: the sport sync contract refuses it.
-      const retiredFeedRes = await app.inject({
-        method: 'POST',
-        url: '/api/v1/ingestion/sports/GOLF/sync',
-        headers: withoutJsonBodyHeaders(rootAdmin.headers),
-        payload: {
-          feeds: ['PARTICIPANTRANKINGS'],
-        },
-      });
-      expect(retiredFeedRes.statusCode).toBe(400);
+      expect(sportSyncRes.statusCode).toBe(404);
 
       const cleanupDryRunRes = await app.inject({
         method: 'POST',
@@ -858,10 +869,10 @@ describe('Contract verification (root admin)', () => {
     try {
       const prepareSyncRes = await app.inject({
         method: 'POST',
-        url: '/api/v1/ingestion/sports/GOLF/sync',
+        url: '/api/v1/ingestion/sports/GOLF/events/empty-diagnostics-event/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
-          feeds: ['EVENTSCHEDULE'],
+          feeds: ['EVENTLIVESCORES'],
         },
       });
       expect(prepareSyncRes.statusCode).toBe(202);
@@ -880,8 +891,8 @@ describe('Contract verification (root admin)', () => {
             rawCaptured: true,
             raw: [
               expect.objectContaining({
-                path: '/test/schedule',
-                raw: { events: [] },
+                path: '/test/scores',
+                raw: { contestants: [] },
               }),
             ],
           }),
@@ -889,13 +900,13 @@ describe('Contract verification (root admin)', () => {
             severity: 'WARNING',
             warnings: [
               expect.objectContaining({
-                code: 'NO_PROVIDER_EVENTS',
+                code: 'NO_PROVIDER_LIVE_SCORES',
               }),
             ],
           }),
           stats: expect.objectContaining({
             providerRecordsReturned: 0,
-            eventsFetched: 0,
+            liveScoreUpdatesReturned: 0,
           }),
         }),
       );
@@ -968,10 +979,10 @@ describe('Contract verification (root admin)', () => {
 
       const missingSportProviderRes = await app.inject({
         method: 'POST',
-        url: '/api/v1/ingestion/sports/UFC/sync',
+        url: '/api/v1/ingestion/sports/UFC/events/ufc-300/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
-          feeds: ['EVENTSCHEDULE'],
+          feeds: ['EVENTLIVESCORES'],
         },
       });
       expect(missingSportProviderRes.statusCode).toBe(404);

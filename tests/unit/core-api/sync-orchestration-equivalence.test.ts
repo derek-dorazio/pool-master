@@ -63,26 +63,6 @@ function createOrchestrator(now: Date) {
   return new SyncOrchestrator({ now: () => now });
 }
 
-function createSportRequest(input: {
-  source: 'SCHEDULED' | 'MANUAL';
-  feed: 'EVENTSCHEDULE';
-  now: Date;
-}): NormalizedSyncRequest {
-  const actor = input.source === 'SCHEDULED'
-    ? { type: 'SYSTEM', name: 'scheduler' } as const
-    : { type: 'ROOT_ADMIN', userId: 'root-admin-1', email: 'admin@example.com' } as const;
-  return createOrchestrator(input.now).normalizeRequest({
-    source: input.source,
-    actor,
-    scope: {
-      type: 'SPORT',
-      sport: Sport.GOLF,
-      feeds: [input.feed],
-      windowPolicy: { defaultLookaheadDays: 30 },
-    },
-  });
-}
-
 function createEventRequest(input: {
   source: 'SCHEDULED' | 'MANUAL';
   feed: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
@@ -178,70 +158,6 @@ async function runAndReadPayload(input: {
 }
 
 describe('sync orchestration equivalence', () => {
-  it('pool-master-rop.68.2.6 persists equivalent scheduled and manual schedule diagnostics', async () => {
-    const now = new Date('2026-05-30T12:00:00.000Z');
-    const job = createJob({
-      jobType: 'EVENT_SCHEDULE_SYNC',
-      feed: 'EVENTSCHEDULE',
-      recordsProcessed: 0,
-      warnings: [{
-        code: 'NO_PROVIDER_EVENTS',
-        message: 'Provider returned no upcoming events for the requested sport/date window.',
-      }],
-      stats: {
-        providerRecordsReturned: 0,
-        eventsFetched: 0,
-        eventsProcessed: 0,
-      },
-    });
-
-    const scheduledPayload = await runAndReadPayload({
-      normalizedRequest: createSportRequest({ source: 'SCHEDULED', feed: 'EVENTSCHEDULE', now }),
-      runType: 'SCHEDULED_SPORT_SYNC',
-      job,
-    });
-    const manualPayload = await runAndReadPayload({
-      normalizedRequest: createSportRequest({ source: 'MANUAL', feed: 'EVENTSCHEDULE', now }),
-      runType: 'MANUAL_SPORT_SYNC',
-      job,
-    });
-
-    expect(stripAllowedSourceDifferences(scheduledPayload)).toEqual(stripAllowedSourceDifferences(manualPayload));
-    expect(clonePayload(scheduledPayload)).toMatchObject({
-      runType: 'SCHEDULED_SPORT_SYNC',
-      requestPayload: {
-        source: 'SCHEDULED',
-        actor: { type: 'SYSTEM', name: 'scheduler' },
-        effectiveWindow: {
-          from: '2026-05-30T12:00:00.000Z',
-          to: '2026-06-29T12:00:00.000Z',
-          defaultedFrom: true,
-          defaultedTo: true,
-        },
-      },
-      outcome: {
-        severity: 'WARNING',
-        warnings: [{
-          code: 'NO_PROVIDER_EVENTS',
-          message: 'Provider returned no upcoming events for the requested sport/date window.',
-        }],
-      },
-    });
-    expect(clonePayload(manualPayload)).toMatchObject({
-      runType: 'MANUAL_SPORT_SYNC',
-      requestPayload: {
-        source: 'MANUAL',
-        actor: { type: 'ROOT_ADMIN', userId: 'root-admin-1', email: 'admin@example.com' },
-        effectiveWindow: {
-          from: '2026-05-30T12:00:00.000Z',
-          to: '2026-06-29T12:00:00.000Z',
-          defaultedFrom: true,
-          defaultedTo: true,
-        },
-      },
-    });
-  });
-
   it('pool-master-rop.68.2.6 persists equivalent scheduled and manual event field diagnostics', async () => {
     const now = new Date('2026-05-30T12:00:00.000Z');
     const job = createJob({

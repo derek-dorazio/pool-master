@@ -47,7 +47,7 @@ import { draftsModule } from './modules/drafts/routes';
 
 // Ingestion module
 import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './modules/ingestion/core';
-import type { IngestionCallbacks, SportEvent, SportEventDetail } from './modules/ingestion/core';
+import type { IngestionCallbacks, SportEventDetail } from './modules/ingestion/core';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from './modules/events/wiring';
@@ -118,23 +118,6 @@ export function buildApp() {
   app.register(versionModule, { prefix: '/api/v1/version', operationId: 'getVersion' });
 
   const ingestionCallbacks: IngestionCallbacks = {
-    async onEvents(events: SportEvent[]) {
-      app.log.info({
-        count: events.length,
-        events: events.slice(0, 10).map((event) => ({
-          providerId: event.providerId,
-          externalId: event.externalId,
-          sport: event.sport,
-          name: event.name,
-          status: event.status,
-          startDate: event.startDate.toISOString(),
-          participantCount: event.participantCount ?? null,
-        })),
-      }, 'Ingested events');
-      const persisted = await ingestionPersistence.persistEventsWithDiagnostics(events);
-      app.log.info({ persisted: persisted.count }, 'Persisted sport events');
-      return persisted.writeDiagnostics;
-    },
     async onEventDetail(detail: SportEventDetail) {
       app.log.info({
         providerId: detail.providerId,

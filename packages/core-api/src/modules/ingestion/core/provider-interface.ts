@@ -26,7 +26,8 @@ export interface SportDataProvider {
   /**
    * Fetch events/schedule for a sport. With a `dateRange`, only events starting inside it;
    * without one, every event the provider has for the sport (#402: the catalog browse no
-   * longer defaults to a window around today).
+   * longer defaults to a window around today). Called on demand by the catalog browse,
+   * score-source linking and the year import; nothing schedules it (#126).
    */
   getUpcomingEvents(sport: Sport, dateRange?: DateRange): Promise<SportEvent[]>;
 
@@ -44,9 +45,6 @@ export interface SportDataProvider {
    * ship in Phase 4).
    */
   getLiveScores(eventId: string, options?: ProviderEventSyncOptions): Promise<LiveScoreResult>;
-
-  /** Fetch final results for a completed event. */
-  getEventResults(eventId: string, options?: ProviderEventSyncOptions): Promise<ProviderEventResult | null>;
 
   /** Health check — is the provider API responding? */
   healthCheck(): Promise<ProviderHealthStatus>;
@@ -200,23 +198,6 @@ export interface ProviderParticipant {
    */
   ranking?: number;
   metadata: Record<string, unknown>;
-}
-
-export interface ProviderEventResult {
-  eventExternalId: string;
-  providerId: string;
-  status: 'COMPLETED' | 'OFFICIAL';
-  results: ProviderParticipantResult[];
-}
-
-export interface ProviderParticipantResult {
-  participantExternalId: string;
-  finishPosition: number;
-  scoreToPar?: number;
-  totalStrokes?: number;
-  dnf: boolean;
-  dnfReason?: string;
-  stats: Record<string, number>;
 }
 
 export interface ProviderHealthStatus {

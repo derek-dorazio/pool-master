@@ -35,7 +35,6 @@ import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-man
 import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
 import { RootAdminPollIntervalsPage } from '@/features/root-admin/root-admin-poll-intervals-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
-import { RootAdminRunSportSyncPage } from '@/features/root-admin/root-admin-run-sport-sync-page';
 import { RootAdminSportOverridesPage } from '@/features/root-admin/root-admin-sport-overrides-page';
 import { RootAdminSyncConfigPage } from '@/features/root-admin/root-admin-sync-config-page';
 import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
@@ -245,10 +244,6 @@ export const router = createBrowserRouter([
               {
                 path: 'sync',
                 element: <RootAdminSyncDashboardPage />,
-              },
-              {
-                path: 'sync/run-sport-sync',
-                element: <RootAdminRunSportSyncPage />,
               },
               {
                 path: 'sync/run-event-sync',

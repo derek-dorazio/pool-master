@@ -117,11 +117,11 @@ describe('RootAdminSyncDashboardPage', () => {
       screen.queryByText(/Most recent runs are shown first/),
     ).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-sync-workflow-sequence')).toHaveTextContent(
-      'ScheduleParticipantsMock stateLive scores',
+      'ParticipantsMock stateLive scores',
     );
     expect(
-      screen.getByTestId('root-admin-open-run-sport-sync-page'),
-    ).toHaveAttribute('href', '/manage/sync/run-sport-sync');
+      screen.queryByTestId('root-admin-open-run-sport-sync-page'),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByTestId('root-admin-open-run-event-sync-page'),
     ).toHaveAttribute('href', '/manage/sync/run-event-sync');
@@ -189,46 +189,46 @@ describe('RootAdminSyncDashboardPage', () => {
             id: 'sync-run-warning',
             providerId: 'mock-contest-feed',
             sport: 'GOLF',
-            eventId: null,
+            eventId: 'golf-masters-2026',
             status: 'COMPLETED',
             startedAt: '2026-05-25T12:00:00.000Z',
             completedAt: '2026-05-25T12:01:00.000Z',
             createdAt: '2026-05-25T11:59:00.000Z',
             payload: {
-              runType: 'MANUAL_SPORT_SYNC',
-              requestedFeed: 'EVENTSCHEDULE',
+              runType: 'MANUAL_EVENT_SYNC',
+              requestedFeed: 'EVENTLIVESCORES',
               outcome: {
                 severity: 'WARNING',
-                summary: 'Completed event schedule sync for GOLF (0 records).',
+                summary: 'Completed event live scores sync for golf-masters-2026 (0 records).',
                 warnings: [
                   {
-                    code: 'NO_PROVIDER_EVENTS',
-                    message: 'Provider returned no upcoming events for the requested sport/date window.',
+                    code: 'NO_PROVIDER_LIVE_SCORES',
+                    message: 'Provider returned no live-score updates for the requested event.',
                   },
                 ],
                 errors: 0,
               },
               stats: {
                 providerRecordsReturned: 0,
-                eventsFetched: 0,
+                liveScoreUpdatesReturned: 0,
               },
               requestPayload: {
                 sport: 'GOLF',
-                feeds: ['EVENTSCHEDULE'],
+                eventId: 'golf-masters-2026',
               },
               providerPayload: {
-                operation: 'EVENTSCHEDULE',
+                operation: 'EVENTLIVESCORES',
                 rawCaptured: true,
                 rawTruncated: false,
                 raw: [
                   {
-                    path: '/v1/scenarios/golf/events',
-                    raw: { events: [] },
+                    path: '/v1/scenarios/golf/events/golf-masters-2026/scores',
+                    raw: { contestants: [] },
                   },
                 ],
               },
               jobPayload: {
-                jobType: 'EVENT_SCHEDULE_SYNC',
+                jobType: 'EVENT_LIVE_SCORES_SYNC',
                 status: 'COMPLETED',
                 recordsProcessed: 0,
               },
@@ -242,16 +242,16 @@ describe('RootAdminSyncDashboardPage', () => {
 
     expect(await screen.findByText('COMPLETED WITH WARNINGS')).toBeInTheDocument();
     expect(
-      screen.getByText('Completed event schedule sync for GOLF (0 records).'),
+      screen.getByText('Completed event live scores sync for golf-masters-2026 (0 records).'),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'View details' }));
 
     expect(await screen.findByText('Sync run details')).toBeInTheDocument();
     expect(screen.getByText('Provider Records Returned')).toBeInTheDocument();
-    expect(screen.getByText('Events Fetched')).toBeInTheDocument();
+    expect(screen.getByText('Live Score Updates Returned')).toBeInTheDocument();
     expect(
-      screen.getByText('Provider returned no upcoming events for the requested sport/date window.'),
+      screen.getByText('Provider returned no live-score updates for the requested event.'),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole('tab', { name: 'Payloads' }));
@@ -259,7 +259,7 @@ describe('RootAdminSyncDashboardPage', () => {
 
     expect(await screen.findByText('Provider payload')).toBeInTheDocument();
     expect(screen.getByText(/"rawCaptured": true/)).toBeInTheDocument();
-    expect(screen.getByText(/"events": \[\]/)).toBeInTheDocument();
+    expect(screen.getByText(/"contestants": \[\]/)).toBeInTheDocument();
   });
 
   it('pool-master-rop.68.1.4 keeps raw provider payload secondary when no normalized rows were captured', async () => {

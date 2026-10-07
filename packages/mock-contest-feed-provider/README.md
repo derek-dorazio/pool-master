@@ -1,11 +1,14 @@
 # Mock Contest Feed Provider
 
-`mock-contest-feed-provider` is a non-production-only Fastify service that simulates third-party contest feed data for event schedules, field membership (each contestant carrying its ranking), odds, results, and staged updates.
+`mock-contest-feed-provider` is a non-production-only Fastify service that simulates third-party contest feed data for event schedules, field membership (each contestant carrying its ranking), odds, and live scores.
 
 The service now exposes the mock lifecycle more explicitly:
 
 - pre-event catalog / odds feeds for schedule, field, and contest preparation
-- live scoring feeds for in-progress score movement and final results
+- a live scoring feed (`/scores`) for in-progress score movement through to the final round
+
+There is no separate results feed: PoolMaster builds final standings from the scores it has
+already received (#126).
 
 It is designed for:
 
@@ -22,17 +25,10 @@ It does not use a database. Local JSON scenario files under [`contest-feed-scena
 - `GET /v1/scenarios`
 - `GET /v1/scenarios/:scenarioId`
 - `GET /v1/scenarios/:scenarioId/events`
-- `GET /v1/scenarios/:scenarioId/events/:eventId`
 - `GET /v1/scenarios/:scenarioId/events/:eventId/detail`
 - `GET /v1/scenarios/:scenarioId/events/:eventId/field`
 - `GET /v1/scenarios/:scenarioId/events/:eventId/odds`
-- `GET /v1/scenarios/:scenarioId/events/:eventId/results`
-- `GET /v1/scenarios/:scenarioId/events/:eventId/updates`
-- `GET /v1/pre-event/scenarios/:scenarioId/events/:eventId/detail`
-- `GET /v1/pre-event/scenarios/:scenarioId/events/:eventId/field`
-- `GET /v1/pre-event/scenarios/:scenarioId/events/:eventId/odds`
-- `GET /v1/live/scenarios/:scenarioId/events/:eventId/scores`
-- `GET /v1/live/scenarios/:scenarioId/events/:eventId/results`
+- `GET /v1/scenarios/:scenarioId/events/:eventId/scores`
 - `PUT /v1/scenarios/:scenarioId/events/:eventId/replay`
 - `GET /v1/scenarios/:scenarioId/events/:eventId/replay`
 - `DELETE /v1/scenarios/:scenarioId/events/:eventId/replay`
@@ -127,8 +123,9 @@ describes one named scenario with:
 - event schedule and release/field lock timing
 - event metadata and venue details
 - a baseline field snapshot
-- baseline odds/results snapshots
-- ordered update records for field changes, live updates, and corrections
+- baseline odds and scoring-data snapshots
+- ordered update records for field changes, live updates, and corrections (scenario data
+  only; no route serves them)
 
 PoolMaster only creates golf events, so the bundled scenarios are golf only:
 `golf-major-2026` (a fixed 2026 major-championship season), the tour seeds below, and the
@@ -159,8 +156,10 @@ The scenario model is intentionally event-first and database-free:
 
 - `season` anchors a reusable schedule context for the scenario.
 - `event.field` is the baseline pre-event contestant catalog.
-- `event.feeds` contains baseline feed deltas for `odds` and `results`. There is no
-  separate rankings feed: a contestant's ranking travels on the field (#125).
+- `event.feeds` contains baseline feed deltas for `odds` and `results`. `odds` is served as
+  a snapshot; `results` is the scoring data `/scores` is built from and has no route of
+  its own (#126). There is no separate rankings feed: a contestant's ranking travels on the
+  field (#125).
 - `event.updates` contains staged `field`, `odds`, or `results`
   deltas with an explicit `updateType` such as `live` or `correction`.
 

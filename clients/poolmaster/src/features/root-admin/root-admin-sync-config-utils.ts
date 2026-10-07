@@ -13,14 +13,6 @@ export const INGESTION_POLICY_FIELDS = [
     intervalKey: 'intervalMinutes',
   },
   {
-    key: 'eventSchedule',
-    label: 'Event schedule',
-    intervalLabel: 'Minutes',
-    intervalKey: 'intervalMinutes',
-    extraKey: 'lookaheadDays',
-    extraLabel: 'Schedule lookahead days',
-  },
-  {
     key: 'eventParticipants',
     label: 'Event participants',
     intervalLabel: 'Minutes',
@@ -33,12 +25,6 @@ export const INGESTION_POLICY_FIELDS = [
     label: 'Event live scores',
     intervalLabel: 'Seconds',
     intervalKey: 'intervalSeconds',
-  },
-  {
-    key: 'eventResults',
-    label: 'Event results',
-    intervalLabel: 'Minutes',
-    intervalKey: 'intervalMinutes',
   },
 ] as const;
 
@@ -79,23 +65,19 @@ export function cloneIngestionConfig(
   return {
     ...config,
     healthCheck: { ...config.healthCheck },
-    eventSchedule: { ...config.eventSchedule },
     eventParticipants: { ...config.eventParticipants },
     eventLiveScores: { ...config.eventLiveScores },
-    eventResults: { ...config.eventResults },
     perSportOverrides: Object.fromEntries(
       Object.entries(config.perSportOverrides ?? {}).map(([sport, override]) => [
         sport,
         {
           ...(override.healthCheck && { healthCheck: { ...override.healthCheck } }),
-          ...(override.eventSchedule && { eventSchedule: { ...override.eventSchedule } }),
           ...(override.eventParticipants && {
             eventParticipants: { ...override.eventParticipants },
           }),
           ...(override.eventLiveScores && {
             eventLiveScores: { ...override.eventLiveScores },
           }),
-          ...(override.eventResults && { eventResults: { ...override.eventResults } }),
         },
       ]),
     ),

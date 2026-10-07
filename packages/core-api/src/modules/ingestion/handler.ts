@@ -12,7 +12,7 @@ import type {
   ProviderSyncRunListQuery,
 } from '@poolmaster/shared/dto';
 import type { IngestionService } from './ingestion-service';
-import type { EventSyncRequest, SportSyncRequest } from './core/ingestion-scheduler';
+import type { EventSyncRequest } from './core/ingestion-scheduler';
 import { SyncRequestValidationError } from './core/sync-orchestrator';
 import {
   MockEventStateUnsupportedError,
@@ -39,7 +39,6 @@ export function createIngestionHandlers(
   return {
     listProviders,
     listSyncRuns,
-    submitSportSync,
     submitEventSync,
     listUnmappedParticipants,
     cleanupStaleProviderEvents,
@@ -70,52 +69,6 @@ export function createIngestionHandlers(
     });
     logger.info({ count: syncRuns.length }, 'Listed provider sync runs');
     return reply.send({ syncRuns: syncRuns.map(toProviderSyncRunDto) });
-  }
-
-  async function submitSportSync(
-    request: FastifyRequest<{
-      Params: { sport: Sport };
-      Body: SportSyncRequest;
-    }>,
-    reply: FastifyReply,
-  ) {
-    const { userId: rootAdminUserId, email: rootAdminEmail } = request.authUser!;
-    const logger = request.contextLogger ?? request.log;
-    logger.debug({
-      sport: request.params.sport,
-      requestedFeeds: request.body.feeds,
-    }, 'Preparing sport sync');
-
-    try {
-      const result = await ingestionService.prepareSportSync(
-        {
-          sport: request.params.sport,
-          feeds: request.body.feeds,
-          from: request.body.from,
-          to: request.body.to,
-        },
-        rootAdminUserId,
-        rootAdminEmail,
-      );
-      return reply.code(202).send(toProviderManualSyncSubmissionResponse(result));
-    } catch (err) {
-      if (err instanceof SportProviderNotFoundError) {
-        logger.warn({ sport: request.params.sport }, 'Sport sync preparation failed because no providers were registered');
-        return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
-      }
-      if (err instanceof SportSyncNotConfiguredError) {
-        logger.warn({ sport: request.params.sport }, 'Sport sync preparation failed because sport is not enabled in ingestion config');
-        return sendError(reply, 422, 'SPORT_SYNC_NOT_CONFIGURED', err.message);
-      }
-      if (err instanceof SyncRequestValidationError) {
-        logger.warn({
-          sport: request.params.sport,
-          validationCode: err.code,
-        }, 'Sport sync preparation failed validation');
-        return sendError(reply, 422, 'SYNC_REQUEST_INVALID', err.message, { validationCode: err.code });
-      }
-      throw err;
-    }
   }
 
   async function submitEventSync(

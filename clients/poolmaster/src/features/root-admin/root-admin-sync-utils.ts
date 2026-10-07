@@ -3,7 +3,6 @@ import type { ProviderManualSyncSubmissionResponse, ProviderSummaryDto, Provider
 // #205 — the canonical named components, not indexes into the response map.
 export type ProviderSyncRun = ProviderSyncRunDto;
 export type ProviderSummary = ProviderSummaryDto;
-export type SportSyncSubmission = ProviderManualSyncSubmissionResponse;
 export type EventSyncSubmission = ProviderManualSyncSubmissionResponse;
 
 export const ALL_SYNC_SPORT_OPTIONS = [
@@ -33,15 +32,6 @@ export const SYNC_STATUS_OPTIONS = [
 ] as const;
 export type SyncStatus = (typeof SYNC_STATUS_OPTIONS)[number];
 
-export const SPORT_SYNC_PRESETS = [
-  {
-    id: 'EVENTSCHEDULE_ONLY',
-    label: 'Refresh schedule only',
-    feeds: ['EVENTSCHEDULE'] as const,
-  },
-] as const;
-export type SportSyncPresetId = (typeof SPORT_SYNC_PRESETS)[number]['id'];
-
 export const EVENT_SYNC_PRESETS = [
   {
     id: 'EVENTPARTICIPANTS',
@@ -53,19 +43,12 @@ export const EVENT_SYNC_PRESETS = [
     label: 'Refresh live scores',
     feeds: ['EVENTLIVESCORES'] as const,
   },
-  {
-    id: 'EVENTRESULTS',
-    label: 'Refresh final results',
-    feeds: ['EVENTRESULTS'] as const,
-  },
 ] as const;
 export type EventSyncPresetId = (typeof EVENT_SYNC_PRESETS)[number]['id'];
 
 export const FEED_LABELS = {
-  EVENTSCHEDULE: 'Schedule',
   EVENTPARTICIPANTS: 'Participants',
   EVENTLIVESCORES: 'Live scores',
-  EVENTRESULTS: 'Final results',
 } as const;
 
 export function getProviderName(
@@ -226,10 +209,6 @@ export function getPayloadSection(
 ) {
   const section = payload[key];
   return isRecord(section) ? section : null;
-}
-
-export function getSportSyncPreset(presetId: SportSyncPresetId) {
-  return SPORT_SYNC_PRESETS.find((preset) => preset.id === presetId) ?? SPORT_SYNC_PRESETS[0];
 }
 
 export function getEventSyncPreset(presetId: EventSyncPresetId) {

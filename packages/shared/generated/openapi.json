@@ -12955,33 +12955,7 @@
               "lookaheadDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-              }
-            },
-            "additionalProperties": false,
-            "description": "Partial feed-scheduling override payload."
-          },
-          "eventSchedule": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-              },
-              "intervalSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-              },
-              "lookaheadDays": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
               }
             },
             "additionalProperties": false,
@@ -13007,7 +12981,7 @@
               "lookaheadDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
               }
             },
             "additionalProperties": false,
@@ -13033,33 +13007,7 @@
               "lookaheadDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-              }
-            },
-            "additionalProperties": false,
-            "description": "Partial feed-scheduling override payload."
-          },
-          "eventResults": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-              },
-              "intervalSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-              },
-              "lookaheadDays": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
               }
             },
             "additionalProperties": false,
@@ -13119,7 +13067,7 @@
               "lookaheadDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
               }
             },
             "required": [
@@ -13127,35 +13075,6 @@
             ],
             "additionalProperties": false,
             "description": "Scheduling policy for provider health checks."
-          },
-          "eventSchedule": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-              },
-              "intervalSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-              },
-              "lookaheadDays": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "additionalProperties": false,
-            "description": "Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change."
           },
           "eventParticipants": {
             "type": "object",
@@ -13177,7 +13096,7 @@
               "lookaheadDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
               }
             },
             "required": [
@@ -13206,7 +13125,7 @@
               "lookaheadDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
               }
             },
             "required": [
@@ -13214,35 +13133,6 @@
             ],
             "additionalProperties": false,
             "description": "Scheduling policy for live score polling."
-          },
-          "eventResults": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-              },
-              "intervalSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-              },
-              "lookaheadDays": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "additionalProperties": false,
-            "description": "Scheduling policy for completed-event result refreshes."
           },
           "perSportOverrides": {
             "type": "object",
@@ -13292,33 +13182,7 @@
                     "lookaheadDays": {
                       "type": "integer",
                       "minimum": 0,
-                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                    }
-                  },
-                  "additionalProperties": false,
-                  "description": "Partial feed-scheduling override payload."
-                },
-                "eventSchedule": {
-                  "type": "object",
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean",
-                      "description": "Whether the feed should be scheduled automatically."
-                    },
-                    "intervalMinutes": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                    },
-                    "intervalSeconds": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                    },
-                    "lookaheadDays": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
                     }
                   },
                   "additionalProperties": false,
@@ -13344,7 +13208,7 @@
                     "lookaheadDays": {
                       "type": "integer",
                       "minimum": 0,
-                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
                     }
                   },
                   "additionalProperties": false,
@@ -13370,33 +13234,7 @@
                     "lookaheadDays": {
                       "type": "integer",
                       "minimum": 0,
-                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                    }
-                  },
-                  "additionalProperties": false,
-                  "description": "Partial feed-scheduling override payload."
-                },
-                "eventResults": {
-                  "type": "object",
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean",
-                      "description": "Whether the feed should be scheduled automatically."
-                    },
-                    "intervalMinutes": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                    },
-                    "intervalSeconds": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                    },
-                    "lookaheadDays": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
                     }
                   },
                   "additionalProperties": false,
@@ -13411,10 +13249,8 @@
         },
         "required": [
           "healthCheck",
-          "eventSchedule",
           "eventParticipants",
           "eventLiveScores",
-          "eventResults",
           "perSportOverrides"
         ],
         "additionalProperties": false,
@@ -15033,37 +14869,6 @@
         "additionalProperties": false,
         "description": "A correction to one golfer's round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored."
       },
-      "SportSyncRequest": {
-        "type": "object",
-        "properties": {
-          "feeds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "EVENTSCHEDULE"
-              ]
-            },
-            "minItems": 1,
-            "description": "Feed types to run for a sport-level sync request. Event participant, live-score, result, and odds hydration are event-scoped and must use the event sync endpoint."
-          },
-          "from": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Optional lower bound for sport-level event discovery."
-          },
-          "to": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Optional lower bound for sport-level event discovery."
-          }
-        },
-        "required": [
-          "feeds"
-        ],
-        "additionalProperties": false,
-        "description": "Feed-aware sport sync request."
-      },
       "EventSyncRequest": {
         "type": "object",
         "properties": {
@@ -15073,9 +14878,9 @@
               "type": "string",
               "enum": [
                 "EVENTPARTICIPANTS",
-                "EVENTLIVESCORES",
-                "EVENTRESULTS"
-              ]
+                "EVENTLIVESCORES"
+              ],
+              "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
             },
             "minItems": 1,
             "description": "Feed types to run for a specific event sync request."
@@ -15361,29 +15166,25 @@
                 "items": {
                   "type": "string",
                   "enum": [
-                    "EVENTSCHEDULE",
                     "EVENTPARTICIPANTS",
-                    "EVENTLIVESCORES",
-                    "EVENTRESULTS"
+                    "EVENTLIVESCORES"
                   ],
-                  "description": "Explicit ingestion feed type requested by the caller."
+                  "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
                 },
                 "description": "Feeds represented by the originating manual or scheduled sync request."
               },
               "requestedFeed": {
                 "type": "string",
                 "enum": [
-                  "EVENTSCHEDULE",
                   "EVENTPARTICIPANTS",
-                  "EVENTLIVESCORES",
-                  "EVENTRESULTS"
+                  "EVENTLIVESCORES"
                 ],
-                "description": "Explicit ingestion feed type requested by the caller."
+                "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
               },
               "requestPayload": {
                 "type": "object",
                 "additionalProperties": {},
-                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design."
+                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
               },
               "providerPayload": {
                 "type": "object",
@@ -15391,10 +15192,8 @@
                   "operation": {
                     "type": "string",
                     "enum": [
-                      "EVENTSCHEDULE",
                       "EVENTPARTICIPANTS",
-                      "EVENTLIVESCORES",
-                      "EVENTRESULTS"
+                      "EVENTLIVESCORES"
                     ],
                     "description": "Provider feed operation represented by this payload."
                   },
@@ -15828,29 +15627,25 @@
                       "items": {
                         "type": "string",
                         "enum": [
-                          "EVENTSCHEDULE",
                           "EVENTPARTICIPANTS",
-                          "EVENTLIVESCORES",
-                          "EVENTRESULTS"
+                          "EVENTLIVESCORES"
                         ],
-                        "description": "Explicit ingestion feed type requested by the caller."
+                        "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
                       },
                       "description": "Feeds represented by the originating manual or scheduled sync request."
                     },
                     "requestedFeed": {
                       "type": "string",
                       "enum": [
-                        "EVENTSCHEDULE",
                         "EVENTPARTICIPANTS",
-                        "EVENTLIVESCORES",
-                        "EVENTRESULTS"
+                        "EVENTLIVESCORES"
                       ],
-                      "description": "Explicit ingestion feed type requested by the caller."
+                      "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
                     },
                     "requestPayload": {
                       "type": "object",
                       "additionalProperties": {},
-                      "description": "Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design."
+                      "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                     },
                     "providerPayload": {
                       "type": "object",
@@ -15858,10 +15653,8 @@
                         "operation": {
                           "type": "string",
                           "enum": [
-                            "EVENTSCHEDULE",
                             "EVENTPARTICIPANTS",
-                            "EVENTLIVESCORES",
-                            "EVENTRESULTS"
+                            "EVENTLIVESCORES"
                           ],
                           "description": "Provider feed operation represented by this payload."
                         },
@@ -16194,22 +15987,18 @@
             ]
           },
           "eventId": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "description": "Provider event identifier the submitted runs sync."
           },
           "requestedFeeds": {
             "type": "array",
             "items": {
               "type": "string",
               "enum": [
-                "EVENTSCHEDULE",
                 "EVENTPARTICIPANTS",
-                "EVENTLIVESCORES",
-                "EVENTRESULTS"
+                "EVENTLIVESCORES"
               ],
-              "description": "Explicit ingestion feed type requested by the caller."
+              "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
             }
           },
           "submittedAt": {
@@ -16297,29 +16086,25 @@
                       "items": {
                         "type": "string",
                         "enum": [
-                          "EVENTSCHEDULE",
                           "EVENTPARTICIPANTS",
-                          "EVENTLIVESCORES",
-                          "EVENTRESULTS"
+                          "EVENTLIVESCORES"
                         ],
-                        "description": "Explicit ingestion feed type requested by the caller."
+                        "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
                       },
                       "description": "Feeds represented by the originating manual or scheduled sync request."
                     },
                     "requestedFeed": {
                       "type": "string",
                       "enum": [
-                        "EVENTSCHEDULE",
                         "EVENTPARTICIPANTS",
-                        "EVENTLIVESCORES",
-                        "EVENTRESULTS"
+                        "EVENTLIVESCORES"
                       ],
-                      "description": "Explicit ingestion feed type requested by the caller."
+                      "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
                     },
                     "requestPayload": {
                       "type": "object",
                       "additionalProperties": {},
-                      "description": "Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design."
+                      "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
                     },
                     "providerPayload": {
                       "type": "object",
@@ -16327,10 +16112,8 @@
                         "operation": {
                           "type": "string",
                           "enum": [
-                            "EVENTSCHEDULE",
                             "EVENTPARTICIPANTS",
-                            "EVENTLIVESCORES",
-                            "EVENTRESULTS"
+                            "EVENTLIVESCORES"
                           ],
                           "description": "Provider feed operation represented by this payload."
                         },
@@ -37888,220 +37671,6 @@
             }
           },
           "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/ingestion/sports/{sport}/sync": {
-      "post": {
-        "operationId": "submitSportSync",
-        "summary": "Submit a manual sport sync",
-        "tags": [
-          "Ingestion"
-        ],
-        "description": "Submits one sync run per requested sport-level feed. The runs execute asynchronously after acceptance; follow them in the sync-run history.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SportSyncRequest"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
-              ]
-            },
-            "in": "path",
-            "name": "sport",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "A manual sync submission. The runs execute asynchronously after the request is accepted.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProviderManualSyncSubmissionResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
