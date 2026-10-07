@@ -73,9 +73,11 @@ export class ContestConfigTemplateService {
       throw new ContestConfigTemplateNotFoundError(templateId);
     }
 
-    const nextIsDefault = input.active === false
-      ? false
-      : input.isDefault ?? existing.isDefault;
+    // Only an active template can be the default: deactivating one takes its default off, and
+    // an inactive one cannot take the default from an active one.
+    const nextIsDefault = (input.active ?? existing.active)
+      ? input.isDefault ?? existing.isDefault
+      : false;
 
     const updates: Partial<ContestConfigTemplate> = {
       ...(input.name !== undefined && { name: input.name }),
