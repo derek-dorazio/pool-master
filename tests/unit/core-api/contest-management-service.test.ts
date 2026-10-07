@@ -207,9 +207,6 @@ function createSportEventTierServiceStub(
 function createSportEventReader(overrides?: Partial<{
   status: SportEventStatus;
   startDate: Date;
-  releaseAt: Date;
-  fieldLocksAt: Date;
-  fieldLocked: boolean;
   sport: Sport;
   tournamentFormat: TournamentFormat;
   participantCount: number | null;
@@ -222,9 +219,6 @@ function createSportEventReader(overrides?: Partial<{
       id: '11111111-1111-1111-1111-111111111111',
       status: overrides?.status ?? SportEventStatus.SCHEDULED,
       startDate: overrides?.startDate ?? new Date('2026-05-14T12:00:00.000Z'),
-      releaseAt: overrides?.releaseAt ?? new Date('2026-04-22T12:00:00.000Z'),
-      fieldLocksAt: overrides?.fieldLocksAt ?? new Date('2026-05-10T12:00:00.000Z'),
-      fieldLocked: overrides?.fieldLocked ?? false,
       sport: overrides?.sport ?? Sport.GOLF,
       tournamentFormat:
         overrides?.tournamentFormat ?? TournamentFormat.STROKE_PLAY_TOURNAMENT,
@@ -1086,7 +1080,26 @@ describe('ContestManagementService', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  it('rejects contest creation when the sporting event is not released yet', async () => {
+  it.each([
+    {
+      name: 'refuses with SPORT_EVENT_NOT_RELEASED while the event is still a draft',
+      event: { status: SportEventStatus.DRAFT },
+      code: 'SPORT_EVENT_NOT_RELEASED',
+      message: 'Selected sporting event is not released for contest creation yet.',
+    },
+    {
+      name: 'refuses with SPORT_EVENT_ALREADY_STARTED once the event\'s start time has passed',
+      event: { startDate: new Date('2026-04-23T12:00:00.000Z') },
+      code: 'SPORT_EVENT_ALREADY_STARTED',
+      message: 'Selected sporting event has already started, so contests can no longer be created on it.',
+    },
+    {
+      name: 'refuses with SPORT_EVENT_ALREADY_STARTED for an event in progress, whatever its start time',
+      event: { status: SportEventStatus.IN_PROGRESS },
+      code: 'SPORT_EVENT_ALREADY_STARTED',
+      message: 'Selected sporting event has already started, so contests can no longer be created on it.',
+    },
+  ])('createContest $name, creating nothing', async ({ event, code, message }) => {
     const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
@@ -1095,16 +1108,13 @@ describe('ContestManagementService', () => {
       createParticipantScoringRuleRepo(),
       createSportEventTierServiceStub(),
       undefined,
-      createSportEventReader({
-        releaseAt: new Date('2026-05-10T12:00:00.000Z'),
-        loadedParticipantCount: 72,
-      }),
+      createSportEventReader({ ...event, loadedParticipantCount: 72 }),
     );
 
     await expect(service.createContest(
       { leagueId: 'league-1' },
       {
-        name: 'Unreleased Event Contest',
+        name: 'Unavailable Event Contest',
         sportEventId: '11111111-1111-1111-1111-111111111111',
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
@@ -1115,10 +1125,7 @@ describe('ContestManagementService', () => {
           countedScores: 4,
         },
       },
-    )).rejects.toMatchObject({
-      code: 'SPORT_EVENT_NOT_RELEASED',
-      message: 'Selected sporting event is not released for contest creation yet.',
-    });
+    )).rejects.toMatchObject({ code, message });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 });

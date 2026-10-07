@@ -1,9 +1,21 @@
 import { expect } from '@jest/globals';
 import { MANUAL_ADMIN_PROVIDER_ID, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { SportEventService } from '../../../packages/core-api/src/modules/events/service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import {
+  fakeContestEntryRepo,
+  fakeContestRepo,
+  fakeLeagueMembershipRepo,
+  fakeLeagueRepo,
+  fakeSquadMembershipRepo,
+  fakeUserRepo,
+} from '../../support/repo-fakes';
+
+/** Before every event's start in this file, so the release cutoff never depends on today. */
+const NOW = new Date('2026-01-15T12:00:00.000Z');
 
 // SportEventService's own rules — where an event's sport comes from, what creation seeds,
 // and what update and delete refuse — against an in-memory store. The adapters behind the
@@ -13,13 +25,28 @@ function setup(sportName: Sport = Sport.GOLF) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(sportName);
   const sportLeague = store.addSportLeague(sport.id);
+  const sportEvents = store.sportEventRepo();
+  // The real lifecycle over the same store: a release is a status change like any other.
+  const lifecycle = new EventLifecycleService(
+    {
+      contests: fakeContestRepo(),
+      entries: fakeContestEntryRepo(),
+      leagues: fakeLeagueRepo(),
+      memberships: fakeLeagueMembershipRepo(),
+      squadMemberships: fakeSquadMembershipRepo(),
+      users: fakeUserRepo(),
+    },
+    sportEvents,
+  );
   const service = new SportEventService({
-    sportEvents: store.sportEventRepo(),
+    sportEvents,
     eventSeries: store.eventSeriesRepo(),
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
-    tiers: new SportEventTierService({ tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo() }),
+    tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo() }),
+    lifecycle,
+    now: () => NOW,
   });
   return { store, service, sportLeague };
 }
@@ -27,12 +54,10 @@ function setup(sportName: Sport = Sport.GOLF) {
 const MANUAL_INPUT = {
   name: 'Harbour Open',
   startDate: new Date('2026-06-04T12:00:00.000Z'),
-  releaseAt: new Date('2026-05-21T12:00:00.000Z'),
-  fieldLocksAt: new Date('2026-06-03T12:00:00.000Z'),
 };
 
 describe('SportEventService.createEvent', () => {
-  it('creates a golf event with the manual identity, SCHEDULED, no provider data, four rounds and six tiers', async () => {
+  it('creates a golf event with the manual identity, as a DRAFT, no provider data, four rounds and six tiers', async () => {
     const { store, service, sportLeague } = setup();
 
     const created = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT });
@@ -40,7 +65,7 @@ describe('SportEventService.createEvent', () => {
     expect(created.event).toMatchObject({
       sport: Sport.GOLF,
       providerId: MANUAL_ADMIN_PROVIDER_ID,
-      status: SportEventStatus.SCHEDULED,
+      status: SportEventStatus.DRAFT,
       syncScope: 'NONE',
       rounds: 4,
       sportLeagueId: sportLeague.id,
@@ -96,7 +121,7 @@ describe('SportEventService.createEventFromProviderEvent', () => {
     endDate: new Date('2026-07-19T12:00:00.000Z'),
   };
 
-  it('creates the event linked to its provider for scores, released and locked at its start, with the schedule the provider dates imply', async () => {
+  it('creates the event as a DRAFT linked to its provider for scores, with the schedule the provider dates imply', async () => {
     const { store, service, sportLeague } = setup();
 
     const created = await service.createEventFromProviderEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', externalId: 'ev-1', providerEvent });
@@ -105,9 +130,8 @@ describe('SportEventService.createEventFromProviderEvent', () => {
       providerId: 'feed',
       externalId: 'ev-1',
       syncScope: 'SCORES_ONLY',
+      status: SportEventStatus.DRAFT,
       name: 'Provider Classic',
-      releaseAt: providerEvent.startDate,
-      fieldLocksAt: providerEvent.startDate,
       rounds: 4,
     });
     expect(store.roundRows.map((round) => round.scheduledDate.toISOString().slice(0, 10)))
@@ -183,7 +207,6 @@ describe('SportEventService.cloneEventYear', () => {
     const source = await service.createEvent({
       sportLeagueId: sportLeague.id, eventYear: 2024, name: 'The Open', venue: 'Royal Liverpool', rounds: 4,
       startDate: new Date('2024-02-29T00:00:00.000Z'), endDate: new Date('2024-03-03T00:00:00.000Z'),
-      releaseAt: new Date('2024-02-15T00:00:00.000Z'), fieldLocksAt: new Date('2024-02-28T00:00:00.000Z'),
     });
 
     const cloned = await service.cloneEventYear({ sportLeagueId: sportLeague.id, eventYear: 2024 });
@@ -223,6 +246,76 @@ describe('SportEventService.cloneEventYear', () => {
   });
 });
 
+describe('SportEventService.releaseEvent (#431)', () => {
+  /** A draft whose field holds `golfers` active golfers, the first `tiered` of them in a tier. */
+  async function draftWithField(store: InMemorySportEvents, golfers: number, tiered: number, overrides: Parameters<InMemorySportEvents['addEvent']>[0] = {}) {
+    const event = store.addEvent({ status: SportEventStatus.DRAFT, ...overrides });
+    await store.tierRepo().createMany(event.id, [{ tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1, defaultPickCount: 1 }]);
+    const tierId = store.tierRows[0].id;
+    const entries = Array.from({ length: golfers }, (_, index) => store.addToField(event.id, `participant-${index}`));
+    await store.valuationRepo().assignTiers(entries.slice(0, tiered).map((entry, index) => ({
+      sportEventParticipantId: entry.id,
+      sportEventTierId: tierId,
+      tierOrderIndex: index + 1,
+      source: 'MANUAL',
+    })));
+    return event;
+  }
+
+  it('releases a draft with a loaded, fully tiered field before its start: DRAFT becomes SCHEDULED', async () => {
+    const { store, service } = setup();
+    const event = await draftWithField(store, 3, 3);
+
+    const released = await service.releaseEvent(event.id);
+
+    expect(released.event.status).toBe(SportEventStatus.SCHEDULED);
+    expect(store.events[0].status).toBe(SportEventStatus.SCHEDULED);
+  });
+
+  it('refuses a draft whose field is empty with 422 SPORT_EVENT_NOT_READY, leaving it a draft', async () => {
+    const { store, service } = setup();
+    const event = await draftWithField(store, 0, 0);
+
+    await expect(service.releaseEvent(event.id)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_READY', statusCode: 422 });
+    expect(store.events[0].status).toBe(SportEventStatus.DRAFT);
+  });
+
+  it('refuses a draft with an active golfer in no tier with 422 SPORT_EVENT_NOT_READY', async () => {
+    const { store, service } = setup();
+    const event = await draftWithField(store, 3, 2);
+
+    await expect(service.releaseEvent(event.id)).rejects.toMatchObject({
+      code: 'SPORT_EVENT_NOT_READY',
+      message: expect.stringContaining('1 active participant(s) have no tier'),
+    });
+  });
+
+  it('ignores a withdrawn golfer with no tier: only active golfers must be tiered', async () => {
+    const { store, service } = setup();
+    const event = await draftWithField(store, 2, 2);
+    const withdrawn = store.addToField(event.id, 'participant-withdrawn');
+    withdrawn.isActive = false;
+
+    await expect(service.releaseEvent(event.id)).resolves.toMatchObject({ event: { status: SportEventStatus.SCHEDULED } });
+  });
+
+  it('refuses a draft whose start time has passed with 409 SPORT_EVENT_ALREADY_STARTED', async () => {
+    const { store, service } = setup();
+    const event = await draftWithField(store, 3, 3, { startDate: new Date('2026-01-15T12:00:00.000Z') });
+
+    await expect(service.releaseEvent(event.id)).rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED', statusCode: 409 });
+    expect(store.events[0].status).toBe(SportEventStatus.DRAFT);
+  });
+
+  it('refuses an event that is already released with 409 SPORT_EVENT_NOT_DRAFT, and an unknown one with 404', async () => {
+    const { store, service } = setup();
+    const event = await draftWithField(store, 3, 3, { status: SportEventStatus.SCHEDULED });
+
+    await expect(service.releaseEvent(event.id)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_DRAFT', statusCode: 409 });
+    await expect(service.releaseEvent('missing')).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+  });
+});
+
 describe('SportEventService — read, update, delete', () => {
   it('lists events with their field, tier and contest counts, zero where there are none', async () => {
     const { store, service } = setup();
@@ -232,7 +325,7 @@ describe('SportEventService — read, update, delete', () => {
 
     const [summary] = await service.listEvents({});
 
-    expect(summary).toMatchObject({ loadedParticipantCount: 1, tierCount: 0, contestCount: 2 });
+    expect(summary).toMatchObject({ loadedParticipantCount: 1, untieredParticipantCount: 1, tierCount: 0, contestCount: 2 });
     await expect(service.getEvent('missing')).resolves.toBeNull();
   });
 

@@ -104,8 +104,6 @@ async function seedContestFixture(contestFormat: string): Promise<FixtureContext
       sport: Sport.GOLF,
       name: `Partial Uniques Event ${suffix}`,
       startDate: new Date('2030-01-01T12:00:00.000Z'),
-      releaseAt: new Date('2030-01-01T12:00:00.000Z'),
-      fieldLocksAt: new Date('2030-01-15T12:00:00.000Z'),
       status: 'SCHEDULED',
     },
   });

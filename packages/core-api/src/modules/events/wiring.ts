@@ -40,6 +40,7 @@ import { SportEventTierService } from './sport-event-tier-service';
 
 export function createSportEventTierService(prisma: PrismaClient, logger?: FastifyBaseLogger): SportEventTierService {
   return new SportEventTierService({
+    sportEvents: new PrismaSportEventRepository(prisma),
     tiers: new PrismaSportEventTierRepository(prisma),
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
@@ -85,7 +86,16 @@ export function createSportEventParticipantService(prisma: PrismaClient, logger?
   });
 }
 
-export function createSportEventServices(prisma: PrismaClient, logger?: FastifyBaseLogger): SportEventServices {
+/**
+ * `lifecycle` is the status-change path the release action goes through. Pass the app's own
+ * so a release runs on the same instance as every other transition; omitted, one is built
+ * without mail or settlement, which a release never needs.
+ */
+export function createSportEventServices(
+  prisma: PrismaClient,
+  logger?: FastifyBaseLogger,
+  lifecycle: EventLifecycleService = createEventLifecycleService(prisma, { logger }),
+): SportEventServices {
   const sports = new PrismaSportRepository(prisma);
   const sportLeagues = new PrismaSportLeagueRepository(prisma);
   const events = new PrismaSportEventRepository(prisma);
@@ -104,6 +114,7 @@ export function createSportEventServices(prisma: PrismaClient, logger?: FastifyB
       sports,
       rounds,
       tiers,
+      lifecycle,
       logger,
     }),
     field: createSportEventParticipantService(prisma, logger),

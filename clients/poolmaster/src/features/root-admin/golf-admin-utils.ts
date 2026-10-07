@@ -77,12 +77,11 @@ export function sportEventStatusTone(status: GolfTournamentStatus): BadgeTone {
   return 'neutral';
 }
 
-// --- Workflow rail lifecycle stages (plans/124 §6.3 block 2) ---
+// --- Workflow rail lifecycle stages (plans/124 §6.3 block 2, #431) ---
 
 export type GolfLifecycleStageKey =
-  | 'SETUP'
-  | 'FIELD_OPEN'
-  | 'FIELD_LOCKED'
+  | 'DRAFT'
+  | 'RELEASED'
   | 'LIVE'
   | 'COMPLETED';
 
@@ -90,9 +89,8 @@ export const GOLF_LIFECYCLE_STAGES: ReadonlyArray<{
   key: GolfLifecycleStageKey;
   label: string;
 }> = [
-  { key: 'SETUP', label: 'Setup' },
-  { key: 'FIELD_OPEN', label: 'Field open' },
-  { key: 'FIELD_LOCKED', label: 'Field locked' },
+  { key: 'DRAFT', label: 'Draft' },
+  { key: 'RELEASED', label: 'Released for contests' },
   { key: 'LIVE', label: 'Live' },
   { key: 'COMPLETED', label: 'Completed' },
 ];
@@ -103,40 +101,60 @@ export type GolfLifecycleStage = {
   index: number;
 };
 
-/**
- * Which rail stage a tournament currently sits at. Returns null for CANCELLED /
- * POSTPONED — those are off the Setup → Completed rail and the caller shows a
- * plain status note instead.
- */
-export function resolveGolfLifecycleStage(input: {
-  status: GolfTournamentStatus;
-  fieldLocked: boolean;
-  releaseAt: string;
-  now?: Date;
-}): GolfLifecycleStage | null {
-  const { status, fieldLocked } = input;
+const STAGE_INDEX_BY_STATUS: Partial<Record<GolfTournamentStatus, number>> = {
+  DRAFT: 0,
+  SCHEDULED: 1,
+  IN_PROGRESS: 2,
+  COMPLETED: 3,
+};
 
-  if (status === 'CANCELLED' || status === 'POSTPONED') {
+/**
+ * Which rail stage a tournament currently sits at, straight from its status. Returns null
+ * for CANCELLED / POSTPONED — those are off the Draft → Completed rail and the caller shows
+ * a plain status note instead.
+ */
+export function resolveGolfLifecycleStage(status: GolfTournamentStatus): GolfLifecycleStage | null {
+  const index = STAGE_INDEX_BY_STATUS[status];
+  if (index === undefined) {
     return null;
   }
-
-  let index: number;
-  if (status === 'COMPLETED') {
-    index = 4;
-  } else if (status === 'IN_PROGRESS') {
-    index = 3;
-  } else if (fieldLocked) {
-    index = 2;
-  } else {
-    const now = input.now ?? new Date();
-    const releaseAt = new Date(input.releaseAt);
-    const released =
-      !Number.isNaN(releaseAt.getTime()) && now.getTime() >= releaseAt.getTime();
-    index = released ? 1 : 0;
-  }
-
   const stage = GOLF_LIFECYCLE_STAGES[index];
   return { key: stage.key, label: stage.label, index };
+}
+
+// --- Release (#431) ---
+
+/**
+ * What still stops a draft tournament being released, in the admin's words: the same checks
+ * the server makes. Empty when it is ready, or when it is not a draft.
+ */
+export function describeGolfReleaseBlockers(
+  tournament: Pick<SportEventDto, 'status' | 'startDate' | 'loadedParticipantCount' | 'untieredParticipantCount'>,
+  now: Date = new Date(),
+): string[] {
+  if (tournament.status !== 'DRAFT') {
+    return [];
+  }
+  const blockers: string[] = [];
+  if (new Date(tournament.startDate).getTime() <= now.getTime()) {
+    blockers.push('Its start time has passed, so it can no longer be released.');
+  }
+  if (tournament.loadedParticipantCount === 0) {
+    blockers.push('Load the field.');
+  }
+  if (tournament.untieredParticipantCount > 0) {
+    blockers.push(
+      tournament.untieredParticipantCount === 1
+        ? 'Put the 1 active golfer without a tier into a tier.'
+        : `Put the ${tournament.untieredParticipantCount} active golfers without a tier into tiers.`,
+    );
+  }
+  return blockers;
+}
+
+/** Tiers and prices lock when the tournament is released (#431). */
+export function golfTiersLocked(status: GolfTournamentStatus): boolean {
+  return status !== 'DRAFT';
 }
 
 // --- Auto-lifecycle hint (plans/124 §3.6 / §6.3) ---
@@ -215,7 +233,7 @@ export type GolfTournamentReadiness = {
 export function deriveGolfTournamentReadiness(
   tournament: Pick<
     SportEventDto,
-    'status' | 'fieldLocked' | 'loadedParticipantCount' | 'tierCount'
+    'status' | 'loadedParticipantCount' | 'tierCount' | 'untieredParticipantCount'
   >,
 ): GolfTournamentReadiness {
   if (tournament.status === 'COMPLETED') {
@@ -231,6 +249,9 @@ export function deriveGolfTournamentReadiness(
       reasons: [],
     };
   }
+  if (tournament.status !== 'DRAFT') {
+    return { label: 'Released', tone: 'success', reasons: [] };
+  }
   if (tournament.loadedParticipantCount === 0) {
     return { label: 'Setup', tone: 'neutral', reasons: ['No field loaded'] };
   }
@@ -241,10 +262,14 @@ export function deriveGolfTournamentReadiness(
       reasons: ['No tiers defined'],
     };
   }
-  if (tournament.fieldLocked) {
-    return { label: 'Field locked', tone: 'locked', reasons: [] };
+  if (tournament.untieredParticipantCount > 0) {
+    return {
+      label: 'Tiers pending',
+      tone: 'warning',
+      reasons: [`${tournament.untieredParticipantCount} golfer(s) without a tier`],
+    };
   }
-  return { label: 'Field open', tone: 'success', reasons: [] };
+  return { label: 'Ready to release', tone: 'info', reasons: [] };
 }
 
 // --- datetime-local <input> <-> ISO ---

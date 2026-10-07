@@ -46,7 +46,7 @@ const formatReadiness = formatSportEventStatus;
 
 function readinessTone(status: AdminEvent['readinessStatus']) {
   if (status === 'CONTEST_ELIGIBLE') return 'success';
-  if (status === 'FIELD_LOCKED') return 'locked';
+  if (status === 'EVENT_STARTED') return 'locked';
   if (status === 'PENDING_FIELD') return 'warning';
   return 'neutral';
 }

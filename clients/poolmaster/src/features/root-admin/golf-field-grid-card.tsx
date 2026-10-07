@@ -35,6 +35,8 @@ export type { GolfFieldEntry } from './golf-field-patch';
 type FieldGridMeta = {
   draft: Record<string, GolfFieldRowDraft>;
   setDraft: Dispatch<SetStateAction<Record<string, GolfFieldRowDraft>>>;
+  /** Released for contests (#431): prices are locked; rank, odds, seed and withdrawals are not. */
+  pricesLocked: boolean;
 };
 
 const NUMERIC_COLUMN_LABEL: Record<GolfFieldNumericKey, string> = {
@@ -62,7 +64,7 @@ function numericCell(key: GolfFieldNumericKey) {
     id: key,
     header: NUMERIC_COLUMN_LABEL[key],
     cell: ({ row, table }) => {
-      const { draft, setDraft } = table.options.meta as FieldGridMeta;
+      const { draft, setDraft, pricesLocked } = table.options.meta as FieldGridMeta;
       const entry = row.original;
       const raw = golfFieldCellValue(entry, draft[entry.id], key);
       const invalid = golfFieldCellInvalid(raw, key);
@@ -72,6 +74,7 @@ function numericCell(key: GolfFieldNumericKey) {
             aria-invalid={invalid || undefined}
             aria-label={`${NUMERIC_COLUMN_LABEL[key]} for ${entry.participant.name}`}
             data-testid={`root-admin-golf-field-${key}-${entry.id}`}
+            disabled={key === 'price' && pricesLocked}
             inputMode={key === 'oddsToWin' ? 'decimal' : 'numeric'}
             onChange={(event) =>
               patchRowDraft(setDraft, entry.id, {
@@ -169,11 +172,13 @@ export function GolfFieldGridCard({
   eventId,
   fieldError,
   fieldLoading,
+  pricesLocked = false,
 }: {
   entries: GolfFieldEntry[];
   eventId: string;
   fieldError: string | null;
   fieldLoading: boolean;
+  pricesLocked?: boolean;
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-field-page',
@@ -218,7 +223,7 @@ export function GolfFieldGridCard({
   );
   const invalidCount = useMemo(() => golfFieldInvalidCount(draft), [draft]);
 
-  const meta = useMemo<FieldGridMeta>(() => ({ draft, setDraft }), [draft]);
+  const meta = useMemo<FieldGridMeta>(() => ({ draft, setDraft, pricesLocked }), [draft, pricesLocked]);
 
   return (
     <Tile>
@@ -300,6 +305,9 @@ export function GolfFieldGridCard({
       {saveMutation.isError ? (
         <Alert className="mt-3" data-testid="root-admin-golf-field-save-error" tone="danger">
           {extractErrorMessage(saveMutation.error, {
+            codeMessages: {
+              SPORT_EVENT_TIERS_LOCKED: 'This tournament has been released for contests, so its prices are locked.',
+            },
             fallback: 'We could not save these field changes.',
           })}
         </Alert>

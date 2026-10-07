@@ -19,7 +19,7 @@ import {
 import type { SportEventParticipantDto, SportEventTierDto } from '@/lib/api';
 
 const TIER_LOCKED_MESSAGE =
-  'This tournament has contest entries. Tier and price changes are locked to keep existing picks consistent.';
+  'This tournament has been released for contests, so its tiers and prices are locked.';
 
 function isValidPrice(raw: string): boolean {
   return /^\d+$/.test(raw.trim());
@@ -61,10 +61,13 @@ function findCard(
 export function GolfTierBoard({
   eventId,
   field,
+  locked = false,
   tiers,
 }: {
   eventId: string;
   field: SportEventParticipantDto[];
+  /** Released for contests (#431): the board is read-only. */
+  locked?: boolean;
   tiers: SportEventTierDto[];
 }) {
   const logger = getLogger().child({
@@ -182,14 +185,14 @@ export function GolfTierBoard({
   const saving = assignmentsMutation.isPending || pricesMutation.isPending;
   const saveError = assignmentsMutation.isError
     ? extractErrorMessage(assignmentsMutation.error, {
-        codeMessages: { TIERS_LOCKED_BY_ENTRIES: TIER_LOCKED_MESSAGE },
+        codeMessages: { SPORT_EVENT_TIERS_LOCKED: TIER_LOCKED_MESSAGE },
         fallback: 'We could not save these tier assignments.',
       })
     : pricesMutation.isError
       ? `Tier assignments saved, but prices could not be saved: ${extractErrorMessage(
           pricesMutation.error,
           {
-            codeMessages: { TIERS_LOCKED_BY_ENTRIES: TIER_LOCKED_MESSAGE },
+            codeMessages: { SPORT_EVENT_TIERS_LOCKED: TIER_LOCKED_MESSAGE },
             fallback: 'please retry.',
           },
         )}`
@@ -226,6 +229,7 @@ export function GolfTierBoard({
             aria-label={`Price for ${card.name}`}
             className="h-8"
             data-testid={`root-admin-golf-tier-price-${card.sportEventParticipantId}`}
+            disabled={locked}
             id={`price-${card.sportEventParticipantId}`}
             inputMode="numeric"
             onChange={(event) =>
@@ -242,6 +246,7 @@ export function GolfTierBoard({
             aria-label={`Move ${card.name} to tier`}
             className="h-8"
             data-testid={`root-admin-golf-tier-move-${card.sportEventParticipantId}`}
+            disabled={locked}
             onChange={(event) =>
               setBoard((current) =>
                 moveCard(current, card.sportEventParticipantId, event.target.value),
@@ -258,7 +263,7 @@ export function GolfTierBoard({
           <Button
             aria-label={`Move ${card.name} up`}
             data-testid={`root-admin-golf-tier-up-${card.sportEventParticipantId}`}
-            disabled={index === 0}
+            disabled={locked || index === 0}
             onClick={() =>
               setBoard((current) => nudgeCard(current, card.sportEventParticipantId, -1))
             }
@@ -270,7 +275,7 @@ export function GolfTierBoard({
           <Button
             aria-label={`Move ${card.name} down`}
             data-testid={`root-admin-golf-tier-down-${card.sportEventParticipantId}`}
-            disabled={index === column.cards.length - 1}
+            disabled={locked || index === column.cards.length - 1}
             onClick={() =>
               setBoard((current) => nudgeCard(current, card.sportEventParticipantId, 1))
             }
@@ -336,6 +341,7 @@ export function GolfTierBoard({
           <TierBoardColumn
             column={column}
             key={column.key}
+            locked={locked}
             onReorder={(orderedIds) =>
               setBoard((current) => reorderColumn(current, column.key, orderedIds))
             }
@@ -349,10 +355,12 @@ export function GolfTierBoard({
 
 function TierBoardColumn({
   column,
+  locked,
   onReorder,
   renderCard,
 }: {
   column: TierColumn;
+  locked: boolean;
   onReorder: (orderedIds: string[]) => void;
   renderCard: (column: TierColumn, card: TierCard, index: number) => ReactNode;
 }) {
@@ -381,15 +389,17 @@ function TierBoardColumn({
           onReorder={onReorder}
           renderItem={(card, { dragHandleProps, index }) => (
             <div className="flex items-start gap-2">
-              <Button
-                aria-label={`Drag ${card.name} to reorder`}
-                className="mt-3 shrink-0 cursor-grab px-2"
-                size="sm"
-                variant="ghost"
-                {...dragHandleProps}
-              >
-                <GripVertical aria-hidden className="h-4 w-4" />
-              </Button>
+              {locked ? null : (
+                <Button
+                  aria-label={`Drag ${card.name} to reorder`}
+                  className="mt-3 shrink-0 cursor-grab px-2"
+                  size="sm"
+                  variant="ghost"
+                  {...dragHandleProps}
+                >
+                  <GripVertical aria-hidden className="h-4 w-4" />
+                </Button>
+              )}
               <div className="min-w-0 flex-1">{renderCard(column, card, index)}</div>
             </div>
           )}

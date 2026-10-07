@@ -1611,11 +1611,11 @@ export type ParticipantLeagueAffiliationUploadPreviewResponse = {
     }>;
 };
 
-export type EventStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+export type EventStatusDto = 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
 
-export type EventReadinessStatusDto = 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+export type EventReadinessStatusDto = 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'EVENT_STARTED';
 
-export type EventReadinessReasonDto = 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED';
+export type EventReadinessReasonDto = 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'EVENT_STARTED';
 
 /**
  * A real-world event a contest can be run on — a golf tournament, a race, a match.
@@ -1652,7 +1652,7 @@ export type SportEventDto = {
     /**
      * Event lifecycle status.
      */
-    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
     /**
      * Scheduled or actual start time.
      */
@@ -1674,27 +1674,19 @@ export type SportEventDto = {
      */
     loadedParticipantCount: number;
     /**
-     * When the event becomes available for contest setup.
+     * Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
      */
-    releaseAt: string;
-    /**
-     * After this time, field changes are no longer honored for new contest setup.
-     */
-    fieldLocksAt: string;
-    /**
-     * Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed.
-     */
-    fieldLocked: boolean;
+    untieredParticipantCount: number;
     /**
      * Contest-setup readiness right now.
      */
-    readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+    readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'EVENT_STARTED';
     /**
-     * Why the event is or is not contest-eligible right now.
+     * Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started.
      */
-    readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
+    readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'EVENT_STARTED'>;
     /**
-     * Whether a contest can be created or configured for the event right now.
+     * Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started.
      */
     contestEligible: boolean;
     /**
@@ -1728,7 +1720,7 @@ export type SportEventDto = {
     /**
      * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
      */
-    allowedTransitions: Array<'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+    allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
     /**
      * Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)
      */
@@ -1756,7 +1748,7 @@ export type SportEventListQuery = {
     /**
      * Only events in this lifecycle status.
      */
-    status?: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    status?: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
     /**
      * Only events of this sport league's series.
      */
@@ -1810,7 +1802,7 @@ export type SportEventListResponse = {
         /**
          * Event lifecycle status.
          */
-        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
          * Scheduled or actual start time.
          */
@@ -1832,27 +1824,19 @@ export type SportEventListResponse = {
          */
         loadedParticipantCount: number;
         /**
-         * When the event becomes available for contest setup.
+         * Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
          */
-        releaseAt: string;
-        /**
-         * After this time, field changes are no longer honored for new contest setup.
-         */
-        fieldLocksAt: string;
-        /**
-         * Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed.
-         */
-        fieldLocked: boolean;
+        untieredParticipantCount: number;
         /**
          * Contest-setup readiness right now.
          */
-        readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+        readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'EVENT_STARTED';
         /**
-         * Why the event is or is not contest-eligible right now.
+         * Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started.
          */
-        readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
+        readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'EVENT_STARTED'>;
         /**
-         * Whether a contest can be created or configured for the event right now.
+         * Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started.
          */
         contestEligible: boolean;
         /**
@@ -1886,7 +1870,7 @@ export type SportEventListResponse = {
         /**
          * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
          */
-        allowedTransitions: Array<'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+        allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
         /**
          * Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)
          */
@@ -1943,7 +1927,7 @@ export type SportEventResponse = {
         /**
          * Event lifecycle status.
          */
-        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
          * Scheduled or actual start time.
          */
@@ -1965,27 +1949,19 @@ export type SportEventResponse = {
          */
         loadedParticipantCount: number;
         /**
-         * When the event becomes available for contest setup.
+         * Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
          */
-        releaseAt: string;
-        /**
-         * After this time, field changes are no longer honored for new contest setup.
-         */
-        fieldLocksAt: string;
-        /**
-         * Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed.
-         */
-        fieldLocked: boolean;
+        untieredParticipantCount: number;
         /**
          * Contest-setup readiness right now.
          */
-        readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+        readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'EVENT_STARTED';
         /**
-         * Why the event is or is not contest-eligible right now.
+         * Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started.
          */
-        readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
+        readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'EVENT_STARTED'>;
         /**
-         * Whether a contest can be created or configured for the event right now.
+         * Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started.
          */
         contestEligible: boolean;
         /**
@@ -2019,7 +1995,7 @@ export type SportEventResponse = {
         /**
          * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
          */
-        allowedTransitions: Array<'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+        allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
         /**
          * Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)
          */
@@ -2038,7 +2014,7 @@ export type SportEventResponse = {
 };
 
 /**
- * An admin-authored event. Created SCHEDULED with its default rounds and tiers, accepting no provider data.
+ * An admin-authored event. Created DRAFT with its default rounds and tiers, accepting no provider data; commissioners see it once it is released.
  */
 export type CreateSportEventRequest = {
     /**
@@ -2064,19 +2040,11 @@ export type CreateSportEventRequest = {
      * Round count; golf defaults to 4.
      */
     rounds?: number;
-    /**
-     * ISO 8601 datetime string.
-     */
-    releaseAt: string;
-    /**
-     * ISO 8601 datetime string.
-     */
-    fieldLocksAt: string;
     autoLifecycleEnabled?: boolean;
 };
 
 /**
- * An event created from a provider event, linked to it for scores (SCORES_ONLY). The field is not touched.
+ * An event created from a provider event, linked to it for scores (SCORES_ONLY). Created DRAFT; the field is not touched.
  */
 export type CreateSportEventFromProviderEventRequest = {
     /**
@@ -2175,7 +2143,7 @@ export type ImportSportEventYearFromProviderResponse = {
         /**
          * Event lifecycle status.
          */
-        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
          * Scheduled or actual start time.
          */
@@ -2197,27 +2165,19 @@ export type ImportSportEventYearFromProviderResponse = {
          */
         loadedParticipantCount: number;
         /**
-         * When the event becomes available for contest setup.
+         * Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
          */
-        releaseAt: string;
-        /**
-         * After this time, field changes are no longer honored for new contest setup.
-         */
-        fieldLocksAt: string;
-        /**
-         * Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed.
-         */
-        fieldLocked: boolean;
+        untieredParticipantCount: number;
         /**
          * Contest-setup readiness right now.
          */
-        readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+        readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'EVENT_STARTED';
         /**
-         * Why the event is or is not contest-eligible right now.
+         * Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started.
          */
-        readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
+        readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'EVENT_STARTED'>;
         /**
-         * Whether a contest can be created or configured for the event right now.
+         * Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started.
          */
         contestEligible: boolean;
         /**
@@ -2251,7 +2211,7 @@ export type ImportSportEventYearFromProviderResponse = {
         /**
          * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
          */
-        allowedTransitions: Array<'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+        allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
         /**
          * Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)
          */
@@ -2305,14 +2265,6 @@ export type UpdateSportEventRequest = {
      */
     endDate?: string | null;
     rounds?: number;
-    /**
-     * ISO 8601 datetime string.
-     */
-    releaseAt?: string;
-    /**
-     * ISO 8601 datetime string.
-     */
-    fieldLocksAt?: string;
     autoLifecycleEnabled?: boolean;
 };
 
@@ -2321,9 +2273,9 @@ export type UpdateSportEventRequest = {
  */
 export type TransitionSportEventRequest = {
     /**
-     * One of the event's allowedTransitions.
+     * One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseSportEvent).
      */
-    toStatus: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    toStatus: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
 };
 
 /**
@@ -8481,7 +8433,7 @@ export type ProviderEventDto = {
      * ISO 8601 datetime string.
      */
     endDate: string | null;
-    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
     rounds: number | null;
     /**
      * Field size the provider reports, when it reports one.
@@ -8541,7 +8493,7 @@ export type ProviderCatalogEventListResponse = {
          * ISO 8601 datetime string.
          */
         endDate: string | null;
-        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         rounds: number | null;
         /**
          * Field size the provider reports, when it reports one.
@@ -13296,7 +13248,7 @@ export type CreateContestErrors = {
         };
     };
     /**
-     * The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_FIELD_LOCKED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).
+     * The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).
      */
     422: {
         /**
@@ -15579,7 +15531,7 @@ export type ListEventsData = {
         /**
          * Only events in this lifecycle status.
          */
-        status?: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        status?: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
          * Only events of this sport league's series.
          */
@@ -16400,6 +16352,139 @@ export type CreateEventFromProviderEventResponses = {
 };
 
 export type CreateEventFromProviderEventResponse = CreateEventFromProviderEventResponses[keyof CreateEventFromProviderEventResponses];
+
+export type ReleaseEventData = {
+    body?: never;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/release';
+};
+
+export type ReleaseEventErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * SPORT_EVENT_NOT_DRAFT: the event has already been released. SPORT_EVENT_ALREADY_STARTED: its start time has passed.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * SPORT_EVENT_NOT_READY: the field is not loaded, or an active participant has no tier.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type ReleaseEventError = ReleaseEventErrors[keyof ReleaseEventErrors];
+
+export type ReleaseEventResponses = {
+    /**
+     * One sport event.
+     */
+    200: SportEventResponse;
+};
+
+export type ReleaseEventResponse = ReleaseEventResponses[keyof ReleaseEventResponses];
 
 export type TransitionEventData = {
     body: TransitionSportEventRequest;

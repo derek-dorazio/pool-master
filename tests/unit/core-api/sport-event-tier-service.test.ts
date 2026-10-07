@@ -1,4 +1,4 @@
-import { TierSource } from '@poolmaster/shared/domain';
+import { SportEventStatus, TierSource } from '@poolmaster/shared/domain';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 
@@ -12,10 +12,12 @@ const TWO_TIERS = [
   { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2, defaultPickCount: 1 },
 ];
 
-function setup() {
+function setup(status: SportEventStatus = SportEventStatus.DRAFT) {
   const store = new InMemorySportEvents();
-  const event = store.addEvent();
+  // Tiers and prices are set while the event is a draft; release locks them (#431).
+  const event = store.addEvent({ status });
   const service = new SportEventTierService({
+    sportEvents: store.sportEventRepo(),
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
     field: store.fieldRepo(),
@@ -133,5 +135,36 @@ describe('SportEventTierService — prices and the contest-side read', () => {
       expect.objectContaining({ participantId: 'p-budget', price: 12, tierId: null, tierKey: null }),
     ]);
     await expect(service.getEffectiveTiersForSportEvent(event.id)).resolves.toEqual([]);
+  });
+});
+
+describe('SportEventTierService — locked once the event is released (#431)', () => {
+  it.each([
+    SportEventStatus.SCHEDULED,
+    SportEventStatus.IN_PROGRESS,
+    SportEventStatus.COMPLETED,
+  ])('refuses every tier and price write on a %s event with 409 SPORT_EVENT_TIERS_LOCKED, changing nothing', async (status) => {
+    const { store, event, service } = setup(status);
+    await store.tierRepo().createMany(event.id, TWO_TIERS);
+    const entry = store.addToField(event.id, 'participant-a', { ranking: 1, seedNumber: 1 });
+    const locked = { code: 'SPORT_EVENT_TIERS_LOCKED', statusCode: 409 };
+
+    await expect(service.replaceTiers({ sportEventId: event.id, tiers: TWO_TIERS.slice(0, 1) })).rejects.toMatchObject(locked);
+    await expect(service.replaceTierAssignments({
+      sportEventId: event.id,
+      assignments: [{ sportEventParticipantId: entry.id, tierKey: 'tier-1', tierOrderIndex: 1 }],
+    })).rejects.toMatchObject(locked);
+    await expect(service.autoAssignTiers({ sportEventId: event.id, source: TierSource.RANKING })).rejects.toMatchObject(locked);
+    await expect(service.autoAssignPrices({ sportEventId: event.id, minPrice: 5, maxPrice: 10 })).rejects.toMatchObject(locked);
+
+    expect(store.tierRows).toHaveLength(2);
+    expect(store.valuationRows).toEqual([]);
+  });
+
+  it('refuses a tier write on an unknown event with 404 EVENT_NOT_FOUND', async () => {
+    const { service } = setup();
+
+    await expect(service.autoAssignTiers({ sportEventId: 'missing', source: TierSource.RANKING }))
+      .rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
   });
 });

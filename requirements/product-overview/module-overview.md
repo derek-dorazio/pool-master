@@ -3,8 +3,8 @@
 ## 1. Event And Feed Operations
 
 PoolMaster ingests real-world events and participant fields from sports-data
-providers, normalizes them, and resolves operational timing such as
-`releaseAt` and `fieldLocksAt` from seeded relative rules. This module is
+providers and normalizes them. Every event starts as a draft that commissioners
+cannot see until the root admin releases it for contests. This module is
 designed to run automatically; root-admin tools exist mainly for monitoring and
 exception handling.
 

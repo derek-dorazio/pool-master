@@ -47,8 +47,6 @@ async function createEvent(tag: string, overrides: Record<string, unknown> = {})
       sport: 'GOLF',
       name: `Catalog ${tag}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
-      releaseAt: new Date('2026-05-01T12:00:00.000Z'),
-      fieldLocksAt: new Date('2026-05-06T16:00:00.000Z'),
       ...overrides,
     },
   });

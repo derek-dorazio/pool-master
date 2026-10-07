@@ -29,8 +29,6 @@ const editFormSchema = z.object({
   location: z.string().trim().optional(),
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().optional(),
-  releaseAt: z.string().min(1, 'Field release is required'),
-  fieldLocksAt: z.string().min(1, 'Field lock is required'),
   rounds: z.coerce.number().int().min(1, 'At least one round'),
 });
 
@@ -43,8 +41,6 @@ function toDefaults(tournament: SportEventDto): EditFormValues {
     location: tournament.location || '',
     startDate: toDateTimeLocalValue(tournament.startDate),
     endDate: tournament.endDate ? toDateTimeLocalValue(tournament.endDate) : '',
-    releaseAt: toDateTimeLocalValue(tournament.releaseAt),
-    fieldLocksAt: toDateTimeLocalValue(tournament.fieldLocksAt),
     rounds: tournament.rounds ?? 1,
   };
 }
@@ -59,8 +55,6 @@ function toRequestBody(values: EditFormValues): UpdateSportEventRequest {
     ...(localDateTimeInputToIso(values.endDate)
       ? { endDate: localDateTimeInputToIso(values.endDate) }
       : {}),
-    releaseAt: localDateTimeInputToIso(values.releaseAt) ?? values.releaseAt,
-    fieldLocksAt: localDateTimeInputToIso(values.fieldLocksAt) ?? values.fieldLocksAt,
     rounds: values.rounds,
   };
 }
@@ -210,20 +204,6 @@ export function GolfTournamentSummaryCard({
             </FormField>
             <FormField label="Ends">
               <Input type="datetime-local" {...form.register('endDate')} />
-            </FormField>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <FormField
-              error={form.formState.errors.releaseAt?.message}
-              label="Field release"
-            >
-              <Input type="datetime-local" {...form.register('releaseAt')} />
-            </FormField>
-            <FormField
-              error={form.formState.errors.fieldLocksAt?.message}
-              label="Field locks"
-            >
-              <Input type="datetime-local" {...form.register('fieldLocksAt')} />
             </FormField>
           </div>
           <FormField

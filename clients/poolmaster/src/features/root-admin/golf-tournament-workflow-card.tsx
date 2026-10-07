@@ -18,13 +18,15 @@ import {
   sportEventStatusTone,
   type GolfTournamentStatus,
 } from './golf-admin-utils';
+import { GolfTournamentReleaseAction } from './golf-tournament-release-action';
 import { GolfTournamentRoundsModal } from './golf-tournament-rounds-modal';
 import { GolfTournamentWorkflowRail } from './golf-tournament-workflow-rail';
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 
 /**
- * plans/124 §6.3 block 2 — the workflow rail, allowed transitions, the
- * automatic-lifecycle toggle, and the round schedule editor.
+ * plans/124 §6.3 block 2 — the workflow rail, "Release for contests" while the tournament
+ * is a draft (#431), allowed transitions, the automatic-lifecycle toggle, and the round
+ * schedule editor.
  */
 export function GolfTournamentWorkflowCard({
   eventId,
@@ -102,6 +104,12 @@ export function GolfTournamentWorkflowCard({
       <div className="mt-4">
         <GolfTournamentWorkflowRail rounds={rounds} tournament={tournament} />
       </div>
+
+      {tournament.status === 'DRAFT' ? (
+        <div className="mt-4">
+          <GolfTournamentReleaseAction eventId={eventId} tournament={tournament} />
+        </div>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
         {tournament.allowedTransitions.length > 0 ? (

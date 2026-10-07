@@ -12,6 +12,7 @@ import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { GolfTierAutoAssignActions } from './golf-tier-auto-assign-actions';
 import { GolfTierBoard } from './golf-tier-board';
 import { GolfTierDefinitionsPanel } from './golf-tier-definitions-panel';
+import { golfTiersLocked } from './golf-admin-utils';
 import { useGolfFieldQuery, useGolfTiersQuery, useGolfTournamentQuery } from './use-golf-tournament';
 
 /**
@@ -30,6 +31,7 @@ export function RootAdminGolfTournamentTiersPage() {
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
   const tiers = useMemo(() => tiersQuery.data ?? [], [tiersQuery.data]);
+  const locked = tournament ? golfTiersLocked(tournament.status) : false;
   const field = useMemo(() => fieldQuery.data ?? [], [fieldQuery.data]);
 
   const assignmentCountByTierKey = useMemo(() => {
@@ -70,16 +72,16 @@ export function RootAdminGolfTournamentTiersPage() {
               ← Tournament Home
             </LinkButton>
             <GolfTierAutoAssignActions
-              disabled={field.length === 0}
+              disabled={locked || field.length === 0}
               eventId={eventId}
             />
           </div>
 
-          {tournament.contestCount > 0 ? (
-            <Callout tone="info">
-              This tournament has {tournament.contestCount} contest
-              {tournament.contestCount === 1 ? '' : 's'}. Tier and price changes are
-              rejected once any contest has entries, to keep existing picks consistent.
+          {locked ? (
+            <Callout data-testid="root-admin-golf-tiers-locked" tone="info">
+              This tournament has been released for contests, so its tiers and prices are
+              locked for good. A golfer added to the field from now on stays without a tier
+              and can&apos;t be picked.
             </Callout>
           ) : null}
 
@@ -120,6 +122,7 @@ export function RootAdminGolfTournamentTiersPage() {
                   <GolfTierBoard
                     eventId={eventId}
                     field={field}
+                    locked={locked}
                     tiers={tiers}
                   />
                 }
@@ -127,6 +130,7 @@ export function RootAdminGolfTournamentTiersPage() {
                   <GolfTierDefinitionsPanel
                     assignmentCountByTierKey={assignmentCountByTierKey}
                     eventId={eventId}
+                    locked={locked}
                     tiers={tiers}
                   />
                 }

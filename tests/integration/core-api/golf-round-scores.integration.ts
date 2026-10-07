@@ -45,8 +45,6 @@ async function createField(suffix: string) {
       name: `Round Scores Open ${suffix}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: 'IN_PROGRESS',
-      releaseAt: new Date('2026-05-01T12:00:00.000Z'),
-      fieldLocksAt: new Date('2026-05-06T16:00:00.000Z'),
     },
   });
   const round1 = await prisma.sportEventRound.create({

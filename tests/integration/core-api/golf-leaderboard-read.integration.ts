@@ -81,9 +81,6 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
         startDate: new Date('2026-05-28T12:00:00.000Z'),
         endDate: new Date('2026-05-31T22:00:00.000Z'),
         status: 'IN_PROGRESS',
-        releaseAt: new Date('2026-05-20T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-05-27T16:00:00.000Z'),
-        fieldLocked: true,
       },
     });
     // The rounds belong to the event, not to any one participant, so they are

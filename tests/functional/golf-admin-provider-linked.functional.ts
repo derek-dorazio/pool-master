@@ -250,8 +250,6 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
         startDate: ADMIN_EVENT_START,
         endDate: ADMIN_EVENT_END,
         rounds: 4,
-        releaseAt: '2026-05-20T00:00:00.000Z',
-        fieldLocksAt: '2026-05-27T16:00:00.000Z',
         sportLeagueId,
         eventYear: 2026,
         autoLifecycleEnabled: false,
@@ -325,8 +323,6 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
         startDate: MOCK_EVENT_START,
         endDate: MOCK_EVENT_END,
         rounds: 4,
-        releaseAt: '2026-05-20T00:00:00.000Z',
-        fieldLocksAt: '2026-05-27T16:00:00.000Z',
         sportLeagueId,
         eventYear: 2027,
         autoLifecycleEnabled: false,
@@ -359,7 +355,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     // The details sync never writes SportEvent.status (plans/124 §3.3), and on a
     // SCORES_ONLY event it leaves the admin's header and schedule as authored (#118).
     const afterRefresh = await getEvent({ client: admin, path: { eventId } });
-    expect(afterRefresh.data!.event.status).toBe('SCHEDULED');
+    expect(afterRefresh.data!.event.status).toBe('DRAFT');
     expect(afterRefresh.data!.event.syncScope).toBe('SCORES_ONLY');
     expect(afterRefresh.data!.event).toMatchObject({
       name: `The ${RUN} Championship`,
@@ -393,6 +389,11 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
       (await autoAssignEventPrices({ client: admin, path: { eventId }, body: { minPrice: 1000, maxPrice: 10000 } }))
         .response?.status,
     ).toBe(200);
+
+    // Released as a fixture write: the tournament's start date is fixed in the past (the mock
+    // scenario's), so the release route would refuse it as started. Release has its own coverage
+    // in golf-admin-tournament.functional.ts; here it only has to reach SCHEDULED.
+    await getFunctionalPrisma().sportEvent.update({ where: { id: eventId }, data: { status: 'SCHEDULED' } });
 
     // --- 5a. League contest against the linked tournament (prisma fixture:
     // the SDK managed-contest create path rejects an already-field-locked

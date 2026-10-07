@@ -203,6 +203,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
         ...(filters.sportLeagueId !== undefined && { eventSeries: { sportLeagueId: filters.sportLeagueId } }),
         ...(filters.eventYear !== undefined && { eventYear: filters.eventYear }),
         ...(filters.q !== undefined && { name: { contains: filters.q, mode: 'insensitive' as const } }),
+        ...(filters.releasedOnly && { NOT: { status: SportEventStatus.DRAFT } }),
       },
       include: SPORT_EVENT_INCLUDE,
       orderBy: [{ startDate: 'asc' }, { name: 'asc' }],
@@ -223,8 +224,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
         endDate: input.endDate ?? null,
         status: input.status,
         rounds: input.rounds ?? null,
-        releaseAt: input.releaseAt,
-        fieldLocksAt: input.fieldLocksAt,
         eventSeriesId: input.eventSeriesId,
         eventYear: input.eventYear,
         syncScope: input.syncScope,
@@ -244,8 +243,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
         ...(updates.startDate !== undefined && { startDate: updates.startDate }),
         ...(updates.endDate !== undefined && { endDate: updates.endDate }),
         ...(updates.rounds !== undefined && { rounds: updates.rounds }),
-        ...(updates.releaseAt !== undefined && { releaseAt: updates.releaseAt }),
-        ...(updates.fieldLocksAt !== undefined && { fieldLocksAt: updates.fieldLocksAt }),
         ...(updates.autoLifecycleEnabled !== undefined && { autoLifecycleEnabled: updates.autoLifecycleEnabled }),
         ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.providerId !== undefined && { providerId: updates.providerId }),
@@ -277,6 +274,19 @@ export class PrismaSportEventRepository implements SportEventRepository {
     const groups = await this.prisma.sportEventParticipant.groupBy({
       by: ['sportEventId'],
       where: { sportEventId: { in: [...sportEventIds] } },
+      _count: { _all: true },
+    });
+    return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
+  }
+
+  async countUntieredActiveParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>> {
+    const groups = await this.prisma.sportEventParticipant.groupBy({
+      by: ['sportEventId'],
+      where: {
+        sportEventId: { in: [...sportEventIds] },
+        isActive: true,
+        OR: [{ valuation: null }, { valuation: { sportEventTierId: null } }],
+      },
       _count: { _all: true },
     });
     return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
@@ -752,9 +762,6 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     status: row.status as SportEventStatus,
     rounds: row.rounds ?? undefined,
     participantCount: row.participantCount ?? undefined,
-    fieldLocked: row.fieldLocked,
-    releaseAt: row.releaseAt,
-    fieldLocksAt: row.fieldLocksAt,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
     eventSeriesId: row.eventSeriesId,
     eventYear: row.eventYear,

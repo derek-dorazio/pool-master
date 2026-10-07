@@ -15,8 +15,7 @@ Trigger:
 Main flow:
 1. PoolMaster imports the event and participant field.
 2. PoolMaster creates or matches normalized participants.
-3. PoolMaster resolves `releaseAt` and `fieldLocksAt` from the applicable
-   defaults.
+3. PoolMaster stores the event as a draft until the root admin releases it.
 4. PoolMaster marks the event with its current readiness state.
 
 Expected outcomes:
@@ -41,8 +40,8 @@ Main flow:
    snapshots.
 3. PoolMaster recalculates event readiness and any affected contest-readiness
    projections.
-4. PoolMaster honors the event-level `fieldLocksAt` policy when deciding
-   whether new field changes should still affect unreleased contests.
+4. A field change never moves a golfer's tier or price once the event is
+   released; a golfer added after release stays untiered.
 
 Expected outcomes:
 - event state stays current without forcing commissioners to recreate contests

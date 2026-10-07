@@ -111,8 +111,6 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
 
     fireEvent.change(await screen.findByTestId('root-admin-golf-tournament-create-name'), { target: { value: 'The Masters' } });
     fireEvent.change(screen.getByTestId('root-admin-golf-tournament-create-start'), { target: { value: '2026-04-09T13:00' } });
-    fireEvent.change(screen.getByTestId('root-admin-golf-tournament-create-release'), { target: { value: '2026-03-26T13:00' } });
-    fireEvent.change(screen.getByTestId('root-admin-golf-tournament-create-locks'), { target: { value: '2026-04-08T13:00' } });
     fireEvent.click(screen.getByTestId('root-admin-golf-tournament-create-submit'));
 
     expect(
@@ -131,12 +129,6 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
     fireEvent.change(nameInput, { target: { value: 'Spring Classic' } });
     fireEvent.change(screen.getByTestId('root-admin-golf-tournament-create-start'), {
       target: { value: '2026-03-12T13:00' },
-    });
-    fireEvent.change(screen.getByTestId('root-admin-golf-tournament-create-release'), {
-      target: { value: '2026-03-01T13:00' },
-    });
-    fireEvent.change(screen.getByTestId('root-admin-golf-tournament-create-locks'), {
-      target: { value: '2026-03-11T13:00' },
     });
 
     fireEvent.click(screen.getByTestId('root-admin-golf-tournament-create-submit'));

@@ -37,8 +37,8 @@ PoolMaster should support a real first-pass flow where:
 1. a sport data provider exposes an event and its participant field
 2. PoolMaster imports that event and participant field from the provider
 3. PoolMaster normalizes the event and participants
-4. PoolMaster resolves event-level `releaseAt` and `fieldLocksAt` operational
-   timestamps from global defaults
+4. the root admin tiers the field and releases the event for contests, which
+   locks its tiers and prices
 5. a commissioner creates a contest for that event
 6. PoolMaster derives the contest-ready participant field from the event field
    plus contest configuration
@@ -69,8 +69,7 @@ Root-admin event operations are a light-touch operational control surface for:
 - enabling provider use
 - monitoring imports and provider health
 - retrying or refreshing a specific event if needed
-- advanced override of event-level `releaseAt` and `fieldLocksAt` only in rare
-  cases
+- releasing an event for contests once its field is loaded and tiered
 
 The normal flow is automated. Events are provider-imported from real-world
 schedules, and default relative timing rules resolve into event-specific
@@ -155,8 +154,8 @@ Goal:
 Current match:
 - provider admin and ingestion trigger surfaces exist
 - event list ingestion exists
-- event operational timestamps such as `releaseAt` and `fieldLocksAt` now
-  exist in the model and timing foundation
+- events start as drafts and the root admin releases them for contests; the
+  event's start time is the contest cutoff
 
 Current mismatch:
 - there is no cohesive admin event lifecycle UX or explicit event readiness

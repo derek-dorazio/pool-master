@@ -11,9 +11,8 @@
  * override for a rain delay, a dispute, or any other reason the recorded
  * schedule no longer reflects reality.
  *
- * "Field locked" needs no code here — `evaluateEventOperationalState`
- * already derives that at read time from `fieldLocksAt`. This scheduler's
- * job is exactly the two status writes below, nothing else.
+ * A DRAFT event is never touched: only an admin's release moves it (#431). This
+ * scheduler's job is exactly the two status writes below, nothing else.
  */
 
 import type { FastifyBaseLogger } from 'fastify';

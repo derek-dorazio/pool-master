@@ -17,7 +17,6 @@ function buildProviderEvent(overrides: Record<string, unknown> = {}) {
     startDate: new Date('2027-04-08T00:00:00.000Z'),
     endDate: new Date('2027-04-11T00:00:00.000Z'),
     status: 'SCHEDULED',
-    fieldLocked: false,
     metadata: {},
     ...overrides,
   };

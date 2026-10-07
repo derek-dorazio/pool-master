@@ -120,8 +120,7 @@ export class InMemorySportEvents {
     const event = stamp({
       id: this.id('event'), externalId: 'ext', providerId: 'manual-admin', sport: 'GOLF', name: 'Open',
       eventSeriesId: this.id('event-series'), eventYear: 2026, sportLeagueId: 'sport-league-unplaced',
-      startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED', fieldLocked: false,
-      releaseAt: new Date('2026-05-21T12:00:00.000Z'), fieldLocksAt: new Date('2026-06-03T12:00:00.000Z'),
+      startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED',
       metadata: {}, syncScope: 'NONE', autoLifecycleEnabled: true, ...overrides,
     }) as SportEvent;
     this.events.push(event);
@@ -256,6 +255,7 @@ export class InMemorySportEvents {
         && (filters.sportLeagueId === undefined || row.sportLeagueId === filters.sportLeagueId)
         && (filters.eventYear === undefined || row.eventYear === filters.eventYear)
         && (filters.q === undefined || row.name.toLowerCase().includes(filters.q.toLowerCase()))
+        && (!filters.releasedOnly || row.status !== 'DRAFT')
       )),
       create: async (input: SportEventCreate) => {
         // The database's one-edition-per-year constraint, raised the way Prisma raises it.
@@ -266,7 +266,7 @@ export class InMemorySportEvents {
           });
         }
         const series = this.eventSeriesRows.find((row) => row.id === input.eventSeriesId);
-        return this.addEvent({ ...input, sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced', metadata: {}, fieldLocked: false });
+        return this.addEvent({ ...input, sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced', metadata: {} });
       },
       update: async (id, updates: SportEventUpdate) => {
         const row = this.events.find((candidate) => candidate.id === id) as SportEvent;
@@ -284,6 +284,11 @@ export class InMemorySportEvents {
         this.events = this.events.filter((row) => row.id !== id);
       },
       countParticipants: async (ids) => count(ids, (id) => this.field.filter((row) => row.sportEventId === id).length),
+      countUntieredActiveParticipants: async (ids) => count(ids, (id) => this.field.filter((row) => (
+        row.sportEventId === id
+        && row.isActive
+        && !this.valuationRows.some((valuation) => valuation.sportEventParticipantId === row.id && valuation.sportEventTierId)
+      )).length),
       countTiers: async (ids) => count(ids, (id) => this.tierRows.filter((row) => row.sportEventId === id).length),
       countContests: async (ids) => count(ids, (id) => this.contestsByEvent.get(id) ?? 0),
       countBySportLeagues: async (ids, filters = {}) => count(ids, (id) => this.events.filter((row) => (

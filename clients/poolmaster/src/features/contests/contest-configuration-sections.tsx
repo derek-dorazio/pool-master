@@ -8,7 +8,6 @@ import {
   DefinitionList,
   ListCard,
   ListStack,
-  ResponsiveGridLayout,
   SectionHeader,
   StatusBadge,
   Tile,
@@ -97,8 +96,7 @@ export function EventReadinessPanel({
         className="mt-4"
         items={[
           { id: "participants-loaded", label: "Participants loaded", value: event.participantCount ?? 0 },
-          { id: "release-at", label: "Release at", value: formatDateTimeDisplay(event.releaseAt) },
-          { id: "field-locks-at", label: "Field locks at", value: formatDateTimeDisplay(event.fieldLocksAt) },
+          { id: "starts-at", label: "Entries close", value: formatDateTimeDisplay(event.startDate) },
           { id: "event-status", label: "Event status", value: event.status },
         ]}
       />
@@ -176,17 +174,8 @@ export function InheritedTiersPanel({ tiers }: InheritedTiersPanelProps) {
   );
 }
 
-type NoEligibleEventsAlertProps = {
-  events: SportEventDto[];
-  formatReadinessLabel: (event: SportEventDto) => string;
-  formatReadinessReasons: (event: SportEventDto) => string;
-};
-
-export function NoEligibleEventsAlert({
-  events,
-  formatReadinessLabel,
-  formatReadinessReasons,
-}: NoEligibleEventsAlertProps) {
+/** No released, unstarted event with a field: nothing to build a contest on yet (#431). */
+export function NoEligibleEventsAlert() {
   return (
     <Alert
       data-testid="create-contest-no-events"
@@ -194,22 +183,9 @@ export function NoEligibleEventsAlert({
       tone="warning"
     >
       <p>
-        Prime Time Commissioner only shows real imported events once they are released and the field is
-        loaded. Check back when the next tournament reaches contest-ready status.
+        An event appears here once an admin releases it for contests, until it starts. Check back
+        when the next tournament is released.
       </p>
-      {events.length ? (
-        <ResponsiveGridLayout className="mt-4">
-          {events.slice(0, 3).map((event) => (
-            <div className="text-sm" key={event.id}>
-              {event.name}
-              {" · "}
-              {formatReadinessLabel(event)}
-              {" · "}
-              {formatReadinessReasons(event)}
-            </div>
-          ))}
-        </ResponsiveGridLayout>
-      ) : null}
     </Alert>
   );
 }

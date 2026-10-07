@@ -129,6 +129,59 @@ describe('SPORT_EVENT_STATUS_TRANSITIONS exhaustiveness', () => {
   });
 });
 
+describe('SPORT_EVENT_STATUS_TRANSITIONS DRAFT row (#431)', () => {
+  it('lets a draft move only to SCHEDULED (its release) or CANCELLED', () => {
+    expect(SPORT_EVENT_STATUS_TRANSITIONS[SportEventStatus.DRAFT]).toEqual([
+      SportEventStatus.SCHEDULED,
+      SportEventStatus.CANCELLED,
+    ]);
+  });
+
+  it('gives no status a way back to DRAFT', () => {
+    for (const targets of Object.values(SPORT_EVENT_STATUS_TRANSITIONS)) {
+      expect(targets).not.toContain(SportEventStatus.DRAFT);
+    }
+  });
+});
+
+describe('EventLifecycleService release guard (#431)', () => {
+  it('refuses to move a draft to SCHEDULED outside the release action, with 409 SPORT_EVENT_RELEASE_REQUIRED', async () => {
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.DRAFT });
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger());
+
+    for (const actor of [{ type: 'ROOT_ADMIN' as const }, { type: 'SYSTEM' as const }]) {
+      await expect(
+        service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.SCHEDULED, actor }),
+      ).rejects.toMatchObject({ code: 'SPORT_EVENT_RELEASE_REQUIRED', statusCode: 409 });
+    }
+    expect(storedEvent().status).toBe(SportEventStatus.DRAFT);
+  });
+
+  it('moves a draft to SCHEDULED when the release action asks', async () => {
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.DRAFT });
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger());
+
+    await service.applySportEventStatusTransition({
+      sportEventId: 'sport-event-1',
+      toStatus: SportEventStatus.SCHEDULED,
+      actor: { type: 'ROOT_ADMIN' },
+      release: true,
+    });
+
+    expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);
+  });
+
+  it('refuses to start a draft that was never released (422 SPORT_EVENT_INVALID_TRANSITION)', async () => {
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.DRAFT });
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger());
+
+    await expect(
+      service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'SYSTEM' } }),
+    ).rejects.toMatchObject({ code: 'SPORT_EVENT_INVALID_TRANSITION', statusCode: 422 });
+    expect(storedEvent().status).toBe(SportEventStatus.DRAFT);
+  });
+});
+
 describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-g1z allows a declared transition for a ROOT_ADMIN actor', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });

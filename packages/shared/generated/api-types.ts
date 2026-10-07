@@ -1353,7 +1353,7 @@ export interface paths {
         };
         /**
          * List sport events
-         * @description The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts.
+         * @description The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts. DRAFT events (not yet released for contests) are listed for a root admin only.
          */
         get: operations["listEvents"];
         put?: never;
@@ -1453,6 +1453,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Release a draft sport event for contests
+         * @description DRAFT → SCHEDULED. Commissioners can then see the event and build contests on it, and its tiers and prices are locked for good. Refused unless the field is loaded, every active participant has a tier, and the start time has not passed. Root admin only.
+         */
+        post: operations["releaseEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/transition": {
         parameters: {
             query?: never;
@@ -1464,7 +1484,7 @@ export interface paths {
         put?: never;
         /**
          * Move a sport event to its next status
-         * @description Only to one of the event's allowedTransitions. Activates or settles its contests as the new status requires. Root admin only.
+         * @description Only to one of the event's allowedTransitions. Activates or settles its contests as the new status requires. A DRAFT event is refused SCHEDULED with 409 SPORT_EVENT_RELEASE_REQUIRED: releasing it is its own action (releaseEvent). Root admin only.
          */
         post: operations["transitionEvent"];
         delete?: never;
@@ -3550,11 +3570,11 @@ export interface components {
             }[];
         };
         /** @enum {string} */
-        EventStatusDto: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+        EventStatusDto: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
         /** @enum {string} */
-        EventReadinessStatusDto: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
+        EventReadinessStatusDto: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "EVENT_STARTED";
         /** @enum {string} */
-        EventReadinessReasonDto: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED";
+        EventReadinessReasonDto: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "EVENT_STARTED";
         /** @description A real-world event a contest can be run on — a golf tournament, a race, a match. */
         SportEventDto: {
             /**
@@ -3581,7 +3601,7 @@ export interface components {
              * @description Event lifecycle status.
              * @enum {string}
              */
-            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
             /**
              * Format: date-time
              * @description Scheduled or actual start time.
@@ -3598,26 +3618,16 @@ export interface components {
             participantCount: number | null;
             /** @description Number of event participants currently persisted for the event. */
             loadedParticipantCount: number;
-            /**
-             * Format: date-time
-             * @description When the event becomes available for contest setup.
-             */
-            releaseAt: string;
-            /**
-             * Format: date-time
-             * @description After this time, field changes are no longer honored for new contest setup.
-             */
-            fieldLocksAt: string;
-            /** @description Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed. */
-            fieldLocked: boolean;
+            /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.) */
+            untieredParticipantCount: number;
             /**
              * @description Contest-setup readiness right now.
              * @enum {string}
              */
-            readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
-            /** @description Why the event is or is not contest-eligible right now. */
-            readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED")[];
-            /** @description Whether a contest can be created or configured for the event right now. */
+            readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "EVENT_STARTED";
+            /** @description Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started. */
+            readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "EVENT_STARTED")[];
+            /** @description Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started. */
             contestEligible: boolean;
             /**
              * Format: uuid
@@ -3643,7 +3653,7 @@ export interface components {
             /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
             contestCount: number;
             /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
-            allowedTransitions: ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+            allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
             /** @description Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.) */
             metadata: {
                 [key: string]: unknown;
@@ -3670,7 +3680,7 @@ export interface components {
              * @description Only events in this lifecycle status.
              * @enum {string}
              */
-            status?: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            status?: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
             /**
              * Format: uuid
              * @description Only events of this sport league's series.
@@ -3709,7 +3719,7 @@ export interface components {
                  * @description Event lifecycle status.
                  * @enum {string}
                  */
-                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /**
                  * Format: date-time
                  * @description Scheduled or actual start time.
@@ -3726,26 +3736,16 @@ export interface components {
                 participantCount: number | null;
                 /** @description Number of event participants currently persisted for the event. */
                 loadedParticipantCount: number;
-                /**
-                 * Format: date-time
-                 * @description When the event becomes available for contest setup.
-                 */
-                releaseAt: string;
-                /**
-                 * Format: date-time
-                 * @description After this time, field changes are no longer honored for new contest setup.
-                 */
-                fieldLocksAt: string;
-                /** @description Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed. */
-                fieldLocked: boolean;
+                /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.) */
+                untieredParticipantCount: number;
                 /**
                  * @description Contest-setup readiness right now.
                  * @enum {string}
                  */
-                readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
-                /** @description Why the event is or is not contest-eligible right now. */
-                readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED")[];
-                /** @description Whether a contest can be created or configured for the event right now. */
+                readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "EVENT_STARTED";
+                /** @description Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started. */
+                readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "EVENT_STARTED")[];
+                /** @description Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started. */
                 contestEligible: boolean;
                 /**
                  * Format: uuid
@@ -3771,7 +3771,7 @@ export interface components {
                 /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
                 contestCount: number;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
-                allowedTransitions: ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
                 /** @description Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.) */
                 metadata: {
                     [key: string]: unknown;
@@ -3816,7 +3816,7 @@ export interface components {
                  * @description Event lifecycle status.
                  * @enum {string}
                  */
-                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /**
                  * Format: date-time
                  * @description Scheduled or actual start time.
@@ -3833,26 +3833,16 @@ export interface components {
                 participantCount: number | null;
                 /** @description Number of event participants currently persisted for the event. */
                 loadedParticipantCount: number;
-                /**
-                 * Format: date-time
-                 * @description When the event becomes available for contest setup.
-                 */
-                releaseAt: string;
-                /**
-                 * Format: date-time
-                 * @description After this time, field changes are no longer honored for new contest setup.
-                 */
-                fieldLocksAt: string;
-                /** @description Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed. */
-                fieldLocked: boolean;
+                /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.) */
+                untieredParticipantCount: number;
                 /**
                  * @description Contest-setup readiness right now.
                  * @enum {string}
                  */
-                readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
-                /** @description Why the event is or is not contest-eligible right now. */
-                readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED")[];
-                /** @description Whether a contest can be created or configured for the event right now. */
+                readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "EVENT_STARTED";
+                /** @description Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started. */
+                readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "EVENT_STARTED")[];
+                /** @description Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started. */
                 contestEligible: boolean;
                 /**
                  * Format: uuid
@@ -3878,7 +3868,7 @@ export interface components {
                 /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
                 contestCount: number;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
-                allowedTransitions: ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
                 /** @description Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.) */
                 metadata: {
                     [key: string]: unknown;
@@ -3895,7 +3885,7 @@ export interface components {
                 updatedAt: string;
             };
         };
-        /** @description An admin-authored event. Created SCHEDULED with its default rounds and tiers, accepting no provider data. */
+        /** @description An admin-authored event. Created DRAFT with its default rounds and tiers, accepting no provider data; commissioners see it once it is released. */
         CreateSportEventRequest: {
             /**
              * Format: uuid
@@ -3919,19 +3909,9 @@ export interface components {
             endDate?: string;
             /** @description Round count; golf defaults to 4. */
             rounds?: number;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            releaseAt: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            fieldLocksAt: string;
             autoLifecycleEnabled?: boolean;
         };
-        /** @description An event created from a provider event, linked to it for scores (SCORES_ONLY). The field is not touched. */
+        /** @description An event created from a provider event, linked to it for scores (SCORES_ONLY). Created DRAFT; the field is not touched. */
         CreateSportEventFromProviderEventRequest: {
             /**
              * Format: uuid
@@ -4002,7 +3982,7 @@ export interface components {
                  * @description Event lifecycle status.
                  * @enum {string}
                  */
-                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /**
                  * Format: date-time
                  * @description Scheduled or actual start time.
@@ -4019,26 +3999,16 @@ export interface components {
                 participantCount: number | null;
                 /** @description Number of event participants currently persisted for the event. */
                 loadedParticipantCount: number;
-                /**
-                 * Format: date-time
-                 * @description When the event becomes available for contest setup.
-                 */
-                releaseAt: string;
-                /**
-                 * Format: date-time
-                 * @description After this time, field changes are no longer honored for new contest setup.
-                 */
-                fieldLocksAt: string;
-                /** @description Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed. */
-                fieldLocked: boolean;
+                /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.) */
+                untieredParticipantCount: number;
                 /**
                  * @description Contest-setup readiness right now.
                  * @enum {string}
                  */
-                readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
-                /** @description Why the event is or is not contest-eligible right now. */
-                readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED")[];
-                /** @description Whether a contest can be created or configured for the event right now. */
+                readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "EVENT_STARTED";
+                /** @description Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started. */
+                readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "EVENT_STARTED")[];
+                /** @description Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started. */
                 contestEligible: boolean;
                 /**
                  * Format: uuid
@@ -4064,7 +4034,7 @@ export interface components {
                 /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
                 contestCount: number;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
-                allowedTransitions: ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
                 /** @description Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.) */
                 metadata: {
                     [key: string]: unknown;
@@ -4110,25 +4080,15 @@ export interface components {
              */
             endDate?: string | null;
             rounds?: number;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            releaseAt?: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            fieldLocksAt?: string;
             autoLifecycleEnabled?: boolean;
         };
         /** @description Moves an event to its next lifecycle status, activating or settling its contests as that status requires. */
         TransitionSportEventRequest: {
             /**
-             * @description One of the event's allowedTransitions.
+             * @description One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseSportEvent).
              * @enum {string}
              */
-            toStatus: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            toStatus: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
         };
         /** @description Links an event to a provider event for scores. */
         LinkSportEventScoreSourceRequest: {
@@ -8807,7 +8767,7 @@ export interface components {
              */
             endDate: string | null;
             /** @enum {string} */
-            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
             rounds: number | null;
             /** @description Field size the provider reports, when it reports one. */
             participantCount: number | null;
@@ -8858,7 +8818,7 @@ export interface components {
                  */
                 endDate: string | null;
                 /** @enum {string} */
-                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 rounds: number | null;
                 /** @description Field size the provider reports, when it reports one. */
                 participantCount: number | null;
@@ -13192,7 +13152,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_FIELD_LOCKED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type). */
+            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type). */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -15121,7 +15081,7 @@ export interface operations {
                 /** @description Only events of this sport. */
                 sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                 /** @description Only events in this lifecycle status. */
-                status?: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                status?: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /** @description Only events of this sport league's series. */
                 sportLeagueId?: string;
                 /** @description Only editions branded with this year. */
@@ -15841,6 +15801,123 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    releaseEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One sport event. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description SPORT_EVENT_NOT_DRAFT: the event has already been released. SPORT_EVENT_ALREADY_STARTED: its start time has passed. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description SPORT_EVENT_NOT_READY: the field is not loaded, or an active participant has no tier. */
             422: {
                 headers: {
                     [name: string]: unknown;

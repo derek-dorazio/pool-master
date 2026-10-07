@@ -94,7 +94,9 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
   return {
     listEvents: async (request: FastifyRequest<{ Querystring: SportEventListQuery }>): Promise<SportEventListResponse> => {
       const logger = request.contextLogger ?? request.log;
-      const events = (await sportEvents.listEvents(request.query)).map(mapSportEventToDto);
+      // A DRAFT event is the admin's work in progress: only a root admin sees it (#431).
+      const releasedOnly = request.authUser?.isRootAdmin !== true;
+      const events = (await sportEvents.listEvents({ ...request.query, releasedOnly })).map(mapSportEventToDto);
       logger.info({
         action: 'events.route.list.success',
         data: { count: events.length, contestEligibleCount: events.filter((event) => event.contestEligible).length },
@@ -112,8 +114,6 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
         ...body,
         startDate: new Date(body.startDate),
         endDate: body.endDate ? new Date(body.endDate) : undefined,
-        releaseAt: new Date(body.releaseAt),
-        fieldLocksAt: new Date(body.fieldLocksAt),
       });
       return reply.status(201).send({ event: mapSportEventToDto(created) } satisfies SportEventResponse);
     },
@@ -151,13 +151,11 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     },
 
     updateEvent: async (request: FastifyRequest<EventParams & { Body: UpdateSportEventRequest }>): Promise<SportEventResponse> => {
-      const { startDate, endDate, releaseAt, fieldLocksAt, ...rest } = request.body;
+      const { startDate, endDate, ...rest } = request.body;
       const updated = await sportEvents.updateEvent(request.params.eventId, {
         ...rest,
         ...(startDate !== undefined && { startDate: new Date(startDate) }),
         ...(endDate !== undefined && { endDate: endDate === null ? null : new Date(endDate) }),
-        ...(releaseAt !== undefined && { releaseAt: new Date(releaseAt) }),
-        ...(fieldLocksAt !== undefined && { fieldLocksAt: new Date(fieldLocksAt) }),
       });
       return { event: mapSportEventToDto(updated) };
     },
@@ -165,6 +163,11 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     deleteEvent: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
       await sportEvents.deleteEvent(request.params.eventId);
       return reply.status(204).send();
+    },
+
+    /** "Release for contests" (#431): the one way out of DRAFT, after its readiness checks. */
+    releaseEvent: async (request: FastifyRequest<EventParams>): Promise<SportEventResponse> => {
+      return { event: mapSportEventToDto(await sportEvents.releaseEvent(request.params.eventId)) };
     },
 
     /** Status changes go through the lifecycle service, the one path that also activates and settles contests. */

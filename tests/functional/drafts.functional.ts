@@ -318,8 +318,6 @@ async function seedBudgetPickFixture(options: { isExclusive?: boolean } = {}) {
       sport: 'GOLF',
       name: 'Budget Functional Event',
       startDate: new Date('2026-04-20T12:00:00.000Z'),
-      releaseAt: new Date('2026-04-20T12:00:00.000Z'),
-      fieldLocksAt: new Date('2026-04-20T12:00:00.000Z'),
       status: 'SCHEDULED',
     },
   });
@@ -472,8 +470,6 @@ async function seedTieredDraftFixture(options: {
       sport: 'GOLF',
       name: 'Tiered Functional Event',
       startDate: new Date('2026-04-20T12:00:00.000Z'),
-      releaseAt: new Date('2026-04-20T12:00:00.000Z'),
-      fieldLocksAt: new Date('2026-04-20T12:00:00.000Z'),
       status: 'SCHEDULED',
     },
   });

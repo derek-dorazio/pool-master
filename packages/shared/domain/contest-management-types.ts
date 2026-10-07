@@ -53,14 +53,14 @@ export type SportEventReadinessStatus =
   | 'NOT_RELEASED'
   | 'PENDING_FIELD'
   | 'CONTEST_ELIGIBLE'
-  | 'FIELD_LOCKED';
+  | 'EVENT_STARTED';
 
 export type SportEventReadinessReason =
   | 'EVENT_NOT_RELEASED'
   | 'FIELD_NOT_LOADED'
-  | 'FIELD_LOCKED';
+  | 'EVENT_STARTED';
 
-/** Imported real-world event augmented with PoolMaster operational timing. */
+/** A real-world event a contest can be run on. `DRAFT` until an admin releases it (#431). */
 export interface SportEvent extends DomainEntity {
   externalId: string;
   providerId: string;
@@ -73,9 +73,6 @@ export interface SportEvent extends DomainEntity {
   status: SportEventStatus;
   rounds?: number;
   participantCount?: number;
-  fieldLocked: boolean;
-  releaseAt: Date;
-  fieldLocksAt: Date;
   metadata: Record<string, unknown>;
   /** The event series — the recurring tournament — this is one edition of. Its only parent. */
   eventSeriesId: string;

@@ -67,9 +67,6 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
         startDate: new Date('2026-05-07T12:00:00.000Z'),
         endDate: new Date('2026-05-10T22:00:00.000Z'),
         status: 'IN_PROGRESS',
-        fieldLocked: true,
-        releaseAt: new Date('2026-05-01T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-05-06T16:00:00.000Z'),
         ...fourRoundSchedule(),
       },
     });
@@ -183,8 +180,6 @@ describe('Golf live-score persistence', () => {
         name: `Live ${suffix} ${tag}`,
         startDate: new Date('2026-05-07T12:00:00.000Z'),
         status: 'IN_PROGRESS',
-        releaseAt: new Date('2026-05-01T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-05-06T16:00:00.000Z'),
         ...fourRoundSchedule(),
       },
     });

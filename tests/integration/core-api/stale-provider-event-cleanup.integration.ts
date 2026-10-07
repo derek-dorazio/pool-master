@@ -309,8 +309,6 @@ async function createCleanupSportEvent(input: {
       name: input.name,
       startDate: input.startDate,
       endDate: input.endDate,
-      releaseAt: new Date(input.startDate.getTime() - 14 * 24 * 60 * 60_000),
-      fieldLocksAt: new Date(input.startDate.getTime() - 24 * 60 * 60_000),
       status: 'SCHEDULED',
       participantCount: 1,
       metadata: {},

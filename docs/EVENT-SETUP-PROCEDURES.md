@@ -41,11 +41,11 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
 | Field | Set it to |
 |---|---|
 | Tour, Event year, Name | Any tour, the current year, and a name of your own (for example "Derek's Golf Tournament") |
-| Starts, Ends | Any dates you like. Nothing compares them with today or with the mock |
-| Field release | Any time in the past. Contests cannot be created before it |
-| Field locks | Far enough ahead to finish creating contests and entries. Contests cannot be created after it |
+| Starts, Ends | A start far enough ahead to finish releasing the tournament and creating contests and entries. The start time is the cutoff: the tournament can't be released, and contests can't be created or opened, once it has passed. Nothing compares the dates with the mock |
 | Rounds | 4 |
 | Move this tournament through Live and Completed automatically | **Unchecked** |
+
+The tournament is saved as a **draft**: commissioners can't see it until step 6.
 
 Leave automatic lifecycle off. With it on, a background job moves the tournament to
 In progress and Completed from its round dates, which takes the timing out of your hands.
@@ -105,15 +105,25 @@ event starts with six tiers. Auto-assign fills them in ranking order, ten golfer
 and the last tier takes everyone left. The mock's 80 golfers therefore come out as
 10/10/10/10/10/30. A tier-pick contest's configuration is checked against this tier count.
 
-## 6. Create contests and entries
+## 6. Release it for contests
+
+On the tournament's home page, the Workflow card's *Release for contests*, then confirm. The
+button stays disabled, with a list of what is missing, until the field is loaded and every
+active golfer has a tier. Release moves the tournament from Draft to Scheduled, and
+commissioners can now pick it. It also **locks the tiers and prices for good**: the tier
+board and price cells turn read-only. Rankings, odds and withdrawals stay editable, and a
+golfer added after release stays untiered and can't be picked (#431).
+
+## 7. Create contests and entries
 
 As a commissioner of a test league (root admin is not needed):
 
 1. *Create Contest* (`/league/:leagueCode/contests/new`) and pick the tournament. Creation
-   is refused before *Field release* or after *Field locks*, or when the field is empty.
+   is refused while the tournament is a draft or once it has started. The contest is saved
+   as a draft; press *Open to league* on its setup page to let members enter.
 2. Submit entries from one or more test accounts while the contest is open.
 
-## 7. Go live
+## 8. Go live
 
 Do these two in this order.
 
@@ -132,7 +142,7 @@ mixes them with the simulated ones.
 Golfers tee off across the first third of each round, so the first poll or two may bring
 no scores.
 
-## 8. Watch it
+## 9. Watch it
 
 - The contest leaderboard should change about once a minute as holes are played.
 - The cut is made after round 2: the top 65 and ties go through, the rest show as missed
@@ -141,7 +151,7 @@ no scores.
   in usually means the tournament is not In progress, has no field, or its golfers did not
   come from the mock.
 
-## 9. Finish
+## 10. Finish
 
 When the score-source card says "Simulation finished at …", *Move to Completed* on the
 Workflow card.

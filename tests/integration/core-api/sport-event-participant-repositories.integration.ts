@@ -67,8 +67,6 @@ describe('Sport event participant repositories', () => {
         sport: Sport.GOLF,
         name: 'Integration Event Participants',
         startDate: new Date('2026-04-12T12:00:00.000Z'),
-        releaseAt: new Date('2026-04-12T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-04-12T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });

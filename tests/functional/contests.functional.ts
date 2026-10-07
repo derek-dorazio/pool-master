@@ -140,8 +140,6 @@ async function seedImportedGolfEvent(options: {
 }) {
   const prisma = getFunctionalPrisma();
   const now = new Date();
-  const releaseAt = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const fieldLocksAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const startDate = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
   const sport = await prisma.sport.create({
     data: {
@@ -160,8 +158,6 @@ async function seedImportedGolfEvent(options: {
       sport: Sport.GOLF,
       name: options.eventName,
       startDate,
-      releaseAt,
-      fieldLocksAt,
       status: 'SCHEDULED',
     },
   });
@@ -944,8 +940,6 @@ describe('SDK Functional: Contests and Entries', () => {
         sport: Sport.GOLF,
         name: 'Entry Detail Event',
         startDate: new Date('2026-04-10T12:00:00.000Z'),
-        releaseAt: new Date('2026-04-10T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-04-10T12:00:00.000Z'),
         status: 'IN_PROGRESS',
       },
     });
@@ -1161,8 +1155,6 @@ describe('SDK Functional: Contests and Entries', () => {
         sport: Sport.GOLF,
         name: 'Functional Contest Event',
         startDate: new Date('2026-04-10T12:00:00.000Z'),
-        releaseAt: new Date('2026-04-10T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });
@@ -1357,8 +1349,6 @@ describe('SDK Functional: Contests and Entries', () => {
         sport: Sport.GOLF,
         name: 'Visibility Event',
         startDate: new Date('2026-04-10T12:00:00.000Z'),
-        releaseAt: new Date('2026-04-10T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });
@@ -1538,8 +1528,6 @@ describe('SDK Functional: Contests and Entries', () => {
         sport: Sport.GOLF,
         name: 'List Visibility Event',
         startDate: new Date('2026-04-10T12:00:00.000Z'),
-        releaseAt: new Date('2026-04-10T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });

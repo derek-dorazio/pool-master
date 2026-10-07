@@ -9,18 +9,26 @@
  * The valuation view reads valuations directly rather than through the tiers, because a
  * valuation can carry a price with no tier (a budget-format contest), and a query that
  * starts from the tiers would never see it.
+ *
+ * Tiers and prices are set while the event is a DRAFT and lock for good when it is released
+ * (#431): every write here refuses with 409 SPORT_EVENT_TIERS_LOCKED after that, so a saved
+ * entry can never be broken by a tier or price moving under it. A participant added to the
+ * field after release stays untiered and can't be picked.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
+  SportEventRepository,
   SportEventTierDefinition,
   SportEventTierRepository,
 } from '@poolmaster/shared/db';
 import {
+  SportEventStatus,
   TierSource,
   ValuationSource,
+  type SportEvent,
   type SportEventParticipant,
   type SportEventTier,
 } from '@poolmaster/shared/domain';
@@ -55,7 +63,22 @@ export interface ParticipantValuationView {
   price: number | null;
 }
 
+/**
+ * Refuses a tier or price change once the event is released (#431). The field grid's price
+ * column goes through this too, so there is one lock rule.
+ */
+export function assertTiersAndPricesEditable(event: SportEvent): void {
+  if (event.status !== SportEventStatus.DRAFT) {
+    throw new SportEventError(
+      `Sport event ${event.id} has been released for contests, so its tiers and prices are locked.`,
+      'SPORT_EVENT_TIERS_LOCKED',
+      409,
+    );
+  }
+}
+
 export interface SportEventTierServiceDeps {
+  sportEvents: Pick<SportEventRepository, 'findById'>;
   tiers: SportEventTierRepository;
   valuations: SportEventParticipantValuationRepository;
   field: SportEventParticipantRepository;
@@ -139,6 +162,7 @@ export class SportEventTierService {
    * field every run — nothing persisted to drift (plans/124 §4.5a).
    */
   async autoAssignTiers(input: { sportEventId: string; source: TierSource; tierSize?: number }): Promise<SportEventTierGroup[]> {
+    await this.requireEditableEvent(input.sportEventId);
     const tierSize = input.tierSize ?? DEFAULT_TIER_SIZE;
     const tiers = await this.deps.tiers.findBySportEvent(input.sportEventId);
     if (tiers.length === 0) {
@@ -173,6 +197,7 @@ export class SportEventTierService {
     tiers: readonly SportEventTierDefinition[];
     reassignOrphansTo?: string;
   }): Promise<SportEventTierGroup[]> {
+    await this.requireEditableEvent(input.sportEventId);
     const newKeys = new Set(input.tiers.map((tier) => tier.tierKey));
     if (input.reassignOrphansTo && !newKeys.has(input.reassignOrphansTo)) {
       throw new SportEventError(
@@ -212,6 +237,7 @@ export class SportEventTierService {
     sportEventId: string;
     assignments: ReadonlyArray<{ sportEventParticipantId: string; tierKey: string; tierOrderIndex: number }>;
   }): Promise<SportEventTierGroup[]> {
+    await this.requireEditableEvent(input.sportEventId);
     const [tiers, field] = await Promise.all([
       this.deps.tiers.findBySportEvent(input.sportEventId),
       this.deps.field.findBySportEvent(input.sportEventId),
@@ -250,6 +276,7 @@ export class SportEventTierService {
    * a separate, later action from seeding (plans/124 §4.7a). Tiers are untouched.
    */
   async autoAssignPrices(input: { sportEventId: string; minPrice: number; maxPrice: number }): Promise<ParticipantValuationView[]> {
+    await this.requireEditableEvent(input.sportEventId);
     const seeded = (await this.deps.field.findBySportEvent(input.sportEventId))
       .filter((entry) => entry.isActive && entry.seedNumber !== undefined);
     if (seeded.length === 0) {
@@ -273,6 +300,20 @@ export class SportEventTierService {
       'Auto-assigned prices',
     );
     return this.getEffectiveValuationsForSportEvent(input.sportEventId);
+  }
+
+  /** 404 EVENT_NOT_FOUND for an unknown event; 409 SPORT_EVENT_TIERS_LOCKED once it is released. */
+  private async requireEditableEvent(sportEventId: string): Promise<void> {
+    const event = await this.deps.sportEvents.findById(sportEventId);
+    if (!event) {
+      throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
+    }
+    try {
+      assertTiersAndPricesEditable(event);
+    } catch (error) {
+      this.deps.logger?.warn({ sportEventId, status: event.status }, 'Refused a tier or price change on a released sport event');
+      throw error;
+    }
   }
 }
 

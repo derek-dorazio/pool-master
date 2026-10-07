@@ -9,7 +9,9 @@
  * Every transition is driven by an admin or the lifecycle scheduler; a provider never
  * moves an event's status (ADR-0009). An undeclared jump in
  * SPORT_EVENT_STATUS_TRANSITIONS throws EventLifecycleError
- * (422 SPORT_EVENT_INVALID_TRANSITION).
+ * (422 SPORT_EVENT_INVALID_TRANSITION). DRAFT → SCHEDULED is the release (#431): only
+ * `SportEventService.releaseEvent`, after its readiness checks, may take it, so any other
+ * caller is refused with 409 SPORT_EVENT_RELEASE_REQUIRED.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -52,6 +54,8 @@ export interface SportEventStatusTransitionInput {
   sportEventId: string;
   toStatus: SportEventStatus;
   actor: SportEventStatusTransitionActor;
+  /** Set only by the release action, which has checked the event is ready (#431). */
+  release?: boolean;
 }
 
 export interface SportEventStatusTransitionResult {
@@ -116,6 +120,18 @@ export class EventLifecycleService {
     if (fromStatus !== input.toStatus && !isDeclaredSportEventTransition(fromStatus, input.toStatus)) {
       throw new EventLifecycleError(
         `Sport event ${input.sportEventId} cannot transition from ${fromStatus} to ${input.toStatus}`,
+      );
+    }
+    const isRelease = fromStatus === SportEventStatus.DRAFT && input.toStatus === SportEventStatus.SCHEDULED;
+    if (isRelease && !input.release) {
+      this.logger?.warn(
+        { sportEventId: input.sportEventId, actor: input.actor.type },
+        'Refused to move a draft sport event to SCHEDULED outside the release action',
+      );
+      throw new EventLifecycleError(
+        `Sport event ${input.sportEventId} is a draft; release it for contests instead.`,
+        'SPORT_EVENT_RELEASE_REQUIRED',
+        409,
       );
     }
 

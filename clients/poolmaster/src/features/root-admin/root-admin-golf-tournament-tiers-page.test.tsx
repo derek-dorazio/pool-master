@@ -74,11 +74,8 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     location: 'Hoylake',
     startDate: '2026-07-16T08:00:00.000Z',
     endDate: '2026-07-19T20:00:00.000Z',
-    status: 'SCHEDULED',
+    status: 'DRAFT',
     rounds: 4,
-    releaseAt: '2026-07-01T00:00:00.000Z',
-    fieldLocksAt: '2026-07-15T00:00:00.000Z',
-    fieldLocked: false,
     eventSeriesId: 'event-series-1',
     eventYear: 2026,
     sportLeagueId: 'league-1',
@@ -327,10 +324,26 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     );
   });
 
-  it('pool-master-dyb warns when the tournament already has contests', async () => {
-    seed({ tournament: { contestCount: 2 } });
+  it('locks tier definitions, the board, prices and auto-assign once the tournament is released', async () => {
+    seed({ tournament: { status: 'SCHEDULED', allowedTransitions: ['IN_PROGRESS', 'POSTPONED', 'CANCELLED'] } });
     renderPage();
-    expect(await screen.findByText(/rejected once any contest has entries/i)).toBeInTheDocument();
+
+    expect(await screen.findByTestId('root-admin-golf-tiers-locked')).toHaveTextContent(
+      'released for contests, so its tiers and prices are locked',
+    );
+    expect(screen.getByTestId('root-admin-golf-tier-def-add')).toBeDisabled();
+    expect(screen.getByTestId('root-admin-golf-tier-move-sep-1')).toBeDisabled();
+    expect(screen.getByTestId('root-admin-golf-tier-price-sep-1')).toBeDisabled();
+    expect(screen.getByTestId('root-admin-golf-tier-auto-rank')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Drag Rory to reorder' })).not.toBeInTheDocument();
+  });
+
+  it('leaves a draft tournament\'s tiers editable, with no lock notice', async () => {
+    seed();
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-golf-tier-move-sep-1')).toBeEnabled();
+    expect(screen.queryByTestId('root-admin-golf-tiers-locked')).not.toBeInTheDocument();
   });
 
   it('pool-master-dyb keeps an in-progress board edit across an identical refetch, and reseeds on a real server change (form-state-hazard)', async () => {
