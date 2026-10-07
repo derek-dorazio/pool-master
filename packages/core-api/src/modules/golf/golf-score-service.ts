@@ -446,7 +446,11 @@ export class GolfScoreService {
     }
   }
 
-  /** Single-cell correction of one golfer's round. Unpatched values keep what was recorded. */
+  /**
+   * Single-cell correction of one golfer's round. Unpatched values keep what was recorded. A
+   * correction that would create the round must carry strokes and to par, because the server
+   * never fills either in (#116, #398).
+   */
   async updateRoundScore(sportEventId: string, roundNumber: number, sportEventParticipantId: string, patch: GolfRoundScorePatch): Promise<void> {
     const entry = await this.deps.field.findById(sportEventParticipantId);
     if (!entry || entry.sportEventId !== sportEventId) {
@@ -457,9 +461,21 @@ export class GolfScoreService {
       );
     }
     await this.requireScheduledRound(sportEventId, roundNumber);
-    const round = await this.deps.rounds.findOrCreate(sportEventId, roundNumber);
-    const existing = (await this.deps.golfRounds.findBySportEventParticipants([sportEventParticipantId]))
-      .find((result) => result.participantRound.sportEventRoundId === round.id);
+    const scheduledRound = (await this.deps.rounds.findBySportEvent(sportEventId)).find((candidate) => candidate.roundNumber === roundNumber);
+    const existing = scheduledRound
+      ? (await this.deps.golfRounds.findBySportEventParticipants([sportEventParticipantId]))
+        .find((result) => result.participantRound.sportEventRoundId === scheduledRound.id)
+      : undefined;
+    const strokes = patch.strokes ?? existing?.golf.strokes;
+    const scoreToPar = patch.scoreToPar ?? existing?.golf.scoreToPar;
+    if (strokes === undefined || scoreToPar === undefined) {
+      throw new GolfScoreError(
+        `Golfer ${sportEventParticipantId} has no round ${roundNumber} on sport event ${sportEventId}; creating it needs both strokes and scoreToPar.`,
+        'ROUND_VALUES_REQUIRED',
+        422,
+      );
+    }
+    const round = scheduledRound ?? await this.deps.rounds.findOrCreate(sportEventId, roundNumber);
 
     await this.deps.golfRounds.upsert({
       sportEventParticipantId,
@@ -468,8 +484,8 @@ export class GolfScoreService {
       completedAt: patch.completedAt !== undefined
         ? (patch.completedAt ? new Date(patch.completedAt) : null)
         : existing?.participantRound.completedAt ?? null,
-      strokes: patch.strokes ?? existing?.golf.strokes ?? 0,
-      scoreToPar: patch.scoreToPar ?? existing?.golf.scoreToPar ?? 0,
+      strokes,
+      scoreToPar,
       thru: patch.thru !== undefined ? patch.thru : existing?.golf.thru ?? null,
     });
     await this.refreshGolfStandings(sportEventId, [sportEventParticipantId], new Date());
