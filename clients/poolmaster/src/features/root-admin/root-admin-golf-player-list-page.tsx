@@ -64,8 +64,10 @@ export function RootAdminGolfPlayerListPage() {
 
   const createMutation = useInvalidatingMutation({
     mutationFn: async (values: NewPlayerValues) => {
+      // #311: canSave waits for the sport, but the form's own onSubmit is not
+      // gated by canSave, so this still refuses when the sport is missing.
       if (!sportQuery.data) {
-        throw new Error('The golf sport has not loaded yet.');
+        throw new Error('The golf sport is still loading. Wait a moment and try again.');
       }
       const response = await createParticipant({
         body: {
@@ -174,7 +176,7 @@ export function RootAdminGolfPlayerListPage() {
       />
 
       <FormModal
-        canSave={form.formState.isValid}
+        canSave={form.formState.isValid && Boolean(sportQuery.data)}
         error={createMutation.error}
         isPending={createMutation.isPending}
         onCancel={() => setCreateOpen(false)}
@@ -190,6 +192,7 @@ export function RootAdminGolfPlayerListPage() {
       >
         <form
           className="space-y-3"
+          data-testid="root-admin-golf-player-list-new-form"
           onSubmit={(e) => void form.handleSubmit((values) => createMutation.mutate(values))(e)}
         >
           <FormField error={form.formState.errors.name?.message} label="Name">
