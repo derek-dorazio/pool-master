@@ -1,4 +1,4 @@
-import { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -88,14 +88,14 @@ function contest(overrides: Partial<Contest> = {}): Contest {
     sportEventId: EVENT_ID,
     name: 'Masters Pool',
     status: ContestStatus.OPEN,
-    contestFormat: 'ROSTER_SELECTION',
+    contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
-    scoringEngine: 'GOLF_STROKE_PLAY',
+    scoringEngine: ScoringEngine.STROKE_PLAY,
     isExclusive: false,
     scoringStopsOnElimination: false,
     ...TIMESTAMPS,
     ...overrides,
-  } as Contest;
+  };
 }
 
 function configuration(overrides: Partial<ContestConfiguration> = {}): ContestConfiguration {

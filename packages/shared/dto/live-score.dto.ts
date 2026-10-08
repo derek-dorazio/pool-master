@@ -15,6 +15,7 @@
  */
 
 import { z } from 'zod';
+import { ParticipantRoundStatus } from '@poolmaster/shared/domain';
 
 // ============================================================================
 // Per-category update schemas
@@ -44,7 +45,7 @@ export const GolfRoundUpdateSchema = z.object({
   thru: z.number().int().min(0).optional().describe(
     'Number of completed holes in this round when the provider reports an in-progress round. Playoff holes are not part of any round (#118).',
   ),
-  status: z.enum(['IN_PROGRESS', 'COMPLETED', 'DNF', 'DSQ', 'MISSED_CUT']),
+  status: z.nativeEnum(ParticipantRoundStatus),
   completedAt: z.string().datetime().optional(),
 }).describe('Golf round update emitted by golf adapters per plans/117 §6.1.');
 export type GolfRoundUpdate = z.infer<typeof GolfRoundUpdateSchema>;

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatParticipantStatusLabel } from '@poolmaster/shared/domain';
+import { ContestStatus, formatParticipantStatusLabel } from '@poolmaster/shared/domain';
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -288,8 +288,8 @@ export function ContestDetailPage() {
   const totalCount = entries.length;
   const myCount = myEntries.length;
   const visibleEntries = myOnly ? myEntries : entries;
-  const isOpen = contest.status === 'OPEN';
-  const isDraft = contest.status === 'DRAFT';
+  const isOpen = contest.status === ContestStatus.OPEN;
+  const isDraft = contest.status === ContestStatus.DRAFT;
   const canCreateEntry = isOpen && Boolean(myTeamId);
   // Only commissioners can read a draft at all (#117); the check keeps the release action theirs
   // in the UI too.
@@ -299,7 +299,7 @@ export function ContestDetailPage() {
     ? buildLeaguePath(hintedLeagueCode)
     : '/welcome';
   const manageContestPath =
-    hintedLeagueCode && contest.status === 'DRAFT'
+    hintedLeagueCode && contest.status === ContestStatus.DRAFT
       ? buildLeagueContestManagePath(hintedLeagueCode, contestId)
       : null;
   // #111 — the leaderboard is its own route, and it is only worth offering once the endpoint

@@ -237,7 +237,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     const startedAt = Date.now();
 
     try {
-      await this.fetchJson<{ status: string }>('/health');
+      await this.fetchJson<unknown>('/health');
       return {
         providerId: this.providerId,
         status: 'HEALTHY',

@@ -6352,9 +6352,9 @@ export type SportEventParticipantRoundDto = {
     sportEventRoundId: string;
     roundNumber: number;
     /**
-     * Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT.
+     * Progress through the round.
      */
-    status: string;
+    status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
     /**
      * ISO 8601 datetime string.
      */
@@ -6555,9 +6555,9 @@ export type SportEventParticipantDto = {
         sportEventRoundId: string;
         roundNumber: number;
         /**
-         * Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT.
+         * Progress through the round.
          */
-        status: string;
+        status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
         /**
          * ISO 8601 datetime string.
          */
@@ -6775,9 +6775,9 @@ export type SportEventParticipantListResponse = {
             sportEventRoundId: string;
             roundNumber: number;
             /**
-             * Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT.
+             * Progress through the round.
              */
-            status: string;
+            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
             /**
              * ISO 8601 datetime string.
              */
@@ -7056,9 +7056,9 @@ export type SportEventParticipantResponse = {
             sportEventRoundId: string;
             roundNumber: number;
             /**
-             * Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT.
+             * Progress through the round.
              */
-            status: string;
+            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
             /**
              * ISO 8601 datetime string.
              */
@@ -7253,7 +7253,7 @@ export type ContestCrudConfigurationRequest = {
     draftMode?: string;
     rounds?: number;
     timePerPickSeconds?: number;
-    autoPickPolicy?: string;
+    autoPickPolicy?: 'QUEUE_THEN_BEST' | 'BEST_AVAILABLE' | 'RANDOM';
     tierConfig?: Array<{
         /**
          * Stable tier identifier.
@@ -7891,9 +7891,9 @@ export type ContestLeaderboardResponse = {
             sportEventRoundId: string;
             roundNumber: number;
             /**
-             * Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT.
+             * Progress through the round.
              */
-            status: string;
+            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
             /**
              * ISO 8601 datetime string.
              */
@@ -8016,7 +8016,7 @@ export type ContestConfigurationDetailDto = {
     draftMode?: string;
     rounds?: number;
     timePerPickSeconds?: number;
-    autoPickPolicy?: string;
+    autoPickPolicy?: 'QUEUE_THEN_BEST' | 'BEST_AVAILABLE' | 'RANDOM';
     tierConfig?: Array<{
         /**
          * Stable tier identifier.
@@ -8115,7 +8115,7 @@ export type ContestResponse = {
         draftMode?: string;
         rounds?: number;
         timePerPickSeconds?: number;
-        autoPickPolicy?: string;
+        autoPickPolicy?: 'QUEUE_THEN_BEST' | 'BEST_AVAILABLE' | 'RANDOM';
         tierConfig?: Array<{
             /**
              * Stable tier identifier.
@@ -8534,7 +8534,7 @@ export type GolfRoundScorePreviewResponse = {
             strokes: number | null;
             scoreToPar: number;
             thru: number | null;
-            status: string;
+            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
         } | null;
         /**
          * What is stored now; null when nothing is.
@@ -8543,7 +8543,7 @@ export type GolfRoundScorePreviewResponse = {
             strokes: number | null;
             scoreToPar: number;
             thru: number | null;
-            status: string;
+            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
         } | null;
     }>;
     /**
@@ -9474,7 +9474,7 @@ export type ProviderEventCleanupRowDto = {
     /**
      * Current persisted event status.
      */
-    status: string;
+    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
     /**
      * Persisted event start date.
      */
@@ -9664,7 +9664,7 @@ export type ProviderEventCleanupResponse = {
         /**
          * Current persisted event status.
          */
-        status: string;
+        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
          * Persisted event start date.
          */

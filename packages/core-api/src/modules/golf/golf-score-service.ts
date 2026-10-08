@@ -32,6 +32,7 @@ import type {
 import {
   compareScores,
   PARTICIPANT_SCORING_DEFINITIONS,
+  ParticipantRoundStatus,
   ParticipantStandingStatus,
   rankSortedScores,
   type GolfRoundResult,
@@ -99,7 +100,7 @@ export interface GolfRoundScorePatch {
   strokes?: number;
   scoreToPar?: number;
   thru?: number | null;
-  status?: string;
+  status?: GolfRoundStatus;
   completedAt?: string | null;
 }
 
@@ -342,7 +343,7 @@ export class GolfScoreService {
       ));
       const eventScoreToPar = entryRounds.reduce((sum, result) => sum + result.golf.scoreToPar, 0);
       const eventStrokes = entryRounds.reduce((sum, result) => sum + result.golf.strokes, 0);
-      const currentRoundThru = current.golf.thru ?? (current.participantRound.status === 'COMPLETED' ? 18 : null);
+      const currentRoundThru = current.golf.thru ?? (current.participantRound.status === ParticipantRoundStatus.COMPLETED ? 18 : null);
       const status = mapGolfLiveStatus(current.participantRound.status);
       const currentRound = current.participantRound.roundNumber;
       const before = existingByEntry.get(sportEventParticipantId);
@@ -393,7 +394,7 @@ export class GolfScoreService {
       }
       const existing = existingByEntry.get(sportEventParticipantId);
       const before: GolfRoundValues | null = existing
-        ? { strokes: existing.golf.strokes, scoreToPar: existing.golf.scoreToPar, thru: existing.golf.thru, status: existing.participantRound.status as GolfRoundStatus }
+        ? { strokes: existing.golf.strokes, scoreToPar: existing.golf.scoreToPar, thru: existing.golf.thru, status: existing.participantRound.status }
         : null;
       // Apply stores nothing for a row with no strokes (strokes is NOT NULL in storage).
       const change: GolfScoreChange = row.strokes === null
@@ -511,7 +512,7 @@ function golfRoundValuesEqual(before: GolfRoundValues, after: GolfRoundValues): 
     && before.status === after.status;
 }
 
-function mapGolfLiveStatus(roundStatus: string): ParticipantStandingStatus {
+function mapGolfLiveStatus(roundStatus: GolfRoundStatus): ParticipantStandingStatus {
   switch (roundStatus) {
     case 'IN_PROGRESS':
       return ParticipantStandingStatus.IN_PROGRESS;
@@ -522,8 +523,6 @@ function mapGolfLiveStatus(roundStatus: string): ParticipantStandingStatus {
       return ParticipantStandingStatus.WITHDRAWN;
     case 'MISSED_CUT':
       return ParticipantStandingStatus.ELIMINATED;
-    default:
-      return ParticipantStandingStatus.ACTIVE;
   }
 }
 

@@ -304,6 +304,78 @@ enum PrismaContestFormat {
   PREDICT_TOP_N
 }
 
+// #186: the lifecycle and discriminator columns below were free text until each
+// got a Postgres enum. Members mirror the domain const of the same name in
+// packages/shared/domain/enums.ts (without the Prisma prefix).
+
+enum PrismaContestStatus {
+  DRAFT
+  OPEN
+  DRAFTING
+  LOCKED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PrismaSelectionType {
+  SNAKE_DRAFT
+  TIERED
+  BUDGET_PICK
+  OPEN_SELECTION
+  PICK_EM
+  BRACKET_PICK_EM
+}
+
+enum PrismaScoringEngine {
+  ADVANCEMENT
+  STAT_ACCUMULATION
+  STROKE_PLAY
+  POSITION
+  BRACKET
+  FIGHT_RESULT
+  CUMULATIVE
+}
+
+enum PrismaAutoPickPolicy {
+  QUEUE_THEN_BEST
+  BEST_AVAILABLE
+  RANDOM
+}
+
+enum PrismaPrizePayoutType {
+  FIXED_AMOUNT
+  PERCENTAGE
+}
+
+enum PrismaContestEntryStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PrismaDraftStatus {
+  PENDING
+  LIVE
+  PAUSED
+  COMPLETE
+}
+
+enum PrismaParticipantRoundStatus {
+  IN_PROGRESS
+  COMPLETED
+  DNF
+  DSQ
+  MISSED_CUT
+}
+
+enum PrismaProviderSyncRunStatus {
+  SUBMITTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
 // =============================================================================
 // UTC Storage Convention
 // =============================================================================
@@ -657,10 +729,10 @@ model Contest {
   leagueId                  String              @map("league_id") @db.Uuid
   sportEventId              String?             @map("sport_event_id") @db.Uuid
   name                      String
-  status                    String              @default("DRAFT")
+  status                    PrismaContestStatus @default(DRAFT)
   contestFormat             PrismaContestFormat @default(ROSTER) @map("contest_format")
-  selectionType             String              @map("selection_type")
-  scoringEngine             String              @map("scoring_engine")
+  selectionType             PrismaSelectionType @map("selection_type")
+  scoringEngine             PrismaScoringEngine @map("scoring_engine")
   isExclusive               Boolean             @default(false) @map("is_exclusive")
   scoringStopsOnElimination Boolean             @default(false) @map("scoring_stops_on_elimination")
   startsAt                  DateTime?           @map("starts_at") @db.Timestamptz
@@ -682,28 +754,28 @@ model Contest {
 }
 
 model ContestConfiguration {
-  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestId            String    @unique @map("contest_id") @db.Uuid
-  templateId           String?   @map("template_id") @db.Uuid
-  templateVersion      Int?      @map("template_version")
-  selectionType        String    @map("selection_type") @db.VarChar(50)
-  configJson           Json?     @map("config_json")
+  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId            String                @unique @map("contest_id") @db.Uuid
+  templateId           String?               @map("template_id") @db.Uuid
+  templateVersion      Int?                  @map("template_version")
+  selectionType        PrismaSelectionType   @map("selection_type")
+  configJson           Json?                 @map("config_json")
   rounds               Int?
-  timePerPickSeconds   Int?      @map("time_per_pick_seconds")
-  autoPickPolicy       String?   @map("auto_pick_policy") @db.VarChar(50)
-  tierConfig           Json?     @map("tier_config")
+  timePerPickSeconds   Int?                  @map("time_per_pick_seconds")
+  autoPickPolicy       PrismaAutoPickPolicy? @map("auto_pick_policy")
+  tierConfig           Json?                 @map("tier_config")
   budget               Int?
-  pickCount            Int?      @map("pick_count")
-  isExclusive          Boolean   @default(false) @map("is_exclusive")
-  picksPerPeriod       Int?      @map("picks_per_period")
-  roundValues          Json?     @map("round_values")
-  startRound           String?   @map("start_round") @db.VarChar(50)
-  minimumEntries       Int?      @map("minimum_entries")
-  maxEntriesPerSquad   Int?      @map("max_entries_per_squad")
-  rosterSize           Int?      @map("roster_size")
-  totalPrizePoolAmount Float?    @map("total_prize_pool_amount")
-  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  pickCount            Int?                  @map("pick_count")
+  isExclusive          Boolean               @default(false) @map("is_exclusive")
+  picksPerPeriod       Int?                  @map("picks_per_period")
+  roundValues          Json?                 @map("round_values")
+  startRound           String?               @map("start_round") @db.VarChar(50)
+  minimumEntries       Int?                  @map("minimum_entries")
+  maxEntriesPerSquad   Int?                  @map("max_entries_per_squad")
+  rosterSize           Int?                  @map("roster_size")
+  totalPrizePoolAmount Float?                @map("total_prize_pool_amount")
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime              @updatedAt @map("updated_at") @db.Timestamptz
 
   contest                 Contest                         @relation(fields: [contestId], references: [id])
   template                ContestConfigTemplate?          @relation(fields: [templateId], references: [id])
@@ -714,22 +786,22 @@ model ContestConfiguration {
 }
 
 model ContestConfigTemplate {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sport         String   @db.VarChar(50)
-  eventType     String?  @map("event_type") @db.VarChar(100)
-  contestFormat String   @map("contest_type") @db.VarChar(50)
+  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sport         String              @db.VarChar(50)
+  eventType     String?             @map("event_type") @db.VarChar(100)
+  contestFormat PrismaContestFormat @map("contest_type")
   /// A `SelectionType` value: how an entry in a contest created from this template picks.
-  selectionType String   @map("selection_type") @db.VarChar(50)
-  templateKey   String   @map("template_key") @db.VarChar(100)
-  name          String   @db.VarChar(120)
-  description   String   @db.VarChar(500)
-  sortOrder     Int      @map("sort_order")
-  isDefault     Boolean  @default(false) @map("is_default")
-  active        Boolean  @default(true)
-  configJson    Json     @map("config_json")
-  schemaVersion Int      @default(1) @map("schema_version")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  selectionType PrismaSelectionType @map("selection_type")
+  templateKey   String              @map("template_key") @db.VarChar(100)
+  name          String              @db.VarChar(120)
+  description   String              @db.VarChar(500)
+  sortOrder     Int                 @map("sort_order")
+  isDefault     Boolean             @default(false) @map("is_default")
+  active        Boolean             @default(true)
+  configJson    Json                @map("config_json")
+  schemaVersion Int                 @default(1) @map("schema_version")
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
   configurations ContestConfiguration[]
 
@@ -756,18 +828,18 @@ model ParticipantContestScoringRule {
 }
 
 model ContestPrizeDefinition {
-  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestConfigurationId String   @map("contest_configuration_id") @db.Uuid
-  prizeDefinitionId      String   @map("prize_definition_id") @db.VarChar(100)
-  displayName            String   @map("display_name") @db.VarChar(100)
-  sortOrder              Int      @map("sort_order")
-  ruleConfig             Json     @default("{}") @map("rule_config")
-  payoutType             String?  @map("payout_type") @db.VarChar(50)
+  id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestConfigurationId String                 @map("contest_configuration_id") @db.Uuid
+  prizeDefinitionId      String                 @map("prize_definition_id") @db.VarChar(100)
+  displayName            String                 @map("display_name") @db.VarChar(100)
+  sortOrder              Int                    @map("sort_order")
+  ruleConfig             Json                   @default("{}") @map("rule_config")
+  payoutType             PrismaPrizePayoutType? @map("payout_type")
   amount                 Float?
   percentage             Float?
-  active                 Boolean  @default(true)
-  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  active                 Boolean                @default(true)
+  createdAt              DateTime               @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime               @updatedAt @map("updated_at") @db.Timestamptz
 
   contestConfiguration ContestConfiguration @relation(fields: [contestConfigurationId], references: [id])
 
@@ -781,16 +853,16 @@ model ContestPrizeDefinition {
 // =============================================================================
 
 model ContestEntry {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestId       String   @map("contest_id") @db.Uuid
-  squadId         String   @map("squad_id") @db.Uuid
-  entryNumber     Int      @default(1) @map("entry_number")
+  id              String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId       String                   @map("contest_id") @db.Uuid
+  squadId         String                   @map("squad_id") @db.Uuid
+  entryNumber     Int                      @default(1) @map("entry_number")
   name            String
-  status          String   @default("ACTIVE") @db.VarChar(20)
-  tiebreakerValue Int?     @map("tiebreaker_value")
-  isEliminated    Boolean  @default(false) @map("is_eliminated")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  status          PrismaContestEntryStatus @default(ACTIVE)
+  tiebreakerValue Int?                     @map("tiebreaker_value")
+  isEliminated    Boolean                  @default(false) @map("is_eliminated")
+  createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
   contest Contest @relation(fields: [contestId], references: [id])
   squad   Squad   @relation(fields: [squadId], references: [id])
@@ -886,15 +958,15 @@ model ContestEntryPick {
 // =============================================================================
 
 model DraftSession {
-  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestId            String    @unique @map("contest_id") @db.Uuid
-  status               String    @default("PENDING")
-  currentPickNumber    Int       @default(0) @map("current_pick_number")
-  currentEntryId       String?   @map("current_entry_id") @db.Uuid
-  startedAt            DateTime? @map("started_at") @db.Timestamptz
-  currentTurnStartedAt DateTime? @map("current_turn_started_at") @db.Timestamptz
-  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId            String            @unique @map("contest_id") @db.Uuid
+  status               PrismaDraftStatus @default(PENDING)
+  currentPickNumber    Int               @default(0) @map("current_pick_number")
+  currentEntryId       String?           @map("current_entry_id") @db.Uuid
+  startedAt            DateTime?         @map("started_at") @db.Timestamptz
+  currentTurnStartedAt DateTime?         @map("current_turn_started_at") @db.Timestamptz
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 
   contest       Contest            @relation(fields: [contestId], references: [id])
   pickHistories DraftPickHistory[]
@@ -1037,14 +1109,14 @@ model SportEventRound {
 /// bare `round: Int` (plans/124 §4.10): a round number that doesn't exist for
 /// the event fails at insert with a foreign-key violation.
 model SportEventParticipantRound {
-  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sportEventParticipantId String    @map("sport_event_participant_id") @db.Uuid
-  sportEventRoundId       String    @map("sport_event_round_id") @db.Uuid
+  id                      String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventParticipantId String                       @map("sport_event_participant_id") @db.Uuid
+  sportEventRoundId       String                       @map("sport_event_round_id") @db.Uuid
   /// Provider-normalized progress of this participant's round.
-  status                  String    @default("PENDING") @db.VarChar(20)
-  completedAt             DateTime? @map("completed_at") @db.Timestamptz
-  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  status                  PrismaParticipantRoundStatus
+  completedAt             DateTime?                    @map("completed_at") @db.Timestamptz
+  createdAt               DateTime                     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime                     @updatedAt @map("updated_at") @db.Timestamptz
 
   sportEventParticipant SportEventParticipant           @relation(fields: [sportEventParticipantId], references: [id])
   sportEventRound       SportEventRound                 @relation(fields: [sportEventRoundId], references: [id])
@@ -1158,15 +1230,15 @@ model SportEventParticipantValuation {
 }
 
 model ProviderSyncRun {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  providerId  String    @map("provider_id") @db.VarChar(100)
-  sport       String    @db.VarChar(50)
-  eventId     String?   @map("event_id") @db.VarChar(255)
-  status      String    @db.VarChar(50)
-  startedAt   DateTime? @map("started_at") @db.Timestamptz
-  completedAt DateTime? @map("completed_at") @db.Timestamptz
-  payloadJson Json      @default("{}") @map("payload_json")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  id          String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId  String                      @map("provider_id") @db.VarChar(100)
+  sport       String                      @db.VarChar(50)
+  eventId     String?                     @map("event_id") @db.VarChar(255)
+  status      PrismaProviderSyncRunStatus
+  startedAt   DateTime?                   @map("started_at") @db.Timestamptz
+  completedAt DateTime?                   @map("completed_at") @db.Timestamptz
+  payloadJson Json                        @default("{}") @map("payload_json")
+  createdAt   DateTime                    @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([createdAt(sort: Desc)])
   @@index([providerId, createdAt(sort: Desc)])
