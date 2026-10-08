@@ -38,6 +38,9 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
  * An invite is pending until it is accepted or cancelled. An email invite past its expiry is still
  * listed, marked Expired, so the commissioner can resend it; a resend issues a new link and the old
  * one stops working. A join link can only be cancelled.
+ *
+ * Every pending row can copy its own link (#476). With the invite email switched off, a resend
+ * sends nothing, so copying the new link is how the commissioner gets it to the invitee.
  */
 type LeagueInvitationsProps = {
   isInactiveLeague: boolean;
@@ -80,6 +83,7 @@ export function LeagueInvitations({
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLink, setInviteLink] = useState('');
   const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
+  const [rowCopy, setRowCopy] = useState<{ invitationId: string; state: 'copied' | 'failed' } | null>(null);
   const invitationsKey = QueryKeys.leagueInvitations.byLeague(leagueId);
 
   const invitationsQuery = useQuery({
@@ -135,6 +139,7 @@ export function LeagueInvitations({
       return response.data.invitation;
     },
     onSuccess: (invitation) => {
+      setRowCopy(null);
       logger.info(
         { action: 'leagueInvitations.resend.succeeded', data: { leagueId, invitationId: invitation.id } },
         'Resent a league invitation',
@@ -178,6 +183,16 @@ export function LeagueInvitations({
       setInviteLinkCopied(true);
     } catch {
       // Keep the link visible for manual copy when clipboard access is unavailable.
+    }
+  }
+
+  async function handleCopyRowLink(invitationId: string, link: string) {
+    try {
+      await navigator.clipboard.writeText(link);
+      setRowCopy({ invitationId, state: 'copied' });
+    } catch {
+      // Show the link on the row so it can be copied by hand.
+      setRowCopy({ invitationId, state: 'failed' });
     }
   }
 
@@ -237,6 +252,9 @@ export function LeagueInvitations({
             const isEmail = invitation.inviteType === InviteType.EMAIL;
             const isExpired = invitation.status === InvitationStatus.EXPIRED
               || (invitation.expiresAt ? new Date(invitation.expiresAt).getTime() < Date.now() : false);
+            const label = isEmail ? invitation.email : 'Join link';
+            const link = `${window.location.origin}${buildInvitePath(invitation.inviteCode)}`;
+            const copyState = rowCopy?.invitationId === invitation.id ? rowCopy.state : null;
 
             return (
               <div
@@ -247,7 +265,7 @@ export function LeagueInvitations({
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="text-sm font-medium text-foreground">
-                      {isEmail ? invitation.email : 'Join link'}
+                      {label}
                     </span>
                     <Chip>{isExpired ? 'Expired' : 'Pending'}</Chip>
                   </div>
@@ -262,8 +280,32 @@ export function LeagueInvitations({
                     ) : null}
                     {!isEmail ? ` · ${invitation.currentUses} joined` : null}
                   </p>
+                  {copyState === 'failed' ? (
+                    <p
+                      className="break-all font-mono text-xs text-foreground"
+                      data-testid={`league-invitation-link-${invitation.id}`}
+                    >
+                      {link}
+                    </p>
+                  ) : null}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {copyState === 'copied' ? (
+                    <span className="text-xs text-muted-foreground" data-testid={`league-invitation-copied-${invitation.id}`}>
+                      Link copied
+                    </span>
+                  ) : null}
+                  <Button
+                    aria-label={`Copy invite link for ${label}`}
+                    data-testid={`league-invitation-copy-${invitation.id}`}
+                    onClick={() => void handleCopyRowLink(invitation.id, link)}
+                    size="icon"
+                    title="Copy invite link"
+                    type="button"
+                    variant="icon"
+                  >
+                    {copyState === 'copied' ? <Check aria-hidden size={18} /> : <Copy aria-hidden size={18} />}
+                  </Button>
                   {isEmail ? (
                     <Button
                       data-testid={`league-invitation-resend-${invitation.id}`}
