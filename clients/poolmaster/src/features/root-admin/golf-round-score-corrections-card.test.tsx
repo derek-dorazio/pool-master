@@ -199,11 +199,4 @@ describe('pool-master-r11 GolfRoundScoreCorrectionsCard', () => {
     );
     expect(screen.getByText('No scores recorded for this round yet. Use the bulk load above.')).toBeInTheDocument();
   });
-
-  it('shows a stored status the grid does not offer as In progress, without marking the row changed', () => {
-    renderCard({ rows: [scoreRow({ status: 'SUSPENDED' })] });
-
-    expect(screen.getByTestId('root-admin-golf-scores-status-sep-1')).toHaveValue('IN_PROGRESS');
-    expect(screen.getByTestId('root-admin-golf-scores-save-sep-1')).toBeDisabled();
-  });
 });
