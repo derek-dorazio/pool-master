@@ -15,7 +15,9 @@ import {
   ContestFormat,
   SelectionType,
   Sport,
+  getDefaultCountedScores,
   getDefaultTournamentFormatForSport,
+  getTieredRosterSize,
   getValidContestFormatsForTournamentFormat,
 } from '@poolmaster/shared/domain';
 import { createContest, deleteContest, getContestConfiguration, listContestConfigTemplates, listEvents, updateContest, updateContestConfiguration } from '@/lib/api';
@@ -66,7 +68,7 @@ const contestSetupFormSchema = z.object({
   selectedTemplateId: z.string(),
   unlimitedEntries: z.boolean(),
   maxEntriesPerTeam: z.string(),
-  rosterSize: z.string(),
+  picksPerTier: z.string(),
   countedScores: z.string(),
 });
 
@@ -154,7 +156,7 @@ export function CreateContestPage() {
       selectedTemplateId: '',
       unlimitedEntries: false,
       maxEntriesPerTeam: '1',
-      rosterSize: '6',
+      picksPerTier: '1',
       countedScores: '4',
     },
   });
@@ -164,21 +166,12 @@ export function CreateContestPage() {
     selectedTemplateId,
     unlimitedEntries,
     maxEntriesPerTeam,
-    rosterSize,
+    picksPerTier,
     countedScores,
   } = contestForm.watch();
   const [formError, setFormError] = useState<string | null>(null);
-  // Create needs a template, a complete configuration, or both (#245); the server answers the
-  // empty state with CONTEST_CONFIGURATION_REQUIRED, and this keeps the form from reaching it.
-  const parsedRosterSizeValue = Number(rosterSize);
+  const parsedPicksPerTierValue = Number(picksPerTier);
   const parsedCountedScoresValue = Number(countedScores);
-  const configurationComplete =
-    Number.isInteger(parsedRosterSizeValue)
-    && parsedRosterSizeValue >= 1
-    && Number.isInteger(parsedCountedScoresValue)
-    && parsedCountedScoresValue >= 1
-    && parsedCountedScoresValue <= parsedRosterSizeValue;
-  const createNeedsConfiguration = !isEditMode && !selectedTemplateId && !configurationComplete;
   const [isHydratedFromManagedContest, setIsHydratedFromManagedContest] = useState(false);
 
   const setContestFormValue = useCallback(<Field extends FieldPath<ContestSetupFormValues>>(
@@ -276,6 +269,48 @@ export function CreateContestPage() {
     () => eventsQuery.data?.find((event) => event.id === sportEventId) ?? null,
     [eventsQuery.data, sportEventId],
   );
+  // The roster is derived (#479): the event's tier count times picks per tier. A draft being
+  // edited reads the tiers it inherits; create reads the selected event's count.
+  const tierCount = managedContestQuery.data?.effectiveTiers.length ?? selectedEvent?.tierCount ?? 0;
+  const rosterSizeLabel =
+    tierCount > 0 && Number.isInteger(parsedPicksPerTierValue) && parsedPicksPerTierValue >= 1
+      ? String(getTieredRosterSize(tierCount, parsedPicksPerTierValue))
+      : '—';
+  // Create needs a template, a complete configuration, or both (#245); the server answers the
+  // empty state with CONTEST_CONFIGURATION_REQUIRED, and this keeps the form from reaching it.
+  const configurationComplete =
+    Number.isInteger(parsedPicksPerTierValue)
+    && parsedPicksPerTierValue >= 1
+    && Number.isInteger(parsedCountedScoresValue)
+    && parsedCountedScoresValue >= 1
+    && (tierCount === 0 || parsedCountedScoresValue <= getTieredRosterSize(tierCount, parsedPicksPerTierValue));
+  const createNeedsConfiguration = !isEditMode && !selectedTemplateId && !configurationComplete;
+  // "Scores that count" follows picks per tier: changing it resets the count to the default.
+  const changePicksPerTier = useCallback((value: string) => {
+    setContestFormValue('picksPerTier', value);
+    const parsed = Number(value);
+    if (tierCount > 0 && Number.isInteger(parsed) && parsed >= 1) {
+      setContestFormValue('countedScores', String(getDefaultCountedScores(tierCount, parsed)));
+    }
+  }, [setContestFormValue, tierCount]);
+  // Create starts "Scores that count" at the default for the chosen event's tiers. A draft being
+  // edited keeps what it saved, and so does a selected template whose picks per tier the form
+  // still holds: the template's own count wins over the formula.
+  useEffect(() => {
+    if (isEditMode || tierCount === 0) {
+      return;
+    }
+    const parsed = Number(contestForm.getValues('picksPerTier'));
+    const selectedTemplate = templatesQuery.data?.find(
+      (template) => template.id === contestForm.getValues('selectedTemplateId'),
+    );
+    if (selectedTemplate?.configuration.picksPerTier === parsed) {
+      return;
+    }
+    if (Number.isInteger(parsed) && parsed >= 1) {
+      setContestFormValue('countedScores', String(getDefaultCountedScores(tierCount, parsed)));
+    }
+  }, [contestForm, isEditMode, setContestFormValue, templatesQuery.data, tierCount]);
   const eligibleEvents = useMemo(
     () => eventsQuery.data?.filter((event) => event.contestEligible) ?? [],
     [eventsQuery.data],
@@ -298,7 +333,7 @@ export function CreateContestPage() {
         ? '1'
         : String(configuration.maxEntriesPerSquad),
     );
-    setContestFormValue('rosterSize', String(configuration.rosterSize));
+    setContestFormValue('picksPerTier', String(configuration.picksPerTier));
     setContestFormValue('countedScores', String(configuration.countedScores));
   }, [setContestFormValue]);
 
@@ -329,7 +364,7 @@ export function CreateContestPage() {
         : String(configuration.maxEntriesPerSquad),
     );
 
-    setContestFormValue('rosterSize', String(configuration.rosterSize));
+    setContestFormValue('picksPerTier', String(configuration.picksPerTier));
     setContestFormValue('countedScores', String(configuration.countedScores));
 
     setIsHydratedFromManagedContest(true);
@@ -489,23 +524,29 @@ export function CreateContestPage() {
         throw new Error('Max entries per team must be a positive whole number.');
       }
 
-      const parsedRosterSize = Number(values.rosterSize);
+      const parsedPicksPerTier = Number(values.picksPerTier);
       const parsedCountedScores = Number(values.countedScores);
 
-      if (!Number.isInteger(parsedRosterSize) || parsedRosterSize < 1) {
-        throw new Error('Golfers picked must be a positive whole number.');
+      if (!Number.isInteger(parsedPicksPerTier) || parsedPicksPerTier < 1) {
+        throw new Error('Picks per tier must be a positive whole number.');
       }
 
+      // An event with no tiers yet has no roster to check against; the server skips it too.
+      const submittedRosterSize = getTieredRosterSize(tierCount, parsedPicksPerTier);
       if (
         !Number.isInteger(parsedCountedScores)
         || parsedCountedScores < 1
-        || parsedCountedScores > parsedRosterSize
+        || (tierCount > 0 && parsedCountedScores > submittedRosterSize)
       ) {
-        throw new Error('Counted golfer scores must be between 1 and golfers picked.');
+        throw new Error(
+          tierCount > 0
+            ? `Scores that count must be between 1 and the ${submittedRosterSize} golfers picked.`
+            : 'Scores that count must be a positive whole number.',
+        );
       }
 
       const configuration = {
-        rosterSize: parsedRosterSize,
+        picksPerTier: parsedPicksPerTier,
         countedScores: parsedCountedScores,
         ...(parsedMaxEntries !== undefined
           ? { maxEntriesPerSquad: parsedMaxEntries }
@@ -868,16 +909,23 @@ export function CreateContestPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <FormField label="Golfers picked">
+              <FormField
+                helperText={
+                  tierCount > 0
+                    ? `${tierCount} tiers × ${picksPerTier || '?'} = ${rosterSizeLabel} golfers picked.`
+                    : 'The event has no tiers yet.'
+                }
+                label="Picks per tier"
+              >
                 <Input
-                  data-testid="contest-tiered-roster-size"
+                  data-testid="contest-tiered-picks-per-tier"
                   min={1}
-                  onChange={(event) => setContestFormValue('rosterSize', event.target.value)}
+                  onChange={(event) => changePicksPerTier(event.target.value)}
                   type="number"
-                  value={rosterSize}
+                  value={picksPerTier}
                 />
               </FormField>
-              <FormField label="Count best">
+              <FormField label="Scores that count">
                 <Input
                   data-testid="contest-tiered-counted-scores"
                   min={1}
@@ -972,8 +1020,9 @@ export function CreateContestPage() {
                 value: selectedEvent ? formatDateTimeDisplay(selectedEvent.startDate) : 'Choose a golf event',
               },
               { id: 'entries-per-team', label: 'Entries per team', value: unlimitedEntries ? 'Unlimited' : maxEntriesPerTeam || '1' },
-              { id: 'golfers-picked', label: 'Golfers picked', value: rosterSize },
-              { id: 'count-best', label: 'Count best', value: countedScores },
+              { id: 'picks-per-tier', label: 'Picks per tier', value: picksPerTier },
+              { id: 'golfers-picked', label: 'Golfers picked', value: rosterSizeLabel },
+              { id: 'count-best', label: 'Scores that count', value: countedScores },
             ]}
           />
 

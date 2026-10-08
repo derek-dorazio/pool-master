@@ -250,7 +250,7 @@ describe('SportEventService.releaseEvent (#431)', () => {
   /** A draft whose field holds `golfers` active golfers, the first `tiered` of them in a tier. */
   async function draftWithField(store: InMemorySportEvents, golfers: number, tiered: number, overrides: Parameters<InMemorySportEvents['addEvent']>[0] = {}) {
     const event = store.addEvent({ status: SportEventStatus.DRAFT, ...overrides });
-    await store.tierRepo().createMany(event.id, [{ tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1, defaultPickCount: 1 }]);
+    await store.tierRepo().createMany(event.id, [{ tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 }]);
     const tierId = store.tierRows[0].id;
     const entries = Array.from({ length: golfers }, (_, index) => store.addToField(event.id, `participant-${index}`));
     await store.valuationRepo().assignTiers(entries.slice(0, tiered).map((entry, index) => ({

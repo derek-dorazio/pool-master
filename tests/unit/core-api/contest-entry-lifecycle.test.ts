@@ -351,9 +351,22 @@ describe('ContestService entries — confirmation email', () => {
     for (let i = 1; i <= 6; i++) world.addPick(entryId, `sep-${i}`);
   }
 
+  /**
+   * A contest on an event with six tiers. The world's configuration takes one pick per tier, so
+   * a complete lineup is 6 picks (#479: the roster is derived, never stored).
+   */
+  function setupOnTieredEvent(options: { mailDelivery?: MailDeliveryProvider } = {}) {
+    const context = setup(options);
+    const event = context.world.addSportEvent({ startDate: new Date(Date.now() + 24 * 60 * 60 * 1000) });
+    context.world.addEventTiers(event.id, 6);
+    const contest = { ...context.contest, sportEventId: event.id };
+    context.world.contests.set(contest.id, contest);
+    return { ...context, contest };
+  }
+
   it('emails the owner a confirmation once the lineup is complete and a tiebreaker is saved', async () => {
     const mail = capturingMail();
-    const { world, owner, contest, service } = setup({ mailDelivery: mail });
+    const { world, owner, contest, service } = setupOnTieredEvent({ mailDelivery: mail });
     const created = await service.createEntry(contest.id, owner.id);
     completeLineup(world, created.id);
 
@@ -367,7 +380,7 @@ describe('ContestService entries — confirmation email', () => {
 
   it('sends no confirmation while the lineup is short of the roster size', async () => {
     const mail = capturingMail();
-    const { world, owner, contest, service } = setup({ mailDelivery: mail });
+    const { world, owner, contest, service } = setupOnTieredEvent({ mailDelivery: mail });
     const created = await service.createEntry(contest.id, owner.id);
     world.addPick(created.id, 'sep-1');
 
@@ -378,7 +391,7 @@ describe('ContestService entries — confirmation email', () => {
 
   it('sends no confirmation for a complete lineup with no tiebreaker', async () => {
     const mail = capturingMail();
-    const { world, owner, contest, service } = setup({ mailDelivery: mail });
+    const { world, owner, contest, service } = setupOnTieredEvent({ mailDelivery: mail });
     const created = await service.createEntry(contest.id, owner.id);
     completeLineup(world, created.id);
 
@@ -388,7 +401,7 @@ describe('ContestService entries — confirmation email', () => {
   });
 
   it('still saves the entry when the confirmation email fails to send', async () => {
-    const { world, owner, contest, service } = setup({
+    const { world, owner, contest, service } = setupOnTieredEvent({
       mailDelivery: { send: async () => { throw new Error('SMTP down'); } } as unknown as MailDeliveryProvider,
     });
     const created = await service.createEntry(contest.id, owner.id);

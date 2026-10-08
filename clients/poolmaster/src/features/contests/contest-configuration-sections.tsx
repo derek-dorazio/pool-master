@@ -161,9 +161,7 @@ export function InheritedTiersPanel({ tiers }: InheritedTiersPanelProps) {
               data-testid={`inherited-tier-${tier.tierKey}`}
               description={`${tier.assignments.length} golfer${
                 tier.assignments.length === 1 ? "" : "s"
-              } · ${tier.defaultPickCount} pick${
-                tier.defaultPickCount === 1 ? "" : "s"
-              } by default`}
+              }`}
               key={tier.tierKey}
               title={`${tier.tierNumber}. ${tier.label}`}
             />

@@ -137,6 +137,8 @@ async function seedImportedGolfEvent(options: {
   eventName: string;
   participantCount: number;
   providerId?: string;
+  /** How many tiers the field is split across, round-robin. Defaults to one tier. */
+  tierCount?: number;
 }) {
   const prisma = getFunctionalPrisma();
   const now = new Date();
@@ -167,15 +169,19 @@ async function seedImportedGolfEvent(options: {
   // draft/pick flow requires every selectable golfer to have a real tier
   // assignment (TIER_MISSING otherwise), so this fixture needs one covering
   // the whole field, not just the SportEventParticipant rows.
-  const tier = await prisma.sportEventTier.create({
-    data: {
-      sportEventId: sportEvent.id,
-      tierKey: 'A',
-      label: 'Tier A',
-      tierNumber: 1,
-      defaultPickCount: options.participantCount,
-    },
-  });
+  const tierCount = options.tierCount ?? 1;
+  const tiers = [];
+  for (let tierIndex = 0; tierIndex < tierCount; tierIndex += 1) {
+    const tierKey = String.fromCharCode(65 + tierIndex);
+    tiers.push(await prisma.sportEventTier.create({
+      data: {
+        sportEventId: sportEvent.id,
+        tierKey,
+        label: `Tier ${tierKey}`,
+        tierNumber: tierIndex + 1,
+      },
+    }));
+  }
 
   const seededParticipants: Array<{
     participantId: string;
@@ -207,8 +213,8 @@ async function seedImportedGolfEvent(options: {
     await prisma.sportEventParticipantValuation.create({
       data: {
         sportEventParticipantId: sportEventParticipant.id,
-        sportEventTierId: tier.id,
-        tierOrderIndex: index + 1,
+        sportEventTierId: tiers[index % tierCount].id,
+        tierOrderIndex: Math.floor(index / tierCount) + 1,
         tierAssignedSource: 'MANUAL',
       },
     });
@@ -244,6 +250,8 @@ describe('SDK Functional: Contests and Entries', () => {
     const importedEvent = await seedImportedGolfEvent({
       eventName: 'Managed Masters Functional Event',
       participantCount: 80,
+      // Six tiers, so the default template's one pick per tier makes a roster of 6.
+      tierCount: 6,
     });
 
     const templatesResponse = await listContestConfigTemplates({
@@ -281,8 +289,8 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(createResponse.data?.contest.id).toBeTruthy();
     expect(createResponse.data?.contest.status).toBe(ContestStatus.DRAFT);
     expect(createResponse.data?.contest.selectionType).toBe(SelectionType.TIERED);
-    expect(createResponse.data?.contestConfiguration?.rosterSize).toBe(
-      defaultTemplate?.configuration.rosterSize,
+    expect(createResponse.data?.contestConfiguration?.picksPerTier).toBe(
+      defaultTemplate?.configuration.picksPerTier,
     );
     expect(createResponse.data?.contestConfiguration?.countedScores).toBe(
       defaultTemplate?.configuration.countedScores,
@@ -304,15 +312,15 @@ describe('SDK Functional: Contests and Entries', () => {
     );
     // pool-master-41t — the commissioner detail echoes the linked event's
     // effective tiers read-only (plans/124 §4.6/§5.3). seedImportedGolfEvent
-    // creates a single tier covering the whole 80-golfer field.
+    // splits the 80-golfer field across six tiers.
     const echoedTiers = configurationResponse.data?.contest.effectiveTiers ?? [];
-    expect(echoedTiers).toHaveLength(1);
+    expect(echoedTiers).toHaveLength(6);
     expect(echoedTiers[0]).toMatchObject({
       tierKey: 'A',
       label: 'Tier A',
       tierNumber: 1,
     });
-    expect(echoedTiers[0].assignments).toHaveLength(80);
+    expect(echoedTiers.reduce((total, tier) => total + tier.assignments.length, 0)).toBe(80);
 
     // #117 — a draft takes no entries until the commissioner opens it to the league.
     const draftEntryResponse = await enterContest({
@@ -389,7 +397,7 @@ describe('SDK Functional: Contests and Entries', () => {
         templateId: defaultTemplate?.id as string,
         configuration: {
           maxEntriesPerSquad: 3,
-          rosterSize: 1,
+          picksPerTier: 1,
           countedScores: 1,
         },
       },
@@ -1124,6 +1132,7 @@ describe('SDK Functional: Contests and Entries', () => {
       scoringEngine: ScoringEngine.STROKE_PLAY,
       configuration: {
         rounds: 1,
+        configJson: { picksPerTier: 1, countedScores: 1 },
         tierConfig: [
           {
             tierId: 'tier-1',
@@ -1202,7 +1211,6 @@ describe('SDK Functional: Contests and Entries', () => {
         tierKey: 'tier-1',
         label: 'Tier 1',
         tierNumber: 1,
-        defaultPickCount: 1,
       },
     });
     await prisma.sportEventParticipantValuation.create({

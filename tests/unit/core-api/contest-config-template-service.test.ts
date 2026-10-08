@@ -23,7 +23,7 @@ function template(overrides: Partial<ContestConfigTemplate>): ContestConfigTempl
     sortOrder: 1,
     isDefault: false,
     active: true,
-    configJson: { rosterSize: 6, countedScores: 4 },
+    configJson: { picksPerTier: 1, countedScores: 4 },
     schemaVersion: 1,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
@@ -66,7 +66,7 @@ describe('ContestConfigTemplateService.listTemplates', () => {
     const listed = await service.listTemplates({ sport: Sport.GOLF, eventType: 'MAJOR', active: true });
 
     expect(listed.map((row) => row.id)).toEqual(['any', 'major']);
-    expect(listed[0].configuration).toEqual({ rosterSize: 6, countedScores: 4 });
+    expect(listed[0].configuration).toEqual({ picksPerTier: 1, countedScores: 4 });
   });
 });
 
@@ -78,14 +78,14 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
       name: 'Pick 8, count 5',
       description: 'Bigger roster',
       sortOrder: 4,
-      configuration: { maxEntriesPerSquad: null, rosterSize: 8, countedScores: 5 },
+      configuration: { maxEntriesPerSquad: null, picksPerTier: 2, countedScores: 5 },
     });
 
     expect(store.get('t1')).toMatchObject({
       name: 'Pick 8, count 5',
       description: 'Bigger roster',
       sortOrder: 4,
-      configJson: { rosterSize: 8, countedScores: 5 },
+      configJson: { picksPerTier: 2, countedScores: 5 },
       active: true,
       isDefault: false,
     });

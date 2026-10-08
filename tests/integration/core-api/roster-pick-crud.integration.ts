@@ -107,7 +107,7 @@ describe('RosterPick CRUD integration', () => {
         selectionType: 'TIERED',
         configuration: {
           maxEntriesPerSquad: 1,
-          rosterSize: 1,
+          picksPerTier: 1,
           countedScores: 1,
         },
       },

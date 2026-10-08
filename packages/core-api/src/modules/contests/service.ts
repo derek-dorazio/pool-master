@@ -32,6 +32,7 @@ import {
   ContestEntryStatus,
   ContestStatus,
   deriveLegacyParticipantStatus,
+  getTieredRosterSize,
   LeagueMembershipStatus,
   LeagueRole,
   Sport,
@@ -94,6 +95,8 @@ interface ContestEntryReceiptData {
     sportEventId: string | null;
     configuration: {
       tierConfig: unknown;
+      /** A managed tiered contest's picks per tier; its roster is the event's tier count times this. */
+      picksPerTier: number | null;
       rosterSize: number | null;
       pickCount: number | null;
       rounds: number | null;
@@ -162,7 +165,7 @@ export interface ContestServiceDeps {
   users: UserRepository;
   sportEvents: SportEventRepository;
   eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants'>;
-  tiers: Pick<SportEventTierService, 'getEffectiveValuationsForSportEvent'>;
+  tiers: Pick<SportEventTierService, 'getEffectiveValuationsForSportEvent' | 'listTiers'>;
   logger?: LifecycleLogger;
   mailDelivery?: MailDeliveryProvider;
   appBaseUrl?: string;
@@ -690,7 +693,7 @@ export class ContestService {
       return;
     }
 
-    const requiredSelections = getRequiredSelectionCount(entry.contest.configuration);
+    const requiredSelections = await this.getRequiredSelectionCount(entry.contest);
     if (requiredSelections <= 0 || entry.picks.length < requiredSelections) {
       this.logger.debug({
         action: 'contestEntry.emailDelivery.incompleteLineup',
@@ -767,6 +770,22 @@ export class ContestService {
   }
 
   /**
+   * How many picks a complete entry holds. A managed tiered contest's roster is derived (#479):
+   * the event's tier count, now, times the contest's picks per tier. Older configurations carry
+   * the count themselves.
+   */
+  private async getRequiredSelectionCount(
+    contest: ContestEntryReceiptData['contest'],
+  ): Promise<number> {
+    const picksPerTier = contest.configuration?.picksPerTier ?? null;
+    if (picksPerTier !== null && contest.sportEventId) {
+      const tiers = await this.deps.tiers.listTiers(contest.sportEventId);
+      return getTieredRosterSize(tiers.length, picksPerTier);
+    }
+    return getLegacyRequiredSelectionCount(contest.configuration);
+  }
+
+  /**
    * Resolves each pick's tier label through SportEventTierService (plans/124
    * §4.6b) rather than the dropped legacy SportEventParticipant.valuations
    * table — the one remaining fallback path for entries whose contest has
@@ -822,6 +841,7 @@ export class ContestService {
         configuration: configuration
           ? {
             tierConfig: configuration.tierConfig ?? null,
+            picksPerTier: configuration.configJson?.picksPerTier ?? null,
             rosterSize: configuration.rosterSize ?? null,
             pickCount: configuration.pickCount ?? null,
             rounds: configuration.rounds ?? null,
@@ -1154,7 +1174,7 @@ function toContestEntryParticipantRow(pick: ContestEntryPickWithParticipant): Co
   };
 }
 
-function getRequiredSelectionCount(
+function getLegacyRequiredSelectionCount(
   configuration: ContestEntryReceiptData['contest']['configuration'],
 ): number {
   const tierDefinitions = readEmailTierDefinitions(configuration?.tierConfig);

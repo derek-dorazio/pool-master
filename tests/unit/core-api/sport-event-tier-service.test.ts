@@ -8,8 +8,8 @@ import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 // sport-event-repositories.integration.
 
 const TWO_TIERS = [
-  { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1, defaultPickCount: 1 },
-  { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2, defaultPickCount: 1 },
+  { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
+  { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
 ];
 
 function setup(status: SportEventStatus = SportEventStatus.DRAFT) {

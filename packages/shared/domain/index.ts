@@ -1,5 +1,6 @@
 export * from './enums';
 export * from './contest-validity';
+export * from './tiered-roster';
 export * from './sport-event-lifecycle';
 export * from './providers';
 export * from './sport-catalog-types';

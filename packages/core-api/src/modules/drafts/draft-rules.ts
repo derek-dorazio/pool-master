@@ -39,9 +39,10 @@ export function isCommissionerRole(role: unknown): boolean {
 
 /**
  * How many picks a full roster holds. A budget-pick contest carries the number on its
- * configuration; a tiered contest's roster is however many picks its tiers ask for added up,
- * which is why a tiered room with no tiers has a roster size of 0 and rejects every
- * submission with `SELECTION_CONFIG_INVALID`.
+ * configuration; a tiered contest's roster is however many picks its tiers ask for added up
+ * (the event's tier count times the contest's picks per tier, #479), which is why a tiered
+ * room with no tiers has a roster size of 0 and rejects every submission with
+ * `SELECTION_CONFIG_INVALID`.
  */
 export function getRosterSize(
   selectionType: Contest['selectionType'],
@@ -94,17 +95,21 @@ export function buildEntryUserIdMap(
 
 /**
  * Tiers are event-owned data (plans/124 §4.6/§4.6b) — this is the one place an already
- * resolved `SportEventTierGroup[]` becomes the draft room's `DraftTierConfig[]`. The legacy
+ * resolved `SportEventTierGroup[]` becomes the draft room's `DraftTierConfig[]`. How many
+ * picks each tier takes is the contest's: the same `picksPerTier` for every tier (#479). The legacy
  * tierConfig-JSON branch this replaced is gone; there is exactly one source now. Per-golfer
  * tier and price are a separate lookup (`buildValuationLookup`), since a golfer can have a
  * price with no tier at all.
  */
-export function buildDraftTiers(tierGroups: readonly SportEventTierGroup[]): DraftTierConfig[] {
+export function buildDraftTiers(
+  tierGroups: readonly SportEventTierGroup[],
+  picksPerTier: number,
+): DraftTierConfig[] {
   return tierGroups.map((tier) => ({
     tierId: tier.tierKey,
     tierName: tier.label,
     tierNumber: tier.tierNumber,
-    picksFromTier: tier.defaultPickCount,
+    picksFromTier: picksPerTier,
     participantIds: tier.participants.map((participant) => participant.participantId),
   }));
 }

@@ -87,14 +87,12 @@ describe("pool-master-pjr.8: contest configuration section components", () => {
         tierKey: "tier-1",
         label: "Tier 1",
         tierNumber: 1,
-        defaultPickCount: 2,
         assignments: [assignment("1"), assignment("2")],
       },
       {
         tierKey: "tier-2",
         label: "Tier 2",
         tierNumber: 2,
-        defaultPickCount: 1,
         assignments: [assignment("3")],
       },
     ];
@@ -103,8 +101,8 @@ describe("pool-master-pjr.8: contest configuration section components", () => {
 
     expect(screen.getByText("Inherited tournament tiers")).toBeInTheDocument();
     expect(screen.getByTestId("inherited-tier-tier-1")).toHaveTextContent("1. Tier 1");
-    expect(screen.getByTestId("inherited-tier-tier-1")).toHaveTextContent("2 golfers · 2 picks by default");
-    expect(screen.getByTestId("inherited-tier-tier-2")).toHaveTextContent("1 golfer · 1 pick by default");
+    expect(screen.getByTestId("inherited-tier-tier-1")).toHaveTextContent("2 golfers");
+    expect(screen.getByTestId("inherited-tier-tier-2")).toHaveTextContent("1 golfer");
     // No edit affordances — the panel is a pure read-only echo.
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(screen.queryByTestId("inherited-tiers-empty")).not.toBeInTheDocument();
