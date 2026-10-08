@@ -73,7 +73,7 @@ All survivor contests share these configurable options:
 - Best N scores count; N defaults to (tiers − 2) × picks per tier (e.g., pick 6, use best 4; pick 12, use best 8)
 - Lowest combined strokes wins
 - Non-exclusive (multiple managers can pick the same golfer)
-- Missed cut = penalty score of 80 per missed round
+- Unplayed rounds score 80 strokes each (see *Unplayed rounds* under Stroke Play)
 
 **Budget Pick Pool**
 - Each golfer priced based on ranking/odds
@@ -84,7 +84,7 @@ All survivor contests share these configurable options:
 **Snake Draft**
 - Exclusive pre-tournament snake draft
 - Each golfer's actual stroke total counts
-- Missed cut = penalty score
+- Unplayed rounds score 80 strokes each (see *Unplayed rounds* under Stroke Play)
 - Lowest total combined strokes wins
 
 ### Scoring: DFS Points
@@ -110,8 +110,32 @@ All survivor contests share these configurable options:
 ### Scoring: Stroke Play
 
 - Total actual strokes count (lower is better)
-- Missed cut: 80 strokes per missed round
+- Unplayed rounds: 80 strokes per round (below)
 - Best N of M counting method (e.g., best 4 of 6 golfers)
+
+#### Unplayed rounds
+
+Every round a golfer does not play counts as 80 strokes, in every contest (a commissioner
+choice of penalty is not built yet).
+
+- **Missed cut:** every scheduled round after the cut (rounds 3 and 4 of a four-round event).
+- **Withdrawn or disqualified, or removed from the field:** every scheduled round they did not
+  finish, including the one they withdrew during. A golfer who withdrew before teeing off
+  scores 80 in every round.
+- **Once the event is complete:** every round any golfer did not finish, whatever their status.
+- **Mid-event, no score at all while still in the field:** each round the field has moved past
+  (a later round has started). A golfer still in the event with any score keeps their live
+  score until it completes, so play suspended overnight is never penalised.
+
+Contests rank on to-par, so a round's 80 counts as **80 minus that round's par**: +8 on a par 72.
+Par is the event's *par per round* when an admin set it, otherwise strokes minus to-par on any
+golfer's finished round of that number. Until either is known for a round, that round adds
+nothing yet. Rounds past the event's scheduled count are never scored, and playoff holes never
+count.
+
+This is contest scoring only. The event's own leaderboard keeps each golfer's real score and
+leaves cut and withdrawn golfers unranked. The contest leaderboard shows an unplayed round as an
+italic 80, and each golfer's total there is their contest score.
 
 ### Example Configurations
 

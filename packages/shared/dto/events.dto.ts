@@ -58,6 +58,7 @@ export const SportEventDtoSchema = z.object({
   startDate: DateTimeSchema.describe('Scheduled or actual start time.'),
   endDate: DateTimeSchema.nullable().describe('Scheduled or actual end time when known; null otherwise.'),
   rounds: z.number().int().nullable().describe('Number of rounds when the format has them; null otherwise.'),
+  roundsPar: z.number().int().nullable().describe('Par for every round, when an admin set it. Null: contest scoring derives each round\'s par from the field\'s finished rounds. Contest scoring uses it to turn an unplayed round\'s 80 strokes into to-par.'),
   participantCount: z.number().int().nullable().describe('Field size the provider reports, when it reports one; null otherwise.'),
   loadedParticipantCount: z.number().int().describe('Number of event participants currently persisted for the event.'),
   untieredParticipantCount: z.number().int().describe(`Active event participants with no tier. A DRAFT event can't be released while any remain. ${ADMIN_ONLY}`),
@@ -156,6 +157,10 @@ export const ImportSportEventYearFromProviderResponseSchema = z.object({
 }).describe('What an event-year import created and skipped. Running it again creates nothing new.');
 export type ImportSportEventYearFromProviderResponse = z.infer<typeof ImportSportEventYearFromProviderResponseSchema>;
 
+/** The par range an admin may set for an event's rounds. Never above 80, so an unplayed round's 80 strokes is never under par. */
+export const ROUNDS_PAR_MIN = 60;
+export const ROUNDS_PAR_MAX = 80;
+
 export const UpdateSportEventRequestSchema = z.object({
   name: z.string().min(1).optional(),
   venue: z.string().nullable().optional().describe('null clears it.'),
@@ -163,6 +168,8 @@ export const UpdateSportEventRequestSchema = z.object({
   startDate: DateTimeSchema.optional(),
   endDate: z.string().datetime().nullable().optional().describe('null clears it.'),
   rounds: z.number().int().min(1).optional(),
+  roundsPar: z.number().int().min(ROUNDS_PAR_MIN).max(ROUNDS_PAR_MAX).nullable().optional()
+    .describe(`Par for every round, ${ROUNDS_PAR_MIN} to ${ROUNDS_PAR_MAX}. null clears it, so contest scoring derives each round's par from the field.`),
   autoLifecycleEnabled: z.boolean().optional(),
 }).describe('Changes to an event; omitted fields are left alone.');
 export type UpdateSportEventRequest = z.infer<typeof UpdateSportEventRequestSchema>;

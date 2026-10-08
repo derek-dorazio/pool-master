@@ -79,6 +79,7 @@ function pickFixture(
     slot: null,
     isCounting: true,
     isDropped: false,
+    golf: null,
     ...overrides,
   };
 }
@@ -257,13 +258,48 @@ describe('buildLeaderboardView', () => {
     const view = buildLeaderboardView(responseFixture({
       participants: [rory],
       entries: [entryFixture({
-        picks: [pickFixture({ pickId: 'pick-1', sportEventParticipantId: 'sep-1' })],
+        picks: [pickFixture({
+          pickId: 'pick-1',
+          sportEventParticipantId: 'sep-1',
+          golf: { scoreToPar: -5, unplayedRoundNumbers: [] },
+        })],
       })],
     }));
 
     expect(view.roundNumbers).toEqual([1, 2]);
     expect(view.entries[0].picks[0].rounds).toEqual(['68', '-2']);
     expect(view.entries[0].picks[0].total).toBe('-5');
+    expect(view.hasUnplayedRounds).toBe(false);
+  });
+
+  it('shows a cut golfer\'s contest score with 80 in each unplayed round, adding columns for rounds nobody has played yet', () => {
+    const cut = participantFixture({
+      id: 'sep-cut',
+      name: 'Cut Golfer',
+      standing: { ...standingFixture(2), status: 'ELIMINATED' },
+      rounds: [
+        roundFixture({ roundNumber: 1, status: 'COMPLETED', golf: { strokes: 72, scoreToPar: 0, thru: 18 } }),
+        roundFixture({ roundNumber: 2, status: 'MISSED_CUT', golf: { strokes: 74, scoreToPar: 2, thru: 18 } }),
+      ],
+    });
+    const view = buildLeaderboardView(responseFixture({
+      participants: [cut],
+      entries: [entryFixture({
+        picks: [pickFixture({
+          pickId: 'pick-1',
+          sportEventParticipantId: 'sep-cut',
+          golf: { scoreToPar: 18, unplayedRoundNumbers: [3, 4] },
+        })],
+      })],
+    }));
+
+    expect(view.roundNumbers).toEqual([1, 2, 3, 4]);
+    // Played rounds still render through the scoring definition; only the unplayed ones read 80.
+    expect(view.entries[0].picks[0].rounds[0]).toBe('72');
+    expect(view.entries[0].picks[0].rounds.slice(2)).toEqual(['80', '80']);
+    expect(view.entries[0].picks[0].total).toBe('+18');
+    expect(view.entries[0].picks[0].unplayedRoundNumbers).toEqual([3, 4]);
+    expect(view.hasUnplayedRounds).toBe(true);
   });
 
   it('keeps the server\'s order and its tie-aware display positions', () => {

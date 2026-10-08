@@ -309,12 +309,124 @@ describe('golf contest settlement — which contests settle', () => {
   });
 });
 
+describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
+  it('freezes +8 for each of rounds 3 and 4 on par-72 rounds for a cut golfer and for one the feed never flagged', async () => {
+    const prisma = getPrisma();
+    const service = createGolfContestSettlementService(prisma);
+    const suffix = randomUUID().slice(0, 8);
+    const owner = await createTestUser({ displayName: `Golf Unplayed ${suffix}` });
+    const sport = await prisma.sport.upsert({
+      where: { name: Sport.GOLF },
+      create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
+    });
+    const league = await prisma.league.create({
+      data: { leagueCode: `GSU${suffix.toUpperCase()}`, name: `Golf Unplayed League ${suffix}` },
+    });
+    const squad = await prisma.squad.create({
+      data: { leagueId: league.id, createdBy: owner.user.id, name: `Unplayed ${suffix}` },
+    });
+    const event = await prisma.sportEvent.create({
+      data: {
+        ...(await freshEventEdition(prisma)),
+        externalId: `golf-settlement-unplayed-${suffix}`,
+        providerId: 'integration-test',
+        sport: Sport.GOLF,
+        name: `Golf Unplayed Classic ${suffix}`,
+        startDate: new Date('2026-05-28T12:00:00.000Z'),
+        endDate: new Date('2026-05-31T22:00:00.000Z'),
+        status: 'COMPLETED',
+        rounds: 4,
+      },
+    });
+    const eventRounds = await Promise.all([1, 2, 3, 4].map((roundNumber) => prisma.sportEventRound.create({
+      data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(Date.UTC(2026, 4, 27 + roundNumber, 12)) },
+    })));
+    // The leader played all four rounds at 70 on par 72, so every round's par is derivable.
+    const leader = await createSettlementParticipant({ sportId: sport.id, sportEventId: event.id, name: `Leader ${suffix}`, scoreToPar: -8, strokes: 280 });
+    const cut = await createSettlementParticipant({
+      sportId: sport.id, sportEventId: event.id, name: `Cut ${suffix}`, scoreToPar: 2, strokes: 146, status: 'ELIMINATED',
+    });
+    const writeRound = (sportEventParticipantId: string, roundNumber: number, status: 'COMPLETED' | 'MISSED_CUT', strokes: number) =>
+      prisma.sportEventParticipantRound.create({
+        data: {
+          sportEventParticipantId,
+          sportEventRoundId: eventRounds[roundNumber - 1].id,
+          status,
+          golf: { create: { strokes, scoreToPar: strokes - 72, thru: 18 } },
+        },
+      });
+    for (const roundNumber of [1, 2, 3, 4]) {
+      await writeRound(leader.id, roundNumber, 'COMPLETED', 70);
+    }
+    await writeRound(cut.id, 1, 'COMPLETED', 72);
+    await writeRound(cut.id, 2, 'MISSED_CUT', 74);
+    // Never flagged as cut by the feed: still COMPLETE, two rounds at par, nothing after.
+    const unflagged = await createSettlementParticipant({ sportId: sport.id, sportEventId: event.id, name: `Unflagged ${suffix}`, scoreToPar: 0, strokes: 144 });
+    await writeRound(unflagged.id, 1, 'COMPLETED', 72);
+    await writeRound(unflagged.id, 2, 'COMPLETED', 72);
+    const contest = await prisma.contest.create({
+      data: {
+        leagueId: league.id,
+        sportEventId: event.id,
+        name: `Unplayed Settlement ${suffix}`,
+        status: 'ACTIVE',
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+        scoringEngine: 'STROKE_PLAY',
+      },
+    });
+    await prisma.contestConfiguration.create({
+      data: {
+        contestId: contest.id,
+        selectionType: 'TIERED',
+        configJson: { countedScores: 2 },
+        rosterSize: 2,
+        pickCount: 2,
+        participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
+      },
+    });
+    const entry = await prisma.contestEntry.create({
+      data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Leader and Cut', status: 'ACTIVE' },
+    });
+    const unflaggedEntry = await prisma.contestEntry.create({
+      data: { contestId: contest.id, squadId: squad.id, entryNumber: 2, name: 'Leader and Unflagged', status: 'ACTIVE' },
+    });
+    await prisma.contestEntryPick.createMany({
+      data: [
+        { entryId: entry.id, sportEventParticipantId: leader.id, contestFormat: 'ROSTER', slot: 1 },
+        { entryId: entry.id, sportEventParticipantId: cut.id, contestFormat: 'ROSTER', slot: 2 },
+        { entryId: unflaggedEntry.id, sportEventParticipantId: leader.id, contestFormat: 'ROSTER', slot: 1 },
+        { entryId: unflaggedEntry.id, sportEventParticipantId: unflagged.id, contestFormat: 'ROSTER', slot: 2 },
+      ],
+    });
+
+    await expect(service.settleCompletedSportEvent(event.id)).resolves.toMatchObject({ contestsSettled: 1, standingsUpserted: 2 });
+
+    // -8 for the leader; +2 played plus +8 for each of rounds 3 and 4 for the cut golfer.
+    const standing = await prisma.contestEntryStanding.findFirstOrThrow({
+      where: { contestEntryId: entry.id },
+      include: { golf: true },
+    });
+    expect(standing.golf?.totalScoreToPar).toBe(10);
+    expect(standing.scoredPickCount).toBe(2);
+    // A golfer still marked in the event when it completes, missing rounds 3 and 4, gets their
+    // 80s too: -8 for the leader, E plus +16 for them.
+    const unflaggedStanding = await prisma.contestEntryStanding.findFirstOrThrow({
+      where: { contestEntryId: unflaggedEntry.id },
+      include: { golf: true },
+    });
+    expect(unflaggedStanding.golf?.totalScoreToPar).toBe(8);
+  });
+});
+
 async function createSettlementParticipant(input: {
   sportId: string;
   sportEventId: string;
   name: string;
   scoreToPar: number;
   strokes: number;
+  status?: 'COMPLETE' | 'ELIMINATED' | 'WITHDRAWN';
 }) {
   const prisma = getPrisma();
   const participant = await prisma.participant.create({
@@ -336,7 +448,7 @@ async function createSettlementParticipant(input: {
     data: {
       sportEventParticipantId: sportEventParticipant.id,
       currentRound: 4,
-      status: 'COMPLETE',
+      status: input.status ?? 'COMPLETE',
       asOf: new Date('2026-05-31T22:00:00.000Z'),
       golf: {
         create: { eventScoreToPar: input.scoreToPar, eventStrokes: input.strokes, currentRoundThru: 18 },

@@ -304,6 +304,9 @@ export function toContestLeaderboardResponse(
         slot: pick.slot,
         isCounting: pick.isCounting,
         isDropped: pick.isDropped,
+        golf: leaderboard.sport === Sport.GOLF
+          ? { scoreToPar: pick.participant.score, unplayedRoundNumbers: pick.participant.unplayedRoundNumbers }
+          : null,
       })),
     })),
     asOf: leaderboard.asOf?.toISOString() ?? null,

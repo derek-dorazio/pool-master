@@ -325,6 +325,45 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     });
   });
 
+  it('saves the par per round an admin enters, and sends null when it is left blank', async () => {
+    seedDefaults();
+    updateEventMock.mockResolvedValue({ data: { event: tournament({ roundsPar: 72 }) } });
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
+    const modal = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
+    expect(within(modal).getByTestId('root-admin-golf-tournament-home-edit-rounds-par')).toHaveValue(null);
+    fireEvent.change(within(modal).getByTestId('root-admin-golf-tournament-home-edit-rounds-par'), {
+      target: { value: '72' },
+    });
+    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-home-edit-save'));
+
+    await waitFor(() => expect(updateEventMock).toHaveBeenCalledTimes(1));
+    expect(updateEventMock.mock.calls[0][0]).toMatchObject({ body: { roundsPar: 72 } });
+
+    fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
+    const reopened = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
+    fireEvent.click(within(reopened).getByTestId('root-admin-golf-tournament-home-edit-save'));
+
+    await waitFor(() => expect(updateEventMock).toHaveBeenCalledTimes(2));
+    expect(updateEventMock.mock.calls[1][0]).toMatchObject({ body: { roundsPar: null } });
+  });
+
+  it('refuses a par per round outside 60 to 80 before saving', async () => {
+    seedDefaults();
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
+    const modal = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
+    fireEvent.change(within(modal).getByTestId('root-admin-golf-tournament-home-edit-rounds-par'), {
+      target: { value: '85' },
+    });
+
+    expect(await within(modal).findByText('Par is a whole number from 60 to 80, or blank')).toBeInTheDocument();
+    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-home-edit-save'));
+    expect(updateEventMock).not.toHaveBeenCalled();
+  });
+
   it('pool-master-3dg blocks the edit save when a required field is cleared', async () => {
     seedDefaults();
     renderPage();

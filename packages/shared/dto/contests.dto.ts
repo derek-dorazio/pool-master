@@ -209,6 +209,12 @@ export type ContestEntryDto = z.infer<typeof ContestEntryDtoSchema>;
  * leaderboard-shaped copy of them: round scores, standings and their golf extensions come from
  * there, and a client renders them through `PARTICIPANT_SCORING_DEFINITIONS[scoringDefinitionId]`.
  */
+export const ScoredContestEntryPickGolfDtoSchema = z.object({
+  scoreToPar: z.number().int().nullable().describe('The golfer\'s score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round\'s par). Differs from the event standing\'s eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.'),
+  unplayedRoundNumbers: z.array(z.number().int().min(1)).describe('Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none.'),
+}).describe('Golf extension of a scored pick: the golfer\'s contest score and the rounds in it scored as 80 strokes.');
+export type ScoredContestEntryPickGolfDto = z.infer<typeof ScoredContestEntryPickGolfDtoSchema>;
+
 export const ScoredContestEntryPickDtoSchema = z.object({
   pickId: z.string().describe('ContestEntryPick row identifier.'),
   sportEventParticipantId: z.string().describe('The picked field row. Its scores are the matching entry of `participants`; a pick is a pointer, not a copy.'),
@@ -216,11 +222,12 @@ export const ScoredContestEntryPickDtoSchema = z.object({
   slot: z.number().int().nullable().describe('Optional roster slot from the pick row.'),
   isCounting: z.boolean().describe('Whether this pick currently counts toward the entry\'s total under the counting rule.'),
   isDropped: z.boolean().describe('Whether this scored pick is currently dropped because better picks fill the counting places.'),
+  golf: ScoredContestEntryPickGolfDtoSchema.nullable().describe('Present for a golf contest; null otherwise.'),
 }).describe('One pick on a contest entry, with whether it counts.');
 export type ScoredContestEntryPickDto = z.infer<typeof ScoredContestEntryPickDtoSchema>;
 
 export const ContestEntryGolfStandingDtoSchema = z.object({
-  totalScoreToPar: z.number().int().nullable().describe('The entry\'s total against par: the sum of its counting picks\' event totals. Null until a pick is scored.'),
+  totalScoreToPar: z.number().int().nullable().describe('The entry\'s total against par: the sum of its counting picks\' contest scores (each pick\'s golf.scoreToPar). Null until a pick is scored.'),
 }).describe('Golf extension of a contest entry standing: the total its position was ranked from.');
 export type ContestEntryGolfStandingDto = z.infer<typeof ContestEntryGolfStandingDtoSchema>;
 
@@ -342,6 +349,7 @@ registerSchema('ContestEntryDto', ContestEntryDtoSchema);
 registerSchema('ContestEntryPickDto', ContestEntryPickDtoSchema);
 registerSchema('ContestEntryParticipantDetailDto', ContestEntryParticipantDetailDtoSchema);
 registerSchema('ParticipantScoringDefinitionId', ParticipantScoringDefinitionIdSchema);
+registerSchema('ScoredContestEntryPickGolfDto', ScoredContestEntryPickGolfDtoSchema);
 registerSchema('ScoredContestEntryPickDto', ScoredContestEntryPickDtoSchema);
 registerSchema('ContestEntryGolfStandingDto', ContestEntryGolfStandingDtoSchema);
 registerSchema('ContestEntryStandingDto', ContestEntryStandingDtoSchema);

@@ -80,7 +80,7 @@ export class GolfContestSettlementService {
     }
 
     const completedAt = input?.completedAt ?? sportEvent.endDate ?? sportEvent.startDate;
-    const participants = toParticipantScores(await loadEventField(this.deps, sportEventId));
+    const participants = toParticipantScores(await loadEventField(this.deps, sportEventId), sportEvent);
     const scoreById = new Map(
       participants.map((participant) => [participant.sportEventParticipantId, participant]),
     );

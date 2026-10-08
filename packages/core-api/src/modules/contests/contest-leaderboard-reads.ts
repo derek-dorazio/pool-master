@@ -18,6 +18,11 @@ import type {
   ContestScoringConfigurationRow,
   ParticipantScore,
 } from './contest-leaderboard-calculator';
+import {
+  buildUnplayedRoundContext,
+  scoreGolferForContest,
+  type UnplayedRoundScoringEvent,
+} from './golf-unplayed-rounds';
 
 export interface ContestLeaderboardReadDeps {
   eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants'>;
@@ -38,15 +43,24 @@ export async function loadEventField(
 /**
  * Each field row's score under the contest's scoring definition. The one definition today,
  * GOLF_RELATIVE_TO_PAR_TOTAL, scores a golfer by their event total against par, which lives on
- * the standing's golf extension; a row with no scored standing is unscored.
+ * the standing's golf extension, with every round they did not play scored as 80 strokes
+ * (#478, `golf-unplayed-rounds`). A row with no score and no unplayed round is unscored.
  */
-export function toParticipantScores(field: readonly SportEventParticipantView[]): ParticipantScore[] {
-  return field.map(({ entry, participant, standing }) => ({
-    sportEventParticipantId: entry.id,
-    name: participant.name,
-    score: standing?.golf?.eventScoreToPar ?? null,
-    asOf: standing?.standing.asOf ?? null,
-  }));
+export function toParticipantScores(
+  field: readonly SportEventParticipantView[],
+  event: UnplayedRoundScoringEvent,
+): ParticipantScore[] {
+  const context = buildUnplayedRoundContext(field, event);
+  return field.map((row) => {
+    const { score, unplayedRoundNumbers } = scoreGolferForContest(row, context);
+    return {
+      sportEventParticipantId: row.entry.id,
+      name: row.participant.name,
+      score,
+      unplayedRoundNumbers,
+      asOf: row.standing?.standing.asOf ?? null,
+    };
+  });
 }
 
 /** The contest's counting and scoring configuration, or null when it has none. */

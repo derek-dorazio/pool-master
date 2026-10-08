@@ -435,7 +435,7 @@ export class ContestService {
       loadEventField(this.deps, sportEvent.id),
       loadContestLeaderboardEntries(this.deps, contestId),
     ]);
-    const scores = toParticipantScores(field);
+    const scores = toParticipantScores(field, sportEvent);
     const scoreById = new Map(scores.map((score) => [score.sportEventParticipantId, score]));
 
     const entryRows = entries.map((entry) =>
