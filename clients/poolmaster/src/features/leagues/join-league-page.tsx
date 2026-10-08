@@ -134,6 +134,7 @@ export function JoinLeaguePage() {
       const leagueId = invitationQuery.data?.league.id;
       const leagueCode = invitationQuery.data?.league.leagueCode;
       const nextTeamName = teamName.trim();
+      let teamSetupFailed = false;
 
       if (leagueId && user?.id && nextTeamName) {
         const squadsResponse = await listLeagueSquads({ path: { id: leagueId } });
@@ -151,8 +152,10 @@ export function JoinLeaguePage() {
             });
 
             // The join has already happened, so a failed rename must not read as a failed
-            // join: the viewer goes into the league and can rename the team from Team Home.
+            // join: the viewer goes into the league, and League Home tells them to rename the
+            // team from Team Home.
             if (!updateResponse.data?.squad) {
+              teamSetupFailed = true;
               logger.warn(
                 {
                   action: 'leagueInvite.teamSetup.failed',
@@ -169,6 +172,7 @@ export function JoinLeaguePage() {
       return {
         membership: acceptedMembership,
         leagueCode,
+        teamSetupFailed,
       };
     },
     onMutate: () => {
@@ -184,7 +188,7 @@ export function JoinLeaguePage() {
         'Starting league invitation acceptance',
       );
     },
-    onSuccess: ({ leagueCode }) => {
+    onSuccess: ({ leagueCode, teamSetupFailed }) => {
       logger.info(
         {
           action: 'leagueInvite.accept.succeeded',
@@ -198,7 +202,7 @@ export function JoinLeaguePage() {
       );
       if (leagueCode) {
         rememberRecentLeagueCode(leagueCode);
-        navigate(buildLeaguePath(leagueCode));
+        navigate(buildLeaguePath(leagueCode), teamSetupFailed ? { state: { teamSetupFailed } } : undefined);
       }
     },
     invalidates: [
