@@ -9,6 +9,7 @@
 
 import type {
   AuthProvider,
+  ContestEntryStatus,
   ContestStatus,
   ContestFormat,
   DateFormat,
@@ -68,7 +69,8 @@ export interface User extends DomainEntity {
 export interface League extends DomainEntity {
   leagueCode: string;
   name: string;
-  description?: string;
+  /** `null` in an update clears it; `undefined` leaves it unchanged. */
+  description?: string | null;
   isActive: boolean;
   iconKey: LeagueIconKey;
   joinPolicy: JoinPolicy;
@@ -268,7 +270,7 @@ export interface ContestEntry extends DomainEntity {
   squadId: string;
   entryNumber: number;
   name: string;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: ContestEntryStatus;
   tiebreakerValue?: number | null;
   isEliminated: boolean;
 }
@@ -375,30 +377,3 @@ export interface PlatformRuntimeConfigChange {
   changedAt: Date;
 }
 
-// --- Commissioner Dashboard ---
-
-export interface CommissionerDashboard {
-  league: League;
-  contests: Contest[];
-  memberCount: number;
-  pendingInvites: number;
-  recentMemberActivity: MemberActivityEvent[];
-  upcomingEvents: UpcomingEvent[];
-}
-
-/** Member activity event surfaced in commissioner dashboards. */
-export interface MemberActivityEvent {
-  userId: string;
-  firstName?: string;
-  lastName?: string;
-  action: string;
-  timestamp: Date;
-}
-
-/** Upcoming scheduled item surfaced in commissioner dashboards. */
-export interface UpcomingEvent {
-  contestId?: string;
-  title: string;
-  date: Date;
-  eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END';
-}

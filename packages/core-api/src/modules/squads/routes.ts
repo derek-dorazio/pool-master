@@ -246,7 +246,7 @@ export function squadsModule(fastify: FastifyInstance): void {
       tags: ['Squads'],
       summary: 'Invite a co-owner by email',
       description:
-        'Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. Active team owners, league commissioners, and root admins may start this flow.',
+        'Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active team owners, league commissioners, and root admins may start this flow.',
       operationId: 'createSquadOwnerInvitation',
       body: schemaRef('CreateSquadOwnerInvitationRequest'),
       response: {
@@ -266,7 +266,7 @@ export function squadsModule(fastify: FastifyInstance): void {
       tags: ['Squads'],
       summary: 'Replace an active team owner',
       description:
-        'Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email. Active team owners, league commissioners, and root admins may start this flow.',
+        'Guided replacement flow that removes the selected current owner (ending their team and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league\'s last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A team owner may replace a co-owner; a league commissioner or root admin may also replace a team\'s only owner, and the team stays active for the replacement.',
       operationId: 'replaceSquadOwner',
       body: schemaRef('ReplaceSquadOwnerRequest'),
       response: {

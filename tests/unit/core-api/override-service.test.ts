@@ -60,3 +60,34 @@ describe('OverrideService', () => {
   });
 
 });
+
+describe('OverrideService — missing contests and the deadline', () => {
+  it.each([
+    ['reopen', (service: OverrideService) => service.reopenContest('missing')],
+    ['close', (service: OverrideService) => service.closeContest('missing')],
+    ['extend the deadline of', (service: OverrideService) => service.extendDeadline('missing', new Date('2026-06-01T00:00:00.000Z'))],
+  ])('refuses to %s a contest that does not exist with CONTEST_NOT_FOUND, changing nothing', async (_label, act) => {
+    const contestRepo = createMockContestRepo({ findById: jest.fn().mockResolvedValue(null) });
+
+    await expect(act(new OverrideService(contestRepo))).rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND' });
+    expect(contestRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses to close a cancelled contest as already closed, so it is never shown as finished', async () => {
+    const contestRepo = createMockContestRepo({
+      findById: jest.fn().mockResolvedValue(buildContest({ status: ContestStatus.CANCELLED })),
+    });
+
+    await expect(new OverrideService(contestRepo).closeContest('contest-1')).rejects.toMatchObject({ code: 'CONTEST_ALREADY_CLOSED' });
+    expect(contestRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('moves the contest end to the new deadline', async () => {
+    const contestRepo = createMockContestRepo();
+    const newEnd = new Date('2026-06-01T00:00:00.000Z');
+
+    await new OverrideService(contestRepo).extendDeadline('contest-1', newEnd);
+
+    expect(contestRepo.update).toHaveBeenCalledWith('contest-1', { endsAt: newEnd });
+  });
+});

@@ -12,7 +12,6 @@ import {
   LeagueRole,
 } from '../domain/enums';
 import { DateTimeSchema } from './common.dto';
-import { ContestDtoSchema } from './contests.dto';
 import { SquadMembershipDtoSchema } from './squads.dto';
 import { UserDtoSchema } from './users.dto';
 
@@ -259,23 +258,6 @@ export const InvitationPreviewResponseSchema = z.object({
 }).describe('Invitation preview payload used by `/invite/<inviteCode>` flows.');
 export type InvitationPreviewResponse = z.infer<typeof InvitationPreviewResponseSchema>;
 
-export const MemberActivityEventDtoSchema = z.object({
-  userId: z.string().describe('User involved in the activity event.'),
-  firstName: z.string().optional().describe('First name shown for the member activity event when available.'),
-  lastName: z.string().optional().describe('Last name shown for the member activity event when available.'),
-  action: z.string().describe('Normalized member activity action label.'),
-  timestamp: DateTimeSchema.describe('When the member activity occurred.'),
-}).describe('Recent member activity row used on commissioner dashboards.');
-export type MemberActivityEventDto = z.infer<typeof MemberActivityEventDtoSchema>;
-
-export const UpcomingEventDtoSchema = z.object({
-  contestId: z.string().optional(),
-  title: z.string(),
-  date: DateTimeSchema,
-  eventType: z.enum(['DRAFT_START', 'CONTEST_START', 'CONTEST_END']).describe('Upcoming event category.'),
-}).describe('Upcoming league event summary.');
-export type UpcomingEventDto = z.infer<typeof UpcomingEventDtoSchema>;
-
 // --- Responses ---
 
 export const LeagueResponseSchema = z.object({
@@ -370,20 +352,17 @@ export const GenerateInviteLinkResponseSchema = z.object({
 }).describe('Generated invite-link response.');
 export type GenerateInviteLinkResponse = z.infer<typeof GenerateInviteLinkResponseSchema>;
 
-/**
- * Commissioner dashboard response. The `league` and `contests` fields are typed against the
- * canonical `LeagueDtoSchema` and `ContestDtoSchema` rather than `JsonObjectSchema`
- * placeholders. It is league-scoped, so it carries no viewer context (A8).
- */
-export const LeagueDashboardResponseSchema = z.object({
-  league: LeagueDtoSchema.describe('League payload driving the dashboard header.'),
-  contests: z.array(ContestDtoSchema).describe('The league\'s contests.'),
-  memberCount: z.number().int().describe('Current league member count.'),
-  pendingInvites: z.number().int().describe('Current number of pending invitations.'),
-  recentMemberActivity: z.array(MemberActivityEventDtoSchema).describe('Recent member activity for the league.'),
-  upcomingEvents: z.array(UpcomingEventDtoSchema).describe('Upcoming league events that should be surfaced on the dashboard.'),
-}).describe('Commissioner dashboard response.');
-export type LeagueDashboardResponse = z.infer<typeof LeagueDashboardResponseSchema>;
+export const ListLeagueInvitationsResponseSchema = z.object({
+  invitations: z.array(LeagueInvitationDtoSchema).describe(
+    'The league\'s outstanding invitations, newest first: every PENDING invitation (email invites not yet accepted, join links not yet cancelled or used up), plus email invites that went EXPIRED without being accepted. An email invite past its expiresAt stays listed until it is accepted or cancelled; Resend Invite renews it.',
+  ),
+}).describe('Commissioner list of a league\'s pending invitations.');
+export type ListLeagueInvitationsResponse = z.infer<typeof ListLeagueInvitationsResponseSchema>;
+
+export const ResendLeagueInvitationResponseSchema = z.object({
+  invitation: LeagueInvitationDtoSchema.describe('The renewed invitation, with its new invite code and expiry.'),
+}).describe('Resent email-invitation response.');
+export type ResendLeagueInvitationResponse = z.infer<typeof ResendLeagueInvitationResponseSchema>;
 
 export const LeagueBulkOperationResponseSchema = z.object({
   total: z.number().int().min(0).describe('How many rows the import received.'),
@@ -415,8 +394,6 @@ registerSchema('LeagueDto', LeagueDtoSchema);
 registerSchema('LeagueMembershipDto', LeagueMembershipDtoSchema);
 registerSchema('LeagueInvitationDto', LeagueInvitationDtoSchema);
 registerSchema('InvitationPreviewResponse', InvitationPreviewResponseSchema);
-registerSchema('MemberActivityEventDto', MemberActivityEventDtoSchema);
-registerSchema('UpcomingEventDto', UpcomingEventDtoSchema);
 registerSchema('LeagueResponse', LeagueResponseSchema);
 registerSchema('LeagueContextResponse', LeagueContextResponseSchema);
 registerSchema('LeagueListResponse', LeagueListResponseSchema);
@@ -424,5 +401,6 @@ registerSchema('LeagueMembersResponse', LeagueMembersResponseSchema);
 registerSchema('LeagueMembershipResponse', LeagueMembershipResponseSchema);
 registerSchema('SendLeagueInvitationsResponse', SendLeagueInvitationsResponseSchema);
 registerSchema('GenerateInviteLinkResponse', GenerateInviteLinkResponseSchema);
-registerSchema('LeagueDashboardResponse', LeagueDashboardResponseSchema);
+registerSchema('ListLeagueInvitationsResponse', ListLeagueInvitationsResponseSchema);
+registerSchema('ResendLeagueInvitationResponse', ResendLeagueInvitationResponseSchema);
 registerSchema('LeagueBulkOperationResponse', LeagueBulkOperationResponseSchema);

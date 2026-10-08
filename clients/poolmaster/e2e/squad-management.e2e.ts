@@ -131,6 +131,8 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
       leagueId = created.league.id;
       await expect(commissioner.getByTestId('league-home')).toBeVisible();
 
+      // #221 — inviting members lives on Teams and Owners, with the roster.
+      await commissioner.goto(`/league/${run.leagueCode}/teams`);
       await commissioner.getByTestId('league-open-invite-members').click();
       const invitation = await submitAndRead<{ invitation: { inviteCode: string } }>(
         commissioner,

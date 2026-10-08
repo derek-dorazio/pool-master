@@ -230,6 +230,85 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
   });
 });
 
+describe('golf contest settlement — which contests settle', () => {
+  async function seedCompletedEvent(status: 'COMPLETED' | 'IN_PROGRESS' = 'COMPLETED') {
+    const prisma = getPrisma();
+    const suffix = randomUUID().slice(0, 8);
+    const sport = await prisma.sport.upsert({
+      where: { name: Sport.GOLF },
+      create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
+    });
+    const league = await prisma.league.create({
+      data: { leagueCode: `GSD${suffix.toUpperCase()}`, name: `Golf Settlement Draft League ${suffix}` },
+    });
+    const event = await prisma.sportEvent.create({
+      data: {
+        ...(await freshEventEdition(prisma)),
+        externalId: `golf-settlement-draft-${suffix}`,
+        providerId: 'integration-test',
+        sport: Sport.GOLF,
+        name: `Golf Settlement Draft Open ${suffix}`,
+        startDate: new Date('2026-05-28T12:00:00.000Z'),
+        endDate: new Date('2026-05-31T22:00:00.000Z'),
+        status,
+      },
+    });
+    await createSettlementParticipant({ sportId: sport.id, sportEventId: event.id, name: `Golfer ${suffix}`, scoreToPar: -3, strokes: 285 });
+    return { league, event, suffix };
+  }
+
+  it('leaves a never-opened DRAFT contest a draft with no standings when its event completes', async () => {
+    const prisma = getPrisma();
+    const service = createGolfContestSettlementService(prisma);
+    const { league, event, suffix } = await seedCompletedEvent();
+    const draft = await createSettlementContest({
+      leagueId: league.id,
+      sportEventId: event.id,
+      name: `Never Opened ${suffix}`,
+      status: 'DRAFT',
+    });
+    const active = await createSettlementContest({ leagueId: league.id, sportEventId: event.id, name: `Running ${suffix}` });
+
+    const summary = await service.settleCompletedSportEvent(event.id);
+
+    expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1 });
+    await expect(prisma.contest.findUniqueOrThrow({ where: { id: draft.id }, select: { status: true } }))
+      .resolves.toEqual({ status: 'DRAFT' });
+    await expect(prisma.contest.findUniqueOrThrow({ where: { id: active.id }, select: { status: true } }))
+      .resolves.toEqual({ status: 'COMPLETED' });
+    await expect(prisma.contestEntryStanding.count({ where: { contestId: draft.id } })).resolves.toBe(0);
+  });
+
+  it('settles nothing while the event is not yet COMPLETED', async () => {
+    const prisma = getPrisma();
+    const service = createGolfContestSettlementService(prisma);
+    const { league, event, suffix } = await seedCompletedEvent('IN_PROGRESS');
+    const active = await createSettlementContest({ leagueId: league.id, sportEventId: event.id, name: `Still Playing ${suffix}` });
+
+    await expect(service.settleCompletedSportEvent(event.id)).resolves.toEqual({
+      sportEventId: event.id,
+      contestsSettled: 0,
+      contestsCompleted: 0,
+      standingsUpserted: 0,
+    });
+    await expect(prisma.contest.findUniqueOrThrow({ where: { id: active.id }, select: { status: true } }))
+      .resolves.toEqual({ status: 'ACTIVE' });
+  });
+
+  it('settles nothing for an event that does not exist', async () => {
+    const service = createGolfContestSettlementService(getPrisma());
+    const missingId = randomUUID();
+
+    await expect(service.settleCompletedSportEvent(missingId)).resolves.toEqual({
+      sportEventId: missingId,
+      contestsSettled: 0,
+      contestsCompleted: 0,
+      standingsUpserted: 0,
+    });
+  });
+});
+
 async function createSettlementParticipant(input: {
   sportId: string;
   sportEventId: string;
@@ -273,6 +352,7 @@ async function createSettlementContest(input: {
   name: string;
   /** Every real configuration carries a scoring rule (#246); false builds one that does not. */
   withScoringRule?: boolean;
+  status?: 'DRAFT' | 'OPEN' | 'ACTIVE';
 }) {
   const prisma = getPrisma();
   const contest = await prisma.contest.create({
@@ -280,7 +360,7 @@ async function createSettlementContest(input: {
       leagueId: input.leagueId,
       sportEventId: input.sportEventId,
       name: input.name,
-      status: 'ACTIVE',
+      status: input.status ?? 'ACTIVE',
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       scoringEngine: 'STROKE_PLAY',

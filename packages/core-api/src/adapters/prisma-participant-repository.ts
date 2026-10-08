@@ -147,7 +147,7 @@ export function mapToParticipant(row: {
   nationality: string | null;
   role: string | null;
   teamAffiliation: string | null;
-  status: string;
+  status: ParticipantStatus;
   injuryStatus: unknown;
   photoUrl: string | null;
   photoLastUpdated: Date | null;
@@ -167,7 +167,7 @@ export function mapToParticipant(row: {
     nationality: row.nationality ?? undefined,
     role: row.role ?? undefined,
     teamAffiliation: row.teamAffiliation ?? undefined,
-    status: row.status as ParticipantStatus,
+    status: row.status,
     injuryStatus: toInjuryStatus(row.injuryStatus),
     photoUrl: row.photoUrl ?? undefined,
     photoLastUpdated: row.photoLastUpdated ?? undefined,

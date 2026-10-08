@@ -22,6 +22,7 @@ import { GolfTournamentReleaseAction } from './golf-tournament-release-action';
 import { GolfTournamentRoundsModal } from './golf-tournament-rounds-modal';
 import { GolfTournamentWorkflowRail } from './golf-tournament-workflow-rail';
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
+import { SportEventStatus } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 block 2 — the workflow rail, "Release for contests" while the tournament
@@ -105,7 +106,7 @@ export function GolfTournamentWorkflowCard({
         <GolfTournamentWorkflowRail rounds={rounds} tournament={tournament} />
       </div>
 
-      {tournament.status === 'DRAFT' ? (
+      {tournament.status === SportEventStatus.DRAFT ? (
         <div className="mt-4">
           <GolfTournamentReleaseAction eventId={eventId} tournament={tournament} />
         </div>

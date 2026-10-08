@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
-import { TeamIconKey } from '@poolmaster/shared/domain';
+import { SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
 import { acceptInvitation, listLeagueSquads, updateLeagueSquad } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
@@ -134,7 +134,7 @@ export function JoinLeaguePage() {
       if (leagueId && user?.id && nextTeamName) {
         const squadsResponse = await listLeagueSquads({ path: { id: leagueId } });
         const myTeam = squadsResponse.data?.squads?.find((team) =>
-          team.members?.some((member) => member.userId === user.id && member.status === 'ACTIVE'),
+          team.members?.some((member) => member.userId === user.id && member.status === SquadMembershipStatus.ACTIVE),
         );
 
         if (myTeam) {

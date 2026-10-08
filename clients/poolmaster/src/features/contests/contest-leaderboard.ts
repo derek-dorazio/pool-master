@@ -15,14 +15,13 @@
 import {
   isRoundComplete,
   PARTICIPANT_SCORING_DEFINITIONS,
+  ParticipantRoundStatus,
+  ParticipantStandingStatus,
 } from '@poolmaster/shared/domain';
 import type {
   ContestLeaderboardResponse,
   SportEventParticipantDto,
 } from '@/lib/api';
-
-/** The round status a live round carries; the written set is in `GolfRoundUpdate`. */
-const IN_PROGRESS_ROUND_STATUS = 'IN_PROGRESS';
 
 /** The round the field is currently on, and whether it has finished. */
 export interface LeaderboardRound {
@@ -44,7 +43,7 @@ export function resolveCurrentRound(
 
   for (const participant of participants) {
     for (const round of participant.rounds) {
-      if (round.status === IN_PROGRESS_ROUND_STATUS) {
+      if (round.status === ParticipantRoundStatus.IN_PROGRESS) {
         if (highestInProgress === null || round.roundNumber > highestInProgress) {
           highestInProgress = round.roundNumber;
         }
@@ -99,13 +98,13 @@ export function formatThru(participant: SportEventParticipantDto): string | null
   if (!standing) {
     return null;
   }
-  if (standing.status === 'ELIMINATED') {
+  if (standing.status === ParticipantStandingStatus.ELIMINATED) {
     return 'CUT';
   }
-  if (standing.status === 'WITHDRAWN') {
+  if (standing.status === ParticipantStandingStatus.WITHDRAWN) {
     return 'WD';
   }
-  if (standing.status === 'COMPLETE') {
+  if (standing.status === ParticipantStandingStatus.COMPLETE) {
     return 'F';
   }
   const currentRound = participant.rounds.find(

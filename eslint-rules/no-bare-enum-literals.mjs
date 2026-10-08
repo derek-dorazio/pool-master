@@ -9,10 +9,10 @@
  * framing, and the rule is scoped to match it.
  *
  * Like `no-widened-enum-fields`, this reads schema.prisma at config load and only
- * considers field names that are an enum on EVERY model declaring them. `status` is
- * excluded today because it is `String` on six models — a literal comparison there
- * has no enum to name. When #186 converts those columns, both rules widen with no
- * edit here.
+ * considers field names that are an enum on EVERY model declaring them. A name that
+ * is `String` on any model has no enum to name there, so it is left alone. #186
+ * converted the last `status` columns, which is how `status` came under both rules
+ * with no edit here.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';

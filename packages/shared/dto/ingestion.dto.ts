@@ -4,7 +4,7 @@
  * Every operation is root-admin; `admin` is the permission, `ingestion` is what they administer.
  */
 import { z } from 'zod';
-import { ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
+import { IngestionJobStatus, ProviderSyncRunStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 import { EventStatusDtoSchema } from './events.dto';
 import { registerSchema } from './schema-registry';
@@ -109,7 +109,7 @@ export const ProviderSyncJobPayloadDtoSchema = z.object({
   providerId: z.string().describe('Provider that executed the ingestion job.'),
   sport: SportDtoSchema,
   eventExternalId: z.string().optional().describe('External event id for event-scoped jobs, when applicable.'),
-  status: z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']).describe('Internal ingestion job status.'),
+  status: z.nativeEnum(IngestionJobStatus).describe('Internal ingestion job status.'),
   startedAt: z.string().datetime().optional().describe('When the ingestion job started.'),
   completedAt: z.string().datetime().optional().describe('When the ingestion job completed.'),
   recordsProcessed: z.number().int().min(0).describe('Canonical records processed by the ingestion job.'),
@@ -254,7 +254,7 @@ export const ProviderEventCleanupRowDtoSchema = z.object({
   externalId: z.string().describe('Provider-side event identifier.'),
   sport: z.string().describe('Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values.'),
   name: z.string().describe('Current persisted event name.'),
-  status: z.string().describe('Current persisted event status.'),
+  status: z.nativeEnum(SportEventStatus).describe('Current persisted event status.'),
   startDate: z.string().datetime().describe('Persisted event start date.'),
   endDate: z.string().datetime().nullable().describe('Persisted event end date, when known.'),
   staleReason: z.enum(['NON_GOLF_EVENT', 'PAST_GOLF_EVENT']).describe('Cleanup rule that selected this stale event for inventory.'),

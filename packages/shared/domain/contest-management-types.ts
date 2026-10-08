@@ -1,6 +1,8 @@
 import type {
+  AutoPickPolicy,
   ContestFormat,
   ParticipantInactiveReason,
+  PrizePayoutType,
   SelectionType,
   Sport,
   SportEventStatus,
@@ -127,7 +129,7 @@ export interface ContestConfiguration extends DomainEntity {
   configJson?: GolfContestConfig;
   rounds?: number;
   timePerPickSeconds?: number;
-  autoPickPolicy?: string;
+  autoPickPolicy?: AutoPickPolicy;
   minimumEntries?: number;
   maxEntriesPerSquad?: number | null;
   totalPrizePoolAmount?: number | null;
@@ -176,7 +178,7 @@ export interface ContestPrizeDefinition extends DomainEntity {
   displayName: string;
   sortOrder: number;
   ruleConfig: Record<string, unknown>;
-  payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
+  payoutType?: PrizePayoutType;
   amount?: number;
   percentage?: number;
   active: boolean;
