@@ -366,6 +366,27 @@ describe('identity cluster repositories (#202)', () => {
 
       expect(await repo.findByUser(loner.user.id)).toEqual([]);
     });
+
+    it('omits a league the user was removed from, so a removed member no longer sees it in their leagues', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueRepository(prisma);
+      const former = await createTestUser({ lastName: 'FormerMember' });
+
+      const current = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}B4`, 'Current');
+      const left = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}B5`, 'Left');
+      for (const [leagueId, status] of [
+        [current.id, LeagueMembershipStatus.ACTIVE],
+        [left.id, LeagueMembershipStatus.INACTIVE],
+      ] as const) {
+        await prisma.leagueMembership.create({
+          data: { leagueId, userId: former.user.id, role: LeagueRole.MEMBER, status },
+        });
+      }
+
+      const ids = (await repo.findByUser(former.user.id)).map((league) => league.id);
+
+      expect(ids).toEqual([current.id]);
+    });
   });
 
   // #202 — new in step 3.3, backing the admin league list. Asserted against a real

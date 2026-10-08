@@ -6,7 +6,7 @@ import {
   buildLeagueContestPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
-import { PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
+import { ContestStatus, PARTICIPANT_SCORING_DEFINITIONS, SelectionType } from '@poolmaster/shared/domain';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
@@ -45,7 +45,7 @@ const formatTiebreaker = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TO
 // The entry page says what an open contest means for this entry; every other status reads as it
 // does on every contest page.
 function getContestPhaseLabel(contest: ContestDto) {
-  return contest.status === 'OPEN' ? 'Editable until the event starts' : contestStatusLabel(contest.status);
+  return contest.status === ContestStatus.OPEN ? 'Editable until the event starts' : contestStatusLabel(contest.status);
 }
 
 function getCompletionStats(selectionGroups: SelectionGroup[]) {
@@ -515,7 +515,7 @@ export function ContestEntryPage() {
   const entrySummary = contestEntriesQuery.data?.entries.find((entry) => entry.id === entryId) ?? null;
   const myEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
   const isMyEntry = myEntryIds.includes(entryId);
-  const isEditable = contest.status === 'OPEN';
+  const isEditable = contest.status === ContestStatus.OPEN;
   const selectedEntry = draftState.entries.find((entry) => entry.id === entryId) ?? null;
   const selectionGroups = draftState.selectionGroups ?? [];
   const completionStats = getCompletionStats(selectionGroups);
@@ -548,7 +548,7 @@ export function ContestEntryPage() {
     });
   }
 
-  if (contest.selectionType !== 'TIERED') {
+  if (contest.selectionType !== SelectionType.TIERED) {
     return (
       <ErrorState
         action={(
@@ -636,7 +636,7 @@ export function ContestEntryPage() {
                 : 'Entry editing is closed'
             }
             label="Entries close"
-            value={contest.status === 'OPEN' ? 'When the event starts' : 'Closed'}
+            value={contest.status === ContestStatus.OPEN ? 'When the event starts' : 'Closed'}
           />
         </MetricGrid>
       </Tile>

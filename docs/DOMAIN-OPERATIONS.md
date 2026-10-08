@@ -730,7 +730,7 @@ An entry's result, frozen when its contest settles — cross-sport core plus a s
 
 | Operation | Role | Notes |
 |---|---|---|
-| Write | *(settlement)* | Written once per entry when the linked event completes; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; reopening moves it back to `ACTIVE`, and the next settlement recomputes |
+| Write | *(settlement)* | Written once per entry when the linked event completes; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; a `DRAFT` (never opened) or `CANCELLED` contest is skipped too and keeps its status, since a draft leaves only by being opened or deleted (#117); reopening moves it back to `ACTIVE`, and the next settlement recomputes |
 | Read | `member` | Through the golf leaderboard of a `COMPLETED` contest |
 
 ### ContestEntryPick

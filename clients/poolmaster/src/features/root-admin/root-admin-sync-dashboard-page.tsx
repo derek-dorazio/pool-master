@@ -35,6 +35,7 @@ import {
 } from './root-admin-sync-utils';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
 type SyncRunEvidenceRow = {
@@ -105,7 +106,7 @@ function getRunStatusTone(run: ProviderSyncRun) {
 
 function getRunStatusLabel(run: ProviderSyncRun) {
   const warnings = getPayloadWarnings(run.payload);
-  if (run.status === 'COMPLETED' && (getPayloadSeverity(run.payload) === 'WARNING' || warnings.length > 0)) {
+  if (run.status === ProviderSyncRunStatus.COMPLETED && (getPayloadSeverity(run.payload) === 'WARNING' || warnings.length > 0)) {
     return 'COMPLETED WITH WARNINGS';
   }
 
@@ -180,10 +181,10 @@ export function RootAdminSyncDashboardPage() {
 
   const recentRuns = useMemo(() => syncRunsQuery.data ?? [], [syncRunsQuery.data]);
   const summary = useMemo(() => {
-    const submitted = recentRuns.filter((run) => run.status === 'SUBMITTED').length;
-    const running = recentRuns.filter((run) => run.status === 'IN_PROGRESS').length;
-    const failed = recentRuns.filter((run) => run.status === 'FAILED').length;
-    const completed = recentRuns.filter((run) => run.status === 'COMPLETED').length;
+    const submitted = recentRuns.filter((run) => run.status === ProviderSyncRunStatus.SUBMITTED).length;
+    const running = recentRuns.filter((run) => run.status === ProviderSyncRunStatus.IN_PROGRESS).length;
+    const failed = recentRuns.filter((run) => run.status === ProviderSyncRunStatus.FAILED).length;
+    const completed = recentRuns.filter((run) => run.status === ProviderSyncRunStatus.COMPLETED).length;
     return {
       submitted,
       running,

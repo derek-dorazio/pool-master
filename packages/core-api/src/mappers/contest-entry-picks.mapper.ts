@@ -10,7 +10,7 @@
  * §12.1 (canonical DTO surface).
  */
 
-import type { ContestEntryPick } from '@poolmaster/shared/domain';
+import type { ContestEntryPick, ContestFormat } from '@poolmaster/shared/domain';
 import type { ContestEntryPickDto } from '@poolmaster/shared/dto';
 
 /**
@@ -24,7 +24,7 @@ export interface ContestEntryPickRow {
   id: string;
   entryId: string;
   sportEventParticipantId: string;
-  contestFormat: string;
+  contestFormat: ContestFormat;
   period: number | null;
   slot: number | null;
   tier: string | null;
@@ -68,7 +68,7 @@ export function mapContestEntryPickRowToDomain(row: ContestEntryPickRow): Contes
     id: row.id,
     entryId: row.entryId,
     sportEventParticipantId: row.sportEventParticipantId,
-    contestFormat: row.contestFormat as ContestEntryPick['contestFormat'],
+    contestFormat: row.contestFormat,
     period: row.period ?? undefined,
     slot: row.slot ?? undefined,
     tier: row.tier ?? undefined,
