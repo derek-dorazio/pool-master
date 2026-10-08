@@ -151,7 +151,11 @@ export function GolfTournamentScoreSourceCard({
           <>
             <Button
               data-testid="root-admin-golf-tournament-link-open"
-              onClick={() => setLinkOpen(true)}
+              onClick={() => {
+                // A refusal from the simulated-event link must not greet the picker.
+                linkMutation.reset();
+                setLinkOpen(true);
+              }}
               size="sm"
               type="button"
               variant="secondary"

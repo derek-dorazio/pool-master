@@ -1023,4 +1023,23 @@ describe('Tournament Home blocks: empty values, refusals and closing dialogs', (
       expect(getEventLiveSimulationMock).not.toHaveBeenCalled();
     });
   });
+  it('opens the provider picker without an earlier simulated-link refusal still showing in it', async () => {
+    seedDefaults();
+    listProvidersMock.mockResolvedValue({
+      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], supportsLiveSimulation: true }] },
+    });
+    listProviderCatalogEventsMock.mockResolvedValue({ data: { events: [] } });
+    linkEventScoreSourceMock.mockResolvedValue({
+      error: { error: { code: 'PROVIDER_EVENT_NOT_FOUND', message: 'Simulated event refused.' } },
+      response: { status: 404 },
+    });
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-link-simulated'));
+    expect(await screen.findByTestId('root-admin-golf-tournament-link-error')).toHaveTextContent('Simulated event refused.');
+
+    fireEvent.click(screen.getByTestId('root-admin-golf-tournament-link-open'));
+    const modal = await screen.findByTestId('root-admin-golf-tournament-link-modal');
+    expect(within(modal).queryByText('Simulated event refused.')).not.toBeInTheDocument();
+  });
 });
