@@ -98,7 +98,8 @@ network timeouts and bounds each attempt at three minutes, retrying twice, again
 time of about 35 seconds, and the whole script stops after 11 minutes so it ends inside the
 step's 12. `timeout` stops `npx` but not the `apt-get` it started under `sudo`, which keeps
 the dpkg lock; before retrying, the script waits for that `apt-get` to finish (its downloads
-still count), and stops it only when time is running out. The browser download is cached per
+still count), and stops it only when time is running out. Every step, including the
+`dpkg --configure -a` repair, has its own limit, so the 11 minutes is a hard cap. The browser download is cached per
 Playwright version, so only the system packages still come from the mirror.
 
 ## Repository setup — branch protection

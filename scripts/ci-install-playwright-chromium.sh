@@ -31,9 +31,17 @@ apt_busy() {
 
 cd "$(dirname "$0")/../clients/poolmaster"
 
+# Seconds kept back from each attempt for timeout's --kill-after, so an attempt never
+# runs past the deadline.
+KILL_RESERVE=25
+# Worst case for the cleanup between attempts: sleep 5 plus dpkg's 30s limit and 5s kill-after.
+CLEANUP_SECONDS=45
+# An attempt shorter than this cannot finish a slow-mirror install; skip it.
+MIN_ATTEMPT_SECONDS=30
+
 for ATTEMPT in $(seq 1 "$ATTEMPTS"); do
-  REMAINING=$((DEADLINE - SECONDS))
-  if [ "$REMAINING" -lt 30 ]; then
+  REMAINING=$((DEADLINE - SECONDS - KILL_RESERVE))
+  if [ "$REMAINING" -lt "$MIN_ATTEMPT_SECONDS" ]; then
     echo "::warning::No time left for attempt $ATTEMPT"
     break
   fi
@@ -44,20 +52,27 @@ for ATTEMPT in $(seq 1 "$ATTEMPTS"); do
     exit 0
   fi
   echo "::warning::Playwright Chromium install attempt $ATTEMPT failed or timed out"
+  [ "$ATTEMPT" -lt "$ATTEMPTS" ] || break
   # The apt-get left running under sudo still holds the dpkg lock, so the next attempt
   # would fail at once. Let it finish while time allows; its downloads still count.
-  while apt_busy && [ $((DEADLINE - SECONDS)) -gt 60 ]; do
+  NEEDED=$((KILL_RESERVE + MIN_ATTEMPT_SECONDS + CLEANUP_SECONDS))
+  while apt_busy && [ $((DEADLINE - SECONDS)) -gt "$NEEDED" ]; do
     sleep 5
   done
+  if [ $((DEADLINE - SECONDS)) -lt "$NEEDED" ]; then
+    echo "::warning::No time left for attempt $((ATTEMPT + 1))"
+    break
+  fi
   if apt_busy; then
     echo "::warning::apt-get or dpkg is still running; stopping it before the next attempt"
     sudo pkill -x apt-get || true
     sudo pkill -x dpkg || true
     sleep 5
   fi
-  # A dpkg run killed mid-install leaves the next apt-get refusing to start.
-  sudo dpkg --configure -a || true
+  # A dpkg run killed mid-install leaves the next apt-get refusing to start. Its postinst
+  # scripts can run long, so bound it like everything else here.
+  timeout --kill-after=5 30 sudo dpkg --configure -a || true
 done
 
-echo "::error::Playwright Chromium install failed after $ATTEMPTS attempts"
+echo "::error::Playwright Chromium install did not succeed within ${TOTAL_SECONDS}s"
 exit 1
