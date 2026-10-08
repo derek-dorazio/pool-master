@@ -287,7 +287,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
       tags: ['Leagues'],
       summary: 'Resend an email invitation',
       description:
-        'Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.',
+        'Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.',
       operationId: 'resendLeagueInvitation',
       response: {
         200: schemaRef('ResendLeagueInvitationResponse'),

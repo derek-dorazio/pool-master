@@ -379,12 +379,15 @@ export class InvitationService {
         'LEAGUE_INVITATION_NOT_RESENDABLE',
       );
     }
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRY_DAYS);
     const [league, inviterName] = await Promise.all([
       this.deps.leagues.findById(leagueId),
       this.resolveInviterName(resentBy),
     ]);
+    if (league) {
+      this.requireActiveLeague(league, 'resend');
+    }
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRY_DAYS);
     const renewed = await this.deps.invitations.update(invitation.id, {
       inviteCode: generateInviteCode(),
       status: InvitationStatus.PENDING,

@@ -410,7 +410,7 @@ export const sendLeagueInvitations = <ThrowOnError extends boolean = false>(opti
 /**
  * Resend an email invitation
  *
- * Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.
+ * Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.
  */
 export const resendLeagueInvitation = <ThrowOnError extends boolean = false>(options: Options<ResendLeagueInvitationData, ThrowOnError>) => (options.client ?? client).post<ResendLeagueInvitationResponses, ResendLeagueInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
