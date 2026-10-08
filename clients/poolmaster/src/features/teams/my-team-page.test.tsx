@@ -1466,3 +1466,316 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     );
   });
 });
+
+describe('Team Home use cases', () => {
+  afterEach(() => {
+    for (const mock of [
+      changeMemberRoleMock, createLeagueSquadMock, deleteLeagueSquadMock, enterContestMock,
+      createSquadOwnerInvitationMock, getCurrentUserMock, getLeagueByCodeMock, inactivateLeagueSquadMock,
+      listContestEntriesMock, listContestsMock, listLeagueMembersMock, listLeagueSquadsMock,
+      listSquadOwnerInvitationsMock, logoutUserMock, refreshTokenMock, removeSquadOwnerMock,
+      replaceSquadOwnerMock, revokeSquadOwnerInvitationMock, updateContestEntryMock, updateLeagueSquadMock,
+    ]) {
+      mock.mockReset();
+    }
+  });
+
+  function primeTeamHome({
+    role = 'MEMBER',
+    isRootAdmin = false,
+    squadId = 'team-1',
+    league = {},
+    squads = [buildTeamSummary()],
+  }: {
+    role?: 'COMMISSIONER' | 'MEMBER';
+    isRootAdmin?: boolean;
+    squadId?: string | null;
+    league?: Record<string, unknown>;
+    squads?: Array<ReturnType<typeof buildTeamSummary>>;
+  } = {}) {
+    getCurrentUserMock.mockResolvedValue({ data: { user: { ...VIEWER_USER, isRootAdmin } } });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getLeagueByCodeMock.mockResolvedValue({ data: leagueContext({ role, squadId, league }) });
+    listLeagueSquadsMock.mockResolvedValue({ data: { squads } });
+    listLeagueMembersMock.mockResolvedValue({ data: { members: [] } });
+    listContestsMock.mockResolvedValue({ data: { contests: [] } });
+    listSquadOwnerInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
+  }
+
+  const otherTeam = () => buildTeamSummary({
+    id: 'team-2',
+    name: 'Rival Squad',
+    createdBy: 'user-2',
+    members: [],
+    memberCount: 0,
+  });
+
+  it('creates the team with the icon the viewer picked before creating it', async () => {
+    primeTeamHome({ squadId: null, squads: [] });
+    createLeagueSquadMock.mockResolvedValue({
+      data: { squad: buildTeamSummary({ iconKey: TeamIconKey.CAPTAIN_WINK_OCEAN }) },
+    });
+
+    renderMyTeamPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Change icon' }));
+    await screen.findByTestId('my-team-icon-modal');
+    fireEvent.click(screen.getByTestId(`my-team-icon-${TeamIconKey.CAPTAIN_WINK_OCEAN}`));
+    fireEvent.click(screen.getByTestId('my-team-save-icon'));
+    await waitFor(() => expect(screen.queryByTestId('my-team-icon-modal')).not.toBeInTheDocument());
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Team name' }), { target: { value: 'Ocean Winkers' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create team' }));
+
+    await waitFor(() => expect(createLeagueSquadMock).toHaveBeenCalledWith({
+      path: { id: 'league-1' },
+      body: { name: 'Ocean Winkers', iconKey: TeamIconKey.CAPTAIN_WINK_OCEAN },
+    }));
+  });
+
+  it('shows a member their own team even when a link asks for another team', async () => {
+    primeTeamHome({ role: 'MEMBER', squads: [buildTeamSummary(), otherTeam()] });
+
+    renderMyTeamPage('/league/BIGDAWGS/team?teamId=team-2');
+
+    expect(await screen.findByRole('heading', { name: 'Derek Squad' })).toBeInTheDocument();
+    expect(screen.queryByText('Commissioner team view')).not.toBeInTheDocument();
+  });
+
+  it('lets a commissioner open another team by link and marks it as a commissioner view', async () => {
+    primeTeamHome({ role: 'COMMISSIONER', squads: [buildTeamSummary(), otherTeam()] });
+
+    renderMyTeamPage('/league/BIGDAWGS/team?teamId=team-2');
+
+    expect(await screen.findByRole('heading', { name: 'Rival Squad' })).toBeInTheDocument();
+    expect(screen.getByText('Commissioner team view')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Change team name/ })).toBeEnabled();
+  });
+
+  it('makes every team edit read-only while the league is inactive', async () => {
+    primeTeamHome({ role: 'COMMISSIONER', league: { isActive: false } });
+
+    renderMyTeamPage();
+
+    expect(await screen.findByText('This league is inactive.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Change team name/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Change team icon/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Inactivate team/ })).toBeDisabled();
+  });
+
+  it('after inactivating, tells the commissioner the owners left the league and the team can be restored', async () => {
+    primeTeamHome({ role: 'COMMISSIONER' });
+    inactivateLeagueSquadMock.mockResolvedValue({
+      data: { squad: buildTeamSummary({ isActive: false, members: [], memberCount: 0 }) },
+    });
+
+    renderMyTeamPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: /^Inactivate team/ }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Inactivate team' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Inactivate team' }));
+
+    expect(await screen.findByText(/Derek Squad is now inactive\. Its owners were removed from this league\./)).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('shows the reason and keeps the team active when inactivating it fails', async () => {
+    primeTeamHome({ role: 'COMMISSIONER' });
+    inactivateLeagueSquadMock.mockResolvedValue({
+      error: { code: 'SQUAD_INACTIVATE_FAILED', message: 'The team could not be inactivated.' },
+    });
+
+    renderMyTeamPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: /^Inactivate team/ }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Inactivate team' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Inactivate team' }));
+
+    expect(await screen.findByText('The team could not be inactivated.')).toBeInTheDocument();
+    expect(screen.getByTestId('my-team-lifecycle-status')).toHaveTextContent('Active');
+  });
+
+  it('lets only a root admin delete an inactive team; a commissioner sees delete disabled', async () => {
+    primeTeamHome({
+      role: 'COMMISSIONER',
+      squads: [buildTeamSummary({ isActive: false, members: [], memberCount: 0 })],
+    });
+
+    renderMyTeamPage('/league/BIGDAWGS/team?teamId=team-1');
+
+    expect(await screen.findByRole('button', { name: /^Delete team/ })).toBeDisabled();
+  });
+
+  it('shows the reason and stays on Team Home when deleting an inactive team fails', async () => {
+    primeTeamHome({
+      isRootAdmin: true,
+      squads: [buildTeamSummary({ isActive: false, members: [], memberCount: 0 })],
+    });
+    deleteLeagueSquadMock.mockResolvedValue({
+      error: { code: 'SQUAD_DELETE_FAILED', message: 'The team could not be deleted.' },
+    });
+
+    renderMyTeamPage('/league/BIGDAWGS/team?teamId=team-1');
+
+    fireEvent.click(await screen.findByRole('button', { name: /^Delete team/ }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Delete team' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Delete team' }));
+
+    expect(await screen.findByText('The team could not be deleted.')).toBeInTheDocument();
+    expect(screen.queryByTestId('league-route-destination')).not.toBeInTheDocument();
+  });
+
+  const coOwner = {
+    id: 'membership-2',
+    squadId: 'team-1',
+    leagueId: 'league-1',
+    userId: 'user-2',
+    user: { ...VIEWER_USER, id: 'user-2', email: 'jordan@example.com', username: 'jordan@example.com', firstName: 'Jordan', lastName: 'Rivers' },
+    status: 'ACTIVE',
+    joinedAt: '2026-04-15T00:00:00.000Z',
+    createdAt: '2026-04-15T00:00:00.000Z',
+    updatedAt: '2026-04-15T00:00:00.000Z',
+  };
+
+  const pendingOwnerInvite = {
+    id: 'owner-invite-1',
+    leagueId: 'league-1',
+    squadId: 'team-1',
+    email: 'pending@example.com',
+    status: 'PENDING',
+    replacementForUserId: null,
+    invitedBy: 'user-1',
+    inviteCode: 'owner-code-1',
+    expiresAt: '2026-11-01T00:00:00.000Z',
+    createdAt: '2026-10-01T00:00:00.000Z',
+    updatedAt: '2026-10-01T00:00:00.000Z',
+  };
+
+  async function openManageOwners() {
+    fireEvent.click(await screen.findByRole('button', { name: /^Manage owners/ }));
+    await screen.findByRole('dialog', { name: 'Manage owners' });
+  }
+
+  it('does not offer to create a team while the viewer\'s team is still loading', async () => {
+    primeTeamHome();
+    listLeagueSquadsMock.mockReturnValue(new Promise(() => undefined));
+
+    renderMyTeamPage();
+
+    await waitFor(() => expect(listLeagueSquadsMock).toHaveBeenCalled());
+    expect(screen.getByText('Loading your team...')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create team' })).not.toBeInTheDocument();
+  });
+
+  it('shows an error instead of the create-team form when the team list fails to load', async () => {
+    primeTeamHome();
+    listLeagueSquadsMock.mockResolvedValue({
+      error: { code: 'INTERNAL_ERROR', message: 'Teams are unavailable right now.' },
+      status: 500,
+    });
+
+    renderMyTeamPage();
+
+    expect(await screen.findByText('Teams are unavailable right now.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create team' })).not.toBeInTheDocument();
+  });
+
+  it('invites a co-owner by email, confirms it, and clears the field', async () => {
+    primeTeamHome();
+    createSquadOwnerInvitationMock.mockResolvedValue({ data: { invitation: { ...pendingOwnerInvite, email: 'friend@example.com' } } });
+
+    renderMyTeamPage();
+    await openManageOwners();
+    const emailField = screen.getByRole('textbox', { name: 'Co-owner email' });
+    fireEvent.change(emailField, { target: { value: ' friend@example.com ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Invite' }));
+
+    expect(await screen.findByText('Co-owner invite created.')).toBeInTheDocument();
+    expect(createSquadOwnerInvitationMock).toHaveBeenCalledWith({
+      path: { id: 'league-1', squadId: 'team-1' },
+      body: { email: 'friend@example.com' },
+    });
+    expect(emailField).toHaveValue('');
+  });
+
+  it('shows the reason and keeps the email when a co-owner invite is rejected', async () => {
+    primeTeamHome();
+    createSquadOwnerInvitationMock.mockResolvedValue({
+      error: { code: 'SQUAD_OWNER_INVITATION_MEMBER_EXISTS', message: 'That person already belongs to this league.' },
+    });
+
+    renderMyTeamPage();
+    await openManageOwners();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Co-owner email' }), { target: { value: 'member@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Invite' }));
+
+    expect(await screen.findByText('That person already belongs to this league.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Co-owner email' })).toHaveValue('member@example.com');
+  });
+
+  it('replaces another owner with an invitation to the replacement email, but never offers to replace the viewer', async () => {
+    primeTeamHome({ squads: [buildTeamSummary({ members: [buildTeamSummary().members[0], coOwner], memberCount: 2 })] });
+    replaceSquadOwnerMock.mockResolvedValue({
+      data: { invitation: { ...pendingOwnerInvite, email: 'new@example.com', replacementForUserId: 'user-2' } },
+    });
+
+    renderMyTeamPage();
+    await openManageOwners();
+    expect(screen.getAllByRole('button', { name: 'Replace owner' })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Replace owner' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement owner email' }), { target: { value: 'new@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Replace' }));
+
+    await waitFor(() => expect(replaceSquadOwnerMock).toHaveBeenCalledWith({
+      path: { id: 'league-1', squadId: 'team-1', userId: 'user-2' },
+      body: { email: 'new@example.com' },
+    }));
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Replacement owner email' })).not.toBeInTheDocument());
+  });
+
+  it('shows the reason and keeps the replace form open when replacing an owner fails', async () => {
+    primeTeamHome({ squads: [buildTeamSummary({ members: [buildTeamSummary().members[0], coOwner], memberCount: 2 })] });
+    replaceSquadOwnerMock.mockResolvedValue({
+      error: { code: 'SQUAD_OWNER_INVITATION_EMAIL_INVALID', message: 'That email cannot be invited.' },
+    });
+
+    renderMyTeamPage();
+    await openManageOwners();
+    fireEvent.click(screen.getByRole('button', { name: 'Replace owner' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement owner email' }), { target: { value: 'bad@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Replace' }));
+
+    expect(await screen.findByText('That email cannot be invited.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Replacement owner email' })).toHaveValue('bad@example.com');
+  });
+
+  it('shows the reason when revoking a pending owner invite fails', async () => {
+    primeTeamHome();
+    listSquadOwnerInvitationsMock.mockResolvedValue({ data: { invitations: [pendingOwnerInvite] } });
+    revokeSquadOwnerInvitationMock.mockResolvedValue({
+      error: { code: 'SQUAD_OWNER_INVITATION_NOT_PENDING', message: 'That invite was already accepted.' },
+    });
+
+    renderMyTeamPage();
+    await openManageOwners();
+    expect(await screen.findByText('pending@example.com')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Revoke' }));
+
+    expect(await screen.findByText('That invite was already accepted.')).toBeInTheDocument();
+    expect(revokeSquadOwnerInvitationMock).toHaveBeenCalledWith({
+      path: { id: 'league-1', invitationId: 'owner-invite-1' },
+    });
+  });
+
+  it('shows the load-error copy with a way back to welcome when the league cannot be loaded', async () => {
+    primeTeamHome();
+    getLeagueByCodeMock.mockResolvedValue({
+      error: { code: 'LEAGUE_NOT_FOUND', message: 'League not found.' },
+      status: 404,
+    });
+
+    renderMyTeamPage();
+
+    expect(await screen.findByRole('link', { name: 'Back to welcome' })).toHaveAttribute('href', '/welcome');
+  });
+});

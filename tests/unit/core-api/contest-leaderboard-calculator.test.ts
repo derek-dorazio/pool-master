@@ -1,8 +1,11 @@
-import { PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
 import {
   applySettledContestStandings,
+  buildContestEntryStanding,
   rankContestEntryStandings,
+  resolveContestCountingRule,
   resolveContestScoringDefinition,
+  type ParticipantScore,
 } from '../../../packages/core-api/src/modules/contests/contest-leaderboard-calculator';
 
 describe('contest scoring definition', () => {
@@ -126,3 +129,140 @@ describe('settled contest standings', () => {
     ]);
   });
 });
+
+describe('contest counting rule', () => {
+  const config = (configJson: unknown, rosterSize: number | null = null, pickCount: number | null = null) => ({
+    configJson,
+    rosterSize,
+    pickCount,
+    rounds: null,
+    participantScoringRules: [],
+  });
+
+  it('counts the configuration\'s countedScores, falling back to rosterSize, then pickCount', () => {
+    expect(resolveContestCountingRule(config({ countedScores: 4 }, 6, 6))).toEqual({ type: 'BEST_N_GOLFERS', count: 4 });
+    expect(resolveContestCountingRule(config({}, 5, 6))).toEqual({ type: 'BEST_N_GOLFERS', count: 5 });
+    expect(resolveContestCountingRule(config(null, null, 3))).toEqual({ type: 'BEST_N_GOLFERS', count: 3 });
+  });
+
+  it('ignores a countedScores that is not a positive whole number, and a configJson that is a list', () => {
+    expect(resolveContestCountingRule(config({ countedScores: 0 }, 6))).toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
+    expect(resolveContestCountingRule(config({ countedScores: 2.5 }, 6))).toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
+    expect(resolveContestCountingRule(config({ countedScores: '4' }, 6))).toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
+    expect(resolveContestCountingRule(config([{ countedScores: 4 }], 6))).toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
+  });
+
+  it('has no counting rule when nothing says how many scores count, or there is no configuration', () => {
+    expect(resolveContestCountingRule(config({}, null, null))).toBeNull();
+    expect(resolveContestCountingRule(null)).toBeNull();
+  });
+});
+
+describe('an entry\'s standing from its picks', () => {
+  const at = (minute: number) => new Date(Date.UTC(2026, 3, 9, 12, minute));
+  const scores = (rows: Array<[string, string, number | null]>) => new Map<string, ParticipantScore>(
+    rows.map(([id, name, score]) => [id, { sportEventParticipantId: id, name, score, asOf: null }]),
+  );
+  const entry = (picks: Array<{ id: string; sep: string; slot?: number | null; minute?: number }>) => ({
+    id: 'entry-1',
+    entryNumber: 1,
+    name: 'Sunday Charge',
+    status: ContestEntryStatus.ACTIVE,
+    squadId: 'squad-1',
+    squad: { name: 'Birdie Brigade' },
+    picks: picks.map((pick) => ({
+      id: pick.id,
+      sportEventParticipantId: pick.sep,
+      pickedAt: at(pick.minute ?? 0),
+      slot: pick.slot ?? null,
+    })),
+  });
+  const best = (count: number) => ({ type: 'BEST_N_GOLFERS' as const, count });
+
+  it('sums the best N scores, lowest first when lower is better, and marks the rest dropped', () => {
+    const field = scores([['a', 'Ace', -8], ['b', 'Bea', 2], ['c', 'Cal', -3], ['d', 'Dee', 5]]);
+
+    const standing = buildContestEntryStanding(
+      entry([{ id: 'p1', sep: 'a' }, { id: 'p2', sep: 'b' }, { id: 'p3', sep: 'c' }, { id: 'p4', sep: 'd' }]),
+      field,
+      best(2),
+      'LOWER_IS_BETTER',
+    );
+
+    expect(standing.score).toBe(-11);
+    expect(standing.scoredPickCount).toBe(4);
+    expect(standing.picks.map((pick) => [pick.pickId, pick.isCounting, pick.isDropped])).toEqual([
+      ['p1', true, false],
+      ['p3', true, false],
+      ['p2', false, true],
+      ['p4', false, true],
+    ]);
+  });
+
+  it('counts the highest scores when higher is better', () => {
+    const field = scores([['a', 'Ace', 30], ['b', 'Bea', 12], ['c', 'Cal', 25]]);
+
+    const standing = buildContestEntryStanding(
+      entry([{ id: 'p1', sep: 'a' }, { id: 'p2', sep: 'b' }, { id: 'p3', sep: 'c' }]),
+      field,
+      best(2),
+      'HIGHER_IS_BETTER',
+    );
+
+    expect(standing.score).toBe(55);
+  });
+
+  it('breaks a tie between two equal golfers by name, so the same golfer counts on every read', () => {
+    const field = scores([['z', 'Zed', -4], ['a', 'Abe', -4]]);
+
+    const standing = buildContestEntryStanding(
+      entry([{ id: 'p1', sep: 'z' }, { id: 'p2', sep: 'a' }]),
+      field,
+      best(1),
+      'LOWER_IS_BETTER',
+    );
+
+    expect(standing.picks.find((pick) => pick.isCounting)?.pickId).toBe('p2');
+  });
+
+  it('leaves unscored golfers neither counting nor dropped, after the scored ones by slot then pick time', () => {
+    const field = scores([['a', 'Ace', -2], ['b', 'Bea', null], ['c', 'Cal', null], ['d', 'Dee', null]]);
+
+    const standing = buildContestEntryStanding(
+      entry([
+        { id: 'p-late', sep: 'b', slot: null, minute: 5 },
+        { id: 'p-slot2', sep: 'c', slot: 2 },
+        { id: 'p-early', sep: 'd', slot: null, minute: 1 },
+        { id: 'p-scored', sep: 'a', slot: 9 },
+      ]),
+      field,
+      best(4),
+      'LOWER_IS_BETTER',
+    );
+
+    expect(standing.picks.map((pick) => pick.pickId)).toEqual(['p-scored', 'p-slot2', 'p-early', 'p-late']);
+    expect(standing.picks.filter((pick) => pick.isDropped)).toEqual([]);
+    expect(standing.scoredPickCount).toBe(1);
+    expect(standing.score).toBe(-2);
+  });
+
+  it('has no score and leaves out a pick whose golfer is no longer in the field', () => {
+    const standing = buildContestEntryStanding(
+      entry([{ id: 'p1', sep: 'gone' }]),
+      scores([]),
+      best(4),
+      'LOWER_IS_BETTER',
+    );
+
+    expect(standing).toMatchObject({ score: null, scoredPickCount: 0, picks: [], countingPickLimit: 4 });
+  });
+
+  it('carries the entry\'s own status, active or inactive, onto its standing', () => {
+    const field = scores([]);
+    expect(buildContestEntryStanding({ ...entry([]), status: ContestEntryStatus.INACTIVE }, field, best(1), 'LOWER_IS_BETTER').status)
+      .toBe(ContestEntryStatus.INACTIVE);
+    expect(buildContestEntryStanding({ ...entry([]), status: ContestEntryStatus.ACTIVE }, field, best(1), 'LOWER_IS_BETTER').status)
+      .toBe(ContestEntryStatus.ACTIVE);
+  });
+});
+

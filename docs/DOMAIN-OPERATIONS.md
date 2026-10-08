@@ -710,7 +710,7 @@ and an optional event type.
 | Operation | Role | Notes |
 |---|---|---|
 | List | `authenticated` | `listContestConfigTemplates` (#245). Every filter optional — `sport`, `contestFormat`, `eventType`, `active`; an `eventType` narrows to that type plus the templates for any event type. One read for the create flow and the root-admin screens |
-| Update | `rootAdmin` | `updateContestConfigTemplate`, `PUT /api/v1/contest-config-templates/:templateId`, guarded by `requireRootAdmin` like every other global-object write. Seeded rows only; there is no create or delete. Until #248 it was `adminUpdateContestConfigTemplate` under `/api/v1/admin`, the last route there |
+| Update | `rootAdmin` | `updateContestConfigTemplate`, `PUT /api/v1/contest-config-templates/:templateId`, guarded by `requireRootAdmin` like every other global-object write. Seeded rows only; there is no create or delete. Only an active template can be the default: deactivating one clears it, and an inactive one cannot take it. Until #248 it was `adminUpdateContestConfigTemplate` under `/api/v1/admin`, the last route there |
 
 ### Contest
 
@@ -719,8 +719,7 @@ and an optional event type.
 | Create | `commissioner` | `createContest` (#245) — the one way a contest is made. Takes `name`, `sportEventId`, `contestFormat` (`ROSTER`), `selectionType` (`TIERED` until another selection type has a typed configuration, #93/#99), and a `templateId`, a `configuration`, or both. With both, the template is recorded as provenance and the configuration replaces the template's whole — no merge. Neither: 400 `CONTEST_CONFIGURATION_REQUIRED`. A template that is missing, inactive, or of another format or selection type: 422 `CONTEST_CONFIGURATION_INVALID`. The event must be released, not yet started, and its field loaded (422 `SPORT_EVENT_*`). The contest is saved `DRAFT` (#117): only the league's commissioners (and root admins) see it, nobody can enter it, and its name and configuration stay editable. Answers 201 with the canonical contest read |
 | Open to league | `commissioner` | `openContest`, `POST …/contest-management/contests/:contestId/open` (#117): `DRAFT` → `OPEN` with a compare-and-set, so a double press runs once. Members see and enter the contest from then on; its name, configuration and existence are locked for good, with no undo. 409 `CONTEST_NOT_DRAFT` when it is not a draft; 409 `CONTEST_EVENT_ALREADY_STARTED` once the event's start time has passed or it is `IN_PROGRESS` or later (the draft stays a draft); 422 when the stored configuration no longer fits the event's tiers. The field need not be ready: entries wait on it. Telling the league (feed post, email) will hang off this action |
 | Read configuration | `commissioner` | `getContestConfiguration` (was `getManagedContest` until #248): the contest with its configuration and the tiers it inherits from its event, what the configuration editor reads |
-| Update configuration | `commissioner` | `updateContestConfiguration` (was `updateManagedContestConfiguration` until #248). `DRAFT` only: refused with 409 `CONTEST_CONFIGURATION_LOCKED` once the contest is opened to the league (#117). Members enter against these rules, so nothing reopens them — `reopenContest` returns a contest to `ACTIVE`, never to `DRAFT` |
-| Reopen, close, extend the deadline | `commissioner` | `reopenContest`, `closeContest`, `extendContestDeadline`. A contest has no lock time: entries open when the commissioner opens it and close when its event starts, so `updateContestLockTime` and the stored lock time went (#430). `closeContest` refuses a `DRAFT` with 409 `CONTEST_CLOSE_STATUS_INVALID`: a draft leaves only by being opened or deleted (#117). None takes a `reason`: each accepted one and discarded it, and #248 took it off the contract once the audit log it was documented as feeding was gone (#255) |
+| Update configuration | `commissioner` | `updateContestConfiguration` (was `updateManagedContestConfiguration` until #248). `DRAFT` only: refused with 409 `CONTEST_CONFIGURATION_LOCKED` once the contest is opened to the league (#117). Members enter against these rules, so nothing reopens them: no operation returns a contest to `DRAFT` |
 | List for a league | `authenticated` today | `listContests`. `DRAFT` contests are listed only to the league's commissioners and root admins (#117); the contest detail read answers a draft 404 to anyone else, and a league's `activeContestCount` never counts drafts. **No league check** — any signed-in user can list any league's contests; contest authorization is #193, which does not yet list this route. Each row carries `entryCount`; until #247 the league-scoped list reported 0 for every contest, because its service was built without the entry reads |
 | Delete | `authenticated` today | `deleteContest`, `DRAFT` only. **No league check** (#193, held for discussion: any signed-in user can delete any `DRAFT` contest). Takes the entries, picks, draft state, configuration and the configuration's scoring rules and prize definitions with it; before #247 a configuration with a scoring rule made the delete fail |
 | Start | *(event lifecycle)* | When its event moves to `IN_PROGRESS`, every `OPEN` or `LOCKED` contest on it becomes `ACTIVE` in one guarded write, and its commissioners and entrants are emailed once; a re-sent transition finds nothing left to start |
@@ -734,7 +733,7 @@ An entry's result, frozen when its contest settles — cross-sport core plus a s
 
 | Operation | Role | Notes |
 |---|---|---|
-| Write | *(settlement)* | Written once per entry when the linked event completes; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; a `DRAFT` (never opened) or `CANCELLED` contest is skipped too and keeps its status, since a draft leaves only by being opened or deleted (#117); reopening moves it back to `ACTIVE`, and the next settlement recomputes |
+| Write | *(settlement)* | Written once per entry when the linked event completes; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; a `DRAFT` (never opened) or `CANCELLED` contest is skipped too and keeps its status, since a draft leaves only by being opened or deleted (#117). No route moves a contest back out of `COMPLETED` (the unused reopen, close-early and extend-deadline endpoints were deleted) |
 | Read | `member` | Through the golf leaderboard of a `COMPLETED` contest |
 
 ### ContestEntryPick
@@ -746,6 +745,19 @@ indexes hold (plans/117 §7.1, deleted with its epic; retrieve via
 design (#247), so no adapter or fake can become a second way in. The selection operations
 themselves — including the tiered replace-on-full and toggle-off rules — are the draft room's,
 and move to #198's `SelectionEngine`.
+
+**Entries and picks change in one window**, `areContestEntriesOpen` (contests/entry-window): the
+contest is `OPEN` and its event has not reached its scheduled start time, the cutoff opening a
+contest also uses. The scheduled start closes the window even when the event's status update to
+`IN_PROGRESS` is late. Entering, renaming, setting a tiebreaker and leaving answer 400
+`CONTEST_ENTRY_LOCKED` outside it; the draft room's picks answer 409 (below). A re-entry is
+numbered past the highest entry number the team holds in the contest, because leaving deletes
+the team's first entry and keeps the later ones.
+
+| Operation | Role | Notes |
+|---|---|---|
+| Read the draft room | `member` | `getDraftState`. A `DRAFT` contest answers 404 `CONTEST_NOT_FOUND` to anyone but its league's commissioners and root admins, as the contest read does (#117). While the contest is `DRAFT` or `OPEN`, picks are hidden from other teams (`contestPicksRevealed`): the history carries only the caller's own entries, and `entryId` names another team's entry only from `LOCKED` on, falling back to the caller's own before that. Any active member of the entry's squad, co-owners included, reads it as their own |
+| Place, swap, unselect | squad member | `submitContestSelection`, only while the contest is `OPEN` and its event's start time has not passed (the status follows the event's move to `IN_PROGRESS`, which can lag): 409 `CONTEST_ENTRY_LOCKED` otherwise, the code the entry's own create, edit and leave answer. Re-picking a held golfer unselects it, and that works for a golfer who has since withdrawn; a new pick of a withdrawn golfer is 400 `PARTICIPANT_UNAVAILABLE` |
 
 ## Platform and operations
 

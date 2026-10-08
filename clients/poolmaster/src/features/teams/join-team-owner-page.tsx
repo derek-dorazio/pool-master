@@ -9,6 +9,7 @@ import { acceptTeamOwnerInvitation, registerWithTeamOwnerInvitation } from '@/li
 import { useAuth } from '@/features/auth/auth-context';
 import { setAuthSessionUser } from '@/features/auth/auth-session-cache';
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
+import { describeUnusableInvitation } from '@/features/leagues/unusable-invitation';
 import {
   Button,
   Chip,
@@ -67,9 +68,11 @@ function getErrorMessage(error: unknown) {
 }
 
 export function JoinTeamOwnerPage() {
-  const logger = getLogger().child({
+  // Memoised: `child()` returns a new logger on every call, and the effects below depend on it,
+  // so a logger built during render re-ran them — re-logging the invitation — on every render.
+  const logger = useMemo(() => getLogger().child({
     feature: 'join-team-owner-page',
-  });
+  }), []);
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -265,13 +268,14 @@ export function JoinTeamOwnerPage() {
   const selectedIcon = invitationQuery.data
     ? getTeamIconOption(invitationQuery.data.team.iconKey)
     : null;
+  const unusableInvitationMessage = describeUnusableInvitation(invitationQuery.data?.status);
 
   if (redirectMessage) {
     return (
       <PublicInviteJoinPage
         title={invitationQuery.data ? `Join ${invitationQuery.data.team.name}` : 'Join team'}
       >
-        <p className="mt-3 text-sm text-muted-foreground">{redirectMessage}</p>
+        <p className="mt-3 text-sm text-muted-foreground">{unusableInvitationMessage ?? redirectMessage}</p>
         {invitationQuery.data ? (
           <div className="mt-5 space-y-5">
             <InvitationContextCard
@@ -298,7 +302,7 @@ export function JoinTeamOwnerPage() {
             </div>
           </div>
         ) : null}
-        {inviteCode && invitationQuery.data ? (
+        {inviteCode && invitationQuery.data && !unusableInvitationMessage ? (
           <form
             className="mt-5 space-y-4 rounded-[1.5rem] border border-border bg-background p-5"
             data-testid="team-invite-register-form"
@@ -429,12 +433,13 @@ export function JoinTeamOwnerPage() {
             ) : null}
           </div>
         ) : null}
+        {unusableInvitationMessage ? <p className="mt-4">{unusableInvitationMessage}</p> : null}
         {acceptMutation.isPending ? <p>Accepting invitation...</p> : null}
         {acceptMutation.isError ? <p>{getErrorMessage(acceptMutation.error)}</p> : null}
         {acceptMutation.isSuccess ? <p>Invitation accepted. Redirecting you to your team...</p> : null}
       </div>
 
-      {invitationQuery.data ? (
+      {invitationQuery.data && !unusableInvitationMessage ? (
         <div className="mt-5 flex gap-3">
           <Button
             data-testid="team-invite-accept"

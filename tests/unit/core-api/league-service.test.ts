@@ -113,6 +113,7 @@ function createMockLifecyclePrisma() {
     contestConfiguration: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     contest: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     leagueInvitation: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
+    squadOwnerInvitation: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     squadMembership: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     leagueMembership: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     squad: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
@@ -665,6 +666,7 @@ describe('LeagueService', () => {
 
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
       expect(tx.contest.deleteMany).toHaveBeenCalledWith({ where: { leagueId: 'league-1' } });
+      expect(tx.squadOwnerInvitation.deleteMany).toHaveBeenCalledWith({ where: { leagueId: 'league-1' } });
       expect(tx.leagueMembership.deleteMany).toHaveBeenCalledWith({ where: { leagueId: 'league-1' } });
       expect(tx.league.delete).toHaveBeenCalledWith({ where: { id: 'league-1' } });
     });

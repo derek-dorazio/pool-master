@@ -7378,16 +7378,6 @@ export type UpdateContestEntryRequest = {
 };
 
 /**
- * Request payload for extending a contest end time.
- */
-export type ExtendContestDeadlineRequest = {
-    /**
-     * Replacement contest end timestamp.
-     */
-    newEnd: string;
-};
-
-/**
  * A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields).
  */
 export type ContestDto = {
@@ -16635,60 +16625,6 @@ export type EnterContestResponses = {
 
 export type EnterContestResponse = EnterContestResponses[keyof EnterContestResponses];
 
-export type ReopenContestData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/reopen';
-};
-
-export type ReopenContestResponses = {
-    /**
-     * Single-contest response.
-     */
-    200: ContestResponse;
-};
-
-export type ReopenContestResponse = ReopenContestResponses[keyof ReopenContestResponses];
-
-export type CloseContestData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/close';
-};
-
-export type CloseContestResponses = {
-    /**
-     * Single-contest response.
-     */
-    200: ContestResponse;
-};
-
-export type CloseContestResponse = CloseContestResponses[keyof CloseContestResponses];
-
-export type ExtendContestDeadlineData = {
-    body: ExtendContestDeadlineRequest;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/extend-deadline';
-};
-
-export type ExtendContestDeadlineResponses = {
-    /**
-     * Single-contest response.
-     */
-    200: ContestResponse;
-};
-
-export type ExtendContestDeadlineResponse = ExtendContestDeadlineResponses[keyof ExtendContestDeadlineResponses];
-
 export type ListContestConfigTemplatesData = {
     body?: never;
     path?: never;
@@ -23614,6 +23550,28 @@ export type SubmitContestSelectionErrors = {
      * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
         /**
          * Error payload object.
          */

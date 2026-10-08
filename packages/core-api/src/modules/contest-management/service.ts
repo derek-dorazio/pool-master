@@ -250,8 +250,8 @@ export class ContestManagementService {
       throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
     }
     // Only a draft's configuration can change (#117). Once the contest is open to the league,
-    // members enter against these rules, so they are locked for good — there is no path back:
-    // OverrideService.reopenContest returns a contest to ACTIVE, never to DRAFT.
+    // members enter against these rules, so they are locked for good: nothing returns a contest
+    // to DRAFT.
     if (contest.status !== ContestStatus.DRAFT) {
       this.logger.warn({ contestId, status: contest.status }, 'contest management update configuration refused for a contest that is not a draft');
       throw new ContestManagementError(

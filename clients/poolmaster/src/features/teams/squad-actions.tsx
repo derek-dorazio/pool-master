@@ -27,6 +27,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 type SquadActionsProps = {
   canInactivate: boolean;
   canManageOwners: boolean;
+  leagueCode: string;
   leagueId: string;
   pendingInvitations: TeamOwnerInvitationDto[];
   squadId: string;
@@ -39,6 +40,7 @@ type ActiveAction = 'invite' | 'inactivate' | null;
 export function SquadActions({
   canInactivate,
   canManageOwners,
+  leagueCode,
   leagueId,
   pendingInvitations,
   squadId,
@@ -99,8 +101,12 @@ export function SquadActions({
       return response.data.squad;
     },
     onSuccess: () => setActiveAction(null),
+    // The server also revokes the team's pending co-owner invitations and ends its owners'
+    // league memberships, which the league context counts.
     invalidates: [
       QueryKeys.leagueTeams.byLeague(leagueId),
+      QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
+      QueryKeys.leagues.detail(leagueCode),
       QueryKeys.leagues.list,
       QueryKeys.leagues.members(leagueId),
     ],

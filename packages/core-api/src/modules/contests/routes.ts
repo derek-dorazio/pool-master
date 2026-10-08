@@ -24,10 +24,8 @@ import {
   requireMemberOfLeague,
 } from '../leagues/permissions';
 import { createContestService } from './wiring';
-import { OverrideService } from './override-service';
 import { createContestHandlers, createCreateContestHandler } from './handler';
 import { createContestManagementService } from '../contest-management/wiring';
-import { createOverrideHandlers } from './override-handler';
 import { getAppPrisma } from '../../core/prisma-context';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 
@@ -107,14 +105,10 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
     appBaseUrl: readApplicationBaseUrl(process.env),
   });
   const contestRepo = new PrismaContestRepository(prisma);
-  const overrideService = new OverrideService(contestRepo);
   const handlers = createContestHandlers(contestService);
-  const overrides = createOverrideHandlers(overrideService);
-  // Sage Pass 3 — every override route below mutates contest state on
-  // behalf of a commissioner. The fastify-level auth guard only proves a
-  // valid session, not league commissioner role; without this gate any
-  // authenticated user could call reopen / close / extend-deadline / etc.
-  // The contest-scoped helper resolves leagueId from the contest's row.
+  // Sage Pass 3 — the update and delete routes below change contest state on behalf of a
+  // commissioner. The fastify-level auth guard only proves a valid session, not league
+  // commissioner role. The contest-scoped helper resolves leagueId from the contest's row.
   const requireContestCommissioner = requireCommissionerForContest(
     contestRepo,
     membershipRepo,
@@ -225,7 +219,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       tags: ['Contests'],
       summary: 'Create the current user contest entry',
       description:
-        'Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.',
+        'Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event\'s scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.',
       operationId: 'enterContest',
       response: {
         201: schemaRef('ContestEntryResponse'),
@@ -243,7 +237,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       tags: ['Contests'],
       summary: 'Delete the current user contest entry',
       description:
-        'Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.',
+        'Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.',
       operationId: 'leaveContest',
       response: {
         200: schemaRef('ContestEntryDeletionResponse'),
@@ -260,7 +254,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       tags: ['Contests'],
       summary: 'Update a contest entry',
       description:
-        'Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is still joinable. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.',
+        'Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is OPEN and its event has not reached its scheduled start (400 CONTEST_ENTRY_LOCKED otherwise). Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.',
       operationId: 'updateContestEntry',
       body: schemaRef('UpdateContestEntryRequest'),
       response: {
@@ -310,45 +304,5 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
     },
     preHandler: requireContestCommissioner,
     handler: handlers.deleteContest,
-  });
-
-  // --- Contest Lifecycle Overrides ---
-  fastify.post('/:contestId/reopen', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Reopen a closed contest',
-      description:
-        'Reopens a previously closed contest so commissioner workflows can resume or correct the contest lifecycle.',
-      operationId: 'reopenContest',
-      response: { 200: schemaRef('ContestResponse') },
-    },
-    preHandler: requireContestCommissioner,
-    handler: overrides.reopenContest,
-  });
-  fastify.post('/:contestId/close', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Close a contest early',
-      description:
-        'Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop. '
-        + 'A draft is refused with 409 CONTEST_CLOSE_STATUS_INVALID: open it to the league or delete it instead.',
-      operationId: 'closeContest',
-      response: { 200: schemaRef('ContestResponse') },
-    },
-    preHandler: requireContestCommissioner,
-    handler: overrides.closeContest,
-  });
-  fastify.post('/:contestId/extend-deadline', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Extend the contest end deadline',
-      description:
-        'Moves the contest deadline later to keep the contest open longer without recreating it.',
-      operationId: 'extendContestDeadline',
-      body: schemaRef('ExtendContestDeadlineRequest'),
-      response: { 200: schemaRef('ContestResponse') },
-    },
-    preHandler: requireContestCommissioner,
-    handler: overrides.extendDeadline,
   });
 }

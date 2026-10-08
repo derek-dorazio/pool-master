@@ -7,12 +7,17 @@
  */
 import type { UserDto } from "@/lib/api";
 
-type PostAuthUser = Pick<UserDto, "isRootAdmin">;
+type PostAuthUser = Pick<UserDto, "isRootAdmin" | "isActive">;
 
 export function resolvePostAuthDestination(
   user: PostAuthUser,
   routeState: { from?: string },
 ): string {
+  // An inactive account signs in only to reactivate or delete itself (DOMAIN-OPERATIONS A9),
+  // and is hidden from every league, so any other destination would show it nothing.
+  if (user.isActive === false) {
+    return "/my-account";
+  }
   if (routeState.from) {
     return routeState.from;
   }

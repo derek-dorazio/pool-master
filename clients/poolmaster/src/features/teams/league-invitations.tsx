@@ -11,6 +11,7 @@ import {
   type LeagueDto,
   type LeagueInvitationDto,
   type LeagueMembershipDto,
+  type SendLeagueInvitationsResponse,
 } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
 import { buildInvitePath } from '@/features/leagues/league-routing';
@@ -45,6 +46,27 @@ type LeagueInvitationsProps = {
   leagueName: string;
   membersByUserId: Map<string, LeagueMembershipDto>;
 };
+
+/**
+ * What happened to the one email the commissioner sent. The server skips an address that already
+ * belongs to the league or already has a pending invitation, and says so; without this the field
+ * just cleared and read as "sent".
+ */
+function describeInviteResult(result: SendLeagueInvitationsResponse): string | null {
+  const [sent] = result.sent;
+  if (sent) {
+    return `Invitation sent to ${sent.email}.`;
+  }
+  const [member] = result.skippedMembers;
+  if (member) {
+    return `${member} is already a member of this league.`;
+  }
+  const [duplicate] = result.skippedDuplicates;
+  if (duplicate) {
+    return `${duplicate} already has a pending invitation.`;
+  }
+  return null;
+}
 
 export function LeagueInvitations({
   isInactiveLeague,
@@ -138,9 +160,13 @@ export function LeagueInvitations({
     if (isInactiveLeague) {
       return;
     }
-    const nextLink = await inviteLinkMutation.mutateAsync();
-    setInviteLink(nextLink);
-    setInviteLinkCopied(false);
+    try {
+      const nextLink = await inviteLinkMutation.mutateAsync();
+      setInviteLink(nextLink);
+      setInviteLinkCopied(false);
+    } catch {
+      // Error state is rendered from the mutation.
+    }
   }
 
   async function handleCopyInviteLink() {
@@ -160,8 +186,12 @@ export function LeagueInvitations({
     if (!email || isInactiveLeague) {
       return;
     }
-    await sendInviteMutation.mutateAsync(email);
-    setInviteEmail('');
+    try {
+      await sendInviteMutation.mutateAsync(email);
+      setInviteEmail('');
+    } catch {
+      // Error state is rendered from the mutation; the typed email stays for a retry.
+    }
   }
 
   const invitations = invitationsQuery.data ?? [];
@@ -185,7 +215,10 @@ export function LeagueInvitations({
         <Button
           data-testid="league-open-invite-members"
           disabled={isInactiveLeague}
-          onClick={() => setInviteOpen(true)}
+          onClick={() => {
+            sendInviteMutation.reset();
+            setInviteOpen(true);
+          }}
           type="button"
         >
           Invite members
@@ -302,6 +335,7 @@ export function LeagueInvitations({
         <FormField className="mt-5" label="Join URL">
           <div className="flex flex-col gap-3 sm:flex-row">
             <Input
+              aria-label="Join URL"
               className="min-w-0 flex-1 font-mono"
               data-testid="league-join-url"
               disabled={isInactiveLeague}
@@ -342,6 +376,7 @@ export function LeagueInvitations({
         <FormField className="mt-5" label="Invite by email">
           <div className="flex gap-3">
             <Input
+              aria-label="Invite by email"
               data-testid="league-invite-email"
               disabled={isInactiveLeague}
               onChange={(event) => setInviteEmail(event.target.value)}
@@ -358,6 +393,12 @@ export function LeagueInvitations({
             </Button>
           </div>
         </FormField>
+
+        {sendInviteMutation.data && describeInviteResult(sendInviteMutation.data) ? (
+          <Alert className="mt-3" tone="success">
+            {describeInviteResult(sendInviteMutation.data)}
+          </Alert>
+        ) : null}
 
         {sendInviteMutation.isError ? (
           <Alert className="mt-3" tone="danger">

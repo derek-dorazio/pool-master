@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -17,6 +17,7 @@ import {
   getLeagueByCodeData,
   inactivateLeagueData,
   listLeagueSquadsData,
+  listLeaguesData,
   updateLeagueDetailsData,
   updateLeagueIconData,
 } from './test/fixtures';
@@ -96,6 +97,7 @@ function renderLeagueDetailPage() {
             />
             <Route element={<div data-testid="manage-leagues-page" />} path="/manage/leagues" />
             <Route element={<div data-testid="welcome-page" />} path="/welcome" />
+            <Route element={<div data-testid="signed-out-home" />} path="/" />
           </Routes>
         </MemoryRouter>
       </AuthProvider>
@@ -470,5 +472,255 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
     fireEvent.click(screen.getByTestId('league-delete-submit'));
 
     expect(await screen.findByTestId('manage-leagues-page')).toBeVisible();
+  });
+});
+
+describe('League Home use cases', () => {
+  afterEach(() => {
+    for (const mock of [
+      activateLeagueMock, deleteLeagueMock, enterContestMock, getContestMock,
+      getCurrentUserMock, getLeagueByCodeMock, inactivateLeagueMock, leaveLeagueMock,
+      listContestEntriesMock, listContestsMock, listLeagueSquadsMock, logoutUserMock, refreshTokenMock,
+      updateLeagueDetailsMock, updateLeagueIconMock,
+    ]) {
+      mock.mockReset();
+    }
+  });
+
+  async function confirmLeave() {
+    await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByRole('button', { name: /^Leave league/ }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Leave league' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Leave league' }));
+    fireEvent.click(await dialog.findByRole('button', { name: 'OK' }));
+  }
+
+  it('shows a member no commissioner actions, labels their role Member, and still lets them leave', async () => {
+    primeCommonMocks({ leagueRole: 'MEMBER' });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    expect(screen.getByText('Member')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Change league details/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Invite members/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Inactivate league/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Leave league/ })).toBeEnabled();
+  });
+
+  it('gives a root admin the commissioner actions under a Root Admin label, with no leave action', async () => {
+    primeCommonMocks({ isRootAdmin: true, leagueRole: 'MEMBER' });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    expect(await screen.findByText('Root Admin')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Change league details/ })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: /^Leave league/ })).not.toBeInTheDocument();
+  });
+
+  it('makes an inactive league read-only: editing and leaving are disabled', async () => {
+    primeCommonMocks({ isActive: false });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    expect(screen.getByText('This league is not currently active.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Change league details/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Change league icon/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Leave league/ })).toBeDisabled();
+  });
+
+  it('after leaving, takes the viewer to their next active league rather than an inactive one', async () => {
+    primeCommonMocks({ leagueRole: 'MEMBER' });
+    leaveLeagueMock.mockResolvedValue(apiSuccess({ success: true }));
+    const { queryClient } = renderLeagueDetailPage();
+    queryClient.setQueryData(QueryKeys.leagues.list, listLeaguesData([
+      buildLeague(),
+      buildLeague({ id: 'league-2', leagueCode: 'OLDDOGS', isActive: false }),
+      buildLeague({ id: 'league-3', leagueCode: 'NEWDOGS' }),
+    ]));
+
+    await confirmLeave();
+
+    await waitFor(() => expect(getLeagueByCodeMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ path: { leagueCode: 'NEWDOGS' } }),
+    ));
+    expect(logoutUserMock).not.toHaveBeenCalled();
+  });
+
+  it('after leaving their last league, keeps the viewer signed in and lands them on the welcome page', async () => {
+    primeCommonMocks({ leagueRole: 'MEMBER' });
+    leaveLeagueMock.mockResolvedValue(apiSuccess({ success: true }));
+    logoutUserMock.mockResolvedValue(apiSuccess({ success: true }));
+    const { queryClient } = renderLeagueDetailPage();
+    queryClient.setQueryData(QueryKeys.leagues.list, listLeaguesData([buildLeague()]));
+
+    await confirmLeave();
+
+    expect(await screen.findByTestId('welcome-page')).toBeVisible();
+    expect(logoutUserMock).not.toHaveBeenCalled();
+  });
+
+  it('after leaving, sends the viewer through welcome rather than straight into a remaining league that is inactive', async () => {
+    primeCommonMocks({ leagueRole: 'MEMBER' });
+    leaveLeagueMock.mockResolvedValue(apiSuccess({ success: true }));
+    const { queryClient } = renderLeagueDetailPage();
+    queryClient.setQueryData(QueryKeys.leagues.list, listLeaguesData([
+      buildLeague(),
+      buildLeague({ id: 'league-2', leagueCode: 'OLDDOGS', isActive: false }),
+    ]));
+
+    await confirmLeave();
+
+    expect(await screen.findByTestId('welcome-page')).toBeVisible();
+  });
+
+  it('saving details with the description emptied sends no description, which the contract treats as clearing it', async () => {
+    primeCommonMocks();
+    getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
+      buildLeague({ description: 'Old description' }),
+      { membership: buildLeagueMembership() },
+    )));
+    updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({
+      description: null,
+    }))));
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByRole('button', { name: /^Change league details/ }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Change league details' }));
+    fireEvent.change(dialog.getByRole('textbox', { name: 'Description' }), { target: { value: '   ' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Save details' }));
+
+    await waitFor(() => expect(updateLeagueDetailsMock).toHaveBeenCalledWith({
+      path: { id: 'league-1' },
+      body: { name: 'Big Dawgs' },
+    }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByText('No description')).toBeInTheDocument();
+  });
+
+  it('keeps the details modal open with the reason when saving fails, and blocks saving a blank name', async () => {
+    primeCommonMocks();
+    updateLeagueDetailsMock.mockResolvedValue({
+      error: { code: 'VALIDATION_ERROR', message: 'League name is already taken.' },
+    });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByRole('button', { name: /^Change league details/ }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Change league details' }));
+    const nameField = dialog.getByRole('textbox', { name: 'League name' });
+    fireEvent.change(nameField, { target: { value: '  ' } });
+    expect(dialog.getByRole('button', { name: 'Save details' })).toBeDisabled();
+
+    fireEvent.change(nameField, { target: { value: 'Taken Name' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Save details' }));
+
+    expect(await dialog.findByText('League name is already taken.')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Change league details' })).toBeVisible();
+  });
+
+  it('enables delete only once the typed code matches the league code, ignoring case and surrounding spaces', async () => {
+    primeCommonMocks({ isActive: false });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Delete league' }));
+    const codeField = dialog.getByRole('textbox', { name: 'League code' });
+    const deleteButton = dialog.getByRole('button', { name: 'Delete league' });
+
+    expect(deleteButton).toBeDisabled();
+    fireEvent.change(codeField, { target: { value: 'BIGDAWG' } });
+    expect(deleteButton).toBeDisabled();
+    fireEvent.change(codeField, { target: { value: '  bigdawgs ' } });
+    expect(deleteButton).toBeEnabled();
+  });
+
+  it('shows the reason and stays on League Home when deleting the league fails', async () => {
+    primeCommonMocks({ isActive: false });
+    deleteLeagueMock.mockResolvedValue({
+      error: { code: 'LEAGUE_DELETE_FAILED', message: 'The league could not be deleted.' },
+    });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Delete league' }));
+    fireEvent.change(dialog.getByRole('textbox', { name: 'League code' }), { target: { value: 'BIGDAWGS' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Delete league' }));
+
+    expect(await dialog.findByText('The league could not be deleted.')).toBeInTheDocument();
+    expect(screen.queryByTestId('welcome-page')).not.toBeInTheDocument();
+  });
+
+  it('shows the reason when reactivating an inactive league fails, leaving it inactive', async () => {
+    primeCommonMocks({ isActive: false });
+    activateLeagueMock.mockResolvedValue({
+      error: { code: 'LEAGUE_ACTIVATE_FAILED', message: 'The league could not be activated.' },
+    });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByRole('button', { name: 'Activate' }));
+
+    expect(await screen.findByText('The league could not be activated.')).toBeInTheDocument();
+    expect(screen.getByTestId('league-lifecycle-status')).toHaveTextContent('Inactive');
+  });
+
+  it('shows the reason inside the confirmation when inactivating the league fails, leaving it active', async () => {
+    primeCommonMocks();
+    inactivateLeagueMock.mockResolvedValue({
+      error: { code: 'LEAGUE_INACTIVATE_FAILED', message: 'The league could not be inactivated.' },
+    });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByRole('button', { name: /^Inactivate league/ }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Inactivate league' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Inactivate' }));
+
+    expect(await dialog.findByText('The league could not be inactivated.')).toBeInTheDocument();
+    expect(screen.getByTestId('league-lifecycle-status')).toHaveTextContent('Active');
+  });
+
+  it('keeps the icon picker open with the reason when saving the icon fails, and leaves the current icon unchanged', async () => {
+    primeCommonMocks();
+    updateLeagueIconMock.mockResolvedValue({
+      error: { code: 'VALIDATION_ERROR', message: 'That icon is not available.' },
+    });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByRole('button', { name: /^Change league icon/ }));
+    await screen.findByTestId('league-icon-modal');
+    fireEvent.click(screen.getByTestId('league-icon-GOLF_BALL'));
+    fireEvent.click(screen.getByTestId('league-save-icon'));
+
+    expect(await screen.findByText('That icon is not available.')).toBeInTheDocument();
+    expect(screen.getByTestId('league-icon-modal')).toBeVisible();
+    expect(screen.getByTestId('league-current-icon-label')).toHaveTextContent('Trophy');
+  });
+
+  it('shows the load-error copy with a way back to welcome when the league cannot be loaded', async () => {
+    primeCommonMocks();
+    getLeagueByCodeMock.mockResolvedValue({
+      error: { code: 'LEAGUE_NOT_FOUND', message: 'League not found.' },
+      status: 404,
+    });
+
+    renderLeagueDetailPage();
+
+    expect(await screen.findByRole('link', { name: 'Back to welcome' })).toHaveAttribute('href', '/welcome');
+    expect(screen.queryByTestId('league-home')).not.toBeInTheDocument();
   });
 });
