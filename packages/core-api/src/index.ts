@@ -10,6 +10,7 @@ import { authGuard } from './plugins/auth-guard';
 import { etagPlugin } from './plugins/etag-support';
 import { pollConfigPlugin } from './plugins/poll-config';
 import { requestLoggingContext } from './plugins/request-logging-context';
+import { FASTIFY_AJV_OPTIONS } from './plugins/string-transforms';
 import { globalErrorHandler } from './core/error-handler';
 import { createFastifyLoggerOptions } from './core/logger';
 
@@ -69,7 +70,7 @@ import {
 } from './modules/email';
 
 export function buildApp() {
-  const app = Fastify({ logger: createFastifyLoggerOptions('core-api') });
+  const app = Fastify({ logger: createFastifyLoggerOptions('core-api'), ajv: FASTIFY_AJV_OPTIONS });
   const prisma = new PrismaClient();
   const isOpenApiExport = process.env.OPENAPI_EXPORT === 'true';
 

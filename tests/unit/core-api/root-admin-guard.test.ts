@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import { FASTIFY_AJV_OPTIONS } from '../../../packages/core-api/src/plugins/string-transforms';
 import jwt from 'jsonwebtoken';
 import { requireRootAdmin } from '../../../packages/core-api/src/core/root-admin-guard';
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
@@ -18,7 +19,7 @@ function bearer(isRootAdmin: boolean): Record<string, string> {
 }
 
 async function buildApp() {
-  const app = Fastify({ logger: false });
+  const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
   app.setErrorHandler(globalErrorHandler);
   await app.register(authGuard);
   app.post('/things/:id', {

@@ -1912,7 +1912,7 @@ export type UserResetPasswordResponse = {
  */
 export type UserDeleteRequest = {
     /**
-     * Exact email confirmation required before permanently deleting the inactive account.
+     * Email confirmation required before permanently deleting the inactive account. Matched after trimming and lowercasing.
      */
     email: string;
 };
@@ -8554,9 +8554,9 @@ export type UpdateGolfRoundScoreRequest = {
     strokes?: number;
     scoreToPar?: number;
     /**
-     * Holes completed in the round. A round is 18 holes; playoff holes are never scored.
+     * Holes completed in the round. A round is 18 holes; playoff holes are never scored. Null clears it, for a golfer who has not started.
      */
-    thru?: number;
+    thru?: number | null;
     status?: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
     /**
      * Null clears it.

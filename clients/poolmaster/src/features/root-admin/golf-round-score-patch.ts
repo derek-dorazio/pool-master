@@ -79,7 +79,10 @@ export function buildRoundScorePatch(
   ) {
     patch.strokes = Number(draft.strokes);
   }
-  if (
+  if (draft.thru !== undefined && draft.thru.trim() === '') {
+    // A blanked thru clears the stored one: the golfer has not started the round.
+    if (row.thru !== null) patch.thru = null;
+  } else if (
     draft.thru !== undefined &&
     isThru(draft.thru) &&
     Number(draft.thru) !== row.thru

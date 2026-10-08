@@ -3,7 +3,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { SuccessSchema } from './common.dto';
+import { EmailInputSchema, SuccessSchema } from './common.dto';
 import { UserDtoSchema } from './users.dto';
 
 // --- Requests ---
@@ -16,7 +16,7 @@ export const RegisterRequestSchema = z.object({
     .max(100)
     .regex(/^\S+$/, 'Username cannot contain spaces')
     .describe('Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field.'),
-  email: z.string().email().describe('Primary contact email address for the user account.'),
+  email: EmailInputSchema.describe('Primary contact email address for the user account.'),
   password: z
     .string()
     .min(8)

@@ -6,19 +6,19 @@ import {
   TeamIconKey as TeamIconKeyEnum,
   type TeamIconKey,
 } from '@poolmaster/shared/domain';
-import { DateTimeSchema } from './common.dto';
+import { DateTimeSchema, EmailInputSchema } from './common.dto';
 
 const TeamIconKeyValues = Object.values(TeamIconKeyEnum) as [TeamIconKey, ...TeamIconKey[]];
 
 export const CreateSquadOwnerInvitationRequestSchema = z.object({
-  email: z.string().email().describe('Email address for the intended co-owner.'),
+  email: EmailInputSchema.describe('Email address for the intended co-owner.'),
 }).describe('Request payload for inviting an additional co-owner to a team.');
 export type CreateSquadOwnerInvitationRequest = z.infer<
   typeof CreateSquadOwnerInvitationRequestSchema
 >;
 
 export const ReplaceSquadOwnerRequestSchema = z.object({
-  email: z.string().email().describe('Email address for the replacement owner.'),
+  email: EmailInputSchema.describe('Email address for the replacement owner.'),
 }).describe('Request payload for replacing an existing active owner on a team.');
 export type ReplaceSquadOwnerRequest = z.infer<typeof ReplaceSquadOwnerRequestSchema>;
 

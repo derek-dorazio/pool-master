@@ -372,7 +372,7 @@ export class UserService {
         data: { userId: user.id },
       }, 'Rejected delete due to email confirmation mismatch');
       throw new UserOperationError(
-        'Delete confirmation email must match the account email exactly',
+        'Delete confirmation email must match the account email',
         'ACCOUNT_DELETE_CONFIRMATION_MISMATCH',
         400,
       );

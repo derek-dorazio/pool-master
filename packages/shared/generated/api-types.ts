@@ -3567,7 +3567,7 @@ export interface components {
         UserDeleteRequest: {
             /**
              * Format: email
-             * @description Exact email confirmation required before permanently deleting the inactive account.
+             * @description Email confirmation required before permanently deleting the inactive account. Matched after trimming and lowercasing.
              */
             email: string;
         };
@@ -8759,8 +8759,8 @@ export interface components {
         UpdateGolfRoundScoreRequest: {
             strokes?: number;
             scoreToPar?: number;
-            /** @description Holes completed in the round. A round is 18 holes; playoff holes are never scored. */
-            thru?: number;
+            /** @description Holes completed in the round. A round is 18 holes; playoff holes are never scored. Null clears it, for a golfer who has not started. */
+            thru?: number | null;
             /** @enum {string} */
             status?: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
             /**

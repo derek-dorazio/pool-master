@@ -22,6 +22,7 @@ import { startSmtpSinkServer, type CapturedMail, type SmtpSinkServer } from '../
 // Plugins and modules from core-api
 import { healthPlugin } from '../../packages/core-api/src/plugins/health';
 import { authGuard } from '../../packages/core-api/src/plugins/auth-guard';
+import { FASTIFY_AJV_OPTIONS } from '../../packages/core-api/src/plugins/string-transforms';
 import { globalErrorHandler } from '../../packages/core-api/src/core/error-handler';
 import { authModule } from '../../packages/core-api/src/modules/auth/routes';
 import { leaguesModule } from '../../packages/core-api/src/modules/leagues/routes';
@@ -126,7 +127,7 @@ export function getPrisma(): PrismaClient {
 
 /** Build the Fastify app with real plugins and modules (no background jobs). */
 async function buildTestApp(): Promise<FastifyInstance> {
-  const testApp = Fastify({ logger: false });
+  const testApp = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
 
   testApp.decorate('prisma', prisma);
 
