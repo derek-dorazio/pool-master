@@ -58,7 +58,7 @@ describe('ContestService entries — entering a contest', () => {
 
     const stored = world.entriesOf(contest.id, squad.id);
     expect(stored).toHaveLength(1);
-    expect(stored[0]).toMatchObject({ entryNumber: 1, name: 'Birdie Brigade Entry 1', status: 'ACTIVE' });
+    expect(stored[0]).toMatchObject({ entryNumber: 1, name: 'Birdie Brigade Entry 1', status: 'DRAFT' });
     expect(dto).toMatchObject({ id: stored[0].id, squadName: 'Birdie Brigade', picksCount: 0 });
   });
 
@@ -473,15 +473,16 @@ describe('ContestService entries — reads', () => {
     await expect(service.getMyEntry(contest.id, commissioner.id)).resolves.toBeNull();
   });
 
-  it('counts entries per contest, with zero for a contest nobody entered', async () => {
+  it('counts submitted entries per contest, leaving unsubmitted drafts out, with zero for a contest nobody entered', async () => {
     const { world, league, owner, rival, contest, service } = setup();
     const empty = world.addContest(league.id);
-    await service.createEntry(contest.id, owner.id);
+    const submitted = await service.createEntry(contest.id, owner.id);
     await service.createEntry(contest.id, rival.id);
+    await world.entryRepo().update(submitted.id, { status: 'SUBMITTED' });
 
     const counts = await service.countEntriesByContest([contest.id, empty.id]);
 
-    expect(counts.get(contest.id)).toBe(2);
+    expect(counts.get(contest.id)).toBe(1);
     expect(counts.get(empty.id)).toBe(0);
     await expect(service.countEntriesByContest([])).resolves.toEqual(new Map());
   });

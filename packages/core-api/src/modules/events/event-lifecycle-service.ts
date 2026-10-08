@@ -201,7 +201,7 @@ export class EventLifecycleService {
   }
 
   /**
-   * The contest's league, its active entries (entry number, then name) and the people told:
+   * The contest's league, its submitted entries (entry number, then name) and the people told:
    * the league's active commissioners, then each entry's active squad members, active users
    * only, each once. Null when the league is gone.
    */
@@ -210,7 +210,7 @@ export class EventLifecycleService {
     const [league, leagueMemberships, contestEntries] = await Promise.all([
       leagues.findById(contest.leagueId),
       memberships.findByLeague(contest.leagueId),
-      entries.findByContestWithSquad(contest.id, { activeOnly: true }),
+      entries.findByContestWithSquad(contest.id, { submittedOnly: true }),
     ]);
     if (!league) {
       return null;

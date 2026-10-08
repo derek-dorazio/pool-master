@@ -24,10 +24,10 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
 
   async findByContestWithSquad(
     contestId: string,
-    options?: { activeOnly?: boolean },
+    options?: { submittedOnly?: boolean },
   ): Promise<ContestEntryWithSquad[]> {
     const rows = await this.prisma.contestEntry.findMany({
-      where: { contestId, ...(options?.activeOnly && { status: 'ACTIVE' }) },
+      where: { contestId, ...(options?.submittedOnly && { status: 'SUBMITTED' }) },
       include: { squad: { select: { name: true } } },
       orderBy: [{ entryNumber: 'asc' }, { createdAt: 'asc' }],
     });

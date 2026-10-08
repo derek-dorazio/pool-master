@@ -14681,9 +14681,11 @@
           "status": {
             "type": "string",
             "enum": [
-              "ACTIVE",
+              "DRAFT",
+              "SUBMITTED",
               "INACTIVE"
-            ]
+            ],
+            "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
           },
           "tiebreakerValue": {
             "type": [
@@ -15028,10 +15030,11 @@
           "status": {
             "type": "string",
             "enum": [
-              "ACTIVE",
+              "DRAFT",
+              "SUBMITTED",
               "INACTIVE"
             ],
-            "description": "Contest entry lifecycle status."
+            "description": "Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked."
           },
           "position": {
             "type": [
@@ -15711,10 +15714,11 @@
                 "status": {
                   "type": "string",
                   "enum": [
-                    "ACTIVE",
+                    "DRAFT",
+                    "SUBMITTED",
                     "INACTIVE"
                   ],
-                  "description": "Contest entry lifecycle status."
+                  "description": "Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked."
                 },
                 "position": {
                   "type": [
@@ -16420,9 +16424,11 @@
               "status": {
                 "type": "string",
                 "enum": [
-                  "ACTIVE",
+                  "DRAFT",
+                  "SUBMITTED",
                   "INACTIVE"
-                ]
+                ],
+                "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
               },
               "tiebreakerValue": {
                 "type": [
@@ -16563,9 +16569,11 @@
               "status": {
                 "type": "string",
                 "enum": [
-                  "ACTIVE",
+                  "DRAFT",
+                  "SUBMITTED",
                   "INACTIVE"
-                ]
+                ],
+                "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
               },
               "tiebreakerValue": {
                 "type": [
@@ -16731,9 +16739,11 @@
                 "status": {
                   "type": "string",
                   "enum": [
-                    "ACTIVE",
+                    "DRAFT",
+                    "SUBMITTED",
                     "INACTIVE"
-                  ]
+                  ],
+                  "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
                 },
                 "tiebreakerValue": {
                   "type": [
@@ -16879,9 +16889,11 @@
               "status": {
                 "type": "string",
                 "enum": [
-                  "ACTIVE",
+                  "DRAFT",
+                  "SUBMITTED",
                   "INACTIVE"
-                ]
+                ],
+                "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
               },
               "tiebreakerValue": {
                 "type": [
@@ -43465,13 +43477,23 @@
                           "isOnClock": {
                             "type": "boolean",
                             "description": "Whether the entry currently has the active turn."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "DRAFT",
+                              "SUBMITTED",
+                              "INACTIVE"
+                            ],
+                            "description": "DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481)."
                           }
                         },
                         "required": [
                           "id",
                           "userId",
                           "name",
-                          "isOnClock"
+                          "isOnClock",
+                          "status"
                         ],
                         "additionalProperties": false,
                         "description": "Draft entry summary."
@@ -44086,7 +44108,7 @@
         "tags": [
           "Drafts"
         ],
-        "description": "Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise.",
+        "description": "Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. A change that leaves a SUBMITTED entry's lineup short sends the entry back to DRAFT; it must be submitted again to count.",
         "requestBody": {
           "required": true,
           "content": {
@@ -44303,13 +44325,23 @@
                           "isOnClock": {
                             "type": "boolean",
                             "description": "Whether the entry currently has the active turn."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "DRAFT",
+                              "SUBMITTED",
+                              "INACTIVE"
+                            ],
+                            "description": "DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481)."
                           }
                         },
                         "required": [
                           "id",
                           "userId",
                           "name",
-                          "isOnClock"
+                          "isOnClock",
+                          "status"
                         ],
                         "additionalProperties": false,
                         "description": "Draft entry summary."
@@ -44754,6 +44786,914 @@
                   ],
                   "additionalProperties": false,
                   "description": "Draft response returned immediately after a pick mutation."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/drafts/{contestId}/entries/{entryId}/submit": {
+      "post": {
+        "operationId": "submitContestEntry",
+        "summary": "Submit a contest entry",
+        "tags": [
+          "Drafts"
+        ],
+        "description": "Submits the caller's entry once its lineup is complete, and returns the refreshed draft state. An entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. Submitting an already submitted entry changes nothing. A later pick change that leaves the lineup short sends the entry back to DRAFT. Entries are submitted only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. Only a member of the entry's team may submit it: 403 DRAFT_ENTRY_ACCESS_DENIED otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "entryId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Draft-state response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contestId": {
+                      "type": "string"
+                    },
+                    "contestName": {
+                      "type": "string"
+                    },
+                    "selectionType": {
+                      "type": "string",
+                      "enum": [
+                        "SNAKE_DRAFT",
+                        "TIERED",
+                        "BUDGET_PICK",
+                        "OPEN_SELECTION",
+                        "PICK_EM",
+                        "BRACKET_PICK_EM"
+                      ]
+                    },
+                    "isTurnBased": {
+                      "type": "boolean"
+                    },
+                    "isCommissioner": {
+                      "type": "boolean"
+                    },
+                    "rosterSize": {
+                      "type": "number"
+                    },
+                    "contestConfiguration": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "isExclusive": {
+                          "type": "boolean"
+                        },
+                        "rounds": {
+                          "type": "number"
+                        },
+                        "pickCount": {
+                          "type": "number"
+                        },
+                        "rosterSize": {
+                          "type": "number"
+                        },
+                        "budget": {
+                          "type": "number"
+                        },
+                        "timePerPickSeconds": {
+                          "type": "number"
+                        },
+                        "picksPerPeriod": {
+                          "type": "number"
+                        },
+                        "roundValues": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          }
+                        },
+                        "startRound": {
+                          "type": "string"
+                        },
+                        "tierConfig": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "tierId": {
+                                "type": "string"
+                              },
+                              "tierName": {
+                                "type": "string"
+                              },
+                              "tierNumber": {
+                                "type": "number"
+                              },
+                              "picksFromTier": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "tierId",
+                              "tierName",
+                              "tierNumber",
+                              "picksFromTier"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Tier definition displayed within a draft room."
+                          },
+                          "description": "Tier configuration when the contest uses tiered selection."
+                        }
+                      },
+                      "required": [
+                        "isExclusive"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Contest-configuration subset required by draft-room clients."
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "LIVE",
+                        "PAUSED",
+                        "COMPLETE"
+                      ]
+                    },
+                    "currentPickNumber": {
+                      "type": "number"
+                    },
+                    "currentRound": {
+                      "type": "number"
+                    },
+                    "totalPicks": {
+                      "type": "number"
+                    },
+                    "totalRounds": {
+                      "type": "number"
+                    },
+                    "currentEntryId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "currentEntryName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "myEntryId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "isMyPick": {
+                      "type": "boolean"
+                    },
+                    "timePerPickSeconds": {
+                      "type": "number"
+                    },
+                    "currentTurnStartedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Entry identifier."
+                          },
+                          "userId": {
+                            "type": "string",
+                            "description": "User that owns the entry."
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Entry display name."
+                          },
+                          "isOnClock": {
+                            "type": "boolean",
+                            "description": "Whether the entry currently has the active turn."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "DRAFT",
+                              "SUBMITTED",
+                              "INACTIVE"
+                            ],
+                            "description": "DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481)."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "userId",
+                          "name",
+                          "isOnClock",
+                          "status"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Draft entry summary."
+                      }
+                    },
+                    "draftPickHistories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "pickNumber": {
+                            "type": "number"
+                          },
+                          "round": {
+                            "type": "number"
+                          },
+                          "pickInRound": {
+                            "type": "number"
+                          },
+                          "entryId": {
+                            "type": "string"
+                          },
+                          "entryName": {
+                            "type": "string"
+                          },
+                          "participantId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "participantName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "role": {
+                            "type": "string"
+                          },
+                          "team": {
+                            "type": "string"
+                          },
+                          "price": {
+                            "type": "number"
+                          },
+                          "tierId": {
+                            "type": "string"
+                          },
+                          "tierName": {
+                            "type": "string"
+                          },
+                          "autoPicked": {
+                            "type": "boolean"
+                          },
+                          "isSkipped": {
+                            "type": "boolean"
+                          },
+                          "pickedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the pick was made or skipped."
+                          }
+                        },
+                        "required": [
+                          "pickNumber",
+                          "round",
+                          "pickInRound",
+                          "entryId",
+                          "entryName",
+                          "participantId",
+                          "participantName",
+                          "autoPicked",
+                          "pickedAt"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Historical draft pick row shown in draft-room history."
+                      }
+                    },
+                    "availableParticipantIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "selectedEntryId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "selectedEntryName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "tiebreakerValue": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "selectionGroups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "groupId": {
+                            "type": "string"
+                          },
+                          "groupName": {
+                            "type": "string"
+                          },
+                          "groupNumber": {
+                            "type": "number"
+                          },
+                          "picksFromGroup": {
+                            "type": "number"
+                          },
+                          "selectedParticipantIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Selections currently saved on the selected entry for this group."
+                          },
+                          "participants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "participantName": {
+                                  "type": "string"
+                                },
+                                "role": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "team": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "status": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "price": {
+                                  "type": [
+                                    "number",
+                                    "null"
+                                  ]
+                                },
+                                "ranking": {
+                                  "type": [
+                                    "number",
+                                    "null"
+                                  ]
+                                },
+                                "orderIndex": {
+                                  "type": [
+                                    "number",
+                                    "null"
+                                  ]
+                                },
+                                "isAvailable": {
+                                  "type": "boolean"
+                                },
+                                "unavailableReason": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "isSelected": {
+                                  "type": "boolean",
+                                  "description": "Whether the currently selected entry has this participant selected."
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "participantName",
+                                "isAvailable"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Selectable participant row used by roster-based entry builders."
+                            },
+                            "description": "Selectable participants shown inside the group."
+                          }
+                        },
+                        "required": [
+                          "groupId",
+                          "groupName",
+                          "groupNumber",
+                          "picksFromGroup",
+                          "selectedParticipantIds",
+                          "participants"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Contest-specific selection group used by tiered or budget-style entry builders."
+                      }
+                    },
+                    "isComplete": {
+                      "type": "boolean"
+                    },
+                    "pickEmEvents": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "eventId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "period": {
+                            "type": "number"
+                          },
+                          "matchupIndex": {
+                            "type": "number"
+                          },
+                          "homeParticipantId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "homeParticipantName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "awayParticipantId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "awayParticipantName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "eventTime": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
+                          "deadline": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
+                          "isLocked": {
+                            "type": "boolean"
+                          },
+                          "myPickParticipantId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "confidenceWeight": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "label": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "Optional label used for compact pick-em presentation."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "eventId",
+                          "period",
+                          "matchupIndex",
+                          "homeParticipantId",
+                          "homeParticipantName",
+                          "awayParticipantId",
+                          "awayParticipantName",
+                          "eventTime",
+                          "deadline",
+                          "isLocked",
+                          "myPickParticipantId",
+                          "confidenceWeight",
+                          "label"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Pick-em event row surfaced in draft-style pick flows."
+                      }
+                    },
+                    "bracketMatchups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "roundNumber": {
+                            "type": "number"
+                          },
+                          "matchNumber": {
+                            "type": "number"
+                          },
+                          "label": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "isLocked": {
+                            "type": "boolean"
+                          },
+                          "topTeam": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "seed": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "seed"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Minimal team identity used in bracket pick-em draft payloads."
+                          },
+                          "bottomTeam": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "seed": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "seed"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Minimal team identity used in bracket pick-em draft payloads."
+                          },
+                          "winnerId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "Winning team identifier when the matchup has been decided."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "roundNumber",
+                          "matchNumber",
+                          "label",
+                          "isLocked",
+                          "topTeam",
+                          "bottomTeam",
+                          "winnerId"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Bracket matchup returned to bracket-style pick clients."
+                      },
+                      "description": "Bracket pick data when relevant to the draft."
+                    }
+                  },
+                  "required": [
+                    "contestId",
+                    "contestName",
+                    "selectionType",
+                    "isTurnBased",
+                    "rosterSize",
+                    "status",
+                    "currentPickNumber",
+                    "currentRound",
+                    "totalPicks",
+                    "totalRounds",
+                    "currentEntryId",
+                    "currentEntryName",
+                    "myEntryId",
+                    "isMyPick",
+                    "timePerPickSeconds",
+                    "currentTurnStartedAt",
+                    "entries",
+                    "draftPickHistories",
+                    "availableParticipantIds",
+                    "isComplete"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Draft-state response."
                 }
               }
             }

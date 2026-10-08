@@ -52,7 +52,8 @@ today, and did not count this file as one.
 
 ### Draft Module (`modules/drafts/`)
 
-It publishes two operations, `getDraftState` and `submitContestSelection`. It was the last
+It publishes three operations, `getDraftState`, `submitContestSelection` and
+`submitContestEntry` (#481: an entry counts only once its owner submits a complete lineup). It was the last
 module holding route plumbing, actor resolution, direct `prisma.` calls, the selection rules
 and response mapping in a single `routes.ts`; #346 extracted the service layer, so the
 module now carries the ordinary layering. The file set each module should end up with is

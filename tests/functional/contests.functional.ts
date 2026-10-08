@@ -792,7 +792,7 @@ describe('SDK Functional: Contests and Entries', () => {
         squadId: enterResponse.data?.entry.squadId as string,
         entryNumber: 2,
         name: 'Rename Functional League Entry 2',
-        status: 'ACTIVE',
+        status: 'SUBMITTED',
         isEliminated: false,
       },
     });

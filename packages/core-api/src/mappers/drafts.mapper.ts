@@ -131,6 +131,7 @@ function toDraftEntryDto(entry: DraftRoomEntry): DraftEntryDto {
     userId: entry.userId,
     name: entry.name,
     isOnClock: false,
+    status: entry.status,
   };
 }
 

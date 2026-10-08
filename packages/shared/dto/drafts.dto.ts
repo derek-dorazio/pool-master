@@ -2,7 +2,7 @@
  * Draft DTOs — request/response schemas for draft endpoints.
  */
 import { z } from 'zod';
-import { DraftStatus, SelectionType } from '../domain/enums';
+import { ContestEntryStatus, DraftStatus, SelectionType } from '../domain/enums';
 
 // --- Requests ---
 
@@ -43,6 +43,7 @@ export const DraftEntryDtoSchema = z.object({
   userId: z.string().describe('User that owns the entry.'),
   name: z.string().describe('Entry display name.'),
   isOnClock: z.boolean().describe('Whether the entry currently has the active turn.'),
+  status: z.nativeEnum(ContestEntryStatus).describe('DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).'),
 }).describe('Draft entry summary.');
 export type DraftEntryDto = z.infer<typeof DraftEntryDtoSchema>;
 

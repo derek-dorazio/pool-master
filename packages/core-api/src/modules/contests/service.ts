@@ -229,6 +229,7 @@ export class ContestService {
       && membership.role === LeagueRole.COMMISSIONER;
   }
 
+  /** Submitted entries only: a draft is not an entry until its owner submits it (#481). */
   async countEntriesByContest(contestIds: string[]): Promise<Map<string, number>> {
     const counts = new Map(contestIds.map((contestId) => [contestId, 0]));
     if (!contestIds.length) {
@@ -243,7 +244,10 @@ export class ContestService {
     );
 
     for (const { contestId, entries } of entryLists) {
-      counts.set(contestId, entries.length);
+      counts.set(
+        contestId,
+        entries.filter((entry) => entry.status === ContestEntryStatus.SUBMITTED).length,
+      );
     }
 
     return counts;
@@ -530,7 +534,8 @@ export class ContestService {
       squadId: squad.id,
       entryNumber: nextEntryNumber,
       name: buildDefaultEntryName(squad.name, nextEntryNumber),
-      status: 'ACTIVE',
+      // Born a draft; the owner submits it once its lineup is complete (#481).
+      status: ContestEntryStatus.DRAFT,
       isEliminated: false,
     });
     const dto = await this.loadEntryDtoById(created.id);
@@ -917,7 +922,8 @@ export class ContestService {
   ): Promise<ContestEntry[]> {
     const entries = await this.deps.entries.findBySquad(squadId);
     return entries
-      .filter((entry) => entry.contestId === contestId && entry.status === ContestEntryStatus.ACTIVE)
+      // Drafts and submitted entries alike: both hold one of the squad's entry places.
+      .filter((entry) => entry.contestId === contestId && entry.status !== ContestEntryStatus.INACTIVE)
       .sort((left, right) => left.entryNumber - right.entryNumber);
   }
 

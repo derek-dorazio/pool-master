@@ -106,7 +106,7 @@ function entry(id: string, squadId: string, tiebreakerValue: number | null = nul
     squadId,
     entryNumber: 1,
     name: `Entry ${id}`,
-    status: 'ACTIVE',
+    status: 'DRAFT',
     tiebreakerValue,
     isEliminated: false,
     ...TIMESTAMPS,

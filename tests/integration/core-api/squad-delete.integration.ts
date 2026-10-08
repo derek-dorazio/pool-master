@@ -103,7 +103,7 @@ async function seedLeagueWithContestHistory() {
   });
   const seedEntry = async (squadId: string) => {
     const entry = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId, entryNumber: 1, name: `Entry ${squadId.slice(0, 6)}`, status: 'ACTIVE' },
+      data: { contestId: contest.id, squadId, entryNumber: 1, name: `Entry ${squadId.slice(0, 6)}`, status: 'SUBMITTED' },
     });
     await prisma.contestEntryPick.create({
       data: {

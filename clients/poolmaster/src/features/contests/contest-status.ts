@@ -1,5 +1,5 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { type ContestEntryStatus, ContestStatus } from '@poolmaster/shared/domain';
 import type { StatusBadgeProps } from '@/features/shared/ui';
 
 /**
@@ -32,6 +32,22 @@ export const CONTEST_STATUS_TONES: Record<ContestStatus, NonNullable<StatusBadge
   ACTIVE: 'live',
   COMPLETED: 'final',
   CANCELLED: 'inactive',
+};
+
+/**
+ * What members read for each entry status (#481). A draft counts nowhere until it is submitted,
+ * so its label says so rather than echoing the enum.
+ */
+export const CONTEST_ENTRY_STATUS_LABELS: Record<ContestEntryStatus, string> = {
+  DRAFT: 'Not submitted',
+  SUBMITTED: 'Submitted',
+  INACTIVE: 'Inactive',
+};
+
+export const CONTEST_ENTRY_STATUS_TONES: Record<ContestEntryStatus, NonNullable<StatusBadgeProps['tone']>> = {
+  DRAFT: 'warning',
+  SUBMITTED: 'success',
+  INACTIVE: 'inactive',
 };
 
 export function contestStatusLabel(status: ContestStatus) {

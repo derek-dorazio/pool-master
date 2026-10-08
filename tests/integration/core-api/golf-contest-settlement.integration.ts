@@ -397,7 +397,7 @@ async function createSettlementEntries(input: {
         squadId: input.squadOneId,
         entryNumber: 1,
         name: 'Winner',
-        status: 'ACTIVE',
+        status: 'SUBMITTED',
       },
     }),
     prisma.contestEntry.create({
@@ -406,7 +406,7 @@ async function createSettlementEntries(input: {
         squadId: input.squadTwoId,
         entryNumber: 2,
         name: 'Runner Up',
-        status: 'ACTIVE',
+        status: 'SUBMITTED',
       },
     }),
   ]);

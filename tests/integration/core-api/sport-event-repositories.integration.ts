@@ -459,7 +459,7 @@ async function createContestFixture(sportEventId: string) {
     },
   });
   const entry = await prisma.contestEntry.create({
-    data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: `Entry ${suffix}`, status: 'ACTIVE' },
+    data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: `Entry ${suffix}`, status: 'SUBMITTED' },
   });
   return { contestId: contest.id, entryId: entry.id };
 }

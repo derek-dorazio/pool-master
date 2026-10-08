@@ -235,7 +235,7 @@ describe('ContestEntryRepository — entries with their squad', () => {
     });
 
     const all = await repos().entries.findByContestWithSquad(contest.id);
-    const active = await repos().entries.findByContestWithSquad(contest.id, { activeOnly: true });
+    const active = await repos().entries.findByContestWithSquad(contest.id, { submittedOnly: true });
     const one = await repos().entries.findByIdWithSquad(second.id);
 
     expect(all.map((entry) => [entry.id, entry.squadName])).toEqual([

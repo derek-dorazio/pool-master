@@ -52,7 +52,7 @@ describe('contest leaderboard ranking direction', () => {
     entryNumber,
     squadId: `squad-${entryId}`,
     squadName: `Squad ${entryId}`,
-    status: 'ACTIVE' as const,
+    status: 'SUBMITTED' as const,
     score,
     position: null,
     displayPosition: null,
@@ -91,7 +91,7 @@ describe('settled contest standings', () => {
     entryNumber,
     squadId: `squad-${entryNumber}`,
     squadName: `Squad ${entryNumber}`,
-    status: 'ACTIVE' as const,
+    status: 'SUBMITTED' as const,
     score,
     position,
     displayPosition: position === null ? null : String(position),
@@ -167,7 +167,7 @@ describe('an entry\'s standing from its picks', () => {
     id: 'entry-1',
     entryNumber: 1,
     name: 'Sunday Charge',
-    status: ContestEntryStatus.ACTIVE,
+    status: ContestEntryStatus.SUBMITTED,
     squadId: 'squad-1',
     squad: { name: 'Birdie Brigade' },
     picks: picks.map((pick) => ({
@@ -261,8 +261,8 @@ describe('an entry\'s standing from its picks', () => {
     const field = scores([]);
     expect(buildContestEntryStanding({ ...entry([]), status: ContestEntryStatus.INACTIVE }, field, best(1), 'LOWER_IS_BETTER').status)
       .toBe(ContestEntryStatus.INACTIVE);
-    expect(buildContestEntryStanding({ ...entry([]), status: ContestEntryStatus.ACTIVE }, field, best(1), 'LOWER_IS_BETTER').status)
-      .toBe(ContestEntryStatus.ACTIVE);
+    expect(buildContestEntryStanding({ ...entry([]), status: ContestEntryStatus.SUBMITTED }, field, best(1), 'LOWER_IS_BETTER').status)
+      .toBe(ContestEntryStatus.SUBMITTED);
   });
 });
 

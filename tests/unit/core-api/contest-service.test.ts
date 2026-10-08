@@ -91,7 +91,7 @@ const DEFAULT_ENTRY_WITH_SQUAD = {
   squadId: 'squad-1',
   entryNumber: 1,
   name: "Derek's Squad Entry 1",
-  status: 'ACTIVE' as const,
+  status: 'SUBMITTED' as const,
   tiebreakerValue: undefined,
   isEliminated: false,
   createdAt: new Date('2026-01-01'),
@@ -115,7 +115,7 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
       squadId: 'squad-1',
       entryNumber: 1,
       name: 'Ace Squad Entry 1',
-      status: 'ACTIVE',
+      status: 'SUBMITTED',
       isEliminated: false,
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
@@ -226,7 +226,7 @@ const UNSUBMITTED_ENTRY = {
   squadId: 'squad-1',
   entryNumber: 1,
   name: "Derek's Squad Entry 1",
-  status: 'ACTIVE' as const,
+  status: 'SUBMITTED' as const,
   tiebreakerValue: undefined,
   isEliminated: false,
   createdAt: new Date('2026-01-01'),
@@ -473,7 +473,7 @@ describe('ContestService', () => {
       expect(result.map((contest) => contest.id)).toEqual(expected);
     });
 
-    it('pool-master-d0v counts entries for league contest summaries', async () => {
+    it('counts only submitted entries for league contest summaries, leaving drafts out', async () => {
       const [firstContest, secondContest] = [
         buildContest({ id: 'contest-1' }),
         buildContest({ id: 'contest-2' }),
@@ -484,10 +484,11 @@ describe('ContestService', () => {
       const entryRepo = createMockEntryRepo({
         findByContest: jest.fn()
           .mockResolvedValueOnce([
-            { id: 'entry-1' },
-            { id: 'entry-2' },
+            { id: 'entry-1', status: 'SUBMITTED' },
+            { id: 'entry-2', status: 'SUBMITTED' },
+            { id: 'entry-draft', status: 'DRAFT' },
           ])
-          .mockResolvedValueOnce([{ id: 'entry-3' }]),
+          .mockResolvedValueOnce([{ id: 'entry-3', status: 'SUBMITTED' }]),
       });
       const service = buildService({
         contests: contestRepo,
@@ -673,7 +674,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -776,7 +777,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -987,7 +988,7 @@ describe('ContestService', () => {
       expect(rory?.rounds.map(({ round, golf }) => formatRound({ status: round.status, ...golf! })))
         .toEqual(['69', '-2']);
       // Entry order is the port's contract (entryNumber, then createdAt); only active entries count.
-      expect(entryRepo.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { activeOnly: true });
+      expect(entryRepo.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { submittedOnly: true });
       expect(listEventParticipants).toHaveBeenCalledWith('event-1');
     });
 
@@ -1008,7 +1009,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -1062,7 +1063,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -1073,7 +1074,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 2,
             name: "Derek's Squad Entry 2",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -1085,7 +1086,7 @@ describe('ContestService', () => {
           squadId: 'squad-1',
           entryNumber: id === 'entry-1' ? 1 : 2,
           name: updates.name ?? "Derek's Squad Entry 1",
-          status: 'ACTIVE',
+          status: 'SUBMITTED',
           isEliminated: false,
           createdAt: new Date('2026-01-01'),
           updatedAt: new Date('2026-01-02'),
@@ -1141,7 +1142,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             tiebreakerValue: null,
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
@@ -1153,7 +1154,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 2,
             name: 'Second Bullet',
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             tiebreakerValue: null,
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
@@ -1242,7 +1243,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             tiebreakerValue: null,
             isEliminated: false,
             createdAt: new Date('2026-01-01'),

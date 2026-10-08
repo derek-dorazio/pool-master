@@ -125,6 +125,7 @@ function buildEntry(overrides: Partial<{
   name: string;
   entryNumber: number;
   picksCount: number;
+  status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
   participants: Array<{
     pickId: string;
     sportEventParticipantId: string;
@@ -140,7 +141,7 @@ function buildEntry(overrides: Partial<{
     squadName: overrides.squadName ?? 'Birdie Hunters',
     entryNumber: overrides.entryNumber ?? 1,
     name: overrides.name ?? 'Birdie Hunters Entry 1',
-    status: 'ACTIVE' as const,
+    status: overrides.status ?? 'SUBMITTED',
     tiebreakerValue: null,
     isEliminated: false,
     picksCount: overrides.picksCount ?? 0,
@@ -365,6 +366,21 @@ describe('ContestDetailPage (Contest Board)', () => {
 
     expect(await screen.findByTestId('contest-board-entry-spotlight-entry-1')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-board-entry-spotlight-entry-3')).not.toBeInTheDocument();
+  });
+
+  it('marks an unsubmitted entry Not submitted and leaves submitted entries unmarked', async () => {
+    primeMocks({
+      entries: [
+        buildEntry({ id: 'entry-draft', name: 'Still Building', status: 'DRAFT' }),
+        buildEntry({ id: 'entry-done', squadId: 'squad-2', name: 'Locked In', status: 'SUBMITTED' }),
+      ],
+    });
+
+    renderContestBoard();
+
+    expect(await screen.findByTestId('contest-board-entry-status-entry-draft')).toHaveTextContent('Not submitted');
+    expect(screen.getByTestId('contest-board-entry-entry-done')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-entry-status-entry-done')).not.toBeInTheDocument();
   });
 
   // pool-master-dxd.13 — pre-event-start + non-owner: expand renders the

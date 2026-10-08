@@ -516,11 +516,13 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       }
       // Any offered value: the tiebreaker is required, its value is not under test.
       await page.getByTestId('contest-entry-tiebreaker-select').selectOption({ index: 1 });
+      // The button saves the tiebreaker, then submits the entry (#481); only a submitted entry
+      // counts on the leaderboard and at settlement, so wait for the submit itself.
       await submitAndRead(
         page,
         'contest-entry-submit',
-        'PATCH',
-        `/api/v1/contests/${state.contestId}/entries/${state.entryId}`,
+        'POST',
+        `/api/v1/drafts/${state.contestId}/entries/${state.entryId}/submit`,
       );
     });
 
@@ -528,6 +530,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('contest-board')).toBeVisible();
       await expect(page.getByTestId(`contest-board-entry-${state.entryId}`)).toBeVisible();
       await expect(page.getByTestId(`contest-board-entry-spotlight-${state.entryId}`)).toBeVisible();
+      await expect(page.getByTestId(`contest-board-entry-status-${state.entryId}`)).toHaveCount(0);
       await expect(page.getByTestId('contest-board-my-count')).toHaveText(/\b1$/);
     });
 

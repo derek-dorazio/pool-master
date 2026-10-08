@@ -646,7 +646,7 @@ async function buildGolfContestFixture(sportEventId: string): Promise<string> {
       squadId: squad.id,
       entryNumber: 1,
       name: `Provider Entry ${suffix}`,
-      status: 'ACTIVE',
+      status: 'SUBMITTED',
     },
   });
 

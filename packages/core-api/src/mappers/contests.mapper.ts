@@ -19,6 +19,7 @@ import {
   type Contest,
   type ContestConfiguration,
   type ContestEntry,
+  type ContestEntryStatus,
   type ContestStatus,
   type ContestFormat,
   type ParticipantScoringDefinitionId,
@@ -89,7 +90,7 @@ export interface ContestEntryStandingRow {
   entryNumber: number;
   squadId: string;
   squadName: string;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: ContestEntryStatus;
   score: number | null;
   position: number | null;
   displayPosition: string | null;

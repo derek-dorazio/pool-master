@@ -35,6 +35,7 @@ const {
   getLeagueMock,
   listContestEntriesMock,
   mockLogger,
+  submitContestEntryMock,
   submitContestSelectionMock,
   updateContestEntryMock,
 } = vi.hoisted(() => {
@@ -56,6 +57,7 @@ const {
     getLeagueMock: vi.fn(),
     listContestEntriesMock: vi.fn(),
     mockLogger: logger,
+    submitContestEntryMock: vi.fn(),
     submitContestSelectionMock: vi.fn(),
     updateContestEntryMock: vi.fn(),
   };
@@ -67,6 +69,7 @@ bindApiMocks({
   getEvent: getEventMock,
   getLeague: getLeagueMock,
   listContestEntries: listContestEntriesMock,
+  submitContestEntry: submitContestEntryMock,
   submitContestSelection: submitContestSelectionMock,
   updateContestEntry: updateContestEntryMock,
 });
@@ -191,7 +194,7 @@ function primeCommonMocks(overrides?: {
           squadName: 'Birdie Hunters',
           entryNumber: 1,
           name: 'Birdie Hunters Entry 1',
-          status: 'ACTIVE',
+          status: 'DRAFT',
           tiebreakerValue: 271,
           isEliminated: false,
           createdAt: '2026-04-15T00:00:00.000Z',
@@ -238,7 +241,7 @@ function buildDraftState(selectionGroups: DraftSelectionGroup[]) {
     currentTurnStartedAt: null,
     timePerPickSeconds: 0,
     entries: [
-      { id: 'entry-1', userId: 'user-1', name: 'Birdie Hunters Entry 1', isOnClock: false },
+      { id: 'entry-1', userId: 'user-1', name: 'Birdie Hunters Entry 1', isOnClock: false, status: 'DRAFT' },
     ],
     selectedEntryId: 'entry-1',
     selectedEntryName: 'Birdie Hunters Entry 1',
@@ -287,6 +290,7 @@ describe('ContestEntryPage', () => {
     getEventMock.mockReset();
     getLeagueMock.mockReset();
     listContestEntriesMock.mockReset();
+    submitContestEntryMock.mockReset();
     submitContestSelectionMock.mockReset();
     updateContestEntryMock.mockReset();
     mockLogger.debug.mockReset();
@@ -296,7 +300,7 @@ describe('ContestEntryPage', () => {
   });
 
   // pool-master-08k — guided entry selection advances through tiers and submits the completed lineup.
-  it('renders checkbox tier groups, advances focus, and submits the completed entry', async () => {
+  it('renders checkbox tier groups, advances focus, saves the tiebreaker and submits the completed entry', async () => {
     primeCommonMocks();
     const selectedParticipantIdsByTier = new Map<string, string[]>([
       ['tier-1', []],
@@ -332,7 +336,7 @@ describe('ContestEntryPage', () => {
         currentTurnStartedAt: null,
         timePerPickSeconds: 0,
         entries: [
-          { id: 'entry-1', userId: 'user-1', name: 'Birdie Hunters Entry 1', isOnClock: false },
+          { id: 'entry-1', userId: 'user-1', name: 'Birdie Hunters Entry 1', isOnClock: false, status: 'DRAFT' },
         ],
         selectedEntryId: 'entry-1',
         selectedEntryName: 'Birdie Hunters Entry 1',
@@ -400,7 +404,7 @@ describe('ContestEntryPage', () => {
           squadName: 'Birdie Hunters',
           entryNumber: 1,
           name: 'Sunday Charge',
-          status: 'ACTIVE',
+          status: 'DRAFT',
           tiebreakerValue: -12,
           isEliminated: false,
           createdAt: '2026-04-15T00:00:00.000Z',
@@ -418,6 +422,8 @@ describe('ContestEntryPage', () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- getDraftStateMock is an untyped vi.fn() (bindApiMocks expects a loose mock shape); this just forwards its mocked resolution.
       return getDraftStateMock();
     });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- as above: forwards the untyped draft-state mock's resolution.
+    submitContestEntryMock.mockImplementation(() => getDraftStateMock());
 
     renderContestEntryPage();
 
@@ -470,6 +476,13 @@ describe('ContestEntryPage', () => {
         },
       }),
     );
+    await waitFor(() =>
+      expect(submitContestEntryMock).toHaveBeenCalledWith({
+        path: { contestId: 'contest-1', entryId: 'entry-1' },
+      }),
+    );
+    expect(updateContestEntryMock.mock.invocationCallOrder[0])
+      .toBeLessThan(submitContestEntryMock.mock.invocationCallOrder[0]);
     expect(await screen.findByTestId('contest-page')).toBeInTheDocument();
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -558,7 +571,7 @@ describe('ContestEntryPage', () => {
         currentTurnStartedAt: null,
         timePerPickSeconds: 0,
         entries: [
-          { id: 'entry-1', userId: 'user-1', name: 'Birdie Hunters Entry 1', isOnClock: false },
+          { id: 'entry-1', userId: 'user-1', name: 'Birdie Hunters Entry 1', isOnClock: false, status: 'DRAFT' },
         ],
         selectedEntryId: 'entry-1',
         selectedEntryName: 'Birdie Hunters Entry 1',
@@ -951,8 +964,8 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
       data: {
         ...buildDraftState([twoPickTier(['sep-1'])]),
         entries: [
-          { id: 'entry-1', userId: 'user-other', name: 'Other Team Entry 1', isOnClock: false },
-          { id: 'entry-mine', userId: 'user-1', name: 'My Own Entry', isOnClock: false },
+          { id: 'entry-1', userId: 'user-other', name: 'Other Team Entry 1', isOnClock: false, status: 'DRAFT' },
+          { id: 'entry-mine', userId: 'user-1', name: 'My Own Entry', isOnClock: false, status: 'DRAFT' },
         ],
         selectedEntryId: 'entry-mine',
         selectedEntryName: 'My Own Entry',
@@ -1079,5 +1092,113 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     expect(await screen.findByTestId('contest-entry-builder-heading')).toHaveTextContent('Saved lineup detail');
     expect(screen.getByTestId('contest-entry-readonly-tiebreaker')).toHaveTextContent('Winning score relative to par');
     expect(screen.queryByTestId('contest-entry-participant-sep-3')).not.toBeInTheDocument();
+  });
+  describe('submitting an entry (#481)', () => {
+    const completeGroups = () => [
+      {
+        groupId: 'tier-1',
+        groupName: 'Tier 1',
+        groupNumber: 1,
+        picksFromGroup: 1,
+        selectedParticipantIds: ['sep-1'],
+        participants: [buildGolfParticipant('sep-1', 'Scottie Scheffler', 1, true)],
+      },
+    ];
+
+    function draftStateWithStatus(status: 'DRAFT' | 'SUBMITTED', groups = completeGroups()) {
+      return {
+        ...buildDraftState(groups),
+        entries: [{ id: 'entry-1', userId: 'user-1', name: 'Birdie Hunters Entry 1', isOnClock: false, status }],
+      };
+    }
+
+    it('marks a complete but unsubmitted entry Not submitted and says it only counts once submitted', async () => {
+      primeCommonMocks();
+      getDraftStateMock.mockResolvedValue({ data: draftStateWithStatus('DRAFT') });
+
+      renderContestEntryPage();
+
+      expect(await screen.findByTestId('contest-entry-status-badge')).toHaveTextContent('Not submitted');
+      expect(screen.getByTestId('contest-entry-not-submitted')).toHaveTextContent('only counts once it is submitted');
+      expect(screen.getByTestId('contest-entry-submit')).toHaveTextContent('Submit entry');
+    });
+
+    it('marks a submitted entry Submitted, with no warning and a Save entry action', async () => {
+      primeCommonMocks();
+      getDraftStateMock.mockResolvedValue({ data: draftStateWithStatus('SUBMITTED') });
+
+      renderContestEntryPage();
+
+      expect(await screen.findByTestId('contest-entry-status-badge')).toHaveTextContent('Submitted');
+      expect(screen.queryByTestId('contest-entry-not-submitted')).not.toBeInTheDocument();
+      expect(screen.getByTestId('contest-entry-submit')).toHaveTextContent('Save entry');
+    });
+
+    it('shows the entry back as Not submitted when unselecting a golfer leaves a submitted lineup short', async () => {
+      primeCommonMocks();
+      getDraftStateMock.mockResolvedValue({ data: draftStateWithStatus('SUBMITTED') });
+      submitContestSelectionMock.mockResolvedValue({
+        data: draftStateWithStatus('DRAFT', [
+          { ...completeGroups()[0], selectedParticipantIds: [], participants: [buildGolfParticipant('sep-1', 'Scottie Scheffler', 1, false)] },
+        ]),
+      });
+
+      renderContestEntryPage();
+
+      expect(await screen.findByTestId('contest-entry-status-badge')).toHaveTextContent('Submitted');
+      fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-1'));
+      fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-1'));
+
+      await waitFor(() =>
+        expect(screen.getByTestId('contest-entry-status-badge')).toHaveTextContent('Not submitted'));
+      expect(screen.getByTestId('contest-entry-not-submitted')).toHaveTextContent('needs submitting again');
+    });
+
+    it('stays on the page and shows the server\'s reason when a submit is refused, logged as a rejection', async () => {
+      primeCommonMocks();
+      getDraftStateMock.mockResolvedValue({ data: draftStateWithStatus('DRAFT') });
+      updateContestEntryMock.mockResolvedValue({
+        data: {
+          contestId: 'contest-1',
+          entry: {
+            id: 'entry-1',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            squadName: 'Birdie Hunters',
+            entryNumber: 1,
+            name: 'Birdie Hunters Entry 1',
+            status: 'DRAFT',
+            tiebreakerValue: -12,
+            isEliminated: false,
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-16T00:00:00.000Z',
+          },
+        },
+      });
+      submitContestEntryMock.mockResolvedValue({
+        error: {
+          error: {
+            code: 'ENTRY_LINEUP_INCOMPLETE',
+            message: 'Entry entry-1 cannot be submitted until every tier is filled: Tier 2 still need picks',
+          },
+        },
+        status: 409,
+      });
+
+      renderContestEntryPage();
+
+      fireEvent.change(await screen.findByTestId('contest-entry-tiebreaker-select'), {
+        target: { value: '-12' },
+      });
+      fireEvent.click(screen.getByTestId('contest-entry-submit'));
+
+      expect(await screen.findByTestId('contest-entry-submit-error')).toHaveTextContent('Tier 2 still need picks');
+      expect(screen.queryByTestId('contest-page')).not.toBeInTheDocument();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'contestEntry.submit.failed' }),
+        expect.any(String),
+      );
+      expect(mockLogger.error).not.toHaveBeenCalled();
+    });
   });
 });

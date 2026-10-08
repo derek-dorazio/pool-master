@@ -23,6 +23,7 @@ import {
 import type { SportEventTierGroup, ParticipantValuationView } from '../events/sport-event-tier-service';
 import type {
   DraftTierConfig,
+  LineupShortfall,
   ParticipantValuation,
   SelectionParticipant,
   TieredPlacement,
@@ -53,6 +54,41 @@ export function getRosterSize(
     return tiers.reduce((sum, tier) => sum + tier.picksFromTier, 0);
   }
   return 0;
+}
+
+/**
+ * Whether an entry's lineup may be submitted, and if not, why (#481). Null means it is
+ * complete: exactly `rosterSize` picks and, in a tiered contest, exactly as many picks from
+ * each tier as the tier asks for. A roster size of 0 (a tiered room with no tiers) is never
+ * complete, because there is nothing to submit.
+ *
+ * The draft room cannot overfill a tier (a full tier replaces) or a roster (`ENTRY_COMPLETE`),
+ * so in practice a shortfall is always a lineup with too few picks. The per-tier check still
+ * runs on its own, because a pick on a golfer later moved out of every tier counts towards the
+ * roster but fills no tier.
+ */
+export function findLineupShortfall(input: {
+  selectionType: Contest['selectionType'];
+  rosterSize: number;
+  tiers: readonly DraftTierConfig[];
+  /** The entry's picks, each with the canonical participant it points at. */
+  picks: readonly { participantId: string }[];
+}): LineupShortfall | null {
+  const { selectionType, rosterSize, tiers, picks } = input;
+  const shortTierNames = selectionType === SelectionType.TIERED
+    ? tiers
+      .filter((tier) => {
+        const tierParticipantIds = new Set(tier.participantIds);
+        const picksInTier = picks.filter((pick) => tierParticipantIds.has(pick.participantId));
+        return picksInTier.length !== tier.picksFromTier;
+      })
+      .map((tier) => tier.tierName)
+    : [];
+
+  if (rosterSize > 0 && picks.length === rosterSize && shortTierNames.length === 0) {
+    return null;
+  }
+  return { pickCount: picks.length, rosterSize, shortTierNames };
 }
 
 /**

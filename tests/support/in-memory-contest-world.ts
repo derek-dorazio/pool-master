@@ -326,7 +326,7 @@ export class InMemoryContestWorld {
       findByContestWithSquad: async (contestId, options) =>
         [...this.entries.values()]
           .filter((entry) =>
-            entry.contestId === contestId && (!options?.activeOnly || entry.status === 'ACTIVE'))
+            entry.contestId === contestId && (!options?.submittedOnly || entry.status === 'SUBMITTED'))
           .sort((left, right) => this.byEntryOrder(left, right))
           .map((entry) => this.withSquad(entry)),
       findBySquad: async (squadId) =>

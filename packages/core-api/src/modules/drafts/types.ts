@@ -8,6 +8,7 @@ import type {
   Contest,
   ContestConfiguration,
   ContestEntry,
+  ContestEntryStatus,
   DraftStatus,
   SquadMembership,
 } from '@poolmaster/shared/domain';
@@ -83,12 +84,13 @@ export interface DraftPick {
   pickedAt: Date;
 }
 
-/** An entry in the room, with the user who owns it and how many picks it holds. */
+/** An entry in the room, with the user who owns it, how many picks it holds, and its status. */
 export interface DraftRoomEntry {
   id: string;
   userId: string;
   name: string;
   pickCount: number;
+  status: ContestEntryStatus;
 }
 
 /** One pick as the room's history shows it, with its round placement resolved. */
@@ -161,6 +163,16 @@ export type TieredPlacement =
   | { kind: 'place'; draftRound: number }
   | { kind: 'replace'; draftRound: number; replacedPickId: string }
   | { kind: 'entry-complete' };
+
+/**
+ * Why a lineup cannot be submitted yet (#481): how many picks it holds against the roster, and
+ * which tiers are short of their picks (empty for a budget-pick roster, which has no tiers).
+ */
+export interface LineupShortfall {
+  pickCount: number;
+  rosterSize: number;
+  shortTierNames: string[];
+}
 
 /**
  * What submitting a selection did. `toggled-off` removed a pick and inserted nothing;

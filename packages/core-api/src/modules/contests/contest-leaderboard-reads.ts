@@ -72,12 +72,12 @@ export async function loadContestScoringConfiguration(
   };
 }
 
-/** The contest's ACTIVE entries in entry order, each with its picks in pick order. */
+/** The contest's SUBMITTED entries in entry order, each with its picks in pick order. */
 export async function loadContestLeaderboardEntries(
   deps: Pick<ContestLeaderboardReadDeps, 'entries' | 'picks'>,
   contestId: string,
 ): Promise<ContestLeaderboardEntryInput[]> {
-  const entries = await deps.entries.findByContestWithSquad(contestId, { activeOnly: true });
+  const entries = await deps.entries.findByContestWithSquad(contestId, { submittedOnly: true });
   const picks = await deps.picks.findByEntries(entries.map((entry) => entry.id));
   const picksByEntry = new Map<string, ContestLeaderboardEntryInput['picks']>();
   for (const pick of picks) {

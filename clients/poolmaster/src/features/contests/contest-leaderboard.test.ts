@@ -240,7 +240,7 @@ describe('buildLeaderboardView', () => {
       entryNumber: 1,
       squadId: 'squad-1',
       squadName: 'Birdie Hunters',
-      status: 'ACTIVE' as const,
+      status: 'SUBMITTED' as const,
       position: 1,
       displayPosition: '1',
       countingPickLimit: 2,

@@ -26,6 +26,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import {
+  ContestEntryStatus,
   ContestStatus,
   DraftStatus,
   LeagueMembershipStatus,
@@ -56,6 +57,7 @@ import {
   buildSelectionParticipants,
   buildTierByParticipantId,
   buildValuationLookup,
+  findLineupShortfall,
   findTierByLabel,
   getRosterSize,
   isCommissionerRole,
@@ -69,6 +71,7 @@ import type {
   DraftRoomPick,
   DraftRoomView,
   DraftSelectionGroup,
+  LineupShortfall,
   SubmitSelectionResult,
 } from './types';
 
@@ -113,6 +116,12 @@ export interface SubmitSelectionInput {
   entryId: string;
   /** A `SportEventParticipant` id — the field row, not the canonical participant. */
   participantId: string;
+  actorUserId?: string;
+}
+
+export interface SubmitEntryInput {
+  contestId: string;
+  entryId: string;
   actorUserId?: string;
 }
 
@@ -228,9 +237,10 @@ export class DraftService {
         },
         'Unselected a participant already on the entry',
       );
+      const toggledContext = await this.returnToDraftIfShort(context, requestedEntry, rosterSize);
       return {
         outcome: 'toggled-off',
-        view: await this.buildRoomView({ context, selectedEntryId: entryId, actorUserId }),
+        view: await this.buildRoomView({ context: toggledContext, selectedEntryId: entryId, actorUserId }),
       };
     }
     if (!selectionParticipant.isAvailable) {
@@ -304,10 +314,115 @@ export class DraftService {
       replacedPickId ? 'Replaced a pick in a full tier' : 'Placed a selection',
     );
 
+    const placedContext = await this.returnToDraftIfShort(context, requestedEntry, rosterSize);
     return {
       outcome: 'placed',
-      view: await this.buildRoomView({ context, selectedEntryId: entryId, actorUserId }),
+      view: await this.buildRoomView({ context: placedContext, selectedEntryId: entryId, actorUserId }),
     };
+  }
+
+  /**
+   * Submit an entry (#481): its owner declares the lineup final, and from then on it counts on
+   * the leaderboard, in standings and at settlement. Refused unless the lineup is complete.
+   *
+   * The guards are `submitSelection`'s, in the same order, because they protect the same thing:
+   * an unknown entry answers 404 before an unauthenticated caller 401, then ownership, the
+   * selection type, and the window picks change in. Submitting an entry that is already
+   * submitted changes nothing and answers with the room.
+   */
+  async submitEntry(input: SubmitEntryInput): Promise<DraftRoomView> {
+    const { contestId, entryId, actorUserId } = input;
+    const context = await this.loadContext(contestId);
+
+    const entry = context.entries.find((candidate) => candidate.id === entryId);
+    if (!entry) throw draftErrors.entryNotFound(entryId, contestId);
+
+    if (!actorUserId) throw draftErrors.authSessionRequired();
+
+    const ownsEntry = context.squadMemberships.some(
+      (membership) => membership.squadId === entry.squadId && membership.userId === actorUserId,
+    );
+    if (!ownsEntry) throw draftErrors.entryAccessDenied();
+
+    if (!isRosterSelectionType(context.contest.selectionType)) {
+      throw draftErrors.draftModeUnsupportedForSubmission(context.contest.selectionType);
+    }
+
+    if (!context.acceptsPicks) {
+      this.deps.logger?.warn(
+        { action: 'draft.submitEntry.locked', data: { contestId, entryId, status: context.contest.status } },
+        'Refused to submit an entry on a contest that no longer takes picks',
+      );
+      throw context.contest.status === ContestStatus.OPEN
+        ? draftErrors.submitLockedByEventStart(contestId)
+        : draftErrors.submitLocked(contestId, context.contest.status);
+    }
+
+    if (entry.status === ContestEntryStatus.INACTIVE) throw draftErrors.entryInactive(entryId);
+
+    const rosterSize = getRosterSize(context.contest.selectionType, context.configuration, context.tiers);
+    if (rosterSize <= 0) throw draftErrors.selectionConfigInvalid(contestId);
+
+    const shortfall = await this.findEntryShortfall(context, entryId, rosterSize);
+    if (shortfall) {
+      this.deps.logger?.warn(
+        { action: 'draft.submitEntry.incomplete', data: { contestId, entryId, ...shortfall } },
+        'Refused to submit an entry with an incomplete lineup',
+      );
+      throw draftErrors.lineupIncomplete(entryId, shortfall);
+    }
+
+    let submittedContext = context;
+    if (entry.status !== ContestEntryStatus.SUBMITTED) {
+      const submitted = await this.deps.entries.update(entryId, { status: ContestEntryStatus.SUBMITTED });
+      submittedContext = withEntry(context, submitted);
+      this.deps.logger?.info(
+        { action: 'draft.submitEntry.submitted', data: { contestId, entryId } },
+        'Submitted a contest entry',
+      );
+    }
+
+    return this.buildRoomView({ context: submittedContext, selectedEntryId: entryId, actorUserId });
+  }
+
+  /** The entry's lineup shortfall as of now, read fresh so it sees the latest pick write. */
+  private async findEntryShortfall(
+    context: DraftContext,
+    entryId: string,
+    rosterSize: number,
+  ): Promise<LineupShortfall | null> {
+    const picks = await this.deps.picks.findByEntriesWithParticipant([entryId]);
+    return findLineupShortfall({
+      selectionType: context.contest.selectionType,
+      rosterSize,
+      tiers: context.tiers,
+      picks: picks.map((pick) => ({ participantId: pick.participant.participantId })),
+    });
+  }
+
+  /**
+   * After a pick change on a submitted entry: a lineup left short goes back to DRAFT (#481), so
+   * it stops counting until its owner fills it and submits again. A swap within a full tier
+   * keeps the lineup complete and the entry submitted.
+   */
+  private async returnToDraftIfShort(
+    context: DraftContext,
+    entry: ContestEntry,
+    rosterSize: number,
+  ): Promise<DraftContext> {
+    if (entry.status !== ContestEntryStatus.SUBMITTED) return context;
+    const shortfall = await this.findEntryShortfall(context, entry.id, rosterSize);
+    if (!shortfall) return context;
+
+    const reverted = await this.deps.entries.update(entry.id, { status: ContestEntryStatus.DRAFT });
+    this.deps.logger?.info(
+      {
+        action: 'draft.submitSelection.returnedToDraft',
+        data: { contestId: context.contest.id, entryId: entry.id, ...shortfall },
+      },
+      'A pick change left a submitted lineup short; the entry is a draft again',
+    );
+    return withEntry(context, reverted);
   }
 
   /** A DRAFT contest is its league's active commissioners' alone, and root admins' (#117). */
@@ -427,6 +542,7 @@ export class DraftService {
       userId: entryUserIdMap.get(entry.id) ?? '',
       name: entry.name,
       pickCount: picksByEntry.get(entry.id)?.length ?? 0,
+      status: entry.status,
     }));
 
     const myEntryId = entries.find((entry) => actorEntryIds.has(entry.id))?.id ?? null;
@@ -598,6 +714,14 @@ function toPlacementPick(pick: ContestEntryPickWithParticipant): {
   participantId: string;
 } {
   return { id: pick.id, participantId: pick.participant.participantId };
+}
+
+/** The context with one entry replaced by its freshly written row. */
+function withEntry(context: DraftContext, updated: ContestEntry): DraftContext {
+  return {
+    ...context,
+    entries: context.entries.map((entry) => (entry.id === updated.id ? updated : entry)),
+  };
 }
 
 function entryNameById(entries: readonly DraftRoomEntry[], entryId: string | null): string | null {
