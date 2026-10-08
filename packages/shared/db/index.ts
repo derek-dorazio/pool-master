@@ -55,7 +55,6 @@ export type {
   ParticipantRanking,
   PriceAssignment,
   SportEventCreate,
-  SportEventFieldRecordCounts,
   SportEventFilters,
   SportEventParticipantCreate,
   SportEventParticipantFieldUpdate,

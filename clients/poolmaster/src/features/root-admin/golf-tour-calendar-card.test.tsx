@@ -202,3 +202,91 @@ describe('plans/147 GolfTourCalendarCard', () => {
       .toBeInTheDocument();
   });
 });
+
+describe('GolfTourCalendarCard year actions: plural import, a tour without a keyword, and closing dialogs', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    mockLogger.child.mockReturnValue(mockLogger);
+  });
+
+  async function openImport() {
+    await screen.findByTestId('root-admin-golf-tour-tournament-row-masters-2026');
+    await waitFor(() => expect(screen.getByTestId('root-admin-golf-tour-calendar-import')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('root-admin-golf-tour-calendar-import'));
+  }
+
+  it('counts several created tournaments in the plural', async () => {
+    importEventYearFromProviderMock.mockResolvedValue({
+      data: {
+        created: [
+          sportEventFixture({ id: 'alpha-2026', eventYear: 2026, sportLeagueId: 'pga' }),
+          sportEventFixture({ id: 'beta-2026', eventYear: 2026, sportLeagueId: 'pga' }),
+        ],
+        skipped: [],
+      },
+    });
+    renderCard();
+
+    await openImport();
+    await userEvent.click(screen.getByTestId('root-admin-golf-tour-calendar-import-confirm'));
+
+    expect(await screen.findByTestId('root-admin-golf-tour-calendar-import-result'))
+      .toHaveTextContent('Created 2 tournaments; skipped 0 already here.');
+  });
+
+  it('names an empty keyword when a tour without a match keyword imports nothing', async () => {
+    importEventYearFromProviderMock.mockResolvedValue({ data: { created: [], skipped: [] } });
+    renderCard(sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: 2026, matchKeyword: null }));
+
+    await openImport();
+    await userEvent.click(screen.getByTestId('root-admin-golf-tour-calendar-import-confirm'));
+
+    expect(await screen.findByTestId('root-admin-golf-tour-calendar-import-result'))
+      .toHaveTextContent('The provider lists no 2026 tournaments for the tour “”.');
+  });
+
+  it('closes the import confirmation from its close button without importing', async () => {
+    renderCard();
+
+    await openImport();
+    const modal = screen.getByTestId('root-admin-golf-tour-calendar-import-modal');
+    await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+
+    await waitFor(() =>
+      expect(screen.queryByTestId('root-admin-golf-tour-calendar-import-modal')).not.toBeInTheDocument(),
+    );
+    expect(importEventYearFromProviderMock).not.toHaveBeenCalled();
+  });
+
+  it('closes the set-current confirmation from its close button without updating the tour', async () => {
+    renderCard();
+    await screen.findByTestId('root-admin-golf-tour-tournament-row-masters-2026');
+
+    await userEvent.selectOptions(screen.getByTestId('root-admin-golf-tour-calendar-year'), '2025');
+    await userEvent.click(screen.getByTestId('root-admin-golf-tour-calendar-set-current'));
+    const modal = screen.getByTestId('root-admin-golf-tour-calendar-set-current-modal');
+    expect(modal).toHaveTextContent('2025 becomes PGA Tour’s current year, replacing 2026.');
+    await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+
+    await waitFor(() =>
+      expect(screen.queryByTestId('root-admin-golf-tour-calendar-set-current-modal')).not.toBeInTheDocument(),
+    );
+    expect(updateSportLeagueMock).not.toHaveBeenCalled();
+  });
+
+  it('describes a one-tournament clone in the singular and closes from its close button without cloning', async () => {
+    renderCard();
+    await screen.findByTestId('root-admin-golf-tour-tournament-row-masters-2026');
+
+    await userEvent.selectOptions(screen.getByTestId('root-admin-golf-tour-calendar-year'), '2025');
+    await userEvent.click(screen.getByTestId('root-admin-golf-tour-calendar-clone'));
+    const modal = screen.getByTestId('root-admin-golf-tour-calendar-clone-modal');
+    expect(within(modal).getByText(/^1 tournament will be copied to 2026/)).toBeInTheDocument();
+    await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+
+    await waitFor(() =>
+      expect(screen.queryByTestId('root-admin-golf-tour-calendar-clone-modal')).not.toBeInTheDocument(),
+    );
+    expect(cloneEventYearMock).not.toHaveBeenCalled();
+  });
+});

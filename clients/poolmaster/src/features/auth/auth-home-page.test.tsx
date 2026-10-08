@@ -122,6 +122,7 @@ function renderAuthHomePage(
           <Route element={<AuthHomePage />} path="/" />
           <Route element={<div data-testid="welcome-destination" />} path="/welcome" />
           <Route element={<div data-testid="manage-destination" />} path="/manage" />
+          <Route element={<div data-testid="my-account-destination" />} path="/my-account" />
           <Route element={<div data-testid="invite-destination" />} path="/invite/:inviteCode" />
         </Routes>
       </MemoryRouter>
@@ -180,6 +181,26 @@ describe('AuthHomePage', () => {
       }),
       expect.any(String),
     );
+  });
+
+  it('sends an inactive account to its own account page after login, even with another destination requested', async () => {
+    loginUserMock.mockResolvedValue({
+      data: {
+        user: createUser({ isActive: false }),
+      },
+    });
+
+    renderAuthHomePage({ pathname: '/', state: { from: '/league/ABC123' } });
+
+    fireEvent.change(screen.getByTestId('auth-login-identifier'), {
+      target: { value: 'derek@example.com' },
+    });
+    fireEvent.change(screen.getByTestId('auth-login-password'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.click(screen.getByTestId('auth-login-submit'));
+
+    expect(await screen.findByTestId('my-account-destination')).toBeInTheDocument();
   });
 
   it('redirects root admins to /manage after login when there is no explicit destination', async () => {

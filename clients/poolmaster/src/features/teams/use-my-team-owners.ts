@@ -15,15 +15,26 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
  * results outlive the owners modal closing.
  */
 export function useMyTeamOwners({
+  leagueCode,
   leagueId,
   selectedTeam,
 }: {
+  leagueCode: string;
   leagueId: string;
   selectedTeam: SquadDto | null;
 }) {
   const [coOwnerEmail, setCoOwnerEmail] = useState('');
   const [replaceTargetUserId, setReplaceTargetUserId] = useState<string | null>(null);
   const [replaceEmail, setReplaceEmail] = useState('');
+
+  // Both writes below can change who is in the league, which the member list and the league
+  // context (its member count) show.
+  const ownerChangeKeys = [
+    QueryKeys.leagues.detail(leagueCode),
+    QueryKeys.leagues.members(leagueId),
+    QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
+    QueryKeys.leagueTeams.byLeague(leagueId),
+  ];
 
   const createOwnerInvitationMutation = useInvalidatingMutation({
     mutationFn: async (email: string) => {
@@ -46,10 +57,8 @@ export function useMyTeamOwners({
     onSuccess: () => {
       setCoOwnerEmail('');
     },
-    invalidates: [
-      QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
-      QueryKeys.leagueTeams.byLeague(leagueId),
-    ],
+    // An invitee who already has an account joins the league at once.
+    invalidates: ownerChangeKeys,
   });
 
   const replaceOwnerMutation = useInvalidatingMutation({
@@ -74,10 +83,8 @@ export function useMyTeamOwners({
       setReplaceTargetUserId(null);
       setReplaceEmail('');
     },
-    invalidates: [
-      QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
-      QueryKeys.leagueTeams.byLeague(leagueId),
-    ],
+    // The replaced owner leaves the league.
+    invalidates: ownerChangeKeys,
   });
 
   const revokeOwnerInvitationMutation = useInvalidatingMutation({

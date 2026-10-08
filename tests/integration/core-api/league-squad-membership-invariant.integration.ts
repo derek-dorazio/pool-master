@@ -237,9 +237,14 @@ describe('League/squad membership invariant', () => {
   });
 
   it('holds after a squad is inactivated, which ends every owner\'s league membership', async () => {
+    // The member's team, not the commissioner's: the league's only commissioner may not
+    // inactivate their own team, since that would leave nobody to run the league.
+    const memberSquadId = (
+      await getPrisma().squadMembership.findFirstOrThrow({ where: { leagueId, userId: memberUserId } })
+    ).squadId;
     const inactivateRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.squads.inactivate(leagueId, commissionerSquadId),
+      url: API_ROUTES.squads.inactivate(leagueId, memberSquadId),
       headers: withoutJsonBodyHeaders(commissionerHeaders),
     });
     expect(inactivateRes.statusCode).toBe(200);

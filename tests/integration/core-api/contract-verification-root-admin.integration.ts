@@ -3,7 +3,6 @@ import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import {
   UserResetPasswordResponseSchema,
-  ProviderEventCleanupResponseSchema,
   ContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
   IngestionScheduleConfigSchema,
@@ -43,7 +42,6 @@ import type {
   ParticipantProviderMappingResponse,
   PollIntervalConfig,
   ProviderCatalogEventListResponse,
-  ProviderEventCleanupResponse,
   ProviderListResponse,
   ProviderManualSyncSubmissionResponse,
   ProviderSyncRunListResponse,
@@ -836,16 +834,14 @@ describe('Contract verification (root admin)', () => {
       });
       expect(sportSyncRes.statusCode).toBe(404);
 
-      const cleanupDryRunRes = await app.inject({
+      // ADR-0009 — the stale provider event cleanup is retired with the sync that made stale events.
+      const cleanupRes = await app.inject({
         method: 'POST',
         url: '/api/v1/ingestion/stale-events/cleanup',
         headers: rootAdmin.headers,
         payload: { mode: 'DRY_RUN' },
       });
-      expect(cleanupDryRunRes.statusCode).toBe(200);
-      expect(ProviderEventCleanupResponseSchema.safeParse(cleanupDryRunRes.json()).success).toBe(true);
-      expect(cleanupDryRunRes.json<ProviderEventCleanupResponse>().mode).toBe('DRY_RUN');
-      expect(cleanupDryRunRes.json<ProviderEventCleanupResponse>().executed).toBe(false);
+      expect(cleanupRes.statusCode).toBe(404);
     } finally {
       await app.close();
     }
@@ -1511,10 +1507,10 @@ describe('Contract verification (root admin)', () => {
       expect(tournamentRes.json<SportEventResponse>().event.syncScope).toBe('NONE');
 
       // --- linkEventScoreSource (200) ------------------------------------------
-      // A shape test: linkScoreSource only guards against an externalId already
-      // held by another SportEvent (409 EXTERNAL_EVENT_ALREADY_LINKED), not
-      // against provider-event existence — so a synthetic externalId links fine.
-      const linkRes = await getApp().inject({
+      // A shape test: linkScoreSource checks the provider is registered for the event's
+      // sport, so the link goes through the app that registers contract-provider. It does
+      // not check the provider event exists, so a synthetic externalId links fine.
+      const linkRes = await app.inject({
         method: 'PUT',
         url: `/api/v1/events/${eventId}/score-source`,
         headers: rootAdmin.headers,

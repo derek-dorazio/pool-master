@@ -15,7 +15,6 @@ import type {
   ParticipantRanking,
   PriceAssignment,
   SportEventCreate,
-  SportEventFieldRecordCounts,
   SportEventFilters,
   SportEventParticipantCreate,
   SportEventParticipantFieldUpdate,
@@ -356,29 +355,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
       activeEventCount: activeCounts.get(id) ?? 0,
       lastChangedAt: lastChanged.get(id) ?? null,
     }]));
-  }
-
-  async countFieldRecords(sportEventIds: readonly string[]): Promise<Map<string, SportEventFieldRecordCounts>> {
-    const participants = await this.prisma.sportEventParticipant.findMany({
-      where: { sportEventId: { in: [...sportEventIds] } },
-      select: {
-        sportEventId: true,
-        valuation: { select: { id: true } },
-        _count: { select: { picks: true, rounds: true } },
-      },
-    });
-    const counts = new Map<string, SportEventFieldRecordCounts>(
-      sportEventIds.map((id) => [id, { valuations: 0, rounds: 0, picks: 0 }]),
-    );
-    for (const participant of participants) {
-      const eventCounts = counts.get(participant.sportEventId);
-      if (!eventCounts) continue;
-      // valuation is 1:1 with the participant, so this counts participants that have one.
-      if (participant.valuation) eventCounts.valuations += 1;
-      eventCounts.rounds += participant._count.rounds;
-      eventCounts.picks += participant._count.picks;
-    }
-    return counts;
   }
 
   async findAutoLifecycleCandidates(): Promise<SportEvent[]> {

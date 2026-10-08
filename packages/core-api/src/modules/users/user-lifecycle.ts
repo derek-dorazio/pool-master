@@ -65,10 +65,17 @@ export function hasUserDeleteDependencies(counts: UserDeleteDependencyCounts): b
  * disabling a user and leaving their sessions live is the failure this prevents.
  *
  * Returns how many were revoked, which the force-logout operation reports back.
+ *
+ * `keepToken` spares one refresh token: the caller's own, when they inactivate themselves and
+ * stay signed in to reactivate (A9).
  */
-export async function revokeUserSessions(prisma: PrismaLike, userId: string): Promise<number> {
+export async function revokeUserSessions(
+  prisma: PrismaLike,
+  userId: string,
+  keepToken?: string | null,
+): Promise<number> {
   const result = await prisma.refreshToken.updateMany({
-    where: { userId, revokedAt: null },
+    where: { userId, revokedAt: null, ...(keepToken ? { NOT: { token: keepToken } } : {}) },
     data: { revokedAt: new Date() },
   });
   return result.count;
@@ -91,9 +98,12 @@ export async function deleteUserCascade(tx: Prisma.TransactionClient, userId: st
 }
 
 /**
- * True when this user is the only root admin left.
+ * True when no OTHER active root admin would be left to administer the platform.
  *
- * The guard exists so the platform cannot be left with nobody able to administer it. It was
+ * The guard keeps at least one active root admin, so administering the platform never depends
+ * on someone first reactivating an account. Only active root admins count; the user under test is
+ * subtracted when they are themselves active, so the question is the same for disabling or
+ * demoting an active admin and for deleting an inactive one. It was
  * written inline three times in `admin/user-service.ts` — on disable, on demotion and on
  * delete — as `prisma.user.count({ where: { isRootAdmin: true } })`, and a fourth time here
  * for the self-service path, which re-read the user to get `isRootAdmin`.
@@ -104,10 +114,11 @@ export async function deleteUserCascade(tx: Prisma.TransactionClient, userId: st
  */
 export async function isLastRootAdmin(
   users: UserRepository,
-  user: Pick<User, 'isRootAdmin'>,
+  user: Pick<User, 'isRootAdmin' | 'isActive'>,
 ): Promise<boolean> {
   if (user.isRootAdmin !== true) {
     return false;
   }
-  return (await users.countRootAdmins()) <= 1;
+  const otherActiveRootAdmins = (await users.countActiveRootAdmins()) - (user.isActive ? 1 : 0);
+  return otherActiveRootAdmins < 1;
 }

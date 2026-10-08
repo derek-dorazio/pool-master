@@ -4,9 +4,6 @@
  * module's field refresh (plans/124 §4.4a), so there is one transform, not two.
  */
 import type {
-  ProviderEventCleanupGroupDto,
-  ProviderEventCleanupResponse,
-  ProviderEventCleanupRowDto,
   ProviderEventDto,
   ProviderManualSyncSubmissionResponse,
   ProviderSummaryDto,
@@ -16,9 +13,6 @@ import type {
 import type { ProviderSyncRun } from '@poolmaster/shared/domain';
 import type { SportEvent as ProviderEvent } from '../modules/ingestion/core/provider-interface';
 import type {
-  ProviderEventCleanupGroup,
-  ProviderEventCleanupResult,
-  ProviderEventCleanupRow,
   ProviderManualSyncSubmissionResult,
   ProviderSummary,
   UnmappedParticipant,
@@ -89,46 +83,5 @@ export function toProviderEventDto(event: ProviderEvent): ProviderEventDto {
     participantCount: event.participantCount ?? null,
     fieldLocked: event.fieldLocked,
     metadata: event.metadata,
-  };
-}
-
-export function mapProviderEventCleanupResultToDto(
-  result: ProviderEventCleanupResult,
-): ProviderEventCleanupResponse {
-  return {
-    mode: result.mode,
-    executed: result.executed,
-    inventoriedAt: result.inventoriedAt.toISOString(),
-    summary: { ...result.summary },
-    bySport: result.bySport.map(mapCleanupGroupToDto),
-    byProvider: result.byProvider.map(mapCleanupGroupToDto),
-    byStatus: result.byStatus.map(mapCleanupGroupToDto),
-    events: result.events.map(mapCleanupRowToDto),
-  };
-}
-
-function mapCleanupGroupToDto(group: ProviderEventCleanupGroup): ProviderEventCleanupGroupDto {
-  return { ...group };
-}
-
-function mapCleanupRowToDto(row: ProviderEventCleanupRow): ProviderEventCleanupRowDto {
-  return {
-    id: row.id,
-    providerId: row.providerId,
-    externalId: row.externalId,
-    sport: row.sport,
-    name: row.name,
-    status: row.status,
-    startDate: row.startDate.toISOString(),
-    endDate: row.endDate?.toISOString() ?? null,
-    staleReason: row.staleReason,
-    deletable: row.deletable,
-    deleted: row.deleted,
-    blockedReasons: row.blockedReasons,
-    directContestCount: row.directContestCount,
-    sportEventParticipantCount: row.sportEventParticipantCount,
-    valuationCount: row.valuationCount,
-    roundCount: row.roundCount,
-    pickCount: row.pickCount,
   };
 }

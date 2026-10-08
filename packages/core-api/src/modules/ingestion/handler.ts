@@ -8,7 +8,6 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import type {
   ProviderCatalogEventListQuery,
-  ProviderEventCleanupRequest,
   ProviderSyncRunListQuery,
 } from '@poolmaster/shared/dto';
 import type { IngestionService } from './ingestion-service';
@@ -25,7 +24,6 @@ import { EventScoreSourceError } from '../events/event-score-source-service';
 import { sendError } from '../../core/error-handler';
 import { requireAuthUser } from '../../plugins/auth-guard';
 import {
-  mapProviderEventCleanupResultToDto,
   toProviderEventDto,
   toProviderManualSyncSubmissionResponse,
   toProviderSummaryDto,
@@ -42,7 +40,6 @@ export function createIngestionHandlers(
     listSyncRuns,
     submitEventSync,
     listUnmappedParticipants,
-    cleanupStaleProviderEvents,
     listProviderCatalogEvents,
   };
 
@@ -145,22 +142,6 @@ export function createIngestionHandlers(
     const unmapped = await ingestionService.getUnmappedParticipants();
     logger.info({ count: unmapped.length }, 'Listed unmapped provider participants');
     return reply.send({ participants: unmapped.map(toUnmappedProviderParticipantDto) });
-  }
-
-  async function cleanupStaleProviderEvents(
-    request: FastifyRequest<{ Body: ProviderEventCleanupRequest }>,
-    reply: FastifyReply,
-  ) {
-    const logger = request.contextLogger ?? request.log;
-    logger.debug({ mode: request.body.mode }, 'Running stale provider event cleanup');
-    const result = await ingestionService.cleanupStaleProviderEvents(request.body.mode);
-    logger.info({
-      mode: result.mode,
-      inventoriedEventCount: result.summary.inventoriedEventCount,
-      deletableEventCount: result.summary.deletableEventCount,
-      deletedEventCount: result.summary.deletedEventCount,
-    }, 'Ran stale provider event cleanup');
-    return reply.send(mapProviderEventCleanupResultToDto(result));
   }
 
   // --- Provider catalog browse (plans/124 §3.4/§4.4/§5.1) ---

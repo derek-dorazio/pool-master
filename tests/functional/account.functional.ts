@@ -115,7 +115,7 @@ describe('SDK Functional: Account Lifecycle', () => {
     expect(loginWithNewPassword.data?.user.lastName).toBe('Person');
   });
 
-  it('inactivates an account, blocks new auth, and permanently deletes it with exact email confirmation', async () => {
+  it('inactivates an account, still signs it in as inactive, and permanently deletes it with exact email confirmation', async () => {
     const user = await buildRegisteredUser({
       displayName: 'Account Lifecycle User',
     });
@@ -136,6 +136,8 @@ describe('SDK Functional: Account Lifecycle', () => {
 
     expect(currentUserResponse.data?.user.isActive).toBe(false);
 
+    // A9: an inactive account still signs in, because reactivating or deleting it needs a
+    // session. The session that inactivated it is kept too.
     const loginResponse = await loginUser({
       client: getSdkClient(),
       body: {
@@ -144,19 +146,13 @@ describe('SDK Functional: Account Lifecycle', () => {
       },
     });
 
-    expectFunctionalError(loginResponse, {
-      status: 403,
-      code: 'ACCOUNT_INACTIVE',
-    });
+    expect(loginResponse.data?.user.isActive).toBe(false);
 
     const refreshResponse = await refreshToken({
       client: cookieClient,
     });
 
-    expectFunctionalError(refreshResponse, {
-      status: 401,
-      code: 'INVALID_REFRESH_TOKEN',
-    });
+    expect(refreshResponse.data?.accessToken).toBeTruthy();
 
     const wrongDeleteResponse = await deleteUser({
       client: user.client,

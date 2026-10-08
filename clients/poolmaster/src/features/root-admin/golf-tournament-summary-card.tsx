@@ -52,9 +52,7 @@ function toRequestBody(values: EditFormValues): UpdateSportEventRequest {
     venue: values.venue?.trim() || null,
     location: values.location?.trim() || null,
     startDate: localDateTimeInputToIso(values.startDate) ?? values.startDate,
-    ...(localDateTimeInputToIso(values.endDate)
-      ? { endDate: localDateTimeInputToIso(values.endDate) }
-      : {}),
+    endDate: localDateTimeInputToIso(values.endDate) ?? null,
     rounds: values.rounds,
   };
 }

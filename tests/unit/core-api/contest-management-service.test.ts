@@ -1151,4 +1151,179 @@ describe('ContestManagementService', () => {
     )).rejects.toMatchObject({ code, message });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
+
+  describe('refusals and legacy rows', () => {
+    const EVENT_ID = '11111111-1111-1111-1111-111111111111';
+    const CREATE: CreateContestRequest = {
+      name: 'Masters Pool',
+      sportEventId: EVENT_ID,
+      contestFormat: 'ROSTER',
+      selectionType: 'TIERED',
+      configuration: { maxEntriesPerSquad: 1, rosterSize: 6, countedScores: 4 },
+    };
+
+    function build(options: {
+      reader?: ReturnType<typeof createSportEventReader> | undefined;
+      contestRepo?: ContestRepository;
+      configurationRepo?: ContestConfigurationRepository;
+      templateRepo?: ContestConfigTemplateRepository;
+    } = {}) {
+      const contestRepo = options.contestRepo ?? createContestRepo();
+      const configurationRepo = options.configurationRepo ?? createContestConfigurationRepo();
+      const service = new ContestManagementService(
+        contestRepo,
+        options.templateRepo ?? createContestConfigTemplateRepo(),
+        configurationRepo,
+        createParticipantScoringRuleRepo(),
+        createSportEventTierServiceStub(),
+        undefined,
+        'reader' in options ? options.reader : createSportEventReader(),
+        () => CONTEST_MANAGEMENT_TEST_NOW,
+      );
+      return { service, contestRepo, configurationRepo };
+    }
+
+    it('refuses creating on an event an admin has not released, with SPORT_EVENT_NOT_RELEASED and no contest stored', async () => {
+      const { service, contestRepo } = build({ reader: createSportEventReader({ status: SportEventStatus.DRAFT }) });
+
+      await expect(service.createContest({ leagueId: 'league-1' }, CREATE))
+        .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_RELEASED' });
+      expect(contestRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses creating on an event that has already started, with SPORT_EVENT_ALREADY_STARTED', async () => {
+      const { service, contestRepo } = build({
+        reader: createSportEventReader({ startDate: new Date('2026-04-23T08:00:00.000Z') }),
+      });
+
+      await expect(service.createContest({ leagueId: 'league-1' }, CREATE))
+        .rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED' });
+      expect(contestRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses creating on an unknown event with 404 SPORT_EVENT_NOT_FOUND', async () => {
+      const reader = createSportEventReader();
+      reader.findById.mockResolvedValue(null);
+      const { service } = build({ reader });
+
+      await expect(service.createContest({ leagueId: 'league-1' }, CREATE))
+        .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_FOUND', statusCode: 404 });
+    });
+
+    it('refuses an inactive template as not found', async () => {
+      const templateRepo = createContestConfigTemplateRepo();
+      const template = await templateRepo.findById('any');
+      (templateRepo.findById as jest.Mock).mockResolvedValue({ ...template, active: false });
+      const { service, contestRepo } = build({ templateRepo });
+
+      await expect(service.createContest({ leagueId: 'league-1' }, { ...CREATE, templateId: template!.id }))
+        .rejects.toThrow('Contest configuration template not found');
+      expect(contestRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses a template made for another contest format', async () => {
+      const templateRepo = createContestConfigTemplateRepo();
+      const template = await templateRepo.findById('any');
+      (templateRepo.findById as jest.Mock).mockResolvedValue({ ...template, contestFormat: ContestFormat.SURVIVOR });
+      const { service } = build({ templateRepo });
+
+      await expect(service.createContest({ leagueId: 'league-1' }, { ...CREATE, templateId: template!.id }))
+        .rejects.toThrow('does not match the requested contest type');
+    });
+
+    it('answers 404 CONTEST_NOT_FOUND reading a contest that does not exist', async () => {
+      const contestRepo = createContestRepo();
+      (contestRepo.findById as jest.Mock).mockResolvedValue(null);
+      const { service } = build({ contestRepo });
+
+      await expect(service.getContest('missing')).rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+    });
+
+    it('refuses a settings change on an open contest with 409 CONTEST_CONFIGURATION_LOCKED and stores nothing', async () => {
+      const contestRepo = createContestRepo();
+      const contest = await contestRepo.findById('contest-1');
+      (contestRepo.findById as jest.Mock).mockResolvedValue({ ...contest, status: ContestStatus.OPEN });
+      const { service, configurationRepo } = build({ contestRepo });
+
+      await expect(service.updateContestConfiguration('contest-1', { maxEntriesPerSquad: 2, rosterSize: 6, countedScores: 3 }))
+        .rejects.toMatchObject({ code: CONTEST_CONFIGURATION_LOCKED, statusCode: 409 });
+      expect(configurationRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('answers 404 CONTEST_NOT_FOUND changing settings of a contest with no configuration or no contest row', async () => {
+      const configurationRepo = createContestConfigurationRepo();
+      (configurationRepo.findByContest as jest.Mock).mockResolvedValueOnce(null);
+      await expect(build({ configurationRepo }).service.updateContestConfiguration('contest-1', CREATE.configuration!))
+        .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND' });
+
+      const contestRepo = createContestRepo();
+      (contestRepo.findById as jest.Mock).mockResolvedValue(null);
+      await expect(build({ contestRepo }).service.updateContestConfiguration('contest-1', CREATE.configuration!))
+        .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND' });
+    });
+
+    it('answers 404 opening a draft whose event is gone, and opens without an event check when no reader is wired', async () => {
+      const reader = createSportEventReader();
+      reader.findById.mockResolvedValue(null);
+      await expect(build({ reader }).service.openContest('league-1', 'contest-1'))
+        .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_FOUND', statusCode: 404 });
+
+      const contestRepo = createContestRepo();
+      (contestRepo.transitionStatus as jest.Mock).mockResolvedValue(true);
+      await expect(build({ contestRepo, reader: undefined }).service.openContest('league-1', 'contest-1'))
+        .resolves.toMatchObject({ id: 'contest-1' });
+    });
+
+    it('answers 404 opening a draft with no configuration', async () => {
+      const configurationRepo = createContestConfigurationRepo();
+      (configurationRepo.findByContest as jest.Mock).mockResolvedValue(null);
+
+      await expect(build({ configurationRepo }).service.openContest('league-1', 'contest-1'))
+        .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+    });
+
+    it('reads a legacy tiered configuration with no typed settings from its roster size, counting at most 4', async () => {
+      const configurationRepo = createContestConfigurationRepo();
+      const stored = await configurationRepo.findByContest('contest-1');
+      (configurationRepo.findByContest as jest.Mock).mockResolvedValue({
+        ...stored,
+        configJson: undefined,
+        rosterSize: 3,
+        maxEntriesPerSquad: null,
+      });
+
+      const detail = await build({ configurationRepo }).service.getContest('contest-1');
+
+      expect(detail.configuration).toMatchObject({ rosterSize: 3, countedScores: 3, maxEntriesPerSquad: null });
+    });
+
+    it('defaults a legacy tiered configuration with no roster size to pick 6, count 4', async () => {
+      const configurationRepo = createContestConfigurationRepo();
+      const stored = await configurationRepo.findByContest('contest-1');
+      (configurationRepo.findByContest as jest.Mock).mockResolvedValue({
+        ...stored,
+        configJson: undefined,
+        rosterSize: undefined,
+        pickCount: undefined,
+      });
+
+      const detail = await build({ configurationRepo }).service.getContest('contest-1');
+
+      expect(detail.configuration).toMatchObject({ rosterSize: 6, countedScores: 4 });
+    });
+
+    it('refuses to read a legacy non-tiered configuration with no typed settings', async () => {
+      const configurationRepo = createContestConfigurationRepo();
+      const stored = await configurationRepo.findByContest('contest-1');
+      (configurationRepo.findByContest as jest.Mock).mockResolvedValue({
+        ...stored,
+        configJson: undefined,
+        selectionType: SelectionType.BUDGET_PICK,
+      });
+
+      await expect(build({ configurationRepo }).service.getContest('contest-1'))
+        .rejects.toThrow('missing typed golf contest data');
+    });
+  });
 });
+

@@ -287,20 +287,17 @@ export function LeagueDetailPage() {
     }
   }
 
-  async function handleLeaveCompletionAcknowledge() {
+  function handleLeaveCompletionAcknowledge() {
     const remainingLeagues = queryClient.getQueryData<LeagueListCache>(QueryKeys.leagues.list)?.leagues ?? [];
-    const nextLeague = remainingLeagues.find((league) => league.isActive) ?? remainingLeagues[0];
+    const nextLeague = remainingLeagues.find((league) => league.isActive);
 
     setActiveDialog(null);
     setLeaveCompleted(false);
 
-    if (nextLeague) {
-      navigate(`/league/${nextLeague.leagueCode}`, { replace: true });
-      return;
-    }
-
-    await auth.clearSession();
-    navigate('/', { replace: true });
+    // With no active league left the viewer is still signed in: welcome either lands them on a
+    // league they can select or shows the zero-league page
+    // (requirements/product-requirements/navigation-and-entry-points.md).
+    navigate(nextLeague ? `/league/${nextLeague.leagueCode}` : '/welcome', { replace: true });
   }
 
   if (leagueQuery.isLoading) {
@@ -441,7 +438,7 @@ export function LeagueDetailPage() {
                       pending: activateLeagueMutation.isPending,
                       pendingLabel: 'Activating...',
                       disabled: activateLeagueMutation.isPending,
-                      onSelect: () => void activateLeagueMutation.mutateAsync(),
+                      onSelect: () => activateLeagueMutation.mutate(),
                       testId: 'league-activate',
                       tone: 'primary',
                       visibleForStatuses: ['Inactive'],
@@ -615,7 +612,7 @@ export function LeagueDetailPage() {
               || detailsDraftLeagueId !== leagueId
             }
             isLoading={updateDetailsMutation.isPending}
-            onClick={() => void updateDetailsMutation.mutateAsync().then(handleCloseDetailsModal)}
+            onClick={() => updateDetailsMutation.mutate(undefined, { onSuccess: handleCloseDetailsModal })}
           >
             {updateDetailsMutation.isPending ? 'Saving...' : 'Save details'}
           </Button>
@@ -634,7 +631,7 @@ export function LeagueDetailPage() {
         )}
         isPending={inactivateLeagueMutation.isPending}
         onCancel={() => setActiveDialog(null)}
-        onConfirm={() => void inactivateLeagueMutation.mutateAsync()}
+        onConfirm={() => inactivateLeagueMutation.mutate()}
         onOpenChange={(open) => {
           if (open) {
             inactivateLeagueMutation.reset();
@@ -678,7 +675,7 @@ export function LeagueDetailPage() {
             <div className="mt-6 flex justify-end">
               <Button
                 data-testid="league-leave-ok"
-                onClick={() => void handleLeaveCompletionAcknowledge()}
+                onClick={handleLeaveCompletionAcknowledge}
               >
                 OK
               </Button>
@@ -719,7 +716,7 @@ export function LeagueDetailPage() {
         isConfirmDisabled={!canDeleteLeague}
         isPending={deleteLeagueMutation.isPending}
         onCancel={handleCloseDeleteModal}
-        onConfirm={() => void deleteLeagueMutation.mutateAsync()}
+        onConfirm={() => deleteLeagueMutation.mutate()}
         onOpenChange={(open) => {
           if (open) {
             setDeleteModalOpen(true);
@@ -775,7 +772,7 @@ export function LeagueDetailPage() {
 
           handleCloseIconModal();
         }}
-        onSave={() => void updateIconMutation.mutateAsync(iconDraftKey)}
+        onSave={() => updateIconMutation.mutate(iconDraftKey)}
         onSelect={setIconDraftKey}
         open={iconModalOpen}
         optionTestIdPrefix="league-icon"

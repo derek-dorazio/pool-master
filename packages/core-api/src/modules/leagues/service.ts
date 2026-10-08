@@ -507,6 +507,9 @@ export class LeagueService {
       await tx.leagueInvitation.deleteMany({
         where: { leagueId },
       });
+      await tx.squadOwnerInvitation.deleteMany({
+        where: { leagueId },
+      });
       await tx.squadMembership.deleteMany({
         where: { leagueId },
       });

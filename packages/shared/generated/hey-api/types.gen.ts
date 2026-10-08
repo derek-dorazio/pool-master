@@ -7378,16 +7378,6 @@ export type UpdateContestEntryRequest = {
 };
 
 /**
- * Request payload for extending a contest end time.
- */
-export type ExtendContestDeadlineRequest = {
-    /**
-     * Replacement contest end timestamp.
-     */
-    newEnd: string;
-};
-
-/**
  * A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields).
  */
 export type ContestDto = {
@@ -9438,281 +9428,6 @@ export type UnmappedProviderParticipantListResponse = {
 };
 
 /**
- * Stale provider event cleanup request.
- */
-export type ProviderEventCleanupRequest = {
-    /**
-     * DRY_RUN inventories stale event rows without deleting. EXECUTE deletes rows that are eligible and not contest-referenced.
-     */
-    mode: 'DRY_RUN' | 'EXECUTE';
-};
-
-/**
- * Single stale provider event cleanup inventory row.
- */
-export type ProviderEventCleanupRowDto = {
-    /**
-     * Internal SportEvent identifier.
-     */
-    id: string;
-    /**
-     * Provider/source associated with the stale event row.
-     */
-    providerId: string;
-    /**
-     * Provider-side event identifier.
-     */
-    externalId: string;
-    /**
-     * Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values.
-     */
-    sport: string;
-    /**
-     * Current persisted event name.
-     */
-    name: string;
-    /**
-     * Current persisted event status.
-     */
-    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-    /**
-     * Persisted event start date.
-     */
-    startDate: string;
-    /**
-     * Persisted event end date, when known.
-     */
-    endDate: string | null;
-    /**
-     * Cleanup rule that selected this stale event for inventory.
-     */
-    staleReason: 'NON_GOLF_EVENT' | 'PAST_GOLF_EVENT';
-    /**
-     * Whether EXECUTE mode will delete this event.
-     */
-    deletable: boolean;
-    /**
-     * Whether this request deleted this event. Always false for dry runs.
-     */
-    deleted: boolean;
-    /**
-     * Contest-related references that protect this event from deletion.
-     */
-    blockedReasons: Array<'DIRECT_CONTEST_REFERENCE' | 'CONTEST_ENTRY_PICK_REFERENCE'>;
-    /**
-     * Number of Contest rows directly pointing at this event.
-     */
-    directContestCount: number;
-    /**
-     * Number of SportEventParticipant rows attached to this event.
-     */
-    sportEventParticipantCount: number;
-    /**
-     * Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event.
-     */
-    valuationCount: number;
-    /**
-     * Number of per-round participant rows (SportEventParticipantRound) attached through this event.
-     */
-    roundCount: number;
-    /**
-     * Number of ContestEntryPick rows referencing participants in this event.
-     */
-    pickCount: number;
-};
-
-/**
- * Stale provider event cleanup result: the inventory, and what an EXECUTE deleted.
- */
-export type ProviderEventCleanupResponse = {
-    /**
-     * Requested cleanup mode.
-     */
-    mode: 'DRY_RUN' | 'EXECUTE';
-    /**
-     * Whether this request performed deletion.
-     */
-    executed: boolean;
-    /**
-     * When the inventory was computed.
-     */
-    inventoriedAt: string;
-    /**
-     * Aggregate stale provider event cleanup summary.
-     */
-    summary: {
-        /**
-         * Total stale provider events inventoried by the cleanup rules.
-         */
-        inventoriedEventCount: number;
-        /**
-         * Inventoried events eligible for deletion.
-         */
-        deletableEventCount: number;
-        /**
-         * Inventoried events retained because contest or pick references protect them.
-         */
-        blockedEventCount: number;
-        /**
-         * Events deleted by this request. Zero for dry runs.
-         */
-        deletedEventCount: number;
-        /**
-         * Event participant rows attached to inventoried stale events.
-         */
-        sportEventParticipantCount: number;
-        /**
-         * Event participant valuation rows attached to inventoried stale events.
-         */
-        valuationCount: number;
-        /**
-         * Per-round participant rows attached to inventoried stale events.
-         */
-        roundCount: number;
-        /**
-         * Contest entry pick rows referencing inventoried stale event participants. These protect an event from deletion.
-         */
-        pickCount: number;
-    };
-    /**
-     * Inventory grouped by event sport.
-     */
-    bySport: Array<{
-        /**
-         * Grouping key, such as a sport, provider id, or status.
-         */
-        key: string;
-        /**
-         * Number of inventoried stale events in this group.
-         */
-        eventCount: number;
-        /**
-         * Number of events in this group eligible for deletion.
-         */
-        deletableEventCount: number;
-        /**
-         * Number of events in this group deleted by this request. Zero for dry runs.
-         */
-        deletedEventCount: number;
-    }>;
-    /**
-     * Inventory grouped by provider id.
-     */
-    byProvider: Array<{
-        /**
-         * Grouping key, such as a sport, provider id, or status.
-         */
-        key: string;
-        /**
-         * Number of inventoried stale events in this group.
-         */
-        eventCount: number;
-        /**
-         * Number of events in this group eligible for deletion.
-         */
-        deletableEventCount: number;
-        /**
-         * Number of events in this group deleted by this request. Zero for dry runs.
-         */
-        deletedEventCount: number;
-    }>;
-    /**
-     * Inventory grouped by persisted event status.
-     */
-    byStatus: Array<{
-        /**
-         * Grouping key, such as a sport, provider id, or status.
-         */
-        key: string;
-        /**
-         * Number of inventoried stale events in this group.
-         */
-        eventCount: number;
-        /**
-         * Number of events in this group eligible for deletion.
-         */
-        deletableEventCount: number;
-        /**
-         * Number of events in this group deleted by this request. Zero for dry runs.
-         */
-        deletedEventCount: number;
-    }>;
-    /**
-     * Per-event cleanup inventory rows.
-     */
-    events: Array<{
-        /**
-         * Internal SportEvent identifier.
-         */
-        id: string;
-        /**
-         * Provider/source associated with the stale event row.
-         */
-        providerId: string;
-        /**
-         * Provider-side event identifier.
-         */
-        externalId: string;
-        /**
-         * Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values.
-         */
-        sport: string;
-        /**
-         * Current persisted event name.
-         */
-        name: string;
-        /**
-         * Current persisted event status.
-         */
-        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-        /**
-         * Persisted event start date.
-         */
-        startDate: string;
-        /**
-         * Persisted event end date, when known.
-         */
-        endDate: string | null;
-        /**
-         * Cleanup rule that selected this stale event for inventory.
-         */
-        staleReason: 'NON_GOLF_EVENT' | 'PAST_GOLF_EVENT';
-        /**
-         * Whether EXECUTE mode will delete this event.
-         */
-        deletable: boolean;
-        /**
-         * Whether this request deleted this event. Always false for dry runs.
-         */
-        deleted: boolean;
-        /**
-         * Contest-related references that protect this event from deletion.
-         */
-        blockedReasons: Array<'DIRECT_CONTEST_REFERENCE' | 'CONTEST_ENTRY_PICK_REFERENCE'>;
-        /**
-         * Number of Contest rows directly pointing at this event.
-         */
-        directContestCount: number;
-        /**
-         * Number of SportEventParticipant rows attached to this event.
-         */
-        sportEventParticipantCount: number;
-        /**
-         * Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event.
-         */
-        valuationCount: number;
-        /**
-         * Number of per-round participant rows (SportEventParticipantRound) attached through this event.
-         */
-        roundCount: number;
-        /**
-         * Number of ContestEntryPick rows referencing participants in this event.
-         */
-        pickCount: number;
-    }>;
-};
-
-/**
  * An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it.
  */
 export type ProviderEventDto = {
@@ -10018,28 +9733,6 @@ export type LoginUserErrors = {
             details?: unknown;
         };
     };
-    /**
-     * Standard API error envelope.
-     */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
 };
 
 export type LoginUserError = LoginUserErrors[keyof LoginUserErrors];
@@ -10158,6 +9851,28 @@ export type ListUsersErrors = {
     /**
      * Standard API error envelope.
      */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
     401: {
         /**
          * Error payload object.
@@ -10237,6 +9952,9 @@ export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
 export type DeleteUserData = {
     body: UserDeleteRequest;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -10375,6 +10093,9 @@ export type DeleteUserResponse = DeleteUserResponses[keyof DeleteUserResponses];
 export type GetUserData = {
     body?: never;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -10382,6 +10103,28 @@ export type GetUserData = {
 };
 
 export type GetUserErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -10464,6 +10207,9 @@ export type GetUserResponse = GetUserResponses[keyof GetUserResponses];
 export type UpdateUserProfileData = {
     body: UserProfileUpdateRequest;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -10597,6 +10343,9 @@ export type UpdateUserProfileResponse = UpdateUserProfileResponses[keyof UpdateU
 export type UpdateUserUsernameData = {
     body: UserUsernameUpdateRequest;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -10730,6 +10479,9 @@ export type UpdateUserUsernameResponse = UpdateUserUsernameResponses[keyof Updat
 export type UpdateUserPreferencesData = {
     body: UserPreferencesUpdateRequest;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -10737,6 +10489,28 @@ export type UpdateUserPreferencesData = {
 };
 
 export type UpdateUserPreferencesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -10841,6 +10615,9 @@ export type UpdateUserPreferencesResponse = UpdateUserPreferencesResponses[keyof
 export type ChangeUserPasswordData = {
     body: UserPasswordChangeRequest;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -10979,6 +10756,9 @@ export type ChangeUserPasswordResponse = ChangeUserPasswordResponses[keyof Chang
 export type ResetUserPasswordData = {
     body?: never;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -10986,6 +10766,28 @@ export type ResetUserPasswordData = {
 };
 
 export type ResetUserPasswordErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -11068,6 +10870,9 @@ export type ResetUserPasswordResponse = ResetUserPasswordResponses[keyof ResetUs
 export type DisableUserData = {
     body?: never;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -11075,6 +10880,28 @@ export type DisableUserData = {
 };
 
 export type DisableUserErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -11179,6 +11006,9 @@ export type DisableUserResponse = DisableUserResponses[keyof DisableUserResponse
 export type EnableUserData = {
     body?: never;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -11186,6 +11016,28 @@ export type EnableUserData = {
 };
 
 export type EnableUserErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -11290,6 +11142,9 @@ export type EnableUserResponse = EnableUserResponses[keyof EnableUserResponses];
 export type RevokeUserSessionsData = {
     body?: never;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -11297,6 +11152,28 @@ export type RevokeUserSessionsData = {
 };
 
 export type RevokeUserSessionsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -11379,6 +11256,9 @@ export type RevokeUserSessionsResponse2 = RevokeUserSessionsResponses[keyof Revo
 export type SetUserRootAdminData = {
     body: SetUserRootAdminRequest;
     path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
         userId: string;
     };
     query?: never;
@@ -11386,6 +11266,28 @@ export type SetUserRootAdminData = {
 };
 
 export type SetUserRootAdminErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -16723,60 +16625,6 @@ export type EnterContestResponses = {
 
 export type EnterContestResponse = EnterContestResponses[keyof EnterContestResponses];
 
-export type ReopenContestData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/reopen';
-};
-
-export type ReopenContestResponses = {
-    /**
-     * Single-contest response.
-     */
-    200: ContestResponse;
-};
-
-export type ReopenContestResponse = ReopenContestResponses[keyof ReopenContestResponses];
-
-export type CloseContestData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/close';
-};
-
-export type CloseContestResponses = {
-    /**
-     * Single-contest response.
-     */
-    200: ContestResponse;
-};
-
-export type CloseContestResponse = CloseContestResponses[keyof CloseContestResponses];
-
-export type ExtendContestDeadlineData = {
-    body: ExtendContestDeadlineRequest;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/extend-deadline';
-};
-
-export type ExtendContestDeadlineResponses = {
-    /**
-     * Single-contest response.
-     */
-    200: ContestResponse;
-};
-
-export type ExtendContestDeadlineResponse = ExtendContestDeadlineResponses[keyof ExtendContestDeadlineResponses];
-
 export type ListContestConfigTemplatesData = {
     body?: never;
     path?: never;
@@ -18396,6 +18244,28 @@ export type LinkEventScoreSourceErrors = {
      * Standard API error envelope.
      */
     409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
         /**
          * Error payload object.
          */
@@ -23118,71 +22988,6 @@ export type ListUnmappedProviderParticipantsResponses = {
 
 export type ListUnmappedProviderParticipantsResponse = ListUnmappedProviderParticipantsResponses[keyof ListUnmappedProviderParticipantsResponses];
 
-export type CleanupStaleProviderEventsData = {
-    body: ProviderEventCleanupRequest;
-    path?: never;
-    query?: never;
-    url: '/api/v1/ingestion/stale-events/cleanup';
-};
-
-export type CleanupStaleProviderEventsErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type CleanupStaleProviderEventsError = CleanupStaleProviderEventsErrors[keyof CleanupStaleProviderEventsErrors];
-
-export type CleanupStaleProviderEventsResponses = {
-    /**
-     * Stale provider event cleanup result: the inventory, and what an EXECUTE deleted.
-     */
-    200: ProviderEventCleanupResponse;
-};
-
-export type CleanupStaleProviderEventsResponse = CleanupStaleProviderEventsResponses[keyof CleanupStaleProviderEventsResponses];
-
 export type ListProviderCatalogEventsData = {
     body?: never;
     path: {
@@ -23745,6 +23550,28 @@ export type SubmitContestSelectionErrors = {
      * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
         /**
          * Error payload object.
          */

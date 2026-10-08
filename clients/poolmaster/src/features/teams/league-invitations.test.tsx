@@ -225,3 +225,89 @@ describe('LeagueInvitations', () => {
     expect(screen.getByTestId('league-invitation-cancel-email-1')).toBeEnabled();
   });
 });
+
+describe('Inviting members from Teams and Owners', () => {
+  afterEach(() => {
+    generateInviteLinkMock.mockReset();
+    listLeagueInvitationsMock.mockReset();
+    sendLeagueInvitationsMock.mockReset();
+  });
+
+  async function openInviteMembers() {
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
+    renderInvitations();
+    fireEvent.click(await screen.findByTestId('league-open-invite-members'));
+    await screen.findByRole('dialog', { name: 'Invite Members' });
+  }
+
+  async function sendInviteTo(email: string) {
+    await openInviteMembers();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Invite by email' }), { target: { value: email } });
+    fireEvent.click(screen.getByTestId('league-send-invite'));
+  }
+
+  it('confirms who an email invitation was sent to', async () => {
+    sendLeagueInvitationsMock.mockResolvedValue({ data: { sent: [emailInvite()], skippedMembers: [], skippedDuplicates: [] } });
+
+    await sendInviteTo('friend@example.com');
+
+    expect(await screen.findByText('Invitation sent to friend@example.com.')).toBeInTheDocument();
+  });
+
+  it('tells the commissioner an email already belongs to a member instead of implying it was sent', async () => {
+    sendLeagueInvitationsMock.mockResolvedValue({ data: { sent: [], skippedMembers: ['member@example.com'], skippedDuplicates: [] } });
+
+    await sendInviteTo('member@example.com');
+
+    expect(await screen.findByText('member@example.com is already a member of this league.')).toBeInTheDocument();
+    expect(screen.queryByText(/Invitation sent/)).not.toBeInTheDocument();
+  });
+
+  it('tells the commissioner an email already has a pending invitation instead of implying it was sent again', async () => {
+    sendLeagueInvitationsMock.mockResolvedValue({ data: { sent: [], skippedMembers: [], skippedDuplicates: ['pending@example.com'] } });
+
+    await sendInviteTo('pending@example.com');
+
+    expect(await screen.findByText('pending@example.com already has a pending invitation.')).toBeInTheDocument();
+    expect(screen.queryByText(/Invitation sent/)).not.toBeInTheDocument();
+  });
+
+  it('shows the server reason when an invitation cannot be sent and keeps the typed email', async () => {
+    sendLeagueInvitationsMock.mockResolvedValue({
+      error: { code: 'LEAGUE_INACTIVE', message: 'This league is inactive and cannot send invitations.' },
+    });
+
+    await sendInviteTo('friend@example.com');
+
+    expect(await screen.findByText('This league is inactive and cannot send invitations.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Invite by email' })).toHaveValue('friend@example.com');
+  });
+
+  it('shows the server reason when a join URL cannot be created and leaves the field empty', async () => {
+    generateInviteLinkMock.mockResolvedValue({
+      error: { code: 'LEAGUE_INACTIVE', message: 'This league is inactive and cannot create invite links.' },
+    });
+
+    await openInviteMembers();
+    fireEvent.click(screen.getByTestId('league-create-join-url'));
+
+    expect(await screen.findByText('This league is inactive and cannot create invite links.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Join URL' })).toHaveValue('');
+  });
+
+  it('keeps a created join URL visible for manual copy when the clipboard refuses the write', async () => {
+    const writeTextMock = vi.fn().mockRejectedValue(new Error('Clipboard blocked'));
+    Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
+    generateInviteLinkMock.mockResolvedValue({ data: { invitation: buildGeneratedInviteLink({ inviteCode: 'invite-xyz' }) } });
+
+    await openInviteMembers();
+    fireEvent.click(screen.getByTestId('league-create-join-url'));
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Join URL' })).toHaveValue(
+      'http://localhost:3000/invite/invite-xyz',
+    ));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy join URL' }));
+
+    await waitFor(() => expect(writeTextMock).toHaveBeenCalled());
+    expect(screen.getByRole('textbox', { name: 'Join URL' })).toHaveValue('http://localhost:3000/invite/invite-xyz');
+  });
+});

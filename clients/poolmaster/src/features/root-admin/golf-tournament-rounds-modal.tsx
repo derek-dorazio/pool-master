@@ -80,9 +80,8 @@ export function GolfTournamentRoundsModal({
             roundNumber: row.roundNumber,
             scheduledDate:
               localDateTimeInputToIso(row.scheduledDate) ?? row.scheduledDate,
-            ...(localDateTimeInputToIso(row.scheduledEndAt)
-              ? { scheduledEndAt: localDateTimeInputToIso(row.scheduledEndAt) }
-              : {}),
+            // A blank end clears it (null), rather than keeping the old one.
+            scheduledEndAt: localDateTimeInputToIso(row.scheduledEndAt) ?? null,
           })),
         },
       });

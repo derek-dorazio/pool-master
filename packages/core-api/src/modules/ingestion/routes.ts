@@ -1,7 +1,7 @@
 /**
  * Ingestion module — the operations over sports-data ingestion: providers, sync submissions
- * and their history, competitors a provider could not match, the stale-event cleanup, and the
- * provider catalog browse. Mounted at /api/v1/ingestion.
+ * and their history, competitors a provider could not match, and the provider catalog
+ * browse. Mounted at /api/v1/ingestion.
  *
  * Every operation is root-admin (#205): `admin` is the permission, `ingestion` is what these
  * operations administer. Binding an unmatched competitor to a participant is an operation on
@@ -93,18 +93,6 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
       response: { 200: schemaRef('UnmappedProviderParticipantListResponse'), ...errors() },
     },
     handler: handler.listUnmappedParticipants,
-  });
-
-  fastify.post('/stale-events/cleanup', {
-    schema: {
-      tags: ['Ingestion'],
-      summary: 'Inventory or delete stale provider events',
-      description: 'Inventories stale provider SportEvent rows and, in EXECUTE mode, deletes the eligible ones. Non-Golf events are stale because the current provider workflow is Golf-only; Golf events are stale once their end time has passed. A contest on the event, or a pick on one of its participants, protects it from deletion. Each event is deleted in its own transaction, and one that cannot be deleted is left in place and reported as not deleted.',
-      operationId: 'cleanupStaleProviderEvents',
-      body: schemaRef('ProviderEventCleanupRequest'),
-      response: { 200: schemaRef('ProviderEventCleanupResponse'), ...errors() },
-    },
-    handler: handler.cleanupStaleProviderEvents,
   });
 
   fastify.get('/providers/:providerId/catalog-events', {

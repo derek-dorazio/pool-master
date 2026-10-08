@@ -502,6 +502,20 @@ describe('UserPage', () => {
     );
   });
 
+  it('tells an inactive user they stay signed in to reactivate or delete, never that sign-in is blocked', async () => {
+    getUserMock.mockResolvedValue({
+      data: {
+        user: buildCurrentUser({ isActive: false }),
+      },
+    });
+
+    renderUserPage();
+
+    const banner = await screen.findByTestId('user-page-inactive-banner');
+    expect(banner).not.toHaveTextContent(/cannot sign in/i);
+    expect(banner).toHaveTextContent(/reactivate/i);
+  });
+
   it('pool-master-rop.78.11 reactivates an inactive account in the auth query cache', async () => {
     getUserMock
       .mockResolvedValueOnce({
@@ -617,5 +631,187 @@ describe('UserPage', () => {
     expect(await screen.findByTestId('root-admin-user-temp-password')).toHaveTextContent(
       'Pm-temp-password!9a',
     );
+  });
+
+  it('keeps the lifecycle dialog open and shows the server refusal when a root admin cannot inactivate the account', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isRootAdmin: true, isActive: true });
+    disableUserMock.mockResolvedValue({
+      error: {
+        error: {
+          code: 'ACCOUNT_LAST_ROOT_ADMIN',
+          message: 'This is the only root admin. Promote another root admin before deactivating the account.',
+        },
+      },
+    });
+
+    renderUserPage('/users/user-2');
+
+    await screen.findByTestId('root-admin-user-page');
+    fireEvent.click(screen.getByTestId('root-admin-user-open-lifecycle'));
+    const dialog = await screen.findByTestId('root-admin-user-lifecycle-dialog');
+    fireEvent.click(screen.getByTestId('root-admin-user-submit-lifecycle'));
+
+    expect(await within(dialog).findByText(/only root admin/i)).toBeVisible();
+    expect(screen.getByTestId('root-admin-user-lifecycle-dialog')).toBeVisible();
+  });
+
+  it('deletes with the account email when the root admin types it in another case or with spaces', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isRootAdmin: false, isActive: false });
+    deleteUserMock.mockResolvedValue({ data: { success: true } });
+
+    renderUserPage('/users/user-2');
+
+    await screen.findByTestId('root-admin-user-page');
+    fireEvent.click(screen.getByTestId('root-admin-user-open-delete'));
+    await screen.findByTestId('root-admin-user-delete-dialog');
+    fireEvent.change(screen.getByTestId('root-admin-user-delete-confirmation'), {
+      target: { value: ' Target@Example.com ' },
+    });
+    fireEvent.click(screen.getByTestId('root-admin-user-submit-delete'));
+
+    await waitFor(() =>
+      expect(deleteUserMock).toHaveBeenCalledWith({
+        path: { userId: 'user-2' },
+        body: { email: 'target@example.com' },
+      }),
+    );
+  });
+
+  it('sends the password change with the three fields the user typed', async () => {
+    primeCurrentUser();
+    changeUserPasswordMock.mockResolvedValue({ data: { success: true } });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-password'));
+    await screen.findByTestId('user-page-password-dialog');
+    fireEvent.change(screen.getByTestId('user-page-current-password'), { target: { value: 'OldPassword1' } });
+    fireEvent.change(screen.getByTestId('user-page-new-password'), { target: { value: 'NewPassword1' } });
+    fireEvent.change(screen.getByTestId('user-page-confirm-password'), { target: { value: 'NewPassword1' } });
+    fireEvent.click(screen.getByTestId('user-page-save-password'));
+
+    await waitFor(() =>
+      expect(changeUserPasswordMock).toHaveBeenCalledWith({
+        path: { userId: 'me' },
+        body: { currentPassword: 'OldPassword1', newPassword: 'NewPassword1', confirmNewPassword: 'NewPassword1' },
+      }),
+    );
+  });
+
+  it('shows the server refusal when the current password is wrong', async () => {
+    primeCurrentUser();
+    changeUserPasswordMock.mockResolvedValue({
+      error: { error: { code: 'INVALID_CURRENT_PASSWORD', message: 'Current password is incorrect.' } },
+    });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-password'));
+    const dialog = await screen.findByTestId('user-page-password-dialog');
+    fireEvent.change(screen.getByTestId('user-page-current-password'), { target: { value: 'WrongPassword1' } });
+    fireEvent.change(screen.getByTestId('user-page-new-password'), { target: { value: 'NewPassword1' } });
+    fireEvent.change(screen.getByTestId('user-page-confirm-password'), { target: { value: 'NewPassword1' } });
+    fireEvent.click(screen.getByTestId('user-page-save-password'));
+
+    expect(await within(dialog).findByText('Current password is incorrect.')).toBeVisible();
+  });
+
+  it('deletes an inactive account with its own email and shows the deleted confirmation', async () => {
+    primeCurrentUser({ isActive: false });
+    deleteUserMock.mockResolvedValue({ data: { success: true } });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page-inactive-banner');
+    fireEvent.click(screen.getByTestId('user-page-open-delete'));
+    await screen.findByTestId('user-page-delete-dialog');
+    fireEvent.change(screen.getByTestId('user-page-delete-confirmation'), { target: { value: 'derek@example.com' } });
+    fireEvent.click(screen.getByTestId('user-page-delete-submit'));
+
+    expect(await screen.findByTestId('user-page-delete-success')).toBeVisible();
+    expect(deleteUserMock).toHaveBeenCalledWith({ path: { userId: 'me' }, body: { email: 'derek@example.com' } });
+  });
+
+  it('keeps the delete dialog open with the reason when league data still blocks the delete', async () => {
+    primeCurrentUser({ isActive: false });
+    deleteUserMock.mockResolvedValue({
+      error: {
+        error: {
+          code: 'ACCOUNT_DELETE_DEPENDENCIES_EXIST',
+          message: 'Account still owns or belongs to league-scoped data.',
+        },
+      },
+    });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page-inactive-banner');
+    fireEvent.click(screen.getByTestId('user-page-open-delete'));
+    const dialog = await screen.findByTestId('user-page-delete-dialog');
+    fireEvent.change(screen.getByTestId('user-page-delete-confirmation'), { target: { value: 'derek@example.com' } });
+    fireEvent.click(screen.getByTestId('user-page-delete-submit'));
+
+    expect(await within(dialog).findByText(/league-scoped data/)).toBeVisible();
+    expect(screen.queryByTestId('user-page-delete-success')).not.toBeInTheDocument();
+  });
+
+  it('shows an error state when a root admin opens a user who cannot be read', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+
+    renderUserPage('/users/user-missing');
+
+    expect(await screen.findByTestId('root-admin-user-page-error')).toBeVisible();
+  });
+
+  it('reactivates an inactive user from the root-admin page and closes the dialog', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isActive: false });
+    enableUserMock.mockResolvedValue({ data: { user: buildCurrentUser({ id: 'user-2', isActive: true }) } });
+
+    renderUserPage('/users/user-2');
+
+    expect(await screen.findByTestId('root-admin-user-inactive-banner')).toBeVisible();
+    fireEvent.click(screen.getByTestId('root-admin-user-open-lifecycle'));
+    await screen.findByTestId('root-admin-user-lifecycle-dialog');
+    fireEvent.click(screen.getByTestId('root-admin-user-submit-lifecycle'));
+
+    await waitFor(() => expect(enableUserMock).toHaveBeenCalledWith({ path: { userId: 'user-2' } }));
+    await waitFor(() => expect(screen.queryByTestId('root-admin-user-lifecycle-dialog')).not.toBeInTheDocument());
+  });
+
+  it('shows the server refusal in the role dialog when demoting the last root admin', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isRootAdmin: true });
+    setUserRootAdminMock.mockResolvedValue({
+      error: { error: { code: 'LAST_ROOT_ADMIN', message: 'Cannot remove the last remaining root admin.' } },
+    });
+
+    renderUserPage('/users/user-2');
+
+    await screen.findByTestId('root-admin-user-page');
+    fireEvent.click(screen.getByTestId('root-admin-user-open-role'));
+    const dialog = await screen.findByTestId('root-admin-user-role-dialog');
+    fireEvent.click(screen.getByTestId('root-admin-user-submit-role'));
+
+    expect(await within(dialog).findByText(/last remaining root admin/)).toBeVisible();
+  });
+
+  it('keeps the delete button disabled until the confirmation matches the viewed user\'s email', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isActive: false });
+
+    renderUserPage('/users/user-2');
+
+    await screen.findByTestId('root-admin-user-page');
+    fireEvent.click(screen.getByTestId('root-admin-user-open-delete'));
+    await screen.findByTestId('root-admin-user-delete-dialog');
+    fireEvent.change(screen.getByTestId('root-admin-user-delete-confirmation'), { target: { value: 'someone@example.com' } });
+
+    expect(screen.getByTestId('root-admin-user-submit-delete')).toBeDisabled();
+    expect(deleteUserMock).not.toHaveBeenCalled();
   });
 });
