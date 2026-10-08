@@ -122,6 +122,7 @@ export function TeamOwnerActionMenu({
   // change here: a commissioner may demote themselves, and removing an owner ends their membership.
   const ownerViewKeys = [
     QueryKeys.leagues.detail(leagueCode),
+    QueryKeys.leagues.list,
     QueryKeys.leagues.members(leagueId),
     QueryKeys.leagueTeams.byLeague(leagueId),
     QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),

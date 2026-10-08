@@ -61,6 +61,7 @@ export function useMyTeamLifecycle({
     // context (member count, and the viewer's own membership if it was their team) change too.
     invalidates: [
       QueryKeys.leagues.detail(leagueCode),
+      QueryKeys.leagues.list,
       QueryKeys.leagues.members(leagueId),
       QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
       QueryKeys.leagueTeams.byLeague(leagueId),
