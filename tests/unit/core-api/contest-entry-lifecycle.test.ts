@@ -556,3 +556,42 @@ describe('ContestService — draft visibility and contest edits', () => {
     await expect(service.updateContest(draft.id, { name: 'x' })).rejects.toBeInstanceOf(ContestNotFoundError);
   });
 });
+
+describe('ContestService entries — the event start closes entries', () => {
+  const HOUR = 60 * 60 * 1000;
+
+  function onEvent(startDate: Date) {
+    const context = setup();
+    const event = context.world.addSportEvent({ startDate });
+    context.world.contests.set(context.contest.id, { ...context.contest, sportEventId: event.id });
+    return context;
+  }
+
+  it('refuses a new entry with CONTEST_ENTRY_LOCKED once the event\'s start time has passed, though its status still says scheduled', async () => {
+    const { world, owner, squad, contest, service } = onEvent(new Date(Date.now() - HOUR));
+
+    await expect(service.createEntry(contest.id, owner.id)).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
+    expect(world.entriesOf(contest.id, squad.id)).toHaveLength(0);
+  });
+
+  it('refuses renaming or leaving with CONTEST_ENTRY_LOCKED once the event\'s start time has passed', async () => {
+    const { world, owner, squad, contest, service } = onEvent(new Date(Date.now() + HOUR));
+    const created = await service.createEntry(contest.id, owner.id);
+    const event = [...world.sportEvents.values()][0];
+    world.sportEvents.set(event.id, { ...event, startDate: new Date(Date.now() - HOUR) });
+
+    await expect(service.updateEntry(contest.id, created.id, owner.id, { name: 'Late change' }))
+      .rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
+    await expect(service.deleteMyEntry(contest.id, owner.id)).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
+    expect(world.entriesOf(contest.id, squad.id)).toMatchObject([{ name: 'Birdie Brigade Entry 1' }]);
+  });
+
+  it('accepts an entry on an event that starts later', async () => {
+    const { world, owner, squad, contest, service } = onEvent(new Date(Date.now() + 7 * 24 * HOUR));
+
+    await service.createEntry(contest.id, owner.id);
+
+    expect(world.entriesOf(contest.id, squad.id)).toHaveLength(1);
+  });
+});
+

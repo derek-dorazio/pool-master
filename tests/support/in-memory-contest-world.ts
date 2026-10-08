@@ -33,6 +33,7 @@ import type {
   ContestEntry,
   League,
   LeagueMembership,
+  SportEvent,
   Squad,
   SquadMembership,
   User,
@@ -44,6 +45,7 @@ import {
   LeagueRole,
   ScoringEngine,
   SelectionType,
+  SportEventStatus,
   SquadMembershipStatus,
   TeamIconKey,
 } from '@poolmaster/shared/domain';
@@ -79,6 +81,7 @@ export class InMemoryContestWorld {
   readonly squadMemberships = new Map<string, SquadMembership>();
   /** Loaded field size per sport event — what `countParticipants` answers. */
   readonly fieldSizes = new Map<string, number>();
+  readonly sportEvents = new Map<string, SportEvent>();
 
   private sequence = 0;
 
@@ -201,6 +204,21 @@ export class InMemoryContestWorld {
     };
     this.configurations.set(configuration.id, configuration);
     return configuration;
+  }
+
+  /** Seeds the contest's sport event with a loaded field. Only what the entry rules read matters. */
+  addSportEvent(overrides: Partial<SportEvent> & { startDate: Date }): SportEvent {
+    const event = {
+      id: this.nextId('event'),
+      name: 'The Masters',
+      status: SportEventStatus.SCHEDULED,
+      createdAt: T0,
+      updatedAt: T0,
+      ...overrides,
+    } as SportEvent;
+    this.sportEvents.set(event.id, event);
+    this.fieldSizes.set(event.id, 40);
+    return event;
   }
 
   /** Seeds a pick directly; production picks come only through ContestEntryPickService. */
@@ -469,6 +487,7 @@ export class InMemoryContestWorld {
 
   sportEventRepo(): SportEventRepository {
     return fakeSportEventRepo({
+      findById: async (id) => this.sportEvents.get(id) ?? null,
       countParticipants: async (ids) =>
         new Map(ids.map((id) => [id, this.fieldSizes.get(id) ?? 0])),
     });

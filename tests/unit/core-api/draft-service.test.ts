@@ -21,6 +21,7 @@ import {
   fakeLeagueMembershipRepo,
   fakeParticipantRepo,
   fakeSportEventParticipantRepo,
+  fakeSportEventRepo,
   fakeSquadMembershipRepo,
 } from '../../support/repo-fakes';
 
@@ -207,6 +208,8 @@ interface SetupOptions {
   tierGroups?: unknown[];
   valuations?: unknown[];
   field?: SportEventParticipant[];
+  /** The contest event's scheduled start; a week out unless a test says otherwise. */
+  eventStartDate?: Date;
 }
 
 function setup(options: SetupOptions = {}) {
@@ -254,6 +257,13 @@ function setup(options: SetupOptions = {}) {
       countByContest: jest.fn().mockResolvedValue((options.picks ?? []).length),
     }),
     pickWrites: { createPick, deletePick } as never,
+    sportEvents: fakeSportEventRepo({
+      findById: jest.fn().mockResolvedValue({
+        id: EVENT_ID,
+        status: 'SCHEDULED',
+        startDate: options.eventStartDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      }),
+    }),
     tiers: {
       getEffectiveTiersForSportEvent: jest
         .fn()
@@ -796,4 +806,20 @@ describe('DraftService.submitSelection — picks only while the contest is open'
     expect(view.canCurrentUserSubmit).toBe(false);
     expect(view.currentEntryId).toBeNull();
   });
+
+  it('refuses a pick with CONTEST_ENTRY_LOCKED once the event\'s start time has passed, though its status still says scheduled', async () => {
+    const { service, createPick } = setup({ eventStartDate: new Date(Date.now() - 60 * 60 * 1000) });
+
+    await expect(service.submitSelection(submit())).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED', statusCode: 409 });
+    expect(createPick).not.toHaveBeenCalled();
+  });
+
+  it('tells the room the owner cannot submit once the event\'s start time has passed', async () => {
+    const { service } = setup({ eventStartDate: new Date(Date.now() - 60 * 60 * 1000) });
+
+    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+
+    expect(view.canCurrentUserSubmit).toBe(false);
+  });
 });
+
