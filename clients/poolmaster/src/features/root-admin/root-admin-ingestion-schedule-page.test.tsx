@@ -88,4 +88,31 @@ describe('RootAdminIngestionSchedulePage', () => {
       }),
     );
   });
+  it('shows the server\'s reason when saving the schedule is refused, instead of silently keeping the edit', async () => {
+    updateIngestionScheduleMock.mockResolvedValue({
+      error: { error: { code: 'VALIDATION_ERROR', message: 'intervalSeconds must be at least 10.' } },
+      response: { status: 400 },
+    });
+    renderPage();
+
+    fireEvent.change(
+      await screen.findByTestId('root-admin-ingestion-page-eventLiveScores-intervalSeconds'),
+      { target: { value: '5' } },
+    );
+    fireEvent.click(screen.getByTestId('root-admin-ingestion-page-save'));
+
+    expect(await screen.findByText('intervalSeconds must be at least 10.')).toBeInTheDocument();
+  });
+
+  it('shows the server\'s reason when resetting the schedule is refused', async () => {
+    resetIngestionScheduleMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'The schedule store is unavailable.' } },
+      response: { status: 500 },
+    });
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Reset ingestion schedule' }));
+
+    expect(await screen.findByText('The schedule store is unavailable.')).toBeInTheDocument();
+  });
 });

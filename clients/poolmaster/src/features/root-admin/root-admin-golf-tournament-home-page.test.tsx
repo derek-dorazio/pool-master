@@ -536,3 +536,76 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     });
   });
 });
+
+describe('clearing an optional date and refused links on Tournament Home', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    mockLogger.child.mockReturnValue(mockLogger);
+  });
+
+  it('clears the end date when the admin blanks it in Edit details, rather than keeping the old one', async () => {
+    seedDefaults();
+    updateEventMock.mockResolvedValue({ data: { event: tournament({ endDate: undefined }) } });
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
+    const modal = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
+    const endInput = within(modal).getByLabelText('Ends');
+    expect(endInput).not.toHaveValue('');
+    fireEvent.change(endInput, { target: { value: '' } });
+    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-home-edit-save'));
+
+    await waitFor(() => expect(updateEventMock).toHaveBeenCalledTimes(1));
+    expect((updateEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body)
+      .toHaveProperty('endDate', null);
+  });
+
+  it('clears a round\'s end time when the admin blanks it in the schedule editor, rather than keeping the old one', async () => {
+    seedDefaults();
+    updateEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-rounds-edit'));
+    const modal = await screen.findByTestId('root-admin-golf-tournament-rounds-modal');
+    const roundOneEnd = within(modal).getByLabelText('Round 1 end');
+    expect(roundOneEnd).not.toHaveValue('');
+    fireEvent.change(roundOneEnd, { target: { value: '' } });
+    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-rounds-save'));
+
+    await waitFor(() => expect(updateEventRoundsMock).toHaveBeenCalledTimes(1));
+    const body = (updateEventRoundsMock.mock.calls[0][0] as {
+      body: { rounds: Array<Record<string, unknown>> };
+    }).body;
+    expect(body.rounds[0]).toHaveProperty('scheduledEndAt', null);
+  });
+
+  it('shows the server\'s reason inside the picker when linking a provider event is refused', async () => {
+    seedDefaults();
+    listProvidersMock.mockResolvedValue({
+      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] },
+    });
+    listProviderCatalogEventsMock.mockResolvedValue({
+      data: {
+        events: [{
+          externalId: 'mock-weekend',
+          name: 'Mock Weekend Event',
+          startDate: '2026-05-07T12:00:00.000Z',
+          endDate: '2026-05-10T22:00:00.000Z',
+          status: 'SCHEDULED',
+        }],
+      },
+    });
+    linkEventScoreSourceMock.mockResolvedValue({
+      error: { error: { code: 'PROVIDER_SPORT_MISMATCH', message: 'Provider mock-contest-feed does not cover GOLF.' } },
+      response: { status: 422 },
+    });
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-link-open'));
+    const modal = await screen.findByTestId('root-admin-golf-tournament-link-modal');
+    fireEvent.click(await within(modal).findByTestId('root-admin-golf-tournament-link-option-mock-weekend'));
+    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-link-modal-apply'));
+
+    expect(await within(modal).findByText('Provider mock-contest-feed does not cover GOLF.')).toBeInTheDocument();
+  });
+});
