@@ -63,6 +63,8 @@ export class PrismaLeagueInvitationRepository implements LeagueInvitationReposit
       where: { id },
       data: {
         ...(updates.status !== undefined && { status: updates.status }),
+        ...(updates.inviteCode !== undefined && { inviteCode: updates.inviteCode }),
+        ...(updates.expiresAt !== undefined && { expiresAt: updates.expiresAt }),
         ...(updates.currentUses !== undefined && { currentUses: updates.currentUses }),
         ...(updates.acceptedAt !== undefined && { acceptedAt: updates.acceptedAt }),
         ...(updates.acceptedBy !== undefined && { acceptedBy: updates.acceptedBy }),

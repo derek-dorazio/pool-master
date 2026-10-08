@@ -14,8 +14,10 @@ import {
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 import { extractAdminErrorMessage } from './root-admin-sync-config-utils';
+import { EmailSettingsForm } from './root-admin-email-settings-form';
 import {
   changedFields,
+  summarizeEmail,
   summarizeIngestionSchedule,
   summarizePollIntervals,
   type SettingsSummaryItem,
@@ -24,7 +26,7 @@ import {
 /**
  * /manage/settings (#450) — one card per settings group: what is in use, whether it is saved or
  * the defaults, who last changed it, and its recent changes. Groups that already have an edit
- * page link to it rather than duplicating its form.
+ * page link to it rather than duplicating its form; Email, which has none, is edited on its card.
  */
 export function RootAdminSettingsPage() {
   const settingsQuery = useQuery({
@@ -75,6 +77,7 @@ function SettingsGroupCard({ group }: { group: SettingsGroup }) {
         title={group.title}
       />
       <DefinitionList items={summary.map((item) => ({ id: item.id, label: item.label, value: item.value }))} />
+      {group.key === 'EMAIL_CONFIG' ? <EmailSettingsForm group={group} /> : null}
       <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
         {group.updatedAt ? (
           <>
@@ -123,6 +126,9 @@ function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; a
           </>
         ),
       };
+    case 'EMAIL_CONFIG':
+      // Edited in place: the card carries the form.
+      return { summary: summarizeEmail(group.value), actions: null };
   }
 }
 

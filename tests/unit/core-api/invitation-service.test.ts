@@ -307,6 +307,144 @@ describe('InvitationService', () => {
     });
   });
 
+  describe('listOutstandingInvitations', () => {
+    it('lists pending invites and email invites that expired unaccepted, leaving out accepted, cancelled and expired join links', async () => {
+      const pendingEmail = buildInvitation({ status: InvitationStatus.PENDING });
+      const pendingLink = buildInvitation({ inviteType: InviteType.LINK, email: undefined, maxUses: 0 });
+      const expiredEmail = buildInvitation({ status: InvitationStatus.EXPIRED });
+      const service = new InvitationService({
+        invitations: createMockInvitationRepo({
+          findByLeague: jest.fn().mockResolvedValue([
+            pendingEmail,
+            buildInvitation({ status: InvitationStatus.ACCEPTED }),
+            pendingLink,
+            buildInvitation({ status: InvitationStatus.REVOKED }),
+            expiredEmail,
+            buildInvitation({ inviteType: InviteType.LINK, status: InvitationStatus.EXPIRED }),
+          ]),
+        }),
+        memberships: createMockMembershipRepo(),
+        leagues: createMockLeagueRepo(),
+        users: fakeUserRepo(),
+      });
+
+      const listed = await service.listOutstandingInvitations('league-1');
+
+      expect(listed.map((invitation) => invitation.id)).toEqual([
+        pendingEmail.id,
+        pendingLink.id,
+        expiredEmail.id,
+      ]);
+    });
+  });
+
+  describe('resendEmailInvitation', () => {
+    function createResendService(
+      invitation: ReturnType<typeof buildInvitation> | null,
+      mailDelivery?: MailDeliveryProvider,
+    ) {
+      const invitationRepo = createMockInvitationRepo({
+        findById: jest.fn().mockResolvedValue(invitation),
+      });
+      const service = new InvitationService({
+        invitations: invitationRepo,
+        memberships: createMockMembershipRepo(),
+        leagues: createMockLeagueRepo({
+          findById: jest.fn().mockResolvedValue(buildLeague({
+            id: 'league-1',
+            name: 'Mathworks',
+            leagueCode: 'MATHWORKS',
+          })),
+        }),
+        users: createProvisioningUsers(),
+        mailDelivery,
+        appBaseUrl: 'https://app.example.com',
+      });
+      return { invitationRepo, service };
+    }
+
+    it('gives an email invite a new code and a fresh 7-day expiry, and emails the new link to the same address', async () => {
+      const invitation = buildInvitation({ id: 'invite-1', inviteCode: 'oldcode', email: 'alice@example.com' });
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
+      };
+      const { invitationRepo, service } = createResendService(invitation, mailDelivery);
+      const before = Date.now();
+
+      const renewed = await service.resendEmailInvitation('league-1', 'invite-1', 'owner-1');
+
+      const update = jest.mocked(invitationRepo.update).mock.calls[0][1];
+      expect(update.inviteCode).toBeDefined();
+      expect(update.inviteCode).not.toBe('oldcode');
+      expect(update.status).toBe(InvitationStatus.PENDING);
+      const expiryDays = ((update.expiresAt as Date).getTime() - before) / (24 * 60 * 60 * 1000);
+      expect(expiryDays).toBeGreaterThan(6.9);
+      expect(expiryDays).toBeLessThan(7.1);
+      expect(renewed.inviteCode).toBe(update.inviteCode);
+      expect(mailDelivery.send).toHaveBeenCalledTimes(1);
+      const sent = mailDelivery.send.mock.calls[0][0];
+      expect(sent.to).toBe('alice@example.com');
+      expect(sent.text).toContain(`https://app.example.com/invite/${update.inviteCode}`);
+      expect(sent.text).not.toContain('oldcode');
+    });
+
+    it('renews an email invite that expired unaccepted back to PENDING', async () => {
+      const { invitationRepo, service } = createResendService(
+        buildInvitation({ id: 'invite-1', status: InvitationStatus.EXPIRED }),
+      );
+
+      const renewed = await service.resendEmailInvitation('league-1', 'invite-1', 'owner-1');
+
+      expect(renewed.status).toBe(InvitationStatus.PENDING);
+      expect(invitationRepo.update).toHaveBeenCalledWith('invite-1', expect.objectContaining({
+        status: InvitationStatus.PENDING,
+      }));
+    });
+
+    it('refuses to resend a join link, and changes nothing', async () => {
+      const { invitationRepo, service } = createResendService(
+        buildInvitation({ id: 'link-1', inviteType: InviteType.LINK, email: undefined }),
+      );
+
+      await expect(service.resendEmailInvitation('league-1', 'link-1', 'owner-1')).rejects.toMatchObject({
+        code: 'LEAGUE_INVITATION_NOT_RESENDABLE',
+      });
+      expect(invitationRepo.update).not.toHaveBeenCalled();
+    });
+
+    it.each([InvitationStatus.ACCEPTED, InvitationStatus.REVOKED])(
+      'refuses to resend an email invite that is %s, and changes nothing',
+      async (status) => {
+        const { invitationRepo, service } = createResendService(buildInvitation({ id: 'invite-1', status }));
+
+        await expect(service.resendEmailInvitation('league-1', 'invite-1', 'owner-1')).rejects.toBeInstanceOf(
+          InvitationInvalidError,
+        );
+        expect(invitationRepo.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it('reports an invitation from another league as not found', async () => {
+      const { service } = createResendService(buildInvitation({ id: 'invite-1', leagueId: 'other-league' }));
+
+      await expect(service.resendEmailInvitation('league-1', 'invite-1', 'owner-1')).rejects.toBeInstanceOf(
+        InvitationNotFoundError,
+      );
+    });
+
+    it('fails the resend with a delivery error when the email cannot be sent', async () => {
+      const { service } = createResendService(buildInvitation({ id: 'invite-1' }), {
+        providerName: 'smtp',
+        send: jest.fn().mockRejectedValue(new Error('SMTP down')),
+      });
+
+      await expect(service.resendEmailInvitation('league-1', 'invite-1', 'owner-1')).rejects.toBeInstanceOf(
+        InvitationEmailDeliveryError,
+      );
+    });
+  });
+
   describe('revokeInviteLink', () => {
     it('sets invitation status to REVOKED', async () => {
       const invitation = buildInvitation({ leagueId: 'league-1', inviteCode: 'abc123' });
@@ -324,6 +462,26 @@ describe('InvitationService', () => {
         status: InvitationStatus.REVOKED,
       });
     });
+
+    it.each([InvitationStatus.ACCEPTED, InvitationStatus.REVOKED])(
+      'refuses to cancel an invitation that is already %s and leaves it unchanged',
+      async (status) => {
+        const invitation = buildInvitation({ leagueId: 'league-1', inviteCode: 'abc123', status });
+        const invitationRepo = createMockInvitationRepo({
+          findByCode: jest.fn().mockResolvedValue(invitation),
+        });
+        const service = new InvitationService({
+          invitations: invitationRepo,
+          memberships: createMockMembershipRepo(),
+          leagues: createMockLeagueRepo(),
+          users: fakeUserRepo(),
+        });
+        await expect(service.revokeInviteLink('league-1', 'abc123')).rejects.toMatchObject({
+          code: 'LEAGUE_INVITATION_NOT_CANCELLABLE',
+        });
+        expect(invitationRepo.update).not.toHaveBeenCalled();
+      },
+    );
 
     it('throws InvitationNotFoundError for unknown code', async () => {
       const service = new InvitationService({

@@ -23,13 +23,9 @@ import {
 import { InvitationService } from '../leagues/invitation-service';
 import { createInvitationHandlers } from '../leagues/invitation-handler';
 import { getAppPrisma } from '../../core/prisma-context';
-import {
-  createMailDeliveryProvider,
-  readApplicationBaseUrl,
-  readMailDeliveryConfig,
-} from '../email';
+import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 
-export function invitationsModule(fastify: FastifyInstance): void {
+export function invitationsModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -39,10 +35,7 @@ export function invitationsModule(fastify: FastifyInstance): void {
   const invitationRepo = new PrismaLeagueInvitationRepository(prisma);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
-  const mailDelivery = createMailDeliveryProvider(
-    readMailDeliveryConfig(process.env),
-    fastify.log,
-  );
+  const mailDelivery = opts.mailDelivery;
   const appBaseUrl = readApplicationBaseUrl(process.env);
 
   const invitationService = new InvitationService({

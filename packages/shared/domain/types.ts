@@ -376,30 +376,3 @@ export interface PlatformRuntimeConfigChange {
   changedAt: Date;
 }
 
-// --- Commissioner Dashboard ---
-
-export interface CommissionerDashboard {
-  league: League;
-  contests: Contest[];
-  memberCount: number;
-  pendingInvites: number;
-  recentMemberActivity: MemberActivityEvent[];
-  upcomingEvents: UpcomingEvent[];
-}
-
-/** Member activity event surfaced in commissioner dashboards. */
-export interface MemberActivityEvent {
-  userId: string;
-  firstName?: string;
-  lastName?: string;
-  action: string;
-  timestamp: Date;
-}
-
-/** Upcoming scheduled item surfaced in commissioner dashboards. */
-export interface UpcomingEvent {
-  contestId?: string;
-  title: string;
-  date: Date;
-  eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END';
-}

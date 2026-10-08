@@ -20,7 +20,8 @@ import {
   ErrorEnvelopeSchema,
   SportEventListResponseSchema,
   GenerateInviteLinkResponseSchema,
-  LeagueDashboardResponseSchema,
+  ListLeagueInvitationsResponseSchema,
+  ResendLeagueInvitationResponseSchema,
   LeagueResponseSchema,
   SendLeagueInvitationsResponseSchema,
   SquadListResponseSchema,
@@ -32,7 +33,9 @@ import type {
   ContestConfigTemplateListResponse,
   ContestResponse,
   ErrorEnvelope,
+  GenerateInviteLinkResponse,
   LeagueContextResponse,
+  SendLeagueInvitationsResponse,
   SquadListResponse,
 } from '@poolmaster/shared/dto';
 import {
@@ -137,14 +140,14 @@ describe('Contract verification (web)', () => {
     expect(parsed.success).toBe(true);
   });
 
-  it('league invitation and dashboard routes match their response DTOs', async () => {
-    const owner = await createTestUser({ displayName: 'Contract Dashboard Owner' });
+  it('league invitation routes match their response DTOs', async () => {
+    const owner = await createTestUser({ displayName: 'Contract Invitations Owner' });
 
     const leagueRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: owner.headers,
-      payload: buildCreateLeaguePayload('Contract Dashboard League'),
+      payload: buildCreateLeaguePayload('Contract Invitations League'),
     });
     const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
@@ -175,15 +178,38 @@ describe('Contract verification (web)', () => {
       GenerateInviteLinkResponseSchema.safeParse(inviteLinkRes.json()).success,
     ).toBe(true);
 
-    const dashboardRes = await getApp().inject({
+    const listRes = await getApp().inject({
       method: 'GET',
-      url: `${API_ROUTES.leagues.detail(leagueId)}/dashboard`,
+      url: `/api/v1/leagues/${leagueId}/invitations`,
       headers: owner.headers,
     });
-    expect(dashboardRes.statusCode).toBe(200);
-    expect(
-      LeagueDashboardResponseSchema.safeParse(dashboardRes.json()).success,
-    ).toBe(true);
+    expect(listRes.statusCode).toBe(200);
+    const listed = ListLeagueInvitationsResponseSchema.safeParse(listRes.json());
+    expect(listed.success).toBe(true);
+    expect(listed.data?.invitations).toHaveLength(2);
+
+    const emailInvitationId = invitationRes.json<SendLeagueInvitationsResponse>().sent[0].id;
+    const resendRes = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/leagues/${leagueId}/invitations/${emailInvitationId}/resend`,
+      headers: owner.headers,
+      payload: {},
+    });
+    expect(resendRes.statusCode).toBe(200);
+    expect(ResendLeagueInvitationResponseSchema.safeParse(resendRes.json()).success).toBe(true);
+
+    const resendLinkRes = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/leagues/${leagueId}/invitations/${
+        inviteLinkRes.json<GenerateInviteLinkResponse>().invitation.id
+      }/resend`,
+      headers: owner.headers,
+      payload: {},
+    });
+    expect(resendLinkRes.statusCode).toBe(409);
+    expect(ErrorEnvelopeSchema.safeParse(resendLinkRes.json()).success).toBe(true);
+    expect(resendLinkRes.json<ErrorEnvelope>().error.code).toBe('LEAGUE_INVITATION_NOT_RESENDABLE');
+
   });
 
   it('league lifecycle routes match the shared response DTOs', async () => {
