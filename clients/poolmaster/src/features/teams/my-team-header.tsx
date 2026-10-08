@@ -38,7 +38,7 @@ export function MyTeamHeader({
               {isManagingAnotherTeam
                 ? 'Review this team, update its details, and manage its owners.'
                 : !selectedTeam && !canCreateOwnTeam
-                  ? 'Select a team from Teams and Owners to manage it here. Root admins can review any team without becoming league members.'
+                  ? 'Select a team from Teams and Owners to manage it here.'
                   : 'Manage your team name, icon, owners, and lifecycle.'}
             </p>
           </div>

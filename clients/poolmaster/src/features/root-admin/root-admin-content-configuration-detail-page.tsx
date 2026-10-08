@@ -142,7 +142,7 @@ export function RootAdminContentConfigurationDetailPage() {
             Template not found
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            No persisted contest template matched <span className="font-medium text-foreground">{templateKey}</span>.
+            No contest template matched <span className="font-medium text-foreground">{templateKey}</span>.
           </p>
         </>
       ) : (

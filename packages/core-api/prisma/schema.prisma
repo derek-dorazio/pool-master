@@ -355,13 +355,6 @@ enum PrismaContestEntryStatus {
   INACTIVE
 }
 
-enum PrismaDraftStatus {
-  PENDING
-  LIVE
-  PAUSED
-  COMPLETE
-}
-
 enum PrismaParticipantRoundStatus {
   IN_PROGRESS
   COMPLETED
@@ -747,7 +740,6 @@ model Contest {
   configuration  ContestConfiguration?
   entries        ContestEntry[]
   entryStandings ContestEntryStanding[]
-  draftSession   DraftSession?
 
   @@index([leagueId])
   @@index([sportEventId])
@@ -869,9 +861,8 @@ model ContestEntry {
   contest Contest @relation(fields: [contestId], references: [id])
   squad   Squad   @relation(fields: [squadId], references: [id])
 
-  picks              ContestEntryPick[]
-  draftPickHistories DraftPickHistory[]
-  standing           ContestEntryStanding?
+  picks    ContestEntryPick[]
+  standing ContestEntryStanding?
 
   @@unique([contestId, squadId, entryNumber])
   @@map("contest_entries")
@@ -949,53 +940,9 @@ model ContestEntryPick {
 
   entry                 ContestEntry          @relation(fields: [entryId], references: [id])
   sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
-  draftPickHistories    DraftPickHistory[]
 
   @@index([entryId])
   @@map("contest_entry_picks")
-}
-
-// =============================================================================
-// Draft Session (Snake Draft only)
-// =============================================================================
-
-model DraftSession {
-  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestId            String            @unique @map("contest_id") @db.Uuid
-  status               PrismaDraftStatus @default(PENDING)
-  currentPickNumber    Int               @default(0) @map("current_pick_number")
-  currentEntryId       String?           @map("current_entry_id") @db.Uuid
-  startedAt            DateTime?         @map("started_at") @db.Timestamptz
-  currentTurnStartedAt DateTime?         @map("current_turn_started_at") @db.Timestamptz
-  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt            DateTime          @updatedAt @map("updated_at") @db.Timestamptz
-
-  contest       Contest            @relation(fields: [contestId], references: [id])
-  pickHistories DraftPickHistory[]
-
-  @@map("draft_sessions")
-}
-
-model DraftPickHistory {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  draftSessionId String   @map("draft_session_id") @db.Uuid
-  pickId         String   @map("pick_id") @db.Uuid
-  entryId        String   @map("entry_id") @db.Uuid
-  pickNumber     Int      @map("pick_number")
-  round          Int
-  pickInRound    Int      @map("pick_in_round")
-  autoPicked     Boolean  @default(false) @map("auto_picked")
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  session DraftSession     @relation(fields: [draftSessionId], references: [id])
-  pick    ContestEntryPick @relation(fields: [pickId], references: [id])
-  entry   ContestEntry     @relation(fields: [entryId], references: [id])
-
-  @@unique([draftSessionId, pickNumber])
-  @@index([draftSessionId])
-  @@index([pickId])
-  @@map("draft_pick_histories")
 }
 
 // =============================================================================

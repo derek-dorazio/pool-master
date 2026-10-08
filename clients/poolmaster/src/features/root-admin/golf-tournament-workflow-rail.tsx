@@ -72,8 +72,7 @@ export function GolfTournamentWorkflowRail({
         />
       ) : (
         <p className="text-sm text-muted-foreground">
-          This tournament is {formatSportEventStatus(tournament.status)} and off the
-          standard lifecycle rail.
+          This tournament is {formatSportEventStatus(tournament.status)}.
         </p>
       )}
 

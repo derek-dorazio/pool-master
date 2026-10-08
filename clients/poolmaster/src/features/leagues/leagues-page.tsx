@@ -47,9 +47,8 @@ export function WelcomePage() {
                 Create your first league
               </p>
               <p className="mb-5 max-w-2xl text-sm text-muted-foreground">
-                Start by creating a private league with its own league code. Once it
-                exists, this home flow will route you directly into that league
-                context.
+                Start by creating a private league with its own league code, then
+                invite your members.
               </p>
               <Button
                 data-testid="welcome-create-league"

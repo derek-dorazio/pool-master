@@ -356,10 +356,10 @@ export function AuthHomePage() {
             </h2>
             <p className="max-w-xl text-base text-muted-foreground">
               {inviteContext
-                ? "Sign in to join with your existing account, or create a new account and continue to the invitation confirmation step."
+                ? "Sign in to join with your existing account, or create a new account to accept the invitation."
                 : teamInviteContext
-                  ? `Sign in to join ${teamInviteContext.team.name} as a co-owner, or create a new account and continue to the invitation confirmation step.`
-                  : "Prime Time Commissioner gives commissioners one place to create leagues, invite members, manage teams, and grow into contests as new features come online."}
+                  ? `Sign in to join ${teamInviteContext.team.name} as a co-owner, or create a new account to accept the invitation.`
+                  : "Prime Time Commissioner gives commissioners one place to create leagues, invite members, manage teams, and run contests."}
             </p>
           </div>
           {inviteContext ? (
@@ -367,7 +367,7 @@ export function AuthHomePage() {
               <InvitationContextCard
                 inviteCode={inviteContext.inviteCode}
                 leagueName={inviteContext.league.name}
-                message="This invitation is scoped to a specific league. After you sign in or create your account, you’ll review the invite and explicitly choose to join."
+                message="After you sign in or create your account, you can review the invite and choose to join."
                 title="League invite"
               />
             </>
@@ -375,18 +375,18 @@ export function AuthHomePage() {
             <InvitationContextCard
               inviteCode={teamInviteContext.inviteCode}
               leagueName={teamInviteContext.league.name}
-              message={`This invitation adds you as a co-owner of ${teamInviteContext.team.name}. After you sign in or create your account, you’ll review the team invitation and explicitly accept it.`}
+              message={`This invitation adds you as a co-owner of ${teamInviteContext.team.name}. After you sign in or create your account, you can review the invitation and accept it.`}
               title="Team co-owner invite"
             />
           ) : (
             <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
               <Tile padding="sm" radius="md" variant="subtle">
-                Commissioners start by creating an account, landing in the app,
-                and launching their first league with a memorable league code.
+                Commissioners create a league, give it a memorable league code,
+                and invite their members.
               </Tile>
               <Tile padding="sm" radius="md" variant="subtle">
-                Members join later through invitation, then manage their own
-                team inside the league experience.
+                Members join by invitation and manage their own team in the
+                league.
               </Tile>
             </div>
           )}
@@ -554,10 +554,10 @@ export function AuthHomePage() {
 
           <p className="mt-5 text-sm text-muted-foreground">
             {inviteContext
-              ? "Registration signs you in first, then returns you to this league invitation so you can confirm the join explicitly."
+              ? "After you create your account, you'll come back to this invitation to join the league."
               : teamInviteContext
-                ? "Registration signs you in first, then returns you to this team invitation so you can confirm the co-owner join explicitly."
-                : "Registration signs you in and lands you on your normal app home. If you have no leagues yet, that landing page becomes your first-time commissioner welcome state."}
+                ? "After you create your account, you'll come back to this invitation to join the team."
+                : "After you create your account, you can set up your first league."}
           </p>
           <Link
             className="mt-3 inline-block text-sm font-medium text-primary hover:underline"

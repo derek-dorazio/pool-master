@@ -778,7 +778,7 @@ export function CreateContestPage() {
             Back to league home
           </LinkButton>
         )}
-        body="Contest configuration stays limited to commissioners so the league uses one consistent contest setup flow."
+        body="Only commissioners can set up contests."
         testId="create-contest-page-unauthorized"
         title="Commissioner access required"
       />
@@ -802,8 +802,8 @@ export function CreateContestPage() {
               </h2>
               <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
                 {isEditMode
-                  ? 'Keep contest setup and league-facing rules aligned from the same commissioner shell used during creation.'
-                  : 'Start with the approved golf-first contest family. The current web flow supports tiered golf contests end to end.'}
+                  ? 'Review and update this contest’s settings.'
+                  : 'Set up a tiered golf contest for your league.'}
               </p>
             </div>
           </div>
@@ -942,8 +942,7 @@ export function CreateContestPage() {
               <InheritedTiersPanel tiers={managedContestQuery.data.effectiveTiers ?? []} />
             ) : (
               <Alert>
-                Tier structure and golfer assignments are set on the tournament, not the contest —
-                this contest inherits whatever tiers the tournament defines.
+                This contest uses the tournament’s tiers and golfer assignments.
               </Alert>
             )}
             </fieldset>

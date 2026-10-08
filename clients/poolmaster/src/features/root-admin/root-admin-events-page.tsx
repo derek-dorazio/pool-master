@@ -277,8 +277,8 @@ export function RootAdminEventsPage() {
   const selectedEvent = eventsQuery.data?.find((event) => event.id === selectedEventId);
   const participantModalTitle = selectedEvent?.name ?? 'Event participants';
   const participantModalDescription = selectedEvent
-    ? `${selectedEvent.providerId} current database state`
-    : 'Current persisted participant field for this event.';
+    ? `Participants from ${selectedEvent.providerId}`
+    : 'Participants in this event.';
 
   return (
     <>

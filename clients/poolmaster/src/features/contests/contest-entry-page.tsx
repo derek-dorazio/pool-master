@@ -646,8 +646,8 @@ export function ContestEntryPage() {
             Back to contest
           </LinkButton>
         )}
-        body="The first-pass entry builder currently supports tiered contest selections only."
-        title="This entry flow is not ready yet."
+        body="Only tiered contests can be entered here."
+        title="This contest can't be entered here."
       />
     );
   }
@@ -790,7 +790,7 @@ export function ContestEntryPage() {
               )
             ) : (
               <Alert className="mt-5">
-                This entry is not part of your current team context.
+                This entry belongs to another team.
               </Alert>
             )}
           </Tile>
