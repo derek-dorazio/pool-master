@@ -843,6 +843,10 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     getDraftStateMock.mockResolvedValue({
       data: {
         ...buildDraftState([twoPickTier(['sep-1'])]),
+        entries: [
+          { id: 'entry-1', userId: 'user-other', name: 'Other Team Entry 1', isOnClock: false },
+          { id: 'entry-mine', userId: 'user-1', name: 'My Own Entry', isOnClock: false },
+        ],
         selectedEntryId: 'entry-mine',
         selectedEntryName: 'My Own Entry',
         myEntryId: 'entry-mine',
