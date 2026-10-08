@@ -1153,7 +1153,7 @@ describe('SDK Functional: Contests and Entries', () => {
         providerId: 'functional-test',
         sport: Sport.GOLF,
         name: 'Functional Contest Event',
-        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        startDate: new Date('2099-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });

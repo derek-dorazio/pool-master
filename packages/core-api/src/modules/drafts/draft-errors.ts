@@ -71,6 +71,14 @@ export const draftErrors = {
       409,
     ),
 
+  /** The same lock, reached by the event's start time while the contest still says OPEN. */
+  selectionLockedByEventStart: (contestId: string) =>
+    new DraftError(
+      `Contest ${contestId}'s event has started; picks can no longer be changed`,
+      'CONTEST_ENTRY_LOCKED',
+      409,
+    ),
+
   selectionConfigInvalid: (contestId: string) =>
     new DraftError(
       `Contest ${contestId} does not have a usable roster size or pick count`,

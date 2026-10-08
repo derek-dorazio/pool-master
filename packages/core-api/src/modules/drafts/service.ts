@@ -183,7 +183,9 @@ export class DraftService {
         { action: 'draft.submitSelection.locked', data: { contestId, entryId, status: context.contest.status } },
         'Refused a pick change on a contest that no longer takes picks',
       );
-      throw draftErrors.selectionLocked(contestId, context.contest.status);
+      throw context.contest.status === ContestStatus.OPEN
+        ? draftErrors.selectionLockedByEventStart(contestId)
+        : draftErrors.selectionLocked(contestId, context.contest.status);
     }
 
     const isTiered = context.contest.selectionType === SelectionType.TIERED;
