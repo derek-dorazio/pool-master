@@ -67,9 +67,11 @@ function getErrorMessage(error: unknown) {
 }
 
 export function JoinTeamOwnerPage() {
-  const logger = getLogger().child({
+  // Memoised: `child()` returns a new logger on every call, and the effects below depend on it,
+  // so a logger built during render re-ran them — re-logging the invitation — on every render.
+  const logger = useMemo(() => getLogger().child({
     feature: 'join-team-owner-page',
-  });
+  }), []);
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
