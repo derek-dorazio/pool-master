@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -389,6 +389,44 @@ describe('CreateContestPage', () => {
 
     expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(8);
     expect(screen.getByText('6 tiers × 2 = 12 golfers picked.')).toBeInTheDocument();
+  });
+
+  it('keeps a selected template\'s own scores that count when the event\'s tiers load', async () => {
+    primeCommonMocks();
+    listContestConfigTemplatesMock.mockResolvedValue({
+      data: {
+        templates: [
+          {
+            id: '44444444-4444-4444-8444-444444444444',
+            sport: 'GOLF',
+            contestFormat: 'ROSTER',
+            selectionType: 'TIERED',
+            templateKey: 'golf-tiered-custom',
+            name: 'Select two from each tier, 10 count',
+            description: 'A root admin template that departs from the formula.',
+            sortOrder: 1,
+            isDefault: true,
+            active: true,
+            schemaVersion: 1,
+            configuration: { maxEntriesPerSquad: 1, picksPerTier: 2, countedScores: 10 },
+          },
+        ],
+      },
+    });
+
+    // The events (and so the tier count) arrive after the template has been applied.
+    const primedEvents = await (listEventsMock.getMockImplementation()?.() as Promise<unknown>);
+    let releaseEvents: (value: unknown) => void = () => undefined;
+    listEventsMock.mockReturnValue(new Promise((resolve) => { releaseEvents = resolve; }));
+
+    renderCreateContestPage();
+
+    await waitFor(() => expect(listContestConfigTemplatesMock).toHaveBeenCalled());
+    await act(async () => { await Promise.resolve(); });
+    releaseEvents(primedEvents);
+
+    await screen.findByText('6 tiers × 2 = 12 golfers picked.');
+    expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(10);
   });
 
   it('starts scores that count at the selected event\'s tier count less two', async () => {

@@ -294,16 +294,23 @@ export function CreateContestPage() {
     }
   }, [setContestFormValue, tierCount]);
   // Create starts "Scores that count" at the default for the chosen event's tiers. A draft being
-  // edited keeps what it saved.
+  // edited keeps what it saved, and so does a selected template whose picks per tier the form
+  // still holds: the template's own count wins over the formula.
   useEffect(() => {
     if (isEditMode || tierCount === 0) {
       return;
     }
     const parsed = Number(contestForm.getValues('picksPerTier'));
+    const selectedTemplate = templatesQuery.data?.find(
+      (template) => template.id === contestForm.getValues('selectedTemplateId'),
+    );
+    if (selectedTemplate?.configuration.picksPerTier === parsed) {
+      return;
+    }
     if (Number.isInteger(parsed) && parsed >= 1) {
       setContestFormValue('countedScores', String(getDefaultCountedScores(tierCount, parsed)));
     }
-  }, [contestForm, isEditMode, setContestFormValue, tierCount]);
+  }, [contestForm, isEditMode, setContestFormValue, templatesQuery.data, tierCount]);
   const eligibleEvents = useMemo(
     () => eventsQuery.data?.filter((event) => event.contestEligible) ?? [],
     [eventsQuery.data],
