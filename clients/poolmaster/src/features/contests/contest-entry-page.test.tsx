@@ -837,7 +837,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     expect(screen.getByTestId('contest-entry-participant-sep-1')).toHaveTextContent('Selected');
   });
 
-  it('shows another team\'s entry as hidden while the contest is open, rather than the viewer\'s own picks', async () => {
+  function primeHiddenOtherTeamEntry() {
     primeCommonMocks();
     // The server answers the viewer's own entry when another team's is asked for before lock.
     getDraftStateMock.mockResolvedValue({
@@ -876,6 +876,10 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
         ],
       },
     });
+  }
+
+  it('shows another team\'s entry as hidden while the contest is open, rather than the viewer\'s own picks', async () => {
+    primeHiddenOtherTeamEntry();
 
     renderContestEntryPage();
 
@@ -885,6 +889,19 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     expect(screen.getByTestId('contest-entry-heading')).toHaveTextContent('Other Team Entry 1');
     expect(screen.queryByText('Scottie Scheffler')).not.toBeInTheDocument();
     expect(screen.queryByText('My Own Entry')).not.toBeInTheDocument();
+  });
+
+  it("shows the summary tiles as hidden on another team's entry while the contest is open, not empty-lineup counts", async () => {
+    primeHiddenOtherTeamEntry();
+
+    renderContestEntryPage();
+
+    await screen.findByTestId('contest-entry-picks-hidden');
+    expect(screen.queryByText('0/0')).not.toBeInTheDocument();
+    expect(screen.queryByText('Lineup is fully selected')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-tiebreaker-status')).toHaveTextContent('Hidden');
+    expect(screen.getByTestId('contest-entry-tiebreaker-summary')).toHaveTextContent('Hidden until the contest locks');
+    expect(screen.getAllByText('Hidden until the contest locks')).toHaveLength(4);
   });
 
   it('closes editing once the event has started, even while the contest still says open', async () => {
