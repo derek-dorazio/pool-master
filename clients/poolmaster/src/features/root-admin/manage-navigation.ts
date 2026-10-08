@@ -85,18 +85,6 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   },
 ];
 
-export function getManageSectionDefinition(
-  key: ManageSectionKey,
-): ManageSectionDefinition {
-  const section = MANAGE_SECTION_DEFINITIONS.find((candidate) => candidate.key === key);
-
-  if (!section) {
-    throw new Error(`Unknown manage section key: ${key}`);
-  }
-
-  return section;
-}
-
 export function getManageSectionsByGroup(
   group: ManageSectionGroup,
 ): ManageSectionDefinition[] {

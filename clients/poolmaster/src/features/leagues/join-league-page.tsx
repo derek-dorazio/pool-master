@@ -304,7 +304,7 @@ export function JoinLeaguePage() {
             <InvitationContextCard
               inviteCode={invitationQuery.data.inviteCode}
               leagueName={invitationQuery.data.league.name}
-              message={`Name your team and choose Join League when you're ready.`}
+              message="Name your team and choose Join League when you're ready."
               title="Ready to join"
             />
           ) : null}
