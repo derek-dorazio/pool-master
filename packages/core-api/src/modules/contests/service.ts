@@ -32,7 +32,6 @@ import {
   ContestEntryStatus,
   ContestStatus,
   deriveLegacyParticipantStatus,
-  getTieredRosterSize,
   LeagueMembershipStatus,
   LeagueRole,
   Sport,
@@ -95,11 +94,6 @@ interface ContestEntryReceiptData {
     sportEventId: string | null;
     configuration: {
       tierConfig: unknown;
-      /** A managed tiered contest's picks per tier; its roster is the event's tier count times this. */
-      picksPerTier: number | null;
-      rosterSize: number | null;
-      pickCount: number | null;
-      rounds: number | null;
     } | null;
     league: {
       name: string;
@@ -666,8 +660,8 @@ export class ContestService {
 
   /**
    * The "Entry submitted" confirmation, sent by the draft room when an entry is submitted
-   * (#481). Before the explicit submit it went out on whichever edit first left the entry with
-   * a full lineup and a tiebreaker. Still skipped for an incomplete lineup or no tiebreaker.
+   * (#481). The draft room only calls it once the lineup has passed the submit check, so it
+   * does not judge the lineup again.
    */
   async sendEntrySubmittedEmail(
     contestId: string,
@@ -702,28 +696,6 @@ export class ContestService {
       return;
     }
 
-    const requiredSelections = await this.getRequiredSelectionCount(entry.contest);
-    if (requiredSelections <= 0 || entry.picks.length < requiredSelections) {
-      this.logger.debug({
-        action: 'contestEntry.emailDelivery.incompleteLineup',
-        data: {
-          contestId,
-          entryId,
-          requiredSelections,
-          savedSelections: entry.picks.length,
-        },
-      }, 'Skipped contest entry confirmation email because lineup is incomplete');
-      return;
-    }
-
-    if (entry.tiebreakerValue === null || entry.tiebreakerValue === undefined) {
-      this.logger.debug({
-        action: 'contestEntry.emailDelivery.missingTiebreaker',
-        data: { contestId, entryId },
-      }, 'Skipped contest entry confirmation email because tiebreaker is missing');
-      return;
-    }
-
     const message = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
       userName: formatUserName(user),
       leagueName: entry.contest.league.name,
@@ -737,10 +709,11 @@ export class ContestService {
         entryId,
       ),
       submittedAt: entry.updatedAt,
-      // The tiebreaker is a predicted winning score relative to par.
-      tiebreaker: PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(
-        entry.tiebreakerValue,
-      ),
+      // The tiebreaker is a predicted winning score relative to par. Submit does not require
+      // one, so a lineup submitted without it says so.
+      tiebreaker: entry.tiebreakerValue === null || entry.tiebreakerValue === undefined
+        ? 'None'
+        : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(entry.tiebreakerValue),
       tiers: await this.buildEntryTierSelectionsForEmail(entry),
     });
 
@@ -776,22 +749,6 @@ export class ContestService {
         },
       }, 'Failed to deliver contest entry confirmation email');
     }
-  }
-
-  /**
-   * How many picks a complete entry holds. A managed tiered contest's roster is derived (#479):
-   * the event's tier count, now, times the contest's picks per tier. Older configurations carry
-   * the count themselves.
-   */
-  private async getRequiredSelectionCount(
-    contest: ContestEntryReceiptData['contest'],
-  ): Promise<number> {
-    const picksPerTier = contest.configuration?.picksPerTier ?? null;
-    if (picksPerTier !== null && contest.sportEventId) {
-      const tiers = await this.deps.tiers.listTiers(contest.sportEventId);
-      return getTieredRosterSize(tiers.length, picksPerTier);
-    }
-    return getLegacyRequiredSelectionCount(contest.configuration);
   }
 
   /**
@@ -850,10 +807,6 @@ export class ContestService {
         configuration: configuration
           ? {
             tierConfig: configuration.tierConfig ?? null,
-            picksPerTier: configuration.configJson?.picksPerTier ?? null,
-            rosterSize: configuration.rosterSize ?? null,
-            pickCount: configuration.pickCount ?? null,
-            rounds: configuration.rounds ?? null,
           }
           : null,
         league: { name: league.name, leagueCode: league.leagueCode },
@@ -1182,16 +1135,6 @@ function toContestEntryParticipantRow(pick: ContestEntryPickWithParticipant): Co
     teamAffiliation: pick.participant.teamAffiliation,
     pickedAt: pick.pickedAt,
   };
-}
-
-function getLegacyRequiredSelectionCount(
-  configuration: ContestEntryReceiptData['contest']['configuration'],
-): number {
-  const tierDefinitions = readEmailTierDefinitions(configuration?.tierConfig);
-  if (tierDefinitions.length > 0) {
-    return tierDefinitions.reduce((sum, tier) => sum + tier.picksFromTier, 0);
-  }
-  return configuration?.rosterSize ?? configuration?.pickCount ?? configuration?.rounds ?? 0;
 }
 
 function buildEntryTierSelections(

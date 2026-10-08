@@ -381,19 +381,7 @@ describe('ContestService entries — confirmation email', () => {
     expect(mail.sent[0].text).toContain('-10');
   });
 
-  it('sends no confirmation while the lineup is short of the roster size', async () => {
-    const mail = capturingMail();
-    const { world, owner, contest, service } = setupOnTieredEvent({ mailDelivery: mail });
-    const created = await service.createEntry(contest.id, owner.id);
-    world.addPick(created.id, 'sep-1');
-    await service.updateEntry(contest.id, created.id, owner.id, { tiebreakerValue: -10 });
-
-    await service.sendEntrySubmittedEmail(contest.id, created.id, owner.id);
-
-    expect(mail.sent).toHaveLength(0);
-  });
-
-  it('sends no confirmation for a complete lineup with no tiebreaker', async () => {
+  it('emails the confirmation for a lineup submitted without a tiebreaker, showing the tiebreaker as None', async () => {
     const mail = capturingMail();
     const { world, owner, contest, service } = setupOnTieredEvent({ mailDelivery: mail });
     const created = await service.createEntry(contest.id, owner.id);
@@ -401,7 +389,8 @@ describe('ContestService entries — confirmation email', () => {
 
     await service.sendEntrySubmittedEmail(contest.id, created.id, owner.id);
 
-    expect(mail.sent).toHaveLength(0);
+    expect(mail.sent).toHaveLength(1);
+    expect(mail.sent[0].text).toContain('Tiebreaker: None');
   });
 
   it('resolves without throwing when the confirmation email fails to send', async () => {
