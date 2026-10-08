@@ -139,7 +139,7 @@ export function MyTeamPage() {
     selectedTeam && myTeam && selectedTeam.id !== myTeam.id && canManageAnyTeam,
   );
 
-  const owners = useMyTeamOwners({ leagueId, selectedTeam });
+  const owners = useMyTeamOwners({ leagueCode, leagueId, selectedTeam });
   const lifecycle = useMyTeamLifecycle({
     leagueId,
     leagueCode,
