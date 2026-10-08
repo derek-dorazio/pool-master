@@ -54,7 +54,6 @@ import type {
   ContestEntryPickRepository,
   ContestEntryRepository,
   ContestEntryStandingRepository,
-  ContestPrizeDefinitionRepository,
   ContestRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
@@ -267,10 +266,7 @@ export function fakeSportEventParticipantRepo(
   return {
     findById: one(),
     findBySportEvent: many(),
-    create: echoCreate('sport-event-participant'),
-    update: echoUpdate(),
     createMany: nothing(),
-    upsertMany: nothing(),
     updateMany: nothing(),
     delete: nothing(),
     countPicks: jest.fn().mockResolvedValue(0),
@@ -360,7 +356,6 @@ export function fakeContestConfigurationRepo(
   overrides: Partial<ContestConfigurationRepository> = {},
 ): ContestConfigurationRepository {
   return {
-    findById: one(),
     findByContest: one(),
     create: echoCreate('contest-configuration'),
     update: echoUpdate(),
@@ -383,24 +378,10 @@ export function fakeParticipantContestScoringRuleRepo(
   overrides: Partial<ParticipantContestScoringRuleRepository> = {},
 ): ParticipantContestScoringRuleRepository {
   return {
-    findById: one(),
     findByContestConfiguration: many(),
     create: echoCreate('participant-contest-scoring-rule'),
-    update: echoUpdate(),
     delete: nothing(),
     ...overrides,
   };
 }
 
-export function fakeContestPrizeDefinitionRepo(
-  overrides: Partial<ContestPrizeDefinitionRepository> = {},
-): ContestPrizeDefinitionRepository {
-  return {
-    findById: one(),
-    findByContestConfiguration: many(),
-    create: echoCreate('contest-prize-definition'),
-    update: echoUpdate(),
-    delete: nothing(),
-    ...overrides,
-  };
-}

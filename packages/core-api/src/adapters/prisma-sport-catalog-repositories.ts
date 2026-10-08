@@ -459,44 +459,9 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     return rows.map(toSportEventParticipant);
   }
 
-  async create(
-    participant: Omit<SportEventParticipant, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<SportEventParticipant> {
-    return toSportEventParticipant(await this.prisma.sportEventParticipant.create({
-      data: {
-        sportEventId: participant.sportEventId,
-        participantId: participant.participantId,
-        isActive: participant.isActive,
-        inactiveReason: participant.inactiveReason,
-        ranking: participant.ranking,
-        oddsToWin: participant.oddsToWin,
-        seedNumber: participant.seedNumber,
-        metadata: participant.metadata as object,
-      },
-    }));
-  }
-
-  async update(id: string, updates: Partial<SportEventParticipant>): Promise<SportEventParticipant> {
-    return toSportEventParticipant(await this.prisma.sportEventParticipant.update({
-      where: { id },
-      data: {
-        ...fieldPatch(updates),
-        ...(updates.metadata !== undefined && { metadata: updates.metadata as object }),
-      },
-    }));
-  }
-
   async createMany(sportEventId: string, rows: readonly SportEventParticipantCreate[]): Promise<void> {
     await this.prisma.$transaction(rows.map((row) => this.prisma.sportEventParticipant.create({
       data: { sportEventId, participantId: row.participantId, ...fieldPatch(row) },
-    })));
-  }
-
-  async upsertMany(sportEventId: string, rows: readonly SportEventParticipantCreate[]): Promise<void> {
-    await this.prisma.$transaction(rows.map((row) => this.prisma.sportEventParticipant.upsert({
-      where: { sportEventId_participantId: { sportEventId, participantId: row.participantId } },
-      create: { sportEventId, participantId: row.participantId, ...fieldPatch(row) },
-      update: fieldPatch(row),
     })));
   }
 
@@ -640,23 +605,6 @@ export class PrismaSportEventParticipantRoundRepository implements SportEventPar
     return rows.map(toParticipantRound);
   }
 
-  async findBySportEventParticipant(sportEventParticipantId: string): Promise<SportEventParticipantRound[]> {
-    const rows = await this.prisma.sportEventParticipantRound.findMany({
-      where: { sportEventParticipantId },
-      include: PARTICIPANT_ROUND_INCLUDE,
-      orderBy: { sportEventRound: { roundNumber: 'asc' } },
-    });
-    return rows.map(toParticipantRound);
-  }
-
-  async findBySportEventRound(sportEventRoundId: string): Promise<SportEventParticipantRound[]> {
-    const rows = await this.prisma.sportEventParticipantRound.findMany({
-      where: { sportEventRoundId },
-      include: PARTICIPANT_ROUND_INCLUDE,
-      orderBy: { sportEventParticipantId: 'asc' },
-    });
-    return rows.map(toParticipantRound);
-  }
 }
 
 export class PrismaSportEventParticipantStandingRepository implements SportEventParticipantStandingRepository {
@@ -670,10 +618,6 @@ export class PrismaSportEventParticipantStandingRepository implements SportEvent
     return rows.map(toStanding);
   }
 
-  async findBySportEventParticipant(sportEventParticipantId: string): Promise<SportEventParticipantStanding | null> {
-    const row = await this.prisma.sportEventParticipantStanding.findUnique({ where: { sportEventParticipantId } });
-    return row ? toStanding(row) : null;
-  }
 }
 
 function countMap(ids: readonly string[], counted: Array<[string, number]>): Map<string, number> {

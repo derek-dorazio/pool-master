@@ -16,7 +16,6 @@ export { PrismaContestEntryStandingRepository } from './prisma-contest-entry-sta
 export {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
-  PrismaContestPrizeDefinitionRepository,
   PrismaParticipantContestScoringRuleRepository,
 } from './prisma-contest-management-repositories';
 export {

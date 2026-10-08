@@ -39,6 +39,17 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 
+/** Resolves once some backend in the test database is waiting on a lock another one holds. */
+async function waitForBlockedBackend(): Promise<void> {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const [{ waiting }] = await getPrisma().$queryRaw<Array<{ waiting: number }>>`
+      SELECT count(*)::int AS waiting FROM pg_locks WHERE NOT granted`;
+    if (waiting > 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  throw new Error('No backend blocked on a lock within 5 seconds');
+}
+
 function coreApiTask(): AppSettingsService {
   return new AppSettingsService({
     repository: new PrismaPlatformRuntimeConfigRepository(getPrisma()),
@@ -138,6 +149,42 @@ describe('settings registry on Postgres', () => {
     const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: POLL_INTERVAL_SETTINGS.key } });
     expect((stored?.configJson as { draft: number }).draft).toBe(12000);
     expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(1);
+  });
+
+  it('a first save that loses the race to another first save answers with a conflict naming the winner, and writes nothing', async () => {
+    const admin = await createTestUser({ displayName: 'Settings Race Admin', isRootAdmin: true });
+    const repository = new PrismaPlatformRuntimeConfigRepository(getPrisma());
+    // The other task's first save inserts the row and holds its transaction open, so this
+    // save finds no row to lock and meets that insert at the unique key once it commits.
+    let release!: () => void;
+    let inserted!: () => void;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    const insertDone = new Promise<void>((resolve) => { inserted = resolve; });
+    const winner = getPrisma().$transaction(async (tx) => {
+      await tx.platformRuntimeConfig.create({
+        data: { configKey: POLL_INTERVAL_SETTINGS.key, configJson: { draft: 12000 }, updatedById: admin.user.id },
+      });
+      inserted();
+      await held;
+    });
+    await insertDone;
+
+    const losing = repository.save({
+      configKey: POLL_INTERVAL_SETTINGS.key,
+      configJson: { draft: 14000 },
+      changedById: admin.user.id,
+      expectedUpdatedAt: null,
+    });
+    // Release the winner only once the losing save is waiting on its lock, so the loser meets
+    // the row at the unique key rather than finding it committed.
+    await waitForBlockedBackend();
+    release();
+    await winner;
+    const result = await losing;
+
+    expect(result.status).toBe('conflict');
+    expect(result.status === 'conflict' && result.current?.configJson).toEqual({ draft: 12000 });
+    expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(0);
   });
 
   it('an invalid stored value is served as the defaults and the row is left exactly as it was', async () => {

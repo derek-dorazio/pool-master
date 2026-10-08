@@ -91,7 +91,6 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
   };
 
   return {
-    findById: jest.fn(),
     findByContest: jest.fn().mockImplementation(async () => ({ ...state })),
     create: jest.fn().mockImplementation(async (configuration) => {
       Object.assign(state, configuration, {

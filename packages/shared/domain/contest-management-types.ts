@@ -2,7 +2,6 @@ import type {
   AutoPickPolicy,
   ContestFormat,
   ParticipantInactiveReason,
-  PrizePayoutType,
   SelectionType,
   Sport,
   SportEventStatus,
@@ -173,19 +172,6 @@ export interface ParticipantContestScoringRule extends DomainEntity {
   participantScoringDefinitionId: ParticipantScoringDefinitionId;
   sortOrder: number;
   config: Record<string, unknown>;
-  active: boolean;
-}
-
-/** Prize definition attached to a contest configuration. */
-export interface ContestPrizeDefinition extends DomainEntity {
-  contestConfigurationId: string;
-  prizeDefinitionId: string;
-  displayName: string;
-  sortOrder: number;
-  ruleConfig: Record<string, unknown>;
-  payoutType?: PrizePayoutType;
-  amount?: number;
-  percentage?: number;
   active: boolean;
 }
 

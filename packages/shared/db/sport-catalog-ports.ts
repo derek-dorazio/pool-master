@@ -185,17 +185,8 @@ export interface SportEventParticipantRepository {
   findById(id: string): Promise<SportEventParticipant | null>;
   /** Ordered by seed, unseeded last. */
   findBySportEvent(sportEventId: string): Promise<SportEventParticipant[]>;
-  create(
-    participant: Omit<SportEventParticipant, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<SportEventParticipant>;
-  update(
-    id: string,
-    updates: Partial<SportEventParticipant>,
-  ): Promise<SportEventParticipant>;
   /** Adds participants to an event's field, all or none. */
   createMany(sportEventId: string, rows: readonly SportEventParticipantCreate[]): Promise<void>;
-  /** Adds or refreshes participants on an event's field by participant, all or none. */
-  upsertMany(sportEventId: string, rows: readonly SportEventParticipantCreate[]): Promise<void>;
   /** Patches field rows and their manual prices, all or none. */
   updateMany(entries: readonly SportEventParticipantFieldUpdate[]): Promise<void>;
   /** Removes a field row with its valuation, standing and rounds. The caller guards picks. */
@@ -245,15 +236,11 @@ export interface SportEventParticipantValuationRepository {
 export interface SportEventParticipantRoundRepository {
   /** Every participant's rounds at the event, by participant then round number. */
   findBySportEvent(sportEventId: string): Promise<SportEventParticipantRound[]>;
-  /** Ordered by round number. */
-  findBySportEventParticipant(sportEventParticipantId: string): Promise<SportEventParticipantRound[]>;
-  findBySportEventRound(sportEventRoundId: string): Promise<SportEventParticipantRound[]>;
 }
 
 export interface SportEventParticipantStandingRepository {
   /** Best position first, unranked last. Position is direction-free: 1 is best in every sport. */
   findBySportEvent(sportEventId: string): Promise<SportEventParticipantStanding[]>;
-  findBySportEventParticipant(sportEventParticipantId: string): Promise<SportEventParticipantStanding | null>;
 }
 
 /** Candidate participants for an upload row, within one sport. Exact match on each identifier given. */

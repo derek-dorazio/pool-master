@@ -98,6 +98,9 @@ export class PrismaContestRepository implements ContestRepository {
         ...(updates.endsAt !== undefined && { endsAt: updates.endsAt }),
         ...(updates.isExclusive !== undefined && { isExclusive: updates.isExclusive }),
       },
+      include: {
+        sportEvent: { select: { sport: true } },
+      },
     });
     return mapToContest(row);
   }

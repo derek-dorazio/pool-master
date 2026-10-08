@@ -2,13 +2,11 @@ import type {
   ContestConfigTemplate,
   ContestConfiguration,
   ContestEntryPick,
-  ContestPrizeDefinition,
   ParticipantContestScoringRule,
   ParticipantInactiveReason,
 } from '../domain';
 
 export interface ContestConfigurationRepository {
-  findById(id: string): Promise<ContestConfiguration | null>;
   findByContest(contestId: string): Promise<ContestConfiguration | null>;
   create(
     configuration: Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>,
@@ -38,32 +36,12 @@ export interface ContestConfigTemplateRepository {
 }
 
 export interface ParticipantContestScoringRuleRepository {
-  findById(id: string): Promise<ParticipantContestScoringRule | null>;
   findByContestConfiguration(
     contestConfigurationId: string,
   ): Promise<ParticipantContestScoringRule[]>;
   create(
     rule: Omit<ParticipantContestScoringRule, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ParticipantContestScoringRule>;
-  update(
-    id: string,
-    updates: Partial<ParticipantContestScoringRule>,
-  ): Promise<ParticipantContestScoringRule>;
-  delete(id: string): Promise<void>;
-}
-
-export interface ContestPrizeDefinitionRepository {
-  findById(id: string): Promise<ContestPrizeDefinition | null>;
-  findByContestConfiguration(
-    contestConfigurationId: string,
-  ): Promise<ContestPrizeDefinition[]>;
-  create(
-    definition: Omit<ContestPrizeDefinition, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ContestPrizeDefinition>;
-  update(
-    id: string,
-    updates: Partial<ContestPrizeDefinition>,
-  ): Promise<ContestPrizeDefinition>;
   delete(id: string): Promise<void>;
 }
 

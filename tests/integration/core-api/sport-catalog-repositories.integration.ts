@@ -9,6 +9,7 @@ import { Sport } from '@poolmaster/shared/domain';
 import {
   PrismaEventSeriesRepository,
   PrismaParticipantLeagueAffiliationRepository,
+  PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
   PrismaSportEventParticipantRoundRepository,
   PrismaSportEventParticipantStandingRepository,
@@ -59,6 +60,18 @@ async function createParticipant(sportId: string, name: string, externalId?: str
 }
 
 describe('Sport and SportLeague repositories', () => {
+  it('reads a sport by id, null for an unknown id, and lists every sport by name', async () => {
+    const golf = await golfSport();
+    const nfl = await getPrisma().sport.create({
+      data: { name: Sport.NFL, participantType: 'TEAM', tournamentFormat: 'WEEKLY_GAMES_SEASON' },
+    });
+    const sports = new PrismaSportRepository(getPrisma());
+
+    await expect(sports.findById(nfl.id)).resolves.toMatchObject({ id: nfl.id, name: Sport.NFL, participantType: 'TEAM' });
+    await expect(sports.findById(randomUUID())).resolves.toBeNull();
+    expect((await sports.findAll()).map((row) => row.id)).toEqual([golf.id, nfl.id]);
+  });
+
   it('finds a sport by name and lists sport leagues filtered by sport and activity, ordered by name', async () => {
     const sport = await golfSport();
     const sports = new PrismaSportRepository(getPrisma());
@@ -192,6 +205,51 @@ describe('ParticipantRepository — search and matching', () => {
     await expect(participants.findMatching(sport.id, { name: 'Rory' })).resolves.toEqual([]);
     await expect(participants.findMatching(randomUUID(), { id: rory.id })).resolves.toEqual([]);
   });
+
+  it('creates a participant, reads it by id, and updates only the fields given', async () => {
+    const sport = await golfSport();
+    const participants = new PrismaParticipantRepository(getPrisma());
+
+    const created = await participants.create({
+      sportId: sport.id,
+      name: 'Ludvig Aberg',
+      participantType: 'INDIVIDUAL',
+      nationality: 'SWE',
+      role: 'GOLFER',
+      status: 'ACTIVE',
+      injuryStatus: { status: 'HEALTHY' },
+      externalIds: { owgr: '12' },
+    });
+    const updated = await participants.update(created.id, { name: 'Ludvig Åberg', status: 'INACTIVE' });
+
+    expect(updated).toEqual(expect.objectContaining({
+      id: created.id,
+      name: 'Ludvig Åberg',
+      status: 'INACTIVE',
+      nationality: 'SWE',
+      role: 'GOLFER',
+      injuryStatus: { status: 'HEALTHY' },
+      externalIds: { owgr: '12' },
+    }));
+    await expect(participants.findById(created.id)).resolves.toEqual(updated);
+    await expect(participants.findById(randomUUID())).resolves.toBeNull();
+  });
+
+  it('binds a provider identity once: binding it again moves it to the new participant instead of duplicating it', async () => {
+    const sport = await golfSport();
+    const mappings = new PrismaParticipantProviderMappingRepository(getPrisma());
+    const [first, second] = [await createParticipant(sport.id, 'First'), await createParticipant(sport.id, 'Second')];
+    const identity = { providerId: 'integration-test', externalId: 'feed-42', confidence: 'MANUAL' as const };
+
+    await mappings.bind({ ...identity, participantId: first.id, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
+    const moved = await mappings.bind({ ...identity, participantId: second.id, mappedAt: new Date('2026-05-02T00:00:00.000Z') });
+
+    expect(moved).toMatchObject({ participantId: second.id, externalId: 'feed-42' });
+    await expect(mappings.findByParticipant(first.id)).resolves.toEqual([]);
+    await expect(mappings.findByProviderExternalIds('integration-test', ['feed-42'])).resolves.toEqual([
+      expect.objectContaining({ participantId: second.id, mappedAt: new Date('2026-05-02T00:00:00.000Z') }),
+    ]);
+  });
 });
 
 describe('SportEvent core repositories', () => {
@@ -210,6 +268,21 @@ describe('SportEvent core repositories', () => {
     expect((await events.findAll({ sportLeagueId: pga.id })).map((row) => row.id)).toEqual([later.id]);
     await expect(events.findById(later.id)).resolves.toMatchObject({ sportLeagueId: pga.id, syncScope: 'NONE', autoLifecycleEnabled: true });
     expect(await events.countParticipants([later.id, earlier.id])).toEqual(new Map([[later.id, 1], [earlier.id, 0]]));
+  });
+
+  it('summarizes each provider\'s scheduled and in-progress events and its latest change, with zeros for a provider with none', async () => {
+    const live = await createEvent('live', { status: 'IN_PROGRESS' });
+    await createEvent('scheduled', { status: 'SCHEDULED' });
+    await createEvent('done', { status: 'COMPLETED' });
+    await createEvent('elsewhere', { providerId: 'TEST_PROVIDER', status: 'SCHEDULED' });
+    const touched = await getPrisma().sportEvent.update({ where: { id: live.id }, data: { name: 'Catalog live, renamed' } });
+
+    const summary = await new PrismaSportEventRepository(getPrisma()).summarizeByProviders(['integration-test', 'contract-provider']);
+
+    expect(summary).toEqual(new Map([
+      ['integration-test', { activeEventCount: 2, lastChangedAt: touched.updatedAt }],
+      ['contract-provider', { activeEventCount: 0, lastChangedAt: null }],
+    ]));
   });
 
   it('reads rounds in order, participant rounds with their round number, and standings best position first scoped to the event', async () => {
@@ -237,11 +310,10 @@ describe('SportEvent core repositories', () => {
     }
 
     expect((await new PrismaSportEventRoundRepository(getPrisma()).findBySportEvent(event.id)).map((row) => row.roundNumber)).toEqual([1, 2]);
-    expect((await new PrismaSportEventParticipantRoundRepository(getPrisma()).findBySportEventParticipant(leader.id))
-      .map((row) => row.roundNumber)).toEqual([1, 2]);
+    expect((await new PrismaSportEventParticipantRoundRepository(getPrisma()).findBySportEvent(event.id))
+      .map((row) => [row.sportEventParticipantId, row.roundNumber])).toEqual([[leader.id, 1], [leader.id, 2]]);
     const standings = new PrismaSportEventParticipantStandingRepository(getPrisma());
     expect((await standings.findBySportEvent(event.id)).map((row) => [row.sportEventParticipantId, row.position]))
       .toEqual([[leader.id, 1], [second.id, 2], [unranked.id, null]]);
-    await expect(standings.findBySportEventParticipant(outsider.id)).resolves.toMatchObject({ position: 1 });
   });
 });
