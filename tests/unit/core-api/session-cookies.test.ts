@@ -14,6 +14,8 @@
 import {
   createSessionCookieHeaders,
   createClearedSessionCookieHeaders,
+  parseCookies,
+  readAccessCookie,
 } from '../../../packages/core-api/src/core/session-cookies';
 
 const TOKENS = {
@@ -81,5 +83,21 @@ describe('#182: session cookie Secure attribute', () => {
     expect(access).toContain('HttpOnly');
     expect(refresh).toContain('HttpOnly');
     expect(csrf).not.toContain('HttpOnly');
+  });
+});
+
+describe('reading the session cookies from a request', () => {
+  it('reads the session cookie when another cookie on the request is not valid percent-encoding', () => {
+    const header = 'site_tracker=%E0%A4%A; poolmaster_access=token%2Fvalue';
+
+    expect(readAccessCookie(header)).toBe('token/value');
+  });
+
+  it('keeps a cookie whose value is not valid percent-encoding as it was sent, instead of throwing', () => {
+    expect(parseCookies('discount=100%; theme=dark')).toEqual({ discount: '100%', theme: 'dark' });
+  });
+
+  it('keeps an equals sign inside a cookie value and skips an empty segment', () => {
+    expect(parseCookies('a=b=c;; d=e')).toEqual({ a: 'b=c', d: 'e' });
   });
 });

@@ -230,8 +230,8 @@ describe('ContestEntryRepository — entries with their squad', () => {
     const first = await prisma.contestEntry.create({
       data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'First' },
     });
-    const withdrawn = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 3, name: 'Withdrawn', status: 'WITHDRAWN' },
+    const inactive = await prisma.contestEntry.create({
+      data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 3, name: 'Inactive', status: 'INACTIVE' },
     });
 
     const all = await repos().entries.findByContestWithSquad(contest.id);
@@ -241,7 +241,7 @@ describe('ContestEntryRepository — entries with their squad', () => {
     expect(all.map((entry) => [entry.id, entry.squadName])).toEqual([
       [first.id, `Alpha ${suffix}`],
       [second.id, `Bravo ${suffix}`],
-      [withdrawn.id, `Alpha ${suffix}`],
+      [inactive.id, `Alpha ${suffix}`],
     ]);
     expect(active.map((entry) => entry.id)).toEqual([first.id, second.id]);
     expect(one).toEqual(expect.objectContaining({ id: second.id, entryNumber: 2, squadName: `Bravo ${suffix}` }));

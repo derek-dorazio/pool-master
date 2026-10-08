@@ -4,6 +4,7 @@ import {
   createContest,
   enterContest,
   listContestConfigTemplates,
+  resendLeagueInvitation,
   openContest,
   sendLeagueInvitations,
   submitContestSelection,
@@ -164,6 +165,45 @@ describe('SDK Functional: system emails', () => {
     expect(linksIn(welcomes[0])).toEqual([`${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}`]);
     expect(await sentMailTo(invitee.email)).toHaveLength(2);
     expect(await sentMailTo(commissioner.email)).toHaveLength(0);
+  });
+
+  it('resends a league invite to the same address with a new link, and only the new link joins the league', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'Resending Commissioner',
+      leagueName: `Email Resend League ${randomUUID().slice(0, 6)}`,
+    });
+    const invitee = await buildRegisteredUser({ displayName: 'Re-Invited Member' });
+    const invite = await sendLeagueInvitations({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { emails: [invitee.email] },
+    });
+    const original = invite.data?.sent[0];
+    expect(original).toBeDefined();
+
+    const resent = await resendLeagueInvitation({
+      client: commissioner.client,
+      path: { id: league.id, invitationId: original?.id as string },
+    });
+
+    expect(resent.response.status).toBe(200);
+    const newCode = resent.data?.invitation.inviteCode as string;
+    expect(newCode).toBeTruthy();
+    expect(newCode).not.toBe(original?.inviteCode);
+    const invitesSent = await sentMailWithSubject(
+      invitee.email,
+      `Resending Commissioner invited you to ${league.name}`,
+    );
+    expect(invitesSent).toHaveLength(2);
+    expect(linksIn(invitesSent[1])).toEqual([`${FUNCTIONAL_APP_BASE_URL}/invite/${newCode}`]);
+
+    const oldLink = await acceptInvitation({
+      client: invitee.client,
+      body: { inviteCode: original?.inviteCode as string },
+    });
+    expect(oldLink.response.status).toBe(404);
+    const newLink = await acceptInvitation({ client: invitee.client, body: { inviteCode: newCode } });
+    expect(newLink.response.status).toBe(201);
   });
 
   it('sends the entry confirmation to the member who completed the entry, linking to that entry, and a contest-started summary to the commissioner and each entrant when an admin starts the event', async () => {

@@ -5,13 +5,13 @@
  * never exists half-scored.
  */
 
-import type { GolfRoundResult, GolfStandingResult, ParticipantStandingStatus } from '../domain';
+import type { GolfRoundResult, GolfStandingResult, ParticipantRoundStatus, ParticipantStandingStatus } from '../domain';
 
 export interface GolfRoundWrite {
   sportEventParticipantId: string;
   sportEventRoundId: string;
   /** Core: the participant's progress through the round. */
-  status: string;
+  status: ParticipantRoundStatus;
   completedAt: Date | null;
   /** Golf: what was scored. */
   strokes: number;

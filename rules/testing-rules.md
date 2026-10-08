@@ -829,7 +829,7 @@ Prefer to keep data integration tests for:
 - history fallback logic
 - draft/roster persistence details that are more about stored state than client workflow
 - query/read-model correctness where the main proof is “this returns the correct data from the real DB”
-- representative permanent keep areas such as scoring results/recalculation, ingestion persistence, history read fallbacks, roster-pick persistence, sport-event participant repository queries, standings/dashboard read models, and lower-level contest-management configuration flows
+- representative permanent keep areas such as scoring results/recalculation, ingestion persistence, history read fallbacks, roster-pick persistence, sport-event participant repository queries, standings read models, and lower-level contest-management configuration flows
 
 ### Data Integration Depth Requirement
 

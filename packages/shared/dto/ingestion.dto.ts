@@ -4,7 +4,7 @@
  * Every operation is root-admin; `admin` is the permission, `ingestion` is what they administer.
  */
 import { z } from 'zod';
-import { ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
+import { IngestionJobStatus, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 import { EventStatusDtoSchema } from './events.dto';
 import { registerSchema } from './schema-registry';
@@ -109,7 +109,7 @@ export const ProviderSyncJobPayloadDtoSchema = z.object({
   providerId: z.string().describe('Provider that executed the ingestion job.'),
   sport: SportDtoSchema,
   eventExternalId: z.string().optional().describe('External event id for event-scoped jobs, when applicable.'),
-  status: z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']).describe('Internal ingestion job status.'),
+  status: z.nativeEnum(IngestionJobStatus).describe('Internal ingestion job status.'),
   startedAt: z.string().datetime().optional().describe('When the ingestion job started.'),
   completedAt: z.string().datetime().optional().describe('When the ingestion job completed.'),
   recordsProcessed: z.number().int().min(0).describe('Canonical records processed by the ingestion job.'),

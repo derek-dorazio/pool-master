@@ -10,26 +10,38 @@ import { isLastRootAdmin } from '../../../packages/core-api/src/modules/users/us
 import { fakeUserRepo } from '../../support/repo-fakes';
 
 describe('isLastRootAdmin', () => {
-  it('is true for a root admin when they are the only one', async () => {
-    const users = fakeUserRepo({ countRootAdmins: jest.fn().mockResolvedValue(1) });
+  it('is true for an active root admin when they are the only active one', async () => {
+    const users = fakeUserRepo({ countActiveRootAdmins: jest.fn().mockResolvedValue(1) });
 
-    await expect(isLastRootAdmin(users, { isRootAdmin: true })).resolves.toBe(true);
+    await expect(isLastRootAdmin(users, { isRootAdmin: true, isActive: true })).resolves.toBe(true);
   });
 
-  it('is false for a root admin when another exists', async () => {
-    const users = fakeUserRepo({ countRootAdmins: jest.fn().mockResolvedValue(2) });
+  it('is false for an active root admin when another active one exists', async () => {
+    const users = fakeUserRepo({ countActiveRootAdmins: jest.fn().mockResolvedValue(2) });
 
-    await expect(isLastRootAdmin(users, { isRootAdmin: false })).resolves.toBe(false);
-    await expect(isLastRootAdmin(users, { isRootAdmin: true })).resolves.toBe(false);
+    await expect(isLastRootAdmin(users, { isRootAdmin: false, isActive: true })).resolves.toBe(false);
+    await expect(isLastRootAdmin(users, { isRootAdmin: true, isActive: true })).resolves.toBe(false);
+  });
+
+  it('is false for an inactive root admin while one active root admin remains', async () => {
+    const users = fakeUserRepo({ countActiveRootAdmins: jest.fn().mockResolvedValue(1) });
+
+    await expect(isLastRootAdmin(users, { isRootAdmin: true, isActive: false })).resolves.toBe(false);
+  });
+
+  it('is true for an inactive root admin when no active root admin remains', async () => {
+    const users = fakeUserRepo({ countActiveRootAdmins: jest.fn().mockResolvedValue(0) });
+
+    await expect(isLastRootAdmin(users, { isRootAdmin: true, isActive: false })).resolves.toBe(true);
   });
 
   it('is false for a non-root-admin, without counting at all', async () => {
-    const users = fakeUserRepo({ countRootAdmins: jest.fn().mockResolvedValue(1) });
+    const users = fakeUserRepo({ countActiveRootAdmins: jest.fn().mockResolvedValue(1) });
 
     // `isRootAdmin` is optional on the canonical User, so absent must read as "not one"
     // rather than as "unknown, go and count".
-    await expect(isLastRootAdmin(users, {})).resolves.toBe(false);
-    await expect(isLastRootAdmin(users, { isRootAdmin: false })).resolves.toBe(false);
-    expect(users.countRootAdmins).not.toHaveBeenCalled();
+    await expect(isLastRootAdmin(users, { isActive: true })).resolves.toBe(false);
+    await expect(isLastRootAdmin(users, { isRootAdmin: false, isActive: true })).resolves.toBe(false);
+    expect(users.countActiveRootAdmins).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,4 @@
-import { LeagueRole } from '@poolmaster/shared/domain';
+import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import type { LeagueDto, LeagueMembershipDto } from '@/lib/api';
 import { readCookie } from '@/lib/cookies';
 
@@ -139,7 +139,7 @@ export function getCommissionerLeagueIds(
     memberships
       .filter(
         (membership) =>
-          membership.status === 'ACTIVE' && membership.role === LeagueRole.COMMISSIONER,
+          membership.status === LeagueMembershipStatus.ACTIVE && membership.role === LeagueRole.COMMISSIONER,
       )
       .map((membership) => membership.leagueId),
   );

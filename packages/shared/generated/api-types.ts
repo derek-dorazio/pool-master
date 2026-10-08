@@ -292,7 +292,7 @@ export interface paths {
         put?: never;
         /**
          * Disable a user
-         * @description Sets isActive = false and revokes every live session, atomically. Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining root admin. Disabling yourself clears your session cookies.
+         * @description Sets isActive = false and revokes every live session, atomically, except, when you inactivate yourself, the cookie session you did it from (A9: an inactive account may still sign in to reactivate or delete itself). Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining active root admin.
          */
         post: operations["disableUser"];
         delete?: never;
@@ -548,13 +548,37 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List a league's outstanding invitations
+         * @description Lists the league's outstanding invitations, newest first: every PENDING email invite and join link, plus email invites that expired without being accepted. Accepted and cancelled invitations are not listed. Commissioner only.
+         */
+        get: operations["listLeagueInvitations"];
         put?: never;
         /**
          * Send email invitations to join a league
-         * @description Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response.
+         * @description Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
          */
         post: operations["sendLeagueInvitations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/invitations/{invitationId}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resend an email invitation
+         * @description Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.
+         */
+        post: operations["resendLeagueInvitation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -572,7 +596,7 @@ export interface paths {
         put?: never;
         /**
          * Generate a shareable invite link
-         * @description Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints.
+         * @description Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
          */
         post: operations["generateInviteLink"];
         delete?: never;
@@ -592,8 +616,8 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Revoke an invite link
-         * @description Revokes a previously created shareable invite link so the invite code can no longer be accepted by future users.
+         * Cancel an invitation
+         * @description Cancels an outstanding invitation by its invite code, a shareable join link or an email invite, so the code can no longer be accepted. The invitation becomes REVOKED. An invitation already accepted or cancelled is refused with 409 LEAGUE_INVITATION_NOT_CANCELLABLE.
          */
         delete: operations["revokeInviteLink"];
         options?: never;
@@ -676,26 +700,6 @@ export interface paths {
          * @description Allows the authenticated user to leave a league through their own membership rather than through a commissioner-managed removal flow.
          */
         delete: operations["leaveLeague"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/dashboard": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get commissioner dashboard for a league
-         * @description Returns the commissioner-oriented dashboard payload for a league, including action items, member counts, pending invites, and upcoming events.
-         */
-        get: operations["getLeagueDashboard"];
-        put?: never;
-        post?: never;
-        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -784,7 +788,7 @@ export interface paths {
         put?: never;
         /**
          * Inactivate a team
-         * @description Inactivates the target team, preserves its history, and removes its active owners from the league. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original team (#218).
+         * @description Inactivates the target team, preserves its history, removes its active owners from the league, and revokes its pending co-owner invitations so an old invite cannot revive it. Refused with LEAGUE_LAST_COMMISSIONER_REQUIRED when the team's owners are every active commissioner the league has. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original team (#218).
          *
          *     **League commissioners and root admins only (#219).** Team owners may invite and remove co-owners on their own team, but ending a team also ends its owners' league memberships, so it is league administration rather than team management.
          */
@@ -866,7 +870,7 @@ export interface paths {
         put?: never;
         /**
          * Invite a co-owner by email
-         * @description Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. Active team owners, league commissioners, and root admins may start this flow.
+         * @description Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active team owners, league commissioners, and root admins may start this flow.
          */
         post: operations["createSquadOwnerInvitation"];
         delete?: never;
@@ -886,7 +890,7 @@ export interface paths {
         put?: never;
         /**
          * Replace an active team owner
-         * @description Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email. Active team owners, league commissioners, and root admins may start this flow.
+         * @description Guided replacement flow that removes the selected current owner (ending their team and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A team owner may replace a co-owner; a league commissioner or root admin may also replace a team's only owner, and the team stays active for the replacement.
          */
         post: operations["replaceSquadOwner"];
         delete?: never;
@@ -946,7 +950,7 @@ export interface paths {
         put?: never;
         /**
          * Accept a league invitation using an invite code
-         * @description Accepts an invitation for the authenticated user and creates or reactivates a MEMBER membership in the target league.
+         * @description Accepts an invitation for the authenticated user and creates or reactivates a MEMBER membership in the target league. An email invitation can be accepted only by the account whose email it was sent to (400 `LEAGUE_INVITATION_EMAIL_MISMATCH`); an invite link can be used by anyone holding it. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
          */
         post: operations["acceptInvitation"];
         delete?: never;
@@ -986,7 +990,7 @@ export interface paths {
         put?: never;
         /**
          * Accept a team-owner invitation using an invite code
-         * @description Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team.
+         * @description Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`.
          */
         post: operations["acceptTeamOwnerInvitation"];
         delete?: never;
@@ -1010,7 +1014,7 @@ export interface paths {
          *
          *     Unauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.
          *
-         *     The account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person.
+         *     The account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
          */
         post: operations["registerWithTeamOwnerInvitation"];
         delete?: never;
@@ -3737,6 +3741,1684 @@ export interface components {
             /** @description Access-token lifetime in seconds from the time it was issued. */
             expiresIn: number;
         };
+        /** @description Squad membership summary. */
+        SquadMembershipDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            squadId: string;
+            /** Format: uuid */
+            leagueId: string;
+            /** Format: uuid */
+            userId: string;
+            /** @description The member, as the canonical UserDto. */
+            user: {
+                /** @description Stable user identifier. */
+                id: string;
+                /** @description Primary email address for the user account. */
+                email: string;
+                /** @description Unique login identifier for the account. */
+                username: string;
+                /** @description First name shown in account and member-management surfaces. */
+                firstName: string;
+                /** @description Last name shown in account and member-management surfaces. */
+                lastName: string;
+                /** @description Whether the account is currently active for normal sign-in and product usage. */
+                isActive: boolean;
+                /** @description Whether the user has platform-level root-admin access. */
+                isRootAdmin: boolean;
+                /**
+                 * @description Authentication provider used for the account when known.
+                 * @enum {string}
+                 */
+                authProvider?: "email" | "google" | "apple";
+                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                timezone?: string;
+                /** @description Preferred locale for formatting and localized copy. */
+                locale?: string;
+                /**
+                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                timeFormat?: "12H" | "24H";
+                /**
+                 * @description Preferred date display format used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                dateFormat?: "MDY" | "DMY" | "YMD";
+                /**
+                 * Format: date-time
+                 * @description Account creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            };
+            /**
+             * @description Squad membership status.
+             * @enum {string}
+             */
+            status: "ACTIVE" | "INACTIVE";
+            /**
+             * Format: date-time
+             * @description When the user joined the squad.
+             */
+            joinedAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad membership record was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad membership record was last updated.
+             */
+            updatedAt: string;
+        };
+        /** @description A squad within a league. Returned wherever a squad is read. */
+        SquadDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            leagueId: string;
+            /** Format: uuid */
+            createdBy: string;
+            /** @description Squad display name. */
+            name: string;
+            /**
+             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+             * @enum {string}
+             */
+            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+            isActive: boolean;
+            /** @description Number of memberships attached to the squad. */
+            memberCount: number;
+            /**
+             * Format: date-time
+             * @description When the squad was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad was last updated.
+             */
+            updatedAt: string;
+            /** @description Optional expanded squad membership list. */
+            members?: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                squadId: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                userId: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+                /**
+                 * @description Squad membership status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the squad.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was last updated.
+                 */
+                updatedAt: string;
+            }[];
+        };
+        /** @description Single-squad response. */
+        SquadResponse: {
+            /** @description A squad within a league. Returned wherever a squad is read. */
+            squad: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                createdBy: string;
+                /** @description Squad display name. */
+                name: string;
+                /**
+                 * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+                isActive: boolean;
+                /** @description Number of memberships attached to the squad. */
+                memberCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the squad was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad was last updated.
+                 */
+                updatedAt: string;
+                /** @description Optional expanded squad membership list. */
+                members?: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    squadId: string;
+                    /** Format: uuid */
+                    leagueId: string;
+                    /** Format: uuid */
+                    userId: string;
+                    /** @description The member, as the canonical UserDto. */
+                    user: {
+                        /** @description Stable user identifier. */
+                        id: string;
+                        /** @description Primary email address for the user account. */
+                        email: string;
+                        /** @description Unique login identifier for the account. */
+                        username: string;
+                        /** @description First name shown in account and member-management surfaces. */
+                        firstName: string;
+                        /** @description Last name shown in account and member-management surfaces. */
+                        lastName: string;
+                        /** @description Whether the account is currently active for normal sign-in and product usage. */
+                        isActive: boolean;
+                        /** @description Whether the user has platform-level root-admin access. */
+                        isRootAdmin: boolean;
+                        /**
+                         * @description Authentication provider used for the account when known.
+                         * @enum {string}
+                         */
+                        authProvider?: "email" | "google" | "apple";
+                        /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                        timezone?: string;
+                        /** @description Preferred locale for formatting and localized copy. */
+                        locale?: string;
+                        /**
+                         * @description Preferred clock display used in account and scheduling surfaces.
+                         * @enum {string}
+                         */
+                        timeFormat?: "12H" | "24H";
+                        /**
+                         * @description Preferred date display format used in account and scheduling surfaces.
+                         * @enum {string}
+                         */
+                        dateFormat?: "MDY" | "DMY" | "YMD";
+                        /**
+                         * Format: date-time
+                         * @description Account creation timestamp in ISO 8601 format.
+                         */
+                        createdAt?: string;
+                    };
+                    /**
+                     * @description Squad membership status.
+                     * @enum {string}
+                     */
+                    status: "ACTIVE" | "INACTIVE";
+                    /**
+                     * Format: date-time
+                     * @description When the user joined the squad.
+                     */
+                    joinedAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the squad membership record was created.
+                     */
+                    createdAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the squad membership record was last updated.
+                     */
+                    updatedAt: string;
+                }[];
+            };
+        };
+        /** @description Squad-list response. */
+        SquadListResponse: {
+            squads: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                createdBy: string;
+                /** @description Squad display name. */
+                name: string;
+                /**
+                 * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+                isActive: boolean;
+                /** @description Number of memberships attached to the squad. */
+                memberCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the squad was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad was last updated.
+                 */
+                updatedAt: string;
+                /** @description Optional expanded squad membership list. */
+                members?: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    squadId: string;
+                    /** Format: uuid */
+                    leagueId: string;
+                    /** Format: uuid */
+                    userId: string;
+                    /** @description The member, as the canonical UserDto. */
+                    user: {
+                        /** @description Stable user identifier. */
+                        id: string;
+                        /** @description Primary email address for the user account. */
+                        email: string;
+                        /** @description Unique login identifier for the account. */
+                        username: string;
+                        /** @description First name shown in account and member-management surfaces. */
+                        firstName: string;
+                        /** @description Last name shown in account and member-management surfaces. */
+                        lastName: string;
+                        /** @description Whether the account is currently active for normal sign-in and product usage. */
+                        isActive: boolean;
+                        /** @description Whether the user has platform-level root-admin access. */
+                        isRootAdmin: boolean;
+                        /**
+                         * @description Authentication provider used for the account when known.
+                         * @enum {string}
+                         */
+                        authProvider?: "email" | "google" | "apple";
+                        /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                        timezone?: string;
+                        /** @description Preferred locale for formatting and localized copy. */
+                        locale?: string;
+                        /**
+                         * @description Preferred clock display used in account and scheduling surfaces.
+                         * @enum {string}
+                         */
+                        timeFormat?: "12H" | "24H";
+                        /**
+                         * @description Preferred date display format used in account and scheduling surfaces.
+                         * @enum {string}
+                         */
+                        dateFormat?: "MDY" | "DMY" | "YMD";
+                        /**
+                         * Format: date-time
+                         * @description Account creation timestamp in ISO 8601 format.
+                         */
+                        createdAt?: string;
+                    };
+                    /**
+                     * @description Squad membership status.
+                     * @enum {string}
+                     */
+                    status: "ACTIVE" | "INACTIVE";
+                    /**
+                     * Format: date-time
+                     * @description When the user joined the squad.
+                     */
+                    joinedAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the squad membership record was created.
+                     */
+                    createdAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the squad membership record was last updated.
+                     */
+                    updatedAt: string;
+                }[];
+            }[];
+        };
+        /** @description Single squad-membership response. */
+        SquadMembershipResponse: {
+            /** @description Squad membership summary. */
+            membership: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                squadId: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                userId: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+                /**
+                 * @description Squad membership status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the squad.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was last updated.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description Request payload for creating a squad within a league. */
+        CreateSquadRequest: {
+            /** @description Squad display name. */
+            name?: string;
+            /**
+             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+             * @enum {string}
+             */
+            iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+        };
+        /** @description Patch payload for updating a squad. */
+        UpdateSquadRequest: {
+            /** @description Updated squad display name. */
+            name?: string;
+            /**
+             * @description Updated built-in team icon key from the curated PoolMaster team icon catalog.
+             * @enum {string}
+             */
+            iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+        };
+        /** @description Request payload for adding a user to a squad. */
+        AddSquadMemberRequest: {
+            /**
+             * Format: uuid
+             * @description User to add as an owner of the team.
+             */
+            userId: string;
+        };
+        /** @description Commissioner request payload for creating a new private league. */
+        CreateLeagueRequest: {
+            /** @description Primary league name shown in selectors, invites, and league home. */
+            name: string;
+            /** @description Required unique league route code used in bookmarkable URLs such as `/league/<leagueCode>`. */
+            leagueCode: string;
+            /** @description Optional short description or commissioner-facing summary for the league. */
+            description?: string;
+        };
+        /** @description Commissioner confirmation payload for permanently deleting an inactive league. */
+        DeleteLeagueRequest: {
+            /** @description Exact league code confirmation required before permanently deleting an inactive league. */
+            leagueCode: string;
+        };
+        /** @description Commissioner request payload for editing league details while the league remains active. */
+        UpdateLeagueDetailsRequest: {
+            /** @description Updated primary league name shown in selectors, tiles, and league home. */
+            name: string;
+            /** @description Optional updated commissioner-facing league description. Omit or send an empty value to clear it. */
+            description?: string;
+        };
+        /** @description Commissioner request payload for selecting a built-in league icon. */
+        UpdateLeagueIconRequest: {
+            /**
+             * @description Selected built-in league icon from the curated PoolMaster icon catalog.
+             * @enum {string}
+             */
+            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+        };
+        /** @description Commissioner request payload for sending direct email invites. */
+        SendLeagueInvitationsRequest: {
+            /** @description Email recipients to invite into the league. */
+            emails: string[];
+            /** @description Optional commissioner note included with the invitation email. */
+            message?: string;
+        };
+        /** @description Commissioner request payload for creating a shareable invite link. */
+        GenerateInviteLinkRequest: {
+            /** @description Optional invite-link lifetime in days. */
+            expiresInDays?: number;
+            /** @description Optional maximum number of accepted joins. Zero means unlimited use. */
+            maxUses?: number;
+        };
+        /** @description Commissioner-managed membership role update payload. */
+        ChangeLeagueMemberRoleRequest: {
+            /**
+             * @description Target membership role after the change. Commissioner grants league-administration access.
+             * @enum {string}
+             */
+            role: "COMMISSIONER" | "MEMBER";
+        };
+        /** @description Authenticated invitation-acceptance payload. */
+        AcceptInvitationRequest: {
+            /** @description Invite code from the invite URL or invitation email. */
+            inviteCode: string;
+        };
+        /** @description Single CSV-style member import row. */
+        CsvImportRow: {
+            /** @description Email address for the imported member row. */
+            email: string;
+            /** @description Optional first name supplied in the import row. */
+            firstName?: string;
+            /** @description Optional last name supplied in the import row. */
+            lastName?: string;
+            /**
+             * @description Optional requested league role for the imported member.
+             * @enum {string}
+             */
+            role?: "COMMISSIONER" | "MEMBER";
+        };
+        /** @description Commissioner request payload for importing league members. */
+        ImportLeagueMembersRequest: {
+            /** @description Rows to import as league members. */
+            rows: {
+                /** @description Email address for the imported member row. */
+                email: string;
+                /** @description Optional first name supplied in the import row. */
+                firstName?: string;
+                /** @description Optional last name supplied in the import row. */
+                lastName?: string;
+                /**
+                 * @description Optional requested league role for the imported member.
+                 * @enum {string}
+                 */
+                role?: "COMMISSIONER" | "MEMBER";
+            }[];
+        };
+        /** @description League-list query. Narrows the result; it never pages it. */
+        LeagueListQuery: {
+            /**
+             * @description Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access.
+             * @enum {string}
+             */
+            scope?: "mine" | "all";
+            /** @description Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
+            search?: string;
+            /** @description Optional active/inactive filter. Omitted returns both. */
+            isActive?: boolean;
+        };
+        /** @description A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object. */
+        LeagueDto: {
+            /** @description Internal league identifier used for authenticated management APIs. */
+            id: string;
+            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+            leagueCode: string;
+            /** @description Primary display name for the league. */
+            name: string;
+            /** @description Optional short league description. */
+            description?: string | null;
+            /** @description Whether the league is currently active for normal write interactions. */
+            isActive: boolean;
+            /**
+             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+             * @enum {string}
+             */
+            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+            /** @description Current number of memberships in the league. */
+            memberCount: number;
+            /** @description Number of currently active contests associated with the league. */
+            activeContestCount: number;
+            /**
+             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+             * @enum {string}
+             */
+            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+            /**
+             * Format: date-time
+             * @description League creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+        };
+        /** @description A membership of a user in a league, with the member embedded. */
+        LeagueMembershipDto: {
+            /** @description Membership record identifier. */
+            id: string;
+            /** @description League that owns the membership. */
+            leagueId: string;
+            /** @description User account attached to the membership. */
+            userId: string;
+            /**
+             * @description Current league role for the user.
+             * @enum {string}
+             */
+            role: "COMMISSIONER" | "MEMBER";
+            /**
+             * @description Membership lifecycle state.
+             * @enum {string}
+             */
+            status: "ACTIVE" | "INACTIVE";
+            /**
+             * Format: date-time
+             * @description When the user joined the league.
+             */
+            joinedAt: string;
+            /**
+             * Format: date-time
+             * @description When the membership record was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the membership record was last updated.
+             */
+            updatedAt: string;
+            /** @description The member, as the canonical UserDto. */
+            user: {
+                /** @description Stable user identifier. */
+                id: string;
+                /** @description Primary email address for the user account. */
+                email: string;
+                /** @description Unique login identifier for the account. */
+                username: string;
+                /** @description First name shown in account and member-management surfaces. */
+                firstName: string;
+                /** @description Last name shown in account and member-management surfaces. */
+                lastName: string;
+                /** @description Whether the account is currently active for normal sign-in and product usage. */
+                isActive: boolean;
+                /** @description Whether the user has platform-level root-admin access. */
+                isRootAdmin: boolean;
+                /**
+                 * @description Authentication provider used for the account when known.
+                 * @enum {string}
+                 */
+                authProvider?: "email" | "google" | "apple";
+                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                timezone?: string;
+                /** @description Preferred locale for formatting and localized copy. */
+                locale?: string;
+                /**
+                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                timeFormat?: "12H" | "24H";
+                /**
+                 * @description Preferred date display format used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                dateFormat?: "MDY" | "DMY" | "YMD";
+                /**
+                 * Format: date-time
+                 * @description Account creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            };
+        };
+        /** @description Invitation record returned from commissioner invite-management APIs. */
+        LeagueInvitationDto: {
+            /** @description Invitation record identifier. */
+            id: string;
+            /** @description League that owns the invitation. */
+            leagueId: string;
+            /** @description Email recipient for direct email invites. Link invites omit this field. */
+            email?: string | null;
+            /** @description Shareable invitation code used in URLs and acceptance requests. */
+            inviteCode: string;
+            /**
+             * @description Invitation delivery mode, such as EMAIL or LINK.
+             * @enum {string}
+             */
+            inviteType: "EMAIL" | "LINK";
+            /**
+             * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+             * @enum {string}
+             */
+            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+            /** @description Maximum accepted joins allowed for the invitation. */
+            maxUses: number;
+            /** @description How many times the invitation has already been accepted. */
+            currentUses: number;
+            /** @description User ID of the commissioner or actor that issued the invite. */
+            invitedBy: string;
+            /**
+             * Format: date-time
+             * @description When the invite stops being valid, if it expires.
+             */
+            expiresAt?: string | null;
+            /**
+             * Format: date-time
+             * @description When the invitation was accepted, if applicable.
+             */
+            acceptedAt?: string | null;
+            /** @description User ID that accepted the invite, when known. */
+            acceptedBy?: string | null;
+            /**
+             * Format: date-time
+             * @description Invitation creation timestamp.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Last invitation update timestamp.
+             */
+            updatedAt: string;
+        };
+        /** @description Invitation preview payload used by `/invite/<inviteCode>` flows. */
+        InvitationPreviewResponse: {
+            /** @description Public invitation preview shown before or after authentication. */
+            invitation: {
+                /** @description Invitation code currently being previewed. */
+                inviteCode: string;
+                /**
+                 * @description Current invitation lifecycle state.
+                 * @enum {string}
+                 */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** @description Minimal league identity shown before accepting the invite. */
+                league: {
+                    /** @description League ID associated with the invitation. */
+                    id: string;
+                    /** @description Bookmarkable short code for the invited league. */
+                    leagueCode: string;
+                    /** @description Display name for the invited league. */
+                    name: string;
+                };
+            };
+        };
+        /** @description Single-league response. */
+        LeagueResponse: {
+            /** @description A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object. */
+            league: {
+                /** @description Internal league identifier used for authenticated management APIs. */
+                id: string;
+                /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                leagueCode: string;
+                /** @description Primary display name for the league. */
+                name: string;
+                /** @description Optional short league description. */
+                description?: string | null;
+                /** @description Whether the league is currently active for normal write interactions. */
+                isActive: boolean;
+                /**
+                 * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                /** @description Current number of memberships in the league. */
+                memberCount: number;
+                /** @description Number of currently active contests associated with the league. */
+                activeContestCount: number;
+                /**
+                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+                 * @enum {string}
+                 */
+                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                /**
+                 * Format: date-time
+                 * @description League creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            };
+        };
+        /** @description A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context. */
+        LeagueContextResponse: {
+            /** @description A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object. */
+            league: {
+                /** @description Internal league identifier used for authenticated management APIs. */
+                id: string;
+                /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                leagueCode: string;
+                /** @description Primary display name for the league. */
+                name: string;
+                /** @description Optional short league description. */
+                description?: string | null;
+                /** @description Whether the league is currently active for normal write interactions. */
+                isActive: boolean;
+                /**
+                 * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                /** @description Current number of memberships in the league. */
+                memberCount: number;
+                /** @description Number of currently active contests associated with the league. */
+                activeContestCount: number;
+                /**
+                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+                 * @enum {string}
+                 */
+                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                /**
+                 * Format: date-time
+                 * @description League creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            };
+            /** @description The viewer's membership in this league, or null when they have none. */
+            membership: {
+                /** @description Membership record identifier. */
+                id: string;
+                /** @description League that owns the membership. */
+                leagueId: string;
+                /** @description User account attached to the membership. */
+                userId: string;
+                /**
+                 * @description Current league role for the user.
+                 * @enum {string}
+                 */
+                role: "COMMISSIONER" | "MEMBER";
+                /**
+                 * @description Membership lifecycle state.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the league.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was last updated.
+                 */
+                updatedAt: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+            } | null;
+            /** @description The viewer's squad membership within this league, or null when they hold none. */
+            squadMembership: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                squadId: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                userId: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+                /**
+                 * @description Squad membership status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the squad.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was last updated.
+                 */
+                updatedAt: string;
+            } | null;
+        };
+        /** @description League-list response, with the viewer's memberships once as an array. */
+        LeagueListResponse: {
+            leagues: {
+                /** @description Internal league identifier used for authenticated management APIs. */
+                id: string;
+                /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                leagueCode: string;
+                /** @description Primary display name for the league. */
+                name: string;
+                /** @description Optional short league description. */
+                description?: string | null;
+                /** @description Whether the league is currently active for normal write interactions. */
+                isActive: boolean;
+                /**
+                 * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                /** @description Current number of memberships in the league. */
+                memberCount: number;
+                /** @description Number of currently active contests associated with the league. */
+                activeContestCount: number;
+                /**
+                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+                 * @enum {string}
+                 */
+                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                /**
+                 * Format: date-time
+                 * @description League creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            }[];
+            /** @description The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to. */
+            memberships: {
+                /** @description Membership record identifier. */
+                id: string;
+                /** @description League that owns the membership. */
+                leagueId: string;
+                /** @description User account attached to the membership. */
+                userId: string;
+                /**
+                 * @description Current league role for the user.
+                 * @enum {string}
+                 */
+                role: "COMMISSIONER" | "MEMBER";
+                /**
+                 * @description Membership lifecycle state.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the league.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was last updated.
+                 */
+                updatedAt: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+            }[];
+        };
+        /** @description League-members response. Each member is the membership edge with the user embedded. */
+        LeagueMembersResponse: {
+            members: {
+                /** @description Membership record identifier. */
+                id: string;
+                /** @description League that owns the membership. */
+                leagueId: string;
+                /** @description User account attached to the membership. */
+                userId: string;
+                /**
+                 * @description Current league role for the user.
+                 * @enum {string}
+                 */
+                role: "COMMISSIONER" | "MEMBER";
+                /**
+                 * @description Membership lifecycle state.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the league.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was last updated.
+                 */
+                updatedAt: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+            }[];
+        };
+        /** @description Single league-membership response. */
+        LeagueMembershipResponse: {
+            /** @description A membership of a user in a league, with the member embedded. */
+            membership: {
+                /** @description Membership record identifier. */
+                id: string;
+                /** @description League that owns the membership. */
+                leagueId: string;
+                /** @description User account attached to the membership. */
+                userId: string;
+                /**
+                 * @description Current league role for the user.
+                 * @enum {string}
+                 */
+                role: "COMMISSIONER" | "MEMBER";
+                /**
+                 * @description Membership lifecycle state.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the league.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was last updated.
+                 */
+                updatedAt: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+            };
+        };
+        /** @description League invitation-send response. */
+        SendLeagueInvitationsResponse: {
+            /** @description Invitation records successfully created and sent. */
+            sent: {
+                /** @description Invitation record identifier. */
+                id: string;
+                /** @description League that owns the invitation. */
+                leagueId: string;
+                /** @description Email recipient for direct email invites. Link invites omit this field. */
+                email?: string | null;
+                /** @description Shareable invitation code used in URLs and acceptance requests. */
+                inviteCode: string;
+                /**
+                 * @description Invitation delivery mode, such as EMAIL or LINK.
+                 * @enum {string}
+                 */
+                inviteType: "EMAIL" | "LINK";
+                /**
+                 * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+                 * @enum {string}
+                 */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** @description Maximum accepted joins allowed for the invitation. */
+                maxUses: number;
+                /** @description How many times the invitation has already been accepted. */
+                currentUses: number;
+                /** @description User ID of the commissioner or actor that issued the invite. */
+                invitedBy: string;
+                /**
+                 * Format: date-time
+                 * @description When the invite stops being valid, if it expires.
+                 */
+                expiresAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the invitation was accepted, if applicable.
+                 */
+                acceptedAt?: string | null;
+                /** @description User ID that accepted the invite, when known. */
+                acceptedBy?: string | null;
+                /**
+                 * Format: date-time
+                 * @description Invitation creation timestamp.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description Last invitation update timestamp.
+                 */
+                updatedAt: string;
+            }[];
+            /** @description Emails skipped because they already belong to the league. */
+            skippedMembers: string[];
+            /** @description Emails skipped because they were duplicated in the request or invite set. */
+            skippedDuplicates: string[];
+        };
+        /** @description Generated invite-link response. */
+        GenerateInviteLinkResponse: {
+            /** @description Invitation record returned from commissioner invite-management APIs. */
+            invitation: {
+                /** @description Invitation record identifier. */
+                id: string;
+                /** @description League that owns the invitation. */
+                leagueId: string;
+                /** @description Email recipient for direct email invites. Link invites omit this field. */
+                email?: string | null;
+                /** @description Shareable invitation code used in URLs and acceptance requests. */
+                inviteCode: string;
+                /**
+                 * @description Invitation delivery mode, such as EMAIL or LINK.
+                 * @enum {string}
+                 */
+                inviteType: "EMAIL" | "LINK";
+                /**
+                 * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+                 * @enum {string}
+                 */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** @description Maximum accepted joins allowed for the invitation. */
+                maxUses: number;
+                /** @description How many times the invitation has already been accepted. */
+                currentUses: number;
+                /** @description User ID of the commissioner or actor that issued the invite. */
+                invitedBy: string;
+                /**
+                 * Format: date-time
+                 * @description When the invite stops being valid, if it expires.
+                 */
+                expiresAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the invitation was accepted, if applicable.
+                 */
+                acceptedAt?: string | null;
+                /** @description User ID that accepted the invite, when known. */
+                acceptedBy?: string | null;
+                /**
+                 * Format: date-time
+                 * @description Invitation creation timestamp.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description Last invitation update timestamp.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description Commissioner list of a league's pending invitations. */
+        ListLeagueInvitationsResponse: {
+            /** @description The league's outstanding invitations, newest first: every PENDING invitation (email invites not yet accepted, join links not yet cancelled or used up), plus email invites that went EXPIRED without being accepted. An email invite past its expiresAt stays listed until it is accepted or cancelled; Resend Invite renews it. */
+            invitations: {
+                /** @description Invitation record identifier. */
+                id: string;
+                /** @description League that owns the invitation. */
+                leagueId: string;
+                /** @description Email recipient for direct email invites. Link invites omit this field. */
+                email?: string | null;
+                /** @description Shareable invitation code used in URLs and acceptance requests. */
+                inviteCode: string;
+                /**
+                 * @description Invitation delivery mode, such as EMAIL or LINK.
+                 * @enum {string}
+                 */
+                inviteType: "EMAIL" | "LINK";
+                /**
+                 * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+                 * @enum {string}
+                 */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** @description Maximum accepted joins allowed for the invitation. */
+                maxUses: number;
+                /** @description How many times the invitation has already been accepted. */
+                currentUses: number;
+                /** @description User ID of the commissioner or actor that issued the invite. */
+                invitedBy: string;
+                /**
+                 * Format: date-time
+                 * @description When the invite stops being valid, if it expires.
+                 */
+                expiresAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the invitation was accepted, if applicable.
+                 */
+                acceptedAt?: string | null;
+                /** @description User ID that accepted the invite, when known. */
+                acceptedBy?: string | null;
+                /**
+                 * Format: date-time
+                 * @description Invitation creation timestamp.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description Last invitation update timestamp.
+                 */
+                updatedAt: string;
+            }[];
+        };
+        /** @description Resent email-invitation response. */
+        ResendLeagueInvitationResponse: {
+            /** @description The renewed invitation, with its new invite code and expiry. */
+            invitation: {
+                /** @description Invitation record identifier. */
+                id: string;
+                /** @description League that owns the invitation. */
+                leagueId: string;
+                /** @description Email recipient for direct email invites. Link invites omit this field. */
+                email?: string | null;
+                /** @description Shareable invitation code used in URLs and acceptance requests. */
+                inviteCode: string;
+                /**
+                 * @description Invitation delivery mode, such as EMAIL or LINK.
+                 * @enum {string}
+                 */
+                inviteType: "EMAIL" | "LINK";
+                /**
+                 * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+                 * @enum {string}
+                 */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** @description Maximum accepted joins allowed for the invitation. */
+                maxUses: number;
+                /** @description How many times the invitation has already been accepted. */
+                currentUses: number;
+                /** @description User ID of the commissioner or actor that issued the invite. */
+                invitedBy: string;
+                /**
+                 * Format: date-time
+                 * @description When the invite stops being valid, if it expires.
+                 */
+                expiresAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the invitation was accepted, if applicable.
+                 */
+                acceptedAt?: string | null;
+                /** @description User ID that accepted the invite, when known. */
+                acceptedBy?: string | null;
+                /**
+                 * Format: date-time
+                 * @description Invitation creation timestamp.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description Last invitation update timestamp.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description Result of a bulk CSV member import. */
+        LeagueBulkOperationResponse: {
+            /** @description How many rows the import received. */
+            total: number;
+            /** @description How many invitations the import created. */
+            sent: number;
+            /** @description Rows that were not imported, with the reason for each. */
+            failed: {
+                /** @description Email address on the row that failed. */
+                email: string;
+                /** @description Why the row was not imported. */
+                reason: string;
+            }[];
+            /** @description Email addresses skipped because they already have an invitation to this league. */
+            duplicates: string[];
+        };
+        /** @description Request payload for inviting an additional co-owner to a team. */
+        CreateSquadOwnerInvitationRequest: {
+            /**
+             * Format: email
+             * @description Email address for the intended co-owner.
+             */
+            email: string;
+        };
+        /** @description Request payload for replacing an existing active owner on a team. */
+        ReplaceSquadOwnerRequest: {
+            /**
+             * Format: email
+             * @description Email address for the replacement owner.
+             */
+            email: string;
+        };
+        /** @description Authenticated team-owner invitation acceptance payload. */
+        AcceptTeamOwnerInvitationRequest: {
+            /** @description Team-owner invitation code from the invite URL or email. */
+            inviteCode: string;
+        };
+        /** @description Registers a new account against a pending team-owner invitation and accepts it, joining the league and the squad in one request. */
+        RegisterWithTeamOwnerInvitationRequest: {
+            /** @description Invite code from the team-owner invitation URL. */
+            inviteCode: string;
+            /** @description Unique login identifier chosen by the invitee. The account email is not chosen here — it is the address the invitation was sent to. */
+            username: string;
+            /** @description Plaintext password chosen during registration. */
+            password: string;
+            /** @description First name captured for the account profile. Also names the invitee on the squad roster. */
+            firstName: string;
+            /** @description Last name captured for the account profile. */
+            lastName: string;
+        };
+        /** @description Pending or historical team-owner invitation record. */
+        TeamOwnerInvitationDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            leagueId: string;
+            /** Format: uuid */
+            squadId: string;
+            /** Format: email */
+            email: string;
+            inviteCode: string;
+            /** @enum {string} */
+            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+            /** Format: uuid */
+            invitedBy: string;
+            /** Format: uuid */
+            acceptedBy?: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            acceptedAt?: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            expiresAt?: string | null;
+            /** Format: uuid */
+            replacementForUserId?: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            createdAt: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            updatedAt: string | null;
+            team: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                /** @enum {string} */
+                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+            };
+        };
+        /** @description Single team-owner invitation response. */
+        TeamOwnerInvitationResponse: {
+            /** @description Pending or historical team-owner invitation record. */
+            invitation: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                squadId: string;
+                /** Format: email */
+                email: string;
+                inviteCode: string;
+                /** @enum {string} */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** Format: uuid */
+                invitedBy: string;
+                /** Format: uuid */
+                acceptedBy?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                acceptedAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                expiresAt?: string | null;
+                /** Format: uuid */
+                replacementForUserId?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                updatedAt: string | null;
+                team: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    /** @enum {string} */
+                    iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                };
+            };
+        };
+        /** @description League-scoped list of team-owner invitations. */
+        TeamOwnerInvitationListResponse: {
+            invitations: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                squadId: string;
+                /** Format: email */
+                email: string;
+                inviteCode: string;
+                /** @enum {string} */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** Format: uuid */
+                invitedBy: string;
+                /** Format: uuid */
+                acceptedBy?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                acceptedAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                expiresAt?: string | null;
+                /** Format: uuid */
+                replacementForUserId?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                updatedAt: string | null;
+                team: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    /** @enum {string} */
+                    iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                };
+            }[];
+        };
+        /** @description Public preview payload for a team-owner invitation. */
+        TeamOwnerInvitationPreviewResponse: {
+            invitation: {
+                inviteCode: string;
+                /** @enum {string} */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                league: {
+                    /** Format: uuid */
+                    id: string;
+                    leagueCode: string;
+                    name: string;
+                };
+                team: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    /** @enum {string} */
+                    iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                };
+                /**
+                 * @description League role applied when the invitation is accepted.
+                 * @enum {string}
+                 */
+                roleAfterAccept: "MEMBER";
+            };
+        };
         /** @description A provider's identifier for a participant — how synced data finds them. */
         ParticipantProviderMappingDto: {
             /** Format: uuid */
@@ -5419,8 +7101,11 @@ export interface components {
             /** Format: uuid */
             sportEventRoundId: string;
             roundNumber: number;
-            /** @description Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT. */
-            status: string;
+            /**
+             * @description Progress through the round.
+             * @enum {string}
+             */
+            status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.
@@ -5583,8 +7268,11 @@ export interface components {
                 /** Format: uuid */
                 sportEventRoundId: string;
                 roundNumber: number;
-                /** @description Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT. */
-                status: string;
+                /**
+                 * @description Progress through the round.
+                 * @enum {string}
+                 */
+                status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -5762,8 +7450,11 @@ export interface components {
                     /** Format: uuid */
                     sportEventRoundId: string;
                     roundNumber: number;
-                    /** @description Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT. */
-                    status: string;
+                    /**
+                     * @description Progress through the round.
+                     * @enum {string}
+                     */
+                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                     /**
                      * Format: date-time
                      * @description ISO 8601 datetime string.
@@ -5980,8 +7671,11 @@ export interface components {
                     /** Format: uuid */
                     sportEventRoundId: string;
                     roundNumber: number;
-                    /** @description Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT. */
-                    status: string;
+                    /**
+                     * @description Progress through the round.
+                     * @enum {string}
+                     */
+                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                     /**
                      * Format: date-time
                      * @description ISO 8601 datetime string.
@@ -6132,7 +7826,8 @@ export interface components {
             draftMode?: string;
             rounds?: number;
             timePerPickSeconds?: number;
-            autoPickPolicy?: string;
+            /** @enum {string} */
+            autoPickPolicy?: "QUEUE_THEN_BEST" | "BEST_AVAILABLE" | "RANDOM";
             tierConfig?: {
                 /** @description Stable tier identifier. */
                 tierId: string;
@@ -6605,8 +8300,11 @@ export interface components {
                     /** Format: uuid */
                     sportEventRoundId: string;
                     roundNumber: number;
-                    /** @description Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT. */
-                    status: string;
+                    /**
+                     * @description Progress through the round.
+                     * @enum {string}
+                     */
+                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                     /**
                      * Format: date-time
                      * @description ISO 8601 datetime string.
@@ -6692,7 +8390,8 @@ export interface components {
             draftMode?: string;
             rounds?: number;
             timePerPickSeconds?: number;
-            autoPickPolicy?: string;
+            /** @enum {string} */
+            autoPickPolicy?: "QUEUE_THEN_BEST" | "BEST_AVAILABLE" | "RANDOM";
             tierConfig?: {
                 /** @description Stable tier identifier. */
                 tierId: string;
@@ -6768,7 +8467,8 @@ export interface components {
                 draftMode?: string;
                 rounds?: number;
                 timePerPickSeconds?: number;
-                autoPickPolicy?: string;
+                /** @enum {string} */
+                autoPickPolicy?: "QUEUE_THEN_BEST" | "BEST_AVAILABLE" | "RANDOM";
                 tierConfig?: {
                     /** @description Stable tier identifier. */
                     tierId: string;
@@ -7046,1709 +8746,6 @@ export interface components {
              */
             deleted: true;
         };
-        /** @description Squad membership summary. */
-        SquadMembershipDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            squadId: string;
-            /** Format: uuid */
-            leagueId: string;
-            /** Format: uuid */
-            userId: string;
-            /** @description The member, as the canonical UserDto. */
-            user: {
-                /** @description Stable user identifier. */
-                id: string;
-                /** @description Primary email address for the user account. */
-                email: string;
-                /** @description Unique login identifier for the account. */
-                username: string;
-                /** @description First name shown in account and member-management surfaces. */
-                firstName: string;
-                /** @description Last name shown in account and member-management surfaces. */
-                lastName: string;
-                /** @description Whether the account is currently active for normal sign-in and product usage. */
-                isActive: boolean;
-                /** @description Whether the user has platform-level root-admin access. */
-                isRootAdmin: boolean;
-                /**
-                 * @description Authentication provider used for the account when known.
-                 * @enum {string}
-                 */
-                authProvider?: "email" | "google" | "apple";
-                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                timezone?: string;
-                /** @description Preferred locale for formatting and localized copy. */
-                locale?: string;
-                /**
-                 * @description Preferred clock display used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                timeFormat?: "12H" | "24H";
-                /**
-                 * @description Preferred date display format used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                dateFormat?: "MDY" | "DMY" | "YMD";
-                /**
-                 * Format: date-time
-                 * @description Account creation timestamp in ISO 8601 format.
-                 */
-                createdAt?: string;
-            };
-            /**
-             * @description Squad membership status.
-             * @enum {string}
-             */
-            status: "ACTIVE" | "INACTIVE";
-            /**
-             * Format: date-time
-             * @description When the user joined the squad.
-             */
-            joinedAt: string;
-            /**
-             * Format: date-time
-             * @description When the squad membership record was created.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description When the squad membership record was last updated.
-             */
-            updatedAt: string;
-        };
-        /** @description A squad within a league. Returned wherever a squad is read. */
-        SquadDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            leagueId: string;
-            /** Format: uuid */
-            createdBy: string;
-            /** @description Squad display name. */
-            name: string;
-            /**
-             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-             * @enum {string}
-             */
-            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
-            isActive: boolean;
-            /** @description Number of memberships attached to the squad. */
-            memberCount: number;
-            /**
-             * Format: date-time
-             * @description When the squad was created.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description When the squad was last updated.
-             */
-            updatedAt: string;
-            /** @description Optional expanded squad membership list. */
-            members?: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                squadId: string;
-                /** Format: uuid */
-                leagueId: string;
-                /** Format: uuid */
-                userId: string;
-                /** @description The member, as the canonical UserDto. */
-                user: {
-                    /** @description Stable user identifier. */
-                    id: string;
-                    /** @description Primary email address for the user account. */
-                    email: string;
-                    /** @description Unique login identifier for the account. */
-                    username: string;
-                    /** @description First name shown in account and member-management surfaces. */
-                    firstName: string;
-                    /** @description Last name shown in account and member-management surfaces. */
-                    lastName: string;
-                    /** @description Whether the account is currently active for normal sign-in and product usage. */
-                    isActive: boolean;
-                    /** @description Whether the user has platform-level root-admin access. */
-                    isRootAdmin: boolean;
-                    /**
-                     * @description Authentication provider used for the account when known.
-                     * @enum {string}
-                     */
-                    authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                    timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
-                    locale?: string;
-                    /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
-                    /**
-                     * Format: date-time
-                     * @description Account creation timestamp in ISO 8601 format.
-                     */
-                    createdAt?: string;
-                };
-                /**
-                 * @description Squad membership status.
-                 * @enum {string}
-                 */
-                status: "ACTIVE" | "INACTIVE";
-                /**
-                 * Format: date-time
-                 * @description When the user joined the squad.
-                 */
-                joinedAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad membership record was last updated.
-                 */
-                updatedAt: string;
-            }[];
-        };
-        /** @description Single-squad response. */
-        SquadResponse: {
-            /** @description A squad within a league. Returned wherever a squad is read. */
-            squad: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                leagueId: string;
-                /** Format: uuid */
-                createdBy: string;
-                /** @description Squad display name. */
-                name: string;
-                /**
-                 * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-                 * @enum {string}
-                 */
-                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
-                isActive: boolean;
-                /** @description Number of memberships attached to the squad. */
-                memberCount: number;
-                /**
-                 * Format: date-time
-                 * @description When the squad was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad was last updated.
-                 */
-                updatedAt: string;
-                /** @description Optional expanded squad membership list. */
-                members?: {
-                    /** Format: uuid */
-                    id: string;
-                    /** Format: uuid */
-                    squadId: string;
-                    /** Format: uuid */
-                    leagueId: string;
-                    /** Format: uuid */
-                    userId: string;
-                    /** @description The member, as the canonical UserDto. */
-                    user: {
-                        /** @description Stable user identifier. */
-                        id: string;
-                        /** @description Primary email address for the user account. */
-                        email: string;
-                        /** @description Unique login identifier for the account. */
-                        username: string;
-                        /** @description First name shown in account and member-management surfaces. */
-                        firstName: string;
-                        /** @description Last name shown in account and member-management surfaces. */
-                        lastName: string;
-                        /** @description Whether the account is currently active for normal sign-in and product usage. */
-                        isActive: boolean;
-                        /** @description Whether the user has platform-level root-admin access. */
-                        isRootAdmin: boolean;
-                        /**
-                         * @description Authentication provider used for the account when known.
-                         * @enum {string}
-                         */
-                        authProvider?: "email" | "google" | "apple";
-                        /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                        timezone?: string;
-                        /** @description Preferred locale for formatting and localized copy. */
-                        locale?: string;
-                        /**
-                         * @description Preferred clock display used in account and scheduling surfaces.
-                         * @enum {string}
-                         */
-                        timeFormat?: "12H" | "24H";
-                        /**
-                         * @description Preferred date display format used in account and scheduling surfaces.
-                         * @enum {string}
-                         */
-                        dateFormat?: "MDY" | "DMY" | "YMD";
-                        /**
-                         * Format: date-time
-                         * @description Account creation timestamp in ISO 8601 format.
-                         */
-                        createdAt?: string;
-                    };
-                    /**
-                     * @description Squad membership status.
-                     * @enum {string}
-                     */
-                    status: "ACTIVE" | "INACTIVE";
-                    /**
-                     * Format: date-time
-                     * @description When the user joined the squad.
-                     */
-                    joinedAt: string;
-                    /**
-                     * Format: date-time
-                     * @description When the squad membership record was created.
-                     */
-                    createdAt: string;
-                    /**
-                     * Format: date-time
-                     * @description When the squad membership record was last updated.
-                     */
-                    updatedAt: string;
-                }[];
-            };
-        };
-        /** @description Squad-list response. */
-        SquadListResponse: {
-            squads: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                leagueId: string;
-                /** Format: uuid */
-                createdBy: string;
-                /** @description Squad display name. */
-                name: string;
-                /**
-                 * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-                 * @enum {string}
-                 */
-                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
-                isActive: boolean;
-                /** @description Number of memberships attached to the squad. */
-                memberCount: number;
-                /**
-                 * Format: date-time
-                 * @description When the squad was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad was last updated.
-                 */
-                updatedAt: string;
-                /** @description Optional expanded squad membership list. */
-                members?: {
-                    /** Format: uuid */
-                    id: string;
-                    /** Format: uuid */
-                    squadId: string;
-                    /** Format: uuid */
-                    leagueId: string;
-                    /** Format: uuid */
-                    userId: string;
-                    /** @description The member, as the canonical UserDto. */
-                    user: {
-                        /** @description Stable user identifier. */
-                        id: string;
-                        /** @description Primary email address for the user account. */
-                        email: string;
-                        /** @description Unique login identifier for the account. */
-                        username: string;
-                        /** @description First name shown in account and member-management surfaces. */
-                        firstName: string;
-                        /** @description Last name shown in account and member-management surfaces. */
-                        lastName: string;
-                        /** @description Whether the account is currently active for normal sign-in and product usage. */
-                        isActive: boolean;
-                        /** @description Whether the user has platform-level root-admin access. */
-                        isRootAdmin: boolean;
-                        /**
-                         * @description Authentication provider used for the account when known.
-                         * @enum {string}
-                         */
-                        authProvider?: "email" | "google" | "apple";
-                        /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                        timezone?: string;
-                        /** @description Preferred locale for formatting and localized copy. */
-                        locale?: string;
-                        /**
-                         * @description Preferred clock display used in account and scheduling surfaces.
-                         * @enum {string}
-                         */
-                        timeFormat?: "12H" | "24H";
-                        /**
-                         * @description Preferred date display format used in account and scheduling surfaces.
-                         * @enum {string}
-                         */
-                        dateFormat?: "MDY" | "DMY" | "YMD";
-                        /**
-                         * Format: date-time
-                         * @description Account creation timestamp in ISO 8601 format.
-                         */
-                        createdAt?: string;
-                    };
-                    /**
-                     * @description Squad membership status.
-                     * @enum {string}
-                     */
-                    status: "ACTIVE" | "INACTIVE";
-                    /**
-                     * Format: date-time
-                     * @description When the user joined the squad.
-                     */
-                    joinedAt: string;
-                    /**
-                     * Format: date-time
-                     * @description When the squad membership record was created.
-                     */
-                    createdAt: string;
-                    /**
-                     * Format: date-time
-                     * @description When the squad membership record was last updated.
-                     */
-                    updatedAt: string;
-                }[];
-            }[];
-        };
-        /** @description Single squad-membership response. */
-        SquadMembershipResponse: {
-            /** @description Squad membership summary. */
-            membership: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                squadId: string;
-                /** Format: uuid */
-                leagueId: string;
-                /** Format: uuid */
-                userId: string;
-                /** @description The member, as the canonical UserDto. */
-                user: {
-                    /** @description Stable user identifier. */
-                    id: string;
-                    /** @description Primary email address for the user account. */
-                    email: string;
-                    /** @description Unique login identifier for the account. */
-                    username: string;
-                    /** @description First name shown in account and member-management surfaces. */
-                    firstName: string;
-                    /** @description Last name shown in account and member-management surfaces. */
-                    lastName: string;
-                    /** @description Whether the account is currently active for normal sign-in and product usage. */
-                    isActive: boolean;
-                    /** @description Whether the user has platform-level root-admin access. */
-                    isRootAdmin: boolean;
-                    /**
-                     * @description Authentication provider used for the account when known.
-                     * @enum {string}
-                     */
-                    authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                    timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
-                    locale?: string;
-                    /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
-                    /**
-                     * Format: date-time
-                     * @description Account creation timestamp in ISO 8601 format.
-                     */
-                    createdAt?: string;
-                };
-                /**
-                 * @description Squad membership status.
-                 * @enum {string}
-                 */
-                status: "ACTIVE" | "INACTIVE";
-                /**
-                 * Format: date-time
-                 * @description When the user joined the squad.
-                 */
-                joinedAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad membership record was last updated.
-                 */
-                updatedAt: string;
-            };
-        };
-        /** @description Request payload for creating a squad within a league. */
-        CreateSquadRequest: {
-            /** @description Squad display name. */
-            name?: string;
-            /**
-             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-             * @enum {string}
-             */
-            iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-        };
-        /** @description Patch payload for updating a squad. */
-        UpdateSquadRequest: {
-            /** @description Updated squad display name. */
-            name?: string;
-            /**
-             * @description Updated built-in team icon key from the curated PoolMaster team icon catalog.
-             * @enum {string}
-             */
-            iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-        };
-        /** @description Request payload for adding a user to a squad. */
-        AddSquadMemberRequest: {
-            /**
-             * Format: uuid
-             * @description User to add as an owner of the team.
-             */
-            userId: string;
-        };
-        /** @description Commissioner request payload for creating a new private league. */
-        CreateLeagueRequest: {
-            /** @description Primary league name shown in selectors, invites, and league home. */
-            name: string;
-            /** @description Required unique league route code used in bookmarkable URLs such as `/league/<leagueCode>`. */
-            leagueCode: string;
-            /** @description Optional short description or commissioner-facing summary for the league. */
-            description?: string;
-        };
-        /** @description Commissioner confirmation payload for permanently deleting an inactive league. */
-        DeleteLeagueRequest: {
-            /** @description Exact league code confirmation required before permanently deleting an inactive league. */
-            leagueCode: string;
-        };
-        /** @description Commissioner request payload for editing league details while the league remains active. */
-        UpdateLeagueDetailsRequest: {
-            /** @description Updated primary league name shown in selectors, tiles, and league home. */
-            name: string;
-            /** @description Optional updated commissioner-facing league description. Omit or send an empty value to clear it. */
-            description?: string;
-        };
-        /** @description Commissioner request payload for selecting a built-in league icon. */
-        UpdateLeagueIconRequest: {
-            /**
-             * @description Selected built-in league icon from the curated PoolMaster icon catalog.
-             * @enum {string}
-             */
-            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-        };
-        /** @description Commissioner request payload for sending direct email invites. */
-        SendLeagueInvitationsRequest: {
-            /** @description Email recipients to invite into the league. */
-            emails: string[];
-            /** @description Optional commissioner note included with the invitation email. */
-            message?: string;
-        };
-        /** @description Commissioner request payload for creating a shareable invite link. */
-        GenerateInviteLinkRequest: {
-            /** @description Optional invite-link lifetime in days. */
-            expiresInDays?: number;
-            /** @description Optional maximum number of accepted joins. Zero means unlimited use. */
-            maxUses?: number;
-        };
-        /** @description Commissioner-managed membership role update payload. */
-        ChangeLeagueMemberRoleRequest: {
-            /**
-             * @description Target membership role after the change. Commissioner grants league-administration access.
-             * @enum {string}
-             */
-            role: "COMMISSIONER" | "MEMBER";
-        };
-        /** @description Authenticated invitation-acceptance payload. */
-        AcceptInvitationRequest: {
-            /** @description Invite code from the invite URL or invitation email. */
-            inviteCode: string;
-        };
-        /** @description Single CSV-style member import row. */
-        CsvImportRow: {
-            /** @description Email address for the imported member row. */
-            email: string;
-            /** @description Optional first name supplied in the import row. */
-            firstName?: string;
-            /** @description Optional last name supplied in the import row. */
-            lastName?: string;
-            /**
-             * @description Optional requested league role for the imported member.
-             * @enum {string}
-             */
-            role?: "COMMISSIONER" | "MEMBER";
-        };
-        /** @description Commissioner request payload for importing league members. */
-        ImportLeagueMembersRequest: {
-            /** @description Rows to import as league members. */
-            rows: {
-                /** @description Email address for the imported member row. */
-                email: string;
-                /** @description Optional first name supplied in the import row. */
-                firstName?: string;
-                /** @description Optional last name supplied in the import row. */
-                lastName?: string;
-                /**
-                 * @description Optional requested league role for the imported member.
-                 * @enum {string}
-                 */
-                role?: "COMMISSIONER" | "MEMBER";
-            }[];
-        };
-        /** @description League-list query. Narrows the result; it never pages it. */
-        LeagueListQuery: {
-            /**
-             * @description Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access.
-             * @enum {string}
-             */
-            scope?: "mine" | "all";
-            /** @description Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
-            search?: string;
-            /** @description Optional active/inactive filter. Omitted returns both. */
-            isActive?: boolean;
-        };
-        /** @description A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object. */
-        LeagueDto: {
-            /** @description Internal league identifier used for authenticated management APIs. */
-            id: string;
-            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-            leagueCode: string;
-            /** @description Primary display name for the league. */
-            name: string;
-            /** @description Optional short league description. */
-            description?: string | null;
-            /** @description Whether the league is currently active for normal write interactions. */
-            isActive: boolean;
-            /**
-             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-             * @enum {string}
-             */
-            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-            /** @description Current number of memberships in the league. */
-            memberCount: number;
-            /** @description Number of currently active contests associated with the league. */
-            activeContestCount: number;
-            /**
-             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-             * @enum {string}
-             */
-            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-            /**
-             * Format: date-time
-             * @description League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-        };
-        /** @description A membership of a user in a league, with the member embedded. */
-        LeagueMembershipDto: {
-            /** @description Membership record identifier. */
-            id: string;
-            /** @description League that owns the membership. */
-            leagueId: string;
-            /** @description User account attached to the membership. */
-            userId: string;
-            /**
-             * @description Current league role for the user.
-             * @enum {string}
-             */
-            role: "COMMISSIONER" | "MEMBER";
-            /**
-             * @description Membership lifecycle state.
-             * @enum {string}
-             */
-            status: "ACTIVE" | "INACTIVE";
-            /**
-             * Format: date-time
-             * @description When the user joined the league.
-             */
-            joinedAt: string;
-            /**
-             * Format: date-time
-             * @description When the membership record was created.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description When the membership record was last updated.
-             */
-            updatedAt: string;
-            /** @description The member, as the canonical UserDto. */
-            user: {
-                /** @description Stable user identifier. */
-                id: string;
-                /** @description Primary email address for the user account. */
-                email: string;
-                /** @description Unique login identifier for the account. */
-                username: string;
-                /** @description First name shown in account and member-management surfaces. */
-                firstName: string;
-                /** @description Last name shown in account and member-management surfaces. */
-                lastName: string;
-                /** @description Whether the account is currently active for normal sign-in and product usage. */
-                isActive: boolean;
-                /** @description Whether the user has platform-level root-admin access. */
-                isRootAdmin: boolean;
-                /**
-                 * @description Authentication provider used for the account when known.
-                 * @enum {string}
-                 */
-                authProvider?: "email" | "google" | "apple";
-                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                timezone?: string;
-                /** @description Preferred locale for formatting and localized copy. */
-                locale?: string;
-                /**
-                 * @description Preferred clock display used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                timeFormat?: "12H" | "24H";
-                /**
-                 * @description Preferred date display format used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                dateFormat?: "MDY" | "DMY" | "YMD";
-                /**
-                 * Format: date-time
-                 * @description Account creation timestamp in ISO 8601 format.
-                 */
-                createdAt?: string;
-            };
-        };
-        /** @description Invitation record returned from commissioner invite-management APIs. */
-        LeagueInvitationDto: {
-            /** @description Invitation record identifier. */
-            id: string;
-            /** @description League that owns the invitation. */
-            leagueId: string;
-            /** @description Email recipient for direct email invites. Link invites omit this field. */
-            email?: string | null;
-            /** @description Shareable invitation code used in URLs and acceptance requests. */
-            inviteCode: string;
-            /**
-             * @description Invitation delivery mode, such as EMAIL or LINK.
-             * @enum {string}
-             */
-            inviteType: "EMAIL" | "LINK";
-            /**
-             * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
-             * @enum {string}
-             */
-            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-            /** @description Maximum accepted joins allowed for the invitation. */
-            maxUses: number;
-            /** @description How many times the invitation has already been accepted. */
-            currentUses: number;
-            /** @description User ID of the commissioner or actor that issued the invite. */
-            invitedBy: string;
-            /**
-             * Format: date-time
-             * @description When the invite stops being valid, if it expires.
-             */
-            expiresAt?: string | null;
-            /**
-             * Format: date-time
-             * @description When the invitation was accepted, if applicable.
-             */
-            acceptedAt?: string | null;
-            /** @description User ID that accepted the invite, when known. */
-            acceptedBy?: string | null;
-            /**
-             * Format: date-time
-             * @description Invitation creation timestamp.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description Last invitation update timestamp.
-             */
-            updatedAt: string;
-        };
-        /** @description Invitation preview payload used by `/invite/<inviteCode>` flows. */
-        InvitationPreviewResponse: {
-            /** @description Public invitation preview shown before or after authentication. */
-            invitation: {
-                /** @description Invitation code currently being previewed. */
-                inviteCode: string;
-                /**
-                 * @description Current invitation lifecycle state.
-                 * @enum {string}
-                 */
-                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                /** @description Minimal league identity shown before accepting the invite. */
-                league: {
-                    /** @description League ID associated with the invitation. */
-                    id: string;
-                    /** @description Bookmarkable short code for the invited league. */
-                    leagueCode: string;
-                    /** @description Display name for the invited league. */
-                    name: string;
-                };
-            };
-        };
-        /** @description Recent member activity row used on commissioner dashboards. */
-        MemberActivityEventDto: {
-            /** @description User involved in the activity event. */
-            userId: string;
-            /** @description First name shown for the member activity event when available. */
-            firstName?: string;
-            /** @description Last name shown for the member activity event when available. */
-            lastName?: string;
-            /** @description Normalized member activity action label. */
-            action: string;
-            /**
-             * Format: date-time
-             * @description When the member activity occurred.
-             */
-            timestamp: string;
-        };
-        /** @description Upcoming league event summary. */
-        UpcomingEventDto: {
-            contestId?: string;
-            title: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            date: string;
-            /**
-             * @description Upcoming event category.
-             * @enum {string}
-             */
-            eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END";
-        };
-        /** @description Single-league response. */
-        LeagueResponse: {
-            /** @description A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object. */
-            league: {
-                /** @description Internal league identifier used for authenticated management APIs. */
-                id: string;
-                /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                leagueCode: string;
-                /** @description Primary display name for the league. */
-                name: string;
-                /** @description Optional short league description. */
-                description?: string | null;
-                /** @description Whether the league is currently active for normal write interactions. */
-                isActive: boolean;
-                /**
-                 * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                 * @enum {string}
-                 */
-                iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                /** @description Current number of memberships in the league. */
-                memberCount: number;
-                /** @description Number of currently active contests associated with the league. */
-                activeContestCount: number;
-                /**
-                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                 * @enum {string}
-                 */
-                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                /**
-                 * Format: date-time
-                 * @description League creation timestamp in ISO 8601 format.
-                 */
-                createdAt?: string;
-            };
-        };
-        /** @description A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context. */
-        LeagueContextResponse: {
-            /** @description A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object. */
-            league: {
-                /** @description Internal league identifier used for authenticated management APIs. */
-                id: string;
-                /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                leagueCode: string;
-                /** @description Primary display name for the league. */
-                name: string;
-                /** @description Optional short league description. */
-                description?: string | null;
-                /** @description Whether the league is currently active for normal write interactions. */
-                isActive: boolean;
-                /**
-                 * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                 * @enum {string}
-                 */
-                iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                /** @description Current number of memberships in the league. */
-                memberCount: number;
-                /** @description Number of currently active contests associated with the league. */
-                activeContestCount: number;
-                /**
-                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                 * @enum {string}
-                 */
-                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                /**
-                 * Format: date-time
-                 * @description League creation timestamp in ISO 8601 format.
-                 */
-                createdAt?: string;
-            };
-            /** @description The viewer's membership in this league, or null when they have none. */
-            membership: {
-                /** @description Membership record identifier. */
-                id: string;
-                /** @description League that owns the membership. */
-                leagueId: string;
-                /** @description User account attached to the membership. */
-                userId: string;
-                /**
-                 * @description Current league role for the user.
-                 * @enum {string}
-                 */
-                role: "COMMISSIONER" | "MEMBER";
-                /**
-                 * @description Membership lifecycle state.
-                 * @enum {string}
-                 */
-                status: "ACTIVE" | "INACTIVE";
-                /**
-                 * Format: date-time
-                 * @description When the user joined the league.
-                 */
-                joinedAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the membership record was last updated.
-                 */
-                updatedAt: string;
-                /** @description The member, as the canonical UserDto. */
-                user: {
-                    /** @description Stable user identifier. */
-                    id: string;
-                    /** @description Primary email address for the user account. */
-                    email: string;
-                    /** @description Unique login identifier for the account. */
-                    username: string;
-                    /** @description First name shown in account and member-management surfaces. */
-                    firstName: string;
-                    /** @description Last name shown in account and member-management surfaces. */
-                    lastName: string;
-                    /** @description Whether the account is currently active for normal sign-in and product usage. */
-                    isActive: boolean;
-                    /** @description Whether the user has platform-level root-admin access. */
-                    isRootAdmin: boolean;
-                    /**
-                     * @description Authentication provider used for the account when known.
-                     * @enum {string}
-                     */
-                    authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                    timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
-                    locale?: string;
-                    /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
-                    /**
-                     * Format: date-time
-                     * @description Account creation timestamp in ISO 8601 format.
-                     */
-                    createdAt?: string;
-                };
-            } | null;
-            /** @description The viewer's squad membership within this league, or null when they hold none. */
-            squadMembership: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                squadId: string;
-                /** Format: uuid */
-                leagueId: string;
-                /** Format: uuid */
-                userId: string;
-                /** @description The member, as the canonical UserDto. */
-                user: {
-                    /** @description Stable user identifier. */
-                    id: string;
-                    /** @description Primary email address for the user account. */
-                    email: string;
-                    /** @description Unique login identifier for the account. */
-                    username: string;
-                    /** @description First name shown in account and member-management surfaces. */
-                    firstName: string;
-                    /** @description Last name shown in account and member-management surfaces. */
-                    lastName: string;
-                    /** @description Whether the account is currently active for normal sign-in and product usage. */
-                    isActive: boolean;
-                    /** @description Whether the user has platform-level root-admin access. */
-                    isRootAdmin: boolean;
-                    /**
-                     * @description Authentication provider used for the account when known.
-                     * @enum {string}
-                     */
-                    authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                    timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
-                    locale?: string;
-                    /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
-                    /**
-                     * Format: date-time
-                     * @description Account creation timestamp in ISO 8601 format.
-                     */
-                    createdAt?: string;
-                };
-                /**
-                 * @description Squad membership status.
-                 * @enum {string}
-                 */
-                status: "ACTIVE" | "INACTIVE";
-                /**
-                 * Format: date-time
-                 * @description When the user joined the squad.
-                 */
-                joinedAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad membership record was last updated.
-                 */
-                updatedAt: string;
-            } | null;
-        };
-        /** @description League-list response, with the viewer's memberships once as an array. */
-        LeagueListResponse: {
-            leagues: {
-                /** @description Internal league identifier used for authenticated management APIs. */
-                id: string;
-                /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                leagueCode: string;
-                /** @description Primary display name for the league. */
-                name: string;
-                /** @description Optional short league description. */
-                description?: string | null;
-                /** @description Whether the league is currently active for normal write interactions. */
-                isActive: boolean;
-                /**
-                 * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                 * @enum {string}
-                 */
-                iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                /** @description Current number of memberships in the league. */
-                memberCount: number;
-                /** @description Number of currently active contests associated with the league. */
-                activeContestCount: number;
-                /**
-                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                 * @enum {string}
-                 */
-                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                /**
-                 * Format: date-time
-                 * @description League creation timestamp in ISO 8601 format.
-                 */
-                createdAt?: string;
-            }[];
-            /** @description The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to. */
-            memberships: {
-                /** @description Membership record identifier. */
-                id: string;
-                /** @description League that owns the membership. */
-                leagueId: string;
-                /** @description User account attached to the membership. */
-                userId: string;
-                /**
-                 * @description Current league role for the user.
-                 * @enum {string}
-                 */
-                role: "COMMISSIONER" | "MEMBER";
-                /**
-                 * @description Membership lifecycle state.
-                 * @enum {string}
-                 */
-                status: "ACTIVE" | "INACTIVE";
-                /**
-                 * Format: date-time
-                 * @description When the user joined the league.
-                 */
-                joinedAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the membership record was last updated.
-                 */
-                updatedAt: string;
-                /** @description The member, as the canonical UserDto. */
-                user: {
-                    /** @description Stable user identifier. */
-                    id: string;
-                    /** @description Primary email address for the user account. */
-                    email: string;
-                    /** @description Unique login identifier for the account. */
-                    username: string;
-                    /** @description First name shown in account and member-management surfaces. */
-                    firstName: string;
-                    /** @description Last name shown in account and member-management surfaces. */
-                    lastName: string;
-                    /** @description Whether the account is currently active for normal sign-in and product usage. */
-                    isActive: boolean;
-                    /** @description Whether the user has platform-level root-admin access. */
-                    isRootAdmin: boolean;
-                    /**
-                     * @description Authentication provider used for the account when known.
-                     * @enum {string}
-                     */
-                    authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                    timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
-                    locale?: string;
-                    /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
-                    /**
-                     * Format: date-time
-                     * @description Account creation timestamp in ISO 8601 format.
-                     */
-                    createdAt?: string;
-                };
-            }[];
-        };
-        /** @description League-members response. Each member is the membership edge with the user embedded. */
-        LeagueMembersResponse: {
-            members: {
-                /** @description Membership record identifier. */
-                id: string;
-                /** @description League that owns the membership. */
-                leagueId: string;
-                /** @description User account attached to the membership. */
-                userId: string;
-                /**
-                 * @description Current league role for the user.
-                 * @enum {string}
-                 */
-                role: "COMMISSIONER" | "MEMBER";
-                /**
-                 * @description Membership lifecycle state.
-                 * @enum {string}
-                 */
-                status: "ACTIVE" | "INACTIVE";
-                /**
-                 * Format: date-time
-                 * @description When the user joined the league.
-                 */
-                joinedAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the membership record was last updated.
-                 */
-                updatedAt: string;
-                /** @description The member, as the canonical UserDto. */
-                user: {
-                    /** @description Stable user identifier. */
-                    id: string;
-                    /** @description Primary email address for the user account. */
-                    email: string;
-                    /** @description Unique login identifier for the account. */
-                    username: string;
-                    /** @description First name shown in account and member-management surfaces. */
-                    firstName: string;
-                    /** @description Last name shown in account and member-management surfaces. */
-                    lastName: string;
-                    /** @description Whether the account is currently active for normal sign-in and product usage. */
-                    isActive: boolean;
-                    /** @description Whether the user has platform-level root-admin access. */
-                    isRootAdmin: boolean;
-                    /**
-                     * @description Authentication provider used for the account when known.
-                     * @enum {string}
-                     */
-                    authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                    timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
-                    locale?: string;
-                    /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
-                    /**
-                     * Format: date-time
-                     * @description Account creation timestamp in ISO 8601 format.
-                     */
-                    createdAt?: string;
-                };
-            }[];
-        };
-        /** @description Single league-membership response. */
-        LeagueMembershipResponse: {
-            /** @description A membership of a user in a league, with the member embedded. */
-            membership: {
-                /** @description Membership record identifier. */
-                id: string;
-                /** @description League that owns the membership. */
-                leagueId: string;
-                /** @description User account attached to the membership. */
-                userId: string;
-                /**
-                 * @description Current league role for the user.
-                 * @enum {string}
-                 */
-                role: "COMMISSIONER" | "MEMBER";
-                /**
-                 * @description Membership lifecycle state.
-                 * @enum {string}
-                 */
-                status: "ACTIVE" | "INACTIVE";
-                /**
-                 * Format: date-time
-                 * @description When the user joined the league.
-                 */
-                joinedAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the membership record was last updated.
-                 */
-                updatedAt: string;
-                /** @description The member, as the canonical UserDto. */
-                user: {
-                    /** @description Stable user identifier. */
-                    id: string;
-                    /** @description Primary email address for the user account. */
-                    email: string;
-                    /** @description Unique login identifier for the account. */
-                    username: string;
-                    /** @description First name shown in account and member-management surfaces. */
-                    firstName: string;
-                    /** @description Last name shown in account and member-management surfaces. */
-                    lastName: string;
-                    /** @description Whether the account is currently active for normal sign-in and product usage. */
-                    isActive: boolean;
-                    /** @description Whether the user has platform-level root-admin access. */
-                    isRootAdmin: boolean;
-                    /**
-                     * @description Authentication provider used for the account when known.
-                     * @enum {string}
-                     */
-                    authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                    timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
-                    locale?: string;
-                    /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
-                    /**
-                     * Format: date-time
-                     * @description Account creation timestamp in ISO 8601 format.
-                     */
-                    createdAt?: string;
-                };
-            };
-        };
-        /** @description League invitation-send response. */
-        SendLeagueInvitationsResponse: {
-            /** @description Invitation records successfully created and sent. */
-            sent: {
-                /** @description Invitation record identifier. */
-                id: string;
-                /** @description League that owns the invitation. */
-                leagueId: string;
-                /** @description Email recipient for direct email invites. Link invites omit this field. */
-                email?: string | null;
-                /** @description Shareable invitation code used in URLs and acceptance requests. */
-                inviteCode: string;
-                /**
-                 * @description Invitation delivery mode, such as EMAIL or LINK.
-                 * @enum {string}
-                 */
-                inviteType: "EMAIL" | "LINK";
-                /**
-                 * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
-                 * @enum {string}
-                 */
-                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                /** @description Maximum accepted joins allowed for the invitation. */
-                maxUses: number;
-                /** @description How many times the invitation has already been accepted. */
-                currentUses: number;
-                /** @description User ID of the commissioner or actor that issued the invite. */
-                invitedBy: string;
-                /**
-                 * Format: date-time
-                 * @description When the invite stops being valid, if it expires.
-                 */
-                expiresAt?: string | null;
-                /**
-                 * Format: date-time
-                 * @description When the invitation was accepted, if applicable.
-                 */
-                acceptedAt?: string | null;
-                /** @description User ID that accepted the invite, when known. */
-                acceptedBy?: string | null;
-                /**
-                 * Format: date-time
-                 * @description Invitation creation timestamp.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description Last invitation update timestamp.
-                 */
-                updatedAt: string;
-            }[];
-            /** @description Emails skipped because they already belong to the league. */
-            skippedMembers: string[];
-            /** @description Emails skipped because they were duplicated in the request or invite set. */
-            skippedDuplicates: string[];
-        };
-        /** @description Generated invite-link response. */
-        GenerateInviteLinkResponse: {
-            /** @description Invitation record returned from commissioner invite-management APIs. */
-            invitation: {
-                /** @description Invitation record identifier. */
-                id: string;
-                /** @description League that owns the invitation. */
-                leagueId: string;
-                /** @description Email recipient for direct email invites. Link invites omit this field. */
-                email?: string | null;
-                /** @description Shareable invitation code used in URLs and acceptance requests. */
-                inviteCode: string;
-                /**
-                 * @description Invitation delivery mode, such as EMAIL or LINK.
-                 * @enum {string}
-                 */
-                inviteType: "EMAIL" | "LINK";
-                /**
-                 * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
-                 * @enum {string}
-                 */
-                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                /** @description Maximum accepted joins allowed for the invitation. */
-                maxUses: number;
-                /** @description How many times the invitation has already been accepted. */
-                currentUses: number;
-                /** @description User ID of the commissioner or actor that issued the invite. */
-                invitedBy: string;
-                /**
-                 * Format: date-time
-                 * @description When the invite stops being valid, if it expires.
-                 */
-                expiresAt?: string | null;
-                /**
-                 * Format: date-time
-                 * @description When the invitation was accepted, if applicable.
-                 */
-                acceptedAt?: string | null;
-                /** @description User ID that accepted the invite, when known. */
-                acceptedBy?: string | null;
-                /**
-                 * Format: date-time
-                 * @description Invitation creation timestamp.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description Last invitation update timestamp.
-                 */
-                updatedAt: string;
-            };
-        };
-        /** @description Commissioner dashboard response. */
-        LeagueDashboardResponse: {
-            /** @description League payload driving the dashboard header. */
-            league: {
-                /** @description Internal league identifier used for authenticated management APIs. */
-                id: string;
-                /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                leagueCode: string;
-                /** @description Primary display name for the league. */
-                name: string;
-                /** @description Optional short league description. */
-                description?: string | null;
-                /** @description Whether the league is currently active for normal write interactions. */
-                isActive: boolean;
-                /**
-                 * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                 * @enum {string}
-                 */
-                iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                /** @description Current number of memberships in the league. */
-                memberCount: number;
-                /** @description Number of currently active contests associated with the league. */
-                activeContestCount: number;
-                /**
-                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                 * @enum {string}
-                 */
-                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                /**
-                 * Format: date-time
-                 * @description League creation timestamp in ISO 8601 format.
-                 */
-                createdAt?: string;
-            };
-            /** @description The league's contests. */
-            contests: {
-                id: string;
-                name: string;
-                /** @enum {string} */
-                status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                /** @enum {string} */
-                contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                /** @enum {string} */
-                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                /** @enum {string} */
-                scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                leagueId: string;
-                sportEventId?: string | null;
-                sport?: string | null;
-                /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
-                entryCount?: number;
-                /** Format: date-time */
-                startsAt?: string | null;
-                /** Format: date-time */
-                endsAt?: string | null;
-                /** @description Whether a participant may be picked by only one entry in the contest. */
-                isExclusive: boolean;
-                /** Format: date-time */
-                createdAt?: string;
-                /** Format: date-time */
-                updatedAt?: string;
-            }[];
-            /** @description Current league member count. */
-            memberCount: number;
-            /** @description Current number of pending invitations. */
-            pendingInvites: number;
-            /** @description Recent member activity for the league. */
-            recentMemberActivity: {
-                /** @description User involved in the activity event. */
-                userId: string;
-                /** @description First name shown for the member activity event when available. */
-                firstName?: string;
-                /** @description Last name shown for the member activity event when available. */
-                lastName?: string;
-                /** @description Normalized member activity action label. */
-                action: string;
-                /**
-                 * Format: date-time
-                 * @description When the member activity occurred.
-                 */
-                timestamp: string;
-            }[];
-            /** @description Upcoming league events that should be surfaced on the dashboard. */
-            upcomingEvents: {
-                contestId?: string;
-                title: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                date: string;
-                /**
-                 * @description Upcoming event category.
-                 * @enum {string}
-                 */
-                eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END";
-            }[];
-        };
-        /** @description Result of a bulk CSV member import. */
-        LeagueBulkOperationResponse: {
-            /** @description How many rows the import received. */
-            total: number;
-            /** @description How many invitations the import created. */
-            sent: number;
-            /** @description Rows that were not imported, with the reason for each. */
-            failed: {
-                /** @description Email address on the row that failed. */
-                email: string;
-                /** @description Why the row was not imported. */
-                reason: string;
-            }[];
-            /** @description Email addresses skipped because they already have an invitation to this league. */
-            duplicates: string[];
-        };
-        /** @description Request payload for inviting an additional co-owner to a team. */
-        CreateSquadOwnerInvitationRequest: {
-            /**
-             * Format: email
-             * @description Email address for the intended co-owner.
-             */
-            email: string;
-        };
-        /** @description Request payload for replacing an existing active owner on a team. */
-        ReplaceSquadOwnerRequest: {
-            /**
-             * Format: email
-             * @description Email address for the replacement owner.
-             */
-            email: string;
-        };
-        /** @description Authenticated team-owner invitation acceptance payload. */
-        AcceptTeamOwnerInvitationRequest: {
-            /** @description Team-owner invitation code from the invite URL or email. */
-            inviteCode: string;
-        };
-        /** @description Registers a new account against a pending team-owner invitation and accepts it, joining the league and the squad in one request. */
-        RegisterWithTeamOwnerInvitationRequest: {
-            /** @description Invite code from the team-owner invitation URL. */
-            inviteCode: string;
-            /** @description Unique login identifier chosen by the invitee. The account email is not chosen here — it is the address the invitation was sent to. */
-            username: string;
-            /** @description Plaintext password chosen during registration. */
-            password: string;
-            /** @description First name captured for the account profile. Also names the invitee on the squad roster. */
-            firstName: string;
-            /** @description Last name captured for the account profile. */
-            lastName: string;
-        };
-        /** @description Pending or historical team-owner invitation record. */
-        TeamOwnerInvitationDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            leagueId: string;
-            /** Format: uuid */
-            squadId: string;
-            /** Format: email */
-            email: string;
-            inviteCode: string;
-            /** @enum {string} */
-            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-            /** Format: uuid */
-            invitedBy: string;
-            /** Format: uuid */
-            acceptedBy?: string | null;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            acceptedAt?: string | null;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            expiresAt?: string | null;
-            /** Format: uuid */
-            replacementForUserId?: string | null;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            createdAt: string | null;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            updatedAt: string | null;
-            team: {
-                /** Format: uuid */
-                id: string;
-                name: string;
-                /** @enum {string} */
-                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-            };
-        };
-        /** @description Single team-owner invitation response. */
-        TeamOwnerInvitationResponse: {
-            /** @description Pending or historical team-owner invitation record. */
-            invitation: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                leagueId: string;
-                /** Format: uuid */
-                squadId: string;
-                /** Format: email */
-                email: string;
-                inviteCode: string;
-                /** @enum {string} */
-                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                /** Format: uuid */
-                invitedBy: string;
-                /** Format: uuid */
-                acceptedBy?: string | null;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                acceptedAt?: string | null;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                expiresAt?: string | null;
-                /** Format: uuid */
-                replacementForUserId?: string | null;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                createdAt: string | null;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                updatedAt: string | null;
-                team: {
-                    /** Format: uuid */
-                    id: string;
-                    name: string;
-                    /** @enum {string} */
-                    iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                };
-            };
-        };
-        /** @description League-scoped list of team-owner invitations. */
-        TeamOwnerInvitationListResponse: {
-            invitations: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                leagueId: string;
-                /** Format: uuid */
-                squadId: string;
-                /** Format: email */
-                email: string;
-                inviteCode: string;
-                /** @enum {string} */
-                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                /** Format: uuid */
-                invitedBy: string;
-                /** Format: uuid */
-                acceptedBy?: string | null;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                acceptedAt?: string | null;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                expiresAt?: string | null;
-                /** Format: uuid */
-                replacementForUserId?: string | null;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                createdAt: string | null;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                updatedAt: string | null;
-                team: {
-                    /** Format: uuid */
-                    id: string;
-                    name: string;
-                    /** @enum {string} */
-                    iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                };
-            }[];
-        };
-        /** @description Public preview payload for a team-owner invitation. */
-        TeamOwnerInvitationPreviewResponse: {
-            invitation: {
-                inviteCode: string;
-                /** @enum {string} */
-                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                league: {
-                    /** Format: uuid */
-                    id: string;
-                    leagueCode: string;
-                    name: string;
-                };
-                team: {
-                    /** Format: uuid */
-                    id: string;
-                    name: string;
-                    /** @enum {string} */
-                    iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                };
-                /**
-                 * @description League role applied when the invitation is accepted.
-                 * @enum {string}
-                 */
-                roleAfterAccept: "MEMBER";
-            };
-        };
         /** @description A round of golf scores. */
         GolfRoundScoreUploadRequest: {
             rows: {
@@ -8806,14 +8803,16 @@ export interface components {
                     strokes: number | null;
                     scoreToPar: number;
                     thru: number | null;
-                    status: string;
+                    /** @enum {string} */
+                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                 } | null;
                 /** @description What is stored now; null when nothing is. */
                 after: {
                     strokes: number | null;
                     scoreToPar: number;
                     thru: number | null;
-                    status: string;
+                    /** @enum {string} */
+                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                 } | null;
             }[];
             /** @description Counts by resolution. */
@@ -9753,25 +9752,6 @@ export interface operations {
                     };
                 };
             };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
         };
     };
     refreshToken: {
@@ -9880,6 +9860,25 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -9943,6 +9942,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -9956,6 +9956,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -10022,6 +10041,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10149,6 +10169,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10270,6 +10291,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10391,6 +10413,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10408,6 +10431,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -10493,6 +10535,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10620,6 +10663,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10633,6 +10677,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResetPasswordResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -10699,6 +10762,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10712,6 +10776,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -10797,6 +10880,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10810,6 +10894,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -10895,6 +10998,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10908,6 +11012,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RevokeUserSessionsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -10974,6 +11097,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10996,6 +11120,25 @@ export interface operations {
                          * @enum {boolean}
                          */
                         success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
                     };
                 };
             };
@@ -11731,6 +11874,47 @@ export interface operations {
             };
         };
     };
+    listLeagueInvitations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Commissioner list of a league's pending invitations. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListLeagueInvitationsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
     sendLeagueInvitations: {
         parameters: {
             query?: never;
@@ -11756,7 +11940,125 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    resendLeagueInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                invitationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resent email-invitation response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResendLeagueInvitationResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11817,6 +12119,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GenerateInviteLinkResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -11888,6 +12209,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12184,66 +12524,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getLeagueDashboard: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Commissioner dashboard response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LeagueDashboardResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };

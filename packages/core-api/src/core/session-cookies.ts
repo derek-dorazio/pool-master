@@ -64,9 +64,23 @@ export function parseCookies(cookieHeader?: string): Record<string, string> {
     if (!rawKey) {
       return accumulator;
     }
-    accumulator[rawKey] = decodeURIComponent(rest.join('='));
+    accumulator[rawKey] = decodeCookieValue(rest.join('='));
     return accumulator;
   }, {});
+}
+
+/**
+ * The request's Cookie header carries every cookie the browser holds for the host, not only
+ * ours, and nothing obliges another site's cookie to be valid percent-encoding. Letting
+ * `decodeURIComponent` throw on one of them turned every cookie-session request into a 500,
+ * so a value that does not decode is kept as it was sent.
+ */
+function decodeCookieValue(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 export function readAccessCookie(cookieHeader?: string): string | undefined {

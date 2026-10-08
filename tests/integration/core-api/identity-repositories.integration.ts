@@ -254,19 +254,23 @@ describe('identity cluster repositories (#202)', () => {
 
   // #202 step 3.3 — the platform-lockout guard's count. Written inline three times in
   // `admin/user-service.ts` before this.
-  describe('UserRepository.countRootAdmins', () => {
-    it('counts root admins and nobody else', async () => {
+  describe('UserRepository.countActiveRootAdmins', () => {
+    it('counts active root admins and nobody else', async () => {
       const prisma = getPrisma();
       const repo = new PrismaUserRepository(prisma);
 
-      const before = await repo.countRootAdmins();
+      const before = await repo.countActiveRootAdmins();
 
-      // A plain user must not move the count; a root admin must move it by exactly one.
+      // A plain user must not move the count; an active root admin must move it by exactly one.
       await createTestUser({ lastName: 'NotAnAdmin' });
-      expect(await repo.countRootAdmins()).toBe(before);
+      expect(await repo.countActiveRootAdmins()).toBe(before);
 
-      await createTestUser({ lastName: 'AnAdmin', isRootAdmin: true });
-      expect(await repo.countRootAdmins()).toBe(before + 1);
+      const admin = await createTestUser({ lastName: 'AnAdmin', isRootAdmin: true });
+      expect(await repo.countActiveRootAdmins()).toBe(before + 1);
+
+      // An inactive root admin does not count towards the active root admins the guard keeps.
+      await prisma.user.update({ where: { id: admin.user.id }, data: { isActive: false } });
+      expect(await repo.countActiveRootAdmins()).toBe(before);
     });
   });
 
@@ -361,6 +365,27 @@ describe('identity cluster repositories (#202)', () => {
       const loner = await createTestUser({ lastName: 'Loner' });
 
       expect(await repo.findByUser(loner.user.id)).toEqual([]);
+    });
+
+    it('omits a league the user was removed from, so a removed member no longer sees it in their leagues', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueRepository(prisma);
+      const former = await createTestUser({ lastName: 'FormerMember' });
+
+      const current = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}B4`, 'Current');
+      const left = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}B5`, 'Left');
+      for (const [leagueId, status] of [
+        [current.id, LeagueMembershipStatus.ACTIVE],
+        [left.id, LeagueMembershipStatus.INACTIVE],
+      ] as const) {
+        await prisma.leagueMembership.create({
+          data: { leagueId, userId: former.user.id, role: LeagueRole.MEMBER, status },
+        });
+      }
+
+      const ids = (await repo.findByUser(former.user.id)).map((league) => league.id);
+
+      expect(ids).toEqual([current.id]);
     });
   });
 
