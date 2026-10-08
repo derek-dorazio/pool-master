@@ -137,3 +137,107 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
     expect(handleSubmit).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("contest entry selection: withdrawn golfers and card details", () => {
+  function groupWithWithdrawn(selectedParticipantIds: string[]): SelectionGroup {
+    const group = buildGroup(selectedParticipantIds);
+    return {
+      ...group,
+      participants: group.participants.map((participant) =>
+        participant.sportEventParticipantId === "sep-2"
+          ? {
+              ...participant,
+              status: "WITHDRAWN",
+              isAvailable: false,
+              unavailableReason: "Withdrawn",
+            }
+          : participant,
+      ),
+    };
+  }
+
+  function renderEditable(group: SelectionGroup, onParticipantSelect = vi.fn()) {
+    render(
+      <EditableSelectionGroup
+        canSelect
+        group={group}
+        isBusy={false}
+        isExpanded
+        onParticipantSelect={onParticipantSelect}
+        onToggle={vi.fn()}
+        setToggleRef={vi.fn()}
+      />,
+    );
+    return onParticipantSelect;
+  }
+
+  it("keeps a held golfer who has withdrawn clickable, so the entry can unselect them", async () => {
+    const onSelect = renderEditable(groupWithWithdrawn(["sep-1", "sep-2"]));
+
+    const withdrawn = screen.getByTestId("contest-entry-participant-sep-2");
+    expect(withdrawn).toBeEnabled();
+    expect(withdrawn).toHaveTextContent("Selected");
+
+    await userEvent.setup().click(withdrawn);
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: "sep-2" }));
+  });
+
+  it("disables a withdrawn golfer the entry does not hold, showing why", () => {
+    renderEditable(groupWithWithdrawn(["sep-1"]));
+
+    const withdrawn = screen.getByTestId("contest-entry-participant-sep-2");
+    expect(withdrawn).toBeDisabled();
+    expect(withdrawn).toHaveTextContent("Withdrawn");
+  });
+
+  it("disables every golfer while a pick is saving or when the viewer cannot pick", () => {
+    const { rerender } = render(
+      <EditableSelectionGroup
+        canSelect
+        group={buildGroup(["sep-1"])}
+        isBusy
+        isExpanded
+        onParticipantSelect={vi.fn()}
+        onToggle={vi.fn()}
+        setToggleRef={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId("contest-entry-participant-sep-3")).toBeDisabled();
+
+    rerender(
+      <EditableSelectionGroup
+        canSelect={false}
+        group={buildGroup(["sep-1"])}
+        isBusy={false}
+        isExpanded
+        onParticipantSelect={vi.fn()}
+        onToggle={vi.fn()}
+        setToggleRef={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId("contest-entry-participant-sep-3")).toBeDisabled();
+  });
+
+  it("shows a golfer's team, price and ranking when they have them", () => {
+    const group = buildGroup([]);
+    renderEditable({
+      ...group,
+      participants: group.participants.map((participant) =>
+        participant.sportEventParticipantId === "sep-1"
+          ? { ...participant, team: "USA", price: 3200 }
+          : participant,
+      ),
+    });
+
+    const card = screen.getByTestId("contest-entry-participant-sep-1");
+    expect(card).toHaveTextContent("USA");
+    expect(card).toHaveTextContent("3200 salary");
+    expect(card).toHaveTextContent("Ranking #1");
+  });
+
+  it("says no golfer was saved for a locked tier the entry left empty", () => {
+    render(<LockedSelectionGroup group={buildGroup([])} />);
+
+    expect(screen.getByText("No golfer was saved from this tier.")).toBeInTheDocument();
+  });
+});
