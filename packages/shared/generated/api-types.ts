@@ -2387,7 +2387,7 @@ export interface paths {
         };
         /**
          * Get current draft state for a contest
-         * @description Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (LOCKED onwards); otherwise it falls back to the caller's own.
          */
         get: operations["getDraftState"];
         put?: never;
@@ -2409,7 +2409,7 @@ export interface paths {
         put?: never;
         /**
          * Submit a draft pick
-         * @description Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed.
+         * @description Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise.
          */
         post: operations["submitContestSelection"];
         delete?: never;
@@ -22266,6 +22266,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
