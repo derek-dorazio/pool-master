@@ -14,6 +14,7 @@ import {
   PublicInviteJoinPage,
 } from '@/features/shared/ui';
 import { InvitationContextCard } from './invitation-context-card';
+import { describeUnusableInvitation } from './unusable-invitation';
 import {
   buildInvitePath,
   buildLeaguePath,
@@ -50,12 +51,6 @@ function getErrorMessage(error: unknown) {
 
   return 'We could not accept this invitation. Please try again.';
 }
-
-const UNUSABLE_INVITATION_MESSAGES: Partial<Record<string, string>> = {
-  EXPIRED: 'This invitation has expired. Ask the commissioner for a new one.',
-  REVOKED: 'This invitation was withdrawn. Ask the commissioner for a new one.',
-  ACCEPTED: 'This invitation has already been used.',
-};
 
 export function JoinLeaguePage() {
   const logger = getLogger().child({
@@ -245,9 +240,7 @@ export function JoinLeaguePage() {
   }, [inviteCode, isAuthenticated]);
 
   const selectedIcon = getTeamIconOption(selectedIconKey);
-  const unusableInvitationMessage = invitationQuery.data
-    ? UNUSABLE_INVITATION_MESSAGES[invitationQuery.data.status] ?? null
-    : null;
+  const unusableInvitationMessage = describeUnusableInvitation(invitationQuery.data?.status);
 
   if (redirectMessage) {
     return (
