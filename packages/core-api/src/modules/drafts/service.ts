@@ -47,7 +47,7 @@ import type {
 } from '@poolmaster/shared/db';
 import type { ContestEntryPickService } from '../contest-entry-picks';
 import { contestPicksRevealed } from '../contests/service';
-import { hasSportEventStarted } from '../events/operational-timing';
+import { areContestEntriesOpen } from '../contests/entry-window';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { draftErrors } from './draft-errors';
 import {
@@ -340,7 +340,6 @@ export class DraftService {
       sportEventId ? this.deps.sportEvents.findById(sportEventId) : Promise.resolve(null),
     ]);
     const now = this.deps.now?.() ?? new Date();
-    const eventStarted = sportEvent ? hasSportEventStarted(sportEvent, now) : false;
 
     const squadIds = Array.from(new Set(entries.map((entry) => entry.squadId)));
     const [squadMemberships, participants] = await Promise.all([
@@ -354,7 +353,8 @@ export class DraftService {
       entries,
       squadMemberships,
       tiers: buildDraftTiers(tierGroups),
-      acceptsPicks: contest.status === ContestStatus.OPEN && !eventStarted,
+      // One rule for every entry change: see contests/entry-window.
+      acceptsPicks: areContestEntriesOpen(contest, sportEvent, now),
       selectionParticipants: buildSelectionParticipants({
         field,
         participantsById: new Map(participants.map((p: Participant) => [p.id, p])),

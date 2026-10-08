@@ -87,8 +87,8 @@ export class GolfContestSettlementService {
     const asOf = resolveContestStandingAsOf(participants, completedAt);
     // A COMPLETED contest is already settled: its standing is the frozen result, and re-running
     // settlement (the event re-sent as COMPLETED, or a late score correction) must not rewrite
-    // it. Reopening a contest (OverrideService.reopenContest) moves it back to ACTIVE, which is
-    // the deliberate way to have it settled again.
+    // it. Only a contest moved back out of COMPLETED would be settled again, and no route does
+    // that today: the reopen endpoint, which nothing called, was deleted.
     const contests = await this.deps.contests.findBySportEvent(sportEventId, {
       excludeStatuses: NOT_SETTLED,
     });
