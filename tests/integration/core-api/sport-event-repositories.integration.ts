@@ -251,7 +251,7 @@ describe('SportEventRoundRepository — writes', () => {
 });
 
 describe('SportEventParticipantRepository — the field', () => {
-  it('orders by seed with unseeded last, and upserts by participant without duplicating', async () => {
+  it('orders the field by seed with unseeded participants last', async () => {
     const { field } = repos();
     const event = await createEvent();
     const [ana, ben, cal] = await createParticipants(['Ana', 'Ben', 'Cal']);
@@ -261,11 +261,8 @@ describe('SportEventParticipantRepository — the field', () => {
       { participantId: cal.id, seedNumber: 1 },
     ]);
 
-    await field.upsertMany(event.id, [{ participantId: ana.id, seedNumber: 3, ranking: 40 }]);
-
     const rows = await field.findBySportEvent(event.id);
-    expect(rows.map((row) => [row.participantId, row.seedNumber])).toEqual([[cal.id, 1], [ben.id, 2], [ana.id, 3]]);
-    expect(rows[2].ranking).toBe(40);
+    expect(rows.map((row) => [row.participantId, row.seedNumber])).toEqual([[cal.id, 1], [ben.id, 2], [ana.id, null]]);
   });
 
   it('patches rows and manual prices all or none; undefined leaves a column, null clears it', async () => {

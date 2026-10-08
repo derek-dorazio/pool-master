@@ -317,7 +317,6 @@ export class InMemoryContestWorld {
 
   configurationRepo(): ContestConfigurationRepository {
     return {
-      findById: async (id) => this.configurations.get(id) ?? null,
       findByContest: async (contestId) =>
         [...this.configurations.values()].find((row) => row.contestId === contestId) ?? null,
       create: async (input) => this.addConfiguration(input.contestId, input),

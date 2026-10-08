@@ -360,22 +360,9 @@ export class InMemorySportEvents {
       findBySportEvent: async (sportEventId) => this.field
         .filter((row) => row.sportEventId === sportEventId)
         .sort((left, right) => (left.seedNumber ?? Infinity) - (right.seedNumber ?? Infinity)),
-      create: async (row) => this.addToField(row.sportEventId, row.participantId, row),
-      update: async (id, updates) => {
-        const row = this.field.find((candidate) => candidate.id === id) as SportEventParticipant;
-        Object.assign(row, updates);
-        return row;
-      },
       createMany: async (sportEventId, rows: readonly SportEventParticipantCreate[]) => {
         for (const { participantId, ...patch } of rows) {
           apply(this.addToField(sportEventId, participantId), patch);
-        }
-      },
-      upsertMany: async (sportEventId, rows) => {
-        for (const { participantId, ...patch } of rows) {
-          const row = this.field.find((candidate) => candidate.sportEventId === sportEventId && candidate.participantId === participantId)
-            ?? this.addToField(sportEventId, participantId);
-          apply(row, patch);
         }
       },
       updateMany: async (entries) => {
@@ -466,8 +453,6 @@ export class InMemorySportEvents {
         return this.participantRoundRows.filter((row) => entryIds.has(row.sportEventParticipantId)).map(withNumber)
           .sort((left, right) => left.roundNumber - right.roundNumber);
       },
-      findBySportEventParticipant: async (id) => this.participantRoundRows.filter((row) => row.sportEventParticipantId === id).map(withNumber),
-      findBySportEventRound: async (id) => this.participantRoundRows.filter((row) => row.sportEventRoundId === id).map(withNumber),
     };
   }
 
@@ -477,7 +462,6 @@ export class InMemorySportEvents {
         const entryIds = new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
         return this.standingRows.filter((row) => entryIds.has(row.sportEventParticipantId));
       },
-      findBySportEventParticipant: async (id) => this.standingRows.find((row) => row.sportEventParticipantId === id) ?? null,
     };
   }
 

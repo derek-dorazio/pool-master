@@ -7,7 +7,6 @@ export type {
   ContestEntryStandingRepository,
   ContestEntryStandingResult,
   ContestEntryStandingWrite,
-  ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
 } from './contest-management-ports';
 export type {

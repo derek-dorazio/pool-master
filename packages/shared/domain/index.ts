@@ -21,7 +21,6 @@ export type {
 export type {
   ContestConfigTemplate,
   ContestConfiguration,
-  ContestPrizeDefinition,
   GolfContestConfig,
   GolfContestTierDefinition,
   GolfTieredContestConfig,

@@ -237,11 +237,10 @@ describe('SportEvent core repositories', () => {
     }
 
     expect((await new PrismaSportEventRoundRepository(getPrisma()).findBySportEvent(event.id)).map((row) => row.roundNumber)).toEqual([1, 2]);
-    expect((await new PrismaSportEventParticipantRoundRepository(getPrisma()).findBySportEventParticipant(leader.id))
-      .map((row) => row.roundNumber)).toEqual([1, 2]);
+    expect((await new PrismaSportEventParticipantRoundRepository(getPrisma()).findBySportEvent(event.id))
+      .map((row) => [row.sportEventParticipantId, row.roundNumber])).toEqual([[leader.id, 1], [leader.id, 2]]);
     const standings = new PrismaSportEventParticipantStandingRepository(getPrisma());
     expect((await standings.findBySportEvent(event.id)).map((row) => [row.sportEventParticipantId, row.position]))
       .toEqual([[leader.id, 1], [second.id, 2], [unranked.id, null]]);
-    await expect(standings.findBySportEventParticipant(outsider.id)).resolves.toMatchObject({ position: 1 });
   });
 });

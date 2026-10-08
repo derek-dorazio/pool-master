@@ -2,7 +2,6 @@ import type { PrismaClient } from '@prisma/client';
 import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
-  ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import type {
@@ -10,9 +9,7 @@ import type {
   ContestConfigTemplate,
   ContestConfiguration,
   ContestFormat,
-  ContestPrizeDefinition,
   ParticipantContestScoringRule,
-  PrizePayoutType,
   SelectionType,
 } from '@poolmaster/shared/domain';
 
@@ -20,13 +17,6 @@ export class PrismaContestConfigurationRepository
   implements ContestConfigurationRepository
 {
   constructor(private readonly prisma: PrismaClient) {}
-
-  async findById(id: string): Promise<ContestConfiguration | null> {
-    const row = await this.prisma.contestConfiguration.findUnique({
-      where: { id },
-    });
-    return row ? mapContestConfiguration(row) : null;
-  }
 
   async findByContest(contestId: string): Promise<ContestConfiguration | null> {
     const row = await this.prisma.contestConfiguration.findUnique({
@@ -186,13 +176,6 @@ export class PrismaParticipantContestScoringRuleRepository
 {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findById(id: string): Promise<ParticipantContestScoringRule | null> {
-    const row = await this.prisma.participantContestScoringRule.findUnique({
-      where: { id },
-    });
-    return row ? mapParticipantScoringRule(row) : null;
-  }
-
   async findByContestConfiguration(
     contestConfigurationId: string,
   ): Promise<ParticipantContestScoringRule[]> {
@@ -218,96 +201,8 @@ export class PrismaParticipantContestScoringRuleRepository
     return mapParticipantScoringRule(row);
   }
 
-  async update(
-    id: string,
-    updates: Partial<ParticipantContestScoringRule>,
-  ): Promise<ParticipantContestScoringRule> {
-    const row = await this.prisma.participantContestScoringRule.update({
-      where: { id },
-      data: {
-        ...(updates.participantScoringDefinitionId !== undefined && {
-          participantScoringDefinitionId: updates.participantScoringDefinitionId,
-        }),
-        ...(updates.sortOrder !== undefined && { sortOrder: updates.sortOrder }),
-        ...(updates.config !== undefined && { config: updates.config as object }),
-        ...(updates.active !== undefined && { active: updates.active }),
-      },
-    });
-    return mapParticipantScoringRule(row);
-  }
-
   async delete(id: string): Promise<void> {
     await this.prisma.participantContestScoringRule.delete({ where: { id } });
-  }
-}
-
-export class PrismaContestPrizeDefinitionRepository
-  implements ContestPrizeDefinitionRepository
-{
-  constructor(private readonly prisma: PrismaClient) {}
-
-  async findById(id: string): Promise<ContestPrizeDefinition | null> {
-    const row = await this.prisma.contestPrizeDefinition.findUnique({
-      where: { id },
-    });
-    return row ? mapPrizeDefinition(row) : null;
-  }
-
-  async findByContestConfiguration(
-    contestConfigurationId: string,
-  ): Promise<ContestPrizeDefinition[]> {
-    const rows = await this.prisma.contestPrizeDefinition.findMany({
-      where: { contestConfigurationId },
-      orderBy: { sortOrder: 'asc' },
-    });
-    return rows.map(mapPrizeDefinition);
-  }
-
-  async create(
-    definition: Omit<ContestPrizeDefinition, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ContestPrizeDefinition> {
-    const row = await this.prisma.contestPrizeDefinition.create({
-      data: {
-        contestConfigurationId: definition.contestConfigurationId,
-        prizeDefinitionId: definition.prizeDefinitionId,
-        displayName: definition.displayName,
-        sortOrder: definition.sortOrder,
-        ruleConfig: definition.ruleConfig as object,
-        payoutType: definition.payoutType,
-        amount: definition.amount,
-        percentage: definition.percentage,
-        active: definition.active,
-      },
-    });
-    return mapPrizeDefinition(row);
-  }
-
-  async update(
-    id: string,
-    updates: Partial<ContestPrizeDefinition>,
-  ): Promise<ContestPrizeDefinition> {
-    const row = await this.prisma.contestPrizeDefinition.update({
-      where: { id },
-      data: {
-        ...(updates.prizeDefinitionId !== undefined && {
-          prizeDefinitionId: updates.prizeDefinitionId,
-        }),
-        ...(updates.displayName !== undefined && { displayName: updates.displayName }),
-        ...(updates.sortOrder !== undefined && { sortOrder: updates.sortOrder }),
-        ...(updates.ruleConfig !== undefined && {
-          ruleConfig: updates.ruleConfig as object,
-        }),
-        ...(updates.payoutType !== undefined && { payoutType: updates.payoutType }),
-        ...(updates.amount !== undefined && { amount: updates.amount }),
-        ...(updates.percentage !== undefined && { percentage: updates.percentage }),
-        ...(updates.active !== undefined && { active: updates.active }),
-      },
-    });
-    return mapPrizeDefinition(row);
-  }
-
-  async delete(id: string): Promise<void> {
-    await this.prisma.contestPrizeDefinition.delete({ where: { id } });
   }
 }
 
@@ -414,36 +309,6 @@ function mapParticipantScoringRule(row: {
       row.participantScoringDefinitionId as ParticipantContestScoringRule['participantScoringDefinitionId'],
     sortOrder: row.sortOrder,
     config: (row.config ?? {}) as Record<string, unknown>,
-    active: row.active,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function mapPrizeDefinition(row: {
-  id: string;
-  contestConfigurationId: string;
-  prizeDefinitionId: string;
-  displayName: string;
-  sortOrder: number;
-  ruleConfig: unknown;
-  payoutType: PrizePayoutType | null;
-  amount: number | null;
-  percentage: number | null;
-  active: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}): ContestPrizeDefinition {
-  return {
-    id: row.id,
-    contestConfigurationId: row.contestConfigurationId,
-    prizeDefinitionId: row.prizeDefinitionId,
-    displayName: row.displayName,
-    sortOrder: row.sortOrder,
-    ruleConfig: (row.ruleConfig ?? {}) as Record<string, unknown>,
-    payoutType: row.payoutType ?? undefined,
-    amount: row.amount ?? undefined,
-    percentage: row.percentage ?? undefined,
     active: row.active,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
