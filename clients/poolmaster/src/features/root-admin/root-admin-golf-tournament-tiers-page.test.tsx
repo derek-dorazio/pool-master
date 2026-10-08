@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -429,5 +429,130 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     });
     renderPage();
     expect(await screen.findByText('Tiers index offline')).toBeInTheDocument();
+  });
+
+  it('auto-assigns tiers from odds, and keeps the confirmation open with the reason when the server refuses', async () => {
+    seed();
+    autoAssignEventTiersMock.mockResolvedValue({
+      error: { error: { code: 'SPORT_EVENT_TIERS_LOCKED', message: 'Tiers are locked for this tournament.' } },
+      response: { status: 409 },
+    });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-golf-tier-auto-odds'));
+    await userEvent.click(screen.getByTestId('root-admin-golf-tier-auto-tiers-confirm'));
+
+    await waitFor(() =>
+      expect(autoAssignEventTiersMock).toHaveBeenCalledWith(
+        expect.objectContaining({ body: { source: 'ODDS' } }),
+      ),
+    );
+    const modal = screen.getByTestId('root-admin-golf-tier-auto-tiers-modal');
+    expect(await within(modal).findByText('Tiers are locked for this tournament.')).toBeInTheDocument();
+  });
+
+  it('refuses an auto-price range that is not two whole numbers with max above min', async () => {
+    seed();
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-golf-tier-auto-prices'));
+    const min = screen.getByTestId('root-admin-golf-tier-auto-prices-min');
+    const max = screen.getByTestId('root-admin-golf-tier-auto-prices-max');
+    const confirm = screen.getByTestId('root-admin-golf-tier-auto-prices-confirm');
+
+    await userEvent.clear(min);
+    await userEvent.type(min, '1.5');
+    expect(screen.getByText('Enter a whole number')).toBeInTheDocument();
+    expect(confirm).toBeDisabled();
+
+    await userEvent.clear(min);
+    await userEvent.type(min, '5000');
+    await userEvent.clear(max);
+    await userEvent.type(max, '4000');
+    expect(screen.getByText('Max must exceed min')).toBeInTheDocument();
+    expect(confirm).toBeDisabled();
+
+    await userEvent.clear(max);
+    expect(screen.getByText('Enter a whole number')).toBeInTheDocument();
+    expect(autoAssignEventPricesMock).not.toHaveBeenCalled();
+  });
+
+  it('deletes a tier with no golfers without asking where they should go', async () => {
+    seed();
+    replaceEventTiersMock.mockResolvedValue({ data: null });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-golf-tier-def-delete-tier-3'));
+    expect(screen.queryByTestId('root-admin-golf-tier-def-reassign')).not.toBeInTheDocument();
+    expect(screen.getByText('Delete Tier 3? It has no golfers assigned.')).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId('root-admin-golf-tier-def-delete-confirm'));
+
+    await waitFor(() =>
+      expect(replaceEventTiersMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: {
+            tiers: [
+              { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1, defaultPickCount: 1 },
+              { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2, defaultPickCount: 1 },
+            ],
+          },
+        }),
+      ),
+    );
+  });
+
+  it('saves a blank tier name as its position and a pick count as a whole number no lower than zero', async () => {
+    seed();
+    replaceEventTiersMock.mockResolvedValue({ data: null });
+    renderPage();
+
+    await userEvent.clear(await screen.findByTestId('root-admin-golf-tier-def-label-tier-2'));
+    // Pasted rather than typed: the field re-renders from a number on every keystroke.
+    fireEvent.change(screen.getByTestId('root-admin-golf-tier-def-picks-tier-1'), { target: { value: '2.7' } });
+    fireEvent.change(screen.getByTestId('root-admin-golf-tier-def-picks-tier-3'), { target: { value: '-1' } });
+    await userEvent.click(screen.getByTestId('root-admin-golf-tier-def-save'));
+
+    await waitFor(() =>
+      expect(replaceEventTiersMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: {
+            tiers: [
+              { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1, defaultPickCount: 2 },
+              { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2, defaultPickCount: 1 },
+              { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3, defaultPickCount: 0 },
+            ],
+          },
+        }),
+      ),
+    );
+  });
+
+  it('discards unsaved tier edits back to the saved definitions', async () => {
+    seed();
+    renderPage();
+
+    const label = await screen.findByTestId('root-admin-golf-tier-def-label-tier-1');
+    await userEvent.clear(label);
+    await userEvent.type(label, 'Favourites');
+    await userEvent.click(screen.getByTestId('root-admin-golf-tier-def-discard'));
+
+    expect(screen.getByTestId('root-admin-golf-tier-def-label-tier-1')).toHaveValue('Tier 1');
+    expect(screen.queryByTestId('root-admin-golf-tier-def-save')).not.toBeInTheDocument();
+  });
+
+  it('explains a tier save refused because the tournament was released', async () => {
+    seed();
+    replaceEventTiersMock.mockResolvedValue({
+      error: { error: { code: 'SPORT_EVENT_TIERS_LOCKED', message: 'locked' } },
+      response: { status: 409 },
+    });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-golf-tier-def-add'));
+    await userEvent.click(screen.getByTestId('root-admin-golf-tier-def-save'));
+
+    expect(await screen.findByTestId('root-admin-golf-tier-def-error')).toHaveTextContent(
+      'This tournament has been released for contests, so its tier definitions are locked.',
+    );
   });
 });

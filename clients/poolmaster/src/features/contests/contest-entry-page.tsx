@@ -42,6 +42,7 @@ const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
 
 // The tiebreaker is a predicted winning score relative to par.
 const formatTiebreaker = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format;
+const HIDDEN_PICKS_HELPER = 'Hidden until the contest locks';
 
 // The entry page says what an open contest means for this entry; every other status reads as it
 // does on every contest page.
@@ -77,26 +78,48 @@ function getNextIncompleteGroupId(selectionGroups: SelectionGroup[]) {
   return selectionGroups.find((group) => group.selectedParticipantIds.length < group.picksFromGroup)?.groupId ?? null;
 }
 
-function getNextSelectedParticipantIds(group: SelectionGroup, participantId: string) {
+/**
+ * When each of the entry's golfers was picked, by sport-event participant id. A full tier's swap
+ * displaces the tier's most recently picked golfer on the server, and the tier's list is in tier
+ * order, not pick order, so the optimistic swap needs this to drop the same one.
+ */
+function buildPickedAtById(draftState: DraftState, entryId: string): Map<string, string> {
+  return new Map(
+    (draftState.draftPickHistories ?? [])
+      .flatMap((pick) => (pick.entryId === entryId && pick.participantId
+        ? [[pick.participantId, pick.pickedAt] as const]
+        : [])),
+  );
+}
+
+function getNextSelectedParticipantIds(
+  group: SelectionGroup,
+  participantId: string,
+  pickedAtById: ReadonlyMap<string, string>,
+) {
   if (group.selectedParticipantIds.includes(participantId)) {
     return group.selectedParticipantIds.filter((selectedParticipantId) => selectedParticipantId !== participantId);
   }
 
   if (group.selectedParticipantIds.length >= group.picksFromGroup) {
-    return [...group.selectedParticipantIds.slice(0, group.picksFromGroup - 1), participantId];
+    // A golfer with no pick time is treated as the oldest, so it is never the one displaced.
+    const newest = group.selectedParticipantIds.reduce((latest, candidate) =>
+      (pickedAtById.get(candidate) ?? '') >= (pickedAtById.get(latest) ?? '') ? candidate : latest);
+    return [...group.selectedParticipantIds.filter((selectedParticipantId) => selectedParticipantId !== newest), participantId];
   }
 
   return Array.from(new Set([...group.selectedParticipantIds, participantId]));
 }
 
-function applyOptimisticSelection(draftState: DraftState, participantId: string): DraftState {
+function applyOptimisticSelection(draftState: DraftState, participantId: string, entryId: string): DraftState {
   const selectionGroups = draftState.selectionGroups ?? [];
+  const pickedAtById = buildPickedAtById(draftState, entryId);
   const nextSelectionGroups = selectionGroups.map((group) => {
     if (!group.participants.some((participant) => participant.sportEventParticipantId === participantId)) {
       return group;
     }
 
-    const selectedParticipantIds = getNextSelectedParticipantIds(group, participantId);
+    const selectedParticipantIds = getNextSelectedParticipantIds(group, participantId, pickedAtById);
     const selectedIdSet = new Set(selectedParticipantIds);
 
     return {
@@ -197,6 +220,8 @@ export function ContestEntryPage() {
    * contest-shaped key that nothing else could reuse.
    */
   const { league: contestLeague } = useLeagueContextById(contestQuery.data?.leagueId);
+  // The event's start is the entry cutoff (#431); the contest's status follows the event's own
+  // move to in progress, which can lag the start, and the server refuses picks from the start on.
   const schedule = useContestSchedule(contestQuery.data);
   const detailsSeedSource = useMemo(() => {
     if (!draftStateQuery.data) {
@@ -447,7 +472,7 @@ export function ContestEntryPage() {
       if (previousDraftState) {
         queryClient.setQueryData<DraftState>(
           draftStateQueryKey,
-          applyOptimisticSelection(previousDraftState, participantId),
+          applyOptimisticSelection(previousDraftState, participantId, entryId),
         );
       }
 
@@ -522,14 +547,17 @@ export function ContestEntryPage() {
   const myEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
   const isMyEntry = myEntryIds.includes(entryId);
   const isEditable = areContestEntriesOpen(contest.status, schedule?.startsAt);
+  // Before the contest locks, the server answers the viewer's own entry when another team's is
+  // asked for, so a different selected entry means this one's picks are not ours to see yet.
+  const picksHidden = draftState.selectedEntryId !== entryId;
   const selectedEntry = draftState.entries.find((entry) => entry.id === entryId) ?? null;
-  const selectionGroups = draftState.selectionGroups ?? [];
+  const selectionGroups = picksHidden ? [] : draftState.selectionGroups ?? [];
   const completionStats = getCompletionStats(selectionGroups);
   const nextIncompleteGroupId = getNextIncompleteGroupId(selectionGroups);
   const lineupComplete =
     completionStats.requiredSelections > 0
     && completionStats.totalSelections >= completionStats.requiredSelections;
-  const savedTiebreaker = draftState.tiebreakerValue ?? null;
+  const savedTiebreaker = picksHidden ? null : draftState.tiebreakerValue ?? null;
   const hasSavedTiebreaker = savedTiebreaker !== null;
   const selectedTiebreakerValue =
     tiebreakerDraft.trim().length > 0
@@ -612,19 +640,21 @@ export function ContestEntryPage() {
 
         <MetricGrid className="mt-6 md:grid-cols-4">
           <MetricTile
-            helperText="Tiers complete"
+            helperText={picksHidden ? HIDDEN_PICKS_HELPER : 'Tiers complete'}
             label="Tier progress"
-            value={`${completionStats.completedTiers}/${selectionGroups.length || 0}`}
+            value={picksHidden ? 'Hidden' : `${completionStats.completedTiers}/${selectionGroups.length || 0}`}
           />
           <MetricTile
-            helperText="Lineup slots filled"
+            helperText={picksHidden ? HIDDEN_PICKS_HELPER : 'Lineup slots filled'}
             label="Picks saved"
-            value={`${completionStats.totalSelections}/${completionStats.requiredSelections}`}
+            value={picksHidden ? 'Hidden' : `${completionStats.totalSelections}/${completionStats.requiredSelections}`}
           />
           <MetricTile
             helperText={(
               <span data-testid="contest-entry-tiebreaker-summary">
-                {savedTiebreaker !== null
+                {picksHidden
+                  ? HIDDEN_PICKS_HELPER
+                  : savedTiebreaker !== null
                   ? `Relative to par ${formatTiebreaker(savedTiebreaker)}`
                   : isEditable
                     ? 'Needed after lineup is complete'
@@ -634,13 +664,15 @@ export function ContestEntryPage() {
             label="Tiebreaker"
             value={(
               <span data-testid="contest-entry-tiebreaker-status">
-                {hasSavedTiebreaker ? 'Saved' : isEditable ? 'Needed' : 'Closed'}
+                {picksHidden ? 'Hidden' : hasSavedTiebreaker ? 'Saved' : isEditable ? 'Needed' : 'Closed'}
               </span>
             )}
           />
           <MetricTile
             helperText={
-              isEditable
+              picksHidden
+                ? HIDDEN_PICKS_HELPER
+                : isEditable
                 ? nextIncompleteGroupId
                   ? `Next focus: ${selectionGroups.find((group) => group.groupId === nextIncompleteGroupId)?.groupName ?? 'Open tier'}`
                   : 'Lineup is fully selected'
@@ -712,6 +744,11 @@ export function ContestEntryPage() {
             {isEditable ? 'Build your lineup' : 'Saved lineup detail'}
           </h3>
           <div className="mt-5 space-y-5">
+            {picksHidden ? (
+              <Alert data-testid="contest-entry-picks-hidden">
+                This team&apos;s picks stay hidden until the contest locks.
+              </Alert>
+            ) : null}
             {selectionGroups.map((group) => {
               if (!isEditable) {
                 return <LockedSelectionGroup group={group} key={group.groupId} />;
@@ -741,6 +778,7 @@ export function ContestEntryPage() {
                           const nextSelectedIds = getNextSelectedParticipantIds(
                             group,
                             nextParticipant.sportEventParticipantId,
+                            buildPickedAtById(draftState, entryId),
                           );
                           if (nextSelectedIds.length < group.picksFromGroup) {
                             return group.groupId;
@@ -752,7 +790,8 @@ export function ContestEntryPage() {
                           return nextGroup?.groupId ?? null;
                         });
                       })
-                      // The mutation's own error state shows a refused pick.
+                      // A refused pick is already shown by the mutation's error state and its
+                      // optimistic change rolled back in onError; nothing is left to handle here.
                       .catch(() => undefined);
                   }}
                   onToggle={() => setExpandedGroupId(isExpanded ? null : group.groupId)}

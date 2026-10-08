@@ -82,6 +82,23 @@ function withRetryHeaders(request: Request) {
   });
 }
 
+/**
+ * The refresh in flight, shared by every request that finds the session expired while it runs.
+ * The refresh token rotates and the server refuses a second use of it, so requests that 401
+ * together, all carrying the same refresh cookie, must wait on one refresh rather than each
+ * sending their own: every refresh after the first was refused and its request failed.
+ */
+let refreshInFlight: Promise<boolean> | null = null;
+
+function refreshAccessSessionOnce(request: Request, fetchImpl: typeof fetch): Promise<boolean> {
+  refreshInFlight ??= refreshAccessSession(request, fetchImpl)
+    .catch(() => false)
+    .finally(() => {
+      refreshInFlight = null;
+    });
+  return refreshInFlight;
+}
+
 async function refreshAccessSession(request: Request, fetchImpl: typeof fetch) {
   const refreshUrl = new URL('/api/v1/auth/refresh', request.url);
   const headers = new Headers({
@@ -113,7 +130,7 @@ async function poolmasterFetch(input: RequestInfo | URL, init?: RequestInit): Pr
     return response;
   }
 
-  const refreshed = await refreshAccessSession(request, fetchImpl).catch(() => false);
+  const refreshed = await refreshAccessSessionOnce(request, fetchImpl);
   if (!refreshed) {
     return response;
   }

@@ -112,7 +112,8 @@ const correctionColumns = [
     cell: ({ row, table }) => {
       const { draft, setDraft } = table.options.meta as CorrectionsMeta;
       const entry = row.original;
-      const raw = draft[entry.sportEventParticipantId]?.thru ?? String(entry.thru);
+      // A round stored without thru shows blank, not "null".
+      const raw = draft[entry.sportEventParticipantId]?.thru ?? (entry.thru === null ? '' : String(entry.thru));
       return (
         <div className="max-w-[5rem]">
           <Input

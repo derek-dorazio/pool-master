@@ -6,6 +6,7 @@ import { RootAdminEventsPage } from './root-admin-events-page';
 import {
   fieldEntryFixture,
   participantFixture,
+  sportEventFixture,
   tierFixture,
   valuationFixture,
 } from './golf-test-fixtures';
@@ -209,5 +210,154 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
     expect(listEventParticipantsMock).toHaveBeenLastCalledWith({
       path: { eventId },
     });
+  });
+});
+
+describe('RootAdminEventsPage states, fallbacks and the participant dialog', () => {
+  const eventId = 'evt-browse-1';
+
+  afterEach(() => {
+    listEventParticipantsMock.mockReset();
+    listEventTiersMock.mockReset();
+    listEventsMock.mockReset();
+  });
+
+  function refusal(code: string, message: string, status = 500) {
+    return { error: { error: { code, message } }, response: { status } };
+  }
+
+  function seedOneEvent(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
+    listEventsMock.mockResolvedValue({
+      data: {
+        events: [
+          sportEventFixture({
+            id: eventId,
+            name: 'Spring Classic',
+            providerId: 'mock-contest-feed',
+            startDate: '2026-03-12T13:00:00.000Z',
+            ...overrides,
+          }),
+        ],
+      },
+    });
+  }
+
+  it('shows the server\'s reason in place of the grid when the event list cannot be loaded', async () => {
+    listEventsMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'The event store is unavailable.'));
+    renderPage();
+
+    expect(await screen.findByText('The event store is unavailable.')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-events-table')).not.toBeInTheDocument();
+  });
+
+  it('reads an unknown provider count and lists no readiness reasons for a contest-eligible event', async () => {
+    seedOneEvent({
+      participantCount: null,
+      readinessStatus: 'CONTEST_ELIGIBLE',
+      readinessReasons: [],
+      contestEligible: true,
+    });
+    renderPage();
+
+    const row = await screen.findByTestId(`root-admin-event-row-${eventId}`);
+    expect(within(row).getByText('Provider count unknown')).toBeInTheDocument();
+    expect(within(row).getByText('Contest Eligible')).toBeInTheDocument();
+    expect(within(row).queryByText(/EVENT_NOT_RELEASED|FIELD_NOT_LOADED/)).not.toBeInTheDocument();
+  });
+
+  it('lists the readiness reasons of an unreleased event under its readiness', async () => {
+    seedOneEvent({ readinessStatus: 'NOT_RELEASED', readinessReasons: ['EVENT_NOT_RELEASED', 'FIELD_NOT_LOADED'] });
+    renderPage();
+
+    const row = await screen.findByTestId(`root-admin-event-row-${eventId}`);
+    expect(within(row).getByText('Not Released')).toBeInTheDocument();
+    expect(within(row).getByText('EVENT_NOT_RELEASED, FIELD_NOT_LOADED')).toBeInTheDocument();
+  });
+
+  it('shows each golfer\'s field status before scoring starts, and "Unknown" for a missing tier, price, score and ranking', async () => {
+    seedOneEvent();
+    listEventTiersMock.mockResolvedValue({ data: { tiers: [] } });
+    listEventParticipantsMock.mockResolvedValue({
+      data: {
+        participants: [
+          fieldEntryFixture({
+            id: 'sep-active',
+            participantId: 'p-active',
+            participant: participantFixture({ id: 'p-active', name: 'Active Golfer' }),
+            isActive: true,
+          }),
+          fieldEntryFixture({
+            id: 'sep-wd',
+            participantId: 'p-wd',
+            participant: participantFixture({ id: 'p-wd', name: 'Withdrawn Golfer' }),
+            isActive: false,
+            inactiveReason: 'WITHDRAWN',
+          }),
+          fieldEntryFixture({
+            id: 'sep-inactive',
+            participantId: 'p-inactive',
+            participant: participantFixture({ id: 'p-inactive', name: 'Benched Golfer' }),
+            isActive: false,
+            inactiveReason: null,
+          }),
+        ],
+      },
+    });
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId(`root-admin-event-participants-${eventId}`));
+
+    const activeRow = await screen.findByTestId('root-admin-event-participant-row-sep-active');
+    expect(within(activeRow).getByText('Active')).toBeInTheDocument();
+    // Ranking, odds, tier, short name and score are unknown; the price line reads "Price Unknown".
+    expect(within(activeRow).getAllByText('Unknown')).toHaveLength(5);
+    expect(within(activeRow).getByText('Price Unknown')).toBeInTheDocument();
+    expect(within(activeRow).getByText('0 rounds, strokes Unknown')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('root-admin-event-participant-row-sep-wd')).getByText('Withdrawn'),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('root-admin-event-participant-row-sep-inactive')).getByText('Inactive'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the server\'s reason in the dialog when the event\'s field cannot be loaded', async () => {
+    seedOneEvent();
+    listEventTiersMock.mockResolvedValue({ data: { tiers: [] } });
+    listEventParticipantsMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'The field store is unavailable.'));
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId(`root-admin-event-participants-${eventId}`));
+
+    const modal = await screen.findByTestId('root-admin-event-participants-modal');
+    expect(await within(modal).findByText('The field store is unavailable.')).toBeInTheDocument();
+  });
+
+  it('shows the server\'s reason in the dialog when the event\'s tiers cannot be loaded', async () => {
+    seedOneEvent();
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
+    listEventTiersMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'The tier store is unavailable.'));
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId(`root-admin-event-participants-${eventId}`));
+
+    const modal = await screen.findByTestId('root-admin-event-participants-modal');
+    expect(await within(modal).findByText('The tier store is unavailable.')).toBeInTheDocument();
+  });
+
+  it('closes the participant dialog from its close button', async () => {
+    seedOneEvent();
+    listEventTiersMock.mockResolvedValue({ data: { tiers: [] } });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId(`root-admin-event-participants-${eventId}`));
+    const modal = await screen.findByTestId('root-admin-event-participants-modal');
+    expect(await within(modal).findByText('No participants are currently loaded for this event.')).toBeInTheDocument();
+    fireEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+
+    await waitFor(() =>
+      expect(screen.queryByTestId('root-admin-event-participants-modal')).not.toBeInTheDocument(),
+    );
   });
 });

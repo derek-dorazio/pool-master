@@ -163,4 +163,40 @@ describe('pool-master-r11 GolfRoundScoreCorrectionsCard', () => {
     renderCard({ rows: [], rowsError: 'Round scores offline' });
     expect(screen.getByText('Round scores offline')).toBeInTheDocument();
   });
+
+  it('shows a blank holes-completed cell, not "null", for a round stored without thru, and leaves the row valid', () => {
+    renderCard({ rows: [scoreRow({ thru: null })] });
+
+    const thru = screen.getByTestId('root-admin-golf-scores-thru-sep-1');
+    expect(thru).toHaveValue('');
+    expect(thru).not.toHaveAttribute('aria-invalid');
+  });
+
+  it('shows the server\'s reason when a correction is refused, and keeps the typed value', async () => {
+    updateEventParticipantGolfRoundScoreMock.mockResolvedValue({
+      error: { code: 'ROUND_BEYOND_SCHEDULE', message: 'Round 2 is beyond the event\'s 1 scheduled rounds.' },
+    });
+    renderCard();
+
+    const strokes = screen.getByTestId('root-admin-golf-scores-strokes-sep-1');
+    await userEvent.clear(strokes);
+    await userEvent.type(strokes, '68');
+    await userEvent.click(screen.getByTestId('root-admin-golf-scores-save-sep-1'));
+
+    expect(await screen.findByTestId('root-admin-golf-scores-correction-save-error'))
+      .toHaveTextContent('Round 2 is beyond the event\'s 1 scheduled rounds.');
+    expect(strokes).toHaveValue('68');
+  });
+
+  it('says scores are loading while the round loads, and points to the bulk load when the round has none', () => {
+    const { rerender } = renderCard({ rows: [], rowsLoading: true });
+    expect(screen.getByText('Loading scores…')).toBeInTheDocument();
+
+    rerender(
+      <QueryClientProvider client={new QueryClient()}>
+        <GolfRoundScoreCorrectionsCard eventId="evt-1" round={2} rows={[]} rowsError={null} rowsLoading={false} />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText('No scores recorded for this round yet. Use the bulk load above.')).toBeInTheDocument();
+  });
 });
