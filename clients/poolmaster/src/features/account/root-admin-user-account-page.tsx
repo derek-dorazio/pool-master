@@ -247,10 +247,10 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     mutationFn: async (targetUser: RootAdminViewedUser) => {
       const response = await deleteUser({
         path: { userId: targetUser.id },
-        // The confirmation is compared case- and space-insensitively below, and the server
-        // compares exactly against the stored (lowercase) email, so send the normalized form.
+        // The typed confirmation only gates the button (compared case- and space-insensitively
+        // below); the server compares exactly, so send the account's own email, as self-delete does.
         body: {
-          email: normalizeEmailConfirmation(deleteEmailConfirmation),
+          email: targetUser.email,
         },
       });
 
