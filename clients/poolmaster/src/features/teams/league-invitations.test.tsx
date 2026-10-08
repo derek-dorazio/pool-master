@@ -243,6 +243,18 @@ describe('LeagueInvitations', () => {
     await waitFor(() => expect(writeTextMock).toHaveBeenCalledWith(`${window.location.origin}/invite/new-code`));
   });
 
+  it('disables copying while a resend is replacing the invite code, so the dying link cannot be copied', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
+    resendLeagueInvitationMock.mockReturnValue(new Promise(() => undefined));
+
+    renderInvitations();
+    fireEvent.click(await screen.findByTestId('league-invitation-resend-email-1'));
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Copy invite link for friend@example.com' })).toBeDisabled(),
+    );
+  });
+
   it('shows an invite\'s link for manual copy when the clipboard refuses the write', async () => {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
     Object.assign(navigator, { clipboard: { writeText: vi.fn().mockRejectedValue(new Error('Clipboard blocked')) } });

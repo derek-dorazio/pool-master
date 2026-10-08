@@ -298,6 +298,7 @@ export function LeagueInvitations({
                   <Button
                     aria-label={`Copy invite link for ${label}`}
                     data-testid={`league-invitation-copy-${invitation.id}`}
+                    disabled={resendMutation.isPending}
                     onClick={() => void handleCopyRowLink(invitation.id, link)}
                     size="icon"
                     title="Copy invite link"
