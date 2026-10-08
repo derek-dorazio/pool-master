@@ -140,23 +140,39 @@ describe('settings registry on Postgres', () => {
     expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(1);
   });
 
-  it('two first saves of one group racing store exactly one value and answer the other with a conflict naming it', async () => {
+  it('a first save that loses the race to another first save answers with a conflict naming the winner, and writes nothing', async () => {
     const admin = await createTestUser({ displayName: 'Settings Race Admin', isRootAdmin: true });
     const repository = new PrismaPlatformRuntimeConfigRepository(getPrisma());
-    const save = (draft: number) => repository.save({
+    // The other task's first save inserts the row and holds its transaction open, so this
+    // save finds no row to lock and meets that insert at the unique key once it commits.
+    let release!: () => void;
+    let inserted!: () => void;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    const insertDone = new Promise<void>((resolve) => { inserted = resolve; });
+    const winner = getPrisma().$transaction(async (tx) => {
+      await tx.platformRuntimeConfig.create({
+        data: { configKey: POLL_INTERVAL_SETTINGS.key, configJson: { draft: 12000 }, updatedById: admin.user.id },
+      });
+      inserted();
+      await held;
+    });
+    await insertDone;
+
+    const losing = repository.save({
       configKey: POLL_INTERVAL_SETTINGS.key,
-      configJson: { draft },
+      configJson: { draft: 14000 },
       changedById: admin.user.id,
       expectedUpdatedAt: null,
     });
+    // Give the losing save time to reach the blocked insert before the winner commits.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    release();
+    await winner;
+    const result = await losing;
 
-    const results = await Promise.all([save(12000), save(14000)]);
-
-    const stored = await getPrisma().platformRuntimeConfig.findUniqueOrThrow({ where: { configKey: POLL_INTERVAL_SETTINGS.key } });
-    expect(results.map((result) => result.status).sort()).toEqual(['conflict', 'saved']);
-    const conflict = results.find((result) => result.status === 'conflict');
-    expect(conflict?.status === 'conflict' && conflict.current?.configJson).toEqual(stored.configJson);
-    expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(1);
+    expect(result.status).toBe('conflict');
+    expect(result.status === 'conflict' && result.current?.configJson).toEqual({ draft: 12000 });
+    expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(0);
   });
 
   it('an invalid stored value is served as the defaults and the row is left exactly as it was', async () => {
