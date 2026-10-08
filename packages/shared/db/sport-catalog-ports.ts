@@ -217,7 +217,7 @@ export interface SportEventTierRepository {
   countValuations(sportEventId: string): Promise<Map<string, number>>;
 }
 
-export type SportEventTierDefinition = Pick<SportEventTier, 'tierKey' | 'label' | 'tierNumber' | 'defaultPickCount'>;
+export type SportEventTierDefinition = Pick<SportEventTier, 'tierKey' | 'label' | 'tierNumber'>;
 
 export interface TierAssignment {
   sportEventParticipantId: string;

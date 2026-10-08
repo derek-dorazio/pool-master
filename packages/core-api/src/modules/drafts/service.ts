@@ -473,7 +473,9 @@ export class DraftService {
       configuration,
       entries,
       squadMemberships,
-      tiers: buildDraftTiers(tierGroups),
+      // A configuration without typed settings takes no picks per tier: its roster is 0, and the
+      // room refuses picks with SELECTION_CONFIG_INVALID rather than guessing a number.
+      tiers: buildDraftTiers(tierGroups, configuration?.configJson?.picksPerTier ?? 0),
       // One rule for every entry change: see contests/entry-window.
       acceptsPicks: areContestEntriesOpen(contest, sportEvent, now),
       selectionParticipants: buildSelectionParticipants({

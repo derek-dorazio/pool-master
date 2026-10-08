@@ -274,6 +274,7 @@ const nullablePositiveIntSchema = z
 
 export const ContestConfigurationDetailDtoSchema = ContestCrudConfigurationRequestSchema.extend({
   maxEntriesPerSquad: nullablePositiveIntSchema,
+  picksPerTier: z.number().int().optional().describe("How many golfers an entry picks from each of the event's tiers in managed tiered golf contests."),
   countedScores: z.number().int().optional().describe('How many roster scores count toward the entry total in managed golf contests.'),
 }).describe(
   'Typed contest configuration returned by contest detail endpoints. Use this shape for client-side entry-cap and contest-behavior decisions instead of treating contestConfiguration as an untyped blob.',

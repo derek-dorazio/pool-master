@@ -1,11 +1,13 @@
 import {
   acceptInvitation,
+  createContest,
   enterContest,
   generateInviteLink,
   getDraftState,
+  openContest,
   submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
-import { ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
+import { ContestFormat, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
 import { buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
 import {
   cleanupFunctionalData,
@@ -422,6 +424,8 @@ async function seedTieredDraftFixture(options: {
     configuration: {
       rounds: 1,
       isExclusive: options.isExclusive ?? false,
+      // The contest's picks per tier, which every event tier takes (#479).
+      configJson: { picksPerTier: picksFromTier, countedScores: 1 },
       tierConfig: [
         {
           tierId: 'tier-1',
@@ -485,7 +489,6 @@ async function seedTieredDraftFixture(options: {
       tierKey: 'tier-1',
       label: 'Tier 1',
       tierNumber: 1,
-      defaultPickCount: picksFromTier,
     },
   });
 
@@ -561,6 +564,77 @@ async function seedTieredDraftFixture(options: {
     sportEventParticipantId: eventParticipantIds[0],
     sportEventParticipantIds: eventParticipantIds,
   };
+}
+
+/**
+ * A contest-ready golf event with `tierCount` tiers of `golfersPerTier` golfers each, for a
+ * contest made through the one managed create. Returns each tier's field-row ids in tier order.
+ */
+async function seedMultiTierGolfEvent(options: { tierCount: number; golfersPerTier: number }) {
+  const prisma = getFunctionalPrisma();
+  const sport = await prisma.sport.create({
+    data: {
+      name: `DraftMultiTierSport-${randomUUID().slice(0, 8)}`,
+      participantType: 'INDIVIDUAL',
+      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
+    },
+  });
+  createdSportIds.push(sport.id);
+
+  const event = await prisma.sportEvent.create({
+    data: {
+      ...(await freshEventEdition(prisma)),
+      externalId: `multi-tier-functional-event-${randomUUID().slice(0, 8)}`,
+      providerId: 'functional-test',
+      sport: 'GOLF',
+      name: 'Multi Tier Functional Event',
+      startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+      status: 'SCHEDULED',
+    },
+  });
+  createdSportEventIds.push(event.id);
+
+  const tierFieldRowIds: string[][] = [];
+  for (let tierIndex = 0; tierIndex < options.tierCount; tierIndex += 1) {
+    const tier = await prisma.sportEventTier.create({
+      data: {
+        sportEventId: event.id,
+        tierKey: `tier-${tierIndex + 1}`,
+        label: `Tier ${tierIndex + 1}`,
+        tierNumber: tierIndex + 1,
+      },
+    });
+    const fieldRowIds: string[] = [];
+    for (let golferIndex = 0; golferIndex < options.golfersPerTier; golferIndex += 1) {
+      const participant = await prisma.participant.create({
+        data: {
+          sportId: sport.id,
+          name: `Multi Tier Golfer ${tierIndex + 1}-${golferIndex + 1} ${randomUUID().slice(0, 8)}`,
+          participantType: 'INDIVIDUAL',
+          externalIds: {},
+          role: 'GOLFER',
+          teamAffiliation: null,
+        },
+      });
+      createdParticipantIds.push(participant.id);
+      const fieldRow = await prisma.sportEventParticipant.create({
+        data: { sportEventId: event.id, participantId: participant.id, isActive: true },
+      });
+      createdSportEventParticipantIds.push(fieldRow.id);
+      await prisma.sportEventParticipantValuation.create({
+        data: {
+          sportEventParticipantId: fieldRow.id,
+          sportEventTierId: tier.id,
+          tierOrderIndex: golferIndex + 1,
+          tierAssignedSource: 'MANUAL',
+        },
+      });
+      fieldRowIds.push(fieldRow.id);
+    }
+    tierFieldRowIds.push(fieldRowIds);
+  }
+
+  return { sportEventId: event.id, tierFieldRowIds };
 }
 
 afterEach(async () => {
@@ -844,6 +918,64 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       replacementParticipantId,
     ]);
     expect(unselectResponse.data?.draftPickHistories).toHaveLength(1);
+  });
+
+  // #479 — the defect: the draft room took each tier's pick count from the event and ignored
+  // the commissioner's setting, so a "2 per tier" contest still allowed one golfer per tier.
+  it('honours the commissioner\'s picksPerTier: a 3-tier contest at 2 per tier has a roster of 6, holds 2 golfers from one tier, and a third from that tier replaces the newest', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'Picks Per Tier Commissioner',
+      leagueName: 'Picks Per Tier Functional League',
+    });
+    const event = await seedMultiTierGolfEvent({ tierCount: 3, golfersPerTier: 3 });
+    const [firstId, secondId, thirdId] = event.tierFieldRowIds[0];
+
+    const created = await createContest({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: {
+        name: 'Two Per Tier Contest',
+        sportEventId: event.sportEventId,
+        contestFormat: ContestFormat.ROSTER,
+        selectionType: SelectionType.TIERED,
+        configuration: { maxEntriesPerSquad: 1, picksPerTier: 2, countedScores: 4 },
+      },
+    });
+    expect(created.response.status).toBe(201);
+    const contestId = created.data?.contest.id as string;
+    expect(created.data?.contestConfiguration?.picksPerTier).toBe(2);
+
+    const opened = await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
+    expect(opened.response.status).toBe(200);
+    const entered = await enterContest({ client: commissioner.client, path: { contestId } });
+    const entryId = entered.data?.entry.id as string;
+    expect(entryId).toBeTruthy();
+
+    const room = await getDraftState({ client: commissioner.client, path: { contestId }, query: { entryId } });
+    expect(room.data?.rosterSize).toBe(6);
+    expect(room.data?.totalRounds).toBe(6);
+    expect(room.data?.selectionGroups?.map((group) => group.picksFromGroup)).toEqual([2, 2, 2]);
+
+    await submitContestSelection({
+      client: commissioner.client,
+      path: { contestId },
+      body: { entryId, participantId: firstId },
+    });
+    const secondPick = await submitContestSelection({
+      client: commissioner.client,
+      path: { contestId },
+      body: { entryId, participantId: secondId },
+    });
+    expect(secondPick.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([firstId, secondId]);
+    expect(secondPick.data?.isComplete).toBe(false);
+
+    const thirdPick = await submitContestSelection({
+      client: commissioner.client,
+      path: { contestId },
+      body: { entryId, participantId: thirdId },
+    });
+    expect(thirdPick.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([firstId, thirdId]);
+    expect(thirdPick.data?.draftPickHistories).toHaveLength(2);
   });
 
   it('#198 lets two entries in a non-exclusive budget-pick room hold the same participant', async () => {

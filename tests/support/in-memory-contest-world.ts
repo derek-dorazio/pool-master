@@ -34,6 +34,7 @@ import type {
   League,
   LeagueMembership,
   SportEvent,
+  SportEventTier,
   Squad,
   SquadMembership,
   User,
@@ -82,6 +83,8 @@ export class InMemoryContestWorld {
   /** Loaded field size per sport event — what `countParticipants` answers. */
   readonly fieldSizes = new Map<string, number>();
   readonly sportEvents = new Map<string, SportEvent>();
+  /** The event's tiers, per sport event — what `listTiers` answers. */
+  readonly eventTiers = new Map<string, SportEventTier[]>();
 
   private sequence = 0;
 
@@ -194,9 +197,8 @@ export class InMemoryContestWorld {
       id: this.nextId('configuration'),
       contestId,
       selectionType: SelectionType.TIERED,
-      configJson: { rosterSize: 6, countedScores: 4 },
-      rosterSize: 6,
-      pickCount: 6,
+      // A managed tiered configuration stores picks per tier, never a roster size (#479).
+      configJson: { picksPerTier: 1, countedScores: 4 },
       maxEntriesPerSquad: null,
       createdAt: T0,
       updatedAt: T0,
@@ -219,6 +221,21 @@ export class InMemoryContestWorld {
     this.sportEvents.set(event.id, event);
     this.fieldSizes.set(event.id, 40);
     return event;
+  }
+
+  /** Seeds an event's tiers, numbered 1..tierCount. A tiered roster is tierCount × picksPerTier. */
+  addEventTiers(sportEventId: string, tierCount: number): SportEventTier[] {
+    const tiers = Array.from({ length: tierCount }, (_, index): SportEventTier => ({
+      id: this.nextId('tier'),
+      sportEventId,
+      tierKey: `tier-${index + 1}`,
+      label: `Tier ${index + 1}`,
+      tierNumber: index + 1,
+      createdAt: T0,
+      updatedAt: T0,
+    }));
+    this.eventTiers.set(sportEventId, tiers);
+    return tiers;
   }
 
   /** Seeds a pick directly; production picks come only through ContestEntryPickService. */
@@ -517,7 +534,10 @@ export class InMemoryContestWorld {
       users: this.userRepo(),
       sportEvents: this.sportEventRepo(),
       eventParticipants: { listEventParticipants: async () => [] },
-      tiers: { getEffectiveValuationsForSportEvent: async () => [] },
+      tiers: {
+        getEffectiveValuationsForSportEvent: async () => [],
+        listTiers: async (sportEventId: string) => this.eventTiers.get(sportEventId) ?? [],
+      },
       ...overrides,
     };
   }

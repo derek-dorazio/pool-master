@@ -121,7 +121,6 @@ export function tierFixture(overrides: Partial<SportEventTierDto> = {}): SportEv
     tierKey: `TIER_${tierNumber}`,
     label: `Tier ${tierNumber}`,
     tierNumber,
-    defaultPickCount: 1,
     ...overrides,
   };
 }

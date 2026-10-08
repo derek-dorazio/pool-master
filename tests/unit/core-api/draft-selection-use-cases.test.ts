@@ -50,10 +50,12 @@ const TIMESTAMPS = {
   updatedAt: new Date('2026-01-01T00:00:00.000Z'),
 };
 
-// Two tiers: tier 1 asks for two golfers (a, b, c), tier 2 for one (d, e). Roster size 3.
+// Two tiers, tier 1 (a, b, c) and tier 2 (d, e, f). The contest takes two golfers from each
+// (#479: every tier takes the contest's picksPerTier), so the roster size is 4.
+const PICKS_PER_TIER = 2;
 const TIERS = [
-  { key: 'tier-1', label: 'Tier 1', number: 1, picks: 2, golfers: ['a', 'b', 'c'] },
-  { key: 'tier-2', label: 'Tier 2', number: 2, picks: 1, golfers: ['d', 'e'] },
+  { key: 'tier-1', label: 'Tier 1', number: 1, golfers: ['a', 'b', 'c'] },
+  { key: 'tier-2', label: 'Tier 2', number: 2, golfers: ['d', 'e', 'f'] },
 ];
 
 interface WorldOptions {
@@ -132,6 +134,7 @@ function buildWorld(options: WorldOptions = {}) {
     contestId: CONTEST_ID,
     selectionType: SelectionType.TIERED,
     isExclusive: options.isExclusive ?? false,
+    configJson: { picksPerTier: PICKS_PER_TIER, countedScores: 3 },
     ...TIMESTAMPS,
   } as ContestConfiguration;
   const entries = [entry(ENTRY_A, SQUAD_A, -8), entry(ENTRY_B, SQUAD_B, -12)];
@@ -168,7 +171,6 @@ function buildWorld(options: WorldOptions = {}) {
     tierKey: tier.key,
     label: tier.label,
     tierNumber: tier.number,
-    defaultPickCount: tier.picks,
     participants: tier.golfers.map((golfer, index) => ({
       sportEventParticipantId: `sep-${golfer}`,
       participantId: `p-${golfer}`,
@@ -293,15 +295,16 @@ describe('Tiered selection — a member building an entry', () => {
 
     await world.pickFor(ENTRY_A, 'a');
     await world.pickFor(ENTRY_A, 'b');
-    const result = await world.pickFor(ENTRY_A, 'd');
+    await world.pickFor(ENTRY_A, 'd');
+    const result = await world.pickFor(ENTRY_A, 'e');
 
-    expect(world.held(ENTRY_A)).toEqual(['a', 'b', 'd']);
-    expect(result.view.rosterSize).toBe(3);
+    expect(world.held(ENTRY_A)).toEqual(['a', 'b', 'd', 'e']);
+    expect(result.view.rosterSize).toBe(4);
     expect(result.view.canCurrentUserSubmit).toBe(false);
     expect(result.view.currentEntryId).toBeNull();
     expect(result.view.selectionGroups.map((group) =>
       group.participants.filter((participant) => participant.isSelected).map((p) => p.participantId),
-    )).toEqual([['p-a', 'p-b'], ['p-d']]);
+    )).toEqual([['p-a', 'p-b'], ['p-d', 'p-e']]);
   });
 
   it('stores each pick in the round its tier position gives it, whatever order the tiers are filled in', async () => {
@@ -331,15 +334,16 @@ describe('Tiered selection — a member building an entry', () => {
     expect(world.picks.find((pick) => pick.sportEventParticipantId === 'sep-c')?.draftRound).toBe(2);
   });
 
-  it('swaps the only pick in a one-golfer tier on a full roster rather than refusing the entry as complete', async () => {
+  it('swaps the newest pick in the last tier on a full roster rather than refusing the entry as complete', async () => {
     const world = buildWorld();
     await world.pickFor(ENTRY_A, 'a');
     await world.pickFor(ENTRY_A, 'b');
     await world.pickFor(ENTRY_A, 'd');
-
     await world.pickFor(ENTRY_A, 'e');
 
-    expect(world.held(ENTRY_A)).toEqual(['a', 'b', 'e']);
+    await world.pickFor(ENTRY_A, 'f');
+
+    expect(world.held(ENTRY_A)).toEqual(['a', 'b', 'd', 'f']);
   });
 
   it('unselects a held golfer when it is picked again, and lets the same golfer be picked back', async () => {
@@ -630,6 +634,6 @@ describe('Draft room response — the published shape', () => {
       ['tier-2', ['sep-d']],
     ]);
     expect(response.draftPickHistories?.map((pick) => pick.participantName)).toEqual(['Golfer A', 'Golfer D']);
-    expect(response.contestConfiguration?.rosterSize).toBe(3);
+    expect(response.contestConfiguration?.rosterSize).toBe(4);
   });
 });

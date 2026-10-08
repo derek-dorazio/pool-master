@@ -54,7 +54,7 @@ function buildTemplate() {
     active: true,
     schemaVersion: 1,
     configuration: {
-      rosterSize: 6,
+      picksPerTier: 1,
       countedScores: 4,
     },
   };
@@ -102,8 +102,8 @@ describe('RootAdminContentConfigurationDetailPage', () => {
   });
 
   // pool-master-piv — tier structure/price are event-owned now; the template only edits
-  // rosterSize/countedScores.
-  it('loads a template and submits roster size / counted scores updates from the dedicated page', async () => {
+  // picksPerTier/countedScores.
+  it('loads a template and submits picks per tier / scores that count updates from the dedicated page', async () => {
     seedTemplates();
 
     renderPage();
@@ -115,8 +115,8 @@ describe('RootAdminContentConfigurationDetailPage', () => {
     fireEvent.change(screen.getByTestId('root-admin-content-config-name'), {
       target: { value: 'Updated template name' },
     });
-    fireEvent.change(screen.getByTestId('root-admin-content-config-roster-size'), {
-      target: { value: '12' },
+    fireEvent.change(screen.getByTestId('root-admin-content-config-picks-per-tier'), {
+      target: { value: '2' },
     });
     fireEvent.change(screen.getByTestId('root-admin-content-config-counted-scores'), {
       target: { value: '8' },
@@ -134,7 +134,7 @@ describe('RootAdminContentConfigurationDetailPage', () => {
           name: 'Updated template name',
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
           configuration: expect.objectContaining({
-            rosterSize: 12,
+            picksPerTier: 2,
             countedScores: 8,
           }),
         }),

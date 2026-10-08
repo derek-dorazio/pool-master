@@ -36,7 +36,6 @@ export function toGolfEffectiveTierDtoList(
     tierKey: tier.tierKey,
     label: tier.label,
     tierNumber: tier.tierNumber,
-    defaultPickCount: tier.defaultPickCount,
     assignments: tier.participants.map((participant) => ({
       sportEventParticipantId: participant.sportEventParticipantId,
       participantId: participant.participantId,

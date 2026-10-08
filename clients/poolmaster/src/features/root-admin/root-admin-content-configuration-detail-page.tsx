@@ -255,18 +255,18 @@ export function RootAdminContentConfigurationDetailPage() {
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <FormField label="Roster size">
+                <FormField label="Picks per tier">
                   <Input
-                    data-testid="root-admin-content-config-roster-size"
+                    data-testid="root-admin-content-config-picks-per-tier"
                     onChange={(event) => updateDraft((current) =>
                       updateTieredTemplateConfiguration(current, {
-                        rosterSize: toPositiveNumber(event.target.value),
+                        picksPerTier: toPositiveNumber(event.target.value),
                       }))}
                     type="number"
-                    value={draft.configuration.rosterSize}
+                    value={draft.configuration.picksPerTier}
                   />
                 </FormField>
-                <FormField label="Counted scores">
+                <FormField label="Scores that count">
                   <Input
                     data-testid="root-admin-content-config-counted-scores"
                     onChange={(event) => updateDraft((current) =>

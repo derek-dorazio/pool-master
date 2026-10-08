@@ -74,7 +74,7 @@ async function seedScheduledGolfEvent(eventName: string): Promise<{
   createdSportEventIds.push(sportEvent.id);
 
   const tier = await prisma.sportEventTier.create({
-    data: { sportEventId: sportEvent.id, tierKey: 'A', label: 'Tier A', tierNumber: 1, defaultPickCount: 1 },
+    data: { sportEventId: sportEvent.id, tierKey: 'A', label: 'Tier A', tierNumber: 1 },
   });
   const golf = await prisma.sport.findUniqueOrThrow({ where: { name: 'GOLF' } });
   const participant = await prisma.participant.create({
@@ -235,7 +235,7 @@ describe('SDK Functional: system emails', () => {
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         templateId: template?.id as string,
-        configuration: { maxEntriesPerSquad: 1, rosterSize: 1, countedScores: 1 },
+        configuration: { maxEntriesPerSquad: 1, picksPerTier: 1, countedScores: 1 },
       },
     });
     expect(created.response.status).toBe(201);

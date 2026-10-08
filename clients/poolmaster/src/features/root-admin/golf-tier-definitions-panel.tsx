@@ -22,7 +22,6 @@ type TierDraft = {
   id: string;
   tierKey: string;
   label: string;
-  defaultPickCount: number;
 };
 type TierBody = ReplaceSportEventTiersRequest['tiers'][number];
 
@@ -33,7 +32,6 @@ function toDraft(tiers: readonly SportEventTierDto[]): TierDraft[] {
       id: tier.tierKey,
       tierKey: tier.tierKey,
       label: tier.label,
-      defaultPickCount: tier.defaultPickCount,
     }));
 }
 
@@ -42,16 +40,14 @@ function toBody(draft: readonly TierDraft[]): TierBody[] {
     tierKey: tier.tierKey,
     label: tier.label.trim() || `Tier ${index + 1}`,
     tierNumber: index + 1,
-    defaultPickCount: Number.isFinite(tier.defaultPickCount)
-      ? Math.max(0, Math.trunc(tier.defaultPickCount))
-      : 0,
   }));
 }
 
 /**
- * plans/124 §6.3 — the left panel: add / rename / reorder / set pick count for a
- * tournament's tier definitions, plus a per-tier delete `ConfirmationModal` that
- * surfaces the orphan count and (when non-zero) requires a reassignment target.
+ * plans/124 §6.3 — the left panel: add / rename / reorder a tournament's tier
+ * definitions, plus a per-tier delete `ConfirmationModal` that surfaces the
+ * orphan count and (when non-zero) requires a reassignment target. How many
+ * picks each tier takes is the contest's setting, not the tier's (#479).
  */
 export function GolfTierDefinitionsPanel({
   assignmentCountByTierKey,
@@ -125,7 +121,6 @@ export function GolfTierDefinitionsPanel({
           id: `tier-${n}`,
           tierKey: `tier-${n}`,
           label: `Tier ${current.length + 1}`,
-          defaultPickCount: 1,
         },
       ];
     });
@@ -217,25 +212,6 @@ export function GolfTierDefinitionsPanel({
                   )
                 }
                 value={tier.label}
-              />
-            </div>
-            <div className="w-20 shrink-0">
-              <Input
-                aria-label={`Pick count for ${tier.label}`}
-                className="h-8"
-                data-testid={`root-admin-golf-tier-def-picks-${tier.tierKey}`}
-                disabled={locked}
-                inputMode="numeric"
-                onChange={(event) =>
-                  setDraft((current) =>
-                    current.map((row) =>
-                      row.id === tier.id
-                        ? { ...row, defaultPickCount: Number(event.target.value) }
-                        : row,
-                    ),
-                  )
-                }
-                value={String(tier.defaultPickCount)}
               />
             </div>
             <Button

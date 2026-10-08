@@ -351,7 +351,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('league-summary-name')).toHaveText(run.leagueName);
     });
 
-    await test.step('create a contest on act 1\'s tournament: roster 6, counted 4, one entry per team', async () => {
+    await test.step('create a contest on act 1\'s tournament: one pick per tier on six tiers, counted 4, one entry per team', async () => {
       await page.goto(`/league/${run.leagueCode}/contests/new`);
       await expect(page.getByTestId('create-contest-page')).toBeVisible();
       // The picker lists every contest-eligible golf event on the platform, QA's whole catalog
@@ -362,7 +362,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await page.getByTestId('contest-name').fill(run.contestName);
       await page.getByTestId('contest-max-entries-unlimited').uncheck();
       await page.getByTestId('contest-max-entries').fill('1');
-      await page.getByTestId('contest-tiered-roster-size').fill('6');
+      await page.getByTestId('contest-tiered-picks-per-tier').fill('1');
       await page.getByTestId('contest-tiered-counted-scores').fill('4');
       const created = await submitAndRead<{ contest: { id: string; name: string } }>(
         page,
@@ -736,7 +736,7 @@ test('act 5: each round of scores moves the leaderboard, and only a counted pick
   const afterRound1 = await test.step('the round-1 leaderboard act 4 left behind is the baseline', async () => {
     const read = await readContestLeaderboard(page, state.contestId, state.entryId);
     // Best-N-of-M has to be live for the asymmetry this act ends on to mean anything: a contest
-    // that counted every pick could not drop one. Act 2 created it roster 6, counted 4.
+    // that counted every pick could not drop one. Act 2 created it one pick per tier on six tiers, counted 4.
     expect(read.countingRuleCount).toBeLessThan(PLAYER_COUNT);
     expect(read.entry.countingPickLimit).toBe(read.countingRuleCount);
     expect(read.entry.scoredPickCount).toBe(PLAYER_COUNT);
@@ -1290,7 +1290,7 @@ type ManagedContestRead = {
     status: string;
     configuration: {
       maxEntriesPerSquad?: number | null;
-      rosterSize: number;
+      picksPerTier: number;
       countedScores: number;
     };
   };
@@ -1315,14 +1315,14 @@ async function putContestConfigurationUnchanged(
   contestId: string,
 ): Promise<{ status: number; errorCode: string | null }> {
   const { contest } = await readManagedContest(page, leagueId, contestId);
-  const { maxEntriesPerSquad, rosterSize, countedScores } = contest.configuration;
+  const { maxEntriesPerSquad, picksPerTier, countedScores } = contest.configuration;
   const response = await page.request.put(
     `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}/configuration`,
     {
       headers: { 'x-csrf-token': await readCsrfToken(page) },
       data: {
         ...(maxEntriesPerSquad === undefined ? {} : { maxEntriesPerSquad }),
-        rosterSize,
+        picksPerTier,
         countedScores,
       },
     },

@@ -51,7 +51,6 @@ const TIER_GROUPS = [
     tierKey: 'tier-1',
     label: 'Tier 1',
     tierNumber: 1,
-    defaultPickCount: 2,
     participants: [
       { sportEventParticipantId: 'sep-a', participantId: 'p-a', tierOrderIndex: 1, price: 100 },
       { sportEventParticipantId: 'sep-b', participantId: 'p-b', tierOrderIndex: 2, price: 90 },
@@ -62,7 +61,6 @@ const TIER_GROUPS = [
     tierKey: 'tier-2',
     label: 'Tier 2',
     tierNumber: 2,
-    defaultPickCount: 1,
     participants: [
       { sportEventParticipantId: 'sep-d', participantId: 'p-d', tierOrderIndex: 1, price: 40 },
     ],
@@ -104,6 +102,8 @@ function configuration(overrides: Partial<ContestConfiguration> = {}): ContestCo
     contestId: CONTEST_ID,
     selectionType: SelectionType.TIERED,
     isExclusive: false,
+    // Every tier takes the contest's picksPerTier (#479): two tiers × 2 is a roster of 4.
+    configJson: { picksPerTier: 2, countedScores: 3 },
     ...TIMESTAMPS,
     ...overrides,
   } as ContestConfiguration;
@@ -307,7 +307,7 @@ describe('#324 DraftService.getDraftState', () => {
     });
   });
 
-  it('builds a tiered room: roster size from the tiers, groups per tier, the actor\'s own entry selected', async () => {
+  it('builds a tiered room: roster size is the event\'s tiers × the contest\'s picksPerTier, groups per tier, the actor\'s own entry selected', async () => {
     const { service } = setup();
 
     const view = await service.getDraftState({
@@ -315,16 +315,16 @@ describe('#324 DraftService.getDraftState', () => {
       actorUserId: OWNER_USER_ID,
     });
 
-    expect(view.rosterSize).toBe(3);
-    expect(view.totalRounds).toBe(3);
-    expect(view.totalPicks).toBe(3);
+    expect(view.rosterSize).toBe(4);
+    expect(view.totalRounds).toBe(4);
+    expect(view.totalPicks).toBe(4);
     expect(view.myEntryId).toBe(ENTRY_ID);
     expect(view.selectedEntryId).toBe(ENTRY_ID);
     expect(view.canCurrentUserSubmit).toBe(true);
     expect(view.isComplete).toBe(false);
     expect(view.status).toBe('LIVE');
     expect(view.selectionGroups.map((group) => group.groupId)).toEqual(['tier-1', 'tier-2']);
-    expect(view.selectionGroups[0].picksFromGroup).toBe(2);
+    expect(view.selectionGroups.map((group) => group.picksFromGroup)).toEqual([2, 2]);
     // Order index is within a tier, so sorting the field by it interleaves the tiers: both
     // tiers' first placed golfers come before tier 1's second.
     expect(view.availableSportEventParticipantIds).toEqual(['sep-a', 'sep-d', 'sep-b', 'sep-c']);
@@ -386,6 +386,7 @@ describe('#324 DraftService.getDraftState', () => {
       picks: [
         pick('pick-a', 'p-a', 'sep-a'),
         pick('pick-b', 'p-b', 'sep-b'),
+        pick('pick-c', 'p-c', 'sep-c'),
         pick('pick-d', 'p-d', 'sep-d'),
       ],
     });
@@ -665,14 +666,16 @@ describe('#324 DraftService.submitSelection — the guards, in order', () => {
         pick('pick-a', 'p-a', 'sep-a'),
         pick('pick-b', 'p-b', 'sep-b'),
         pick('pick-c', 'p-c', 'sep-c'),
+        // A golfer outside every tier still fills a roster spot.
+        pick('pick-x', 'p-x', 'sep-x'),
       ],
     });
 
-    // Tier 2 has one pick to give and the entry holds none from it, but the entry is full.
+    // Tier 2 has two picks to give and the entry holds none from it, but the entry is full.
     await expect(service.submitSelection(submit({ participantId: 'sep-d' }))).rejects.toMatchObject({
       code: 'ENTRY_COMPLETE',
       statusCode: 400,
-      message: `Entry ${ENTRY_ID} has already submitted all 3 picks`,
+      message: `Entry ${ENTRY_ID} has already submitted all 4 picks`,
     });
     expect(createPick).not.toHaveBeenCalled();
     expect(deletePick).not.toHaveBeenCalled();
@@ -746,7 +749,7 @@ describe('#324 DraftService.submitSelection — the three outcomes', () => {
 
     const placed = await setup().service.submitSelection(submit());
     expect(placed.view.selectedEntryId).toBe(ENTRY_ID);
-    expect(placed.view.rosterSize).toBe(3);
+    expect(placed.view.rosterSize).toBe(4);
   });
 
   it('counts the rounds the earlier tiers take when placing into a later tier', async () => {
@@ -797,6 +800,16 @@ describe('DraftService — rooms with missing or partial data', () => {
       contestId: CONTEST_ID,
       actorUserId: OWNER_USER_ID,
     })).rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('refuses every pick as unconfigured when the tiered configuration carries no picksPerTier, rather than guessing a roster', async () => {
+    const { service, createPick } = setup({ configuration: { configJson: undefined } });
+
+    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    expect(view.rosterSize).toBe(0);
+
+    await expect(service.submitSelection(submit())).rejects.toMatchObject({ code: 'SELECTION_CONFIG_INVALID' });
+    expect(createPick).not.toHaveBeenCalled();
   });
 
   it('shows a contest with no event as an empty room that refuses every pick as unconfigured', async () => {

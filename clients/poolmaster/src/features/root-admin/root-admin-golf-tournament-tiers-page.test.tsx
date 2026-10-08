@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -314,8 +314,8 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
           path: { eventId: 'evt-1' },
           body: {
             tiers: [
-              { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 1, defaultPickCount: 1 },
-              { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 2, defaultPickCount: 1 },
+              { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 1 },
+              { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 2 },
             ],
             reassignOrphansTo: 'tier-2',
           },
@@ -409,10 +409,10 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
         expect.objectContaining({
           body: {
             tiers: [
-              { tierKey: 'tier-2', label: 'Tier A', tierNumber: 1, defaultPickCount: 1 },
-              { tierKey: 'tier-3', label: 'Tier B', tierNumber: 2, defaultPickCount: 1 },
+              { tierKey: 'tier-2', label: 'Tier A', tierNumber: 1 },
+              { tierKey: 'tier-3', label: 'Tier B', tierNumber: 2 },
               // new key skips the taken tier-3 -> tier-4, not a duplicate.
-              { tierKey: 'tier-4', label: 'Tier 3', tierNumber: 3, defaultPickCount: 1 },
+              { tierKey: 'tier-4', label: 'Tier 3', tierNumber: 3 },
             ],
           },
         }),
@@ -492,8 +492,8 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
         expect.objectContaining({
           body: {
             tiers: [
-              { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1, defaultPickCount: 1 },
-              { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2, defaultPickCount: 1 },
+              { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
+              { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
             ],
           },
         }),
@@ -501,15 +501,12 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     );
   });
 
-  it('saves a blank tier name as its position and a pick count as a whole number no lower than zero', async () => {
+  it('saves a blank tier name as its position', async () => {
     seed();
     replaceEventTiersMock.mockResolvedValue({ data: null });
     renderPage();
 
     await userEvent.clear(await screen.findByTestId('root-admin-golf-tier-def-label-tier-2'));
-    // Pasted rather than typed: the field re-renders from a number on every keystroke.
-    fireEvent.change(screen.getByTestId('root-admin-golf-tier-def-picks-tier-1'), { target: { value: '2.7' } });
-    fireEvent.change(screen.getByTestId('root-admin-golf-tier-def-picks-tier-3'), { target: { value: '-1' } });
     await userEvent.click(screen.getByTestId('root-admin-golf-tier-def-save'));
 
     await waitFor(() =>
@@ -517,9 +514,9 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
         expect.objectContaining({
           body: {
             tiers: [
-              { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1, defaultPickCount: 2 },
-              { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2, defaultPickCount: 1 },
-              { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3, defaultPickCount: 0 },
+              { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
+              { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
+              { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3 },
             ],
           },
         }),

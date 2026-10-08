@@ -17,12 +17,12 @@ describe('contest-management dto schemas', () => {
       selectionType: 'TIERED',
       configuration: {
         maxEntriesPerSquad: 3,
-        rosterSize: 6,
+        picksPerTier: 1,
         countedScores: 4,
       },
     });
 
-    expect(parsed.configuration?.rosterSize).toBe(6);
+    expect(parsed.configuration?.picksPerTier).toBe(1);
     expect(parsed.templateId).toBeUndefined();
   });
 
@@ -97,7 +97,7 @@ describe('contest-management dto schemas', () => {
       schemaVersion: 1,
       configuration: {
         maxEntriesPerSquad: 1,
-        rosterSize: 6,
+        picksPerTier: 1,
         countedScores: 4,
         tierSource: 'ODDS',
         tierGeneration: {
@@ -141,7 +141,7 @@ describe('contest-management dto schemas', () => {
           id: 'config-1',
           contestId: 'contest-1',
           maxEntriesPerSquad: 1,
-          rosterSize: 6,
+          picksPerTier: 1,
           countedScores: 4,
         },
         effectiveTiers: [
@@ -149,7 +149,6 @@ describe('contest-management dto schemas', () => {
             tierKey: 'tier-1',
             label: 'Tier 1',
             tierNumber: 1,
-            defaultPickCount: 1,
             assignments: [
               {
                 sportEventParticipantId: 'sep-1',
@@ -182,7 +181,7 @@ describe('contest-management dto schemas', () => {
             id: 'config-1',
             contestId: 'contest-1',
             maxEntriesPerSquad: 1,
-            rosterSize: 6,
+            picksPerTier: 1,
             countedScores: 4,
           },
           createdAt: '2026-04-07T12:00:00.000Z',

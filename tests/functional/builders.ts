@@ -234,6 +234,11 @@ export async function seedContestFixture(leagueId: string, options: {
     maxEntriesPerSquad?: number;
     isExclusive?: boolean;
     tierConfig?: unknown[];
+    /**
+     * A tiered contest's typed settings (#479). The draft room reads picksPerTier from here:
+     * without it a tiered room has a roster of 0 and refuses every pick as unconfigured.
+     */
+    configJson?: { picksPerTier: number; countedScores: number };
   };
 }): Promise<{ contestId: string }> {
   const prisma = getFunctionalPrisma();

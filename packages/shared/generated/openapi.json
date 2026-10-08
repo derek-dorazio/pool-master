@@ -10555,7 +10555,7 @@
           },
           "tierCount": {
             "type": "integer",
-            "description": "Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.)"
+            "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
           },
           "contestCount": {
             "type": "integer",
@@ -10837,7 +10837,7 @@
                 },
                 "tierCount": {
                   "type": "integer",
-                  "description": "Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.)"
+                  "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
                 },
                 "contestCount": {
                   "type": "integer",
@@ -11074,7 +11074,7 @@
               },
               "tierCount": {
                 "type": "integer",
-                "description": "Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.)"
+                "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
               },
               "contestCount": {
                 "type": "integer",
@@ -11456,7 +11456,7 @@
                 },
                 "tierCount": {
                   "type": "integer",
-                  "description": "Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.)"
+                  "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
                 },
                 "contestCount": {
                   "type": "integer",
@@ -11868,10 +11868,6 @@
           "tierNumber": {
             "type": "integer",
             "description": "Order among the event's tiers; 1 first."
-          },
-          "defaultPickCount": {
-            "type": "integer",
-            "description": "Picks a contest takes from this tier by default."
           }
         },
         "required": [
@@ -11879,8 +11875,7 @@
           "sportEventId",
           "tierKey",
           "label",
-          "tierNumber",
-          "defaultPickCount"
+          "tierNumber"
         ],
         "additionalProperties": false,
         "description": "A pick tier an event's field is divided into. Who is in it is on each field row's valuation."
@@ -11911,10 +11906,6 @@
                 "tierNumber": {
                   "type": "integer",
                   "description": "Order among the event's tiers; 1 first."
-                },
-                "defaultPickCount": {
-                  "type": "integer",
-                  "description": "Picks a contest takes from this tier by default."
                 }
               },
               "required": [
@@ -11922,8 +11913,7 @@
                 "sportEventId",
                 "tierKey",
                 "label",
-                "tierNumber",
-                "defaultPickCount"
+                "tierNumber"
               ],
               "additionalProperties": false,
               "description": "A pick tier an event's field is divided into. Who is in it is on each field row's valuation."
@@ -11956,17 +11946,12 @@
                 "tierNumber": {
                   "type": "integer",
                   "minimum": 1
-                },
-                "defaultPickCount": {
-                  "type": "integer",
-                  "minimum": 1
                 }
               },
               "required": [
                 "tierKey",
                 "label",
-                "tierNumber",
-                "defaultPickCount"
+                "tierNumber"
               ],
               "additionalProperties": false
             },
@@ -14468,19 +14453,19 @@
                 "minimum": 1,
                 "description": "Maximum entries a Team may create. Null means unlimited."
               },
-              "rosterSize": {
+              "picksPerTier": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "How many golfers each Team entry must pick."
+                "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
               },
               "countedScores": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "How many golfer scores count toward the Team total."
+                "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
               }
             },
             "required": [
-              "rosterSize",
+              "picksPerTier",
               "countedScores"
             ],
             "additionalProperties": false,
@@ -15988,6 +15973,10 @@
             "minimum": 1,
             "description": "Maximum entries a Team may create. Null means unlimited."
           },
+          "picksPerTier": {
+            "type": "integer",
+            "description": "How many golfers an entry picks from each of the event's tiers in managed tiered golf contests."
+          },
           "countedScores": {
             "type": "integer",
             "description": "How many roster scores count toward the entry total in managed golf contests."
@@ -16250,6 +16239,10 @@
                 ],
                 "minimum": 1,
                 "description": "Maximum entries a Team may create. Null means unlimited."
+              },
+              "picksPerTier": {
+                "type": "integer",
+                "description": "How many golfers an entry picks from each of the event's tiers in managed tiered golf contests."
               },
               "countedScores": {
                 "type": "integer",
@@ -28783,15 +28776,15 @@
                               "minimum": 1,
                               "description": "Maximum entries a Team may create. Null means unlimited."
                             },
-                            "rosterSize": {
+                            "picksPerTier": {
                               "type": "integer",
                               "minimum": 1,
-                              "description": "How many golfers each Team entry must pick."
+                              "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
                             },
                             "countedScores": {
                               "type": "integer",
                               "minimum": 1,
-                              "description": "How many golfer scores count toward the Team total."
+                              "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
                             },
                             "id": {
                               "type": "string",
@@ -28803,7 +28796,7 @@
                             }
                           },
                           "required": [
-                            "rosterSize",
+                            "picksPerTier",
                             "countedScores",
                             "id",
                             "contestId"
@@ -28827,10 +28820,6 @@
                               "tierNumber": {
                                 "type": "integer",
                                 "description": "1-based tier ordering."
-                              },
-                              "defaultPickCount": {
-                                "type": "integer",
-                                "description": "Default number of golfers picked from this tier."
                               },
                               "assignments": {
                                 "type": "array",
@@ -28876,7 +28865,6 @@
                               "tierKey",
                               "label",
                               "tierNumber",
-                              "defaultPickCount",
                               "assignments"
                             ],
                             "additionalProperties": false,
@@ -29116,19 +29104,19 @@
                     "minimum": 1,
                     "description": "Maximum entries a Team may create. Null means unlimited."
                   },
-                  "rosterSize": {
+                  "picksPerTier": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "How many golfers each Team entry must pick."
+                    "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
                   },
                   "countedScores": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "How many golfer scores count toward the Team total."
+                    "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
                   }
                 },
                 "required": [
-                  "rosterSize",
+                  "picksPerTier",
                   "countedScores"
                 ],
                 "additionalProperties": false,
@@ -29206,15 +29194,15 @@
                               "minimum": 1,
                               "description": "Maximum entries a Team may create. Null means unlimited."
                             },
-                            "rosterSize": {
+                            "picksPerTier": {
                               "type": "integer",
                               "minimum": 1,
-                              "description": "How many golfers each Team entry must pick."
+                              "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
                             },
                             "countedScores": {
                               "type": "integer",
                               "minimum": 1,
-                              "description": "How many golfer scores count toward the Team total."
+                              "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
                             },
                             "id": {
                               "type": "string",
@@ -29226,7 +29214,7 @@
                             }
                           },
                           "required": [
-                            "rosterSize",
+                            "picksPerTier",
                             "countedScores",
                             "id",
                             "contestId"
@@ -29250,10 +29238,6 @@
                               "tierNumber": {
                                 "type": "integer",
                                 "description": "1-based tier ordering."
-                              },
-                              "defaultPickCount": {
-                                "type": "integer",
-                                "description": "Default number of golfers picked from this tier."
                               },
                               "assignments": {
                                 "type": "array",
@@ -29299,7 +29283,6 @@
                               "tierKey",
                               "label",
                               "tierNumber",
-                              "defaultPickCount",
                               "assignments"
                             ],
                             "additionalProperties": false,
@@ -29670,15 +29653,15 @@
                               "minimum": 1,
                               "description": "Maximum entries a Team may create. Null means unlimited."
                             },
-                            "rosterSize": {
+                            "picksPerTier": {
                               "type": "integer",
                               "minimum": 1,
-                              "description": "How many golfers each Team entry must pick."
+                              "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
                             },
                             "countedScores": {
                               "type": "integer",
                               "minimum": 1,
-                              "description": "How many golfer scores count toward the Team total."
+                              "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
                             },
                             "id": {
                               "type": "string",
@@ -29690,7 +29673,7 @@
                             }
                           },
                           "required": [
-                            "rosterSize",
+                            "picksPerTier",
                             "countedScores",
                             "id",
                             "contestId"
@@ -29714,10 +29697,6 @@
                               "tierNumber": {
                                 "type": "integer",
                                 "description": "1-based tier ordering."
-                              },
-                              "defaultPickCount": {
-                                "type": "integer",
-                                "description": "Default number of golfers picked from this tier."
                               },
                               "assignments": {
                                 "type": "array",
@@ -29763,7 +29742,6 @@
                               "tierKey",
                               "label",
                               "tierNumber",
-                              "defaultPickCount",
                               "assignments"
                             ],
                             "additionalProperties": false,
@@ -31960,19 +31938,19 @@
                                 "minimum": 1,
                                 "description": "Maximum entries a Team may create. Null means unlimited."
                               },
-                              "rosterSize": {
+                              "picksPerTier": {
                                 "type": "integer",
                                 "minimum": 1,
-                                "description": "How many golfers each Team entry must pick."
+                                "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
                               },
                               "countedScores": {
                                 "type": "integer",
                                 "minimum": 1,
-                                "description": "How many golfer scores count toward the Team total."
+                                "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
                               }
                             },
                             "required": [
-                              "rosterSize",
+                              "picksPerTier",
                               "countedScores"
                             ],
                             "additionalProperties": false,
@@ -32140,19 +32118,19 @@
                         "minimum": 1,
                         "description": "Maximum entries a Team may create. Null means unlimited."
                       },
-                      "rosterSize": {
+                      "picksPerTier": {
                         "type": "integer",
                         "minimum": 1,
-                        "description": "How many golfers each Team entry must pick."
+                        "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
                       },
                       "countedScores": {
                         "type": "integer",
                         "minimum": 1,
-                        "description": "How many golfer scores count toward the Team total."
+                        "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
                       }
                     },
                     "required": [
-                      "rosterSize",
+                      "picksPerTier",
                       "countedScores"
                     ],
                     "additionalProperties": false,
@@ -32281,19 +32259,19 @@
                               "minimum": 1,
                               "description": "Maximum entries a Team may create. Null means unlimited."
                             },
-                            "rosterSize": {
+                            "picksPerTier": {
                               "type": "integer",
                               "minimum": 1,
-                              "description": "How many golfers each Team entry must pick."
+                              "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
                             },
                             "countedScores": {
                               "type": "integer",
                               "minimum": 1,
-                              "description": "How many golfer scores count toward the Team total."
+                              "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
                             }
                           },
                           "required": [
-                            "rosterSize",
+                            "picksPerTier",
                             "countedScores"
                           ],
                           "additionalProperties": false,

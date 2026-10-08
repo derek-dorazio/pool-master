@@ -21,12 +21,12 @@ export function toPositiveNumber(value: string) {
  * Tiers/price are event-owned data now, resolved via
  * SportEventTierService.getEffectiveTiersForSportEvent — never a per-contest or
  * per-template override (plans/124 §4.6/§4.6a). A template only ever says
- * "how many picks, how many count," not the tier structure itself.
+ * "how many picks per tier, how many count," not the tier structure itself.
  */
 export function updateTieredTemplateConfiguration(
   template: ContestConfigTemplate,
   updates: {
-    rosterSize?: number;
+    picksPerTier?: number;
     countedScores?: number;
   },
 ): ContestConfigTemplate {
@@ -34,7 +34,7 @@ export function updateTieredTemplateConfiguration(
     ...template,
     configuration: {
       ...template.configuration,
-      rosterSize: updates.rosterSize ?? template.configuration.rosterSize,
+      picksPerTier: updates.picksPerTier ?? template.configuration.picksPerTier,
       countedScores: updates.countedScores ?? template.configuration.countedScores,
     },
   };
