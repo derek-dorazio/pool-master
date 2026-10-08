@@ -4,7 +4,9 @@ How a root admin sets up a made-up golf tournament in QA (or locally) and runs i
 simulated live round, to test contests, entries and the live leaderboard by hand. Nothing
 here depends on a real tournament being played that week.
 
-Every step is a root-admin screen under `/manage` unless it says otherwise.
+Every step is a root-admin screen under `/manage` unless it says otherwise. To skip the setup
+and test contests on ready-made tournaments, use the seed instead (*Seeded 2026 tournaments*
+at the end).
 
 ## What drives what
 
@@ -172,3 +174,43 @@ Final standings are built from the scores PoolMaster has already received.
 - **Unlink only listed events.** A finished tournament linked from the provider list keeps
   that mock event, which blocks the next tournament from using it. *Unlink score source*
   frees it. Simulated events are one per tournament and never need this.
+
+## Seeded 2026 tournaments
+
+The seed loads the whole 2026 PGA TOUR (45 tournaments) and LPGA Tour (31) in one go, each
+ready for contests. It is test data, so no migration, deploy or reset loads it; you run it.
+
+- **QA:** *Actions → Seed QA golf data → Run workflow*. It signs in as the E2E root admin
+  and goes through the same admin API as these screens.
+- **Locally:** with the API running, `POOLMASTER_SEED_BASE_URL=http://localhost:3000
+  POOLMASTER_SEED_ADMIN_IDENTIFIER=<root admin> POOLMASTER_SEED_ADMIN_PASSWORD=<password>
+  npm run seed:golf`.
+
+It takes about two minutes. What each tournament gets:
+
+- **Released** (Scheduled) with automatic lifecycle off, on tours named `PGA TOUR` and
+  `LPGA Tour`, created if missing.
+- **Dates moved forward by whole weeks** from the 2026 calendar, so the first tournament
+  starts at least a week after the run and the rest keep their order and weekdays. The
+  event year stays 2026.
+- **A field** of 72 to 144 of the tour's ranked golfers, with rankings, made-up odds, seeds,
+  six tiers filled by odds (10 per tier, the last takes the rest) and prices from 1,000 to
+  10,000.
+- **Final scores already stored:** four rounds (three for the two 54-hole events), a cut
+  to the top 65 and ties after round 2 in full fields, two withdrawals, and par set for
+  every round. Winners are the real 2026 winners where public results named one; everything
+  else is made up.
+
+To test a contest end to end: create and open it, submit entries, then on the tournament's
+Workflow card *Move to In Progress* (the contest goes live and its leaderboard shows the
+stored scores straight away) and *Move to Completed* (the contest settles). The scores are
+visible on the admin field page before that.
+
+Running it again is safe, including straight after *Reset QA database*: tours, golfers and
+tournaments that already exist are left alone and reported. A tournament left a draft by a
+run that stopped part-way is reported too; delete it and run again. A tournament you
+already created by hand or imported from the provider with the same tour, name and year is
+skipped, so reset QA first for a clean set.
+
+The data file is `packages/core-api/scripts/seed-golf/golf-2026.json`, rebuilt by
+`npm run seed:golf:build` from the mock provider's tour files (same answer every time).

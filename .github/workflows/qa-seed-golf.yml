@@ -1,0 +1,49 @@
+# Load the 2026 PGA TOUR and LPGA Tour seed into QA for manual league and contest testing.
+#
+# workflow_dispatch only: seed data is test data, so it never rides a migration or a deploy.
+# It goes in through QA's public admin API as the E2E root admin, the same way the Manage
+# screens write it, so nothing touches the database directly. Safe to run again, including
+# straight after "Reset QA database": tournaments and golfers that already exist are skipped.
+# See docs/EVENT-SETUP-PROCEDURES.md, "Seeded 2026 tournaments".
+name: Seed QA golf data
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: qa-seed-golf
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    name: seed
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      POOLMASTER_SEED_BASE_URL: https://qa.ultimateofficepoolmanager.com
+      POOLMASTER_SEED_ADMIN_IDENTIFIER: ${{ secrets.POOLMASTER_E2E_ADMIN_IDENTIFIER }}
+      POOLMASTER_SEED_ADMIN_PASSWORD: ${{ secrets.POOLMASTER_E2E_ADMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+      - run: npm ci
+      - name: Build the shared package the generated SDK resolves through
+        run: npm run build --workspace @poolmaster/shared
+      # bash -o pipefail, so a failed seed fails the step rather than reporting tee's exit
+      # code, and stderr goes to the log the summary reads.
+      - name: Seed QA
+        shell: bash
+        run: npm run seed:golf 2>&1 | tee seed.log
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### QA golf seed"
+            echo ""
+            echo '```'
+            grep -E "created|already there|exists as a draft|failed" seed.log || echo "(no seed output)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
