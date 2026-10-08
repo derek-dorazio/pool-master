@@ -196,4 +196,37 @@ describe('provider bindings', () => {
     ).toThrow(/reserved manual-admin providerId/);
     expect(registry.getProvider(Sport.GOLF)).toBeNull();
   });
+  it('fails startup with a clear message when the bindings JSON cannot be parsed', () => {
+    expect(() => loadProviderBindingsFromEnv({
+      SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
+      SPORT_DATA_PROVIDER_BINDINGS_JSON: '{ not json',
+    })).toThrow(/^Invalid SPORT_DATA_PROVIDER_BINDINGS_JSON: /);
+  });
+
+  it('reads bindings with no providers key as no providers bound', () => {
+    expect(loadProviderBindingsFromEnv({
+      SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
+      SPORT_DATA_PROVIDER_BINDINGS_JSON: '{}',
+    }).providers).toEqual({});
+  });
+
+  it('fails startup when the default provider has no binding, rather than running without one', () => {
+    const registry = new ProviderRegistry();
+
+    expect(() => registerConfiguredProviders(registry, {
+      SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
+      SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({ providers: {} }),
+    })).toThrow('Configured default provider "mock-contest-feed" is missing from SPORT_DATA_PROVIDER_BINDINGS_JSON.');
+    expect(registry.getAllProviders()).toEqual([]);
+  });
+
+  it('fails startup when the mock provider is bound without a baseUrl', () => {
+    const registry = new ProviderRegistry();
+
+    expect(() => registerConfiguredProviders(registry, {
+      SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
+      SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({ providers: { 'mock-contest-feed': {} } }),
+    })).toThrow('Provider "mock-contest-feed" requires a baseUrl binding.');
+    expect(registry.getAllProviders()).toEqual([]);
+  });
 });

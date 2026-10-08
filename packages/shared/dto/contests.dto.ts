@@ -89,11 +89,6 @@ export const UpdateContestEntryRequestSchema = z.object({
 }).describe('Request payload for updating a contest entry while the contest is still joinable.');
 export type UpdateContestEntryRequest = z.infer<typeof UpdateContestEntryRequestSchema>;
 
-export const ExtendContestDeadlineRequestSchema = z.object({
-  newEnd: z.string().datetime().describe('Replacement contest end timestamp.'),
-}).describe('Request payload for extending a contest end time.');
-export type ExtendContestDeadlineRequest = z.infer<typeof ExtendContestDeadlineRequestSchema>;
-
 // --- Response Sub-schemas ---
 
 export const ContestDtoSchema = z.object({
@@ -341,7 +336,6 @@ registerSchema('ContestCrudConfigurationRequest', ContestCrudConfigurationReques
 registerSchema('CreateContestRequest', CreateContestRequestSchema);
 registerSchema('UpdateContestRequest', UpdateContestRequestSchema);
 registerSchema('UpdateContestEntryRequest', UpdateContestEntryRequestSchema);
-registerSchema('ExtendContestDeadlineRequest', ExtendContestDeadlineRequestSchema);
 registerSchema('ContestDto', ContestDtoSchema);
 registerSchema('ContestEntryDto', ContestEntryDtoSchema);
 registerSchema('ContestEntryPickDto', ContestEntryPickDtoSchema);

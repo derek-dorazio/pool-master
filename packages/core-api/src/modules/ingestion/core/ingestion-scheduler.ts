@@ -304,6 +304,10 @@ export class IngestionScheduler {
   }
 
   private async runHealthChecks(): Promise<void> {
+    if (!(await this.getGlobalConfig()).healthCheck.enabled) {
+      this.logger?.debug('Skipping provider health checks because they are disabled');
+      return;
+    }
     this.logger?.debug('Running provider health checks');
     const providers = this.registry.getAllProviders();
     for (const provider of providers) {

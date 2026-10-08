@@ -469,3 +469,65 @@ describe('EventLifecycleError', () => {
     expect(error.name).toBe('EventLifecycleError');
   });
 });
+
+describe('EventLifecycleService contest-started emails', () => {
+  const START = { sportEventId: 'sport-event-1', toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'SYSTEM' as const } };
+
+  function mail() {
+    return {
+      providerName: 'smtp' as const,
+      send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
+    };
+  }
+
+  it('still starts the contest when no mail delivery is wired, and sends nothing', async () => {
+    const { sportEvents } = seededEvents();
+    const contests = contestDeps({ startedContest: true });
+
+    await new EventLifecycleService(contests, sportEvents, fakeLogger()).applySportEventStatusTransition(START);
+
+    expect(contests.contests.transitionStatus).toHaveBeenCalledWith('contest-1', expect.objectContaining({ to: ContestStatus.ACTIVE }));
+    expect(contests.users.findById).not.toHaveBeenCalled();
+  });
+
+  it('starts the contest but emails nobody when its league is gone', async () => {
+    const { sportEvents } = seededEvents();
+    const contests = contestDeps({ startedContest: true });
+    contests.leagues.findById = jest.fn().mockResolvedValue(null);
+    const mailDelivery = mail();
+
+    await new EventLifecycleService(contests, sportEvents, fakeLogger(), mailDelivery).applySportEventStatusTransition(START);
+
+    expect(contests.contests.transitionStatus).toHaveBeenCalled();
+    expect(mailDelivery.send).not.toHaveBeenCalled();
+  });
+
+  it('emails each active person once, skipping deactivated users, and greets a user with no name by username, then email', async () => {
+    const { sportEvents } = seededEvents();
+    const contests = contestDeps({ startedContest: true });
+    const people = [
+      buildUser({ id: 'commissioner-1', email: 'commissioner@example.com', firstName: '', lastName: '', username: 'chris' }),
+      buildUser({ id: 'member-1', email: 'member@example.com', firstName: ' ', lastName: '', username: '' }),
+      buildUser({ id: 'gone-1', email: 'gone@example.com', isActive: false }),
+    ];
+    contests.users.findById = jest.fn().mockImplementation(async (id: string) => people.find((user) => user.id === id) ?? null);
+    contests.memberships.findByLeague = jest.fn().mockResolvedValue([
+      buildMembership({ leagueId: 'league-1', userId: 'commissioner-1', role: LeagueRole.COMMISSIONER }),
+      buildMembership({ leagueId: 'league-1', userId: 'gone-1', role: LeagueRole.COMMISSIONER }),
+    ]);
+    // The commissioner is also on the entry's squad: one email, not two.
+    contests.squadMemberships.findBySquad = jest.fn().mockResolvedValue([
+      { userId: 'member-1' }, { userId: 'commissioner-1' },
+    ]);
+    const mailDelivery = mail();
+
+    await new EventLifecycleService(contests, sportEvents, fakeLogger(), mailDelivery).applySportEventStatusTransition(START);
+
+    const recipients = mailDelivery.send.mock.calls.map(([message]) => message.to);
+    expect(recipients).toHaveLength(2);
+    expect(recipients).toEqual(expect.arrayContaining(['commissioner@example.com', 'member@example.com']));
+    const textTo = (to: string) => mailDelivery.send.mock.calls.find(([message]) => message.to === to)?.[0].text ?? '';
+    expect(textTo('commissioner@example.com')).toContain('chris');
+    expect(textTo('member@example.com')).toContain('member@example.com');
+  });
+});

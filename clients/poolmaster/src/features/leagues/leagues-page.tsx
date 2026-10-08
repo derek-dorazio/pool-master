@@ -5,6 +5,7 @@ import { Button } from '@/features/shared/ui/button';
 import { EmptyState, ErrorState, LoadingState } from '@/features/shared/ui/state';
 import {
   buildLeaguePath,
+  getLeagueSelectorOptions,
   resolveDefaultLeagueCode,
 } from './league-routing';
 import { useLeaguesQuery } from './use-leagues-query';
@@ -12,7 +13,10 @@ import { useLeaguesQuery } from './use-leagues-query';
 export function WelcomePage() {
   const auth = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { query: leaguesQuery, leagues } = useLeaguesQuery();
+  const { query: leaguesQuery, leagues: allLeagues, commissionerLeagueIds } = useLeaguesQuery();
+  // Land only on a league the header selector offers: an inactive league drops out of it for
+  // everyone but its commissioner, so it is not somewhere a member should be sent.
+  const leagues = allLeagues ? getLeagueSelectorOptions(allLeagues, commissionerLeagueIds) : allLeagues;
 
   if (leaguesQuery.isLoading) {
     return (

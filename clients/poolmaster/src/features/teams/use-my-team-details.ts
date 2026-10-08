@@ -67,13 +67,16 @@ export function useMyTeamDetails({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTeam?.id, selectedTeam?.name]);
 
+  // With a team, the draft follows the saved icon whenever the picker is closed. Without one,
+  // the draft IS the choice that team creation will send, so closing the picker must keep it.
+  const selectedTeamIconKey = selectedTeam?.iconKey;
   useEffect(() => {
-    if (iconModalOpen) {
+    if (iconModalOpen || !selectedTeamIconKey) {
       return;
     }
 
-    setIconDraftKey(selectedTeam?.iconKey ?? TeamIconKey.CAPTAIN_SMILE_FIELD);
-  }, [iconModalOpen, selectedTeam?.iconKey]);
+    setIconDraftKey(selectedTeamIconKey);
+  }, [iconModalOpen, selectedTeamIconKey]);
 
   useEffect(() => {
     if (selectedTeam) {

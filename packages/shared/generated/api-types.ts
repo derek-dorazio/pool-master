@@ -1174,7 +1174,7 @@ export interface paths {
         head?: never;
         /**
          * Update a contest entry
-         * @description Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is still joinable. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
+         * @description Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is OPEN and its event has not reached its scheduled start (400 CONTEST_ENTRY_LOCKED otherwise). Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
          */
         patch: operations["updateContestEntry"];
         trace?: never;
@@ -1215,74 +1215,14 @@ export interface paths {
         put?: never;
         /**
          * Create the current user contest entry
-         * @description Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
+         * @description Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event's scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
          */
         post: operations["enterContest"];
         /**
          * Delete the current user contest entry
-         * @description Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
+         * @description Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
          */
         delete: operations["leaveContest"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/reopen": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reopen a closed contest
-         * @description Reopens a previously closed contest so commissioner workflows can resume or correct the contest lifecycle.
-         */
-        post: operations["reopenContest"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/close": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Close a contest early
-         * @description Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop. A draft is refused with 409 CONTEST_CLOSE_STATUS_INVALID: open it to the league or delete it instead.
-         */
-        post: operations["closeContest"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/extend-deadline": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Extend the contest end deadline
-         * @description Moves the contest deadline later to keep the contest open longer without recreating it.
-         */
-        post: operations["extendContestDeadline"];
-        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1375,7 +1315,7 @@ export interface paths {
         head?: never;
         /**
          * Update a sport event
-         * @description Edits any event, linked to a provider or not; a provider never overwrites these fields. Root admin only.
+         * @description Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. Root admin only.
          */
         patch: operations["updateEvent"];
         trace?: never;
@@ -1490,7 +1430,7 @@ export interface paths {
         get?: never;
         /**
          * Link a sport event to a provider event for scores
-         * @description 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.
+         * @description 404 PROVIDER_NOT_FOUND when no provider is registered under the id; 422 PROVIDER_SPORT_MISMATCH when the provider does not cover the event's sport; 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.
          */
         put: operations["linkEventScoreSource"];
         post?: never;
@@ -2338,26 +2278,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/ingestion/stale-events/cleanup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Inventory or delete stale provider events
-         * @description Inventories stale provider SportEvent rows and, in EXECUTE mode, deletes the eligible ones. Non-Golf events are stale because the current provider workflow is Golf-only; Golf events are stale once their end time has passed. A contest on the event, or a pick on one of its participants, protects it from deletion. Each event is deleted in its own transaction, and one that cannot be deleted is left in place and reported as not deleted.
-         */
-        post: operations["cleanupStaleProviderEvents"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/ingestion/providers/{providerId}/catalog-events": {
         parameters: {
             query?: never;
@@ -2407,7 +2327,7 @@ export interface paths {
         };
         /**
          * Get current draft state for a contest
-         * @description Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (LOCKED onwards); otherwise it falls back to the caller's own.
          */
         get: operations["getDraftState"];
         put?: never;
@@ -2429,7 +2349,7 @@ export interface paths {
         put?: never;
         /**
          * Submit a draft pick
-         * @description Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed.
+         * @description Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise.
          */
         post: operations["submitContestSelection"];
         delete?: never;
@@ -7935,14 +7855,6 @@ export interface components {
             /** @description Optional tiebreaker prediction saved on the contest entry. */
             tiebreakerValue?: number | null;
         };
-        /** @description Request payload for extending a contest end time. */
-        ExtendContestDeadlineRequest: {
-            /**
-             * Format: date-time
-             * @description Replacement contest end timestamp.
-             */
-            newEnd: string;
-        };
         /** @description A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields). */
         ContestDto: {
             id: string;
@@ -9484,185 +9396,6 @@ export interface components {
                 externalName: string;
                 /** @enum {string} */
                 sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-            }[];
-        };
-        /** @description Stale provider event cleanup request. */
-        ProviderEventCleanupRequest: {
-            /**
-             * @description DRY_RUN inventories stale event rows without deleting. EXECUTE deletes rows that are eligible and not contest-referenced.
-             * @enum {string}
-             */
-            mode: "DRY_RUN" | "EXECUTE";
-        };
-        /** @description Single stale provider event cleanup inventory row. */
-        ProviderEventCleanupRowDto: {
-            /**
-             * Format: uuid
-             * @description Internal SportEvent identifier.
-             */
-            id: string;
-            /** @description Provider/source associated with the stale event row. */
-            providerId: string;
-            /** @description Provider-side event identifier. */
-            externalId: string;
-            /** @description Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values. */
-            sport: string;
-            /** @description Current persisted event name. */
-            name: string;
-            /**
-             * @description Current persisted event status.
-             * @enum {string}
-             */
-            status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
-            /**
-             * Format: date-time
-             * @description Persisted event start date.
-             */
-            startDate: string;
-            /**
-             * Format: date-time
-             * @description Persisted event end date, when known.
-             */
-            endDate: string | null;
-            /**
-             * @description Cleanup rule that selected this stale event for inventory.
-             * @enum {string}
-             */
-            staleReason: "NON_GOLF_EVENT" | "PAST_GOLF_EVENT";
-            /** @description Whether EXECUTE mode will delete this event. */
-            deletable: boolean;
-            /** @description Whether this request deleted this event. Always false for dry runs. */
-            deleted: boolean;
-            /** @description Contest-related references that protect this event from deletion. */
-            blockedReasons: ("DIRECT_CONTEST_REFERENCE" | "CONTEST_ENTRY_PICK_REFERENCE")[];
-            /** @description Number of Contest rows directly pointing at this event. */
-            directContestCount: number;
-            /** @description Number of SportEventParticipant rows attached to this event. */
-            sportEventParticipantCount: number;
-            /** @description Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event. */
-            valuationCount: number;
-            /** @description Number of per-round participant rows (SportEventParticipantRound) attached through this event. */
-            roundCount: number;
-            /** @description Number of ContestEntryPick rows referencing participants in this event. */
-            pickCount: number;
-        };
-        /** @description Stale provider event cleanup result: the inventory, and what an EXECUTE deleted. */
-        ProviderEventCleanupResponse: {
-            /**
-             * @description Requested cleanup mode.
-             * @enum {string}
-             */
-            mode: "DRY_RUN" | "EXECUTE";
-            /** @description Whether this request performed deletion. */
-            executed: boolean;
-            /**
-             * Format: date-time
-             * @description When the inventory was computed.
-             */
-            inventoriedAt: string;
-            /** @description Aggregate stale provider event cleanup summary. */
-            summary: {
-                /** @description Total stale provider events inventoried by the cleanup rules. */
-                inventoriedEventCount: number;
-                /** @description Inventoried events eligible for deletion. */
-                deletableEventCount: number;
-                /** @description Inventoried events retained because contest or pick references protect them. */
-                blockedEventCount: number;
-                /** @description Events deleted by this request. Zero for dry runs. */
-                deletedEventCount: number;
-                /** @description Event participant rows attached to inventoried stale events. */
-                sportEventParticipantCount: number;
-                /** @description Event participant valuation rows attached to inventoried stale events. */
-                valuationCount: number;
-                /** @description Per-round participant rows attached to inventoried stale events. */
-                roundCount: number;
-                /** @description Contest entry pick rows referencing inventoried stale event participants. These protect an event from deletion. */
-                pickCount: number;
-            };
-            /** @description Inventory grouped by event sport. */
-            bySport: {
-                /** @description Grouping key, such as a sport, provider id, or status. */
-                key: string;
-                /** @description Number of inventoried stale events in this group. */
-                eventCount: number;
-                /** @description Number of events in this group eligible for deletion. */
-                deletableEventCount: number;
-                /** @description Number of events in this group deleted by this request. Zero for dry runs. */
-                deletedEventCount: number;
-            }[];
-            /** @description Inventory grouped by provider id. */
-            byProvider: {
-                /** @description Grouping key, such as a sport, provider id, or status. */
-                key: string;
-                /** @description Number of inventoried stale events in this group. */
-                eventCount: number;
-                /** @description Number of events in this group eligible for deletion. */
-                deletableEventCount: number;
-                /** @description Number of events in this group deleted by this request. Zero for dry runs. */
-                deletedEventCount: number;
-            }[];
-            /** @description Inventory grouped by persisted event status. */
-            byStatus: {
-                /** @description Grouping key, such as a sport, provider id, or status. */
-                key: string;
-                /** @description Number of inventoried stale events in this group. */
-                eventCount: number;
-                /** @description Number of events in this group eligible for deletion. */
-                deletableEventCount: number;
-                /** @description Number of events in this group deleted by this request. Zero for dry runs. */
-                deletedEventCount: number;
-            }[];
-            /** @description Per-event cleanup inventory rows. */
-            events: {
-                /**
-                 * Format: uuid
-                 * @description Internal SportEvent identifier.
-                 */
-                id: string;
-                /** @description Provider/source associated with the stale event row. */
-                providerId: string;
-                /** @description Provider-side event identifier. */
-                externalId: string;
-                /** @description Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values. */
-                sport: string;
-                /** @description Current persisted event name. */
-                name: string;
-                /**
-                 * @description Current persisted event status.
-                 * @enum {string}
-                 */
-                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
-                /**
-                 * Format: date-time
-                 * @description Persisted event start date.
-                 */
-                startDate: string;
-                /**
-                 * Format: date-time
-                 * @description Persisted event end date, when known.
-                 */
-                endDate: string | null;
-                /**
-                 * @description Cleanup rule that selected this stale event for inventory.
-                 * @enum {string}
-                 */
-                staleReason: "NON_GOLF_EVENT" | "PAST_GOLF_EVENT";
-                /** @description Whether EXECUTE mode will delete this event. */
-                deletable: boolean;
-                /** @description Whether this request deleted this event. Always false for dry runs. */
-                deleted: boolean;
-                /** @description Contest-related references that protect this event from deletion. */
-                blockedReasons: ("DIRECT_CONTEST_REFERENCE" | "CONTEST_ENTRY_PICK_REFERENCE")[];
-                /** @description Number of Contest rows directly pointing at this event. */
-                directContestCount: number;
-                /** @description Number of SportEventParticipant rows attached to this event. */
-                sportEventParticipantCount: number;
-                /** @description Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event. */
-                valuationCount: number;
-                /** @description Number of per-round participant rows (SportEventParticipantRound) attached through this event. */
-                roundCount: number;
-                /** @description Number of ContestEntryPick rows referencing participants in this event. */
-                pickCount: number;
             }[];
         };
         /** @description An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it. */
@@ -16047,76 +15780,6 @@ export interface operations {
             };
         };
     };
-    reopenContest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Single-contest response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ContestResponse"];
-                };
-            };
-        };
-    };
-    closeContest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Single-contest response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ContestResponse"];
-                };
-            };
-        };
-    };
-    extendContestDeadline: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ExtendContestDeadlineRequest"];
-            };
-        };
-        responses: {
-            /** @description Single-contest response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ContestResponse"];
-                };
-            };
-        };
-    };
     listContestConfigTemplates: {
         parameters: {
             query?: {
@@ -17452,6 +17115,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21807,68 +21489,6 @@ export interface operations {
             };
         };
     };
-    cleanupStaleProviderEvents: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProviderEventCleanupRequest"];
-            };
-        };
-        responses: {
-            /** @description Stale provider event cleanup result: the inventory, and what an EXECUTE deleted. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProviderEventCleanupResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
     listProviderCatalogEvents: {
         parameters: {
             query: {
@@ -22508,6 +22128,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

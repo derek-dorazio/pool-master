@@ -333,6 +333,7 @@ export function TeamsPage() {
                     canManageOwners={
                       (canManageLeague || team.id === viewer.mySquadId) && leagueIsActive
                     }
+                    leagueCode={leagueCode}
                     leagueId={leagueId}
                     pendingInvitations={pendingInvitations}
                     squadId={team.id}

@@ -41,6 +41,7 @@ export function createDraftHandlers(service: DraftService): DraftHandlers {
       contestId: request.params.contestId,
       selectedEntryId: request.query?.entryId,
       actorUserId: request.authUser?.userId,
+      actorIsRootAdmin: request.authUser?.isRootAdmin === true,
     });
     return toDraftStateResponse(view);
   }

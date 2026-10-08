@@ -208,3 +208,113 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
     );
   });
 });
+
+describe('Joining a league from an invite link', () => {
+  afterEach(() => {
+    for (const mock of [
+      acceptInvitationMock, getCurrentUserMock, getInvitationPreviewMock, listLeagueSquadsMock,
+      logoutUserMock, refreshTokenMock, updateLeagueSquadMock,
+    ]) {
+      mock.mockReset();
+    }
+  });
+
+  function signIn() {
+    getCurrentUserMock.mockResolvedValue(apiSuccess({
+      user: buildCurrentUser({ firstName: 'Derek', lastName: 'Dorazio' }),
+    }));
+    refreshTokenMock.mockResolvedValue({ data: null });
+  }
+
+  function viewersNewTeam(overrides: Parameters<typeof buildLeagueSquad>[0] = {}) {
+    return buildLeagueSquad({
+      name: "Derek Dorazio's Team",
+      iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+      members: [buildLeagueSquadMember()],
+      ...overrides,
+    });
+  }
+
+  it('asks a signed-out visitor to sign in or create an account, returning them to this invite, with no join button', async () => {
+    getCurrentUserMock.mockResolvedValue({ error: { code: 'AUTH_SESSION_REQUIRED', message: 'Sign in.' } });
+    refreshTokenMock.mockResolvedValue({ error: { code: 'AUTH_SESSION_REQUIRED', message: 'Sign in.' } });
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+
+    renderJoinLeaguePage();
+
+    expect(await screen.findByRole('heading', { name: 'Join Big Dawgs' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in to continue' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Create account' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Join league' })).not.toBeInTheDocument();
+  });
+
+  it('says the invitation could not be loaded and offers no join button when the preview fails', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue({ error: { code: 'INVITATION_NOT_FOUND', message: 'Not found.' }, status: 404 });
+
+    renderJoinLeaguePage();
+
+    expect(await screen.findByText('We could not load this invitation.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Join league' })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['EXPIRED', 'This invitation has expired. Ask the commissioner for a new one.'],
+    ['REVOKED', 'This invitation was withdrawn. Ask the commissioner for a new one.'],
+    ['ACCEPTED', 'This invitation has already been used.'],
+  ] as const)('explains a %s invitation cannot be used and offers no join button', async (status, message) => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview({ status }))));
+
+    renderJoinLeaguePage();
+
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Join league' })).not.toBeInTheDocument();
+    expect(acceptInvitationMock).not.toHaveBeenCalled();
+  });
+
+  it('will not join with a blank team name', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+
+    renderJoinLeaguePage();
+
+    const joinButton = await screen.findByRole('button', { name: 'Join league' });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Team name' }), { target: { value: '   ' } });
+    expect(joinButton).toBeDisabled();
+  });
+
+  it('joins without renaming the new team when the viewer keeps its default name and icon', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+    acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
+    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([viewersNewTeam()])));
+
+    renderJoinLeaguePage();
+
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Team name' })).toHaveValue("Derek Dorazio's Team"));
+    fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
+
+    expect(await screen.findByTestId('league-destination')).toBeInTheDocument();
+    expect(acceptInvitationMock).toHaveBeenCalledWith({ body: { inviteCode: 'LEAGUE123' } });
+    expect(updateLeagueSquadMock).not.toHaveBeenCalled();
+  });
+
+  it('still takes the viewer into the league they joined when saving their chosen team name fails afterwards', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+    acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
+    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([viewersNewTeam()])));
+    updateLeagueSquadMock.mockResolvedValue({
+      error: { code: 'SQUAD_NAME_TAKEN', message: 'That team name is already taken in this league.' },
+    });
+
+    renderJoinLeaguePage();
+
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Team name' }), { target: { value: 'Taken Name' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
+
+    expect(await screen.findByTestId('league-destination')).toBeInTheDocument();
+    expect(acceptInvitationMock).toHaveBeenCalledTimes(1);
+  });
+});

@@ -1,7 +1,7 @@
 /**
  * IngestionService — the root-admin operations over sports-data ingestion: the provider
- * list, sync submissions and their history, competitors a provider could not match, the
- * stale-event cleanup, and the provider catalog browse.
+ * list, sync submissions and their history, competitors a provider could not match, and the
+ * provider catalog browse.
  *
  * Reads and writes go through ports. The live provider state (health, catalog, the
  * competitors a provider reports) comes from the provider registry, not from storage.
@@ -13,7 +13,7 @@ import type {
   ProviderSyncRunRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { Sport, SportEventSyncScope, type ProviderSyncRun, type ProviderSyncRunStatus, type SportEventStatus } from '@poolmaster/shared/domain';
+import { type Sport, SportEventSyncScope, type ProviderSyncRun, type ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './core/provider-registry';
 import type { SportDataProvider } from './core/provider-interface';
 import { supportsLiveSimulation, supportsMockEventStateControls } from './core/provider-interface';
@@ -81,61 +81,6 @@ export interface SyncRunListFilters {
  */
 export const DEFAULT_SYNC_RUN_WINDOW_HOURS = 6;
 
-export type ProviderEventCleanupMode = 'DRY_RUN' | 'EXECUTE';
-export type ProviderEventCleanupStaleReason = 'NON_GOLF_EVENT' | 'PAST_GOLF_EVENT';
-export type ProviderEventCleanupBlockedReason =
-  | 'DIRECT_CONTEST_REFERENCE'
-  | 'CONTEST_ENTRY_PICK_REFERENCE';
-
-export interface ProviderEventCleanupRow {
-  id: string;
-  providerId: string;
-  externalId: string;
-  sport: string;
-  name: string;
-  status: SportEventStatus;
-  startDate: Date;
-  endDate: Date | null;
-  staleReason: ProviderEventCleanupStaleReason;
-  deletable: boolean;
-  deleted: boolean;
-  blockedReasons: ProviderEventCleanupBlockedReason[];
-  directContestCount: number;
-  sportEventParticipantCount: number;
-  valuationCount: number;
-  roundCount: number;
-  pickCount: number;
-}
-
-export interface ProviderEventCleanupSummary {
-  inventoriedEventCount: number;
-  deletableEventCount: number;
-  blockedEventCount: number;
-  deletedEventCount: number;
-  sportEventParticipantCount: number;
-  valuationCount: number;
-  roundCount: number;
-  pickCount: number;
-}
-
-export interface ProviderEventCleanupGroup {
-  key: string;
-  eventCount: number;
-  deletableEventCount: number;
-  deletedEventCount: number;
-}
-
-export interface ProviderEventCleanupResult {
-  mode: ProviderEventCleanupMode;
-  executed: boolean;
-  inventoriedAt: Date;
-  summary: ProviderEventCleanupSummary;
-  bySport: ProviderEventCleanupGroup[];
-  byProvider: ProviderEventCleanupGroup[];
-  byStatus: ProviderEventCleanupGroup[];
-  events: ProviderEventCleanupRow[];
-}
-
 // ---------------------------------------------------------------------------
 // Errors
 // ---------------------------------------------------------------------------
@@ -173,55 +118,6 @@ export class SportEventSyncScopeError extends Error {
     );
     this.name = 'SportEventSyncScopeError';
   }
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function groupCleanupRows(
-  rows: ProviderEventCleanupRow[],
-  keyFor: (row: ProviderEventCleanupRow) => string,
-): ProviderEventCleanupGroup[] {
-  const groups = new Map<string, ProviderEventCleanupGroup>();
-  for (const row of rows) {
-    const key = keyFor(row);
-    const existing = groups.get(key) ?? {
-      key,
-      eventCount: 0,
-      deletableEventCount: 0,
-      deletedEventCount: 0,
-    };
-    existing.eventCount += 1;
-    if (row.deletable) existing.deletableEventCount += 1;
-    if (row.deleted) existing.deletedEventCount += 1;
-    groups.set(key, existing);
-  }
-
-  return [...groups.values()].sort((a, b) => a.key.localeCompare(b.key));
-}
-
-function summarizeCleanupRows(rows: ProviderEventCleanupRow[]): ProviderEventCleanupSummary {
-  return rows.reduce<ProviderEventCleanupSummary>((summary, row) => {
-    summary.inventoriedEventCount += 1;
-    if (row.deletable) summary.deletableEventCount += 1;
-    if (!row.deletable) summary.blockedEventCount += 1;
-    if (row.deleted) summary.deletedEventCount += 1;
-    summary.sportEventParticipantCount += row.sportEventParticipantCount;
-    summary.valuationCount += row.valuationCount;
-    summary.roundCount += row.roundCount;
-    summary.pickCount += row.pickCount;
-    return summary;
-  }, {
-    inventoriedEventCount: 0,
-    deletableEventCount: 0,
-    blockedEventCount: 0,
-    deletedEventCount: 0,
-    sportEventParticipantCount: 0,
-    valuationCount: 0,
-    roundCount: 0,
-    pickCount: 0,
-  });
 }
 
 // ---------------------------------------------------------------------------
@@ -519,137 +415,6 @@ export class IngestionService {
         // asynchronous manual submission worker moving through remaining feeds.
       }
     }
-  }
-
-  async cleanupStaleProviderEvents(
-    mode: ProviderEventCleanupMode,
-    options: {
-      now?: Date;
-    } = {},
-  ): Promise<ProviderEventCleanupResult> {
-    const inventoriedAt = options.now ?? new Date();
-    this.logger?.debug({
-      mode,
-      inventoriedAt,
-    }, 'Starting stale provider event cleanup inventory');
-
-    const inventory = await this.buildStaleProviderEventInventory(inventoriedAt);
-    const deletableIds = inventory.filter((row) => row.deletable).map((row) => row.id);
-    const deletedIds = mode === 'EXECUTE'
-      ? await this.deleteStaleProviderEvents(deletableIds)
-      : new Set<string>();
-    const events = inventory.map((row) => ({
-      ...row,
-      deleted: deletedIds.has(row.id),
-    }));
-    const result: ProviderEventCleanupResult = {
-      mode,
-      executed: mode === 'EXECUTE',
-      inventoriedAt,
-      summary: summarizeCleanupRows(events),
-      bySport: groupCleanupRows(events, (row) => row.sport),
-      byProvider: groupCleanupRows(events, (row) => row.providerId),
-      byStatus: groupCleanupRows(events, (row) => row.status),
-      events,
-    };
-
-    this.logger?.info({
-      mode,
-      inventoriedEventCount: result.summary.inventoriedEventCount,
-      deletableEventCount: result.summary.deletableEventCount,
-      deletedEventCount: result.summary.deletedEventCount,
-      blockedEventCount: result.summary.blockedEventCount,
-    }, 'Completed stale provider event cleanup');
-
-    return result;
-  }
-
-  private async buildStaleProviderEventInventory(now: Date): Promise<ProviderEventCleanupRow[]> {
-    const stale = (await this.sportEvents.findAll({}))
-      .map((event) => ({
-        event,
-        staleReason: this.resolveStaleProviderEventReason({
-          sport: event.sport,
-          startDate: event.startDate,
-          endDate: event.endDate ?? null,
-          now,
-        }),
-      }))
-      .filter((row): row is { event: typeof row.event; staleReason: ProviderEventCleanupStaleReason } => row.staleReason !== null)
-      .sort((a, b) => a.event.sport.localeCompare(b.event.sport)
-        || a.event.providerId.localeCompare(b.event.providerId)
-        || a.event.startDate.getTime() - b.event.startDate.getTime()
-        || a.event.externalId.localeCompare(b.event.externalId));
-    const ids = stale.map(({ event }) => event.id);
-    const [contestCounts, participantCounts, fieldRecordCounts] = await Promise.all([
-      this.sportEvents.countContests(ids),
-      this.sportEvents.countParticipants(ids),
-      this.sportEvents.countFieldRecords(ids),
-    ]);
-
-    return stale.map(({ event, staleReason }): ProviderEventCleanupRow => {
-      const directContestCount = contestCounts.get(event.id) ?? 0;
-      const fieldRecords = fieldRecordCounts.get(event.id) ?? { valuations: 0, rounds: 0, picks: 0 };
-      const blockedReasons: ProviderEventCleanupBlockedReason[] = [];
-      if (directContestCount > 0) blockedReasons.push('DIRECT_CONTEST_REFERENCE');
-      if (fieldRecords.picks > 0) blockedReasons.push('CONTEST_ENTRY_PICK_REFERENCE');
-
-      return {
-        id: event.id,
-        providerId: event.providerId,
-        externalId: event.externalId,
-        sport: event.sport,
-        name: event.name,
-        status: event.status,
-        startDate: event.startDate,
-        endDate: event.endDate ?? null,
-        staleReason,
-        deletable: blockedReasons.length === 0,
-        deleted: false,
-        blockedReasons,
-        directContestCount,
-        sportEventParticipantCount: participantCounts.get(event.id) ?? 0,
-        valuationCount: fieldRecords.valuations,
-        roundCount: fieldRecords.rounds,
-        pickCount: fieldRecords.picks,
-      };
-    });
-  }
-
-  private resolveStaleProviderEventReason(input: {
-    sport: string;
-    startDate: Date;
-    endDate: Date | null;
-    now: Date;
-  }): ProviderEventCleanupStaleReason | null {
-    if (input.sport !== Sport.GOLF) {
-      return 'NON_GOLF_EVENT';
-    }
-
-    const eventEnd = input.endDate ?? input.startDate;
-    if (eventEnd.getTime() < input.now.getTime()) {
-      return 'PAST_GOLF_EVENT';
-    }
-
-    return null;
-  }
-
-  /**
-   * Each event goes through the port's delete, which clears its field first; each delete is
-   * its own transaction. An event whose delete fails — something came to reference it after
-   * the inventory — stays, and is reported as not deleted.
-   */
-  private async deleteStaleProviderEvents(eventIds: string[]): Promise<Set<string>> {
-    const deletedIds = new Set<string>();
-    for (const eventId of eventIds) {
-      try {
-        await this.sportEvents.delete(eventId);
-        deletedIds.add(eventId);
-      } catch (error) {
-        this.logger?.warn({ eventId, error }, 'Stale provider event cleanup could not delete an event; leaving it in place');
-      }
-    }
-    return deletedIds;
   }
 
   async getUnmappedParticipants(): Promise<UnmappedParticipant[]> {

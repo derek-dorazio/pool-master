@@ -729,6 +729,30 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(reenterResponse.data?.entry.entryNumber).toBe(1);
   });
 
+  it('re-enters a multi-entry contest after leaving it, numbering the new entry past the one the team still holds', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'Multi Entry Commissioner',
+      leagueName: 'Multi Entry Functional League',
+    });
+    const { contestId } = await seedContestFixture(league.id, {
+      name: 'Multi Entry Contest',
+      selectionType: SelectionType.BUDGET_PICK,
+      scoringEngine: ScoringEngine.POSITION,
+      configuration: { maxEntriesPerSquad: 2 },
+    });
+    await enterContest({ client: commissioner.client, path: { contestId } });
+    await enterContest({ client: commissioner.client, path: { contestId } });
+    // Leaving removes the team's first entry and keeps entry 2.
+    await leaveContest({ client: commissioner.client, path: { contestId } });
+
+    const reenterResponse = await enterContest({ client: commissioner.client, path: { contestId } });
+
+    expect(reenterResponse.response.status).toBe(201);
+    expect(reenterResponse.data?.entry.entryNumber).toBe(3);
+    const entries = await listContestEntries({ client: commissioner.client, path: { contestId } });
+    expect(entries.data?.entries.map((entry) => entry.entryNumber).sort()).toEqual([2, 3]);
+  });
+
   it('renames a team-owned contest entry and rejects duplicate names through the generated SDK', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
       displayName: 'Rename Commissioner',
@@ -938,8 +962,8 @@ describe('SDK Functional: Contests and Entries', () => {
         providerId: 'functional-test',
         sport: Sport.GOLF,
         name: 'Entry Detail Event',
-        startDate: new Date('2026-04-10T12:00:00.000Z'),
-        status: 'IN_PROGRESS',
+        startDate: new Date('2099-04-10T12:00:00.000Z'),
+        status: 'SCHEDULED',
       },
     });
     createdSportEventIds.push(sportEvent.id);
@@ -1153,7 +1177,7 @@ describe('SDK Functional: Contests and Entries', () => {
         providerId: 'functional-test',
         sport: Sport.GOLF,
         name: 'Functional Contest Event',
-        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        startDate: new Date('2099-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });
@@ -1347,7 +1371,7 @@ describe('SDK Functional: Contests and Entries', () => {
         providerId: 'functional-test',
         sport: Sport.GOLF,
         name: 'Visibility Event',
-        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        startDate: new Date('2099-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });
@@ -1526,7 +1550,7 @@ describe('SDK Functional: Contests and Entries', () => {
         providerId: 'functional-test',
         sport: Sport.GOLF,
         name: 'List Visibility Event',
-        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        startDate: new Date('2099-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });

@@ -195,7 +195,19 @@ export class EventScoreSourceService {
     sportEventId: string,
     input: { providerId: string; externalId: string },
   ): Promise<void> {
-    await this.requireSportEvent(sportEventId);
+    const existing = await this.requireSportEvent(sportEventId);
+    // A link no provider could ever send scores for is refused rather than stored.
+    const provider = this.providerRegistry.getProviderById(input.providerId);
+    if (!provider) {
+      throw new EventScoreSourceError(`Provider ${input.providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
+    }
+    if (!provider.sportsCovered.includes(existing.sport as Sport)) {
+      throw new EventScoreSourceError(
+        `Provider ${input.providerId} does not cover ${existing.sport}, the sport of sport event ${sportEventId}.`,
+        'PROVIDER_SPORT_MISMATCH',
+        422,
+      );
+    }
 
     const conflict = await this.prisma.sportEvent.findFirst({
       where: {

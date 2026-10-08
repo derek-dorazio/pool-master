@@ -583,10 +583,10 @@ are gone (#236).
 | Create | `rootAdmin` | `createEvent` (manual) or `createEventFromProviderEvent` (linked for scores), on a sport league in an event year. The series is found or created by name; a second edition of a series in one year is 409 `EVENT_EDITION_ALREADY_EXISTS` — the database's `(eventSeriesId, eventYear)` constraint. The sport comes from the sport league; golf only for now, 422 `SPORT_NOT_SUPPORTED` otherwise. Seeds the rounds and the default tiers. Provider sync never creates an event: it updates the one linked to a provider event and skips the rest. Every new event is `DRAFT`: commissioners can't see or use it until it is released |
 | Clone an event year | `rootAdmin` | `cloneEventYear` re-creates each of a sport league's events in one year as next year's edition (or `targetYear`'s), dates shifted; never the field, tiers, scores or provider link. 422 `EVENT_YEAR_HAS_NO_EVENTS` for an empty source year, 409 `EVENT_YEAR_NOT_EMPTY` for a target year that has events. Leaves the current event year alone |
 | Import an event year from a provider | `rootAdmin` | `importEventYearFromProvider` creates each provider event for a sport league's tour starting in that calendar year that PoolMaster lacks, each as `createEventFromProviderEvent` would, linked for scores. A provider event belongs to the tour when its tour name equals the sport league's `matchKeyword`, ignoring case. Events already linked, and series that already have an edition that year, are skipped and reported, so a re-run creates nothing. 422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD`; 404 `PROVIDER_NOT_FOUND` or `SPORT_LEAGUE_NOT_FOUND` (#385) |
-| Update | `rootAdmin` | `updateEvent` edits any event, linked to a provider or not. A provider sync never overwrites these fields (#435) |
+| Update | `rootAdmin` | `updateEvent` edits any event, linked to a provider or not. A provider sync never overwrites these fields (#435). The round schedule follows the edit: a new start date moves every round (start and end) by the same amount, and a higher round count adds the missing rounds, each a day after the one before. Lowering the count keeps the stored rounds, but the lifecycle scheduler ignores any past the new count |
 | Delete | `rootAdmin` | 409 `EVENT_HAS_CONTESTS`. Deletes the event's rounds and tiers first — before #236 it failed on the foreign key for any event that had them |
 | Release for contests | `rootAdmin` | `releaseEvent`, `POST /events/:eventId/release` (#431): `DRAFT` → `SCHEDULED`, the only way out of `DRAFT` apart from cancelling. 409 `SPORT_EVENT_NOT_DRAFT`; 409 `SPORT_EVENT_ALREADY_STARTED` once the start time has passed; 422 `SPORT_EVENT_NOT_READY` until the field is loaded and every active participant has a tier. Release locks the event's tiers and prices for good; rank, odds and withdrawals stay editable, and a participant added later stays untiered. The event's start time is the contest cutoff: no contest is created or opened after it |
-| Transition, link / unlink the score source | `rootAdmin` | `transitionEvent`, `linkEventScoreSource`, `unlinkEventScoreSource`. `transitionEvent` refuses `DRAFT` → `SCHEDULED` with 409 `SPORT_EVENT_RELEASE_REQUIRED`: that move is `releaseEvent`'s |
+| Transition, link / unlink the score source | `rootAdmin` | `transitionEvent`, `linkEventScoreSource`, `unlinkEventScoreSource`. `transitionEvent` refuses `DRAFT` → `SCHEDULED` with 409 `SPORT_EVENT_RELEASE_REQUIRED`: that move is `releaseEvent`'s. `linkEventScoreSource` refuses a provider that is not registered (404 `PROVIDER_NOT_FOUND`) or does not cover the event's sport (422 `PROVIDER_SPORT_MISMATCH`), since no scores could ever arrive through it |
 | Start simulated live scoring | `rootAdmin` | `startEventLiveSimulation` asks the linked provider to play the event's four rounds forward on its own clock, so a live contest's leaderboard can be tested; calling again restarts from round 1. Scores still arrive through the live-score sync, which polls only while the event is `IN_PROGRESS`. 409 `EVENT_NOT_LINKED` when unlinked, 422 `LIVE_SIMULATION_UNSUPPORTED` unless the event is golf and the provider reports `supportsLiveSimulation` (only the QA mock feed does), 404 `PROVIDER_EVENT_NOT_FOUND` when the provider no longer has the linked event |
 | Read simulated live scoring | `rootAdmin` | `getEventLiveSimulation` reports the running simulation's clock and current round, so the score-source card can keep it current; 409 `EVENT_NOT_LINKED` when unlinked, 422 `LIVE_SIMULATION_UNSUPPORTED` as for start, and 404 `LIVE_SIMULATION_NOT_RUNNING` when none has been started, the provider restarted, or the provider no longer has the linked event |
 | Link to a simulated event | `rootAdmin` | Tournament Home's **Link to a new simulated event** calls `linkEventScoreSource` with `externalId` `sandbox-<event id>` on the golf provider that reports `supportsLiveSimulation`. The QA mock answers any `sandbox-` id with a golf event of its own, so a made-up tournament on any dates gets a field and a simulation (#402) |
@@ -686,9 +686,13 @@ sync (`submitSportSync`). Events are created and linked by the root admin; the p
 upcoming-event catalog is read only on demand. The two remaining feeds, `EVENTPARTICIPANTS` and
 `EVENTLIVESCORES`, are event-scoped and reach only linked (`SCORES_ONLY`) events. A field sync
 writes the field and its size, never the event's details or status, and a score for a round the
-admin did not schedule is skipped, never creating the round (#435). An event's lifecycle is moved
+admin did not schedule is skipped, never creating the round (#435). A live score is written only
+while its event is `IN_PROGRESS`: before, there is nothing to score, and after, corrections are
+the admin's alone. An event's lifecycle is moved
 by the admin or by the date-driven lifecycle scheduler. Sync-run history rows for the retired
-feeds were deleted by migration, and stored ingestion config drops their keys on boot.
+feeds were deleted by migration, and stored ingestion config drops their keys on boot. The stale
+provider event cleanup went too: it cleared events sync used to create, and every event is now an
+admin's (ADR-0009).
 
 ## Contests and entries
 
@@ -706,7 +710,7 @@ and an optional event type.
 | Operation | Role | Notes |
 |---|---|---|
 | List | `authenticated` | `listContestConfigTemplates` (#245). Every filter optional — `sport`, `contestFormat`, `eventType`, `active`; an `eventType` narrows to that type plus the templates for any event type. One read for the create flow and the root-admin screens |
-| Update | `rootAdmin` | `updateContestConfigTemplate`, `PUT /api/v1/contest-config-templates/:templateId`, guarded by `requireRootAdmin` like every other global-object write. Seeded rows only; there is no create or delete. Until #248 it was `adminUpdateContestConfigTemplate` under `/api/v1/admin`, the last route there |
+| Update | `rootAdmin` | `updateContestConfigTemplate`, `PUT /api/v1/contest-config-templates/:templateId`, guarded by `requireRootAdmin` like every other global-object write. Seeded rows only; there is no create or delete. Only an active template can be the default: deactivating one clears it, and an inactive one cannot take it. Until #248 it was `adminUpdateContestConfigTemplate` under `/api/v1/admin`, the last route there |
 
 ### Contest
 
@@ -715,8 +719,7 @@ and an optional event type.
 | Create | `commissioner` | `createContest` (#245) — the one way a contest is made. Takes `name`, `sportEventId`, `contestFormat` (`ROSTER`), `selectionType` (`TIERED` until another selection type has a typed configuration, #93/#99), and a `templateId`, a `configuration`, or both. With both, the template is recorded as provenance and the configuration replaces the template's whole — no merge. Neither: 400 `CONTEST_CONFIGURATION_REQUIRED`. A template that is missing, inactive, or of another format or selection type: 422 `CONTEST_CONFIGURATION_INVALID`. The event must be released, not yet started, and its field loaded (422 `SPORT_EVENT_*`). The contest is saved `DRAFT` (#117): only the league's commissioners (and root admins) see it, nobody can enter it, and its name and configuration stay editable. Answers 201 with the canonical contest read |
 | Open to league | `commissioner` | `openContest`, `POST …/contest-management/contests/:contestId/open` (#117): `DRAFT` → `OPEN` with a compare-and-set, so a double press runs once. Members see and enter the contest from then on; its name, configuration and existence are locked for good, with no undo. 409 `CONTEST_NOT_DRAFT` when it is not a draft; 409 `CONTEST_EVENT_ALREADY_STARTED` once the event's start time has passed or it is `IN_PROGRESS` or later (the draft stays a draft); 422 when the stored configuration no longer fits the event's tiers. The field need not be ready: entries wait on it. Telling the league (feed post, email) will hang off this action |
 | Read configuration | `commissioner` | `getContestConfiguration` (was `getManagedContest` until #248): the contest with its configuration and the tiers it inherits from its event, what the configuration editor reads |
-| Update configuration | `commissioner` | `updateContestConfiguration` (was `updateManagedContestConfiguration` until #248). `DRAFT` only: refused with 409 `CONTEST_CONFIGURATION_LOCKED` once the contest is opened to the league (#117). Members enter against these rules, so nothing reopens them — `reopenContest` returns a contest to `ACTIVE`, never to `DRAFT` |
-| Reopen, close, extend the deadline | `commissioner` | `reopenContest`, `closeContest`, `extendContestDeadline`. A contest has no lock time: entries open when the commissioner opens it and close when its event starts, so `updateContestLockTime` and the stored lock time went (#430). `closeContest` refuses a `DRAFT` with 409 `CONTEST_CLOSE_STATUS_INVALID`: a draft leaves only by being opened or deleted (#117). None takes a `reason`: each accepted one and discarded it, and #248 took it off the contract once the audit log it was documented as feeding was gone (#255) |
+| Update configuration | `commissioner` | `updateContestConfiguration` (was `updateManagedContestConfiguration` until #248). `DRAFT` only: refused with 409 `CONTEST_CONFIGURATION_LOCKED` once the contest is opened to the league (#117). Members enter against these rules, so nothing reopens them: no operation returns a contest to `DRAFT` |
 | List for a league | `authenticated` today | `listContests`. `DRAFT` contests are listed only to the league's commissioners and root admins (#117); the contest detail read answers a draft 404 to anyone else, and a league's `activeContestCount` never counts drafts. **No league check** — any signed-in user can list any league's contests; contest authorization is #193, which does not yet list this route. Each row carries `entryCount`; until #247 the league-scoped list reported 0 for every contest, because its service was built without the entry reads |
 | Delete | `authenticated` today | `deleteContest`, `DRAFT` only. **No league check** (#193, held for discussion: any signed-in user can delete any `DRAFT` contest). Takes the entries, picks, draft state, configuration and the configuration's scoring rules and prize definitions with it; before #247 a configuration with a scoring rule made the delete fail |
 | Start | *(event lifecycle)* | When its event moves to `IN_PROGRESS`, every `OPEN` or `LOCKED` contest on it becomes `ACTIVE` in one guarded write, and its commissioners and entrants are emailed once; a re-sent transition finds nothing left to start |
@@ -730,7 +733,7 @@ An entry's result, frozen when its contest settles — cross-sport core plus a s
 
 | Operation | Role | Notes |
 |---|---|---|
-| Write | *(settlement)* | Written once per entry when the linked event completes; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; a `DRAFT` (never opened) or `CANCELLED` contest is skipped too and keeps its status, since a draft leaves only by being opened or deleted (#117); reopening moves it back to `ACTIVE`, and the next settlement recomputes |
+| Write | *(settlement)* | Written once per entry when the linked event completes; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; a `DRAFT` (never opened) or `CANCELLED` contest is skipped too and keeps its status, since a draft leaves only by being opened or deleted (#117). No route moves a contest back out of `COMPLETED` (the unused reopen, close-early and extend-deadline endpoints were deleted) |
 | Read | `member` | Through the golf leaderboard of a `COMPLETED` contest |
 
 ### ContestEntryPick
@@ -742,6 +745,19 @@ indexes hold (plans/117 §7.1, deleted with its epic; retrieve via
 design (#247), so no adapter or fake can become a second way in. The selection operations
 themselves — including the tiered replace-on-full and toggle-off rules — are the draft room's,
 and move to #198's `SelectionEngine`.
+
+**Entries and picks change in one window**, `areContestEntriesOpen` (contests/entry-window): the
+contest is `OPEN` and its event has not reached its scheduled start time, the cutoff opening a
+contest also uses. The scheduled start closes the window even when the event's status update to
+`IN_PROGRESS` is late. Entering, renaming, setting a tiebreaker and leaving answer 400
+`CONTEST_ENTRY_LOCKED` outside it; the draft room's picks answer 409 (below). A re-entry is
+numbered past the highest entry number the team holds in the contest, because leaving deletes
+the team's first entry and keeps the later ones.
+
+| Operation | Role | Notes |
+|---|---|---|
+| Read the draft room | `member` | `getDraftState`. A `DRAFT` contest answers 404 `CONTEST_NOT_FOUND` to anyone but its league's commissioners and root admins, as the contest read does (#117). While the contest is `DRAFT` or `OPEN`, picks are hidden from other teams (`contestPicksRevealed`): the history carries only the caller's own entries, and `entryId` names another team's entry only from `LOCKED` on, falling back to the caller's own before that. Any active member of the entry's squad, co-owners included, reads it as their own |
+| Place, swap, unselect | squad member | `submitContestSelection`, only while the contest is `OPEN` and its event's start time has not passed (the status follows the event's move to `IN_PROGRESS`, which can lag): 409 `CONTEST_ENTRY_LOCKED` otherwise, the code the entry's own create, edit and leave answer. Re-picking a held golfer unselects it, and that works for a golfer who has since withdrawn; a new pick of a withdrawn golfer is 400 `PARTICIPANT_UNAVAILABLE` |
 
 ## Platform and operations
 
@@ -786,7 +802,6 @@ refreshes them from the database every 30 seconds, and every save is recorded in
 | List sync runs | `rootAdmin` | `listProviderSyncRuns` — filtered by provider, sport and status, bounded by a submission-time window (`from`/`to`, default the last 6 hours). Unpaged (§16): the window is the bound |
 | Submit an event sync | `rootAdmin` | `submitEventSync` — 202 with one `SUBMITTED` run per feed; the runs execute after acceptance. An event whose `syncScope` forbids a feed is 409 |
 | List unmapped competitors | `rootAdmin` | `listUnmappedProviderParticipants` — competitors a provider reports that no participant is mapped to. `bindParticipantProviderMapping` (above) repairs each |
-| Clean up stale provider events | `rootAdmin` | `cleanupStaleProviderEvents` — `DRY_RUN` inventories, `EXECUTE` deletes the unblocked; an event a contest references is never deleted |
 | Browse a provider's catalog | `rootAdmin` | `listProviderCatalogEvents` — live provider events, each the full `ProviderEventDto`; without `from`/`to` it returns every event the provider has, with no window around today (#402) |
 
 Deleted in #205, all unbuilt or unused: the health and error-log surface (service health,

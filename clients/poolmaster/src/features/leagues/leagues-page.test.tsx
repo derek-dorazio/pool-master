@@ -1,11 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockApi } from '@/test/msw-api';
 import { WelcomePage } from './leagues-page';
-import { apiSuccess, buildLeague, listLeaguesData } from './test/fixtures';
+import { RECENT_LEAGUE_COOKIE } from './league-routing';
+import { apiSuccess, buildLeague, buildLeagueMembership, listLeaguesData } from './test/fixtures';
 
 const {
   authState,
@@ -83,6 +84,11 @@ vi.mock('@/features/shared/ui/state', () => ({
   },
 }));
 
+function LeagueHomeDestination() {
+  const { leagueCode } = useParams<{ leagueCode: string }>();
+  return <div data-testid="league-home-destination">League home {leagueCode}</div>;
+}
+
 function renderWelcomePage(initialEntries = ['/welcome']) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -99,7 +105,7 @@ function renderWelcomePage(initialEntries = ['/welcome']) {
         <Routes>
           <Route element={<WelcomePage />} path="/welcome" />
           <Route
-            element={<div data-testid="league-home-destination">League home</div>}
+            element={<LeagueHomeDestination />}
             path="/league/:leagueCode"
           />
         </Routes>
@@ -190,5 +196,83 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
       }),
     );
     await waitFor(() => expect(mockApi.listLeagues).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe('Landing a signed-in user on a league', () => {
+  beforeEach(() => {
+    mockApi.listLeagues.mockReset();
+    document.cookie = `${RECENT_LEAGUE_COOKIE}=; Path=/; Max-Age=0`;
+  });
+
+  const activeOlder = buildLeague({ id: 'league-active', leagueCode: 'ACTIVE1', createdAt: '2026-04-01T00:00:00.000Z' });
+  const inactiveNewer = buildLeague({
+    id: 'league-inactive', leagueCode: 'GONE1', isActive: false, createdAt: '2026-05-01T00:00:00.000Z',
+  });
+
+  it('lands a member on their newest active league, skipping a newer league that is inactive', async () => {
+    mockApi.listLeagues.mockResolvedValue(apiSuccess(listLeaguesData(
+      [activeOlder, inactiveNewer],
+      [
+        buildLeagueMembership({ id: 'm-1', leagueId: 'league-active', role: 'MEMBER' }),
+        buildLeagueMembership({ id: 'm-2', leagueId: 'league-inactive', role: 'MEMBER' }),
+      ],
+    )));
+
+    renderWelcomePage();
+
+    expect(await screen.findByTestId('league-home-destination')).toHaveTextContent('League home ACTIVE1');
+  });
+
+  it('ignores a remembered league that is now inactive for a member', async () => {
+    document.cookie = `${RECENT_LEAGUE_COOKIE}=GONE1; Path=/`;
+    mockApi.listLeagues.mockResolvedValue(apiSuccess(listLeaguesData(
+      [activeOlder, inactiveNewer],
+      [
+        buildLeagueMembership({ id: 'm-1', leagueId: 'league-active', role: 'MEMBER' }),
+        buildLeagueMembership({ id: 'm-2', leagueId: 'league-inactive', role: 'MEMBER' }),
+      ],
+    )));
+
+    renderWelcomePage();
+
+    expect(await screen.findByTestId('league-home-destination')).toHaveTextContent('League home ACTIVE1');
+  });
+
+  it('honours a remembered active league over the newest one', async () => {
+    const activeNewest = buildLeague({ id: 'league-new', leagueCode: 'NEW1', createdAt: '2026-06-01T00:00:00.000Z' });
+    document.cookie = `${RECENT_LEAGUE_COOKIE}=ACTIVE1; Path=/`;
+    mockApi.listLeagues.mockResolvedValue(apiSuccess(listLeaguesData([activeOlder, activeNewest])));
+
+    renderWelcomePage();
+
+    expect(await screen.findByTestId('league-home-destination')).toHaveTextContent('League home ACTIVE1');
+  });
+
+  it('still lands a commissioner on their inactive league, which they are the one able to reactivate', async () => {
+    document.cookie = `${RECENT_LEAGUE_COOKIE}=GONE1; Path=/`;
+    mockApi.listLeagues.mockResolvedValue(apiSuccess(listLeaguesData(
+      [activeOlder, inactiveNewer],
+      [
+        buildLeagueMembership({ id: 'm-1', leagueId: 'league-active', role: 'MEMBER' }),
+        buildLeagueMembership({ id: 'm-2', leagueId: 'league-inactive' }),
+      ],
+    )));
+
+    renderWelcomePage();
+
+    expect(await screen.findByTestId('league-home-destination')).toHaveTextContent('League home GONE1');
+  });
+
+  it('shows a member whose leagues are all inactive the zero-league welcome rather than a league they cannot select', async () => {
+    mockApi.listLeagues.mockResolvedValue(apiSuccess(listLeaguesData(
+      [inactiveNewer],
+      [buildLeagueMembership({ id: 'm-2', leagueId: 'league-inactive', role: 'MEMBER' })],
+    )));
+
+    renderWelcomePage();
+
+    expect(await screen.findByTestId('authenticated-landing-empty')).toBeInTheDocument();
+    expect(screen.queryByTestId('league-home-destination')).not.toBeInTheDocument();
   });
 });

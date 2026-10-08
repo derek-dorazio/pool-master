@@ -18,8 +18,6 @@ export function MyTeamOwnersPanel({
   owners,
   notices,
   selectedTeam,
-  isTeamsLoading,
-  isTeamsError,
   activeMembers,
   teamOwnerInvitations,
   leagueMembersByUserId,
@@ -36,8 +34,6 @@ export function MyTeamOwnersPanel({
   /** The lifecycle outcomes, shown under the owner controls. */
   notices: ReactNode;
   selectedTeam: SquadDto | null;
-  isTeamsLoading: boolean;
-  isTeamsError: boolean;
   activeMembers: TeamMember[];
   teamOwnerInvitations: TeamOwnerInvitationDto[];
   leagueMembersByUserId: LeagueMembersByUserId;
@@ -72,6 +68,7 @@ export function MyTeamOwnersPanel({
           </p>
           <div className="mt-4 flex gap-3">
             <Input
+              aria-label="Co-owner email"
               data-testid="my-team-owner-email"
               disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
               onChange={(event) => setCoOwnerEmail(event.target.value)}
@@ -98,11 +95,7 @@ export function MyTeamOwnersPanel({
       ) : null}
 
       <div className="space-y-3">
-        {isTeamsLoading ? (
-          <p className="text-sm text-muted-foreground">Loading team members...</p>
-        ) : isTeamsError ? (
-          <p className="text-sm text-muted-foreground">We couldn&apos;t load your team yet.</p>
-        ) : !selectedTeam ? (
+        {!selectedTeam ? (
           <p className="text-sm text-muted-foreground">
             Create your team first and the active member list will appear here.
           </p>
@@ -214,6 +207,7 @@ export function MyTeamOwnersPanel({
           </p>
           <div className="mt-4 flex gap-3">
             <Input
+              aria-label="Replacement owner email"
               data-testid="my-team-replace-email"
               disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
               onChange={(event) => setReplaceEmail(event.target.value)}
