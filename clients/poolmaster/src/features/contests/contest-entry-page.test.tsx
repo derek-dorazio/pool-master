@@ -31,6 +31,7 @@ type DraftSelectionGroup = {
 const {
   getContestMock,
   getDraftStateMock,
+  getEventMock,
   getLeagueMock,
   listContestEntriesMock,
   mockLogger,
@@ -51,6 +52,7 @@ const {
   return {
     getContestMock: vi.fn(),
     getDraftStateMock: vi.fn(),
+    getEventMock: vi.fn(),
     getLeagueMock: vi.fn(),
     listContestEntriesMock: vi.fn(),
     mockLogger: logger,
@@ -62,6 +64,7 @@ const {
 bindApiMocks({
   getContest: getContestMock,
   getDraftState: getDraftStateMock,
+  getEvent: getEventMock,
   getLeague: getLeagueMock,
   listContestEntries: listContestEntriesMock,
   submitContestSelection: submitContestSelectionMock,
@@ -744,5 +747,209 @@ describe('ContestEntryPage', () => {
 
     selectedParticipantIds = ['sep-1'];
     deferredSelection.resolve({ data: buildDraftState(buildSelectionGroups()) });
+  });
+});
+
+describe('ContestEntryPage — selection rules the server enforces', () => {
+  afterEach(() => {
+    getContestMock.mockReset();
+    getDraftStateMock.mockReset();
+    getEventMock.mockReset();
+    getLeagueMock.mockReset();
+    listContestEntriesMock.mockReset();
+    submitContestSelectionMock.mockReset();
+    updateContestEntryMock.mockReset();
+  });
+
+  function twoPickTier(selectedParticipantIds: string[]) {
+    return {
+      groupId: 'tier-1',
+      groupName: 'Tier A',
+      groupNumber: 1,
+      picksFromGroup: 2,
+      selectedParticipantIds,
+      participants: [
+        buildGolfParticipant('sep-1', 'Scottie Scheffler', 1, selectedParticipantIds.includes('sep-1')),
+        buildGolfParticipant('sep-2', 'Rory McIlroy', 2, selectedParticipantIds.includes('sep-2')),
+        buildGolfParticipant('sep-3', 'Jordan Spieth', 3, selectedParticipantIds.includes('sep-3')),
+      ],
+    };
+  }
+
+  function historyRow(sportEventParticipantId: string, participantName: string, pickedAt: string) {
+    return {
+      pickNumber: 1,
+      round: 1,
+      pickInRound: 1,
+      entryId: 'entry-1',
+      entryName: 'Birdie Hunters Entry 1',
+      participantId: sportEventParticipantId,
+      participantName,
+      isAutoPicked: false,
+      pickedAt,
+    };
+  }
+
+  // The server swaps out the tier's most recently picked golfer, not the one listed last.
+  it('while a swap in a full tier is saving, drops the golfer picked most recently, as the server will', async () => {
+    primeCommonMocks();
+    // Listed in tier order Scottie then Rory, but Rory was picked first and Scottie second.
+    const draftState = {
+      ...buildDraftState([twoPickTier(['sep-1', 'sep-2'])]),
+      draftPickHistories: [
+        historyRow('sep-2', 'Rory McIlroy', '2026-04-15T10:00:00.000Z'),
+        historyRow('sep-1', 'Scottie Scheffler', '2026-04-15T11:00:00.000Z'),
+      ],
+    };
+    getDraftStateMock.mockResolvedValue({ data: draftState });
+    const deferred = createDeferred<{ data: ReturnType<typeof buildDraftState> }>();
+    submitContestSelectionMock.mockImplementation(() => deferred.promise);
+
+    renderContestEntryPage();
+
+    fireEvent.click(await screen.findByTestId('contest-entry-group-toggle-tier-1'));
+    fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-3'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('contest-entry-participant-sep-3')).toHaveTextContent('Selected');
+    });
+    expect(screen.getByTestId('contest-entry-participant-sep-2')).toHaveTextContent('Selected');
+    expect(screen.getByTestId('contest-entry-participant-sep-1')).not.toHaveTextContent('Selected');
+
+    deferred.resolve({ data: buildDraftState([twoPickTier(['sep-2', 'sep-3'])]) });
+  });
+
+  it('puts the selection back and says why when the server refuses a pick', async () => {
+    primeCommonMocks();
+    getDraftStateMock.mockResolvedValue({ data: buildDraftState([twoPickTier(['sep-1'])]) });
+    submitContestSelectionMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_ENTRY_LOCKED', message: 'Picks can no longer be changed.' } },
+      response: { status: 409 },
+    });
+
+    renderContestEntryPage();
+
+    // An unfinished tier opens on its own.
+    fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-2'));
+
+    expect(await screen.findByText('Picks can no longer be changed.')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-participant-sep-2')).not.toHaveTextContent('Selected');
+    expect(screen.getByTestId('contest-entry-participant-sep-1')).toHaveTextContent('Selected');
+  });
+
+  it('shows another team\'s entry as hidden while the contest is open, rather than the viewer\'s own picks', async () => {
+    primeCommonMocks();
+    // The server answers the viewer's own entry when another team's is asked for before lock.
+    getDraftStateMock.mockResolvedValue({
+      data: {
+        ...buildDraftState([twoPickTier(['sep-1'])]),
+        selectedEntryId: 'entry-mine',
+        selectedEntryName: 'My Own Entry',
+        myEntryId: 'entry-mine',
+      },
+    });
+    listContestEntriesMock.mockResolvedValue({
+      data: {
+        contestId: 'contest-1',
+        total: 2,
+        isJoined: true,
+        myEntryId: 'entry-mine',
+        myEntryIds: ['entry-mine'],
+        entries: [
+          {
+            id: 'entry-1',
+            contestId: 'contest-1',
+            squadId: 'squad-other',
+            squadName: 'Other Team',
+            entryNumber: 1,
+            name: 'Other Team Entry 1',
+            status: 'ACTIVE',
+            tiebreakerValue: null,
+            isEliminated: false,
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-16T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    renderContestEntryPage();
+
+    expect(await screen.findByTestId('contest-entry-picks-hidden')).toHaveTextContent(
+      'picks stay hidden until the contest locks',
+    );
+    expect(screen.getByTestId('contest-entry-heading')).toHaveTextContent('Other Team Entry 1');
+    expect(screen.queryByText('Scottie Scheffler')).not.toBeInTheDocument();
+    expect(screen.queryByText('My Own Entry')).not.toBeInTheDocument();
+  });
+
+  it('closes editing once the event has started, even while the contest still says open', async () => {
+    primeCommonMocks();
+    getContestMock.mockResolvedValue({
+      data: {
+        contest: {
+          id: 'contest-1',
+          leagueId: 'league-1',
+          name: 'Bohler Masters Tiered',
+          status: 'OPEN',
+          contestType: 'ROSTER',
+          selectionType: 'TIERED',
+          scoringEngine: 'STROKE_PLAY',
+          sportEventId: 'event-1',
+          startsAt: null,
+        },
+      },
+    });
+    getEventMock.mockResolvedValue({
+      data: { event: { id: 'event-1', startDate: '2020-04-10T12:00:00.000Z', endDate: null } },
+    });
+    getDraftStateMock.mockResolvedValue({ data: buildDraftState([twoPickTier(['sep-1'])]) });
+
+    renderContestEntryPage();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('contest-entry-builder-heading')).toHaveTextContent('Saved lineup detail'),
+    );
+    expect(screen.queryByTestId('contest-entry-participant-sep-2')).not.toBeInTheDocument();
+  });
+
+  it('keeps editing open before the event\'s start time', async () => {
+    primeCommonMocks();
+    getContestMock.mockResolvedValue({
+      data: {
+        contest: {
+          id: 'contest-1',
+          leagueId: 'league-1',
+          name: 'Bohler Masters Tiered',
+          status: 'OPEN',
+          contestType: 'ROSTER',
+          selectionType: 'TIERED',
+          scoringEngine: 'STROKE_PLAY',
+          sportEventId: 'event-1',
+          startsAt: null,
+        },
+      },
+    });
+    getEventMock.mockResolvedValue({
+      data: { event: { id: 'event-1', startDate: '2099-04-10T12:00:00.000Z', endDate: null } },
+    });
+    getDraftStateMock.mockResolvedValue({ data: buildDraftState([twoPickTier(['sep-1'])]) });
+
+    renderContestEntryPage();
+
+    expect(await screen.findByTestId('contest-entry-builder-heading')).toHaveTextContent('Build your lineup');
+  });
+
+  it('shows a locked contest\'s lineup read-only, with the saved tiebreaker', async () => {
+    primeCommonMocks({ contestStatus: 'LOCKED' });
+    getDraftStateMock.mockResolvedValue({
+      data: { ...buildDraftState([twoPickTier(['sep-1', 'sep-2'])]), tiebreakerValue: -6 },
+    });
+
+    renderContestEntryPage();
+
+    expect(await screen.findByTestId('contest-entry-builder-heading')).toHaveTextContent('Saved lineup detail');
+    expect(screen.getByTestId('contest-entry-readonly-tiebreaker')).toHaveTextContent('Winning score relative to par');
+    expect(screen.queryByTestId('contest-entry-participant-sep-3')).not.toBeInTheDocument();
   });
 });
