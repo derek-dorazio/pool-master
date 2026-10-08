@@ -29,6 +29,7 @@ import type {
   SquadMembership,
 } from '@poolmaster/shared/domain';
 import {
+  ContestEntryStatus,
   ContestStatus,
   deriveLegacyParticipantStatus,
   LeagueMembershipStatus,
@@ -901,7 +902,7 @@ export class ContestService {
   ): Promise<ContestEntry[]> {
     const entries = await this.deps.entries.findBySquad(squadId);
     return entries
-      .filter((entry) => entry.contestId === contestId && entry.status === 'ACTIVE')
+      .filter((entry) => entry.contestId === contestId && entry.status === ContestEntryStatus.ACTIVE)
       .sort((left, right) => left.entryNumber - right.entryNumber);
   }
 

@@ -64,8 +64,8 @@ export class PrismaUserRepository implements UserRepository {
     return row ? mapToUser(row) : null;
   }
 
-  async countRootAdmins(): Promise<number> {
-    return this.prisma.user.count({ where: { isRootAdmin: true } });
+  async countActiveRootAdmins(): Promise<number> {
+    return this.prisma.user.count({ where: { isRootAdmin: true, isActive: true } });
   }
 
   /**

@@ -6,10 +6,14 @@ import type {
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import type {
+  AutoPickPolicy,
   ContestConfigTemplate,
   ContestConfiguration,
+  ContestFormat,
   ContestPrizeDefinition,
   ParticipantContestScoringRule,
+  PrizePayoutType,
+  SelectionType,
 } from '@poolmaster/shared/domain';
 
 export class PrismaContestConfigurationRepository
@@ -312,11 +316,11 @@ function mapContestConfiguration(row: {
   contestId: string;
   templateId: string | null;
   templateVersion: number | null;
-  selectionType: string;
+  selectionType: SelectionType;
   configJson: unknown;
   rounds: number | null;
   timePerPickSeconds: number | null;
-  autoPickPolicy: string | null;
+  autoPickPolicy: AutoPickPolicy | null;
   tierConfig: unknown;
   budget: number | null;
   pickCount: number | null;
@@ -336,7 +340,7 @@ function mapContestConfiguration(row: {
     contestId: row.contestId,
     templateId: row.templateId ?? undefined,
     templateVersion: row.templateVersion ?? undefined,
-    selectionType: row.selectionType as ContestConfiguration['selectionType'],
+    selectionType: row.selectionType,
     configJson: row.configJson as ContestConfiguration['configJson'],
     rounds: row.rounds ?? undefined,
     timePerPickSeconds: row.timePerPickSeconds ?? undefined,
@@ -361,8 +365,8 @@ function mapContestConfigTemplate(row: {
   id: string;
   sport: string;
   eventType: string | null;
-  contestFormat: string;
-  selectionType: string;
+  contestFormat: ContestFormat;
+  selectionType: SelectionType;
   templateKey: string;
   name: string;
   description: string;
@@ -378,8 +382,8 @@ function mapContestConfigTemplate(row: {
     id: row.id,
     sport: row.sport as ContestConfigTemplate['sport'],
     eventType: row.eventType ?? undefined,
-    contestFormat: row.contestFormat as ContestConfigTemplate['contestFormat'],
-    selectionType: row.selectionType as ContestConfigTemplate['selectionType'],
+    contestFormat: row.contestFormat,
+    selectionType: row.selectionType,
     templateKey: row.templateKey,
     name: row.name,
     description: row.description,
@@ -423,7 +427,7 @@ function mapPrizeDefinition(row: {
   displayName: string;
   sortOrder: number;
   ruleConfig: unknown;
-  payoutType: string | null;
+  payoutType: PrizePayoutType | null;
   amount: number | null;
   percentage: number | null;
   active: boolean;
@@ -437,7 +441,7 @@ function mapPrizeDefinition(row: {
     displayName: row.displayName,
     sortOrder: row.sortOrder,
     ruleConfig: (row.ruleConfig ?? {}) as Record<string, unknown>,
-    payoutType: row.payoutType as ContestPrizeDefinition['payoutType'],
+    payoutType: row.payoutType ?? undefined,
     amount: row.amount ?? undefined,
     percentage: row.percentage ?? undefined,
     active: row.active,

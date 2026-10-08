@@ -36,7 +36,6 @@ import type {
   GenerateInviteLinkResponse,
   LeagueContextResponse,
   SendLeagueInvitationsResponse,
-  SquadListResponse,
 } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
@@ -467,11 +466,23 @@ describe('Contract verification (web)', () => {
     expect(listRes.statusCode).toBe(200);
     expect(SquadListResponseSchema.safeParse(listRes.json()).success).toBe(true);
 
-    const squadId = listRes.json<SquadListResponse>().squads[0].id;
+    // Inactivating ends the owners' league memberships, so the league's only commissioner may
+    // not inactivate their own team. Inactivate a second member's team instead.
+    const member = await createTestUser({ displayName: 'Contract Team Member' });
+    const prisma = getPrisma();
+    await prisma.leagueMembership.create({
+      data: { leagueId, userId: member.user.id, role: 'MEMBER', status: 'ACTIVE', joinedAt: new Date() },
+    });
+    const memberSquad = await prisma.squad.create({
+      data: { leagueId, name: 'Contract Member Team', createdBy: member.user.id },
+    });
+    await prisma.squadMembership.create({
+      data: { squadId: memberSquad.id, leagueId, userId: member.user.id, status: 'ACTIVE', joinedAt: new Date() },
+    });
 
     const inactivateRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.squads.inactivate(leagueId, squadId),
+      url: API_ROUTES.squads.inactivate(leagueId, memberSquad.id),
       headers: withoutJsonBodyHeaders(owner.headers),
     });
 

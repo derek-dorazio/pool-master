@@ -59,7 +59,7 @@ export class EventLifecycleScheduler {
 
     for (const candidate of candidates) {
       try {
-        await this.applyDueTransition(candidate, roundsByEvent.get(candidate.id) ?? [], now);
+        await this.applyDueTransition(candidate, countedRounds(candidate, roundsByEvent.get(candidate.id) ?? []), now);
       } catch (error) {
         this.logger?.error({
           sportEventId: candidate.id,
@@ -96,6 +96,15 @@ export class EventLifecycleScheduler {
       }
     }
   }
+}
+
+/**
+ * The rounds the event plays: an admin who cuts the round count (weather) leaves the rows past
+ * it stored, and those no longer decide when the event starts or ends.
+ */
+function countedRounds(event: SportEvent, rounds: SportEventRound[]): SportEventRound[] {
+  const roundCount = event.rounds;
+  return roundCount ? rounds.filter((round) => round.roundNumber <= roundCount) : rounds;
 }
 
 function minDate(dates: Date[]): Date | undefined {

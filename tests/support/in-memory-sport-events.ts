@@ -302,14 +302,6 @@ export class InMemorySportEvents {
           lastChangedAt: changed.length > 0 ? new Date(Math.max(...changed)) : null,
         }];
       })),
-      countFieldRecords: async (ids) => new Map(ids.map((id) => {
-        const entryIds = new Set(this.field.filter((row) => row.sportEventId === id).map((row) => row.id));
-        return [id, {
-          valuations: this.valuationRows.filter((row) => entryIds.has(row.sportEventParticipantId)).length,
-          rounds: this.participantRoundRows.filter((row) => entryIds.has(row.sportEventParticipantId)).length,
-          picks: [...entryIds].reduce((sum, entryId) => sum + (this.picksByEntry.get(entryId) ?? 0), 0),
-        }];
-      })),
       findAutoLifecycleCandidates: async () => this.events.filter((row) => (
         row.autoLifecycleEnabled
         && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS')
@@ -495,17 +487,19 @@ export class InMemorySportEvents {
     };
   }
 
+  // Reads and writes hand back copies, as a database does: a caller holding an earlier read
+  // must not see it change under a later write.
   private golfRoundResults(): GolfRoundResult[] {
     return this.participantRoundRows.flatMap((row) => {
       const golf = this.golfRoundRows.find((candidate) => candidate.participantRoundId === row.id);
-      return golf ? [{ participantRound: { ...row, roundNumber: this.roundNumberOf(row.sportEventRoundId) }, golf }] : [];
+      return golf ? [{ participantRound: { ...row, roundNumber: this.roundNumberOf(row.sportEventRoundId) }, golf: { ...golf } }] : [];
     }).sort((left, right) => left.participantRound.roundNumber - right.participantRound.roundNumber);
   }
 
   private golfStandingResults(): GolfStandingResult[] {
     return this.standingRows.flatMap((standing) => {
       const golf = this.golfStandingRows.find((candidate) => candidate.standingId === standing.id);
-      return golf ? [{ standing, golf }] : [];
+      return golf ? [{ standing: { ...standing }, golf: { ...golf } }] : [];
     });
   }
 
@@ -522,7 +516,7 @@ export class InMemorySportEvents {
       this.golfRoundRows.push(golf);
     }
     Object.assign(golf, { strokes: write.strokes, scoreToPar: write.scoreToPar, thru: write.thru });
-    return { participantRound: { ...core, roundNumber: this.roundNumberOf(core.sportEventRoundId) }, golf };
+    return { participantRound: { ...core, roundNumber: this.roundNumberOf(core.sportEventRoundId) }, golf: { ...golf } };
   }
 
   golfRoundRepo(): SportEventParticipantGolfRoundRepository {
@@ -563,7 +557,7 @@ export class InMemorySportEvents {
           this.golfStandingRows.push(golf);
         }
         Object.assign(golf, { eventScoreToPar: write.eventScoreToPar, eventStrokes: write.eventStrokes, currentRoundThru: write.currentRoundThru });
-        return { standing, golf };
+        return { standing: { ...standing }, golf: { ...golf } };
       },
       updateRanks: async (ranks) => {
         for (const rank of ranks) {

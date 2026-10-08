@@ -146,21 +146,10 @@ export class AuthService {
       }, 'Rejected login for missing or passwordless user');
       throw new AuthError('Invalid username, email, or password', 'INVALID_CREDENTIALS');
     }
-    if (!user.isActive) {
-      this.logger?.warn({
-        action: 'authService.login.inactiveAccount',
-        data: {
-          userId: user.id,
-          identifierType,
-        },
-      }, 'Rejected login for inactive account');
-      throw new AuthError(
-        'This account is inactive. Sign in is unavailable until the account is reactivated or deleted.',
-        'ACCOUNT_INACTIVE',
-        403,
-      );
-    }
-
+    // No `isActive` check: an inactive account signs in, because reactivating or deleting it
+    // needs a session (DOMAIN-OPERATIONS A9). The check used to sit before the password
+    // comparison, so a wrong password on an inactive account answered ACCOUNT_INACTIVE and
+    // told a stranger the account existed.
     const valid = await bcrypt.compare(password, credentials.passwordHash);
     if (!valid) {
       this.logger?.warn({
@@ -203,20 +192,7 @@ export class AuthService {
       }, 'Rejected refresh for invalid or expired token');
       throw new AuthError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
     }
-    if (!stored.user.isActive) {
-      this.logger?.warn({
-        action: 'authService.refresh.inactiveAccount',
-        data: {
-          userId: stored.user.id,
-          sessionId: stored.sessionId,
-        },
-      }, 'Rejected refresh for inactive account');
-      throw new AuthError(
-        'This account is inactive. Session refresh is unavailable.',
-        'ACCOUNT_INACTIVE',
-        403,
-      );
-    }
+    // An inactive account keeps its session, for the same reason it may sign in (A9).
 
     // Revoke the old refresh token (rotation)
     await this.prisma.refreshToken.update({

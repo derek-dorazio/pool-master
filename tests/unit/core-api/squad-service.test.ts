@@ -13,6 +13,7 @@ import { SquadService } from '../../../packages/core-api/src/modules/squads/serv
 import {
   fakeLeagueMembershipRepo,
   fakeSquadMembershipRepo,
+  fakeSquadOwnerInvitationRepo,
   fakeSquadRepo,
   fakeUserRepo,
 } from '../../support/repo-fakes';
@@ -150,6 +151,7 @@ describe('SquadService', () => {
       leagueMembershipRepo,
       userRepo,
       prisma,
+      fakeSquadOwnerInvitationRepo(),
     );
 
     const result = await service.createSquad('league-1', 'user-1', {});
@@ -181,6 +183,7 @@ describe('SquadService', () => {
       }),
       userRepo,
       prisma,
+      fakeSquadOwnerInvitationRepo(),
     );
 
     await expect(service.createSquad('league-1', 'user-1', {})).rejects.toThrow(
@@ -238,6 +241,7 @@ describe('SquadService', () => {
       leagueMembershipRepo,
       userRepo,
       prisma,
+      fakeSquadOwnerInvitationRepo(),
     );
 
     // findByLeagueAndUser resolves null, so this caller holds no membership in the league.
@@ -315,6 +319,7 @@ describe('SquadService', () => {
       leagueMembershipRepo,
       userRepo,
       prisma,
+      fakeSquadOwnerInvitationRepo(),
     );
 
     await expect(service.removeOwner('league-1', 'squad-1', 'user-1', 'user-1')).rejects.toThrow(
@@ -411,6 +416,7 @@ describe('SquadService', () => {
           leagueMembershipRepo,
           userRepo,
           prisma,
+          fakeSquadOwnerInvitationRepo(),
         ),
       };
     }
@@ -504,6 +510,7 @@ describe('SquadService', () => {
       leagueMembershipRepo,
       userRepo,
       prisma,
+      fakeSquadOwnerInvitationRepo(),
     );
 
     await service.updateSquad('league-1', 'squad-1', 'user-1', { name: 'Updated Team' });
@@ -541,7 +548,7 @@ describe('SquadService', () => {
       });
       userFindById.mockResolvedValue(buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' }));
 
-      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, userRepo, prisma);
+      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, userRepo, prisma, fakeSquadOwnerInvitationRepo());
 
       await expect(
         service.createSquad('league-1', 'user-1', { name: 'Existing Team' }),
@@ -580,7 +587,7 @@ describe('SquadService', () => {
       userFindById.mockResolvedValue(buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' }));
       userFindByLeague.mockResolvedValue([]);
 
-      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, userRepo, prisma);
+      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, userRepo, prisma, fakeSquadOwnerInvitationRepo());
 
       await service.createSquad('league-1', 'user-1', {});
 
@@ -603,7 +610,7 @@ describe('SquadService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue({ ...baseMembership, role: 'COMMISSIONER' }),
       });
 
-      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, userRepo, prisma);
+      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, userRepo, prisma, fakeSquadOwnerInvitationRepo());
 
       await expect(
         service.updateSquad('league-1', 'squad-1', 'user-1', { name: 'Existing Team' }),
@@ -626,7 +633,7 @@ describe('SquadService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue({ ...baseMembership, role: 'COMMISSIONER' }),
       });
 
-      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, userRepo, prisma);
+      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, userRepo, prisma, fakeSquadOwnerInvitationRepo());
 
       await service.updateSquad('league-1', 'squad-1', 'user-1', { name: 'Existing Team' });
 
@@ -679,6 +686,7 @@ describe('SquadService', () => {
       leagueMembershipRepo,
       userRepo,
       prisma,
+      fakeSquadOwnerInvitationRepo(),
     );
 
     await expect(service.inactivateSquad('league-1', 'squad-1', 'user-1')).rejects.toMatchObject({
@@ -797,6 +805,7 @@ describe('SquadService', () => {
       leagueMembershipRepo,
       userRepo,
       prisma,
+      fakeSquadOwnerInvitationRepo(),
     );
 
     await service.inactivateSquad('league-1', 'squad-1', 'user-1');

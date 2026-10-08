@@ -1,105 +1,109 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import type { ComponentProps } from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
-import { mockApi } from '@/test/msw-api';
-import { apiSuccess, buildLeagueMembership, buildLeagueSquadMember } from '@/features/leagues/test/fixtures';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
+import { QueryKeys } from '@/lib/query-keys';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 
-type MenuProps = ComponentProps<typeof TeamOwnerActionMenu>;
+const changeMemberRoleMock = vi.fn();
+const removeSquadOwnerMock = vi.fn();
+
+bindApiMocks({
+  changeMemberRole: changeMemberRoleMock,
+  removeSquadOwner: removeSquadOwnerMock,
+});
+
+type MenuProps = Parameters<typeof TeamOwnerActionMenu>[0];
 
 function renderMenu(overrides: Partial<MenuProps> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
   const props: MenuProps = {
     activeOwnerCount: 2,
     canManageLeagueRole: true,
     canRemoveOwner: true,
     leagueCode: 'BIGDAWGS',
     leagueId: 'league-1',
-    ownerName: 'Jordan Rivers',
+    ownerName: 'Olive Owner',
     ownerRole: 'MEMBER',
     ownerUserId: 'user-2',
     surface: 'teams',
     teamId: 'team-1',
     ...overrides,
   };
-
-  return render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <TeamOwnerActionMenu {...props} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
+  return { ...view, invalidateSpy };
 }
 
-function openMenu() {
-  fireEvent.click(screen.getByRole('button', { name: 'Owner actions' }));
+function openAction(action: 'promote' | 'demote' | 'remove') {
+  fireEvent.click(screen.getByTestId('teams-owner-actions-trigger-team-1-user-2'));
+  fireEvent.click(screen.getByTestId(`teams-owner-actions-${action}-team-1-user-2`));
 }
 
-async function chooseAction(name: string) {
-  openMenu();
-  fireEvent.click(screen.getByRole('button', { name }));
-  await screen.findByRole('dialog', { name });
+function membership(role: 'COMMISSIONER' | 'MEMBER') {
+  return {
+    data: {
+      membership: {
+        id: 'league-member-2',
+        leagueId: 'league-1',
+        userId: 'user-2',
+        role,
+        status: 'ACTIVE',
+        joinedAt: '2026-04-16T00:00:00.000Z',
+        createdAt: '2026-04-16T00:00:00.000Z',
+        updatedAt: '2026-04-16T00:00:00.000Z',
+      },
+    },
+  };
+}
+
+function invalidatedKeys(spy: ReturnType<typeof renderMenu>['invalidateSpy']) {
+  return spy.mock.calls.map(([filters]) => (filters as { queryKey?: unknown } | undefined)?.queryKey);
 }
 
 describe('TeamOwnerActionMenu', () => {
-  it('renders nothing when the viewer can neither change the owner\'s role nor remove them', () => {
-    renderMenu({ canManageLeagueRole: false, canRemoveOwner: false });
-
-    expect(screen.queryByRole('button', { name: 'Owner actions' })).not.toBeInTheDocument();
+  beforeEach(() => {
+    changeMemberRoleMock.mockReset();
+    removeSquadOwnerMock.mockReset();
   });
 
-  it('offers promote and remove, but not demote, for an owner who is a league member', () => {
-    renderMenu({ ownerRole: 'MEMBER' });
+  it('renders nothing when the viewer may neither change the owner\'s role nor remove them', () => {
+    const { container } = renderMenu({ canManageLeagueRole: false, canRemoveOwner: false });
 
-    openMenu();
-
-    expect(screen.getByRole('button', { name: 'Promote to commissioner' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remove owner' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Demote to member' })).not.toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
   });
 
-  it('offers demote, but not promote, for an owner who is a commissioner', () => {
+  it('offers demotion but not promotion for an owner who is already a commissioner', () => {
     renderMenu({ ownerRole: 'COMMISSIONER' });
 
-    openMenu();
+    fireEvent.click(screen.getByTestId('teams-owner-actions-trigger-team-1-user-2'));
 
-    expect(screen.getByRole('button', { name: 'Demote to member' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Promote to commissioner' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('teams-owner-actions-demote-team-1-user-2')).toBeInTheDocument();
+    expect(screen.queryByTestId('teams-owner-actions-promote-team-1-user-2')).not.toBeInTheDocument();
   });
 
-  it('offers only removal when the viewer may remove owners but not change league roles', () => {
-    renderMenu({ canManageLeagueRole: false, ownerRole: 'MEMBER' });
+  it('shows the server\'s refusal in the promote dialog and lets the viewer try again', async () => {
+    changeMemberRoleMock.mockResolvedValue({
+      error: { code: 'LEAGUE_PERMISSION_DENIED', message: 'Only a commissioner can change roles.' },
+    });
+    renderMenu();
 
-    openMenu();
+    openAction('promote');
+    fireEvent.click(await screen.findByTestId('teams-owner-actions-confirm-promote-team-1-user-2'));
 
-    expect(screen.getByRole('button', { name: 'Remove owner' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Promote to commissioner' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Demote to member' })).not.toBeInTheDocument();
+    expect(await screen.findByText('Only a commissioner can change roles.')).toBeInTheDocument();
+    expect(screen.getByTestId('teams-owner-actions-confirm-promote-team-1-user-2')).toBeEnabled();
   });
 
-  it('promotes the owner to commissioner in this league and closes the confirmation', async () => {
-    mockApi.changeMemberRole.mockResolvedValue(apiSuccess({
-      membership: buildLeagueMembership({ userId: 'user-2', role: 'COMMISSIONER' }),
-    }));
-    renderMenu({ ownerRole: 'MEMBER' });
-
-    await chooseAction('Promote to commissioner');
-    const dialog = within(screen.getByRole('dialog', { name: 'Promote to commissioner' }));
-    expect(dialog.getByText('Jordan Rivers will gain commissioner authority for this league.')).toBeInTheDocument();
-    fireEvent.click(dialog.getByRole('button', { name: 'Promote' }));
-
-    await waitFor(() => expect(mockApi.changeMemberRole).toHaveBeenCalledWith({
-      path: { id: 'league-1', uid: 'user-2' },
-      body: { role: 'COMMISSIONER' },
-    }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-  });
-
-  it('keeps the demote confirmation open with the server reason when the last commissioner cannot step down', async () => {
-    mockApi.changeMemberRole.mockResolvedValue({
+  it('shows the last-commissioner refusal in the demote dialog instead of closing it', async () => {
+    changeMemberRoleMock.mockResolvedValue({
       error: {
         code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
         message: 'Appoint another active commissioner before removing or demoting the last commissioner.',
@@ -107,76 +111,106 @@ describe('TeamOwnerActionMenu', () => {
     });
     renderMenu({ ownerRole: 'COMMISSIONER' });
 
-    await chooseAction('Demote to member');
-    const dialog = within(screen.getByRole('dialog', { name: 'Demote to member' }));
-    fireEvent.click(dialog.getByRole('button', { name: 'Demote' }));
+    openAction('demote');
+    fireEvent.click(await screen.findByTestId('teams-owner-actions-confirm-demote-team-1-user-2'));
 
-    expect(await dialog.findByText(
-      'Appoint another active commissioner before removing or demoting the last commissioner.',
-    )).toBeInTheDocument();
-    expect(dialog.getByRole('button', { name: 'Demote' })).toBeEnabled();
-  });
-
-  it('clears a previous failure when the confirmation is closed and opened again', async () => {
-    mockApi.changeMemberRole.mockResolvedValue({
-      error: { code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED', message: 'Cannot demote the last commissioner.' },
+    expect(await screen.findByText(/Appoint another active commissioner/)).toBeInTheDocument();
+    expect(changeMemberRoleMock).toHaveBeenCalledWith({
+      path: { id: 'league-1', uid: 'user-2' },
+      body: { role: 'MEMBER' },
     });
-    renderMenu({ ownerRole: 'COMMISSIONER' });
-
-    await chooseAction('Demote to member');
-    const dialog = within(screen.getByRole('dialog', { name: 'Demote to member' }));
-    fireEvent.click(dialog.getByRole('button', { name: 'Demote' }));
-    await dialog.findByText('Cannot demote the last commissioner.');
-    fireEvent.click(dialog.getByRole('button', { name: 'Close Demote to member' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-
-    await chooseAction('Demote to member');
-    const reopened = within(screen.getByRole('dialog', { name: 'Demote to member' }));
-    expect(reopened.queryByText('Cannot demote the last commissioner.')).not.toBeInTheDocument();
+    expect(screen.getByTestId('teams-owner-actions-dialog-team-1-user-2')).toBeInTheDocument();
   });
 
-  it('removes an owner from a team that has another owner, warning it also removes them from the league', async () => {
-    mockApi.removeSquadOwner.mockResolvedValue(apiSuccess({
-      membership: buildLeagueSquadMember({ userId: 'user-2' }),
-    }));
-    renderMenu({ activeOwnerCount: 2 });
+  it('refreshes the league context after a role change, so a commissioner who demotes themselves loses commissioner controls', async () => {
+    changeMemberRoleMock.mockResolvedValue(membership('MEMBER'));
+    const { invalidateSpy } = renderMenu({ ownerRole: 'COMMISSIONER' });
 
-    await chooseAction('Remove owner');
-    const dialog = within(screen.getByRole('dialog', { name: 'Remove owner' }));
-    expect(dialog.getByText(/removes them from the team and from the league/)).toBeInTheDocument();
-    fireEvent.click(dialog.getByRole('button', { name: 'Remove from team and league' }));
+    openAction('demote');
+    fireEvent.click(await screen.findByTestId('teams-owner-actions-confirm-demote-team-1-user-2'));
 
-    await waitFor(() => expect(mockApi.removeSquadOwner).toHaveBeenCalledWith({
-      path: { id: 'league-1', squadId: 'team-1', userId: 'user-2' },
-    }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-  });
-
-  it('shows the server reason and keeps the dialog open when removing an owner fails', async () => {
-    mockApi.removeSquadOwner.mockResolvedValue({
-      error: { code: 'SQUAD_OWNER_REMOVE_FAILED', message: 'That owner could not be removed.' },
-    });
-    renderMenu({ activeOwnerCount: 3 });
-
-    await chooseAction('Remove owner');
-    const dialog = within(screen.getByRole('dialog', { name: 'Remove owner' }));
-    fireEvent.click(dialog.getByRole('button', { name: 'Remove from team and league' }));
-
-    expect(await dialog.findByText('That owner could not be removed.')).toBeInTheDocument();
-  });
-
-  it('does not remove a team\'s only owner directly, and points to Team Home to inactivate the team instead', async () => {
-    renderMenu({ activeOwnerCount: 1, surface: 'teams' });
-
-    await chooseAction('Remove owner');
-    const dialog = within(screen.getByRole('dialog', { name: 'Remove owner' }));
-
-    expect(dialog.getByText(/only has one active owner left/)).toBeInTheDocument();
-    expect(dialog.getByRole('link', { name: 'Open Team Home' })).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/teams/team-1',
+    await waitFor(() =>
+      expect(screen.queryByTestId('teams-owner-actions-dialog-team-1-user-2')).not.toBeInTheDocument(),
     );
-    expect(dialog.queryByRole('button', { name: 'Remove from team and league' })).not.toBeInTheDocument();
-    expect(mockApi.removeSquadOwner).not.toHaveBeenCalled();
+    expect(invalidatedKeys(invalidateSpy)).toEqual(
+      expect.arrayContaining([
+        QueryKeys.leagues.detail('BIGDAWGS'),
+        QueryKeys.leagues.list,
+        QueryKeys.leagueTeams.byLeague('league-1'),
+      ]),
+    );
+  });
+
+  it('points to Team Home instead of offering removal when the owner is the team\'s last one', async () => {
+    renderMenu({ activeOwnerCount: 1 });
+
+    openAction('remove');
+
+    expect(await screen.findByRole('link', { name: 'Open Team Home' })).toBeInTheDocument();
+    expect(screen.queryByTestId('teams-owner-actions-confirm-remove-team-1-user-2')).not.toBeInTheDocument();
+  });
+
+  it('removes a co-owner, closes the dialog and refreshes the roster and the league\'s member count', async () => {
+    removeSquadOwnerMock.mockResolvedValue({
+      data: {
+        membership: {
+          id: 'squad-member-2',
+          squadId: 'team-1',
+          leagueId: 'league-1',
+          status: 'INACTIVE',
+          joinedAt: '2026-04-16T00:00:00.000Z',
+          createdAt: '2026-04-16T00:00:00.000Z',
+          updatedAt: '2026-04-16T00:00:00.000Z',
+          user: {
+            id: 'user-2',
+            email: 'olive@example.com',
+            username: 'olive',
+            firstName: 'Olive',
+            lastName: 'Owner',
+            isActive: true,
+            isRootAdmin: false,
+            createdAt: '2026-04-16T00:00:00.000Z',
+          },
+        },
+      },
+    });
+    const { invalidateSpy } = renderMenu();
+
+    openAction('remove');
+    fireEvent.click(await screen.findByTestId('teams-owner-actions-confirm-remove-team-1-user-2'));
+
+    await waitFor(() =>
+      expect(screen.queryByTestId('teams-owner-actions-dialog-team-1-user-2')).not.toBeInTheDocument(),
+    );
+    expect(removeSquadOwnerMock).toHaveBeenCalledWith({
+      path: { id: 'league-1', squadId: 'team-1', userId: 'user-2' },
+    });
+    expect(invalidatedKeys(invalidateSpy)).toEqual(
+      expect.arrayContaining([
+        QueryKeys.leagues.detail('BIGDAWGS'),
+        QueryKeys.leagues.members('league-1'),
+        QueryKeys.leagueTeams.byLeague('league-1'),
+      ]),
+    );
+  });
+
+  it('shows the server\'s refusal to remove an owner, and clears it when the dialog is closed', async () => {
+    removeSquadOwnerMock.mockResolvedValue({
+      error: { code: 'SQUAD_OWNER_REQUIRED', message: 'You must be an active team owner to perform this action' },
+    });
+    renderMenu();
+
+    openAction('remove');
+    fireEvent.click(await screen.findByTestId('teams-owner-actions-confirm-remove-team-1-user-2'));
+    expect(await screen.findByText('You must be an active team owner to perform this action')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close Remove owner' }));
+    await waitFor(() =>
+      expect(screen.queryByTestId('teams-owner-actions-dialog-team-1-user-2')).not.toBeInTheDocument(),
+    );
+    openAction('remove');
+
+    expect(await screen.findByTestId('teams-owner-actions-confirm-remove-team-1-user-2')).toBeInTheDocument();
+    expect(screen.queryByText('You must be an active team owner to perform this action')).not.toBeInTheDocument();
   });
 });

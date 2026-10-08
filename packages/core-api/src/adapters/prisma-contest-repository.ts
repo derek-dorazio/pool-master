@@ -9,7 +9,7 @@ import type {
   ContestStatusFilter,
   ContestStatusTransition,
 } from '@poolmaster/shared/db';
-import type { Contest } from '@poolmaster/shared/domain';
+import type { Contest, ContestFormat, ContestStatus, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
 
 export class PrismaContestRepository implements ContestRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -126,10 +126,10 @@ function mapToContest(row: {
   leagueId: string;
   sportEventId: string | null;
   name: string;
-  status: string;
-  contestFormat: string;
-  selectionType: string;
-  scoringEngine: string;
+  status: ContestStatus;
+  contestFormat: ContestFormat;
+  selectionType: SelectionType;
+  scoringEngine: ScoringEngine;
   sportEvent?: { sport: string } | null;
   isExclusive: boolean;
   scoringStopsOnElimination: boolean;
@@ -143,10 +143,10 @@ function mapToContest(row: {
     leagueId: row.leagueId,
     sportEventId: row.sportEventId ?? undefined,
     name: row.name,
-    status: row.status as Contest['status'],
-    contestFormat: row.contestFormat as Contest['contestFormat'],
-    selectionType: row.selectionType as Contest['selectionType'],
-    scoringEngine: row.scoringEngine as Contest['scoringEngine'],
+    status: row.status,
+    contestFormat: row.contestFormat,
+    selectionType: row.selectionType,
+    scoringEngine: row.scoringEngine,
     sport: row.sportEvent?.sport as Contest['sport'],
     isExclusive: row.isExclusive,
     scoringStopsOnElimination: row.scoringStopsOnElimination,

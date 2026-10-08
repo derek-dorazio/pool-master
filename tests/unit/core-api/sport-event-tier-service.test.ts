@@ -168,3 +168,71 @@ describe('SportEventTierService — locked once the event is released (#431)', (
       .rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
   });
 });
+
+describe('SportEventTierService — the field changing between assignments', () => {
+  it('places golfers with no ranking after every ranked golfer when tiering by ranking', async () => {
+    const { store, event, service } = setup();
+    await store.tierRepo().createMany(event.id, [TWO_TIERS[0]]);
+    store.addToField(event.id, 'p-unranked');
+    store.addToField(event.id, 'p-second', { ranking: 2 });
+    store.addToField(event.id, 'p-first', { ranking: 1 });
+
+    const [group] = await service.autoAssignTiers({ sportEventId: event.id, source: TierSource.RANKING });
+
+    expect(group.participants.map((placement) => placement.participantId)).toEqual(['p-first', 'p-second', 'p-unranked']);
+  });
+
+  it('keeps a golfer who withdrew after an earlier assignment in their old tier when tiers are re-run, so picks of them still show in a tier', async () => {
+    const { store, event, service } = setup();
+    await store.tierRepo().createMany(event.id, TWO_TIERS);
+    const withdrawn = store.addToField(event.id, 'p-withdrawn', { oddsToWin: 2 });
+    store.addToField(event.id, 'p-fav', { oddsToWin: 5 });
+    store.addToField(event.id, 'p-long', { oddsToWin: 50 });
+    await service.autoAssignTiers({ sportEventId: event.id, source: TierSource.ODDS, tierSize: 1 });
+
+    withdrawn.isActive = false;
+    const groups = await service.autoAssignTiers({ sportEventId: event.id, source: TierSource.ODDS, tierSize: 1 });
+
+    expect(groups[0].participants.map((placement) => placement.participantId)).toEqual(['p-withdrawn', 'p-fav']);
+    expect(groups[1].participants.map((placement) => placement.participantId)).toEqual(['p-long']);
+  });
+
+  it('lists a tier\'s golfers by their order index, with any that have none last', async () => {
+    const { store, event, service } = setup();
+    await store.tierRepo().createMany(event.id, [TWO_TIERS[0]]);
+    const [tier] = store.tierRows;
+    const unordered = store.addToField(event.id, 'p-unordered');
+    const second = store.addToField(event.id, 'p-second');
+    const first = store.addToField(event.id, 'p-first');
+    await store.valuationRepo().assignTiers([
+      { sportEventParticipantId: unordered.id, sportEventTierId: tier.id, tierOrderIndex: null as unknown as number, source: 'MANUAL' },
+      { sportEventParticipantId: second.id, sportEventTierId: tier.id, tierOrderIndex: 2, source: 'MANUAL' },
+      { sportEventParticipantId: first.id, sportEventTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' },
+    ]);
+
+    const [group] = await service.getEffectiveTiersForSportEvent(event.id);
+
+    expect(group.participants.map((placement) => placement.participantId)).toEqual(['p-first', 'p-second', 'p-unordered']);
+  });
+
+  it('removes an empty tier without asking where its golfers should go', async () => {
+    const { store, event, service } = setup();
+    await store.tierRepo().createMany(event.id, TWO_TIERS);
+    const entry = store.addToField(event.id, 'p-1');
+    const [tier1] = store.tierRows;
+    await store.valuationRepo().assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier1.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+
+    const groups = await service.replaceTiers({ sportEventId: event.id, tiers: [TWO_TIERS[0]] });
+
+    expect(groups.map((group) => [group.tierKey, group.participants.map((p) => p.participantId)])).toEqual([['tier-1', ['p-1']]]);
+  });
+
+  it('prices nothing and writes nothing when no one in the active field has a seed', async () => {
+    const { store, event, service } = setup();
+    store.addToField(event.id, 'p-unseeded');
+    store.addToField(event.id, 'p-withdrawn', { seedNumber: 1, isActive: false });
+
+    await expect(service.autoAssignPrices({ sportEventId: event.id, minPrice: 5, maxPrice: 50 })).resolves.toEqual([]);
+    expect(store.valuationRows).toEqual([]);
+  });
+});

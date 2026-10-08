@@ -3,6 +3,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
+  SquadOwnerInvitationRepository,
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
@@ -10,6 +11,7 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
+  SquadOwnerInvitationStatus,
   TeamIconKey,
 } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
@@ -47,6 +49,7 @@ export class SquadService {
     private readonly leagueMembershipRepo: LeagueMembershipRepository,
     private readonly users: UserRepository,
     private readonly prisma: PrismaClient,
+    private readonly ownerInvitationRepo: SquadOwnerInvitationRepository,
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
@@ -150,6 +153,14 @@ export class SquadService {
     }, 'Updating squad');
     await this.requireSquadManager(leagueId, squadId, userId, isRootAdmin);
     const nextName = input.name?.trim();
+    if (nextName === '') {
+      // The DTO's min(1) admits a name of only spaces, which trims to nothing.
+      this.logger?.warn({
+        action: 'squad.update.blankName',
+        data: { leagueId, squadId, userId },
+      }, 'Rejected blank squad name');
+      throw new SquadOperationError('Team name cannot be blank', 'SQUAD_NAME_REQUIRED');
+    }
     if (nextName !== undefined) {
       // excludeSquadId so a no-op rename does not collide with itself (#202).
       await assertSquadNameAvailable(this.squadRepo, leagueId, nextName, {
@@ -201,6 +212,8 @@ export class SquadService {
 
     const activeMemberships = await this.squadMembershipRepo.findBySquad(squadId);
 
+    await this.requireCommissionerOutsideSquad(leagueId, squadId, activeMemberships.map((m) => m.userId));
+
     await Promise.all(
       activeMemberships.map(async (membership) =>
         inactivateLeagueMemberUnit({
@@ -217,6 +230,17 @@ export class SquadService {
     if (refreshedSquad?.isActive) {
       await this.squadRepo.update(squadId, { isActive: false });
     }
+
+    // Accepting a co-owner invitation reactivates its team, so an invitation left pending
+    // would let anyone holding it undo the inactivation.
+    const pendingInvitations = (await this.ownerInvitationRepo.findByLeague(leagueId)).filter(
+      (invitation) =>
+        invitation.squadId === squadId && invitation.status === SquadOwnerInvitationStatus.PENDING,
+    );
+    await Promise.all(
+      pendingInvitations.map(async (invitation) =>
+        this.ownerInvitationRepo.update(invitation.id, { status: SquadOwnerInvitationStatus.REVOKED })),
+    );
 
     const squadDto = await this.loadSquadDto(squadId);
     this.logger?.info({
@@ -453,6 +477,32 @@ export class SquadService {
       }
       throw err;
     }
+  }
+
+  /**
+   * Inactivating a team ends every owner's league membership, so it must not take the league's
+   * last active commissioner with it — the rule `removeOwner` applies to one owner (#218),
+   * applied to all of the team's owners at once.
+   */
+  private async requireCommissionerOutsideSquad(
+    leagueId: string,
+    squadId: string,
+    ownerUserIds: string[],
+  ): Promise<void> {
+    const owners = new Set(ownerUserIds);
+    const commissioners = (await this.leagueMembershipRepo.findByLeague(leagueId)).filter(
+      (membership) =>
+        membership.status === LeagueMembershipStatus.ACTIVE && membership.role === LeagueRole.COMMISSIONER,
+    );
+    if (commissioners.length === 0 || commissioners.some((membership) => !owners.has(membership.userId))) {
+      return;
+    }
+    this.logger?.warn({
+      action: 'squad.inactivate.lastCommissioner',
+      data: { leagueId, squadId },
+    }, 'Rejected inactivating the team of the league\'s last active commissioner');
+    const lastCommissioner = new LastCommissionerError();
+    throw new SquadOperationError(lastCommissioner.message, lastCommissioner.code);
   }
 
   private async loadSquadDto(squadId: Promise<string> | string): Promise<SquadDto> {

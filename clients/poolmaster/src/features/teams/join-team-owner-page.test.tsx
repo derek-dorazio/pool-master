@@ -332,6 +332,129 @@ describe('JoinTeamOwnerPage', () => {
       expect.any(String),
     );
   });
+
+  describe('other outcomes', () => {
+    const preview = {
+      data: {
+        invitation: {
+          inviteCode: 'TEAM123',
+          status: 'PENDING',
+          league: { id: 'league-1', leagueCode: 'BIGDAWGS', name: 'Big Dawgs' },
+          team: { id: 'team-1', name: 'Beer Bellies', iconKey: 'CAPTAIN_SMILE_FIELD' },
+          roleAfterAccept: 'MEMBER',
+        },
+      },
+    };
+
+    function signedOut() {
+      getCurrentUserMock.mockRejectedValue(new Error('Not authenticated'));
+      refreshTokenMock.mockResolvedValue({ data: null });
+    }
+
+    function signedIn() {
+      getCurrentUserMock.mockResolvedValue({
+        data: {
+          user: {
+            id: 'user-1',
+            email: 'derek@example.com',
+            firstName: 'Derek',
+            lastName: 'Dorazio',
+            isActive: true,
+            isRootAdmin: false,
+            createdAt: '2026-04-16T00:00:00.000Z',
+          },
+        },
+      });
+      refreshTokenMock.mockResolvedValue({ data: null });
+    }
+
+    function fillRegistration() {
+      fireEvent.change(screen.getByTestId('team-invite-register-first-name'), { target: { value: 'Sam' } });
+      fireEvent.change(screen.getByTestId('team-invite-register-last-name'), { target: { value: 'Stranger' } });
+      fireEvent.change(screen.getByTestId('team-invite-register-username'), { target: { value: 'stranger' } });
+      fireEvent.change(screen.getByTestId('team-invite-register-password'), { target: { value: 'stranger-pass-1' } });
+    }
+
+    afterEach(() => {
+      mockLogger.child.mockImplementation(() => mockLogger);
+    });
+
+    it('logs the loaded invitation once, however often the page re-renders while the invitee types', async () => {
+      // The real `child()` returns a new logger on every call, so a page that builds its logger
+      // during render hands its effects a new dependency each time.
+      mockLogger.child.mockImplementation(() => ({ ...mockLogger }));
+      signedOut();
+      getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview);
+
+      renderJoinTeamOwnerPage();
+      await screen.findByTestId('team-invite-register-form');
+      fillRegistration();
+
+      const loadedLogs = mockLogger.info.mock.calls.filter(
+        ([payload]) => (payload as { action?: string }).action === 'teamInvite.preview.loaded',
+      );
+      expect(loadedLogs).toHaveLength(1);
+    });
+
+    it('shows a signed-out visitor no registration form when the invitation cannot be loaded, only the way to sign in', async () => {
+      signedOut();
+      getTeamOwnerInvitationPreviewMock.mockResolvedValue({
+        error: { code: 'SQUAD_OWNER_INVITATION_NOT_FOUND', message: 'Team-owner invitation not found' },
+      });
+
+      renderJoinTeamOwnerPage();
+
+      expect(await screen.findByTestId('team-invite-sign-in')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Join team' })).toBeInTheDocument();
+      expect(screen.queryByTestId('team-invite-register-form')).not.toBeInTheDocument();
+    });
+
+    it('tells an invitee whose email already has an account to sign in instead of registering again', async () => {
+      signedOut();
+      getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview);
+      registerWithTeamOwnerInvitationMock.mockResolvedValue({
+        error: { code: 'SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS', message: 'Account exists' },
+      });
+
+      renderJoinTeamOwnerPage();
+      await screen.findByTestId('team-invite-register-form');
+      fillRegistration();
+      fireEvent.click(screen.getByTestId('team-invite-register-submit'));
+
+      expect(await screen.findByTestId('team-invite-register-error')).toHaveTextContent(
+        'An account already exists for the email this invitation was sent to. Sign in to accept it.',
+      );
+      expect(screen.queryByTestId('team-destination')).not.toBeInTheDocument();
+    });
+
+    it('does not submit the registration form while required fields are empty', async () => {
+      signedOut();
+      getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview);
+
+      renderJoinTeamOwnerPage();
+      await screen.findByTestId('team-invite-register-form');
+      fireEvent.click(screen.getByTestId('team-invite-register-submit'));
+
+      await waitFor(() => expect(screen.getByTestId('team-invite-register-username')).toHaveAttribute('aria-invalid', 'true'));
+      expect(registerWithTeamOwnerInvitationMock).not.toHaveBeenCalled();
+    });
+
+    it('tells a signed-in visitor the invitation could not be loaded and offers no join button', async () => {
+      signedIn();
+      getTeamOwnerInvitationPreviewMock.mockResolvedValue({
+        error: { code: 'SQUAD_OWNER_INVITATION_NOT_FOUND', message: 'Team-owner invitation not found' },
+      });
+
+      renderJoinTeamOwnerPage();
+
+      expect(await screen.findByText('We could not load this team invitation.')).toBeInTheDocument();
+      expect(screen.queryByTestId('team-invite-accept')).not.toBeInTheDocument();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'teamInvite.preview.failed' }),
+        expect.any(String),
+      );
+    });
+  });
 });
 
 describe('Joining a team as a co-owner from an invite link', () => {

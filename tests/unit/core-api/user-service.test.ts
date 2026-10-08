@@ -370,7 +370,7 @@ describe('disable and enable — one operation, either caller', () => {
     for (const actor of [self, rootAdmin]) {
       const { prisma, service } = serviceFor(
         buildUser({ isRootAdmin: true }),
-        { countRootAdmins: jest.fn().mockResolvedValue(1) },
+        { countActiveRootAdmins: jest.fn().mockResolvedValue(1) },
       );
 
       await expect(service.disableUser(actor, 'user-1'))
@@ -456,7 +456,7 @@ describe('permanent delete — one operation, either caller', () => {
     // root-admin set.
     const { prisma, service } = serviceFor(
       buildUser({ isActive: false, isRootAdmin: true }),
-      { countRootAdmins: jest.fn().mockResolvedValue(1) },
+      { countActiveRootAdmins: jest.fn().mockResolvedValue(0) },
     );
 
     await expect(service.deleteUser(rootAdmin, 'user-1', 'user@example.com'))
@@ -478,7 +478,7 @@ describe('the root-admin role', () => {
 
     const demote = serviceFor(
       buildUser({ isRootAdmin: true }),
-      { countRootAdmins: jest.fn().mockResolvedValue(2) },
+      { countActiveRootAdmins: jest.fn().mockResolvedValue(2) },
     );
     await demote.service.setRootAdmin(rootAdmin, 'user-1', false);
     // Losing authority must invalidate it immediately, not at the next login.
@@ -490,7 +490,7 @@ describe('the root-admin role', () => {
     // administrator, and that is the count; with two, one stepping down is legitimate.
     const { tx, service } = serviceFor(
       buildUser({ id: 'admin-1', isRootAdmin: true }),
-      { countRootAdmins: jest.fn().mockResolvedValue(2) },
+      { countActiveRootAdmins: jest.fn().mockResolvedValue(2) },
     );
 
     await expect(service.setRootAdmin(rootAdmin, 'admin-1', false)).resolves.toBeUndefined();
@@ -500,7 +500,7 @@ describe('the root-admin role', () => {
   it('refuses to remove the last remaining root admin', async () => {
     const { prisma, service } = serviceFor(
       buildUser({ isRootAdmin: true }),
-      { countRootAdmins: jest.fn().mockResolvedValue(1) },
+      { countActiveRootAdmins: jest.fn().mockResolvedValue(1) },
     );
 
     await expect(service.setRootAdmin(rootAdmin, 'user-1', false))
@@ -513,7 +513,7 @@ describe('the root-admin role', () => {
 
     await expect(service.setRootAdmin(rootAdmin, 'user-1', true)).resolves.toBeUndefined();
 
-    expect(users.countRootAdmins).not.toHaveBeenCalled();
+    expect(users.countActiveRootAdmins).not.toHaveBeenCalled();
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 

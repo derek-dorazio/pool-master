@@ -12172,7 +12172,14 @@
           },
           "status": {
             "type": "string",
-            "description": "Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT."
+            "enum": [
+              "IN_PROGRESS",
+              "COMPLETED",
+              "DNF",
+              "DSQ",
+              "MISSED_CUT"
+            ],
+            "description": "Progress through the round."
           },
           "completedAt": {
             "type": [
@@ -12600,7 +12607,14 @@
                 },
                 "status": {
                   "type": "string",
-                  "description": "Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT."
+                  "enum": [
+                    "IN_PROGRESS",
+                    "COMPLETED",
+                    "DNF",
+                    "DSQ",
+                    "MISSED_CUT"
+                  ],
+                  "description": "Progress through the round."
                 },
                 "completedAt": {
                   "type": [
@@ -13070,7 +13084,14 @@
                       },
                       "status": {
                         "type": "string",
-                        "description": "Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT."
+                        "enum": [
+                          "IN_PROGRESS",
+                          "COMPLETED",
+                          "DNF",
+                          "DSQ",
+                          "MISSED_CUT"
+                        ],
+                        "description": "Progress through the round."
                       },
                       "completedAt": {
                         "type": [
@@ -13690,7 +13711,14 @@
                     },
                     "status": {
                       "type": "string",
-                      "description": "Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT."
+                      "enum": [
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "DNF",
+                        "DSQ",
+                        "MISSED_CUT"
+                      ],
+                      "description": "Progress through the round."
                     },
                     "completedAt": {
                       "type": [
@@ -14220,7 +14248,12 @@
             "type": "integer"
           },
           "autoPickPolicy": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "QUEUE_THEN_BEST",
+              "BEST_AVAILABLE",
+              "RANDOM"
+            ]
           },
           "tierConfig": {
             "type": "array",
@@ -15509,7 +15542,14 @@
                       },
                       "status": {
                         "type": "string",
-                        "description": "Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT."
+                        "enum": [
+                          "IN_PROGRESS",
+                          "COMPLETED",
+                          "DNF",
+                          "DSQ",
+                          "MISSED_CUT"
+                        ],
+                        "description": "Progress through the round."
                       },
                       "completedAt": {
                         "type": [
@@ -15776,7 +15816,12 @@
             "type": "integer"
           },
           "autoPickPolicy": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "QUEUE_THEN_BEST",
+              "BEST_AVAILABLE",
+              "RANDOM"
+            ]
           },
           "tierConfig": {
             "type": "array",
@@ -16034,7 +16079,12 @@
                 "type": "integer"
               },
               "autoPickPolicy": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "QUEUE_THEN_BEST",
+                  "BEST_AVAILABLE",
+                  "RANDOM"
+                ]
               },
               "tierConfig": {
                 "type": "array",
@@ -17095,7 +17145,14 @@
                       ]
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "DNF",
+                        "DSQ",
+                        "MISSED_CUT"
+                      ]
                     }
                   },
                   "required": [
@@ -17129,7 +17186,14 @@
                       ]
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "DNF",
+                        "DSQ",
+                        "MISSED_CUT"
+                      ]
                     }
                   },
                   "required": [
@@ -18961,459 +19025,6 @@
         "additionalProperties": false,
         "description": "Every unmapped competitor across the scheduled sports of every provider."
       },
-      "ProviderEventCleanupRequest": {
-        "type": "object",
-        "properties": {
-          "mode": {
-            "type": "string",
-            "enum": [
-              "DRY_RUN",
-              "EXECUTE"
-            ],
-            "description": "DRY_RUN inventories stale event rows without deleting. EXECUTE deletes rows that are eligible and not contest-referenced."
-          }
-        },
-        "required": [
-          "mode"
-        ],
-        "additionalProperties": false,
-        "description": "Stale provider event cleanup request."
-      },
-      "ProviderEventCleanupRowDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Internal SportEvent identifier."
-          },
-          "providerId": {
-            "type": "string",
-            "description": "Provider/source associated with the stale event row."
-          },
-          "externalId": {
-            "type": "string",
-            "description": "Provider-side event identifier."
-          },
-          "sport": {
-            "type": "string",
-            "description": "Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values."
-          },
-          "name": {
-            "type": "string",
-            "description": "Current persisted event name."
-          },
-          "status": {
-            "type": "string",
-            "description": "Current persisted event status."
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Persisted event start date."
-          },
-          "endDate": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "description": "Persisted event end date, when known."
-          },
-          "staleReason": {
-            "type": "string",
-            "enum": [
-              "NON_GOLF_EVENT",
-              "PAST_GOLF_EVENT"
-            ],
-            "description": "Cleanup rule that selected this stale event for inventory."
-          },
-          "deletable": {
-            "type": "boolean",
-            "description": "Whether EXECUTE mode will delete this event."
-          },
-          "deleted": {
-            "type": "boolean",
-            "description": "Whether this request deleted this event. Always false for dry runs."
-          },
-          "blockedReasons": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "DIRECT_CONTEST_REFERENCE",
-                "CONTEST_ENTRY_PICK_REFERENCE"
-              ]
-            },
-            "description": "Contest-related references that protect this event from deletion."
-          },
-          "directContestCount": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Number of Contest rows directly pointing at this event."
-          },
-          "sportEventParticipantCount": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Number of SportEventParticipant rows attached to this event."
-          },
-          "valuationCount": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event."
-          },
-          "roundCount": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Number of per-round participant rows (SportEventParticipantRound) attached through this event."
-          },
-          "pickCount": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Number of ContestEntryPick rows referencing participants in this event."
-          }
-        },
-        "required": [
-          "id",
-          "providerId",
-          "externalId",
-          "sport",
-          "name",
-          "status",
-          "startDate",
-          "endDate",
-          "staleReason",
-          "deletable",
-          "deleted",
-          "blockedReasons",
-          "directContestCount",
-          "sportEventParticipantCount",
-          "valuationCount",
-          "roundCount",
-          "pickCount"
-        ],
-        "additionalProperties": false,
-        "description": "Single stale provider event cleanup inventory row."
-      },
-      "ProviderEventCleanupResponse": {
-        "type": "object",
-        "properties": {
-          "mode": {
-            "type": "string",
-            "enum": [
-              "DRY_RUN",
-              "EXECUTE"
-            ],
-            "description": "Requested cleanup mode."
-          },
-          "executed": {
-            "type": "boolean",
-            "description": "Whether this request performed deletion."
-          },
-          "inventoriedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When the inventory was computed."
-          },
-          "summary": {
-            "type": "object",
-            "properties": {
-              "inventoriedEventCount": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Total stale provider events inventoried by the cleanup rules."
-              },
-              "deletableEventCount": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Inventoried events eligible for deletion."
-              },
-              "blockedEventCount": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Inventoried events retained because contest or pick references protect them."
-              },
-              "deletedEventCount": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Events deleted by this request. Zero for dry runs."
-              },
-              "sportEventParticipantCount": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Event participant rows attached to inventoried stale events."
-              },
-              "valuationCount": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Event participant valuation rows attached to inventoried stale events."
-              },
-              "roundCount": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Per-round participant rows attached to inventoried stale events."
-              },
-              "pickCount": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Contest entry pick rows referencing inventoried stale event participants. These protect an event from deletion."
-              }
-            },
-            "required": [
-              "inventoriedEventCount",
-              "deletableEventCount",
-              "blockedEventCount",
-              "deletedEventCount",
-              "sportEventParticipantCount",
-              "valuationCount",
-              "roundCount",
-              "pickCount"
-            ],
-            "additionalProperties": false,
-            "description": "Aggregate stale provider event cleanup summary."
-          },
-          "bySport": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "key": {
-                  "type": "string",
-                  "description": "Grouping key, such as a sport, provider id, or status."
-                },
-                "eventCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of inventoried stale events in this group."
-                },
-                "deletableEventCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of events in this group eligible for deletion."
-                },
-                "deletedEventCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of events in this group deleted by this request. Zero for dry runs."
-                }
-              },
-              "required": [
-                "key",
-                "eventCount",
-                "deletableEventCount",
-                "deletedEventCount"
-              ],
-              "additionalProperties": false,
-              "description": "Grouped stale event cleanup inventory counts."
-            },
-            "description": "Inventory grouped by event sport."
-          },
-          "byProvider": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "key": {
-                  "type": "string",
-                  "description": "Grouping key, such as a sport, provider id, or status."
-                },
-                "eventCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of inventoried stale events in this group."
-                },
-                "deletableEventCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of events in this group eligible for deletion."
-                },
-                "deletedEventCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of events in this group deleted by this request. Zero for dry runs."
-                }
-              },
-              "required": [
-                "key",
-                "eventCount",
-                "deletableEventCount",
-                "deletedEventCount"
-              ],
-              "additionalProperties": false,
-              "description": "Grouped stale event cleanup inventory counts."
-            },
-            "description": "Inventory grouped by provider id."
-          },
-          "byStatus": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "key": {
-                  "type": "string",
-                  "description": "Grouping key, such as a sport, provider id, or status."
-                },
-                "eventCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of inventoried stale events in this group."
-                },
-                "deletableEventCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of events in this group eligible for deletion."
-                },
-                "deletedEventCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of events in this group deleted by this request. Zero for dry runs."
-                }
-              },
-              "required": [
-                "key",
-                "eventCount",
-                "deletableEventCount",
-                "deletedEventCount"
-              ],
-              "additionalProperties": false,
-              "description": "Grouped stale event cleanup inventory counts."
-            },
-            "description": "Inventory grouped by persisted event status."
-          },
-          "events": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "Internal SportEvent identifier."
-                },
-                "providerId": {
-                  "type": "string",
-                  "description": "Provider/source associated with the stale event row."
-                },
-                "externalId": {
-                  "type": "string",
-                  "description": "Provider-side event identifier."
-                },
-                "sport": {
-                  "type": "string",
-                  "description": "Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values."
-                },
-                "name": {
-                  "type": "string",
-                  "description": "Current persisted event name."
-                },
-                "status": {
-                  "type": "string",
-                  "description": "Current persisted event status."
-                },
-                "startDate": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "Persisted event start date."
-                },
-                "endDate": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "date-time",
-                  "description": "Persisted event end date, when known."
-                },
-                "staleReason": {
-                  "type": "string",
-                  "enum": [
-                    "NON_GOLF_EVENT",
-                    "PAST_GOLF_EVENT"
-                  ],
-                  "description": "Cleanup rule that selected this stale event for inventory."
-                },
-                "deletable": {
-                  "type": "boolean",
-                  "description": "Whether EXECUTE mode will delete this event."
-                },
-                "deleted": {
-                  "type": "boolean",
-                  "description": "Whether this request deleted this event. Always false for dry runs."
-                },
-                "blockedReasons": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "enum": [
-                      "DIRECT_CONTEST_REFERENCE",
-                      "CONTEST_ENTRY_PICK_REFERENCE"
-                    ]
-                  },
-                  "description": "Contest-related references that protect this event from deletion."
-                },
-                "directContestCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of Contest rows directly pointing at this event."
-                },
-                "sportEventParticipantCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of SportEventParticipant rows attached to this event."
-                },
-                "valuationCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event."
-                },
-                "roundCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of per-round participant rows (SportEventParticipantRound) attached through this event."
-                },
-                "pickCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of ContestEntryPick rows referencing participants in this event."
-                }
-              },
-              "required": [
-                "id",
-                "providerId",
-                "externalId",
-                "sport",
-                "name",
-                "status",
-                "startDate",
-                "endDate",
-                "staleReason",
-                "deletable",
-                "deleted",
-                "blockedReasons",
-                "directContestCount",
-                "sportEventParticipantCount",
-                "valuationCount",
-                "roundCount",
-                "pickCount"
-              ],
-              "additionalProperties": false,
-              "description": "Single stale provider event cleanup inventory row."
-            },
-            "description": "Per-event cleanup inventory rows."
-          }
-        },
-        "required": [
-          "mode",
-          "executed",
-          "inventoriedAt",
-          "summary",
-          "bySport",
-          "byProvider",
-          "byStatus",
-          "events"
-        ],
-        "additionalProperties": false,
-        "description": "Stale provider event cleanup result: the inventory, and what an EXECUTE deleted."
-      },
       "ProviderEventDto": {
         "type": "object",
         "properties": {
@@ -20133,45 +19744,6 @@
                 }
               }
             }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
           }
         }
       }
@@ -20349,6 +19921,45 @@
               }
             }
           },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
           "401": {
             "description": "Standard API error envelope.",
             "content": {
@@ -20480,11 +20091,13 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
             },
             "in": "path",
             "name": "userId",
-            "required": true
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
           }
         ],
         "responses": {
@@ -20494,6 +20107,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -20637,11 +20289,13 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
             },
             "in": "path",
             "name": "userId",
-            "required": true
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
           }
         ],
         "responses": {
@@ -20888,11 +20542,13 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
             },
             "in": "path",
             "name": "userId",
-            "required": true
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
           }
         ],
         "responses": {
@@ -21125,11 +20781,13 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
             },
             "in": "path",
             "name": "userId",
-            "required": true
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
           }
         ],
         "responses": {
@@ -21362,11 +21020,13 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
             },
             "in": "path",
             "name": "userId",
-            "required": true
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
           }
         ],
         "responses": {
@@ -21376,6 +21036,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -21560,11 +21259,13 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
             },
             "in": "path",
             "name": "userId",
-            "required": true
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
           }
         ],
         "responses": {
@@ -21801,11 +21502,13 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
             },
             "in": "path",
             "name": "userId",
-            "required": true
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
           }
         ],
         "responses": {
@@ -21815,6 +21518,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserResetPasswordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -21946,15 +21688,17 @@
         "tags": [
           "Users"
         ],
-        "description": "Sets isActive = false and revokes every live session, atomically. Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining root admin. Disabling yourself clears your session cookies.",
+        "description": "Sets isActive = false and revokes every live session, atomically, except, when you inactivate yourself, the cookie session you did it from (A9: an inactive account may still sign in to reactivate or delete itself). Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining active root admin.",
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
             },
             "in": "path",
             "name": "userId",
-            "required": true
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
           }
         ],
         "responses": {
@@ -21964,6 +21708,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -22138,11 +21921,13 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
             },
             "in": "path",
             "name": "userId",
-            "required": true
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
           }
         ],
         "responses": {
@@ -22152,6 +21937,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -22326,11 +22150,13 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
             },
             "in": "path",
             "name": "userId",
-            "required": true
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
           }
         ],
         "responses": {
@@ -22340,6 +22166,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RevokeUserSessionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -22485,11 +22350,13 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
             },
             "in": "path",
             "name": "userId",
-            "required": true
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
           }
         ],
         "responses": {
@@ -22513,6 +22380,45 @@
                   ],
                   "additionalProperties": false,
                   "description": "Minimal success response envelope."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -26362,7 +26268,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Inactivates the target team, preserves its history, and removes its active owners from the league. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original team (#218).\n\n**League commissioners and root admins only (#219).** Team owners may invite and remove co-owners on their own team, but ending a team also ends its owners' league memberships, so it is league administration rather than team management.",
+        "description": "Inactivates the target team, preserves its history, removes its active owners from the league, and revokes its pending co-owner invitations so an old invite cannot revive it. Refused with LEAGUE_LAST_COMMISSIONER_REQUIRED when the team's owners are every active commissioner the league has. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original team (#218).\n\n**League commissioners and root admins only (#219).** Team owners may invite and remove co-owners on their own team, but ending a team also ends its owners' league memberships, so it is league administration rather than team management.",
         "parameters": [
           {
             "schema": {
@@ -33097,7 +33003,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Edits any event, linked to a provider or not; a provider never overwrites these fields. Root admin only.",
+        "description": "Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -34506,7 +34412,7 @@
         "tags": [
           "Events"
         ],
-        "description": "409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.",
+        "description": "404 PROVIDER_NOT_FOUND when no provider is registered under the id; 422 PROVIDER_SPORT_MISMATCH when the provider does not cover the event's sport; 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -34657,6 +34563,45 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -43017,116 +42962,6 @@
         }
       }
     },
-    "/api/v1/ingestion/stale-events/cleanup": {
-      "post": {
-        "operationId": "cleanupStaleProviderEvents",
-        "summary": "Inventory or delete stale provider events",
-        "tags": [
-          "Ingestion"
-        ],
-        "description": "Inventories stale provider SportEvent rows and, in EXECUTE mode, deletes the eligible ones. Non-Golf events are stale because the current provider workflow is Golf-only; Golf events are stale once their end time has passed. A contest on the event, or a pick on one of its participants, protects it from deletion. Each event is deleted in its own transaction, and one that cannot be deleted is left in place and reported as not deleted.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProviderEventCleanupRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Stale provider event cleanup result: the inventory, and what an EXECUTE deleted.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProviderEventCleanupResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/ingestion/providers/{providerId}/catalog-events": {
       "get": {
         "operationId": "listProviderCatalogEvents",
@@ -43486,7 +43321,7 @@
         "tags": [
           "Drafts"
         ],
-        "description": "Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (LOCKED onwards); otherwise it falls back to the caller's own.",
         "parameters": [
           {
             "schema": {
@@ -44306,7 +44141,7 @@
         "tags": [
           "Drafts"
         ],
-        "description": "Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed.",
+        "description": "Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise.",
         "requestBody": {
           "required": true,
           "content": {
@@ -45096,6 +44931,45 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

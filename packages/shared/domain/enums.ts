@@ -229,6 +229,29 @@ export const ProviderSyncRunStatus = {
 } as const;
 export type ProviderSyncRunStatus = (typeof ProviderSyncRunStatus)[keyof typeof ProviderSyncRunStatus];
 
+/** Where one in-memory ingestion job is; a provider sync run records the job's outcome. */
+export const IngestionJobStatus = {
+  PENDING: 'PENDING',
+  RUNNING: 'RUNNING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+} as const;
+export type IngestionJobStatus = (typeof IngestionJobStatus)[keyof typeof IngestionJobStatus];
+
+/**
+ * A participant's progress through one round (SportEventParticipantRound.status), as the
+ * score source reported it. Every round row is written with one of these; there is no
+ * "not started" value, because a round with no scores has no row.
+ */
+export const ParticipantRoundStatus = {
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  DNF: 'DNF',
+  DSQ: 'DSQ',
+  MISSED_CUT: 'MISSED_CUT',
+} as const;
+export type ParticipantRoundStatus = (typeof ParticipantRoundStatus)[keyof typeof ParticipantRoundStatus];
+
 /**
  * Why a SportEventParticipant is inactive for a golf tournament. Meaningful only
  * when `SportEventParticipant.isActive` is false; null covers "inactive, no more
@@ -310,6 +333,20 @@ export const ContestStatus = {
   CANCELLED: 'CANCELLED',
 } as const;
 export type ContestStatus = (typeof ContestStatus)[keyof typeof ContestStatus];
+
+/** Whether an entry still counts in its contest. INACTIVE entries are kept but left off standings. */
+export const ContestEntryStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+} as const;
+export type ContestEntryStatus = (typeof ContestEntryStatus)[keyof typeof ContestEntryStatus];
+
+/** How a prize definition's payout is expressed. */
+export const PrizePayoutType = {
+  FIXED_AMOUNT: 'FIXED_AMOUNT',
+  PERCENTAGE: 'PERCENTAGE',
+} as const;
+export type PrizePayoutType = (typeof PrizePayoutType)[keyof typeof PrizePayoutType];
 
 // --- League ---
 

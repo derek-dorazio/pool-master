@@ -9,6 +9,7 @@
 
 import type {
   AuthProvider,
+  ContestEntryStatus,
   ContestStatus,
   ContestFormat,
   DateFormat,
@@ -269,7 +270,7 @@ export interface ContestEntry extends DomainEntity {
   squadId: string;
   entryNumber: number;
   name: string;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: ContestEntryStatus;
   tiebreakerValue?: number | null;
   isEliminated: boolean;
 }

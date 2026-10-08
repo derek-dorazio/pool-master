@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { LeagueRole } from '@poolmaster/shared/domain';
+import { LeagueRole, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 import type { SquadDto, TeamOwnerInvitationDto } from '@/lib/api';
 import { Alert, Button, Input, Tile } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -181,7 +181,7 @@ export function MyTeamOwnersPanel({
                     {invitation.status} {invitation.replacementForUserId ? '· Replacement invite' : ''}
                   </div>
                 </div>
-                {invitation.status === 'PENDING' ? (
+                {invitation.status === SquadOwnerInvitationStatus.PENDING ? (
                   <Button
                     data-testid={`my-team-revoke-owner-invitation-${invitation.id}`}
                     disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
