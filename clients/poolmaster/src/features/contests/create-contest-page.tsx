@@ -335,13 +335,12 @@ export function CreateContestPage() {
     setIsHydratedFromManagedContest(true);
   }, [isHydratedFromManagedContest, managedContestQuery.data, setContestFormValue]);
 
+  // Create picks the first contest-ready event. A draft keeps the event it was created on: no
+  // update endpoint takes a sport event, so the page never swaps one in.
   useEffect(() => {
-    if (!sportEventId && eligibleEvents.length) {
-      setContestFormValue('sportEventId', eligibleEvents[0].id);
+    if (isEditMode) {
+      return;
     }
-  }, [eligibleEvents, setContestFormValue, sportEventId]);
-
-  useEffect(() => {
     if (sportEventId && eligibleEvents.some((event) => event.id === sportEventId)) {
       return;
     }
@@ -349,7 +348,7 @@ export function CreateContestPage() {
     if (eligibleEvents.length) {
       setContestFormValue('sportEventId', eligibleEvents[0].id);
     }
-  }, [eligibleEvents, setContestFormValue, sportEventId]);
+  }, [eligibleEvents, isEditMode, setContestFormValue, sportEventId]);
 
   useEffect(() => {
     if (isEditMode || selectedTemplateId || !visibleTemplates.length) {
@@ -622,7 +621,9 @@ export function CreateContestPage() {
       }
       setFormError(extractErrorMessage(error, {
         codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
-        fallback: 'We could not create that contest. Please try again.',
+        fallback: isEditMode
+          ? 'We could not save that contest. Please try again.'
+          : 'We could not create that contest. Please try again.',
       }));
     },
   });
@@ -686,7 +687,7 @@ export function CreateContestPage() {
       } else {
         logger.warn(payload, 'Contest delete was rejected');
       }
-      setFormError(extractErrorMessage(error, { fallback: 'We could not create that contest. Please try again.' }));
+      setFormError(extractErrorMessage(error, { fallback: 'We could not delete that contest. Please try again.' }));
     },
   });
 
@@ -813,13 +814,17 @@ export function CreateContestPage() {
             <FormField label="Golf event">
               <Select
                 data-testid="contest-sport-event"
+                disabled={isEditMode}
                 onChange={(event) => {
                   setContestFormValue('sportEventId', event.target.value);
                 }}
                 value={sportEventId}
               >
                 <option value="">Select an event</option>
-                {eligibleEvents.map((event) => (
+                {(isEditMode && selectedEvent && !selectedEvent.contestEligible
+                  ? [selectedEvent, ...eligibleEvents]
+                  : eligibleEvents
+                ).map((event) => (
                   <option key={event.id} value={event.id}>
                     {event.name}
                     {' · '}
