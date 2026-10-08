@@ -15,6 +15,7 @@ import {
   createTestUser,
 } from '../helpers';
 import {
+  PrismaLeagueInvitationRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaUserRepository,
@@ -33,6 +34,9 @@ const LEAGUE_CODE_PREFIX = 'IDREPO';
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
   const prisma = getPrisma();
+  await prisma.leagueInvitation.deleteMany({
+    where: { league: { leagueCode: { startsWith: LEAGUE_CODE_PREFIX } } },
+  });
   await prisma.leagueMembership.deleteMany({
     where: { league: { leagueCode: { startsWith: LEAGUE_CODE_PREFIX } } },
   });
@@ -470,6 +474,51 @@ describe('identity cluster repositories (#202)', () => {
       const found = await repo.findAll({ search: marker.toLowerCase() });
 
       expect(found.map((row) => row.id)).toContain(league.id);
+    });
+  });
+
+  describe('LeagueMembershipRepository.findByUser', () => {
+    it('lists a user\'s ACTIVE memberships, most recently joined first', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueMembershipRepository(prisma);
+      const { user } = await createTestUser({ lastName: 'Joiner' });
+      const [older, newer, left] = await Promise.all([
+        createLeague(prisma, `${LEAGUE_CODE_PREFIX}E1`, 'Joined First'),
+        createLeague(prisma, `${LEAGUE_CODE_PREFIX}E2`, 'Joined Second'),
+        createLeague(prisma, `${LEAGUE_CODE_PREFIX}E3`, 'Left'),
+      ]);
+      const join = (leagueId: string, joinedAt: string, status: LeagueMembershipStatus) => prisma.leagueMembership.create({
+        data: { leagueId, userId: user.id, role: LeagueRole.MEMBER, status, joinedAt: new Date(joinedAt) },
+      });
+      await join(older.id, '2026-01-01T00:00:00.000Z', LeagueMembershipStatus.ACTIVE);
+      await join(newer.id, '2026-02-01T00:00:00.000Z', LeagueMembershipStatus.ACTIVE);
+      await join(left.id, '2026-03-01T00:00:00.000Z', LeagueMembershipStatus.INACTIVE);
+
+      const memberships = await repo.findByUser(user.id);
+
+      expect(memberships.map((membership) => membership.leagueId)).toEqual([newer.id, older.id]);
+    });
+  });
+
+  describe('LeagueInvitationRepository reads', () => {
+    it('reads an invitation by id, null for an unknown id, and lists a league\'s invitations newest first', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueInvitationRepository(prisma);
+      const { user } = await createTestUser({ lastName: 'Inviter' });
+      const [league, otherLeague] = await Promise.all([
+        createLeague(prisma, `${LEAGUE_CODE_PREFIX}F1`, 'Inviting'),
+        createLeague(prisma, `${LEAGUE_CODE_PREFIX}F2`, 'Elsewhere'),
+      ]);
+      const invite = (leagueId: string, code: string, createdAt: string) => prisma.leagueInvitation.create({
+        data: { leagueId, inviteCode: `${LEAGUE_CODE_PREFIX}-${code}-${Date.now()}`, invitedBy: user.id, createdAt: new Date(createdAt) },
+      });
+      const first = await invite(league.id, 'first', '2026-01-01T00:00:00.000Z');
+      const second = await invite(league.id, 'second', '2026-01-02T00:00:00.000Z');
+      await invite(otherLeague.id, 'other', '2026-01-03T00:00:00.000Z');
+
+      await expect(repo.findById(first.id)).resolves.toEqual(expect.objectContaining({ id: first.id, leagueId: league.id }));
+      await expect(repo.findById('00000000-0000-0000-0000-000000000000')).resolves.toBeNull();
+      expect((await repo.findByLeague(league.id)).map((row) => row.id)).toEqual([second.id, first.id]);
     });
   });
 });
