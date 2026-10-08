@@ -200,7 +200,7 @@ describe('#324 draft rules — buildEntryUserIdMap', () => {
 });
 
 describe('#324 draft rules — buildDraftTiers and buildValuationLookup', () => {
-  it('turns resolved event tier groups into the room\'s tier shape', () => {
+  it('turns resolved event tier groups into the room\'s tier shape, each tier taking the contest\'s picksPerTier', () => {
     const groups = [
       {
         id: 'tier-row-1',
@@ -208,7 +208,6 @@ describe('#324 draft rules — buildDraftTiers and buildValuationLookup', () => 
         tierKey: 'tier-1',
         label: 'Tier 1',
         tierNumber: 1,
-        defaultPickCount: 2,
         createdAt: new Date(),
         updatedAt: new Date(),
         participants: [
@@ -218,7 +217,7 @@ describe('#324 draft rules — buildDraftTiers and buildValuationLookup', () => 
       },
     ] as unknown as SportEventTierGroup[];
 
-    expect(buildDraftTiers(groups)).toEqual([
+    expect(buildDraftTiers(groups, 2)).toEqual([
       {
         tierId: 'tier-1',
         tierName: 'Tier 1',
@@ -230,7 +229,36 @@ describe('#324 draft rules — buildDraftTiers and buildValuationLookup', () => 
   });
 
   it('builds no tiers from an event that has none', () => {
-    expect(buildDraftTiers([])).toEqual([]);
+    expect(buildDraftTiers([], 2)).toEqual([]);
+  });
+
+  it('gives every tier the contest\'s picksPerTier, so a 3-tier event at 2 picks per tier has a roster of 6', () => {
+    const groups = [1, 2, 3].map((tierNumber) => ({
+      id: `tier-row-${tierNumber}`,
+      sportEventId: 'event-1',
+      tierKey: `tier-${tierNumber}`,
+      label: `Tier ${tierNumber}`,
+      tierNumber,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      participants: [],
+    })) as unknown as SportEventTierGroup[];
+
+    const tiers = buildDraftTiers(groups, 2);
+
+    expect(tiers.map((draftTier) => draftTier.picksFromTier)).toEqual([2, 2, 2]);
+    expect(getRosterSize(SelectionType.TIERED, configuration(), tiers)).toBe(6);
+  });
+
+  it('gives every tier no picks when the contest supplies 0 picks per tier, so the tiered roster is 0', () => {
+    const groups = [
+      { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1, participants: [] },
+    ] as unknown as SportEventTierGroup[];
+
+    const tiers = buildDraftTiers(groups, 0);
+
+    expect(tiers[0].picksFromTier).toBe(0);
+    expect(getRosterSize(SelectionType.TIERED, configuration(), tiers)).toBe(0);
   });
 
   // pool-master-753 — carried over from the deleted loadDraftContext suite. A price-only

@@ -106,7 +106,6 @@ export class SportEventTierService {
       tierKey: `tier-${index + 1}`,
       label: `Tier ${index + 1}`,
       tierNumber: index + 1,
-      defaultPickCount: 1,
     })));
     this.deps.logger?.info({ sportEventId, tierCount: DEFAULT_TIER_COUNT }, 'Created default tiers');
     return this.deps.tiers.findBySportEvent(sportEventId);

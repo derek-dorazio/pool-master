@@ -83,7 +83,6 @@ export interface SportEventTier extends DomainEntity {
   tierKey: string;
   label: string;
   tierNumber: number;
-  defaultPickCount: number;
 }
 
 /**

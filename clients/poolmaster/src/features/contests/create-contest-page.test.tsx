@@ -122,7 +122,7 @@ function buildManagedContest(status: string, overrides: { id?: string } = {}) {
       id: `config-${id}`,
       contestId: id,
       maxEntriesPerSquad: 1,
-      rosterSize: 6,
+      picksPerTier: 1,
       countedScores: 4,
     },
     effectiveTiers: [],
@@ -182,6 +182,7 @@ function primeCommonMocks() {
           readinessStatus: 'CONTEST_ELIGIBLE',
           readinessReasons: [],
           contestEligible: true,
+          tierCount: 6,
         },
       ],
     },
@@ -203,7 +204,7 @@ function primeCommonMocks() {
           schemaVersion: 1,
           configuration: {
             maxEntriesPerSquad: 1,
-            rosterSize: 6,
+            picksPerTier: 1,
             countedScores: 4,
           },
         },
@@ -221,7 +222,7 @@ function primeCommonMocks() {
           schemaVersion: 1,
           configuration: {
             maxEntriesPerSquad: 1,
-            rosterSize: 12,
+            picksPerTier: 2,
             countedScores: 8,
           },
         },
@@ -263,8 +264,8 @@ describe('CreateContestPage', () => {
     fireEvent.change(screen.getByTestId('contest-name'), {
       target: { value: 'Masters Pick 6' },
     });
-    fireEvent.change(screen.getByTestId('contest-tiered-roster-size'), {
-      target: { value: '6' },
+    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), {
+      target: { value: '1' },
     });
     fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), {
       target: { value: '4' },
@@ -283,7 +284,7 @@ describe('CreateContestPage', () => {
           templateId: '11111111-1111-4111-8111-111111111111',
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
           configuration: expect.objectContaining({
-            rosterSize: 6,
+            picksPerTier: 1,
             countedScores: 4,
           }),
         }),
@@ -334,7 +335,7 @@ describe('CreateContestPage', () => {
   });
 
   // pool-master-dxd.39 — pick-12 templates seed the wider roster shape.
-  it('applies the pick-12 template roster size and counted scores', async () => {
+  it('applies the pick-12 template: two picks per tier on six tiers is twelve golfers, eight counting', async () => {
     primeCommonMocks();
     createContestMock.mockResolvedValue({
       data: {
@@ -349,8 +350,9 @@ describe('CreateContestPage', () => {
     await screen.findByTestId('contest-name');
     fireEvent.click(screen.getByTestId('contest-template-golf-tiered-pick-12'));
 
-    expect(screen.getByTestId('contest-tiered-roster-size')).toHaveValue(12);
+    expect(screen.getByTestId('contest-tiered-picks-per-tier')).toHaveValue(2);
     expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(8);
+    expect(screen.getByText('6 tiers × 2 = 12 golfers picked.')).toBeInTheDocument();
 
     fireEvent.change(screen.getByTestId('contest-name'), {
       target: { value: 'Masters Pick 12' },
@@ -365,12 +367,57 @@ describe('CreateContestPage', () => {
           templateId: '33333333-3333-4333-8333-333333333333',
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
           configuration: expect.objectContaining({
-            rosterSize: 12,
+            picksPerTier: 2,
             countedScores: 8,
           }),
         }),
       }),
     );
+  });
+
+  it('resets scores that count to all but two tiers\' worth when picks per tier changes', async () => {
+    primeCommonMocks();
+
+    renderCreateContestPage();
+
+    await screen.findByTestId('contest-name');
+    expect(screen.getByText('6 tiers × 1 = 6 golfers picked.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), {
+      target: { value: '2' },
+    });
+
+    expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(8);
+    expect(screen.getByText('6 tiers × 2 = 12 golfers picked.')).toBeInTheDocument();
+  });
+
+  it('starts scores that count at the selected event\'s tier count less two', async () => {
+    primeCommonMocks();
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [] } });
+    listEventsMock.mockResolvedValue({
+      data: {
+        events: [
+          {
+            id: 'event-1',
+            sport: 'GOLF',
+            name: 'Masters Tournament',
+            status: 'SCHEDULED',
+            startDate: '2026-04-10T12:00:00.000Z',
+            participantCount: 144,
+            readinessStatus: 'CONTEST_ELIGIBLE',
+            readinessReasons: [],
+            contestEligible: true,
+            tierCount: 4,
+          },
+        ],
+      },
+    });
+
+    renderCreateContestPage();
+
+    await screen.findByTestId('contest-name');
+    await waitFor(() => expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(2));
+    expect(screen.getByText('4 tiers × 1 = 4 golfers picked.')).toBeInTheDocument();
   });
 
   // #245 — a template is optional: with none, the complete form configuration is the contest's.
@@ -401,7 +448,7 @@ describe('CreateContestPage', () => {
         name: 'Masters Custom',
         selectionType: 'TIERED',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
-        configuration: expect.objectContaining({ rosterSize: 6, countedScores: 4 }),
+        configuration: expect.objectContaining({ picksPerTier: 1, countedScores: 4 }),
       }),
     );
   });
@@ -420,18 +467,21 @@ describe('CreateContestPage', () => {
     });
     await waitFor(() => expect(screen.getByTestId('create-contest-submit')).toBeEnabled());
 
-    fireEvent.change(screen.getByTestId('contest-tiered-roster-size'), {
+    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), {
       target: { value: '' },
     });
     expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
 
-    fireEvent.change(screen.getByTestId('contest-tiered-roster-size'), {
-      target: { value: '3' },
+    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), {
+      target: { value: '1' },
+    });
+    fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), {
+      target: { value: '7' },
     });
     expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
 
     fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), {
-      target: { value: '3' },
+      target: { value: '6' },
     });
     expect(screen.getByTestId('create-contest-submit')).toBeEnabled();
     expect(createContestMock).not.toHaveBeenCalled();
@@ -445,7 +495,7 @@ describe('CreateContestPage', () => {
     renderCreateContestPage();
 
     await screen.findByTestId('contest-name');
-    fireEvent.change(screen.getByTestId('contest-tiered-roster-size'), {
+    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), {
       target: { value: '' },
     });
     await waitFor(() => expect(screen.getByTestId('create-contest-submit')).toBeEnabled());
@@ -492,7 +542,7 @@ describe('CreateContestPage', () => {
             id: 'config-78',
             contestId: 'contest-78',
             maxEntriesPerSquad: 1,
-            rosterSize: 6,
+            picksPerTier: 1,
             countedScores: 4,
           },
           effectiveTiers: [],
@@ -557,7 +607,7 @@ describe('CreateContestPage', () => {
             id: 'config-77',
             contestId: 'contest-77',
             maxEntriesPerSquad: 2,
-            rosterSize: 6,
+            picksPerTier: 4,
             countedScores: 4,
           },
           effectiveTiers: [
@@ -565,7 +615,6 @@ describe('CreateContestPage', () => {
               tierKey: 'tier-1',
               label: 'Tier 1',
               tierNumber: 1,
-              defaultPickCount: 1,
               assignments: [
                 { sportEventParticipantId: 'sep-1', participantId: 'g-1', tierOrderIndex: 1, price: null },
                 { sportEventParticipantId: 'sep-2', participantId: 'g-2', tierOrderIndex: 2, price: null },
@@ -593,7 +642,7 @@ describe('CreateContestPage', () => {
     // by the managed-contest response (plans/124 §4.6/§5.3).
     expect(screen.getByTestId('inherited-tiers-panel')).toBeInTheDocument();
     expect(screen.getByTestId('inherited-tier-tier-1')).toHaveTextContent(
-      '2 golfers · 1 pick by default',
+      '2 golfers',
     );
 
     fireEvent.change(screen.getByTestId('contest-name'), {
@@ -619,7 +668,7 @@ describe('CreateContestPage', () => {
         path: { id: 'league-1', contestId: 'contest-77' },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         body: expect.objectContaining({
-          rosterSize: 6,
+          picksPerTier: 4,
           countedScores: 3,
         }),
       }),

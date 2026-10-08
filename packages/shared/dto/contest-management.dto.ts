@@ -65,8 +65,8 @@ export type GolfCategoryDefinitionDto = z.infer<typeof GolfCategoryDefinitionSch
  */
 export const GolfTieredContestConfigurationSchema = z.object({
   maxEntriesPerSquad: nullablePositiveIntSchema,
-  rosterSize: z.number().int().min(1).describe('How many golfers each Team entry must pick.'),
-  countedScores: z.number().int().min(1).describe('How many golfer scores count toward the Team total.'),
+  picksPerTier: z.number().int().min(1).describe("How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."),
+  countedScores: z.number().int().min(1).describe("How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."),
 }).describe('Golf tiered contest configuration for pick-X, count-best-Y roster contests.');
 export type GolfTieredContestConfigurationRequest = z.infer<
   typeof GolfTieredContestConfigurationSchema
@@ -185,7 +185,6 @@ export const GolfEffectiveTierDtoSchema = z.object({
   tierKey: z.string().describe('Stable per-event tier key.'),
   label: z.string().describe('Commissioner-facing tier label.'),
   tierNumber: z.number().int().describe('1-based tier ordering.'),
-  defaultPickCount: z.number().int().describe('Default number of golfers picked from this tier.'),
   assignments: z.array(GolfEffectiveTierAssignmentDtoSchema).describe('Golfers assigned to this tier, ordered by tierOrderIndex ascending.'),
 }).describe('One inherited event tier and its golfer assignments.');
 export type GolfEffectiveTierDto = z.infer<typeof GolfEffectiveTierDtoSchema>;

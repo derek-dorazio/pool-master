@@ -375,7 +375,6 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
             tierKey: `tier-${n}`,
             label: `Tier ${n}`,
             tierNumber: n,
-            defaultPickCount: 2,
           })),
           reassignOrphansTo: 'tier-1',
         },

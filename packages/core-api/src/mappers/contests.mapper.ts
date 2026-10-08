@@ -159,7 +159,7 @@ function toContestConfigurationDetailDto(
   if (isManagedConfiguration && contestConfiguration.configJson) {
     // Only the typed settings: rows saved before #416 also hold a lock time and an entry cap.
     return {
-      rosterSize: contestConfiguration.configJson.rosterSize,
+      picksPerTier: contestConfiguration.configJson.picksPerTier,
       countedScores: contestConfiguration.configJson.countedScores,
       maxEntriesPerSquad,
     };

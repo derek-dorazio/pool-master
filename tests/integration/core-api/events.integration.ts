@@ -285,7 +285,7 @@ describe('events routes', () => {
       });
       if (options.tiered) {
         const tier = await prisma.sportEventTier.create({
-          data: { sportEventId: eventId, tierKey: 'A', label: 'Tier A', tierNumber: 1, defaultPickCount: 1 },
+          data: { sportEventId: eventId, tierKey: 'A', label: 'Tier A', tierNumber: 1 },
         });
         await prisma.sportEventParticipantValuation.create({
           data: {
@@ -300,7 +300,7 @@ describe('events routes', () => {
     }
 
     const tierPayload = {
-      tiers: [{ tierKey: 'A', label: 'Tier A', tierNumber: 1, defaultPickCount: 2 }],
+      tiers: [{ tierKey: 'A', label: 'Tier A', tierNumber: 1 }],
     };
 
     it('releases a tiered draft for a root admin, then locks its tiers while the generic transition never releases', async () => {
