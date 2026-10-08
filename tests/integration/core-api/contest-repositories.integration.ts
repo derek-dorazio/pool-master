@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 import {
+  PrismaContestConfigTemplateRepository,
   PrismaContestEntryPickRepository,
   PrismaContestEntryRepository,
   PrismaContestEntryStandingRepository,
@@ -233,6 +234,59 @@ describe('ContestRepository', () => {
       sport: Sport.GOLF,
     }));
     await expect(repos().contests.findById(contest.id)).resolves.toEqual(renamed);
+  });
+});
+
+describe('ContestConfigTemplateRepository', () => {
+  // Templates are reference data the cleanup leaves alone, so these use a sport of their own.
+  const sport = `ITEST-${randomUUID().slice(0, 8)}`;
+  afterEach(async () => {
+    await getPrisma().contestConfigTemplate.deleteMany({ where: { sport } });
+  });
+
+  async function createTemplate(templateKey: string, eventType: string | null, sortOrder: number) {
+    return getPrisma().contestConfigTemplate.create({
+      data: {
+        sport,
+        eventType,
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+        templateKey,
+        name: `Template ${templateKey}`,
+        description: 'Integration template',
+        sortOrder,
+        configJson: { picksPerTier: 1 },
+      },
+    });
+  }
+
+  it("lists an event type's templates with the ones for any event type, in sort order", async () => {
+    await createTemplate('any', null, 2);
+    await createTemplate('major', 'MAJOR', 1);
+    await createTemplate('other', 'OTHER', 0);
+
+    const templates = await new PrismaContestConfigTemplateRepository(getPrisma())
+      .list({ sport: sport as Sport, eventType: 'MAJOR' });
+
+    expect(templates.map((template) => template.templateKey)).toEqual(['major', 'any']);
+  });
+
+  it('updates only the fields given, and a retired template leaves the active list', async () => {
+    const kept = await createTemplate('kept', null, 0);
+    const retired = await createTemplate('retired', null, 1);
+    const repo = new PrismaContestConfigTemplateRepository(getPrisma());
+
+    const updated = await repo.update(retired.id, { name: 'Retired Template', active: false });
+
+    expect(updated).toEqual(expect.objectContaining({
+      name: 'Retired Template',
+      active: false,
+      description: 'Integration template',
+      sortOrder: 1,
+      configJson: { picksPerTier: 1 },
+    }));
+    const active = await repo.list({ sport: sport as Sport, active: true });
+    expect(active.map((template) => template.id)).toEqual([kept.id]);
   });
 });
 

@@ -189,3 +189,20 @@ describe('pool-master-rop.78.6 / plans/117 §7.1 — ContestEntryPick.contestFor
     expect(violations).toEqual([]);
   });
 });
+
+describe('ContestEntryPickService.deletePick', () => {
+  it('removes the one pick named and leaves the entry and its other picks in place', async () => {
+    const prisma = getPrisma();
+    const service = new ContestEntryPickService(prisma);
+    const fixture = await seedFixtureForFormat('ROSTER');
+    const kept = await service.createPick({ entryId: fixture.entryId, sportEventParticipantId: fixture.sportEventParticipantId });
+    const other = await seedFixtureForFormat('ROSTER');
+    const removed = await service.createPick({ entryId: fixture.entryId, sportEventParticipantId: other.sportEventParticipantId });
+
+    await service.deletePick(removed.id);
+
+    const remaining = await prisma.contestEntryPick.findMany({ where: { entryId: fixture.entryId } });
+    expect(remaining.map((pick) => pick.id)).toEqual([kept.id]);
+    await expect(prisma.contestEntry.count({ where: { id: fixture.entryId } })).resolves.toBe(1);
+  });
+});

@@ -140,6 +140,25 @@ describe('settings registry on Postgres', () => {
     expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(1);
   });
 
+  it('two first saves of one group racing store exactly one value and answer the other with a conflict naming it', async () => {
+    const admin = await createTestUser({ displayName: 'Settings Race Admin', isRootAdmin: true });
+    const repository = new PrismaPlatformRuntimeConfigRepository(getPrisma());
+    const save = (draft: number) => repository.save({
+      configKey: POLL_INTERVAL_SETTINGS.key,
+      configJson: { draft },
+      changedById: admin.user.id,
+      expectedUpdatedAt: null,
+    });
+
+    const results = await Promise.all([save(12000), save(14000)]);
+
+    const stored = await getPrisma().platformRuntimeConfig.findUniqueOrThrow({ where: { configKey: POLL_INTERVAL_SETTINGS.key } });
+    expect(results.map((result) => result.status).sort()).toEqual(['conflict', 'saved']);
+    const conflict = results.find((result) => result.status === 'conflict');
+    expect(conflict?.status === 'conflict' && conflict.current?.configJson).toEqual(stored.configJson);
+    expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(1);
+  });
+
   it('an invalid stored value is served as the defaults and the row is left exactly as it was', async () => {
     await getPrisma().platformRuntimeConfig.create({
       data: { configKey: POLL_INTERVAL_SETTINGS.key, configJson: { standings: 'fast' } },
