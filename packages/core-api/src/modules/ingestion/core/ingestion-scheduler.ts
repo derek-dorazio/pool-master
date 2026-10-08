@@ -10,7 +10,7 @@
  * event and moves its lifecycle by hand (#126).
  */
 
-import type { Sport } from '@poolmaster/shared/domain';
+import type { IngestionJobStatus, Sport } from '@poolmaster/shared/domain';
 import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
@@ -53,7 +53,7 @@ export interface IngestionJobRecord {
   providerId: string;
   sport: Sport;
   eventExternalId?: string;
-  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+  status: IngestionJobStatus;
   startedAt?: Date;
   completedAt?: Date;
   recordsProcessed: number;

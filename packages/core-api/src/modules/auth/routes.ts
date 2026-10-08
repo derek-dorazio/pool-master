@@ -58,7 +58,6 @@ export function authModule(fastify: FastifyInstance): void {
       response: {
         200: schemaRef('AuthResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: handlers.login,

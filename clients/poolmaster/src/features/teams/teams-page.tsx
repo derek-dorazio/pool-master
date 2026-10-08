@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { LeagueRole } from '@poolmaster/shared/domain';
+import { LeagueRole, SquadMembershipStatus, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
 import { type SquadDto, type TeamOwnerInvitationDto, listLeagueSquads, listSquadOwnerInvitations } from '@/lib/api';
@@ -23,6 +23,7 @@ import {
 } from '@/features/shared/ui';
 import { SquadActions } from './squad-actions';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
+import { LeagueInvitations } from './league-invitations';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
 import { QueryKeys } from '@/lib/query-keys';
@@ -95,7 +96,7 @@ export function TeamsPage() {
   const pendingInvitationsByTeam = useMemo(() => {
     const grouped = new Map<string, TeamOwnerInvitationDto[]>();
     for (const invitation of ownerInvitationsQuery.data ?? []) {
-      if (invitation.status !== 'PENDING') {
+      if (invitation.status !== SquadOwnerInvitationStatus.PENDING) {
         continue;
       }
 
@@ -119,7 +120,7 @@ export function TeamsPage() {
           leagueCode: league.leagueCode,
           teamCount: teamsQuery.data.length,
           pendingInvitationCount: ownerInvitationsQuery.data?.filter(
-            (invitation) => invitation.status === 'PENDING',
+            (invitation) => invitation.status === SquadOwnerInvitationStatus.PENDING,
           ).length ?? 0,
         },
       },
@@ -174,8 +175,8 @@ export function TeamsPage() {
         description={(
           <>
             Every member of {league.name} owns a team, so this is the league roster. Owners manage
-            their own team&apos;s co-owners here; commissioners and root admins manage every team
-            and can inactivate one.
+            their own team&apos;s co-owners here; commissioners and root admins manage every team,
+            can inactivate one, and invite new members.
           </>
         )}
         eyebrow="League Directory"
@@ -192,6 +193,16 @@ export function TeamsPage() {
             for this league right now.
           </p>
         </Alert>
+      ) : null}
+
+      {canManageLeague ? (
+        <LeagueInvitations
+          isInactiveLeague={!leagueIsActive}
+          joinPolicy={league.joinPolicy}
+          leagueId={leagueId}
+          leagueName={league.name}
+          membersByUserId={leagueMembersByUserId}
+        />
       ) : null}
 
       <Tile>
@@ -216,7 +227,7 @@ export function TeamsPage() {
             teamsQuery.data.map((team) => {
               const icon = getTeamIconOption(team.iconKey);
               const activeOwners = (team.members ?? []).filter(
-                (member) => member.status === 'ACTIVE',
+                (member) => member.status === SquadMembershipStatus.ACTIVE,
               );
               const pendingInvitations = pendingInvitationsByTeam.get(team.id) ?? [];
 

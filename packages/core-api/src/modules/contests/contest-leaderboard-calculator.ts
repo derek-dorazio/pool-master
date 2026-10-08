@@ -9,6 +9,7 @@ import {
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantScoringDefinitionIdSchema,
   rankSortedScores,
+  type ContestEntryStatus,
   type ParticipantScoringDefinition,
   type ParticipantScoringDefinitionId,
   type ScoreDirection,
@@ -41,7 +42,7 @@ export interface ContestLeaderboardEntryInput {
   id: string;
   entryNumber: number;
   name: string;
-  status: string;
+  status: ContestEntryStatus;
   squadId: string;
   squad: { name: string };
   picks: Array<{
@@ -166,7 +167,7 @@ export function buildContestEntryStanding(
     entryNumber: entry.entryNumber,
     squadId: entry.squadId,
     squadName: entry.squad.name,
-    status: entry.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+    status: entry.status,
     score: countingScores.length > 0
       ? countingScores.reduce((sum, score) => sum + score, 0)
       : null,

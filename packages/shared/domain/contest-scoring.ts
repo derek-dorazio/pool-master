@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { ParticipantRoundStatus } from './enums';
+
 /**
  * Only ids with a live scoring engine are listed. The exhaustive
  * `PARTICIPANT_SCORING_DEFINITIONS` record below means an id added here fails
@@ -37,22 +39,19 @@ export interface ParticipantScoringDefinition {
 
 /** One participant's scored round, as a formatter needs it. `status` is the round row's own. */
 export interface ParticipantRoundScore {
-  status: string;
+  status: ParticipantRoundStatus;
   strokes: number;
   scoreToPar: number;
 }
 
-/** A round row's terminal-and-counted states: every hole played. */
-const COMPLETED_ROUND_STATUSES: ReadonlySet<string> = new Set(['COMPLETED', 'COMPLETE']);
-
 /**
- * Whether a round row is finished. The round's own `status` is a free string and
- * `completedAt` is provider-supplied and often null, so this set is the only signal — which
- * is why it is asked here rather than re-spelled by each surface that needs it. `formatRound`
- * below is one caller; a client deriving which round a leaderboard is currently on is another.
+ * Whether a round row is finished: every hole played. `completedAt` is provider-supplied and
+ * often null, so the status is the only signal — which is why it is asked here rather than
+ * re-spelled by each surface that needs it. `formatRound` below is one caller; a client
+ * deriving which round a leaderboard is currently on is another.
  */
 export const isRoundComplete = (round: Pick<ParticipantRoundScore, 'status'>): boolean =>
-  COMPLETED_ROUND_STATUSES.has(round.status);
+  round.status === ParticipantRoundStatus.COMPLETED;
 
 const formatStrokesToPar = (value: number): string =>
   value === 0 ? 'E' : value > 0 ? `+${value}` : String(value);

@@ -7,7 +7,7 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { getDefaultTournamentFormatForSport } from '@poolmaster/shared/domain';
+import { getDefaultTournamentFormatForSport, type SportEventStatus } from '@poolmaster/shared/domain';
 import type {
   SportEvent,
   SportEventDetail,
@@ -400,7 +400,7 @@ function normalizeSportEventRow(row: {
   location: string | null;
   startDate: Date;
   endDate: Date | null;
-  status: string;
+  status: SportEventStatus;
   rounds: number | null;
   participantCount: number | null;
   metadata: Prisma.JsonValue;

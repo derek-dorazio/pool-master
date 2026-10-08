@@ -1,6 +1,7 @@
 import { createLeague, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
+import type { ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
 import {
   createAuthenticatedClient,
   createFunctionalEmail,
@@ -221,8 +222,8 @@ export async function buildLeagueWithCommissioner(overrides?: {
  */
 export async function seedContestFixture(leagueId: string, options: {
   name: string;
-  selectionType: string;
-  scoringEngine: string;
+  selectionType: SelectionType;
+  scoringEngine: ScoringEngine;
   status?: 'DRAFT' | 'OPEN';
   configuration?: {
     rounds?: number;

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { ParticipantRoundStatus } from '@poolmaster/shared/domain';
 import {
   deriveGolfAutoTransition,
   deriveGolfTournamentReadiness,
@@ -345,7 +346,7 @@ describe('pool-master-r11 golf-admin-utils: parseGolfRoundScoreUpload', () => {
 });
 
 describe('golf-admin-utils: golfRoundScoreRows (issue 236)', () => {
-  function result(roundNumber: number, strokes: number, status = 'COMPLETED') {
+  function result(roundNumber: number, strokes: number, status: ParticipantRoundStatus = 'COMPLETED') {
     return {
       id: `r-${roundNumber}`,
       sportEventRoundId: `round-${roundNumber}`,

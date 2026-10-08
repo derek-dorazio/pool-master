@@ -31,6 +31,7 @@ import {
 } from './contest-status';
 import { ContestStatusBadge } from './contest-status-badge';
 import { buildLeaderboardView, type LeaderboardEntryRow } from './contest-leaderboard';
+import { ContestStatus } from '@poolmaster/shared/domain';
 
 /**
  * The member-facing contest leaderboard (#110, #111, #112).
@@ -309,7 +310,7 @@ export function ContestLeaderboardPage() {
                 {view.currentRoundLabel}
               </Chip>
             ) : null}
-            {contest.status === 'COMPLETED' ? (
+            {contest.status === ContestStatus.COMPLETED ? (
               // #246 — an entry's standing is frozen at settlement while each golfer's own
               // score stays live, so a late correction can make the two disagree on this very
               // page. Say so rather than let it read as a bug.

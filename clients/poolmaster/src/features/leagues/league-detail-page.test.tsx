@@ -10,12 +10,10 @@ import {
   apiSuccess,
   buildCurrentUser,
   buildLeagueMembership,
-  buildGeneratedInviteLink,
   buildLeague,
   buildLeagueSquad,
   buildLeagueSquadMember,
   deleteLeagueData,
-  generateInviteLinkData,
   getLeagueByCodeData,
   inactivateLeagueData,
   listLeagueSquadsData,
@@ -26,7 +24,6 @@ import { QueryKeys } from '@/lib/query-keys';
 
 const deleteLeagueMock = vi.fn();
 const enterContestMock = vi.fn();
-const generateInviteLinkMock = vi.fn();
 const getContestMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
@@ -38,7 +35,6 @@ const listContestsMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const logoutUserMock = vi.fn();
 const refreshTokenMock = vi.fn();
-const sendLeagueInvitationsMock = vi.fn();
 const updateLeagueDetailsMock = vi.fn();
 const updateLeagueIconMock = vi.fn();
 
@@ -46,7 +42,6 @@ bindApiMocks({
   activateLeague: activateLeagueMock,
   deleteLeague: deleteLeagueMock,
   enterContest: enterContestMock,
-  generateInviteLink: generateInviteLinkMock,
   getContest: getContestMock,
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
@@ -57,7 +52,6 @@ bindApiMocks({
   listLeagueSquads: listLeagueSquadsMock,
   logoutUser: logoutUserMock,
   refreshToken: refreshTokenMock,
-  sendLeagueInvitations: sendLeagueInvitationsMock,
   updateLeagueDetails: updateLeagueDetailsMock,
   updateLeagueIcon: updateLeagueIconMock,
 });
@@ -150,7 +144,6 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
     activateLeagueMock.mockReset();
     deleteLeagueMock.mockReset();
     enterContestMock.mockReset();
-    generateInviteLinkMock.mockReset();
     getContestMock.mockReset();
     getCurrentUserMock.mockReset();
     getLeagueByCodeMock.mockReset();
@@ -161,7 +154,6 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
     listLeagueSquadsMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
-    sendLeagueInvitationsMock.mockReset();
     updateLeagueDetailsMock.mockReset();
     updateLeagueIconMock.mockReset();
   });
@@ -402,44 +394,14 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
     );
   });
 
-  // pool-master-8lt — commissioners can create and copy a join URL without email delivery.
-  it('creates a copyable join URL from the Invite Members action modal', async () => {
+  it('offers no Invite members action on League Home, which lives on Teams and Owners now', async () => {
     primeCommonMocks();
-    const writeTextMock = vi.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, {
-      clipboard: { writeText: writeTextMock },
-    });
-    generateInviteLinkMock.mockResolvedValue(apiSuccess(generateInviteLinkData(buildGeneratedInviteLink({
-      inviteCode: 'invite-abc',
-    }))));
 
     renderLeagueDetailPage();
 
-    await screen.findByTestId('league-home');
-    expect(screen.queryByTestId('league-join-url')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId('league-open-invite-members'));
-
-    await screen.findByTestId('league-invitations-section');
-    expect(screen.getByTestId('league-join-url')).toHaveValue('');
-
-    fireEvent.click(screen.getByTestId('league-create-join-url'));
-
-    await waitFor(() =>
-      expect(generateInviteLinkMock).toHaveBeenCalledWith({
-        path: { id: 'league-1' },
-        body: {},
-      }),
-    );
-    expect(screen.getByTestId('league-join-url')).toHaveValue(
-      'http://localhost:3000/invite/invite-abc',
-    );
-
-    fireEvent.click(screen.getByTestId('league-copy-join-url'));
-
-    await waitFor(() =>
-      expect(writeTextMock).toHaveBeenCalledWith(expect.stringContaining('/invite/invite-abc')),
-    );
+    await screen.findByTestId('league-open-details');
+    expect(screen.queryByTestId('league-open-invite-members')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('league-invitations-section')).not.toBeInTheDocument();
   });
 
   // pool-master-dxd.16 — the current league icon is derived from query cache,

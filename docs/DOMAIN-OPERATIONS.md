@@ -220,6 +220,11 @@ delete gate, applied to all writes. It was dropped: nothing in the operation set
 inactive account read-only, and a user must be able to sign in while inactive in order to
 reactivate, so the account was never actually frozen.
 
+Sign-in and session refresh therefore accept an inactive account, and inactivating your own
+account keeps the session you did it from while revoking the others. Until 2026-10 both
+refused with `ACCOUNT_INACTIVE` and self-inactivation signed the user out, so an account
+that inactivated itself could never sign back in to reactivate or delete itself.
+
 ---
 
 ## A10. Root-admin authority is read from the access-token claim
@@ -725,7 +730,7 @@ An entry's result, frozen when its contest settles — cross-sport core plus a s
 
 | Operation | Role | Notes |
 |---|---|---|
-| Write | *(settlement)* | Written once per entry when the linked event completes; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; reopening moves it back to `ACTIVE`, and the next settlement recomputes |
+| Write | *(settlement)* | Written once per entry when the linked event completes; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; a `DRAFT` (never opened) or `CANCELLED` contest is skipped too and keeps its status, since a draft leaves only by being opened or deleted (#117); reopening moves it back to `ACTIVE`, and the next settlement recomputes |
 | Read | `member` | Through the golf leaderboard of a `COMPLETED` contest |
 
 ### ContestEntryPick
@@ -839,7 +844,9 @@ only half the callers enforce is not a rule. Do not reintroduce them.
 
 - **No self-demotion block on root admin.** The rule it reached for — the platform keeps at
   least one root admin — is the last-root-admin count, which applies to every caller. With
-  two root admins one may step down; with one, the count refuses whoever asks.
+  two active root admins one may step down; with one, the count refuses whoever asks. Only
+  active root admins count, so administering the platform never depends on someone first
+  reactivating an account.
 - **No dependency-detail payload on a blocked hard delete.** A typed 409
   `ACCOUNT_DELETE_DEPENDENCIES_EXIST` is the contract. The blockers are visible in the league
   and squad views A9 already governs; resolving one of possibly many into the error envelope

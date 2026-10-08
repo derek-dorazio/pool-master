@@ -1,7 +1,7 @@
 import { type Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
-import type { ProviderSyncRun } from '@poolmaster/shared/domain';
+import { IngestionJobStatus, ProviderSyncRunStatus, type ProviderSyncRun } from '@poolmaster/shared/domain';
 import type { IngestionFeedType, EventSyncRequest, IngestionJobRecord } from '../core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../core/sync-orchestrator';
 
@@ -107,7 +107,7 @@ export class ProviderSyncRunLedger {
         throw new Error('Sync execution completed without an ingestion job result.');
       }
       const completedAt = new Date();
-      const status: ProviderSyncRun['status'] = job.status === 'FAILED' ? 'FAILED' : 'COMPLETED';
+      const status: ProviderSyncRun['status'] = job.status === IngestionJobStatus.FAILED ? ProviderSyncRunStatus.FAILED : ProviderSyncRunStatus.COMPLETED;
       const detail = buildSyncRunDetail(job, syncRun.eventId);
       const payload = {
         ...startedPayload,
@@ -275,7 +275,7 @@ function buildSyncOutcome(input: {
 }): SyncOutcomePayload {
   const warnings = input.warnings ?? [];
   const errorCount = input.errors ?? 0;
-  const severity = input.status === 'FAILED' || errorCount > 0
+  const severity = input.status === ProviderSyncRunStatus.FAILED || errorCount > 0
     ? 'ERROR'
     : warnings.length > 0
       ? 'WARNING'
@@ -307,7 +307,7 @@ function buildSyncRunDetail(
 ): string {
   const target = eventId ?? job.eventExternalId ?? job.sport;
   const feed = formatFeedLabel(mapJobTypeToFeed(job.jobType));
-  if (job.status === 'FAILED') {
+  if (job.status === IngestionJobStatus.FAILED) {
     const error = job.errorLog[0]?.error ?? 'Unknown ingestion failure';
     return `Failed ${feed} sync for ${target}: ${error}`;
   }

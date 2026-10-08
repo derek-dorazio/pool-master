@@ -158,8 +158,8 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
               golf: { eventScoreToPar: -3, eventStrokes: 141, currentRoundThru: 18 },
             },
             rounds: [
-              { id: 'r1', sportEventRoundId: 'round-1', roundNumber: 1, status: 'COMPLETE', completedAt: null, golf: { strokes: 70, scoreToPar: -2, thru: 18 } },
-              { id: 'r2', sportEventRoundId: 'round-2', roundNumber: 2, status: 'COMPLETE', completedAt: null, golf: { strokes: 71, scoreToPar: -1, thru: 18 } },
+              { id: 'r1', sportEventRoundId: 'round-1', roundNumber: 1, status: 'COMPLETED', completedAt: null, golf: { strokes: 70, scoreToPar: -2, thru: 18 } },
+              { id: 'r2', sportEventRoundId: 'round-2', roundNumber: 2, status: 'COMPLETED', completedAt: null, golf: { strokes: 71, scoreToPar: -1, thru: 18 } },
             ],
           }),
           fieldEntryFixture({
@@ -179,7 +179,7 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
               golf: { eventScoreToPar: 0, eventStrokes: 72, currentRoundThru: 18 },
             },
             rounds: [
-              { id: 'r3', sportEventRoundId: 'round-1', roundNumber: 1, status: 'COMPLETE', completedAt: null, golf: { strokes: 72, scoreToPar: 0, thru: 18 } },
+              { id: 'r3', sportEventRoundId: 'round-1', roundNumber: 1, status: 'COMPLETED', completedAt: null, golf: { strokes: 72, scoreToPar: 0, thru: 18 } },
             ],
           }),
         ],

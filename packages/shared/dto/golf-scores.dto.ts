@@ -36,7 +36,7 @@ export const GolfRoundScoreValuesDtoSchema = z.object({
   strokes: z.number().int().nullable(),
   scoreToPar: z.number().int(),
   thru: z.number().int().nullable(),
-  status: z.string(),
+  status: GolfRoundStatusDtoSchema,
 }).describe('A golfer\'s round values.');
 
 export const GolfRoundScorePreviewRowDtoSchema = z.object({
