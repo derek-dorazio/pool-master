@@ -9,12 +9,13 @@
  */
 import { z } from 'zod';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
-import { IngestionScheduleConfigSchema, PollIntervalConfigSchema } from './config.dto';
+import { EmailConfigSchema, IngestionScheduleConfigSchema, PollIntervalConfigSchema } from './config.dto';
 import { registerSchema } from './schema-registry';
 
 export const SettingsGroupKeySchema = z.enum([
   'POLL_INTERVAL_CONFIG',
   'INGESTION_SCHEDULE_CONFIG',
+  'EMAIL_CONFIG',
 ]).describe('The stored key of a settings group.');
 export type SettingsGroupKey = z.infer<typeof SettingsGroupKeySchema>;
 
@@ -49,6 +50,12 @@ export const SettingsGroupSchema = z.discriminatedUnion('key', [
     value: IngestionScheduleConfigSchema.describe('The value in use.'),
     defaults: IngestionScheduleConfigSchema.describe('The value a reset would store.'),
   }),
+  z.object({
+    key: z.literal('EMAIL_CONFIG'),
+    ...groupFields,
+    value: EmailConfigSchema.describe('The value in use.'),
+    defaults: EmailConfigSchema.describe('The value a reset would store.'),
+  }),
 ]).describe('One settings group: its current value, its defaults, and who last changed it.');
 export type SettingsGroup = z.infer<typeof SettingsGroupSchema>;
 
@@ -81,6 +88,11 @@ export const SettingsGroupUpdateRequestSchema = z.discriminatedUnion('key', [
   z.object({
     key: z.literal('INGESTION_SCHEDULE_CONFIG'),
     value: IngestionScheduleConfigValueSchema.describe('The whole new value.'),
+    expectedUpdatedAt,
+  }),
+  z.object({
+    key: z.literal('EMAIL_CONFIG'),
+    value: EmailConfigSchema.describe('The whole new value.'),
     expectedUpdatedAt,
   }),
 ]).describe('A whole new value for one settings group. `key` must match the path.');

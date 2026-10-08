@@ -158,8 +158,9 @@ export interface LeagueRepository {
   findAll(filters?: LeagueSearchFilters): Promise<League[]>;
 
   /**
-   * Leagues the user holds a `LeagueMembership` in — the scoped read access rule A2
-   * requires, where a member sees only their own leagues.
+   * Leagues the user holds an ACTIVE `LeagueMembership` in — the scoped read access rule A2
+   * requires, where a member sees only their own leagues. A removed member's INACTIVE row
+   * does not count.
    *
    * Added in #202. `LeagueService.findByUser` already existed and did this join in
    * application code: `membershipRepo.findByUser` followed by a `findById` per membership,

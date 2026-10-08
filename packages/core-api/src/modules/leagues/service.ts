@@ -118,7 +118,7 @@ export class LeagueService {
     const league = await this.deps.leagues.create({
       leagueCode: input.leagueCode,
       name: input.name,
-      description: input.description,
+      description: input.description?.trim() || undefined,
       isActive: true,
       iconKey: LeagueIconKey.TROPHY,
       joinPolicy: DEFAULT_JOIN_POLICY,
@@ -370,9 +370,11 @@ export class LeagueService {
       );
     }
 
+    // The details PUT replaces both fields: an omitted or blank description clears it, as the
+    // request contract documents. `undefined` here would mean "leave it", so clearing is `null`.
     const updatedLeague = await this.deps.leagues.update(leagueId, {
       name: updates.name,
-      description: updates.description?.trim() ? updates.description.trim() : undefined,
+      description: updates.description?.trim() || null,
     });
     this.logger?.info({
       action: 'league.updateDetails.success',

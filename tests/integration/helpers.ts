@@ -45,6 +45,12 @@ import { IngestionConfigService } from '../../packages/core-api/src/modules/plat
 import { AppSettingsService } from '../../packages/core-api/src/modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from '../../packages/core-api/src/modules/platform/settings-groups';
 import { PlatformSettingsService } from '../../packages/core-api/src/modules/platform/platform-settings-service';
+import {
+  EMAIL_SETTINGS,
+  SettingsAwareMailDeliveryProvider,
+  createMailDeliveryProvider,
+  readMailDeliveryConfig,
+} from '../../packages/core-api/src/modules/email';
 import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
@@ -129,19 +135,24 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(authGuard);
   testApp.setErrorHandler(globalErrorHandler);
 
-  // The ingestion and platform services index.ts builds, without the background scheduler.
+  // The ingestion, platform and mail services index.ts builds, without the background scheduler.
   const providerRegistry = new ProviderRegistry();
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
-  appSettings = new AppSettingsService({
+  const settings = new AppSettingsService({
     repository: runtimeConfigRepository,
     groups: SETTINGS_GROUPS,
     env: process.env,
   });
-  await appSettings.load();
-  const pollConfigService = new PollConfigService(appSettings);
-  const ingestionConfigService = new IngestionConfigService(appSettings);
+  await settings.load();
+  appSettings = settings;
+  const mailDelivery = new SettingsAwareMailDeliveryProvider(
+    createMailDeliveryProvider(readMailDeliveryConfig(process.env)),
+    () => settings.get(EMAIL_SETTINGS),
+  );
+  const pollConfigService = new PollConfigService(settings);
+  const ingestionConfigService = new IngestionConfigService(settings);
   const platformSettingsService = new PlatformSettingsService({
-    settings: appSettings,
+    settings,
     runtimeConfigs: runtimeConfigRepository,
     users: new PrismaUserRepository(prisma),
   });
@@ -155,15 +166,15 @@ async function buildTestApp(): Promise<FastifyInstance> {
 
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth' });
-  testApp.register(leaguesModule, { prefix: '/api/v1/leagues' });
+  testApp.register(leaguesModule, { prefix: '/api/v1/leagues', mailDelivery });
   testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
-  testApp.register(invitationsModule, { prefix: '/api/v1/invitations' });
+  testApp.register(invitationsModule, { prefix: '/api/v1/invitations', mailDelivery });
   testApp.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations' });
-  testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
+  testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', mailDelivery });
   testApp.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',
   });
-  testApp.register(contestsByIdModule, { prefix: '/api/v1/contests' });
+  testApp.register(contestsByIdModule, { prefix: '/api/v1/contests', mailDelivery });
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users' });
   testApp.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry });
@@ -207,28 +218,6 @@ export function getSentMail(): CapturedMail[] {
     throw new Error('Integration mail sink not started — call setupIntegrationTests() first.');
   }
   return integrationSmtpServer.messages;
-}
-
-/**
- * A second app built under different mail settings, e.g. `{ EMAIL_PROVIDER: 'disabled' }`. The
- * modules read the mail environment once, when the app becomes ready, so the overrides are
- * restored afterwards and the shared app is untouched. The caller closes the returned app.
- */
-export async function buildTestAppWithMailEnv(
-  overrides: Partial<Record<MailEnvironmentKey, string>>,
-): Promise<FastifyInstance> {
-  const saved = Object.fromEntries(
-    Object.keys(overrides).map((key) => [key, process.env[key]]),
-  );
-  Object.assign(process.env, overrides);
-  try {
-    return await buildTestApp();
-  } finally {
-    for (const [key, value] of Object.entries(saved)) {
-      if (value === undefined) delete process.env[key];
-      else process.env[key] = value;
-    }
-  }
 }
 
 /** Tear down after all tests. */
