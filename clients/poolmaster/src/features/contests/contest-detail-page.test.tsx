@@ -290,7 +290,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(getEventMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'event-1' } }));
   });
 
-  it('shows the contest\'s own end once a commissioner has extended it, over the event\'s scheduled end', async () => {
+  it('shows the contest\'s own end once it has one, over the event\'s scheduled end', async () => {
     primeMocks({ sportEventId: 'event-1', endsAt: '2026-04-14T18:00:00.000Z' });
     getEventMock.mockResolvedValue({
       data: {
@@ -549,6 +549,59 @@ describe('ContestDetailPage (Contest Board)', () => {
 
     await screen.findByTestId('contest-board-total-count');
     expect(screen.queryByTestId('contest-settled-note')).not.toBeInTheDocument();
+  });
+
+  // The server refuses new entries, renames and pick changes once the event's scheduled start
+  // passes, even while the contest still reads OPEN because the In Progress update is late.
+  it('offers no create, rename or edit on an OPEN contest once its event\'s scheduled start has passed', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      sportEventId: 'event-1',
+      entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })],
+    });
+    getEventMock.mockResolvedValue({
+      data: {
+        event: {
+          id: 'event-1',
+          startDate: new Date(Date.now() - 60 * 60_000).toISOString(),
+          endDate: new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString(),
+        },
+      },
+    });
+
+    renderContestBoard();
+
+    await screen.findByTestId('contest-detail-starts');
+    await screen.findByTestId('contest-board-total-count');
+    expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-rename-entry-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-edit-entry-entry-1')).not.toBeInTheDocument();
+  });
+
+  it('still offers create, rename and edit on an OPEN contest whose event starts later', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      sportEventId: 'event-1',
+      entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })],
+    });
+    getEventMock.mockResolvedValue({
+      data: {
+        event: {
+          id: 'event-1',
+          startDate: new Date(Date.now() + 60 * 60_000).toISOString(),
+          endDate: new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString(),
+        },
+      },
+    });
+
+    renderContestBoard();
+
+    await screen.findByTestId('contest-detail-starts');
+    expect(await screen.findByTestId('contest-board-create-entry')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-board-rename-entry-1')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-board-edit-entry-entry-1')).toBeInTheDocument();
   });
 
   it('hides the create-entry button when the contest is not OPEN', async () => {
