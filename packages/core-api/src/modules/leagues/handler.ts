@@ -226,6 +226,10 @@ export function createLeagueHandlers(
    * copy each of the same membership authorization — the non-member 403 and the
    * inactive-membership 403 — which is two places for one rule to drift.
    *
+   * `getLeague` is also gated by `requireMemberOfLeague` (#458), so for it the check below
+   * never refuses; it stays here for `getLeagueByCode`, which has no league id for a hook to
+   * read until the code is resolved.
+   *
    * A8: this is the ONE response carrying the viewer's relationship to a league, and it
    * carries it as the canonical edges rather than as flags. The client fetches it once on
    * league selection and holds it, so every league-scoped response after it carries none.

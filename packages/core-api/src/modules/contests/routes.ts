@@ -15,6 +15,7 @@ import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
+  PrismaSquadMembershipRepository,
 } from '../../adapters';
 import {
   requireCommissioner,
@@ -22,6 +23,7 @@ import {
   leagueFromPath,
   leagueOfContest,
   requireMemberOfLeague,
+  requireOwnSquad,
 } from '../leagues/permissions';
 import { createContestService } from './wiring';
 import { createContestHandlers, createCreateContestHandler } from './handler';
@@ -117,6 +119,13 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
   // route here either declares a gate or is on scripts/route-authorization-opt-outs.mjs with
   // the reason it authorizes elsewhere; `npm run rules:check` fails a route that does neither.
   const requireContestLeagueMember = requireMemberOfLeague(membershipRepo, leagueOfContest(contestRepo));
+  // #458 — entering and leaving act for the caller's own squad, which the path does not name:
+  // the gate finds it from the contest's league and the session.
+  const requireOwnSquadInContestLeague = requireOwnSquad(
+    membershipRepo,
+    new PrismaSquadMembershipRepository(prisma),
+    leagueOfContest(contestRepo),
+  );
 
   // --- Contest CRUD ---
   fastify.get('/:contestId', {
@@ -203,14 +212,17 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       summary: 'Get the current user contest entry',
       deprecated: true,
       description:
-        'Deprecated legacy helper. New clients should use listContestEntries and filter entries by squadId/client context; this operation remains for older clients through the next release boundary.',
+        'Deprecated legacy helper. New clients should use listContestEntries and filter entries by squadId/client context; this operation remains for older clients through the next release boundary. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A member with no team gets a null entry.',
       operationId: 'getMyContestEntry',
       response: {
         200: schemaRef('MyContestEntryResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
+    preHandler: requireContestLeagueMember,
     handler: handlers.getMyEntry,
   });
 
@@ -224,11 +236,13 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       response: {
         201: schemaRef('ContestEntryResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
         409: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
+    preHandler: requireOwnSquadInContestLeague,
     handler: handlers.createMyEntry,
   });
 
@@ -237,15 +251,17 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       tags: ['Contests'],
       summary: 'Delete the current user contest entry',
       description:
-        'Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.',
+        'Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.',
       operationId: 'leaveContest',
       response: {
         200: schemaRef('ContestEntryDeletionResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
+    preHandler: requireOwnSquadInContestLeague,
     handler: handlers.deleteMyEntry,
   });
 

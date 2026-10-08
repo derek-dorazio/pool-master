@@ -240,11 +240,11 @@ describe('ContestService entries — leaving a contest', () => {
     expect(world.entriesOf(contest.id, squad.id)).toHaveLength(1);
   });
 
-  it('refuses leaving with SQUAD_MANAGER_REQUIRED for a member who has no team', async () => {
+  it('refuses leaving with SQUAD_MEMBERSHIP_REQUIRED, as entering does, for a member who has no team', async () => {
     const { commissioner, contest, service } = setup();
 
     await expect(service.deleteMyEntry(contest.id, commissioner.id)).rejects.toMatchObject({
-      code: 'SQUAD_MANAGER_REQUIRED',
+      code: 'SQUAD_MEMBERSHIP_REQUIRED',
     });
   });
 

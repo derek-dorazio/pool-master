@@ -309,6 +309,8 @@ export const deleteLeague = <ThrowOnError extends boolean = false>(options: Opti
  * Returns a league by internal league ID together with the viewer's own membership edges in it — their LeagueMembership and their SquadMembership — for authenticated league members, league commissioners, or root admins using platform-level override access.
  *
  * The same `LeagueContextResponse` as `getLeagueByCode`: two ways to find one league, one response shape. Use this route when you hold a league ID rather than a league code, as contest-rooted surfaces do (access rule A8).
+ *
+ * 404 LEAGUE_NOT_FOUND for a league that does not exist; otherwise active members only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE.
  */
 export const getLeague = <ThrowOnError extends boolean = false>(options: Options<GetLeagueData, ThrowOnError>) => (options.client ?? client).get<GetLeagueResponses, GetLeagueErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -883,7 +885,7 @@ export const getGolfContestLeaderboard = <ThrowOnError extends boolean = false>(
 /**
  * Delete the current user contest entry
  *
- * Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
+ * Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
  */
 export const leaveContest = <ThrowOnError extends boolean = false>(options: Options<LeaveContestData, ThrowOnError>) => (options.client ?? client).delete<LeaveContestResponses, LeaveContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -894,7 +896,7 @@ export const leaveContest = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Get the current user contest entry
  *
- * Deprecated legacy helper. New clients should use listContestEntries and filter entries by squadId/client context; this operation remains for older clients through the next release boundary.
+ * Deprecated legacy helper. New clients should use listContestEntries and filter entries by squadId/client context; this operation remains for older clients through the next release boundary. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A member with no team gets a null entry.
  *
  * @deprecated
  */

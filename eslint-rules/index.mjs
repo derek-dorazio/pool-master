@@ -21,6 +21,7 @@ import noParallelApiTypes from './no-parallel-api-types.mjs';
 import noInlineQueryKeys from './no-inline-query-keys.mjs';
 import noInlineThemeStyles from './no-inline-theme-styles.mjs';
 import noMockedApi from './no-mocked-api.mjs';
+import noUnawaitedSendError from './no-unawaited-send-error.mjs';
 
 export default {
   meta: { name: 'poolmaster-local', version: '1.0.0' },
@@ -35,5 +36,6 @@ export default {
     'no-widened-enum-fields': noWidenedEnumFields,
     'no-inline-theme-styles': noInlineThemeStyles,
     'no-mocked-api': noMockedApi,
+    'no-unawaited-send-error': noUnawaitedSendError,
   },
 };
