@@ -390,8 +390,8 @@ export function UserPage() {
   const activeUser = user;
   const isInactive = activeUser.isActive === false;
   const memberSince = formatMemberSince(activeUser.createdAt, activeUser.dateFormat);
-  // #202 — NOT gated on `isInactive`. An inactive account is filtered out of views and
-  // cannot sign in; its own details stay editable, which is the precondition for fixing them
+  // #202 — NOT gated on `isInactive`. An inactive account is filtered out of views but can
+  // still sign in; its own details stay editable, which is the precondition for fixing them
   // and reactivating (access rule A9). The server dropped the matching 409 guard.
   const disableProfileEditing = profileMutation.isPending;
   const disableUsernameEditing = usernameMutation.isPending;
@@ -453,8 +453,8 @@ export function UserPage() {
             data-testid="user-page-inactive-banner"
             tone="warning"
           >
-            Your account is inactive. You are hidden from your leagues and cannot sign in
-            normally, but you can still update your details here and reactivate when ready.
+            Your account is inactive, so you are hidden from your leagues. You can still sign in,
+            update your details here, and reactivate or permanently delete the account.
           </Alert>
         ) : null}
       </Tile>
