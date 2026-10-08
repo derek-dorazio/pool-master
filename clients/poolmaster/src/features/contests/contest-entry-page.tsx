@@ -30,7 +30,8 @@ import {
   TiebreakerSelector,
   type SelectionGroup,
 } from './contest-entry-selection';
-import { CONTEST_STATUS_TONES, contestStatusLabel } from './contest-status';
+import { areContestEntriesOpen, CONTEST_STATUS_TONES, contestStatusLabel } from './contest-status';
+import { useContestSchedule } from './use-contest-schedule';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -44,8 +45,12 @@ const formatTiebreaker = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TO
 
 // The entry page says what an open contest means for this entry; every other status reads as it
 // does on every contest page.
-function getContestPhaseLabel(contest: ContestDto) {
-  return contest.status === ContestStatus.OPEN ? 'Editable until the event starts' : contestStatusLabel(contest.status);
+function getContestPhaseLabel(contest: ContestDto, entriesOpen: boolean) {
+  if (entriesOpen) {
+    return 'Editable until the event starts';
+  }
+  // Still OPEN past its start means the event has teed off and the In Progress update is late.
+  return contest.status === ContestStatus.OPEN ? 'Entries closed' : contestStatusLabel(contest.status);
 }
 
 function getCompletionStats(selectionGroups: SelectionGroup[]) {
@@ -192,6 +197,7 @@ export function ContestEntryPage() {
    * contest-shaped key that nothing else could reuse.
    */
   const { league: contestLeague } = useLeagueContextById(contestQuery.data?.leagueId);
+  const schedule = useContestSchedule(contestQuery.data);
   const detailsSeedSource = useMemo(() => {
     if (!draftStateQuery.data) {
       return null;
@@ -515,7 +521,7 @@ export function ContestEntryPage() {
   const entrySummary = contestEntriesQuery.data?.entries.find((entry) => entry.id === entryId) ?? null;
   const myEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
   const isMyEntry = myEntryIds.includes(entryId);
-  const isEditable = contest.status === ContestStatus.OPEN;
+  const isEditable = areContestEntriesOpen(contest.status, schedule?.startsAt);
   const selectedEntry = draftState.entries.find((entry) => entry.id === entryId) ?? null;
   const selectionGroups = draftState.selectionGroups ?? [];
   const completionStats = getCompletionStats(selectionGroups);
@@ -568,7 +574,7 @@ export function ContestEntryPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
             <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
-              {getContestPhaseLabel(contest)}
+              {getContestPhaseLabel(contest, isEditable)}
             </StatusBadge>
             <div>
               <h2 className="text-3xl font-semibold tracking-tight" data-testid="contest-entry-heading">
@@ -636,7 +642,7 @@ export function ContestEntryPage() {
                 : 'Entry editing is closed'
             }
             label="Entries close"
-            value={contest.status === ContestStatus.OPEN ? 'When the event starts' : 'Closed'}
+            value={isEditable ? 'When the event starts' : 'Closed'}
           />
         </MetricGrid>
       </Tile>
@@ -652,7 +658,7 @@ export function ContestEntryPage() {
               className="mt-5"
               items={[
                 { id: 'entry-status', label: 'Entry status', value: entrySummary?.status ?? 'ACTIVE' },
-                { id: 'contest-phase', label: 'Contest phase', value: getContestPhaseLabel(contest) },
+                { id: 'contest-phase', label: 'Contest phase', value: getContestPhaseLabel(contest, isEditable) },
                 { id: 'created', label: 'Created', value: formatDateTimeDisplay(entrySummary?.createdAt) },
                 { id: 'last-updated', label: 'Last updated', value: formatDateTimeDisplay(entrySummary?.updatedAt) },
               ]}
