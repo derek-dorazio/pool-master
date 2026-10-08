@@ -200,12 +200,12 @@ export function createUserHandlers(userService: UserService, authService: AuthSe
   ) {
     return run(request, reply, 'user.disable', async (actor) => {
       const subjectId = subjectOf(actor, request.params.userId);
-      const user = await userService.disableUser(actor, subjectId);
-      // Disabling yourself revokes your own sessions, so the browser's cookies are cleared
-      // rather than left pointing at tokens that no longer work.
-      if (subjectId === actor.userId) {
-        reply.header('Set-Cookie', createClearedSessionCookieHeaders());
-      }
+      // Inactivating yourself keeps the session you did it from (A9: an inactive account may
+      // still sign in, to reactivate or delete itself); every other session is revoked.
+      const keepRefreshToken = subjectId === actor.userId
+        ? readRefreshCookie(request.headers.cookie)
+        : null;
+      const user = await userService.disableUser(actor, subjectId, keepRefreshToken);
       return reply.send({ user: toUserDto(user) });
     });
   }

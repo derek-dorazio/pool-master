@@ -65,10 +65,17 @@ export function hasUserDeleteDependencies(counts: UserDeleteDependencyCounts): b
  * disabling a user and leaving their sessions live is the failure this prevents.
  *
  * Returns how many were revoked, which the force-logout operation reports back.
+ *
+ * `keepToken` spares one refresh token: the caller's own, when they inactivate themselves and
+ * stay signed in to reactivate (A9).
  */
-export async function revokeUserSessions(prisma: PrismaLike, userId: string): Promise<number> {
+export async function revokeUserSessions(
+  prisma: PrismaLike,
+  userId: string,
+  keepToken?: string | null,
+): Promise<number> {
   const result = await prisma.refreshToken.updateMany({
-    where: { userId, revokedAt: null },
+    where: { userId, revokedAt: null, ...(keepToken ? { NOT: { token: keepToken } } : {}) },
     data: { revokedAt: new Date() },
   });
   return result.count;

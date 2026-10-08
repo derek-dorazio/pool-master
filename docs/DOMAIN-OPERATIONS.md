@@ -220,6 +220,11 @@ delete gate, applied to all writes. It was dropped: nothing in the operation set
 inactive account read-only, and a user must be able to sign in while inactive in order to
 reactivate, so the account was never actually frozen.
 
+Sign-in and session refresh therefore accept an inactive account, and inactivating your own
+account keeps the session you did it from while revoking the others. Until 2026-10 both
+refused with `ACCOUNT_INACTIVE` and self-inactivation signed the user out, so an account
+that inactivated itself could never sign back in to reactivate or delete itself.
+
 ---
 
 ## A10. Root-admin authority is read from the access-token claim
