@@ -678,4 +678,84 @@ describe('UserPage', () => {
       }),
     );
   });
+
+  it('sends the password change with the three fields the user typed', async () => {
+    primeCurrentUser();
+    changeUserPasswordMock.mockResolvedValue({ data: { success: true } });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-password'));
+    await screen.findByTestId('user-page-password-dialog');
+    fireEvent.change(screen.getByTestId('user-page-current-password'), { target: { value: 'OldPassword1' } });
+    fireEvent.change(screen.getByTestId('user-page-new-password'), { target: { value: 'NewPassword1' } });
+    fireEvent.change(screen.getByTestId('user-page-confirm-password'), { target: { value: 'NewPassword1' } });
+    fireEvent.click(screen.getByTestId('user-page-save-password'));
+
+    await waitFor(() =>
+      expect(changeUserPasswordMock).toHaveBeenCalledWith({
+        path: { userId: 'me' },
+        body: { currentPassword: 'OldPassword1', newPassword: 'NewPassword1', confirmNewPassword: 'NewPassword1' },
+      }),
+    );
+  });
+
+  it('shows the server refusal when the current password is wrong', async () => {
+    primeCurrentUser();
+    changeUserPasswordMock.mockResolvedValue({
+      error: { error: { code: 'INVALID_CURRENT_PASSWORD', message: 'Current password is incorrect.' } },
+    });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-password'));
+    const dialog = await screen.findByTestId('user-page-password-dialog');
+    fireEvent.change(screen.getByTestId('user-page-current-password'), { target: { value: 'WrongPassword1' } });
+    fireEvent.change(screen.getByTestId('user-page-new-password'), { target: { value: 'NewPassword1' } });
+    fireEvent.change(screen.getByTestId('user-page-confirm-password'), { target: { value: 'NewPassword1' } });
+    fireEvent.click(screen.getByTestId('user-page-save-password'));
+
+    expect(await within(dialog).findByText('Current password is incorrect.')).toBeVisible();
+  });
+
+  it('deletes an inactive account with its own email and shows the deleted confirmation', async () => {
+    primeCurrentUser({ isActive: false });
+    deleteUserMock.mockResolvedValue({ data: { success: true } });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page-inactive-banner');
+    fireEvent.click(screen.getByTestId('user-page-open-delete'));
+    await screen.findByTestId('user-page-delete-dialog');
+    fireEvent.change(screen.getByTestId('user-page-delete-confirmation'), { target: { value: 'derek@example.com' } });
+    fireEvent.click(screen.getByTestId('user-page-delete-submit'));
+
+    expect(await screen.findByTestId('user-page-delete-success')).toBeVisible();
+    expect(deleteUserMock).toHaveBeenCalledWith({ path: { userId: 'me' }, body: { email: 'derek@example.com' } });
+  });
+
+  it('keeps the delete dialog open with the reason when league data still blocks the delete', async () => {
+    primeCurrentUser({ isActive: false });
+    deleteUserMock.mockResolvedValue({
+      error: {
+        error: {
+          code: 'ACCOUNT_DELETE_DEPENDENCIES_EXIST',
+          message: 'Account still owns or belongs to league-scoped data.',
+        },
+      },
+    });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page-inactive-banner');
+    fireEvent.click(screen.getByTestId('user-page-open-delete'));
+    const dialog = await screen.findByTestId('user-page-delete-dialog');
+    fireEvent.change(screen.getByTestId('user-page-delete-confirmation'), { target: { value: 'derek@example.com' } });
+    fireEvent.click(screen.getByTestId('user-page-delete-submit'));
+
+    expect(await within(dialog).findByText(/league-scoped data/)).toBeVisible();
+    expect(screen.queryByTestId('user-page-delete-success')).not.toBeInTheDocument();
+  });
 });
