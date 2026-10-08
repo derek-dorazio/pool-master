@@ -5,6 +5,7 @@ import type {
   ContestEntry,
   LeagueMembership,
   Participant,
+  SportEvent,
   SportEventParticipant,
   SquadMembership,
 } from '@poolmaster/shared/domain';
@@ -197,7 +198,7 @@ function buildWorld(options: WorldOptions = {}) {
     id: EVENT_ID,
     status: 'SCHEDULED',
     startDate: options.eventStartDate ?? new Date(NOW.getTime() + 24 * 60 * 60 * 1000),
-  };
+  } as unknown as SportEvent;
   const deps = {
     sportEvents: { findById: async (id: string) => (id === EVENT_ID ? sportEvent : null) },
     now: () => NOW,

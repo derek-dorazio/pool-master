@@ -13,6 +13,7 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaParticipantRepository,
   PrismaSportEventParticipantRepository,
+  PrismaSportEventRepository,
   PrismaSquadMembershipRepository,
 } from '../../adapters';
 import { ContestEntryPickService } from '../contest-entry-picks';
@@ -33,6 +34,7 @@ export function createDraftService(prisma: PrismaClient, logger?: FastifyBaseLog
     // Contest.contestFormat in the same Prisma transaction as the insert.
     pickWrites: new ContestEntryPickService(prisma, logger),
     tiers: createSportEventTierService(prisma, logger),
+    sportEvents: new PrismaSportEventRepository(prisma),
     logger,
   });
 }

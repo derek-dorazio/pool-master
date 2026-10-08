@@ -42,10 +42,12 @@ import type {
   LeagueMembershipRepository,
   SportEventParticipantRepository,
   ParticipantRepository,
+  SportEventRepository,
   SquadMembershipRepository,
 } from '@poolmaster/shared/db';
 import type { ContestEntryPickService } from '../contest-entry-picks';
 import { contestPicksRevealed } from '../contests/service';
+import { hasSportEventStarted } from '../events/operational-timing';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { draftErrors } from './draft-errors';
 import {
@@ -88,6 +90,9 @@ export interface DraftServiceDeps {
    */
   pickWrites: ContestEntryPickService;
   tiers: SportEventTierService;
+  /** Read for the event's start time, the cutoff for pick changes. */
+  sportEvents: Pick<SportEventRepository, 'findById'>;
+  now?: () => Date;
   logger?: FastifyBaseLogger;
 }
 
@@ -171,8 +176,13 @@ export class DraftService {
     }
 
     // Placing, swapping and unselecting alike: once the contest leaves OPEN its picks are
-    // revealed to the league, so a change after that would be made with the others in view.
-    if (context.contest.status !== ContestStatus.OPEN) {
+    // revealed to the league, so a change after that would be made with the others in view;
+    // and once the event's start time passes the golfers are playing.
+    if (!context.acceptsPicks) {
+      this.deps.logger?.warn(
+        { action: 'draft.submitSelection.locked', data: { contestId, entryId, status: context.contest.status } },
+        'Refused a pick change on a contest that no longer takes picks',
+      );
       throw draftErrors.selectionLocked(contestId, context.contest.status);
     }
 
@@ -315,7 +325,7 @@ export class DraftService {
     if (!contest) throw draftErrors.contestNotFound(contestId);
 
     const sportEventId = contest.sportEventId;
-    const [configuration, entries, field, tierGroups, valuations] = await Promise.all([
+    const [configuration, entries, field, tierGroups, valuations, sportEvent] = await Promise.all([
       this.deps.configurations.findByContest(contestId),
       this.deps.entries.findByContest(contestId),
       sportEventId ? this.deps.field.findBySportEvent(sportEventId) : Promise.resolve([]),
@@ -325,7 +335,10 @@ export class DraftService {
       sportEventId
         ? this.deps.tiers.getEffectiveValuationsForSportEvent(sportEventId)
         : Promise.resolve([]),
+      sportEventId ? this.deps.sportEvents.findById(sportEventId) : Promise.resolve(null),
     ]);
+    const now = this.deps.now?.() ?? new Date();
+    const eventStarted = sportEvent ? hasSportEventStarted(sportEvent, now) : false;
 
     const squadIds = Array.from(new Set(entries.map((entry) => entry.squadId)));
     const [squadMemberships, participants] = await Promise.all([
@@ -339,6 +352,7 @@ export class DraftService {
       entries,
       squadMemberships,
       tiers: buildDraftTiers(tierGroups),
+      acceptsPicks: contest.status === ContestStatus.OPEN && !eventStarted,
       selectionParticipants: buildSelectionParticipants({
         field,
         participantsById: new Map(participants.map((p: Participant) => [p.id, p])),
@@ -436,14 +450,14 @@ export class DraftService {
         ? entries.every((entry) => entry.pickCount >= rosterSize)
         : false;
     const status = mapContestStatusToDraftStatus(contest.status, isComplete);
-    // Against the contest's own status, not `isComplete`: only an OPEN contest takes picks
-    // (`submitSelection` refuses the rest), so a LOCKED, ACTIVE or COMPLETED one closes
-    // submission even while some roster is still short.
+    // Against whether the contest takes picks, not `isComplete`: `submitSelection` refuses
+    // every contest that is not OPEN or whose event has started, so those close submission
+    // even while some roster is still short.
     const canCurrentUserSubmit =
       myEntryId !== null
       && rosterSize > 0
       && myEntryPickCount < rosterSize
-      && contest.status === ContestStatus.OPEN
+      && context.acceptsPicks
       && status !== DraftStatus.COMPLETE;
 
     return {

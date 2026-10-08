@@ -262,6 +262,10 @@ function setup(options: SetupOptions = {}) {
         .fn()
         .mockResolvedValue(options.valuations ?? VALUATIONS),
     } as unknown as SportEventTierService,
+    // An event that starts long after every test's clock, so only contest status gates picks.
+    sportEvents: {
+      findById: jest.fn().mockResolvedValue({ id: EVENT_ID, status: 'SCHEDULED', startDate: new Date('2099-01-01T00:00:00.000Z') }),
+    } as unknown as DraftServiceDeps['sportEvents'],
   };
 
   return { service: new DraftService(deps), deps, createPick, deletePick };
