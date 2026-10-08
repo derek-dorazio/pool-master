@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -9,6 +9,7 @@ import {
   affiliationFixture,
   fieldEntryFixture,
   participantFixture,
+  GOLF_SPORT_FIXTURE,
   sportEventFixture,
   sportLeagueFixture,
   valuationFixture,
@@ -26,6 +27,7 @@ const {
   listSportLeaguesMock,
   listParticipantLeagueAffiliationsMock,
   listParticipantsMock,
+  listSportsMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -47,6 +49,7 @@ const {
     listSportLeaguesMock: vi.fn(),
     listParticipantLeagueAffiliationsMock: vi.fn(),
     listParticipantsMock: vi.fn(),
+    listSportsMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -61,6 +64,7 @@ bindApiMocks({
   listSportLeagues: listSportLeaguesMock,
   listParticipantLeagueAffiliations: listParticipantLeagueAffiliationsMock,
   listParticipants: listParticipantsMock,
+  listSports: listSportsMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -366,5 +370,343 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
     expect(
       await screen.findByTestId('root-admin-golf-field-add-result'),
     ).toHaveTextContent('Added 1 golfer');
+  });
+});
+
+describe('Field editor header actions: refusals, singular counts and closing dialogs', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    mockLogger.child.mockReturnValue(mockLogger);
+  });
+
+  function refusal(code: string, message: string, status = 422) {
+    return { error: { error: { code, message } }, response: { status } };
+  }
+
+  describe('seed from league roster', () => {
+    it('uses singular wording when exactly one golfer is added and one seed number derived', async () => {
+      seed();
+      seedEventParticipantsMock.mockResolvedValue({
+        data: { added: 1, skipped: 0, total: 1, seedNumbersDerived: 1, oddsDerived: 1 },
+      });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-golf-field-seed'));
+      await userEvent.click(screen.getByTestId('root-admin-golf-field-seed-confirm'));
+
+      expect(await screen.findByTestId('root-admin-golf-field-seed-result')).toHaveTextContent(
+        'Added 1 golfer (0 already in the field). Derived 1 seed number and 1 odds.',
+      );
+    });
+
+    it('shows the server\'s reason in the confirmation when seeding is refused, and adds no result', async () => {
+      seed();
+      seedEventParticipantsMock.mockResolvedValue(
+        refusal('SPORT_LEAGUE_ROSTER_EMPTY', 'The PGA Tour roster has no golfers to seed.'),
+      );
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-golf-field-seed'));
+      await userEvent.click(screen.getByTestId('root-admin-golf-field-seed-confirm'));
+
+      const modal = await screen.findByTestId('root-admin-golf-field-seed-modal');
+      expect(await within(modal).findByText('The PGA Tour roster has no golfers to seed.')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-golf-field-seed-result')).not.toBeInTheDocument();
+    });
+
+    it('closes the seed confirmation from its close button without seeding', async () => {
+      seed();
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-golf-field-seed'));
+      const modal = await screen.findByTestId('root-admin-golf-field-seed-modal');
+      await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+
+      await waitFor(() =>
+        expect(screen.queryByTestId('root-admin-golf-field-seed-modal')).not.toBeInTheDocument(),
+      );
+      expect(seedEventParticipantsMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('load or refresh the participant field', () => {
+    it('loads an empty linked field at once, without a confirmation, and says the sync started', async () => {
+      seed({ tournament: { syncScope: 'SCORES_ONLY' }, entries: [] });
+      refreshEventParticipantsMock.mockResolvedValue({ data: { syncRuns: [] } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-golf-field-refresh'));
+
+      await waitFor(() =>
+        expect(refreshEventParticipantsMock).toHaveBeenCalledWith({ path: { eventId: 'evt-1' } }),
+      );
+      expect(screen.queryByTestId('root-admin-golf-field-refresh-modal')).not.toBeInTheDocument();
+      expect(await screen.findByTestId('root-admin-golf-field-refresh-result')).toHaveTextContent(
+        'Provider field sync started.',
+      );
+    });
+
+    it('shows the server\'s reason under the button when loading an empty field is refused', async () => {
+      seed({ tournament: { syncScope: 'SCORES_ONLY' }, entries: [] });
+      refreshEventParticipantsMock.mockResolvedValue(
+        refusal('PROVIDER_EVENT_NOT_FOUND', 'Provider mock-contest-feed has no event mock-weekend.', 404),
+      );
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-golf-field-refresh'));
+
+      expect(await screen.findByTestId('root-admin-golf-field-refresh-error')).toHaveTextContent(
+        'Provider mock-contest-feed has no event mock-weekend.',
+      );
+      expect(screen.queryByTestId('root-admin-golf-field-refresh-result')).not.toBeInTheDocument();
+    });
+
+    it('shows the server\'s reason inside the confirmation when refreshing a loaded field is refused', async () => {
+      seed({ tournament: { syncScope: 'SCORES_ONLY' } });
+      refreshEventParticipantsMock.mockResolvedValue(
+        refusal('SYNC_ALREADY_RUNNING', 'A field sync is already running for this tournament.', 409),
+      );
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-golf-field-refresh'));
+      await userEvent.click(await screen.findByTestId('root-admin-golf-field-refresh-confirm'));
+
+      const modal = screen.getByTestId('root-admin-golf-field-refresh-modal');
+      expect(
+        await within(modal).findByText('A field sync is already running for this tournament.'),
+      ).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-golf-field-refresh-error')).not.toBeInTheDocument();
+    });
+
+    it('closes the refresh confirmation from its close button without refreshing', async () => {
+      seed({ tournament: { syncScope: 'SCORES_ONLY' } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-golf-field-refresh'));
+      const modal = await screen.findByTestId('root-admin-golf-field-refresh-modal');
+      await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+
+      await waitFor(() =>
+        expect(screen.queryByTestId('root-admin-golf-field-refresh-modal')).not.toBeInTheDocument(),
+      );
+      expect(refreshEventParticipantsMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('add more participants', () => {
+    function rosterOf(...golfers: Array<{ id: string; name: string }>) {
+      return {
+        data: {
+          affiliations: golfers.map((golfer, index) =>
+            affiliationFixture({
+              sportLeagueId: 'liv',
+              participantId: golfer.id,
+              ranking: index + 1,
+              participant: participantFixture({ id: golfer.id, name: golfer.name }),
+            }),
+          ),
+        },
+      };
+    }
+
+    async function openAddModal() {
+      await userEvent.click(await screen.findByTestId('root-admin-golf-field-add'));
+      return screen.findByTestId('root-admin-golf-field-add-modal');
+    }
+
+    function seedLeagues() {
+      listSportLeaguesMock.mockResolvedValue({
+        data: { sportLeagues: [sportLeagueFixture({ id: 'liv', name: 'LIV Golf', matchKeyword: 'LIV' })] },
+      });
+      listSportsMock.mockResolvedValue({ data: { sports: [GOLF_SPORT_FIXTURE] } });
+    }
+
+    it('selects every browsed golfer with select-all, clears them again, and reports a plural add with skips', async () => {
+      seed();
+      seedLeagues();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue(
+        rosterOf({ id: 'p-jon', name: 'Jon Rahm' }, { id: 'p-cam', name: 'Cameron Smith' }),
+      );
+      addEventParticipantsMock.mockResolvedValue({ data: { added: 2, skipped: 1, total: 3 } });
+      renderPage();
+
+      await openAddModal();
+      await userEvent.selectOptions(await screen.findByTestId('root-admin-golf-field-add-league'), 'liv');
+      await screen.findByTestId('root-admin-golf-field-add-roster-row-p-jon');
+
+      await userEvent.click(screen.getByTestId('root-admin-golf-field-add-roster-select-all'));
+      expect(screen.getByTestId('root-admin-golf-field-add-submit')).toHaveTextContent('Add selected (2)');
+      await userEvent.click(screen.getByTestId('root-admin-golf-field-add-roster-select-all'));
+      expect(screen.getByTestId('root-admin-golf-field-add-submit')).toHaveTextContent('Add selected (0)');
+      expect(screen.getByTestId('root-admin-golf-field-add-submit')).toBeDisabled();
+
+      await userEvent.click(screen.getByTestId('root-admin-golf-field-add-roster-select-all'));
+      await userEvent.click(screen.getByTestId('root-admin-golf-field-add-submit'));
+
+      await waitFor(() => expect(addEventParticipantsMock).toHaveBeenCalledTimes(1));
+      expect(
+        (addEventParticipantsMock.mock.calls[0][0] as { body: { participantIds: string[] } }).body.participantIds,
+      ).toEqual(['p-jon', 'p-cam']);
+      expect(await screen.findByTestId('root-admin-golf-field-add-result')).toHaveTextContent(
+        'Added 2 golfers to the field (1 were already in it).',
+      );
+      expect(screen.getByTestId('root-admin-golf-field-add-league')).toBeDisabled();
+    });
+
+    it('unticks a golfer that was ticked, so it is not added', async () => {
+      seed();
+      seedLeagues();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue(rosterOf({ id: 'p-jon', name: 'Jon Rahm' }));
+      renderPage();
+
+      await openAddModal();
+      await userEvent.selectOptions(await screen.findByTestId('root-admin-golf-field-add-league'), 'liv');
+      const select = await screen.findByTestId('root-admin-golf-field-add-roster-select-p-jon');
+      await userEvent.click(select);
+      expect(screen.getByTestId('root-admin-golf-field-add-submit')).toHaveTextContent('Add selected (1)');
+      await userEvent.click(select);
+
+      expect(screen.getByTestId('root-admin-golf-field-add-submit')).toHaveTextContent('Add selected (0)');
+      expect(screen.getByTestId('root-admin-golf-field-add-submit')).toBeDisabled();
+    });
+
+    it('says every roster golfer is already in the field when the browsed roster adds no one new', async () => {
+      seed();
+      seedLeagues();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue(rosterOf({ id: 'p-rory', name: 'Rory McIlroy' }));
+      renderPage();
+
+      await openAddModal();
+      await userEvent.selectOptions(await screen.findByTestId('root-admin-golf-field-add-league'), 'liv');
+
+      expect(
+        await screen.findByText('Every golfer on that league’s roster is already in this field.'),
+      ).toBeInTheDocument();
+    });
+
+    it('shows the server\'s reason when the browsed league roster cannot be loaded', async () => {
+      seed();
+      seedLeagues();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue(
+        refusal('SPORT_LEAGUE_NOT_FOUND', 'Sport league liv was not found.', 404),
+      );
+      renderPage();
+
+      await openAddModal();
+      await userEvent.selectOptions(await screen.findByTestId('root-admin-golf-field-add-league'), 'liv');
+
+      expect(await screen.findByText('Roster unavailable')).toBeInTheDocument();
+      expect(screen.getByText('Sport league liv was not found.')).toBeInTheDocument();
+    });
+
+    it('falls back to the name search when the league list cannot be loaded', async () => {
+      seed();
+      listSportLeaguesMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'The league store is unavailable.', 500));
+      renderPage();
+
+      await openAddModal();
+
+      expect(await screen.findByText('Leagues unavailable')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-golf-field-add-league')).not.toBeInTheDocument();
+      expect(screen.getByTestId('root-admin-golf-field-add-search')).toBeInTheDocument();
+    });
+
+    it('lists searched golfers who are not in the field, adds a ticked one, and hides golfers already in it', async () => {
+      seed();
+      seedLeagues();
+      listParticipantsMock.mockResolvedValue({
+        data: {
+          participants: [
+            participantFixture({ id: 'p-rory', name: 'Rory McIlroy' }),
+            participantFixture({ id: 'p-off', name: 'Rory Sabbatini', nationality: 'SVK' }),
+          ],
+        },
+      });
+      addEventParticipantsMock.mockResolvedValue({ data: { added: 1, skipped: 0, total: 1 } });
+      renderPage();
+
+      await openAddModal();
+      fireEvent.change(screen.getByTestId('root-admin-golf-field-add-search'), { target: { value: 'Rory' } });
+
+      const results = await screen.findByTestId('root-admin-golf-field-add-search-results');
+      expect(within(results).getByText('Rory Sabbatini')).toBeInTheDocument();
+      expect(within(results).queryByText('Rory McIlroy')).not.toBeInTheDocument();
+      expect(listParticipantsMock).toHaveBeenCalledWith(
+        expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE', q: 'Rory' } }),
+      );
+
+      await userEvent.click(screen.getByTestId('root-admin-golf-field-add-search-select-p-off'));
+      await userEvent.click(screen.getByTestId('root-admin-golf-field-add-submit'));
+
+      await waitFor(() =>
+        expect(addEventParticipantsMock).toHaveBeenCalledWith(
+          expect.objectContaining({ body: { participantIds: ['p-off'] } }),
+        ),
+      );
+      expect(await screen.findByTestId('root-admin-golf-field-add-result')).toHaveTextContent(
+        'Added 1 golfer to the field.',
+      );
+    });
+
+    it('says no new golfers matched when the search finds only golfers already in the field', async () => {
+      seed();
+      seedLeagues();
+      listParticipantsMock.mockResolvedValue({
+        data: { participants: [participantFixture({ id: 'p-rory', name: 'Rory McIlroy' })] },
+      });
+      renderPage();
+
+      await openAddModal();
+      fireEvent.change(screen.getByTestId('root-admin-golf-field-add-search'), { target: { value: 'Rory' } });
+
+      expect(await screen.findByText('No new golfers matched that search.')).toBeInTheDocument();
+    });
+
+    it('shows the server\'s reason when the golfer search fails', async () => {
+      seed();
+      seedLeagues();
+      listParticipantsMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'Participant search is unavailable.', 500));
+      renderPage();
+
+      await openAddModal();
+      fireEvent.change(screen.getByTestId('root-admin-golf-field-add-search'), { target: { value: 'Ro' } });
+
+      expect(await screen.findByText('Search failed')).toBeInTheDocument();
+      expect(screen.getByText('Participant search is unavailable.')).toBeInTheDocument();
+    });
+
+    it('shows the server\'s reason and keeps the selection when adding golfers is refused', async () => {
+      seed();
+      seedLeagues();
+      listParticipantLeagueAffiliationsMock.mockResolvedValue(rosterOf({ id: 'p-jon', name: 'Jon Rahm' }));
+      addEventParticipantsMock.mockResolvedValue(
+        refusal('SPORT_EVENT_FIELD_LOCKED', 'The field is locked for this tournament.', 409),
+      );
+      renderPage();
+
+      await openAddModal();
+      await userEvent.selectOptions(await screen.findByTestId('root-admin-golf-field-add-league'), 'liv');
+      await userEvent.click(await screen.findByTestId('root-admin-golf-field-add-roster-select-p-jon'));
+      await userEvent.click(screen.getByTestId('root-admin-golf-field-add-submit'));
+
+      expect(await screen.findByText('Add failed')).toBeInTheDocument();
+      expect(screen.getByText('The field is locked for this tournament.')).toBeInTheDocument();
+      expect(screen.getByTestId('root-admin-golf-field-add-submit')).toHaveTextContent('Add selected (1)');
+      expect(screen.queryByTestId('root-admin-golf-field-add-result')).not.toBeInTheDocument();
+    });
+
+    it('closes the add dialog from its close button without adding anyone', async () => {
+      seed();
+      seedLeagues();
+      renderPage();
+
+      const modal = await openAddModal();
+      await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+
+      await waitFor(() =>
+        expect(screen.queryByTestId('root-admin-golf-field-add-modal')).not.toBeInTheDocument(),
+      );
+      expect(addEventParticipantsMock).not.toHaveBeenCalled();
+    });
   });
 });

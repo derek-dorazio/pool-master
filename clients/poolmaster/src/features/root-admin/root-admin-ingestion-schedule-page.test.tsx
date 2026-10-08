@@ -116,3 +116,71 @@ describe('RootAdminIngestionSchedulePage', () => {
     expect(await screen.findByText('The schedule store is unavailable.')).toBeInTheDocument();
   });
 });
+
+describe('RootAdminIngestionSchedulePage load failure, toggles, blank values and pending reset', () => {
+  beforeEach(() => {
+    getIngestionScheduleMock.mockReset();
+    resetIngestionScheduleMock.mockReset();
+    updateIngestionScheduleMock.mockReset();
+  });
+
+  const schedule = {
+    data: {
+      scheduledSports: ['GOLF'],
+      healthCheck: { enabled: true, intervalMinutes: 5 },
+      eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
+      eventLiveScores: { enabled: true, intervalSeconds: 30 },
+      perSportOverrides: {},
+    },
+  };
+
+  it('shows the server\'s reason in place of the editor when the schedule cannot be loaded', async () => {
+    getIngestionScheduleMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'The schedule store is unavailable.' } },
+      response: { status: 500 },
+    });
+    renderPage();
+
+    expect(await screen.findByText('The schedule store is unavailable.')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-ingestion-page-save')).not.toBeInTheDocument();
+  });
+
+  it('saves a policy switched off with its checkbox as enabled false', async () => {
+    getIngestionScheduleMock.mockResolvedValue(schedule);
+    updateIngestionScheduleMock.mockResolvedValue(schedule);
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId('root-admin-ingestion-page-healthCheck-enabled'));
+    fireEvent.click(screen.getByTestId('root-admin-ingestion-page-save'));
+
+    await waitFor(() => expect(updateIngestionScheduleMock).toHaveBeenCalledTimes(1));
+    expect((updateIngestionScheduleMock.mock.calls[0][0] as { body: Record<string, unknown> }).body)
+      .toMatchObject({ healthCheck: { enabled: false, intervalMinutes: 5 } });
+  });
+
+  it('leaves an interval or look-ahead the server does not send blank rather than showing 0', async () => {
+    getIngestionScheduleMock.mockResolvedValue({
+      data: {
+        ...schedule.data,
+        eventParticipants: { enabled: true },
+        eventLiveScores: { enabled: false },
+      },
+    });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-ingestion-page-eventParticipants-intervalMinutes')).toHaveValue(null);
+    expect(screen.getByTestId('root-admin-ingestion-page-eventParticipants-lookaheadDays')).toHaveValue(null);
+    expect(screen.getByTestId('root-admin-ingestion-page-eventLiveScores-intervalSeconds')).toHaveValue(null);
+  });
+
+  it('reads "Resetting..." and disables the reset button while the reset is in flight', async () => {
+    getIngestionScheduleMock.mockResolvedValue(schedule);
+    resetIngestionScheduleMock.mockReturnValue(new Promise(() => undefined));
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Reset ingestion schedule' }));
+
+    const pending = await screen.findByRole('button', { name: 'Resetting...' });
+    expect(pending).toBeDisabled();
+  });
+});
