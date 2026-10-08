@@ -77,6 +77,8 @@ export interface SportEvent extends DomainEntity {
   endDate?: Date;
   status: SportEventStatus;
   rounds?: number;
+  /** Par for every round, when an admin set it; unset, contest scoring derives each round's par from the field (#478). */
+  roundsPar?: number;
   participantCount?: number;
   metadata: Record<string, unknown>;
   /** The event series — the recurring tournament — this is one edition of. Its only parent. */

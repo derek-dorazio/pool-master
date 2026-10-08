@@ -3,6 +3,7 @@ import { throwApiError } from '@/lib/errors';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { ROUNDS_PAR_MAX, ROUNDS_PAR_MIN } from '@poolmaster/shared/dto';
 import { updateEvent } from '@/lib/api';
 import {
   Button,
@@ -30,6 +31,12 @@ const editFormSchema = z.object({
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().optional(),
   rounds: z.coerce.number().int().min(1, 'At least one round'),
+  // Blank means "not set": contest scoring then derives each round's par from the field.
+  roundsPar: z.string().trim().refine((value) => {
+    if (value === '') return true;
+    const par = Number(value);
+    return Number.isInteger(par) && par >= ROUNDS_PAR_MIN && par <= ROUNDS_PAR_MAX;
+  }, `Par is a whole number from ${ROUNDS_PAR_MIN} to ${ROUNDS_PAR_MAX}, or blank`),
 });
 
 type EditFormValues = z.infer<typeof editFormSchema>;
@@ -42,6 +49,7 @@ function toDefaults(tournament: SportEventDto): EditFormValues {
     startDate: toDateTimeLocalValue(tournament.startDate),
     endDate: tournament.endDate ? toDateTimeLocalValue(tournament.endDate) : '',
     rounds: tournament.rounds ?? 1,
+    roundsPar: tournament.roundsPar === null ? '' : String(tournament.roundsPar),
   };
 }
 
@@ -54,6 +62,7 @@ function toRequestBody(values: EditFormValues): UpdateSportEventRequest {
     startDate: localDateTimeInputToIso(values.startDate) ?? values.startDate,
     endDate: localDateTimeInputToIso(values.endDate) ?? null,
     rounds: values.rounds,
+    roundsPar: values.roundsPar === '' ? null : Number(values.roundsPar),
   };
 }
 
@@ -146,6 +155,11 @@ export function GolfTournamentSummaryCard({
           },
           { id: 'rounds', label: 'Rounds', value: tournament.rounds ?? 'Not set' },
           {
+            id: 'rounds-par',
+            label: 'Par per round',
+            value: tournament.roundsPar ?? 'From scores',
+          },
+          {
             id: 'tour',
             label: 'Tour',
             value: (
@@ -210,6 +224,20 @@ export function GolfTournamentSummaryCard({
             label="Rounds"
           >
             <Input min={1} type="number" {...form.register('rounds')} />
+          </FormField>
+          <FormField
+            error={form.formState.errors.roundsPar?.message}
+            helperText="Contests score a round a golfer did not play (cut, withdrawn, no score) as 80 strokes against this par. Leave blank to work it out from players' finished rounds."
+            label="Par per round"
+          >
+            <Input
+              data-testid="root-admin-golf-tournament-home-edit-rounds-par"
+              inputMode="numeric"
+              max={ROUNDS_PAR_MAX}
+              min={ROUNDS_PAR_MIN}
+              type="number"
+              {...form.register('roundsPar')}
+            />
           </FormField>
         </form>
       </FormModal>

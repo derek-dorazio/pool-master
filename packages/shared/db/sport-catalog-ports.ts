@@ -87,6 +87,7 @@ export interface SportEventUpdate {
   startDate?: Date;
   endDate?: Date | null;
   rounds?: number | null;
+  roundsPar?: number | null;
   autoLifecycleEnabled?: boolean;
   status?: SportEventStatus;
   providerId?: string;

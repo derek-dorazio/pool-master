@@ -64,6 +64,7 @@ export interface CreateSportEventInput {
   startDate: Date;
   endDate?: Date;
   rounds?: number;
+  roundsPar?: number;
   autoLifecycleEnabled?: boolean;
 }
 
@@ -148,6 +149,7 @@ export class SportEventService {
       endDate: input.endDate,
       status: SportEventStatus.DRAFT,
       rounds,
+      roundsPar: input.roundsPar,
       eventSeriesId: eventSeries.id,
       eventYear: input.eventYear,
       syncScope: SportEventSyncScope.NONE,
@@ -269,7 +271,7 @@ export class SportEventService {
    * plans/124 §4.2a, reshaped by plans/147 — clone a sport league's calendar for one event
    * year forward to another. It used to clone a season object; it is still one operation, now
    * query-shaped rather than object-shaped. Each source event is re-created through
-   * `createEvent` with name/venue/location/rounds/autoLifecycleEnabled copied and every date
+   * `createEvent` with name/venue/location/rounds/roundsPar/autoLifecycleEnabled copied and every date
    * shifted by the year difference, so it lands in the same series as next year's edition.
    * Never a row copy: field, tiers, prices, scores and provider link stay with the source.
    * The sport league's current event year does not change.
@@ -316,6 +318,7 @@ export class SportEventService {
         startDate: shiftYears(event.startDate, shift),
         endDate: event.endDate ? shiftYears(event.endDate, shift) : undefined,
         rounds: event.rounds,
+        roundsPar: event.roundsPar,
         autoLifecycleEnabled: event.autoLifecycleEnabled,
       }));
     }

@@ -58,6 +58,8 @@ export interface ParticipantScore {
   sportEventParticipantId: string;
   name: string;
   score: number | null;
+  /** Rounds scored as a fixed 80 strokes because the golfer did not play them (#478). */
+  unplayedRoundNumbers: number[];
   asOf: Date | null;
 }
 

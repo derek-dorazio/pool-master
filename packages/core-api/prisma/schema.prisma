@@ -1018,6 +1018,10 @@ model SportEvent {
   endDate              DateTime?                 @map("end_date") @db.Timestamptz
   status               PrismaSportEventStatus    @default(SCHEDULED)
   rounds               Int?
+  // Par for every round of the event (#478), set by an admin. Null derives each
+  // round's par from the field's finished rounds (strokes minus to-par). Read
+  // only by contest scoring, to turn an unplayed round's 80 strokes into to-par.
+  roundsPar            Int?                      @map("rounds_par")
   participantCount     Int?                      @map("participant_count")
   metadata             Json                      @default("{}")
   // The series this is one edition of — the event's only parent, and its only
