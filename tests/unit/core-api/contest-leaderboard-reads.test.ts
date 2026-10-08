@@ -197,6 +197,31 @@ describe('contest scoring of unplayed rounds', () => {
     expect(score).toMatchObject({ score: 32, unplayedRoundNumbers: [1, 2, 3, 4] });
   });
 
+  it('scores a golfer still in the field with rounds 3 and 4 missing +8 for each once the event is complete', () => {
+    const neverFlagged = golfer('sep-stale', 'COMPLETE', [
+      [1, 'COMPLETED', 72, 0],
+      [2, 'COMPLETED', 72, 0],
+    ]);
+
+    const [, score] = toParticipantScores(field(leader, neverFlagged), scoringEvent({ rounds: 4, roundsPar: null, status: 'COMPLETED' }));
+
+    expect(score).toMatchObject({ score: 16, unplayedRoundNumbers: [3, 4] });
+  });
+
+  it('counts a last round with all 18 holes scored as played when the event completes before its status flips', () => {
+    const lastGroup = golfer('sep-last', 'IN_PROGRESS', [
+      [1, 'COMPLETED', 70, -2],
+      [2, 'COMPLETED', 70, -2],
+      [3, 'COMPLETED', 70, -2],
+      [4, 'IN_PROGRESS', 71, -1],
+    ]);
+    lastGroup.rounds[3].golf = { strokes: 71, scoreToPar: -1, thru: 18 } as typeof lastGroup.rounds[number]['golf'];
+
+    const [, score] = toParticipantScores(field(leader, lastGroup), scoringEvent({ rounds: 4, roundsPar: null, status: 'COMPLETED' }));
+
+    expect(score).toMatchObject({ score: -7, unplayedRoundNumbers: [] });
+  });
+
   it('keeps a golfer still playing at their live to-par, even with a round in progress after the field has moved on', () => {
     const suspended = golfer('sep-live', 'IN_PROGRESS', [
       [1, 'COMPLETED', 70, -2],
@@ -226,7 +251,7 @@ function golfer(
       : { standing: { asOf: null, status: standingStatus }, golf: { eventScoreToPar } },
     rounds: rounds.map(([roundNumber, status, strokes, scoreToPar]) => ({
       round: { roundNumber, status },
-      golf: { strokes, scoreToPar },
+      golf: { strokes, scoreToPar, thru: status === 'IN_PROGRESS' ? 9 : 18 } as { strokes: number; scoreToPar: number; thru: number | null },
     })),
   };
 }

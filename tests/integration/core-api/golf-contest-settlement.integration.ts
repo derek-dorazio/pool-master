@@ -310,7 +310,7 @@ describe('golf contest settlement — which contests settle', () => {
 });
 
 describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
-  it('freezes a cut golfer\'s total with +8 for each of rounds 3 and 4 on par-72 rounds', async () => {
+  it('freezes +8 for each of rounds 3 and 4 on par-72 rounds for a cut golfer and for one the feed never flagged', async () => {
     const prisma = getPrisma();
     const service = createGolfContestSettlementService(prisma);
     const suffix = randomUUID().slice(0, 8);
@@ -361,6 +361,10 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     }
     await writeRound(cut.id, 1, 'COMPLETED', 72);
     await writeRound(cut.id, 2, 'MISSED_CUT', 74);
+    // Never flagged as cut by the feed: still COMPLETE, two rounds at par, nothing after.
+    const unflagged = await createSettlementParticipant({ sportId: sport.id, sportEventId: event.id, name: `Unflagged ${suffix}`, scoreToPar: 0, strokes: 144 });
+    await writeRound(unflagged.id, 1, 'COMPLETED', 72);
+    await writeRound(unflagged.id, 2, 'COMPLETED', 72);
     const contest = await prisma.contest.create({
       data: {
         leagueId: league.id,
@@ -385,14 +389,19 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     const entry = await prisma.contestEntry.create({
       data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Leader and Cut', status: 'ACTIVE' },
     });
+    const unflaggedEntry = await prisma.contestEntry.create({
+      data: { contestId: contest.id, squadId: squad.id, entryNumber: 2, name: 'Leader and Unflagged', status: 'ACTIVE' },
+    });
     await prisma.contestEntryPick.createMany({
       data: [
         { entryId: entry.id, sportEventParticipantId: leader.id, contestFormat: 'ROSTER', slot: 1 },
         { entryId: entry.id, sportEventParticipantId: cut.id, contestFormat: 'ROSTER', slot: 2 },
+        { entryId: unflaggedEntry.id, sportEventParticipantId: leader.id, contestFormat: 'ROSTER', slot: 1 },
+        { entryId: unflaggedEntry.id, sportEventParticipantId: unflagged.id, contestFormat: 'ROSTER', slot: 2 },
       ],
     });
 
-    await expect(service.settleCompletedSportEvent(event.id)).resolves.toMatchObject({ contestsSettled: 1, standingsUpserted: 1 });
+    await expect(service.settleCompletedSportEvent(event.id)).resolves.toMatchObject({ contestsSettled: 1, standingsUpserted: 2 });
 
     // -8 for the leader; +2 played plus +8 for each of rounds 3 and 4 for the cut golfer.
     const standing = await prisma.contestEntryStanding.findFirstOrThrow({
@@ -401,6 +410,13 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     });
     expect(standing.golf?.totalScoreToPar).toBe(10);
     expect(standing.scoredPickCount).toBe(2);
+    // A golfer still marked in the event when it completes, missing rounds 3 and 4, gets their
+    // 80s too: -8 for the leader, E plus +16 for them.
+    const unflaggedStanding = await prisma.contestEntryStanding.findFirstOrThrow({
+      where: { contestEntryId: unflaggedEntry.id },
+      include: { golf: true },
+    });
+    expect(unflaggedStanding.golf?.totalScoreToPar).toBe(8);
   });
 });
 
