@@ -146,15 +146,23 @@ function EntryBlock({
               >
                 {pick.thru ?? NO_SCORE}
               </span>
-              {pick.rounds.map((round, index) => (
-                <span
-                  className="text-right text-muted-foreground"
-                  data-testid={`contest-leaderboard-pick-round-${entry.entryId}-${pick.pickId}-${roundNumbers[index]}`}
-                  key={roundNumbers[index]}
-                >
-                  {round ?? NO_SCORE}
-                </span>
-              ))}
+              {pick.rounds.map((round, index) => {
+                // #478 — a round the golfer did not play counts as 80 strokes; set apart so the
+                // total is explainable, and named for a screen reader.
+                const isUnplayed = pick.unplayedRoundNumbers.includes(roundNumbers[index]);
+                return (
+                  <span
+                    aria-label={isUnplayed ? `Round ${roundNumbers[index]} not played, counts as 80 strokes` : undefined}
+                    className={cn('text-right text-muted-foreground', isUnplayed && 'italic')}
+                    data-testid={`contest-leaderboard-pick-round-${entry.entryId}-${pick.pickId}-${roundNumbers[index]}`}
+                    data-unplayed={isUnplayed || undefined}
+                    key={roundNumbers[index]}
+                    title={isUnplayed ? 'Not played: counts as 80 strokes' : undefined}
+                  >
+                    {round ?? NO_SCORE}
+                  </span>
+                );
+              })}
             </div>
           ))}
         </div>
@@ -374,6 +382,11 @@ export function ContestLeaderboardPage() {
             ))
           )}
         </div>
+        {view.hasUnplayedRounds ? (
+          <p className="px-4 pt-3 text-xs text-muted-foreground" data-testid="contest-leaderboard-unplayed-note">
+            Rounds in italics were not played (missed cut, withdrawal, or no score) and count as 80 strokes against that round&apos;s par.
+          </p>
+        ) : null}
       </Tile>
     </section>
   );

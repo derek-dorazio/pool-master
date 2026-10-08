@@ -117,6 +117,9 @@ export function formatThru(participant: SportEventParticipantDto): string | null
   return thru === null || thru <= 0 ? null : String(thru);
 }
 
+/** What a round the golfer did not play counts as, shown in its cell (#478). */
+export const UNPLAYED_ROUND_CELL = '80';
+
 /** One golfer row under an entry. Every score is already formatted; null renders as a dash. */
 export interface LeaderboardPickRow {
   pickId: string;
@@ -125,11 +128,14 @@ export interface LeaderboardPickRow {
   participantName: string;
   /** The worst `M - N` scored picks: present on the page, struck through, out of the total. */
   isDropped: boolean;
+  /** The golfer's score in this contest, unplayed rounds included: what the entry's total sums. */
   total: string | null;
   /** See `formatThru`. */
   thru: string | null;
-  /** One cell per entry of `roundNumbers`, in that order. */
+  /** One cell per entry of `roundNumbers`, in that order. An unplayed round reads `80`. */
   rounds: Array<string | null>;
+  /** The rounds scored as 80 strokes because the golfer did not play them (#478). */
+  unplayedRoundNumbers: number[];
 }
 
 /** One entry's block: its own standing, then its golfers. */
@@ -146,6 +152,8 @@ export interface LeaderboardEntryRow {
 
 export interface LeaderboardView {
   roundNumbers: number[];
+  /** Whether any golfer on the board has a round scored as 80 strokes, so the page explains it. */
+  hasUnplayedRounds: boolean;
   currentRoundLabel: string | null;
   entries: LeaderboardEntryRow[];
 }
@@ -157,7 +165,14 @@ export interface LeaderboardView {
  */
 export function buildLeaderboardView(response: ContestLeaderboardResponse): LeaderboardView {
   const definition = PARTICIPANT_SCORING_DEFINITIONS[response.scoringDefinitionId];
-  const roundNumbers = resolveRoundNumbers(response.participants);
+  // A withdrawn golfer's 80s can fall on rounds nobody has played yet, so those get columns too.
+  const unplayedRoundNumbers = response.entries.flatMap((entry) =>
+    entry.picks.flatMap((pick) => pick.golf?.unplayedRoundNumbers ?? []),
+  );
+  const roundNumbers = [...new Set([
+    ...resolveRoundNumbers(response.participants),
+    ...unplayedRoundNumbers,
+  ])].sort((left, right) => left - right);
   const participantsById = new Map(
     response.participants.map((participant) => [participant.id, participant]),
   );
@@ -186,15 +201,22 @@ export function buildLeaderboardView(response: ContestLeaderboardResponse): Lead
         const roundsByNumber = new Map(
           participant.rounds.map((round) => [round.roundNumber, round]),
         );
-        const eventScoreToPar = participant.standing?.golf?.eventScoreToPar ?? null;
+        // The contest score, not the event's: a cut or withdrawn golfer's unplayed rounds count
+        // as 80 strokes here (#478), while the event standing keeps their real to-par.
+        const contestScore = pick.golf?.scoreToPar ?? null;
+        const pickUnplayedRounds = pick.golf?.unplayedRoundNumbers ?? [];
         return [{
           pickId: pick.pickId,
           position: participant.standing?.displayPosition ?? null,
           participantName: participant.participant.name,
           isDropped: pick.isDropped,
-          total: eventScoreToPar === null ? null : definition.format(eventScoreToPar),
+          total: contestScore === null ? null : definition.format(contestScore),
           thru: formatThru(participant),
+          unplayedRoundNumbers: pickUnplayedRounds,
           rounds: roundNumbers.map((roundNumber) => {
+            if (pickUnplayedRounds.includes(roundNumber)) {
+              return UNPLAYED_ROUND_CELL;
+            }
             const round = roundsByNumber.get(roundNumber);
             if (!round?.golf) {
               return null;
@@ -212,6 +234,7 @@ export function buildLeaderboardView(response: ContestLeaderboardResponse): Lead
 
   return {
     roundNumbers,
+    hasUnplayedRounds: unplayedRoundNumbers.length > 0,
     currentRoundLabel: formatCurrentRoundLabel(resolveCurrentRound(response.participants)),
     entries,
   };

@@ -198,6 +198,7 @@ function leaderboardResponse(entryTotalScoreToPar = -5) {
             slot: 1,
             isCounting: true,
             isDropped: false,
+            golf: { scoreToPar: -5, unplayedRoundNumbers: [] as number[] },
           },
           {
             pickId: 'pick-2',
@@ -206,6 +207,7 @@ function leaderboardResponse(entryTotalScoreToPar = -5) {
             slot: 2,
             isCounting: false,
             isDropped: true,
+            golf: { scoreToPar: 1, unplayedRoundNumbers: [] as number[] },
           },
         ],
       }],
@@ -233,6 +235,7 @@ function leaderboardWithGolfers(golfers: GolferFixture[]) {
         slot: index + 1,
         isCounting: true,
         isDropped: false,
+        golf: { scoreToPar: golfer.eventScoreToPar ?? null, unplayedRoundNumbers: [] as number[] },
       })),
     }],
   };
@@ -402,6 +405,43 @@ describe('ContestLeaderboardPage', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('shows a cut golfer\'s unplayed rounds as 80 in italics, their contest total, and a note explaining the 80s', async () => {
+    const leaderboard = leaderboardWithGolfers([
+      {
+        id: 'sep-1',
+        name: 'Cut Golfer',
+        eventScoreToPar: 2,
+        standingStatus: 'ELIMINATED',
+        rounds: [
+          { roundNumber: 1, status: 'COMPLETED', strokes: 72, scoreToPar: 0 },
+          { roundNumber: 2, status: 'MISSED_CUT', strokes: 74, scoreToPar: 2 },
+        ],
+      },
+    ]);
+    leaderboard.entries[0].picks[0].golf = { scoreToPar: 18, unplayedRoundNumbers: [3, 4] };
+    primeMocks({ leaderboard });
+
+    renderLeaderboard();
+
+    const row = await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
+    expect(row).toHaveTextContent('+18');
+    const roundThree = screen.getByTestId('contest-leaderboard-pick-round-entry-1-pick-1-3');
+    expect(roundThree).toHaveTextContent('80');
+    expect(roundThree).toHaveClass('italic');
+    expect(roundThree).toHaveAccessibleName('Round 3 not played, counts as 80 strokes');
+    expect(screen.getByTestId('contest-leaderboard-pick-round-entry-1-pick-1-2')).not.toHaveClass('italic');
+    expect(screen.getByTestId('contest-leaderboard-unplayed-note')).toHaveTextContent('count as 80 strokes');
+  });
+
+  it('shows no unplayed-rounds note when every golfer played their rounds', async () => {
+    primeMocks();
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
+    expect(screen.queryByTestId('contest-leaderboard-unplayed-note')).not.toBeInTheDocument();
   });
 
   it('strikes through a dropped pick and leaves a counting pick unstruck', async () => {

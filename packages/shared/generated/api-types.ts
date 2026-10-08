@@ -6360,6 +6360,8 @@ export interface components {
             endDate: string | null;
             /** @description Number of rounds when the format has them; null otherwise. */
             rounds: number | null;
+            /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
+            roundsPar: number | null;
             /** @description Field size the provider reports, when it reports one; null otherwise. */
             participantCount: number | null;
             /** @description Number of event participants currently persisted for the event. */
@@ -6478,6 +6480,8 @@ export interface components {
                 endDate: string | null;
                 /** @description Number of rounds when the format has them; null otherwise. */
                 rounds: number | null;
+                /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
+                roundsPar: number | null;
                 /** @description Field size the provider reports, when it reports one; null otherwise. */
                 participantCount: number | null;
                 /** @description Number of event participants currently persisted for the event. */
@@ -6575,6 +6579,8 @@ export interface components {
                 endDate: string | null;
                 /** @description Number of rounds when the format has them; null otherwise. */
                 rounds: number | null;
+                /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
+                roundsPar: number | null;
                 /** @description Field size the provider reports, when it reports one; null otherwise. */
                 participantCount: number | null;
                 /** @description Number of event participants currently persisted for the event. */
@@ -6741,6 +6747,8 @@ export interface components {
                 endDate: string | null;
                 /** @description Number of rounds when the format has them; null otherwise. */
                 rounds: number | null;
+                /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
+                roundsPar: number | null;
                 /** @description Field size the provider reports, when it reports one; null otherwise. */
                 participantCount: number | null;
                 /** @description Number of event participants currently persisted for the event. */
@@ -6826,6 +6834,8 @@ export interface components {
              */
             endDate?: string | null;
             rounds?: number;
+            /** @description Par for every round, 60 to 80. null clears it, so contest scoring derives each round's par from the field. */
+            roundsPar?: number | null;
             autoLifecycleEnabled?: boolean;
         };
         /** @description Moves an event to its next lifecycle status, activating or settling its contests as that status requires. */
@@ -7979,6 +7989,13 @@ export interface components {
         };
         /** @enum {string} */
         ParticipantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+        /** @description Golf extension of a scored pick: the golfer's contest score and the rounds in it scored as 80 strokes. */
+        ScoredContestEntryPickGolfDto: {
+            /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
+            scoreToPar: number | null;
+            /** @description Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
+            unplayedRoundNumbers: number[];
+        };
         /** @description One pick on a contest entry, with whether it counts. */
         ScoredContestEntryPickDto: {
             /** @description ContestEntryPick row identifier. */
@@ -7996,10 +8013,17 @@ export interface components {
             isCounting: boolean;
             /** @description Whether this scored pick is currently dropped because better picks fill the counting places. */
             isDropped: boolean;
+            /** @description Present for a golf contest; null otherwise. */
+            golf: {
+                /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
+                scoreToPar: number | null;
+                /** @description Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
+                unplayedRoundNumbers: number[];
+            } | null;
         };
         /** @description Golf extension of a contest entry standing: the total its position was ranked from. */
         ContestEntryGolfStandingDto: {
-            /** @description The entry's total against par: the sum of its counting picks' event totals. Null until a pick is scored. */
+            /** @description The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored. */
             totalScoreToPar: number | null;
         };
         /** @description One entry's standing in a contest leaderboard. The score lives in the sport's extension. */
@@ -8029,7 +8053,7 @@ export interface components {
             scoredPickCount: number;
             /** @description Present for a golf contest; null otherwise. */
             golf: {
-                /** @description The entry's total against par: the sum of its counting picks' event totals. Null until a pick is scored. */
+                /** @description The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored. */
                 totalScoreToPar: number | null;
             } | null;
             /** @description The entry's picks, counting picks first. */
@@ -8049,6 +8073,13 @@ export interface components {
                 isCounting: boolean;
                 /** @description Whether this scored pick is currently dropped because better picks fill the counting places. */
                 isDropped: boolean;
+                /** @description Present for a golf contest; null otherwise. */
+                golf: {
+                    /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
+                    scoreToPar: number | null;
+                    /** @description Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
+                    unplayedRoundNumbers: number[];
+                } | null;
             }[];
         };
         /** @description How an entry's picks combine into its total. */
@@ -8289,7 +8320,7 @@ export interface components {
                 scoredPickCount: number;
                 /** @description Present for a golf contest; null otherwise. */
                 golf: {
-                    /** @description The entry's total against par: the sum of its counting picks' event totals. Null until a pick is scored. */
+                    /** @description The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored. */
                     totalScoreToPar: number | null;
                 } | null;
                 /** @description The entry's picks, counting picks first. */
@@ -8309,6 +8340,13 @@ export interface components {
                     isCounting: boolean;
                     /** @description Whether this scored pick is currently dropped because better picks fill the counting places. */
                     isDropped: boolean;
+                    /** @description Present for a golf contest; null otherwise. */
+                    golf: {
+                        /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
+                        scoreToPar: number | null;
+                        /** @description Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
+                        unplayedRoundNumbers: number[];
+                    } | null;
                 }[];
             }[];
             /**

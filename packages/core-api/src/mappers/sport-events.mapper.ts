@@ -58,6 +58,7 @@ export function mapSportEventToDto({
     startDate: event.startDate.toISOString(),
     endDate: event.endDate?.toISOString() ?? null,
     rounds: event.rounds ?? null,
+    roundsPar: event.roundsPar ?? null,
     participantCount: event.participantCount ?? null,
     loadedParticipantCount,
     untieredParticipantCount,

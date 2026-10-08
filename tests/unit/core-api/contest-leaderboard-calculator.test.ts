@@ -161,7 +161,7 @@ describe('contest counting rule', () => {
 describe('an entry\'s standing from its picks', () => {
   const at = (minute: number) => new Date(Date.UTC(2026, 3, 9, 12, minute));
   const scores = (rows: Array<[string, string, number | null]>) => new Map<string, ParticipantScore>(
-    rows.map(([id, name, score]) => [id, { sportEventParticipantId: id, name, score, asOf: null }]),
+    rows.map(([id, name, score]) => [id, { sportEventParticipantId: id, name, score, unplayedRoundNumbers: [], asOf: null }]),
   );
   const entry = (picks: Array<{ id: string; sep: string; slot?: number | null; minute?: number }>) => ({
     id: 'entry-1',

@@ -26,6 +26,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     startDate: '2026-05-07T12:00:00.000Z',
     endDate: '2026-05-10T22:00:00.000Z',
     rounds: 4,
+    roundsPar: null,
     participantCount: null,
     loadedParticipantCount: 0,
     untieredParticipantCount: 0,
