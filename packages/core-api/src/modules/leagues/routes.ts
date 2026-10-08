@@ -18,20 +18,17 @@ import {
   PrismaLeagueInvitationRepository,
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
-  PrismaContestRepository,
   PrismaUserRepository,
 } from '../../adapters';
 import { LeagueService } from './service';
 import { InvitationService } from './invitation-service';
 import { MemberService } from './member-service';
 import { MemberDirectoryService } from './member-directory-service';
-import { DashboardService } from './dashboard-service';
 import { BulkService } from './bulk-service';
 import { leagueFromPath, requireCommissioner, requireMemberOfLeague } from './permissions';
 import { createLeagueHandlers } from './handler';
 import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
-import { createDashboardHandlers } from './dashboard-handler';
 import { createBulkHandlers } from './bulk-handler';
 import { getAppPrisma } from '../../core/prisma-context';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
@@ -47,7 +44,6 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const userRepo = new PrismaUserRepository(prisma);
-  const contestRepo = new PrismaContestRepository(prisma);
   const mailDelivery = opts.mailDelivery;
   const appBaseUrl = readApplicationBaseUrl(process.env);
 
@@ -80,12 +76,6 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
     fastify.log,
   );
   const memberDirectoryService = new MemberDirectoryService(membershipRepo, userRepo);
-  const dashboardService = new DashboardService(
-    leagueRepo,
-    membershipRepo,
-    contestRepo,
-    invitationRepo,
-  );
   const bulkService = new BulkService(
     leagueRepo,
     membershipRepo,
@@ -95,7 +85,6 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
   const league = createLeagueHandlers(leagueService, membershipRepo, squadMembershipRepo, userRepo);
   const invitation = createInvitationHandlers(invitationService, userRepo);
   const member = createMemberHandlers(memberService, memberDirectoryService, userRepo);
-  const dashboard = createDashboardHandlers(dashboardService);
   const bulk = createBulkHandlers(bulkService);
 
   // --- League CRUD ---
@@ -419,25 +408,6 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
     handler: member.leaveLeague,
   });
 
-  // --- Commissioner Dashboard ---
-
-  fastify.get('/:id/dashboard', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Get commissioner dashboard for a league',
-      description:
-        'Returns the commissioner-oriented dashboard payload for a league, including action items, member counts, pending invites, and upcoming events.',
-      operationId: 'getLeagueDashboard',
-      response: {
-        200: schemaRef('LeagueDashboardResponse'),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requireCommissioner(membershipRepo),
-    handler: dashboard.getDashboard,
-  });
-
   /*
    * #202 — `resolveActionItem`, `getLeagueAuditLog` and `getMemberAuditLog` are GONE.
    *
@@ -451,6 +421,10 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
    *
    * #255 then deleted the audit feature outright — both tables, every writer and every read —
    * and #205 dropped the action-item table and the dashboard's always-empty `actionItems`.
+   *
+   * #221 removed the commissioner dashboard (`getLeagueDashboard`) itself. It had no frontend
+   * caller; its pending invites and join dates now live on Teams and Owners, and contest start
+   * and end times on the contest pages.
    */
 
   /*

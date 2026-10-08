@@ -22,7 +22,6 @@ import {
   GenerateInviteLinkResponseSchema,
   ListLeagueInvitationsResponseSchema,
   ResendLeagueInvitationResponseSchema,
-  LeagueDashboardResponseSchema,
   LeagueResponseSchema,
   SendLeagueInvitationsResponseSchema,
   SquadListResponseSchema,
@@ -141,14 +140,14 @@ describe('Contract verification (web)', () => {
     expect(parsed.success).toBe(true);
   });
 
-  it('league invitation and dashboard routes match their response DTOs', async () => {
-    const owner = await createTestUser({ displayName: 'Contract Dashboard Owner' });
+  it('league invitation routes match their response DTOs', async () => {
+    const owner = await createTestUser({ displayName: 'Contract Invitations Owner' });
 
     const leagueRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: owner.headers,
-      payload: buildCreateLeaguePayload('Contract Dashboard League'),
+      payload: buildCreateLeaguePayload('Contract Invitations League'),
     });
     const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
@@ -211,15 +210,6 @@ describe('Contract verification (web)', () => {
     expect(ErrorEnvelopeSchema.safeParse(resendLinkRes.json()).success).toBe(true);
     expect(resendLinkRes.json<ErrorEnvelope>().error.code).toBe('LEAGUE_INVITATION_NOT_RESENDABLE');
 
-    const dashboardRes = await getApp().inject({
-      method: 'GET',
-      url: `${API_ROUTES.leagues.detail(leagueId)}/dashboard`,
-      headers: owner.headers,
-    });
-    expect(dashboardRes.statusCode).toBe(200);
-    expect(
-      LeagueDashboardResponseSchema.safeParse(dashboardRes.json()).success,
-    ).toBe(true);
   });
 
   it('league lifecycle routes match the shared response DTOs', async () => {
