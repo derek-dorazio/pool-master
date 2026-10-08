@@ -7,14 +7,10 @@
  * last route under /admin: the permission, not the place, is what makes it an admin operation.
  */
 import type { FastifyInstance } from 'fastify';
-import {
-  ContestConfigTemplateListResponseSchema,
-  ContestConfigTemplateResponseSchema,
-  ErrorEnvelopeSchema,
-  ListContestConfigTemplatesQuerySchema,
-  UpdateContestConfigTemplateRequestSchema,
-  zodToJsonSchema,
-} from '@poolmaster/shared/dto';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { requireRootAdmin } from '../../core/root-admin-guard';
 import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaContestConfigTemplateRepository } from '../../adapters';
@@ -22,6 +18,8 @@ import { createContestConfigTemplateHandlers } from './handler';
 import { ContestConfigTemplateService } from './service';
 
 export function contestConfigTemplatesModule(fastify: FastifyInstance): void {
+  void fastify.register(schemaComponentsPlugin);
+
   const handlers = createContestConfigTemplateHandlers(new ContestConfigTemplateService(
     new PrismaContestConfigTemplateRepository(getAppPrisma(fastify)),
     fastify.log,
@@ -34,11 +32,11 @@ export function contestConfigTemplatesModule(fastify: FastifyInstance): void {
       description:
         'The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format.',
       operationId: 'listContestConfigTemplates',
-      querystring: zodToJsonSchema(ListContestConfigTemplatesQuerySchema),
+      querystring: schemaRef('ListContestConfigTemplatesQuery'),
       response: {
-        200: zodToJsonSchema(ContestConfigTemplateListResponseSchema),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        200: schemaRef('ContestConfigTemplateListResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handlers.listTemplates,
@@ -51,13 +49,13 @@ export function contestConfigTemplatesModule(fastify: FastifyInstance): void {
       description:
         'Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration.',
       operationId: 'updateContestConfigTemplate',
-      body: zodToJsonSchema(UpdateContestConfigTemplateRequestSchema),
+      body: schemaRef('UpdateContestConfigTemplateRequest'),
       response: {
-        200: zodToJsonSchema(ContestConfigTemplateResponseSchema),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        200: schemaRef('ContestConfigTemplateResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
       },
     },
     onRequest: requireRootAdmin,

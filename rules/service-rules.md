@@ -155,7 +155,9 @@ For every API endpoint:
 
 1. Define or update the DTO Zod schema in `packages/shared/dto/`.
 2. Map domain/service results to that DTO in `packages/core-api/src/mappers/`.
-3. Use `zodToJsonSchema()` in the Fastify route schema for request/response payloads.
+3. Publish each request body and response schema as a named OpenAPI component: `registerSchema('Name', NameSchema)`
+   in the DTO module, then `schemaRef('Name')` in the Fastify route schema. An inline schema generates no
+   importable type, so `api:validate` refuses one.
 4. Provide `tags`, `summary`, descriptive endpoint documentation, and unique `operationId`.
 5. Regenerate and validate the shared OpenAPI/client artifacts.
 
@@ -300,7 +302,7 @@ Rules:
 
 ### What Not To Do
 
-- Do not leave placeholder `SuccessSchema` responses on endpoints that return real domain data.
+- Do not leave placeholder `SuccessResponse` responses on endpoints that return real domain data.
 - Do not omit response schemas because “the frontend already knows.”
 - Do not add local frontend interfaces to paper over backend schema gaps.
 - Do not use `as unknown as` in app code to force a generated response into shape.
@@ -390,7 +392,7 @@ All error responses must follow a consistent envelope so frontend clients can ha
 - Error codes must be specific enough for clients and tests to distinguish materially different failures that share the same HTTP status.
 - Human-readable messages must explain the real failure clearly without exposing unsafe internals.
 - When useful, `details` should carry structured machine-readable context rather than ad hoc string blobs.
-- Define a shared DTO/schema for the standard error envelope in `packages/shared/dto/`.
+- The envelope is `ErrorEnvelopeSchema` in `packages/shared/dto/errors.dto.ts`, published once as the `ErrorEnvelope` component. Route schemas reference it with `schemaRef('ErrorEnvelope')` (spread it with a `description` to name the codes a status carries); never inline it.
 - Fastify's global error handler should format unhandled errors into this envelope where practical, and new route work should not bypass that standard.
 - Route schemas must declare error response shapes for the most relevant statuses such as `400`, `401`, `403`, and `404`.
 - Functional API, contract-verification, or data integration tests must validate representative error response shapes, not just success paths.
@@ -458,8 +460,8 @@ Before committing backend code, scan changed files for these anti-patterns. This
 | Pattern to find | What it means | Fix |
 |---|---|---|
 | `additionalProperties: true` in route schemas | Passthrough/generic response schema | Replace with Zod DTO via `zodToJsonSchema()` |
-| `SuccessSchema` on a route returning domain data | Placeholder response, not real contract | Create domain-specific response DTO |
-| `{ type: 'object', properties:` in route files | Inline JSON schema instead of Zod | Move to `packages/shared/dto/` as Zod schema |
+| `SuccessResponse` on a route returning domain data | Placeholder response, not real contract | Create domain-specific response DTO |
+| `{ type: 'object', properties:` or `zodToJsonSchema(` on a body or response in route files | Inline schema instead of a named component | Move to `packages/shared/dto/` as Zod schema, `registerSchema` it, `schemaRef` it |
 | `prisma.*.find` in handler or route files | Raw Prisma access outside service layer | Move to service; return through mapper |
 | `reply.send(await prisma` | Prisma result returned directly to client | Route through service → mapper → DTO |
 | `.map((` in route or handler files | Inline transformation instead of mapper | Extract to `packages/core-api/src/mappers/` |
