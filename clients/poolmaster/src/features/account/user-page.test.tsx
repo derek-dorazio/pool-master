@@ -502,6 +502,20 @@ describe('UserPage', () => {
     );
   });
 
+  it('tells an inactive user they stay signed in to reactivate or delete, never that sign-in is blocked', async () => {
+    getUserMock.mockResolvedValue({
+      data: {
+        user: buildCurrentUser({ isActive: false }),
+      },
+    });
+
+    renderUserPage();
+
+    const banner = await screen.findByTestId('user-page-inactive-banner');
+    expect(banner).not.toHaveTextContent(/cannot sign in/i);
+    expect(banner).toHaveTextContent(/reactivate/i);
+  });
+
   it('pool-master-rop.78.11 reactivates an inactive account in the auth query cache', async () => {
     getUserMock
       .mockResolvedValueOnce({
@@ -616,6 +630,52 @@ describe('UserPage', () => {
 
     expect(await screen.findByTestId('root-admin-user-temp-password')).toHaveTextContent(
       'Pm-temp-password!9a',
+    );
+  });
+
+  it('keeps the lifecycle dialog open and shows the server refusal when a root admin cannot inactivate the account', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isRootAdmin: true, isActive: true });
+    disableUserMock.mockResolvedValue({
+      error: {
+        error: {
+          code: 'ACCOUNT_LAST_ROOT_ADMIN',
+          message: 'This is the only root admin. Promote another root admin before deactivating the account.',
+        },
+      },
+    });
+
+    renderUserPage('/users/user-2');
+
+    await screen.findByTestId('root-admin-user-page');
+    fireEvent.click(screen.getByTestId('root-admin-user-open-lifecycle'));
+    const dialog = await screen.findByTestId('root-admin-user-lifecycle-dialog');
+    fireEvent.click(screen.getByTestId('root-admin-user-submit-lifecycle'));
+
+    expect(await within(dialog).findByText(/only root admin/i)).toBeVisible();
+    expect(screen.getByTestId('root-admin-user-lifecycle-dialog')).toBeVisible();
+  });
+
+  it('deletes with the account email when the root admin types it in another case or with spaces', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isRootAdmin: false, isActive: false });
+    deleteUserMock.mockResolvedValue({ data: { success: true } });
+
+    renderUserPage('/users/user-2');
+
+    await screen.findByTestId('root-admin-user-page');
+    fireEvent.click(screen.getByTestId('root-admin-user-open-delete'));
+    await screen.findByTestId('root-admin-user-delete-dialog');
+    fireEvent.change(screen.getByTestId('root-admin-user-delete-confirmation'), {
+      target: { value: ' Target@Example.com ' },
+    });
+    fireEvent.click(screen.getByTestId('root-admin-user-submit-delete'));
+
+    await waitFor(() =>
+      expect(deleteUserMock).toHaveBeenCalledWith({
+        path: { userId: 'user-2' },
+        body: { email: 'target@example.com' },
+      }),
     );
   });
 });
