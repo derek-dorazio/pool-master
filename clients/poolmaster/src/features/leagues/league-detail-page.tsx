@@ -289,13 +289,14 @@ export function LeagueDetailPage() {
 
   function handleLeaveCompletionAcknowledge() {
     const remainingLeagues = queryClient.getQueryData<LeagueListCache>(QueryKeys.leagues.list)?.leagues ?? [];
-    const nextLeague = remainingLeagues.find((league) => league.isActive) ?? remainingLeagues[0];
+    const nextLeague = remainingLeagues.find((league) => league.isActive);
 
     setActiveDialog(null);
     setLeaveCompleted(false);
 
-    // A user with no league left is still signed in: they land on the zero-league welcome
-    // page (requirements/product-requirements/navigation-and-entry-points.md).
+    // With no active league left the viewer is still signed in: welcome either lands them on a
+    // league they can select or shows the zero-league page
+    // (requirements/product-requirements/navigation-and-entry-points.md).
     navigate(nextLeague ? `/league/${nextLeague.leagueCode}` : '/welcome', { replace: true });
   }
 
