@@ -364,15 +364,12 @@ export function UserPage() {
           <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
             You do not have access to view this user profile.
           </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Requested user id: <span className="font-medium text-foreground">{userId}</span>
-          </p>
         </Tile>
 
         <Tile>
           <p className="text-sm text-muted-foreground">
-            Your own user page is ready now and contains profile, preferences, password, and
-            lifecycle actions as dedicated dialogs.
+            Your own user page has your profile, preferences, password, and account
+            settings.
           </p>
           <LinkButton
             className="mt-5"
@@ -484,7 +481,7 @@ export function UserPage() {
         actions={(
           <ActionList>
             <ActionTile
-              description="Update the name and email shown in account surfaces."
+              description="Update your name and email."
               data-testid="user-page-open-profile"
               label="Edit profile"
               onClick={openProfileDialog}
@@ -508,7 +505,7 @@ export function UserPage() {
             />
 
             <ActionTile
-              description="Keep your current session while revoking your other refresh sessions."
+              description="Change your password and sign out on your other devices."
               data-testid="user-page-open-password"
               label="Change password"
               onClick={openPasswordDialog}
@@ -555,7 +552,7 @@ export function UserPage() {
           && (profileFirstName ?? '').trim().length > 0
           && (profileLastName ?? '').trim().length > 0
         }
-        description="Keep your personal name accurate for membership and account surfaces."
+        description="Update your name and email."
         error={profileMutation.isError ? profileMutation.error : null}
         errorFallback="We could not save your profile."
         isPending={profileMutation.isPending}
@@ -677,7 +674,7 @@ export function UserPage() {
 
       <FormModal
         canSave={!disablePreferencesEditing}
-        description="These settings control how dates, times, and locale-aware copy appear for you."
+        description="Choose how dates and times appear for you."
         error={preferencesMutation.isError ? preferencesMutation.error : null}
         errorFallback="We could not save your preferences."
         isPending={preferencesMutation.isPending}
@@ -816,7 +813,7 @@ export function UserPage() {
       </FormModal>
 
       <UserActionDialog
-        description="Changing your password keeps the current session active and revokes your other refresh sessions."
+        description="Changing your password keeps you signed in here and signs you out on your other devices."
         onOpenChange={(open) => {
           if (open) {
             openPasswordDialog();

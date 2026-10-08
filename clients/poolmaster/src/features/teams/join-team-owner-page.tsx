@@ -399,7 +399,7 @@ export function JoinTeamOwnerPage() {
       title={invitationQuery.data ? `Join ${invitationQuery.data.team.name}` : 'Accept your team invite'}
     >
       <p className="mt-2 text-sm text-muted-foreground">
-        This invitation adds you to an existing team. Team identity is already set, so you&apos;ll join as a co-owner instead of creating a separate team.
+        This invitation adds you to an existing team as a co-owner.
       </p>
 
       <div className="mt-6 rounded-[1.5rem] border border-border bg-background p-5 text-sm text-muted-foreground">
@@ -410,7 +410,7 @@ export function JoinTeamOwnerPage() {
             <InvitationContextCard
               inviteCode={invitationQuery.data.inviteCode}
               leagueName={invitationQuery.data.league.name}
-              message={`Welcome to ${invitationQuery.data.league.name}. You are about to become a co-owner of ${invitationQuery.data.team.name}. Team name and icon are read-only during this acceptance step.`}
+              message={`Welcome to ${invitationQuery.data.league.name}. You are about to become a co-owner of ${invitationQuery.data.team.name}.`}
               title="Ready to join"
             />
             {selectedIcon ? (

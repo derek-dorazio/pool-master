@@ -481,7 +481,7 @@ export function RootAdminSyncDashboardPage() {
                   </MetricGrid>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    No canonical sync stats were captured for this run.
+                    No sync stats were captured for this run.
                   </p>
                 )}
               </TabsContent>
@@ -575,7 +575,7 @@ export function RootAdminSyncDashboardPage() {
         title="Sync run details"
       />
       <ReadOnlyDetailModal
-        description="Raw JSON captured for root-admin sync investigation."
+        description="Raw JSON captured for this run."
         detailContent={
           <pre className="whitespace-pre-wrap break-words">
             {formatJsonPayload(jsonPayload?.payload ?? null)}

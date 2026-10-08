@@ -52,8 +52,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 Prime Time Commissioner hit an unexpected problem.
               </h2>
               <p className="max-w-2xl text-base leading-7 text-muted-foreground">
-                Try reloading the page. If the problem keeps happening, the browser and backend
-                logs now have the failure details for investigation.
+                Try reloading the page. If the problem keeps happening, try again later.
               </p>
             </div>
             <Button

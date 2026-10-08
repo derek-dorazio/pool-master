@@ -5,7 +5,7 @@ const SYNC_CONFIG_DESTINATIONS = [
     key: 'poll-intervals',
     title: 'Poll Intervals',
     description:
-      'Client-facing refresh guidance stored durably in runtime config for standings, drafts, notifications, and default polling.',
+      'How often the app refreshes standings, drafts, notifications, and contests.',
     to: '/manage/sync-config/poll-intervals',
   },
   {

@@ -173,7 +173,7 @@ export function LeagueContestsPage() {
         description={
           isMyEntriesFilter
             ? "Open active contests where your team has an entry."
-            : "Open active contests and jump into contest boards from one place."
+            : "Active contests in this league."
         }
         title={isMyEntriesFilter ? "My Contests" : "Active Contests"}
       />

@@ -104,7 +104,7 @@ export function RootAdminContentConfigurationListPage() {
     <DataGridPage
       columns={columns}
       data={templates}
-      emptyMessage="No persisted contest templates are configured yet."
+      emptyMessage="No contest templates are configured yet."
       error={templatesQuery.error}
       errorBody="We could not load contest templates right now."
       getRowId={(template) => template.id}

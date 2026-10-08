@@ -64,7 +64,7 @@ export function MyTeamOwnersPanel({
         <Tile radius="lg">
           <h4 className="text-sm font-semibold text-foreground">Add co-owner</h4>
           <p className="mt-2 text-sm text-muted-foreground">
-            Invite another person to co-manage this team. Existing league members are rejected automatically.
+            Invite another person to co-manage this team. People already in this league can&apos;t be invited.
           </p>
           <div className="mt-4 flex gap-3">
             <Input

@@ -105,8 +105,7 @@ export function ManageContestsPage() {
           ]}
           description={(
             <>
-            Contest administration lives here for commissioners and root admins. This league
-            membership does not include contest-management authority.
+            Only commissioners can manage contests.
             </>
           )}
           title="Manage Contests"
@@ -118,7 +117,7 @@ export function ManageContestsPage() {
               Open League Home
             </LinkButton>
           )}
-          body="Open League Home for read-only league context. Contest management remains restricted to commissioners and root admins."
+          body="Ask a commissioner if a contest needs changing."
           testId="manage-contests-access-denied"
         />
       </section>
@@ -148,7 +147,7 @@ export function ManageContestsPage() {
           { href: buildLeaguePath(league.leagueCode), label: 'League Home' },
           { label: 'Manage Contests' },
         ]}
-        description="Commissioners and root admins manage league contests here. Use this list to open a contest, jump into the existing per-contest manage flow, or create the next contest."
+        description="Open, manage, or create contests for this league."
         title="Manage Contests"
       />
 
@@ -171,7 +170,7 @@ export function ManageContestsPage() {
               </LinkButton>
             ) : null
           }
-          body="Create the first contest for this league to start the commissioner workflow."
+          body="Create the first contest for this league."
           testId="manage-contests-empty"
           title="No contests yet"
         />
@@ -182,7 +181,7 @@ export function ManageContestsPage() {
               <div>
                 <h2 className="text-xl font-semibold text-foreground">Active contests</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Open live contests or jump into the existing per-contest manage page.
+                  Contests that are in setup, open, or under way.
                 </p>
               </div>
               <Chip tone="neutral">{activeContests.length}</Chip>
@@ -232,8 +231,7 @@ export function ManageContestsPage() {
               <div>
                 <h2 className="text-xl font-semibold text-foreground">Historical contests</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Completed and cancelled contests stay available here for review and per-contest
-                  maintenance.
+                  Completed and cancelled contests.
                 </p>
               </div>
               <Chip tone="neutral">{historicalContests.length}</Chip>

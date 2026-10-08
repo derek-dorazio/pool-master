@@ -312,7 +312,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
   return (
     <section className="space-y-6" data-testid="root-admin-user-page">
       <PageHeader
-        description="You are viewing this account as a root admin. Account-scope actions live here; league-role actions stay on Teams and Owners and Team Home."
+        description="Account actions for this user. League roles are managed on Teams and Owners and Team Home."
         eyebrow="User"
         title="User account"
       />
@@ -322,8 +322,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
           data-testid="root-admin-user-inactive-banner"
           tone="warning"
         >
-          This account is inactive. Root-admin lifecycle controls can reactivate or permanently
-          delete it here.
+          This account is inactive. You can reactivate it or delete it permanently.
         </Alert>
       ) : null}
 
@@ -357,7 +356,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
           <ActionList className="mt-4">
             <ActionTile
               data-testid="root-admin-user-open-role"
-              description="Root admin stays platform-scoped and backend-enforced."
+              description="Root admins can manage every league, user, and sport."
               label={viewedUser.isRootAdmin ? 'Demote root admin' : 'Promote to root admin'}
               onClick={() => openDialog('role')}
               trailing="Open"
@@ -365,7 +364,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
             <ActionTile
               data-testid="root-admin-user-open-reset-password"
-              description="Generates a temporary password and revokes the user's active refresh sessions."
+              description="Generates a temporary password and signs the user out everywhere."
               label="Reset password"
               onClick={() => openDialog('reset-password')}
               trailing="Open"
@@ -393,7 +392,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
       </div>
 
       <UserActionDialog
-        description="Root-admin role stays platform-scoped and backend-enforced."
+        description="Root admins can manage every league, user, and sport."
         onOpenChange={(open) => (open ? openDialog('role') : closeDialog())}
         open={activeDialog === 'role'}
         testId="root-admin-user-role-dialog"
@@ -402,7 +401,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
             {viewedUser.isRootAdmin
-              ? 'Removing root-admin access revokes the user’s active refresh sessions.'
+              ? 'Removing root-admin access signs the user out everywhere.'
               : 'Granting root-admin access allows this user to manage platform-wide administrative workflows.'}
           </p>
           {roleMutation.isError ? (
@@ -436,7 +435,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
       </UserActionDialog>
 
       <UserActionDialog
-        description="This generates a temporary password for the user and revokes their active refresh sessions."
+        description="This generates a temporary password for the user and signs them out everywhere."
         onOpenChange={(open) => (open ? openDialog('reset-password') : closeDialog())}
         open={activeDialog === 'reset-password'}
         testId="root-admin-user-reset-password-dialog"
@@ -482,7 +481,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
       </UserActionDialog>
 
       <UserActionDialog
-        description={isInactive ? 'Reactivating restores normal sign-in and account usage immediately.' : 'Inactivating revokes active refresh sessions and blocks normal sign-in until the account is reactivated.'}
+        description={isInactive ? 'Reactivating restores normal sign-in and account usage immediately.' : 'Inactivating signs the user out everywhere and blocks sign-in until the account is reactivated.'}
         onOpenChange={(open) => (open ? openDialog('lifecycle') : closeDialog())}
         open={activeDialog === 'lifecycle'}
         testId="root-admin-user-lifecycle-dialog"
