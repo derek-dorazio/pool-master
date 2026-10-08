@@ -181,4 +181,30 @@ describe('My Team lifecycle', () => {
     expect(await screen.findByText('Team must already be inactive before it can be permanently deleted.')).toBeInTheDocument();
     expect(screen.queryByTestId('league-route-destination')).not.toBeInTheDocument();
   });
+
+  it('closes the delete dialog on Escape and forgets an earlier refusal', async () => {
+    deleteLeagueSquadMock.mockResolvedValue({
+      error: { code: 'SQUAD_DELETE_REQUIRES_INACTIVE', message: 'Team must already be inactive before it can be permanently deleted.' },
+    });
+    renderLifecycle({ team: buildTeam({ isActive: false }), canDelete: true });
+
+    fireEvent.click(screen.getByTestId('my-team-delete'));
+    fireEvent.click(await screen.findByTestId('my-team-confirm-delete'));
+    await screen.findByText('Team must already be inactive before it can be permanently deleted.');
+
+    fireEvent.keyDown(screen.getByTestId('my-team-delete-dialog'), { key: 'Escape' });
+
+    await waitFor(() => expect(screen.queryByTestId('my-team-delete-dialog')).not.toBeInTheDocument());
+    expect(screen.queryByText('Team must already be inactive before it can be permanently deleted.')).not.toBeInTheDocument();
+  });
+
+  it('closes the inactivate dialog on Escape without inactivating', async () => {
+    renderLifecycle({ team: buildTeam() });
+
+    fireEvent.click(screen.getByTestId('my-team-inactivate'));
+    fireEvent.keyDown(await screen.findByTestId('my-team-inactivate-dialog'), { key: 'Escape' });
+
+    await waitFor(() => expect(screen.queryByTestId('my-team-inactivate-dialog')).not.toBeInTheDocument());
+    expect(inactivateLeagueSquadMock).not.toHaveBeenCalled();
+  });
 });
