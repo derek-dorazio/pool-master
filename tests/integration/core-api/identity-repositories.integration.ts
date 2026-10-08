@@ -268,7 +268,7 @@ describe('identity cluster repositories (#202)', () => {
       const admin = await createTestUser({ lastName: 'AnAdmin', isRootAdmin: true });
       expect(await repo.countActiveRootAdmins()).toBe(before + 1);
 
-      // An inactive root admin cannot sign in, so cannot administer anything.
+      // An inactive root admin does not count towards the active root admins the guard keeps.
       await prisma.user.update({ where: { id: admin.user.id }, data: { isActive: false } });
       expect(await repo.countActiveRootAdmins()).toBe(before);
     });

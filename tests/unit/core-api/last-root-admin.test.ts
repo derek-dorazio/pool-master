@@ -1,10 +1,9 @@
 /**
  * The last-root-admin guard, against a stateful user table.
  *
- * The guard exists so the platform is never left with nobody able to administer it. An
- * inactive root admin cannot do that: sign-in and refresh both refuse an inactive account. So
- * "another root admin exists" has to mean another ACTIVE one, or two admins can switch each
- * other off in turn and lock everyone out.
+ * The guard keeps at least one ACTIVE root admin, so administering the platform never depends
+ * on someone first reactivating an account. "Another root admin exists" therefore means
+ * another active one, or two admins could switch each other off in turn.
  *
  * The fake below counts exactly what the Prisma adapter's count query counts, and the
  * service's own writes land in it, so each case reads as a sequence of real operations.

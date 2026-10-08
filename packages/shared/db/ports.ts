@@ -106,9 +106,9 @@ export interface UserRepository {
   /**
    * How many ACTIVE users hold `isRootAdmin`.
    *
-   * Exists so the platform cannot be left with nobody able to administer it. An inactive root
-   * admin cannot sign in or refresh a session, so they do not count: counting them let the
-   * only active root admin disable or demote themselves while an inactive one remained.
+   * Exists so the platform always keeps at least one active root admin, so administering it never depends on someone first reactivating an account.
+   * Inactive root admins do not count: counting them let the only active root admin disable
+   * or demote themselves while an inactive one remained.
    */
   countActiveRootAdmins(): Promise<number>;
 

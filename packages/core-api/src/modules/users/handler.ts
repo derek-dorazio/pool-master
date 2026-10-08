@@ -201,7 +201,9 @@ export function createUserHandlers(userService: UserService, authService: AuthSe
     return run(request, reply, 'user.disable', async (actor) => {
       const subjectId = subjectOf(actor, request.params.userId);
       // Inactivating yourself keeps the session you did it from (A9: an inactive account may
-      // still sign in, to reactivate or delete itself); every other session is revoked.
+      // still sign in, to reactivate or delete itself); every other session is revoked. Only a
+      // cookie session is spared: a bearer-token client has no refresh cookie here, so it loses
+      // its own refresh token too.
       const keepRefreshToken = subjectId === actor.userId
         ? readRefreshCookie(request.headers.cookie)
         : null;

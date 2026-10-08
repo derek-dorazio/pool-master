@@ -198,7 +198,7 @@ export const resetUserPassword = <ThrowOnError extends boolean = false>(options:
 /**
  * Disable a user
  *
- * Sets isActive = false and revokes every live session, atomically. Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining root admin. Disabling yourself clears your session cookies.
+ * Sets isActive = false and revokes every live session, atomically, except, when you inactivate yourself, the cookie session you did it from (A9: an inactive account may still sign in to reactivate or delete itself). Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining active root admin.
  */
 export const disableUser = <ThrowOnError extends boolean = false>(options: Options<DisableUserData, ThrowOnError>) => (options.client ?? client).post<DisableUserResponses, DisableUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

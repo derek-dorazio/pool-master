@@ -100,8 +100,8 @@ export async function deleteUserCascade(tx: Prisma.TransactionClient, userId: st
 /**
  * True when no OTHER active root admin would be left to administer the platform.
  *
- * The guard exists so the platform cannot be left with nobody able to administer it. Only
- * active root admins count, because an inactive one cannot sign in; the user under test is
+ * The guard keeps at least one active root admin, so administering the platform never depends
+ * on someone first reactivating an account. Only active root admins count; the user under test is
  * subtracted when they are themselves active, so the question is the same for disabling or
  * demoting an active admin and for deleting an inactive one. It was
  * written inline three times in `admin/user-service.ts` — on disable, on demotion and on

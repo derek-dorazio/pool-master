@@ -845,7 +845,8 @@ only half the callers enforce is not a rule. Do not reintroduce them.
 - **No self-demotion block on root admin.** The rule it reached for — the platform keeps at
   least one root admin — is the last-root-admin count, which applies to every caller. With
   two active root admins one may step down; with one, the count refuses whoever asks. Only
-  active root admins count: an inactive one cannot sign in, so cannot administer anything.
+  active root admins count, so administering the platform never depends on someone first
+  reactivating an account.
 - **No dependency-detail payload on a blocked hard delete.** A typed 409
   `ACCOUNT_DELETE_DEPENDENCIES_EXIST` is the contract. The blockers are visible in the league
   and squad views A9 already governs; resolving one of possibly many into the error envelope
