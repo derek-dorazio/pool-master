@@ -1,3 +1,4 @@
+import { PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
 import { applyEventGolfRoundScores, previewEventGolfRoundScores } from '@/lib/api';
 import { BulkUploadPanel, StatusBadge, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -33,6 +34,18 @@ const CHANGE_LABEL: Record<PreviewRow['change'], string> = {
   UNCHANGED: 'UNCHANGED',
   SKIPPED: 'Not stored (no strokes)',
 };
+
+/**
+ * One side of a preview row's change: strokes, to par and status. To par is shown because the
+ * admin enters it separately from strokes (#116), so a to-par-only correction must read as a
+ * change. A row with no strokes shows a dash, never "null".
+ */
+function describeValues(values: PreviewRow['before']): string {
+  if (!values) return '—';
+  const strokes = values.strokes ?? '—';
+  const toPar = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(values.scoreToPar);
+  return `${strokes} (${toPar})·${formatGolfRoundStatus(values.status)}`;
+}
 
 function describeRow(row: PreviewRow['row']): string {
   return row.playerName ?? row.externalId ?? row.participantId ?? 'Unnamed row';
@@ -164,15 +177,9 @@ export function GolfRoundScoreUploadCard({
                       </td>
                       <td className="px-4 py-2">{entry.participantName || '—'}</td>
                       <td className="px-4 py-2 text-muted-foreground">
-                        {entry.before
-                          ? `${entry.before.strokes}·${formatGolfRoundStatus(entry.before.status)}`
-                          : '—'}{' '}
+                        {describeValues(entry.before)}{' '}
                         →{' '}
-                        <span className="text-foreground">
-                          {entry.after
-                            ? `${entry.after.strokes}·${formatGolfRoundStatus(entry.after.status)}`
-                            : '—'}
-                        </span>
+                        <span className="text-foreground">{describeValues(entry.after)}</span>
                       </td>
                       <td className="px-4 py-2">
                         <StatusBadge tone={CHANGE_TONE[entry.change]}>
