@@ -562,6 +562,20 @@ describe('League Home use cases', () => {
     expect(logoutUserMock).not.toHaveBeenCalled();
   });
 
+  it('after leaving, sends the viewer through welcome rather than straight into a remaining league that is inactive', async () => {
+    primeCommonMocks({ leagueRole: 'MEMBER' });
+    leaveLeagueMock.mockResolvedValue(apiSuccess({ success: true }));
+    const { queryClient } = renderLeagueDetailPage();
+    queryClient.setQueryData(QueryKeys.leagues.list, listLeaguesData([
+      buildLeague(),
+      buildLeague({ id: 'league-2', leagueCode: 'OLDDOGS', isActive: false }),
+    ]));
+
+    await confirmLeave();
+
+    expect(await screen.findByTestId('welcome-page')).toBeVisible();
+  });
+
   it('saving details with the description emptied sends no description, which the contract treats as clearing it', async () => {
     primeCommonMocks();
     getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
