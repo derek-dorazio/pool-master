@@ -67,7 +67,7 @@ function LeagueRouteControls() {
   );
 }
 
-function renderLeagueDetailPage() {
+function renderLeagueDetailPage(initialEntry: string | { pathname: string; state: unknown } = '/league/BIGDAWGS') {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -79,7 +79,7 @@ function renderLeagueDetailPage() {
   const view = render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <MemoryRouter initialEntries={['/league/BIGDAWGS']}>
+        <MemoryRouter initialEntries={[initialEntry]}>
           <Routes>
             <Route
               element={(
@@ -517,6 +517,25 @@ describe('League Home use cases', () => {
     expect(await screen.findByText('Root Admin')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Change league details/ })).toBeEnabled();
     expect(screen.queryByRole('button', { name: /^Leave league/ })).not.toBeInTheDocument();
+  });
+
+  it('tells a member who just joined that their team name and icon did not save, pointing them to Team Home', async () => {
+    primeCommonMocks({ leagueRole: 'MEMBER' });
+
+    renderLeagueDetailPage({ pathname: '/league/BIGDAWGS', state: { teamSetupFailed: true } });
+
+    const notice = await screen.findByTestId('league-team-setup-failed');
+    expect(notice).toHaveTextContent("We couldn't save your team name and icon.");
+    expect(within(notice).getByRole('link', { name: 'Team Home' })).toHaveAttribute('href', '/league/BIGDAWGS/team');
+  });
+
+  it('shows no team-setup notice on an ordinary visit to League Home', async () => {
+    primeCommonMocks({ leagueRole: 'MEMBER' });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    expect(screen.queryByTestId('league-team-setup-failed')).not.toBeInTheDocument();
   });
 
   it('makes an inactive league read-only: editing and leaving are disabled', async () => {
