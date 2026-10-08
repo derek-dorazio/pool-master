@@ -1,4 +1,4 @@
-import { PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
 import {
   applySettledContestStandings,
   buildContestEntryStanding,
@@ -167,7 +167,7 @@ describe('an entry\'s standing from its picks', () => {
     id: 'entry-1',
     entryNumber: 1,
     name: 'Sunday Charge',
-    status: 'ACTIVE',
+    status: ContestEntryStatus.ACTIVE,
     squadId: 'squad-1',
     squad: { name: 'Birdie Brigade' },
     picks: picks.map((pick) => ({
@@ -257,12 +257,12 @@ describe('an entry\'s standing from its picks', () => {
     expect(standing).toMatchObject({ score: null, scoredPickCount: 0, picks: [], countingPickLimit: 4 });
   });
 
-  it('reports an INACTIVE entry as inactive and any other status as active', () => {
+  it('carries the entry\'s own status, active or inactive, onto its standing', () => {
     const field = scores([]);
-    expect(buildContestEntryStanding({ ...entry([]), status: 'INACTIVE' }, field, best(1), 'LOWER_IS_BETTER').status)
-      .toBe('INACTIVE');
-    expect(buildContestEntryStanding({ ...entry([]), status: 'SOMETHING_ELSE' }, field, best(1), 'LOWER_IS_BETTER').status)
-      .toBe('ACTIVE');
+    expect(buildContestEntryStanding({ ...entry([]), status: ContestEntryStatus.INACTIVE }, field, best(1), 'LOWER_IS_BETTER').status)
+      .toBe(ContestEntryStatus.INACTIVE);
+    expect(buildContestEntryStanding({ ...entry([]), status: ContestEntryStatus.ACTIVE }, field, best(1), 'LOWER_IS_BETTER').status)
+      .toBe(ContestEntryStatus.ACTIVE);
   });
 });
 
