@@ -698,4 +698,97 @@ describe('ContestDetailPage (Contest Board)', () => {
     await waitFor(() => expect(getLeagueMock).toHaveBeenCalled());
     expect(screen.queryByTestId('contest-open-to-league')).not.toBeInTheDocument();
   });
+
+  it('shows why a new entry was refused and stays on the board', async () => {
+    primeMocks({ contestStatus: 'OPEN', entries: [] });
+    enterContestMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_ENTRY_LIMIT_REACHED', message: 'Your team already has the most entries allowed.' } },
+      status: 409,
+    });
+
+    renderContestBoard();
+
+    fireEvent.click(await screen.findByTestId('contest-board-create-entry'));
+
+    expect(await screen.findByTestId('contest-board-create-error')).toHaveTextContent(
+      'Your team already has the most entries allowed.',
+    );
+    expect(screen.queryByTestId('contest-entry-page')).not.toBeInTheDocument();
+  });
+
+  it('keeps the rename open with the refusal shown when the name is refused, and restores it on cancel', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })],
+    });
+    updateContestEntryMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_ENTRY_NAME_TAKEN', message: 'Your team already has an entry with that name.' } },
+      status: 409,
+    });
+
+    renderContestBoard();
+
+    fireEvent.click(await screen.findByTestId('contest-board-rename-entry-1'));
+    fireEvent.change(await screen.findByTestId('contest-board-rename-input-entry-1'), {
+      target: { value: 'Birdie Hunters Entry 2' },
+    });
+    fireEvent.click(screen.getByTestId('contest-board-rename-save-entry-1'));
+
+    expect(await screen.findByText('Your team already has an entry with that name.')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-board-rename-input-entry-1')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-board-rename-cancel-entry-1'));
+    expect(screen.queryByTestId('contest-board-rename-input-entry-1')).not.toBeInTheDocument();
+    expect(screen.queryByText('Your team already has an entry with that name.')).not.toBeInTheDocument();
+  });
+
+  it('shows the load error when the contest cannot be read', async () => {
+    primeMocks();
+    getContestMock.mockResolvedValue({ error: { error: { code: 'CONTEST_NOT_FOUND', message: 'No contest' } }, status: 404 });
+
+    renderContestBoard();
+
+    expect(await screen.findByText("We couldn't load this contest.")).toBeInTheDocument();
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'contestBoard.contest.failed' }),
+      expect.any(String),
+    );
+  });
+
+  it('shows an entries error, not an empty board, when the entries cannot be read', async () => {
+    primeMocks();
+    listContestEntriesMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } }, status: 500 });
+
+    renderContestBoard();
+
+    expect(await screen.findByText("We couldn't load the current contest entries.")).toBeInTheDocument();
+    expect(screen.queryByText('No contest entries exist yet.')).not.toBeInTheDocument();
+  });
+
+  it('says the team has no entry when "My entries only" is on and it has none', async () => {
+    primeMocks({
+      entries: [buildEntry({ id: 'entry-3', squadId: 'squad-other', squadName: 'Other Team', name: 'Other Team Entry 1' })],
+    });
+
+    renderContestBoard();
+
+    fireEvent.click(await screen.findByTestId('contest-board-my-only-toggle'));
+
+    expect(await screen.findByText('Your team does not have an entry in this contest yet.')).toBeInTheDocument();
+  });
+
+  it('says an own entry has no picks yet when it is opened before any golfer is chosen', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1', participants: [] })],
+    });
+
+    renderContestBoard();
+
+    fireEvent.click(await screen.findByTestId('contest-board-toggle-entry-1'));
+
+    expect(await screen.findByText('This entry does not have any picked participants yet.')).toBeInTheDocument();
+  });
 });
