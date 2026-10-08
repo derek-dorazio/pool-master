@@ -31,6 +31,7 @@ Already enforced mechanically, and therefore **not** triggers:
 | Fake/mock data in application code | `poolmaster/no-mocked-api` (ESLint) |
 | Skipped or disabled tests | `poolmaster/no-disabled-tests` (ESLint) |
 | Env-var fallbacks | `poolmaster/no-env-fallbacks` (ESLint) |
+| A gate sending its refusal without awaiting it | `poolmaster/no-unawaited-send-error` (ESLint) |
 | Direct `fetch`/`axios` in the webapp | `no-restricted-globals` / `no-restricted-imports` in `eslint.config.js` |
 | Frontend types duplicating generated ones | `poolmaster/no-parallel-api-types` (ESLint) |
 | Inline query keys, inline theme styles, bare controls | the corresponding `poolmaster/*` ESLint rules |
