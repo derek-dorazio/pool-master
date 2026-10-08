@@ -32,7 +32,7 @@ import {
 } from './contest-entry-selection';
 import { areContestEntriesOpen, CONTEST_STATUS_TONES, contestStatusLabel } from './contest-status';
 import { useContestSchedule } from './use-contest-schedule';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -405,10 +405,10 @@ export function ContestEntryPage() {
         err: error,
       };
 
-      if (error instanceof Error) {
-        logger.error(payload, 'Contest entry detail save failed unexpectedly');
-      } else {
+      if (error instanceof ApiError) {
         logger.warn(payload, 'Contest entry detail save was rejected');
+      } else {
+        logger.error(payload, 'Contest entry detail save failed unexpectedly');
       }
     },
   });
@@ -484,10 +484,10 @@ export function ContestEntryPage() {
         err: error,
       };
 
-      if (error instanceof Error) {
-        logger.error(payload, 'Contest selection failed unexpectedly');
-      } else {
+      if (error instanceof ApiError) {
         logger.warn(payload, 'Contest selection was rejected');
+      } else {
+        logger.error(payload, 'Contest selection failed unexpectedly');
       }
     },
   });
@@ -547,8 +547,13 @@ export function ContestEntryPage() {
     || saveEntryDetailsMutation.isPending
     || submitSelectionMutation.isPending;
 
+  // A failed save stays on the page: the mutation's own error state shows the reason.
   async function submitEntry() {
-    await saveEntryDetailsMutation.mutateAsync();
+    try {
+      await saveEntryDetailsMutation.mutateAsync();
+    } catch {
+      return;
+    }
     navigate(backToContestPath, {
       state: { leagueCode: backLeagueCode },
     });
@@ -746,7 +751,9 @@ export function ContestEntryPage() {
 
                           return nextGroup?.groupId ?? null;
                         });
-                      });
+                      })
+                      // The mutation's own error state shows a refused pick.
+                      .catch(() => undefined);
                   }}
                   onToggle={() => setExpandedGroupId(isExpanded ? null : group.groupId)}
                   setToggleRef={(element) => {
