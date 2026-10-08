@@ -24,6 +24,8 @@
     "db:drift:check": "node scripts/check-schema-migration-drift.mjs",
     "db:reset:qa": "cd packages/core-api && node scripts/reset-qa-database.mjs",
     "db:reset:qa:apply": "cd packages/core-api && node scripts/reset-qa-database.mjs --apply --confirm-qa-reset",
+    "seed:golf": "node --import tsx packages/core-api/scripts/seed-golf/cli.ts",
+    "seed:golf:build": "node --import tsx packages/core-api/scripts/seed-golf/build-golf-2026.ts",
     "db:studio": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma studio",
     "lint": "eslint 'packages/**/*.ts' 'tests/**/*.{ts,tsx}' 'clients/poolmaster/src/**/*.{ts,tsx}' --max-warnings 0 && npm run lint:theme-tokens",
     "lint:theme-tokens": "node scripts/check-feature-theme-tokens.mjs",

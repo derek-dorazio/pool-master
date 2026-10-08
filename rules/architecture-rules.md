@@ -377,6 +377,7 @@ that it was already there.
 | **Reference data** | The app is *broken* without it. It belongs to the schema's meaning, is identical in every environment, and no user action creates it | **A migration** |
 | **Fixture data** | Makes one environment *usable* by a human. Environment-specific, often holds credentials | **A bootstrap script**, invoked explicitly |
 | **Test data** | Belongs to one test, torn down after | **Test helpers** |
+| **Manual-testing seed** | Gives a human something to test by hand (tournaments, fields, scores). Made up or public, never needed by the app | **An opt-in seed through the admin API**, run on request |
 
 ### Reference data goes in a migration
 
@@ -443,6 +444,18 @@ code defaults that may depend on the environment) and added to `SETTINGS_GROUPS`
   replaced with a journey that creates and tears down its own data; both users survived as
   orphans and came back on every reset until the fixture was trimmed to the root admin, which is
   needed because the post-deploy journey signs in as it and the owner uses it to reach the site.
+
+### Manual-testing seed data goes through the admin API
+
+- `packages/core-api/scripts/seed-golf/` is the pattern: one data file (`golf-2026.json`) and a
+  script that writes it with the generated SDK as a root admin, so every rule the Manage
+  screens apply applies to it too and nothing writes the database behind the service.
+- It runs only when someone asks: `npm run seed:golf` locally, the *Seed QA golf data*
+  workflow on QA. Never from a migration, a deploy, a reset, or a Prisma seed.
+- It is idempotent by skipping, not by overwriting: anything that already exists is left as
+  it is, so it is safe after a QA reset and never clobbers what someone edited by hand.
+- Its dates are moved relative to the day it runs, so what it creates is usable then. No
+  automated test may depend on seeded rows; tests build their own.
 
 ### There is deliberately no Prisma seed
 
