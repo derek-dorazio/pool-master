@@ -64,7 +64,7 @@ export type GolfRoundScorePreviewResponse = z.infer<typeof GolfRoundScorePreview
 export const UpdateGolfRoundScoreRequestSchema = z.object({
   strokes: z.number().int().min(1).optional(),
   scoreToPar: z.number().int().optional(),
-  thru: z.number().int().min(0).max(18).optional().describe('Holes completed in the round. A round is 18 holes; playoff holes are never scored.'),
+  thru: z.number().int().min(0).max(18).nullable().optional().describe('Holes completed in the round. A round is 18 holes; playoff holes are never scored. Null clears it, for a golfer who has not started.'),
   status: GolfRoundStatusDtoSchema.optional(),
   completedAt: z.string().datetime().nullable().optional().describe('Null clears it.'),
 }).describe('A correction to one golfer\'s round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored.');

@@ -17309,10 +17309,13 @@
             "type": "integer"
           },
           "thru": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "minimum": 0,
             "maximum": 18,
-            "description": "Holes completed in the round. A round is 18 holes; playoff holes are never scored."
+            "description": "Holes completed in the round. A round is 18 holes; playoff holes are never scored. Null clears it, for a golfer who has not started."
           },
           "status": {
             "type": "string",
