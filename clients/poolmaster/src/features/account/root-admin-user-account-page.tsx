@@ -373,7 +373,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
             <ActionTile
               data-testid="root-admin-user-open-lifecycle"
-              description="Manage whether this account can sign in."
+              description="Inactivate or reactivate this account. An inactive account is hidden from its leagues."
               label={isInactive ? 'Reactivate account' : 'Inactivate account'}
               onClick={() => openDialog('lifecycle')}
               trailing="Open"

@@ -516,7 +516,7 @@ export function UserPage() {
             />
 
             <ActionTile
-              description="Manage whether your account can sign in."
+              description="Inactivate or reactivate your account. An inactive account is hidden from your leagues."
               data-testid="user-page-open-lifecycle"
               label={isInactive ? 'Reactivate account' : 'Inactivate account'}
               onClick={() => setActiveDialog('lifecycle')}
