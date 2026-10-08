@@ -51,6 +51,10 @@ function formatMemberSince(createdAt?: string, dateFormat?: 'MDY' | 'DMY' | 'YMD
   return `${month}/${day}/${year}`;
 }
 
+function normalizeEmailConfirmation(value: string) {
+  return value.trim().toLowerCase();
+}
+
 function extractAdminError(error: unknown, fallback: string) {
   if (!error || typeof error !== 'object') {
     return fallback;
@@ -220,16 +224,15 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
   const lifecycleMutation = useInvalidatingMutation({
     mutationFn: async (targetUser: RootAdminViewedUser) => {
-      if (targetUser.isActive) {
-        await disableUser({
-          path: { userId: targetUser.id },
-        });
-        return;
-      }
+      // The SDK resolves a refusal rather than throwing, so the response is checked: an
+      // unchecked call closed the dialog as if a refused change (the last root admin) had worked.
+      const response = targetUser.isActive
+        ? await disableUser({ path: { userId: targetUser.id } })
+        : await enableUser({ path: { userId: targetUser.id } });
 
-      await enableUser({
-        path: { userId: targetUser.id },
-      });
+      if (!response.data?.user) {
+        throwApiError(response.error, 'Account lifecycle response is missing the updated user.');
+      }
     },
     onSuccess: () => {
       setActiveDialog(null);
@@ -244,8 +247,10 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     mutationFn: async (targetUser: RootAdminViewedUser) => {
       const response = await deleteUser({
         path: { userId: targetUser.id },
+        // The typed confirmation only gates the button (compared case- and space-insensitively
+        // below); the server compares exactly, so send the account's own email, as self-delete does.
         body: {
-          email: deleteEmailConfirmation,
+          email: targetUser.email,
         },
       });
 
@@ -302,7 +307,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
   const isInactive = viewedUser.isActive === false;
   const memberSince = formatMemberSince(viewedUser.createdAt, viewedUser.dateFormat);
-  const deleteConfirmationMatches = deleteEmailConfirmation.trim().toLowerCase() === viewedUser.email.toLowerCase();
+  const deleteConfirmationMatches = normalizeEmailConfirmation(deleteEmailConfirmation) === viewedUser.email.toLowerCase();
 
   return (
     <section className="space-y-6" data-testid="root-admin-user-page">
@@ -368,7 +373,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
             <ActionTile
               data-testid="root-admin-user-open-lifecycle"
-              description="Manage whether this account can sign in."
+              description="Inactivate or reactivate this account. An inactive account is hidden from its leagues."
               label={isInactive ? 'Reactivate account' : 'Inactivate account'}
               onClick={() => openDialog('lifecycle')}
               trailing="Open"

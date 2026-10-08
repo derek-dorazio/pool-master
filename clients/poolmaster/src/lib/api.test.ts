@@ -300,4 +300,44 @@ describe('poolmaster API client correlation headers', () => {
       vi.unstubAllGlobals();
     }
   });
+
+  it('refreshes once when several requests find the access session expired at the same time, and retries them all', async () => {
+    // The refresh token rotates: the server accepts it once and refuses any later refresh
+    // that still carries it. Requests that 401 together all carry the same old cookie, so
+    // only one refresh may go out for them; a second would be refused and its request lost.
+    let sessionValid = false;
+    let refreshCalls = 0;
+    const json = (body: unknown, status: number) =>
+      new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+    const fetchSpy = vi.fn((input: RequestInfo | URL) => Promise.resolve(respond(input)));
+    function respond(input: RequestInfo | URL): Response {
+      const pathname = new URL(fetchCallUrl(input)).pathname;
+      if (pathname === '/api/v1/auth/refresh') {
+        refreshCalls += 1;
+        if (refreshCalls > 1) {
+          return json({ error: { code: 'INVALID_REFRESH_TOKEN', message: 'Invalid or expired refresh token' } }, 401);
+        }
+        sessionValid = true;
+        return json({ accessToken: 'access-2', refreshToken: 'refresh-2', csrfToken: 'csrf-2', expiresIn: 900 }, 200);
+      }
+      if (!sessionValid) {
+        return json({ error: { code: 'AUTH_ACCESS_TOKEN_INVALID', message: 'Invalid or expired access token' } }, 401);
+      }
+      return json({ leagues: [] }, 200);
+    }
+
+    vi.stubGlobal('fetch', fetchSpy);
+
+    try {
+      const { listLeagues } = await import('./api');
+
+      const responses = await Promise.all([listLeagues(), listLeagues(), listLeagues()]);
+
+      expect(responses.map((response) => response.data?.leagues)).toEqual([[], [], []]);
+      expect(refreshCalls).toBe(1);
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+    }
+  });
 });
