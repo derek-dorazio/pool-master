@@ -207,8 +207,8 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       select: { status: true, endsAt: true },
     })).resolves.toEqual({ status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') });
 
-    // Reopening (OverrideService.reopenContest moves COMPLETED → ACTIVE) is the deliberate
-    // path back: the next settlement recomputes the standing from the corrected scores.
+    // A contest moved back out of COMPLETED is settled again from the corrected scores. No route
+    // does that today (the unused reopen endpoint was deleted), so the test moves it directly.
     await prisma.contest.update({ where: { id: directContest.id }, data: { status: 'ACTIVE' } });
     const third = await service.settleCompletedSportEvent(event.id);
 
