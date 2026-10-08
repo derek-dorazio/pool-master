@@ -225,7 +225,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       tags: ['Contests'],
       summary: 'Create the current user contest entry',
       description:
-        'Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.',
+        'Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event\'s scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.',
       operationId: 'enterContest',
       response: {
         201: schemaRef('ContestEntryResponse'),
@@ -243,7 +243,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       tags: ['Contests'],
       summary: 'Delete the current user contest entry',
       description:
-        'Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.',
+        'Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.',
       operationId: 'leaveContest',
       response: {
         200: schemaRef('ContestEntryDeletionResponse'),
@@ -260,7 +260,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       tags: ['Contests'],
       summary: 'Update a contest entry',
       description:
-        'Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is still joinable. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.',
+        'Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is OPEN and its event has not reached its scheduled start (400 CONTEST_ENTRY_LOCKED otherwise). Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.',
       operationId: 'updateContestEntry',
       body: schemaRef('UpdateContestEntryRequest'),
       response: {

@@ -1170,7 +1170,7 @@ export interface paths {
         head?: never;
         /**
          * Update a contest entry
-         * @description Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is still joinable. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
+         * @description Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is OPEN and its event has not reached its scheduled start (400 CONTEST_ENTRY_LOCKED otherwise). Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
          */
         patch: operations["updateContestEntry"];
         trace?: never;
@@ -1211,12 +1211,12 @@ export interface paths {
         put?: never;
         /**
          * Create the current user contest entry
-         * @description Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
+         * @description Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event's scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
          */
         post: operations["enterContest"];
         /**
          * Delete the current user contest entry
-         * @description Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
+         * @description Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
          */
         delete: operations["leaveContest"];
         options?: never;
@@ -2425,7 +2425,7 @@ export interface paths {
         put?: never;
         /**
          * Submit a draft pick
-         * @description Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks change only while the contest is OPEN: 409 CONTEST_ENTRY_LOCKED once it has moved on.
+         * @description Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks change only while the contest is OPEN and before its event's scheduled start: 409 CONTEST_ENTRY_LOCKED otherwise.
          */
         post: operations["submitContestSelection"];
         delete?: never;

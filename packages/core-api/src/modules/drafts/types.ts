@@ -56,6 +56,8 @@ export interface DraftContext {
   contest: Contest;
   configuration: ContestConfiguration | null;
   entries: ContestEntry[];
+  /** Whether the contest's entries, and so its picks, can change right now. */
+  entriesOpen: boolean;
   squadMemberships: SquadMembership[];
   selectionParticipants: SelectionParticipant[];
   tiers: DraftTierConfig[];

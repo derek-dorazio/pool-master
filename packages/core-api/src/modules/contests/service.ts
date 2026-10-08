@@ -56,6 +56,7 @@ import {
   loadEventField,
   toParticipantScores,
 } from './contest-leaderboard-reads';
+import { areContestEntriesOpen } from './entry-window';
 import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import {
@@ -164,15 +165,18 @@ export interface ContestServiceDeps {
   logger?: LifecycleLogger;
   mailDelivery?: MailDeliveryProvider;
   appBaseUrl?: string;
+  now?: () => Date;
 }
 
 export class ContestService {
   private readonly logger: LifecycleLogger;
   private readonly appBaseUrl: string;
+  private readonly now: () => Date;
 
   constructor(private readonly deps: ContestServiceDeps) {
     this.logger = deps.logger ?? createNoopLogger();
     this.appBaseUrl = deps.appBaseUrl ?? 'http://localhost:5173';
+    this.now = deps.now ?? (() => new Date());
   }
 
   /**
@@ -486,7 +490,7 @@ export class ContestService {
   ): Promise<ContestEntryDto> {
     this.logger.debug({ contestId, userId }, 'contest entry create start');
     const context = await this.getEntryContext(contestId, userId, 'act');
-    if (!isContestJoinable(context.contest.status)) {
+    if (!(await this.areEntriesOpen(context.contest))) {
       this.logger.warn({ contestId, userId, status: context.contest.status }, 'contest entry create locked contest');
       throw new ContestEntryOperationError(
         'Contest entries can only be changed before the contest starts',
@@ -545,7 +549,7 @@ export class ContestService {
   ): Promise<void> {
     this.logger.debug({ contestId, userId }, 'contest entry delete start');
     const context = await this.getEntryContext(contestId, userId, 'act');
-    if (!isContestJoinable(context.contest.status)) {
+    if (!(await this.areEntriesOpen(context.contest))) {
       this.logger.warn({ contestId, userId, status: context.contest.status }, 'contest entry delete locked contest');
       throw new ContestEntryOperationError(
         'Contest entries can only be changed before the contest starts',
@@ -592,7 +596,7 @@ export class ContestService {
       updateKeys: Object.keys(updates),
     }, 'contest entry update start');
     const context = await this.getEntryContext(contestId, userId, 'act');
-    if (!isContestJoinable(context.contest.status)) {
+    if (!(await this.areEntriesOpen(context.contest))) {
       this.logger.warn({ contestId, entryId, userId, status: context.contest.status }, 'contest entry update locked contest');
       throw new ContestEntryOperationError(
         'Contest entries can only be changed before the contest starts',
@@ -896,6 +900,14 @@ export class ContestService {
       }
     }
     return { contest, membership, squadMembership };
+  }
+
+  /** Whether entries can change now: see entry-window.ts. */
+  private async areEntriesOpen(contest: Contest): Promise<boolean> {
+    const sportEvent = contest.status === ContestStatus.OPEN && contest.sportEventId
+      ? await this.deps.sportEvents.findById(contest.sportEventId)
+      : null;
+    return areContestEntriesOpen(contest, sportEvent, this.now());
   }
 
   private async findEntriesBySquad(
@@ -1245,11 +1257,6 @@ function buildEntryUrl(
   entryId: string,
 ): string {
   return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/contests/${encodeURIComponent(contestId)}/entries/${encodeURIComponent(entryId)}`;
-}
-
-/** Entries can be created, changed or deleted only while the contest is OPEN (#117): a DRAFT is the commissioner's alone. */
-function isContestJoinable(status: ContestStatus): boolean {
-  return status === ContestStatus.OPEN;
 }
 
 /**

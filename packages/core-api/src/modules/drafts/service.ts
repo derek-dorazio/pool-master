@@ -26,7 +26,6 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import {
-  ContestStatus,
   DraftStatus,
   SelectionType,
   type ContestEntry,
@@ -41,10 +40,12 @@ import type {
   LeagueMembershipRepository,
   SportEventParticipantRepository,
   ParticipantRepository,
+  SportEventRepository,
   SquadMembershipRepository,
 } from '@poolmaster/shared/db';
 import type { ContestEntryPickService } from '../contest-entry-picks';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
+import { areContestEntriesOpen } from '../contests/entry-window';
 import { draftErrors } from './draft-errors';
 import {
   buildDraftTiers,
@@ -86,7 +87,10 @@ export interface DraftServiceDeps {
    */
   pickWrites: ContestEntryPickService;
   tiers: SportEventTierService;
+  /** The contest's event: its scheduled start closes picks (see contests/entry-window.ts). */
+  sportEvents: Pick<SportEventRepository, 'findById'>;
   logger?: FastifyBaseLogger;
+  now?: () => Date;
 }
 
 export interface GetDraftStateInput {
@@ -150,9 +154,10 @@ export class DraftService {
     if (!isRosterSelectionType(context.contest.selectionType)) {
       throw draftErrors.draftModeUnsupportedForSubmission(context.contest.selectionType);
     }
-    // A pick is part of the entry, so it changes only while entries do: in an OPEN contest (#117).
-    // Once the event starts, a place, replace or toggle-off would rewrite a locked lineup.
-    if (context.contest.status !== ContestStatus.OPEN) {
+    // A pick is part of the entry, so it changes only while entries do: in an OPEN contest
+    // before its event's start (#117). After that a place, replace or toggle-off would rewrite
+    // a locked lineup.
+    if (!context.entriesOpen) {
       throw draftErrors.contestLocked(contestId);
     }
 
@@ -285,7 +290,7 @@ export class DraftService {
     if (!contest) throw draftErrors.contestNotFound(contestId);
 
     const sportEventId = contest.sportEventId;
-    const [configuration, entries, field, tierGroups, valuations] = await Promise.all([
+    const [configuration, entries, field, tierGroups, valuations, sportEvent] = await Promise.all([
       this.deps.configurations.findByContest(contestId),
       this.deps.entries.findByContest(contestId),
       sportEventId ? this.deps.field.findBySportEvent(sportEventId) : Promise.resolve([]),
@@ -295,6 +300,7 @@ export class DraftService {
       sportEventId
         ? this.deps.tiers.getEffectiveValuationsForSportEvent(sportEventId)
         : Promise.resolve([]),
+      sportEventId ? this.deps.sportEvents.findById(sportEventId) : Promise.resolve(null),
     ]);
 
     const squadIds = Array.from(new Set(entries.map((entry) => entry.squadId)));
@@ -307,6 +313,7 @@ export class DraftService {
       contest,
       configuration,
       entries,
+      entriesOpen: areContestEntriesOpen(contest, sportEvent, (this.deps.now ?? (() => new Date()))()),
       squadMemberships,
       tiers: buildDraftTiers(tierGroups),
       selectionParticipants: buildSelectionParticipants({
@@ -390,10 +397,10 @@ export class DraftService {
         : false;
     const status = mapContestStatusToDraftStatus(contest.status, isComplete);
     // Against `status`, not `isComplete`: a COMPLETED contest closes submission even while
-    // some roster is still short, which is the whole difference between the two. And only an
-    // OPEN contest takes picks at all, the same rule submitSelection enforces.
+    // some roster is still short, which is the whole difference between the two. And picks are
+    // taken only while entries are open, the same rule submitSelection enforces.
     const canCurrentUserSubmit =
-      contest.status === ContestStatus.OPEN
+      context.entriesOpen
       && myEntryId !== null
       && rosterSize > 0
       && myEntryPickCount < rosterSize

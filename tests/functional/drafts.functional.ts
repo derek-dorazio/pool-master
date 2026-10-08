@@ -317,7 +317,7 @@ async function seedBudgetPickFixture(options: { isExclusive?: boolean } = {}) {
       providerId: 'integration-test',
       sport: 'GOLF',
       name: 'Budget Functional Event',
-      startDate: new Date('2026-04-20T12:00:00.000Z'),
+      startDate: new Date('2099-04-20T12:00:00.000Z'),
       status: 'SCHEDULED',
     },
   });
@@ -469,7 +469,7 @@ async function seedTieredDraftFixture(options: {
       providerId: 'integration-test',
       sport: 'GOLF',
       name: 'Tiered Functional Event',
-      startDate: new Date('2026-04-20T12:00:00.000Z'),
+      startDate: new Date('2099-04-20T12:00:00.000Z'),
       status: 'SCHEDULED',
     },
   });

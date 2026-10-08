@@ -846,7 +846,7 @@ export const getContestEntry = <ThrowOnError extends boolean = false>(options: O
 /**
  * Update a contest entry
  *
- * Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is still joinable. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
+ * Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is OPEN and its event has not reached its scheduled start (400 CONTEST_ENTRY_LOCKED otherwise). Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
  */
 export const updateContestEntry = <ThrowOnError extends boolean = false>(options: Options<UpdateContestEntryData, ThrowOnError>) => (options.client ?? client).patch<UpdateContestEntryResponses, UpdateContestEntryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -872,7 +872,7 @@ export const getGolfContestLeaderboard = <ThrowOnError extends boolean = false>(
 /**
  * Delete the current user contest entry
  *
- * Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
+ * Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
  */
 export const leaveContest = <ThrowOnError extends boolean = false>(options: Options<LeaveContestData, ThrowOnError>) => (options.client ?? client).delete<LeaveContestResponses, LeaveContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -896,7 +896,7 @@ export const getMyContestEntry = <ThrowOnError extends boolean = false>(options:
 /**
  * Create the current user contest entry
  *
- * Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
+ * Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event's scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
  */
 export const enterContest = <ThrowOnError extends boolean = false>(options: Options<EnterContestData, ThrowOnError>) => (options.client ?? client).post<EnterContestResponses, EnterContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1880,7 +1880,7 @@ export const getDraftState = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Submit a draft pick
  *
- * Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks change only while the contest is OPEN: 409 CONTEST_ENTRY_LOCKED once it has moved on.
+ * Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks change only while the contest is OPEN and before its event's scheduled start: 409 CONTEST_ENTRY_LOCKED otherwise.
  */
 export const submitContestSelection = <ThrowOnError extends boolean = false>(options: Options<SubmitContestSelectionData, ThrowOnError>) => (options.client ?? client).post<SubmitContestSelectionResponses, SubmitContestSelectionErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
