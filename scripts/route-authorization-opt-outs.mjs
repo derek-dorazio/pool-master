@@ -16,22 +16,10 @@
  * Keys are `METHOD /full/path`, exactly as the scanner prints them.
  */
 export const ROUTE_AUTHORIZATION_OPT_OUTS = [
-  // --- Contests: entries act for the caller's own squad, resolved in ContestService.getEntryContext ---
-  {
-    route: 'POST /api/v1/contests/:contestId/entries/me',
-    reason: 'Acts for the caller\'s own squad, derived in the service: ContestService.getEntryContext(\'act\') requires ACTIVE league and squad memberships; createEntry refuses a caller with no team.',
-  },
-  {
-    route: 'DELETE /api/v1/contests/:contestId/entries/me',
-    reason: 'Acts for the caller\'s own squad, derived in the service: ContestService.getEntryContext(\'act\') requires ACTIVE league and squad memberships; deleteMyEntry deletes only that squad\'s entry.',
-  },
+  // --- Contests: the entry id is the sub-resource, resolved in ContestService.getEntryContext ---
   {
     route: 'PATCH /api/v1/contests/:contestId/entries/:entryId',
     reason: 'Needs the entry id: ContestService.getEntryContext(\'act\') requires ACTIVE league and squad memberships, then updateEntry scopes the lookup to that squad (findEntriesBySquad) before matching entryId.',
-  },
-  {
-    route: 'GET /api/v1/contests/:contestId/entries/me',
-    reason: 'Scoped to the caller\'s own ACTIVE squad in ContestService.getMyEntry; a caller with no active squad in the league gets a null entry, never another squad\'s.',
   },
 
   // --- Drafts ---
@@ -44,11 +32,7 @@ export const ROUTE_AUTHORIZATION_OPT_OUTS = [
     reason: 'Authorizes on the entry, as the pick route does: DraftService.submitEntry requires an ACTIVE squad membership on the squad that owns that entry of this contest (DRAFT_ENTRY_ACCESS_DENIED).',
   },
 
-  // --- Leagues: the league id is in the route path, so these are league-scoped already ---
-  {
-    route: 'GET /api/v1/leagues/:id',
-    reason: 'The handler (sendLeagueContext) requires an ACTIVE league membership or root admin; it shares that check with getLeagueByCode, which has no league id for a hook to read.',
-  },
+  // --- Leagues ---
   {
     route: 'GET /api/v1/leagues/code/:leagueCode',
     reason: 'Addressed by code, not id: the handler (sendLeagueContext) resolves the league, then requires an ACTIVE league membership or root admin.',

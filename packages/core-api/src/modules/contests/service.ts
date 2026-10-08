@@ -835,6 +835,8 @@ export class ContestService {
    *   member (403 `LEAGUE_MEMBERSHIP_REQUIRED` absent, `LEAGUE_MEMBERSHIP_INACTIVE` ended), and a
    *   squad membership that has ended is refused (`SQUAD_MEMBERSHIP_INACTIVE`). Having *no* squad
    *   membership is left to the caller: creating an entry and changing one name it differently.
+   *   Entering and leaving are also gated at the route by `requireOwnSquad` (#458); changing an
+   *   entry by id is not, so these checks are its only ones.
    */
   private async getEntryContext(
     contestId: string,
