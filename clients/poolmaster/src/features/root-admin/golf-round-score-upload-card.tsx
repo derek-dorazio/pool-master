@@ -37,7 +37,7 @@ const CHANGE_LABEL: Record<PreviewRow['change'], string> = {
 
 /**
  * One side of a preview row's change: strokes, to par and status. To par is shown because the
- * admin enters it separately from strokes (#116), so a to-par-only correction must read as a
+ * admin enters it separately from strokes, so a to-par-only correction must read as a
  * change. A row with no strokes shows a dash, never "null".
  */
 function describeValues(values: PreviewRow['before']): string {
