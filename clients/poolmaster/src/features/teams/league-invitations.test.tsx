@@ -215,6 +215,57 @@ describe('LeagueInvitations', () => {
     expect(screen.getByTestId('league-invite-email')).toHaveValue('');
   });
 
+  it('copies an email invite\'s link from its pending row, so the commissioner can share it by hand when no email goes out', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
+
+    renderInvitations();
+    fireEvent.click(await screen.findByRole('button', { name: 'Copy invite link for friend@example.com' }));
+
+    await waitFor(() => expect(writeTextMock).toHaveBeenCalledWith(`${window.location.origin}/invite/email-code`));
+    expect(await screen.findByTestId('league-invitation-copied-email-1')).toHaveTextContent('Link copied');
+  });
+
+  it('copies the new link after a resend replaces the invite code, not the one that stopped working', async () => {
+    listLeagueInvitationsMock
+      .mockResolvedValueOnce({ data: { invitations: [emailInvite()] } })
+      .mockResolvedValue({ data: { invitations: [emailInvite({ inviteCode: 'new-code' })] } });
+    resendLeagueInvitationMock.mockResolvedValue({ data: { invitation: emailInvite({ inviteCode: 'new-code' }) } });
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
+
+    renderInvitations();
+    fireEvent.click(await screen.findByTestId('league-invitation-resend-email-1'));
+    await waitFor(() => expect(listLeagueInvitationsMock).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy invite link for friend@example.com' }));
+
+    await waitFor(() => expect(writeTextMock).toHaveBeenCalledWith(`${window.location.origin}/invite/new-code`));
+  });
+
+  it('shows an invite\'s link for manual copy when the clipboard refuses the write', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockRejectedValue(new Error('Clipboard blocked')) } });
+
+    renderInvitations();
+    fireEvent.click(await screen.findByRole('button', { name: 'Copy invite link for friend@example.com' }));
+
+    expect(await screen.findByTestId('league-invitation-link-email-1')).toHaveTextContent(
+      `${window.location.origin}/invite/email-code`,
+    );
+  });
+
+  it('offers a copyable link on a join-link row too', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [joinLink()] } });
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
+
+    renderInvitations();
+    fireEvent.click(await screen.findByRole('button', { name: 'Copy invite link for Join link' }));
+
+    await waitFor(() => expect(writeTextMock).toHaveBeenCalledWith(`${window.location.origin}/invite/link-code`));
+  });
+
   it('disables inviting and resending while the league is inactive', async () => {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
 
