@@ -193,7 +193,7 @@ describe('ManageContestsPage', () => {
     renderManageContestsPage();
 
     expect(await screen.findByTestId('manage-contests-access-denied')).toBeInTheDocument();
-    expect(screen.getByText(/does not include contest-management authority/i)).toBeInTheDocument();
+    expect(screen.getByText('Only commissioners can manage contests.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open League Home' })).toHaveAttribute(
       'href',
       '/league/BIGDAWGS',

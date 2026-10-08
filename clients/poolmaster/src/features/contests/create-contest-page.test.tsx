@@ -725,7 +725,7 @@ describe('CreateContestPage', () => {
     expect(screen.queryByTestId('inherited-tiers-panel')).not.toBeInTheDocument();
     expect(
       screen.getByText(
-        /Tier structure and golfer assignments are set on the tournament/i,
+        /This contest uses the tournament’s tiers and golfer assignments/i,
       ),
     ).toBeInTheDocument();
   });

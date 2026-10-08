@@ -40,9 +40,8 @@ export function ContestTemplatePicker({
       <SectionHeader
         description={
           <>
-          Start from a seeded contest template. The selected template seeds the setup
-          below, and any commissioner changes become the contest-specific configuration
-          saved at creation time.
+          Pick a template to fill in the settings below. You can change any of them
+          before you create the contest.
           </>
         }
         title="Contest template"
@@ -60,9 +59,6 @@ export function ContestTemplatePicker({
           />
         ))}
       </ListStack>
-      <Alert>
-        New contests currently use tiered entry.
-      </Alert>
     </Tile>
   );
 }
@@ -146,7 +142,7 @@ export function InheritedTiersPanel({ tiers }: InheritedTiersPanelProps) {
       variant="subtle"
     >
       <SectionHeader
-        description="Tier structure and golfer assignments are set on the tournament, not the contest. This contest inherits whatever the tournament defines."
+        description="This contest uses the tournament’s tiers and golfer assignments."
         title="Inherited tournament tiers"
       />
       {tiers.length === 0 ? (

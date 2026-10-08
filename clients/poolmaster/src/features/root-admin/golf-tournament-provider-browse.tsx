@@ -213,7 +213,7 @@ export function GolfTournamentProviderBrowse({
             <div className="grid gap-4 sm:grid-cols-2">
               <GolfTournamentEditionFields edition={edition} onChange={onEditionChange} tours={tours} />
               <FormField
-                helperText="The provider contract has no round count; adjust per-round dates later."
+                helperText="The provider doesn't report a round count; adjust per-round dates later."
                 label="Rounds"
               >
                 <Input

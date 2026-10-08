@@ -408,7 +408,7 @@ export function ContestDetailPage() {
             <p className="mt-2 text-sm text-muted-foreground">
               {picksRevealed
                 ? 'Picks are visible. Expand a row to see each entry’s lineup. Scores live on the leaderboard.'
-                : 'Picks are hidden until the contest moves past OPEN. Your own entry expands to its picks; other teams show only how many picks they’ve made.'}
+                : 'Picks are hidden until entries close. Your own entry expands to its picks; other teams show only how many picks they’ve made.'}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -603,7 +603,7 @@ export function ContestDetailPage() {
                       className="mt-4"
                       data-testid={`contest-board-picks-hidden-${entry.id}`}
                     >
-                      Picks hidden until the contest moves past OPEN. {entry.picksCount} picks made so far.
+                      Picks hidden until entries close. {entry.picksCount} picks made so far.
                     </Alert>
                   ) : null}
                 </Tile>

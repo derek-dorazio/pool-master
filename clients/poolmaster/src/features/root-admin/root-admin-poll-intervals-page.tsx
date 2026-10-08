@@ -129,7 +129,7 @@ export function RootAdminPollIntervalsPage() {
             </Button>
           </>
         ),
-        description: 'Client-facing refresh guidance stored durably in runtime config. Update these intervals when the webapp should poll more or less aggressively for standings, draft, notification, and contest state changes.',
+        description: 'How often the app refreshes standings, drafts, notifications, and contests.',
         title: 'Poll Intervals',
       }}
       loadingBody="Loading poll interval configuration..."

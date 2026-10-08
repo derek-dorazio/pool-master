@@ -754,7 +754,7 @@ export function LeagueDetailPage() {
         canSave={canEditLeague}
         canSelect={canEditLeague}
         closeLabel="Close league icon modal"
-        description="Pick a built-in icon and save it without leaving League Home."
+        description="Choose an icon for your league."
         descriptionId="league-icon-modal-description"
         errorMessage={
           updateIconMutation.isError

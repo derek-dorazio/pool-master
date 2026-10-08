@@ -56,7 +56,7 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     group: 'operations',
     title: 'Content Configuration',
     description:
-      'Manage the persisted contest templates available to commissioner contest setup.',
+      'Manage the contest templates commissioners start from.',
     to: '/manage/content-configuration',
   },
   {
@@ -64,7 +64,7 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     group: 'operations',
     title: 'Events',
     description:
-      'Browse current persisted event state and open read-only participant fields for sync QA.',
+      'Browse events and view their participant fields.',
     to: '/manage/events',
   },
   {
@@ -72,7 +72,7 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     group: 'operations',
     title: 'Sync',
     description:
-      'Provider visibility, sync history, and manual run actions now live in dedicated operational pages.',
+      'Providers, sync history, and manual sync runs.',
     to: '/manage/sync',
   },
   {

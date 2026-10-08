@@ -262,7 +262,7 @@ export function MyTeamIconModal({
       canSave={!isInactiveLeague && !isBusy && (hasSelectedTeam ? canManageSelectedTeam : canCreateOwnTeam)}
       canSelect={!isInactiveLeague && !isBusy}
       closeLabel="Close team icon modal"
-      description="Pick a built-in icon and save it without leaving Team Home."
+      description="Choose an icon for your team."
       descriptionId="my-team-icon-modal-description"
       errorMessage={
         updateTeamIconMutation.isError

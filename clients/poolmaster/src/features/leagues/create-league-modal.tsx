@@ -383,13 +383,8 @@ export function CreateLeagueModal({
               padding="sm"
               radius="lg"
             >
-              This first release creates a private, invite-led league by
-              default. After the league is created, you&apos;ll invite members
-              from league home using email invites or shareable invite links.
-              <div className="mt-3 rounded-2xl border border-border bg-background px-3 py-2 text-xs text-foreground">
-                Members do not join by league code alone. Invitations drive the
-                current join flow.
-              </div>
+              Your league is private. After it is created, invite members from
+              League Home by email or with a shareable invite link.
             </Tile>
           </section>
         )}

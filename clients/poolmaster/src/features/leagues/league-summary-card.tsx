@@ -55,7 +55,7 @@ export function LeagueSummaryCard({
                 data-testid="league-summary-description"
               >
                 {description?.trim() ||
-                  "Manage league identity, commissioner controls, and member actions here."}
+                  "Manage your league's details, commissioners, and members."}
               </p>
             </div>
           </div>

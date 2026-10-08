@@ -285,7 +285,7 @@ export function TeamOwnerActionMenu({
         {activeAction === 'demote' ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              The backend still enforces the last-commissioner rule if this is the only active commissioner.
+              A league must keep at least one active commissioner.
             </p>
             {roleError ? <p className="text-sm text-destructive">{roleError}</p> : null}
             <Button
