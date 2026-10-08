@@ -19,8 +19,8 @@ const patterns = [
     message: 'Route schemas should not allow additionalProperties: true without a documented exception.',
   },
   {
-    pattern: /\bSuccessSchema\b/g,
-    message: 'Do not use SuccessSchema for endpoints that return domain data.',
+    pattern: /\bSuccessResponse(Schema)?\b/g,
+    message: 'Do not use SuccessResponse for endpoints that return domain data.',
   },
   {
     pattern: /\bprisma\.[a-zA-Z_][a-zA-Z0-9_]*/g,

@@ -459,7 +459,7 @@ Before committing backend code, scan changed files for these anti-patterns. This
 
 | Pattern to find | What it means | Fix |
 |---|---|---|
-| `additionalProperties: true` in route schemas | Passthrough/generic response schema | Replace with Zod DTO via `zodToJsonSchema()` |
+| `additionalProperties: true` in route schemas | Passthrough/generic response schema | Replace with a Zod DTO, `registerSchema` it, `schemaRef` it |
 | `SuccessResponse` on a route returning domain data | Placeholder response, not real contract | Create domain-specific response DTO |
 | `{ type: 'object', properties:` or `zodToJsonSchema(` on a body or response in route files | Inline schema instead of a named component | Move to `packages/shared/dto/` as Zod schema, `registerSchema` it, `schemaRef` it |
 | `prisma.*.find` in handler or route files | Raw Prisma access outside service layer | Move to service; return through mapper |
@@ -475,8 +475,8 @@ npm run rules:check:route-discipline
 # Find inline JSON schemas in route files
 grep -rn "type: 'object', properties:" packages/core-api/src/modules/*/routes.ts
 
-# Find SuccessSchema used for domain responses
-grep -rn "SuccessSchema" packages/core-api/src/modules/*/routes.ts
+# Find SuccessResponse used for domain responses
+grep -rn "SuccessResponse" packages/core-api/src/modules/*/routes.ts
 
 # Find passthrough schemas
 grep -rn "additionalProperties: true" packages/core-api/src/modules/*/routes.ts
