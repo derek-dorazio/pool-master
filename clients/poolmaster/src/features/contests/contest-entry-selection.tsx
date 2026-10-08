@@ -74,11 +74,12 @@ export function SelectionParticipantCard({
     participant.sportEventParticipantId,
   );
   const canReplace = groupIsFull && !isSelected;
+  // A held golfer stays clickable even after withdrawing: picking them again unselects them,
+  // which the server allows, and otherwise the entry would be stuck holding them.
   const isDisabled =
     isBusy ||
     !canSelect ||
-    !participant.isAvailable ||
-    (groupIsFull && !canReplace && !isSelected);
+    (!participant.isAvailable && !isSelected);
 
   let actionLabel = "Select golfer";
   if (isSelected) {
