@@ -1,5 +1,6 @@
 import { expect } from '@jest/globals';
 import Fastify from 'fastify';
+import { FASTIFY_AJV_OPTIONS } from '../../../packages/core-api/src/plugins/string-transforms';
 import { ServiceVersionResponseSchema, type ServiceVersionResponse } from '../../../packages/shared/dto';
 import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';
 import { versionModule } from '../../../packages/core-api/src/modules/version/routes';
@@ -28,7 +29,7 @@ describe('pool-master-htw service version metadata', () => {
   });
 
   it('returns public service build metadata from /api/v1/version', async () => {
-    const app = Fastify({ logger: false });
+    const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
 
     app.register(versionModule, { prefix: '/api/v1/version' });
     await app.ready();
@@ -61,7 +62,7 @@ describe('pool-master-htw service version metadata', () => {
   });
 
   it('keeps /version public when the auth guard is registered before the route', async () => {
-    const app = Fastify({ logger: false });
+    const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
 
     app.register(authGuard);
     app.register(versionModule, { prefix: '/version', operationId: 'getRootVersion' });

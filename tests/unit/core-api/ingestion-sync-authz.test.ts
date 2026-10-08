@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import { FASTIFY_AJV_OPTIONS } from '../../../packages/core-api/src/plugins/string-transforms';
 import jwt from 'jsonwebtoken';
 import type { PrismaClient } from '@prisma/client';
 import {
@@ -47,7 +48,7 @@ function createIngestionServiceMock() {
 }
 
 async function buildIngestionSyncApp() {
-  const app = Fastify({ logger: false });
+  const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
   const providerService = createIngestionServiceMock();
   // No `user.findUnique` stub: authorization reads the token claim and never the row (A10).
   // The decoration stays because the module expects the instance to carry a Prisma client.

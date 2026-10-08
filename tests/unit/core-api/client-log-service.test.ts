@@ -1,5 +1,6 @@
 import { expect } from '@jest/globals';
 import Fastify from 'fastify';
+import { FASTIFY_AJV_OPTIONS } from '../../../packages/core-api/src/plugins/string-transforms';
 import jwt from 'jsonwebtoken';
 import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';
 import { requestLoggingContext } from '../../../packages/core-api/src/plugins/request-logging-context';
@@ -163,7 +164,7 @@ describe('client log service', () => {
 
 describe('auth guard optional auth binding for client logs', () => {
   it('binds authUser on the public client-logs route when a valid cookie is present', async () => {
-    const app = Fastify({ logger: false });
+    const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
 
     app.register(authGuard);
     app.register(requestLoggingContext);
@@ -215,7 +216,7 @@ describe('auth guard optional auth binding for client logs', () => {
     const service = new ClientLogService({ logger: logger });
     const handler = createClientLogHandlers(service);
 
-    const app = Fastify({ logger: false });
+    const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
     app.register(authGuard);
     app.register(requestLoggingContext);
     // The service re-emits each entry through the request-scoped logger, so that is
@@ -283,7 +284,7 @@ describe('auth guard optional auth binding for client logs', () => {
     const service = new ClientLogService({ logger: logger });
     const handler = createClientLogHandlers(service);
 
-    const app = Fastify({ logger: false });
+    const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
     app.register(authGuard);
     app.register(requestLoggingContext);
     app.addHook('preHandler', async (request) => {

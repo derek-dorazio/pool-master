@@ -1,5 +1,6 @@
 import { expect } from '@jest/globals';
 import Fastify from 'fastify';
+import { FASTIFY_AJV_OPTIONS } from '../../../packages/core-api/src/plugins/string-transforms';
 import type { FastifyInstance } from 'fastify';
 import {
   UserResetPasswordResponseSchema,
@@ -300,7 +301,7 @@ class SimulatingContractProvider extends OperationalContractProvider {
 }
 
 async function buildIngestionApp(provider: SportDataProvider): Promise<FastifyInstance> {
-  const app = Fastify({ logger: false });
+  const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
   const registry = new ProviderRegistry();
   registry.register('GOLF', provider, 'PRIMARY');
   const scheduler = new IngestionScheduler(registry, {

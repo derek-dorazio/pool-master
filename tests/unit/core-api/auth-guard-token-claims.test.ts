@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import { FASTIFY_AJV_OPTIONS } from '../../../packages/core-api/src/plugins/string-transforms';
 import jwt from 'jsonwebtoken';
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
 import { authGuard, requireAuthUser } from '../../../packages/core-api/src/plugins/auth-guard';
@@ -16,7 +17,7 @@ function bearer(payload: object): Record<string, string> {
 }
 
 async function buildApp() {
-  const app = Fastify({ logger: false });
+  const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
   app.setErrorHandler(globalErrorHandler);
   await app.register(authGuard);
   app.get('/whoami', async (request) => ({ userId: requireAuthUser(request).userId }));
