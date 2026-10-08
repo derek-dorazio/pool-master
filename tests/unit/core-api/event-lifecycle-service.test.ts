@@ -523,7 +523,9 @@ describe('EventLifecycleService contest-started emails', () => {
 
     await new EventLifecycleService(contests, sportEvents, fakeLogger(), mailDelivery).applySportEventStatusTransition(START);
 
-    expect(mailDelivery.send.mock.calls.map(([message]) => message.to).sort()).toEqual(['commissioner@example.com', 'member@example.com']);
+    const recipients = mailDelivery.send.mock.calls.map(([message]) => message.to);
+    expect(recipients).toHaveLength(2);
+    expect(recipients).toEqual(expect.arrayContaining(['commissioner@example.com', 'member@example.com']));
     const textTo = (to: string) => mailDelivery.send.mock.calls.find(([message]) => message.to === to)?.[0].text ?? '';
     expect(textTo('commissioner@example.com')).toContain('chris');
     expect(textTo('member@example.com')).toContain('member@example.com');

@@ -147,6 +147,38 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
     });
   });
 
+  describe('event status', () => {
+    it.each(['DRAFT', 'SCHEDULED', 'POSTPONED', 'COMPLETED', 'CANCELLED'])(
+      'writes no score to a %s event, since live scores are accepted only while an event is in progress',
+      async (status) => {
+        const prisma = {
+          sportEvent: { findUnique: jest.fn().mockResolvedValue({ id: 'evt-1', rounds: 4, status }) },
+          sportEventRound: { findMany: jest.fn().mockResolvedValue([{ id: 'ser-1', roundNumber: 1 }]) },
+          participantProviderMapping: { findMany: jest.fn().mockResolvedValue([{ externalId: 'rory', participantId: 'pp-rory' }]) },
+          sportEventParticipant: { findMany: jest.fn().mockResolvedValue([{ id: 'sep-rory', participantId: 'pp-rory' }]) },
+          sportEventParticipantRound: { upsert: jest.fn(), findMany: jest.fn() },
+          sportEventParticipantStanding: { upsert: jest.fn(), findMany: jest.fn() },
+        };
+        const logger = fakeLogger();
+        const result: LiveScoreResult = {
+          category: 'GOLF',
+          externalEventId: 'evt-ext-1',
+          rounds: [{ participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }],
+        };
+
+        const persisted = await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock', logger });
+
+        expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
+        expect(prisma.sportEventRound.findMany).not.toHaveBeenCalled();
+        expect(prisma.sportEventParticipantRound.upsert).not.toHaveBeenCalled();
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.objectContaining({ action: 'liveScore.publish.eventNotInProgress' }),
+          expect.any(String),
+        );
+      },
+    );
+  });
+
   describe('non-GOLF categories', () => {
     it('throws LiveScorePersistenceUnsupportedError for BASKETBALL until the slice ships', async () => {
       const prisma = {
