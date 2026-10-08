@@ -57,7 +57,12 @@ export function useMyTeamLifecycle({
       );
       resetOwnerForms();
     },
+    // Inactivating ends the owners' league memberships, so the league's member list and its
+    // context (member count, and the viewer's own membership if it was their team) change too.
     invalidates: [
+      QueryKeys.leagues.detail(leagueCode),
+      QueryKeys.leagues.list,
+      QueryKeys.leagues.members(leagueId),
       QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
       QueryKeys.leagueTeams.byLeague(leagueId),
     ],
