@@ -548,13 +548,37 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List a league's outstanding invitations
+         * @description Lists the league's outstanding invitations, newest first: every PENDING email invite and join link, plus email invites that expired without being accepted. Accepted and cancelled invitations are not listed. Commissioner only.
+         */
+        get: operations["listLeagueInvitations"];
         put?: never;
         /**
          * Send email invitations to join a league
          * @description Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response.
          */
         post: operations["sendLeagueInvitations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/invitations/{invitationId}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resend an email invitation
+         * @description Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.
+         */
+        post: operations["resendLeagueInvitation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -592,8 +616,8 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Revoke an invite link
-         * @description Revokes a previously created shareable invite link so the invite code can no longer be accepted by future users.
+         * Cancel an invitation
+         * @description Cancels an outstanding invitation by its invite code, a shareable join link or an email invite, so the code can no longer be accepted. The invitation becomes REVOKED. An invitation already accepted or cancelled is refused with 409 LEAGUE_INVITATION_NOT_CANCELLABLE.
          */
         delete: operations["revokeInviteLink"];
         options?: never;
@@ -8381,6 +8405,110 @@ export interface components {
                 updatedAt: string;
             };
         };
+        /** @description Commissioner list of a league's pending invitations. */
+        ListLeagueInvitationsResponse: {
+            /** @description The league's outstanding invitations, newest first: every PENDING invitation (email invites not yet accepted, join links not yet cancelled or used up), plus email invites that went EXPIRED without being accepted. An email invite past its expiresAt stays listed until it is accepted or cancelled; Resend Invite renews it. */
+            invitations: {
+                /** @description Invitation record identifier. */
+                id: string;
+                /** @description League that owns the invitation. */
+                leagueId: string;
+                /** @description Email recipient for direct email invites. Link invites omit this field. */
+                email?: string | null;
+                /** @description Shareable invitation code used in URLs and acceptance requests. */
+                inviteCode: string;
+                /**
+                 * @description Invitation delivery mode, such as EMAIL or LINK.
+                 * @enum {string}
+                 */
+                inviteType: "EMAIL" | "LINK";
+                /**
+                 * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+                 * @enum {string}
+                 */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** @description Maximum accepted joins allowed for the invitation. */
+                maxUses: number;
+                /** @description How many times the invitation has already been accepted. */
+                currentUses: number;
+                /** @description User ID of the commissioner or actor that issued the invite. */
+                invitedBy: string;
+                /**
+                 * Format: date-time
+                 * @description When the invite stops being valid, if it expires.
+                 */
+                expiresAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the invitation was accepted, if applicable.
+                 */
+                acceptedAt?: string | null;
+                /** @description User ID that accepted the invite, when known. */
+                acceptedBy?: string | null;
+                /**
+                 * Format: date-time
+                 * @description Invitation creation timestamp.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description Last invitation update timestamp.
+                 */
+                updatedAt: string;
+            }[];
+        };
+        /** @description Resent email-invitation response. */
+        ResendLeagueInvitationResponse: {
+            /** @description The renewed invitation, with its new invite code and expiry. */
+            invitation: {
+                /** @description Invitation record identifier. */
+                id: string;
+                /** @description League that owns the invitation. */
+                leagueId: string;
+                /** @description Email recipient for direct email invites. Link invites omit this field. */
+                email?: string | null;
+                /** @description Shareable invitation code used in URLs and acceptance requests. */
+                inviteCode: string;
+                /**
+                 * @description Invitation delivery mode, such as EMAIL or LINK.
+                 * @enum {string}
+                 */
+                inviteType: "EMAIL" | "LINK";
+                /**
+                 * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+                 * @enum {string}
+                 */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** @description Maximum accepted joins allowed for the invitation. */
+                maxUses: number;
+                /** @description How many times the invitation has already been accepted. */
+                currentUses: number;
+                /** @description User ID of the commissioner or actor that issued the invite. */
+                invitedBy: string;
+                /**
+                 * Format: date-time
+                 * @description When the invite stops being valid, if it expires.
+                 */
+                expiresAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the invitation was accepted, if applicable.
+                 */
+                acceptedAt?: string | null;
+                /** @description User ID that accepted the invite, when known. */
+                acceptedBy?: string | null;
+                /**
+                 * Format: date-time
+                 * @description Invitation creation timestamp.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description Last invitation update timestamp.
+                 */
+                updatedAt: string;
+            };
+        };
         /** @description Commissioner dashboard response. */
         LeagueDashboardResponse: {
             /** @description League payload driving the dashboard header. */
@@ -11856,6 +11984,47 @@ export interface operations {
             };
         };
     };
+    listLeagueInvitations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Commissioner list of a league's pending invitations. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListLeagueInvitationsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
     sendLeagueInvitations: {
         parameters: {
             query?: never;
@@ -11882,6 +12051,105 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    resendLeagueInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                invitationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resent email-invitation response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResendLeagueInvitationResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12013,6 +12281,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

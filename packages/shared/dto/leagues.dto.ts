@@ -370,6 +370,18 @@ export const GenerateInviteLinkResponseSchema = z.object({
 }).describe('Generated invite-link response.');
 export type GenerateInviteLinkResponse = z.infer<typeof GenerateInviteLinkResponseSchema>;
 
+export const ListLeagueInvitationsResponseSchema = z.object({
+  invitations: z.array(LeagueInvitationDtoSchema).describe(
+    'The league\'s outstanding invitations, newest first: every PENDING invitation (email invites not yet accepted, join links not yet cancelled or used up), plus email invites that went EXPIRED without being accepted. An email invite past its expiresAt stays listed until it is accepted or cancelled; Resend Invite renews it.',
+  ),
+}).describe('Commissioner list of a league\'s pending invitations.');
+export type ListLeagueInvitationsResponse = z.infer<typeof ListLeagueInvitationsResponseSchema>;
+
+export const ResendLeagueInvitationResponseSchema = z.object({
+  invitation: LeagueInvitationDtoSchema.describe('The renewed invitation, with its new invite code and expiry.'),
+}).describe('Resent email-invitation response.');
+export type ResendLeagueInvitationResponse = z.infer<typeof ResendLeagueInvitationResponseSchema>;
+
 /**
  * Commissioner dashboard response. The `league` and `contests` fields are typed against the
  * canonical `LeagueDtoSchema` and `ContestDtoSchema` rather than `JsonObjectSchema`
@@ -424,5 +436,7 @@ registerSchema('LeagueMembersResponse', LeagueMembersResponseSchema);
 registerSchema('LeagueMembershipResponse', LeagueMembershipResponseSchema);
 registerSchema('SendLeagueInvitationsResponse', SendLeagueInvitationsResponseSchema);
 registerSchema('GenerateInviteLinkResponse', GenerateInviteLinkResponseSchema);
+registerSchema('ListLeagueInvitationsResponse', ListLeagueInvitationsResponseSchema);
+registerSchema('ResendLeagueInvitationResponse', ResendLeagueInvitationResponseSchema);
 registerSchema('LeagueDashboardResponse', LeagueDashboardResponseSchema);
 registerSchema('LeagueBulkOperationResponse', LeagueBulkOperationResponseSchema);

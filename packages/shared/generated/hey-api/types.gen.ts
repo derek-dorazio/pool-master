@@ -8138,6 +8138,140 @@ export type GenerateInviteLinkResponse = {
 };
 
 /**
+ * Commissioner list of a league's pending invitations.
+ */
+export type ListLeagueInvitationsResponse = {
+    /**
+     * The league's outstanding invitations, newest first: every PENDING invitation (email invites not yet accepted, join links not yet cancelled or used up), plus email invites that went EXPIRED without being accepted. An email invite past its expiresAt stays listed until it is accepted or cancelled; Resend Invite renews it.
+     */
+    invitations: Array<{
+        /**
+         * Invitation record identifier.
+         */
+        id: string;
+        /**
+         * League that owns the invitation.
+         */
+        leagueId: string;
+        /**
+         * Email recipient for direct email invites. Link invites omit this field.
+         */
+        email?: string | null;
+        /**
+         * Shareable invitation code used in URLs and acceptance requests.
+         */
+        inviteCode: string;
+        /**
+         * Invitation delivery mode, such as EMAIL or LINK.
+         */
+        inviteType: 'EMAIL' | 'LINK';
+        /**
+         * Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+         */
+        status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
+        /**
+         * Maximum accepted joins allowed for the invitation.
+         */
+        maxUses: number;
+        /**
+         * How many times the invitation has already been accepted.
+         */
+        currentUses: number;
+        /**
+         * User ID of the commissioner or actor that issued the invite.
+         */
+        invitedBy: string;
+        /**
+         * When the invite stops being valid, if it expires.
+         */
+        expiresAt?: string | null;
+        /**
+         * When the invitation was accepted, if applicable.
+         */
+        acceptedAt?: string | null;
+        /**
+         * User ID that accepted the invite, when known.
+         */
+        acceptedBy?: string | null;
+        /**
+         * Invitation creation timestamp.
+         */
+        createdAt: string;
+        /**
+         * Last invitation update timestamp.
+         */
+        updatedAt: string;
+    }>;
+};
+
+/**
+ * Resent email-invitation response.
+ */
+export type ResendLeagueInvitationResponse = {
+    /**
+     * The renewed invitation, with its new invite code and expiry.
+     */
+    invitation: {
+        /**
+         * Invitation record identifier.
+         */
+        id: string;
+        /**
+         * League that owns the invitation.
+         */
+        leagueId: string;
+        /**
+         * Email recipient for direct email invites. Link invites omit this field.
+         */
+        email?: string | null;
+        /**
+         * Shareable invitation code used in URLs and acceptance requests.
+         */
+        inviteCode: string;
+        /**
+         * Invitation delivery mode, such as EMAIL or LINK.
+         */
+        inviteType: 'EMAIL' | 'LINK';
+        /**
+         * Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+         */
+        status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
+        /**
+         * Maximum accepted joins allowed for the invitation.
+         */
+        maxUses: number;
+        /**
+         * How many times the invitation has already been accepted.
+         */
+        currentUses: number;
+        /**
+         * User ID of the commissioner or actor that issued the invite.
+         */
+        invitedBy: string;
+        /**
+         * When the invite stops being valid, if it expires.
+         */
+        expiresAt?: string | null;
+        /**
+         * When the invitation was accepted, if applicable.
+         */
+        acceptedAt?: string | null;
+        /**
+         * User ID that accepted the invite, when known.
+         */
+        acceptedBy?: string | null;
+        /**
+         * Invitation creation timestamp.
+         */
+        createdAt: string;
+        /**
+         * Last invitation update timestamp.
+         */
+        updatedAt: string;
+    };
+};
+
+/**
  * Commissioner dashboard response.
  */
 export type LeagueDashboardResponse = {
@@ -12239,6 +12373,51 @@ export type ActivateLeagueResponses = {
 
 export type ActivateLeagueResponse = ActivateLeagueResponses[keyof ActivateLeagueResponses];
 
+export type ListLeagueInvitationsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/invitations';
+};
+
+export type ListLeagueInvitationsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type ListLeagueInvitationsError = ListLeagueInvitationsErrors[keyof ListLeagueInvitationsErrors];
+
+export type ListLeagueInvitationsResponses = {
+    /**
+     * Commissioner list of a league's pending invitations.
+     */
+    200: ListLeagueInvitationsResponse;
+};
+
+export type ListLeagueInvitationsResponse2 = ListLeagueInvitationsResponses[keyof ListLeagueInvitationsResponses];
+
 export type SendLeagueInvitationsData = {
     body: SendLeagueInvitationsRequest;
     path: {
@@ -12305,6 +12484,118 @@ export type SendLeagueInvitationsResponses = {
 };
 
 export type SendLeagueInvitationsResponse2 = SendLeagueInvitationsResponses[keyof SendLeagueInvitationsResponses];
+
+export type ResendLeagueInvitationData = {
+    body?: never;
+    path: {
+        id: string;
+        invitationId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/invitations/{invitationId}/resend';
+};
+
+export type ResendLeagueInvitationErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    502: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type ResendLeagueInvitationError = ResendLeagueInvitationErrors[keyof ResendLeagueInvitationErrors];
+
+export type ResendLeagueInvitationResponses = {
+    /**
+     * Resent email-invitation response.
+     */
+    200: ResendLeagueInvitationResponse;
+};
+
+export type ResendLeagueInvitationResponse2 = ResendLeagueInvitationResponses[keyof ResendLeagueInvitationResponses];
 
 export type GenerateInviteLinkData = {
     body: GenerateInviteLinkRequest;
@@ -12388,6 +12679,28 @@ export type RevokeInviteLinkErrors = {
      * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
         /**
          * Error payload object.
          */

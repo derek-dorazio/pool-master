@@ -288,7 +288,88 @@ export class InvitationService {
     return invitation;
   }
 
-  /** Revokes an existing invite link. */
+  /**
+   * The league's outstanding invitations, newest first (#221): every PENDING invitation, plus
+   * email invites that went EXPIRED unaccepted. An invite is outstanding until it is accepted or
+   * cancelled; an expired email invite is listed so the commissioner can resend it.
+   */
+  async listOutstandingInvitations(leagueId: string): Promise<LeagueInvitation[]> {
+    this.logger?.debug({
+      action: 'leagueInvitation.listOutstanding.enter',
+      data: { leagueId },
+    }, 'Listing outstanding league invitations');
+    const invitations = (await this.deps.invitations.findByLeague(leagueId)).filter(isOutstanding);
+    this.logger?.info({
+      action: 'leagueInvitation.listOutstanding.success',
+      data: { leagueId, invitationCount: invitations.length },
+    }, 'Listed outstanding league invitations');
+    return invitations;
+  }
+
+  /**
+   * Resends an outstanding email invitation (#221): a new invite code, so the old link stops
+   * working, a fresh expiry, and the invitation email sent again. Join links cannot be resent.
+   */
+  async resendEmailInvitation(
+    leagueId: string,
+    invitationId: string,
+    resentBy: string,
+  ): Promise<LeagueInvitation> {
+    this.logger?.debug({
+      action: 'leagueInvitation.resend.enter',
+      data: { leagueId, invitationId, resentBy },
+    }, 'Resending league email invitation');
+    const invitation = await this.deps.invitations.findById(invitationId);
+    if (!invitation || invitation.leagueId !== leagueId) {
+      this.logger?.warn({
+        action: 'leagueInvitation.resend.notFound',
+        data: { leagueId, invitationId },
+      }, 'Cannot resend missing league invitation');
+      throw new InvitationNotFoundError(invitationId);
+    }
+    if (invitation.inviteType !== InviteType.EMAIL || !invitation.email || !isOutstanding(invitation)) {
+      this.logger?.warn({
+        action: 'leagueInvitation.resend.notResendable',
+        data: {
+          leagueId,
+          invitationId,
+          inviteType: invitation.inviteType,
+          status: invitation.status,
+        },
+      }, 'Cannot resend a join link or a settled invitation');
+      throw new InvitationInvalidError(
+        'Only an outstanding email invitation can be resent.',
+        'LEAGUE_INVITATION_NOT_RESENDABLE',
+      );
+    }
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRY_DAYS);
+    const [league, inviterName] = await Promise.all([
+      this.deps.leagues.findById(leagueId),
+      this.resolveInviterName(resentBy),
+    ]);
+    const renewed = await this.deps.invitations.update(invitation.id, {
+      inviteCode: generateInviteCode(),
+      status: InvitationStatus.PENDING,
+      expiresAt,
+    });
+    await this.deliverLeagueInvitationEmail({
+      invitationId: renewed.id,
+      email: invitation.email,
+      inviterName,
+      leagueName: league?.name ?? 'your league',
+      leagueCode: league?.leagueCode ?? leagueId,
+      inviteCode: renewed.inviteCode,
+      expiresAt,
+    });
+    this.logger?.info({
+      action: 'leagueInvitation.resend.success',
+      data: { leagueId, invitationId, resentBy },
+    }, 'Resent league email invitation');
+    return renewed;
+  }
+
+  /** Cancels an invitation by code: a join link or an email invite (#221). It can no longer be accepted. */
   async revokeInviteLink(leagueId: string, inviteCode: string): Promise<void> {
     this.logger?.debug({
       action: 'leagueInvitation.revoke.enter',
@@ -301,6 +382,16 @@ export class InvitationService {
         data: { leagueId, inviteCodeLength: inviteCode.length },
       }, 'Cannot revoke missing league invite link');
       throw new InvitationNotFoundError(inviteCode);
+    }
+    if (!isOutstanding(invitation)) {
+      this.logger?.warn({
+        action: 'leagueInvitation.revoke.notCancellable',
+        data: { leagueId, invitationId: invitation.id, status: invitation.status },
+      }, 'Cannot cancel an invitation that is already accepted or cancelled');
+      throw new InvitationInvalidError(
+        'Only an outstanding invitation can be cancelled.',
+        'LEAGUE_INVITATION_NOT_CANCELLABLE',
+      );
     }
     await this.deps.invitations.update(invitation.id, {
       status: InvitationStatus.REVOKED,
@@ -578,6 +669,12 @@ export class InvitationService {
     }, 'Loaded league invitation preview');
     return preview;
   }
+}
+
+/** Not yet accepted or cancelled. An email invite that expired unaccepted is still outstanding. */
+function isOutstanding(invitation: LeagueInvitation): boolean {
+  return invitation.status === InvitationStatus.PENDING
+    || (invitation.status === InvitationStatus.EXPIRED && invitation.inviteType === InviteType.EMAIL);
 }
 
 /** Generates a short, URL-safe invite code. */
