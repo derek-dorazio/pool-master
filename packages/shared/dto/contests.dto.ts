@@ -4,6 +4,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
+  AutoPickPolicy,
   ContestStatus,
   ContestFormat,
   ParticipantScoringDefinitionIdSchema,
@@ -30,7 +31,7 @@ export const ContestCrudConfigurationRequestSchema = z.object({
   draftMode: z.string().optional(),
   rounds: z.number().int().optional(),
   timePerPickSeconds: z.number().int().optional(),
-  autoPickPolicy: z.string().optional(),
+  autoPickPolicy: z.nativeEnum(AutoPickPolicy).optional(),
   tierConfig: z.array(TierDefinitionRequestSchema).optional(),
   budget: z.number().optional(),
   rosterSize: z.number().int().optional(),

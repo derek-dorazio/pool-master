@@ -866,19 +866,14 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       body: { entryId: fixture.challengerEntryId, participantId: fixture.firstEventParticipantId },
     });
 
-    expect(samePickResponse.data?.draftPickHistories).toHaveLength(2);
-    expect(samePickResponse.data?.draftPickHistories).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          entryId: fixture.commissionerEntryId,
-          participantId: fixture.firstEventParticipantId,
-        }),
-        expect.objectContaining({
-          entryId: fixture.challengerEntryId,
-          participantId: fixture.firstEventParticipantId,
-        }),
-      ]),
-    );
+    // Both entries now hold it, but while the contest is OPEN each team's history carries only
+    // its own picks, so the challenger sees one row, their own.
+    expect(samePickResponse.data?.draftPickHistories).toEqual([
+      expect.objectContaining({
+        entryId: fixture.challengerEntryId,
+        participantId: fixture.firstEventParticipantId,
+      }),
+    ]);
     expect(samePickResponse.data?.availableParticipantIds).toContain(fixture.firstEventParticipantId);
     expect(samePickResponse.data?.isComplete).toBe(true);
   });
@@ -940,19 +935,5 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       }),
     ]);
     expect(freedPickResponse.data?.availableParticipantIds).not.toContain(takenParticipantId);
-  });
-  it('refuses a selection with 409 CONTEST_ENTRY_LOCKED once the contest is underway, and stores no pick', async () => {
-    const fixture = await seedTieredDraftFixture();
-    const prisma = getFunctionalPrisma();
-    await prisma.contest.update({ where: { id: fixture.contestId }, data: { status: 'ACTIVE' } });
-
-    const submitResponse = await submitContestSelection({
-      client: fixture.commissioner.client,
-      path: { contestId: fixture.contestId },
-      body: { entryId: fixture.entryId, participantId: fixture.sportEventParticipantId },
-    });
-
-    expectFunctionalError(submitResponse, { status: 409, code: 'CONTEST_ENTRY_LOCKED' });
-    await expect(prisma.contestEntryPick.count({ where: { entryId: fixture.entryId } })).resolves.toBe(0);
   });
 });

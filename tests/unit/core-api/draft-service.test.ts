@@ -1,4 +1,4 @@
-import { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -21,7 +21,6 @@ import {
   fakeLeagueMembershipRepo,
   fakeParticipantRepo,
   fakeSportEventParticipantRepo,
-  fakeSportEventRepo,
   fakeSquadMembershipRepo,
 } from '../../support/repo-fakes';
 
@@ -89,14 +88,14 @@ function contest(overrides: Partial<Contest> = {}): Contest {
     sportEventId: EVENT_ID,
     name: 'Masters Pool',
     status: ContestStatus.OPEN,
-    contestFormat: 'ROSTER_SELECTION',
+    contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
-    scoringEngine: 'GOLF_STROKE_PLAY',
+    scoringEngine: ScoringEngine.STROKE_PLAY,
     isExclusive: false,
     scoringStopsOnElimination: false,
     ...TIMESTAMPS,
     ...overrides,
-  } as Contest;
+  };
 }
 
 function configuration(overrides: Partial<ContestConfiguration> = {}): ContestConfiguration {
@@ -208,8 +207,6 @@ interface SetupOptions {
   tierGroups?: unknown[];
   valuations?: unknown[];
   field?: SportEventParticipant[];
-  /** The contest event's scheduled start; a week out unless a test says otherwise. */
-  eventStartDate?: Date;
 }
 
 function setup(options: SetupOptions = {}) {
@@ -257,13 +254,6 @@ function setup(options: SetupOptions = {}) {
       countByContest: jest.fn().mockResolvedValue((options.picks ?? []).length),
     }),
     pickWrites: { createPick, deletePick } as never,
-    sportEvents: fakeSportEventRepo({
-      findById: jest.fn().mockResolvedValue({
-        id: EVENT_ID,
-        status: 'SCHEDULED',
-        startDate: options.eventStartDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      }),
-    }),
     tiers: {
       getEffectiveTiersForSportEvent: jest
         .fn()
@@ -272,6 +262,10 @@ function setup(options: SetupOptions = {}) {
         .fn()
         .mockResolvedValue(options.valuations ?? VALUATIONS),
     } as unknown as SportEventTierService,
+    // An event that starts long after every test's clock, so only contest status gates picks.
+    sportEvents: {
+      findById: jest.fn().mockResolvedValue({ id: EVENT_ID, status: 'SCHEDULED', startDate: new Date('2099-01-01T00:00:00.000Z') }),
+    } as unknown as DraftServiceDeps['sportEvents'],
   };
 
   return { service: new DraftService(deps), deps, createPick, deletePick };
@@ -355,14 +349,17 @@ describe('#324 DraftService.getDraftState', () => {
     expect(view.isCommissioner).toBe(false);
   });
 
-  it('honours an explicitly selected entry, and falls back to the actor\'s own for an unknown one', async () => {
+  // Once picks are revealed (LOCKED onwards). While the contest is OPEN another team's entry
+  // is not honoured: draft-selection-use-cases.test.ts covers that half.
+  it('honours an explicitly selected entry once picks are revealed, and falls back to the actor\'s own for an unknown one', async () => {
     const entries = [entry(ENTRY_ID, SQUAD_ID), entry(OTHER_ENTRY_ID, 'squad-2', 'Challenger')];
     const squadMemberships = [
       squadMembership(SQUAD_ID, OWNER_USER_ID),
       squadMembership('squad-2', 'user-challenger'),
     ];
 
-    const selected = await setup({ entries, squadMemberships }).service.getDraftState({
+    const revealed = { status: ContestStatus.LOCKED };
+    const selected = await setup({ contest: revealed, entries, squadMemberships }).service.getDraftState({
       contestId: CONTEST_ID,
       selectedEntryId: OTHER_ENTRY_ID,
       actorUserId: OWNER_USER_ID,
@@ -371,7 +368,7 @@ describe('#324 DraftService.getDraftState', () => {
     expect(selected.selectedEntryName).toBe('Challenger');
     expect(selected.myEntryId).toBe(ENTRY_ID);
 
-    const unknown = await setup({ entries, squadMemberships }).service.getDraftState({
+    const unknown = await setup({ contest: revealed, entries, squadMemberships }).service.getDraftState({
       contestId: CONTEST_ID,
       selectedEntryId: 'entry-nope',
       actorUserId: OWNER_USER_ID,
@@ -769,57 +766,90 @@ describe('#324 DraftService.submitSelection — the three outcomes', () => {
   });
 });
 
-describe('DraftService.submitSelection — picks only while the contest is open', () => {
-  it.each([
-    ContestStatus.DRAFT,
-    ContestStatus.LOCKED,
-    ContestStatus.ACTIVE,
-    ContestStatus.COMPLETED,
-    ContestStatus.CANCELLED,
-  ])('refuses a pick with 409 CONTEST_ENTRY_LOCKED and writes nothing while the contest is %s', async (status) => {
-    const { service, createPick, deletePick } = setup({ contest: { status } });
-
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
-      code: 'CONTEST_ENTRY_LOCKED',
-      statusCode: 409,
-    });
-    expect(createPick).not.toHaveBeenCalled();
-    expect(deletePick).not.toHaveBeenCalled();
-  });
-
-  it('refuses toggling a held pick off with CONTEST_ENTRY_LOCKED once the contest is underway', async () => {
-    const { service, deletePick } = setup({
-      contest: { status: ContestStatus.ACTIVE },
+describe('DraftService — rooms with missing or partial data', () => {
+  it('places a budget pick in the next round when the entry still has room', async () => {
+    const { service, createPick } = setup({
+      contest: { selectionType: SelectionType.BUDGET_PICK },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3 },
       picks: [pick('pick-a', 'p-a', 'sep-a')],
     });
 
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
-    expect(deletePick).not.toHaveBeenCalled();
+    const result = await service.submitSelection(submit({ participantId: 'sep-d' }));
+
+    expect(result.outcome).toBe('placed');
+    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: 'sep-d', draftRound: 2 }));
   });
 
-  it('tells the room the owner cannot submit once the contest is underway, even with a short roster', async () => {
-    const { service } = setup({ contest: { status: ContestStatus.ACTIVE } });
+  it('answers 404 for a DRAFT contest\'s room to an anonymous reader and to a commissioner whose membership is inactive', async () => {
+    const draft = { status: ContestStatus.DRAFT };
+    await expect(setup({ contest: draft }).service.getDraftState({ contestId: CONTEST_ID }))
+      .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+
+    const inactiveCommissioner = {
+      id: 'lm-1', leagueId: LEAGUE_ID, userId: OWNER_USER_ID, role: 'COMMISSIONER', status: 'INACTIVE',
+    } as unknown as LeagueMembership;
+    await expect(setup({ contest: draft, actorMembership: inactiveCommissioner }).service.getDraftState({
+      contestId: CONTEST_ID,
+      actorUserId: OWNER_USER_ID,
+    })).rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('shows a contest with no event as an empty room that refuses every pick as unconfigured', async () => {
+    const { service } = setup({ contest: { sportEventId: undefined } });
+
+    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    expect(view.rosterSize).toBe(0);
+    expect(view.selectionGroups).toEqual([]);
+    expect(view.canCurrentUserSubmit).toBe(false);
+
+    await expect(service.submitSelection(submit())).rejects.toMatchObject({ code: 'SELECTION_CONFIG_INVALID' });
+  });
+
+  it('lists an entry whose team has no active member with an empty owner rather than dropping it', async () => {
+    const { service } = setup({
+      entries: [entry(ENTRY_ID, SQUAD_ID), entry(OTHER_ENTRY_ID, 'squad-orphan')],
+    });
 
     const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
-    expect(view.isComplete).toBe(false);
-    expect(view.canCurrentUserSubmit).toBe(false);
-    expect(view.currentEntryId).toBeNull();
+    expect(view.entries.map((row) => [row.id, row.userId])).toEqual([[ENTRY_ID, OWNER_USER_ID], [OTHER_ENTRY_ID, '']]);
   });
 
-  it('refuses a pick with CONTEST_ENTRY_LOCKED once the event\'s start time has passed, though its status still says scheduled', async () => {
-    const { service, createPick } = setup({ eventStartDate: new Date(Date.now() - 60 * 60 * 1000) });
-
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED', statusCode: 409 });
-    expect(createPick).not.toHaveBeenCalled();
-  });
-
-  it('tells the room the owner cannot submit once the event\'s start time has passed', async () => {
-    const { service } = setup({ eventStartDate: new Date(Date.now() - 60 * 60 * 1000) });
+  it('leaves a tier\'s golfer who is not on the field out of that tier\'s selection group', async () => {
+    const { service } = setup({ field: FIELD.filter((row) => row.id !== 'sep-c') });
 
     const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
-    expect(view.canCurrentUserSubmit).toBe(false);
+    expect(view.selectionGroups[0].participants.map((participant) => participant.participantId)).toEqual(['p-a', 'p-b']);
+  });
+
+  it('places a pick of a golfer outside every tier in the history by its position in the entry, using its stored round when it has one', async () => {
+    const { service } = setup({
+      contest: { status: ContestStatus.LOCKED },
+      picks: [
+        pick('pick-x', 'p-untiered', 'sep-x', { draftRound: null as unknown as number, draftPickNumber: null as unknown as number }),
+        pick('pick-a', 'p-a', 'sep-a', { draftRound: 1 }),
+      ],
+    });
+
+    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+
+    expect(view.picks.map((row) => [row.sportEventParticipantId, row.pickNumber, row.round, row.pickInRound, row.tierId]))
+      .toEqual([
+        ['sep-x', 1, 1, 1, undefined],
+        ['sep-a', 2, 1, 1, 'tier-1'],
+      ]);
+  });
+
+  it('numbers a budget-pick history by each entry\'s own pick order, not by tier', async () => {
+    const { service } = setup({
+      contest: { selectionType: SelectionType.BUDGET_PICK, status: ContestStatus.LOCKED },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3 },
+      picks: [pick('pick-d', 'p-d', 'sep-d'), pick('pick-a', 'p-a', 'sep-a')],
+    });
+
+    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+
+    expect(view.picks.map((row) => row.round)).toEqual([1, 2]);
   });
 });
-

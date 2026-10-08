@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { LeagueRole } from '@poolmaster/shared/domain';
+import { LeagueRole, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 import type { SquadDto, TeamOwnerInvitationDto } from '@/lib/api';
 import { Alert, Button, Input, Tile } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -188,7 +188,7 @@ export function MyTeamOwnersPanel({
                     {invitation.status} {invitation.replacementForUserId ? '· Replacement invite' : ''}
                   </div>
                 </div>
-                {invitation.status === 'PENDING' ? (
+                {invitation.status === SquadOwnerInvitationStatus.PENDING ? (
                   <Button
                     data-testid={`my-team-revoke-owner-invitation-${invitation.id}`}
                     disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
@@ -210,7 +210,7 @@ export function MyTeamOwnersPanel({
         <Tile radius="lg">
           <h4 className="text-sm font-semibold text-foreground">Replace owner</h4>
           <p className="mt-2 text-sm text-muted-foreground">
-            Replacing an owner inactivates the selected current owner and starts the owner-invite flow for the replacement email.
+            Replacing an owner removes them from this team and the league, and invites the replacement email to take their place.
           </p>
           <div className="mt-4 flex gap-3">
             <Input

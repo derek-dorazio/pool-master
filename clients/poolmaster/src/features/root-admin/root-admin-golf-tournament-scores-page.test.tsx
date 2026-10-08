@@ -87,7 +87,7 @@ function roundResult(roundNumber: number, strokes: number) {
     id: `result-${roundNumber}`,
     sportEventRoundId: `round-${roundNumber}`,
     roundNumber,
-    status: 'COMPLETED',
+    status: 'COMPLETED' as const,
     completedAt: '2026-07-16T18:00:00.000Z',
     golf: { strokes, scoreToPar: strokes - 71, thru: 18 },
   };

@@ -406,3 +406,50 @@ describe('events routes', () => {
     });
   });
 });
+
+describe('editing an event moves its round schedule with it', () => {
+  it('moves every stored round by the start date\'s shift and schedules the rounds an admin adds, in Postgres', async () => {
+    const prisma = getPrisma();
+    const admin = await createTestUser({ displayName: 'Round Schedule Admin', isRootAdmin: true });
+    const eventId = randomUUID();
+    await prisma.sportEvent.create({
+      data: {
+        ...(await freshEventEdition(prisma)),
+        id: eventId,
+        providerId: 'integration-test',
+        externalId: `events-round-shift-${eventId}`,
+        sport: Sport.GOLF,
+        name: 'Round Shift Open',
+        startDate: new Date('2099-06-04T12:00:00.000Z'),
+        status: 'DRAFT',
+        rounds: 2,
+        metadata: {},
+      },
+    });
+    await prisma.sportEventRound.createMany({
+      data: [
+        { sportEventId: eventId, roundNumber: 1, scheduledDate: new Date('2099-06-04T12:00:00.000Z'), scheduledEndAt: new Date('2099-06-04T22:00:00.000Z') },
+        { sportEventId: eventId, roundNumber: 2, scheduledDate: new Date('2099-06-06T12:00:00.000Z') },
+      ],
+    });
+
+    const res = await getApp().inject({
+      method: 'PATCH',
+      url: `/api/v1/events/${eventId}`,
+      headers: admin.headers,
+      payload: { startDate: '2099-06-11T12:00:00.000Z', rounds: 3 },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const rounds = await prisma.sportEventRound.findMany({ where: { sportEventId: eventId }, orderBy: { roundNumber: 'asc' } });
+    expect(rounds.map((round) => [round.roundNumber, round.scheduledDate.toISOString(), round.scheduledEndAt?.toISOString() ?? null])).toEqual([
+      [1, '2099-06-11T12:00:00.000Z', '2099-06-11T22:00:00.000Z'],
+      [2, '2099-06-13T12:00:00.000Z', null],
+      // The added round follows the last one by a day, so it keeps the irregular schedule.
+      [3, '2099-06-14T12:00:00.000Z', null],
+    ]);
+
+    await prisma.sportEventRound.deleteMany({ where: { sportEventId: eventId } });
+    await prisma.sportEvent.delete({ where: { id: eventId } });
+  });
+});

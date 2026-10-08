@@ -261,10 +261,15 @@ export class UserService {
    * Idempotent: already inactive means the desired state holds, so this succeeds without
    * re-revoking sessions for a change that did not happen.
    * Returning early also means the guard below cannot reject a no-op.
+   *
+   * Every session is revoked except `keepRefreshToken`, which the handler passes when users
+   * inactivate themselves: an inactive account may still sign in (A9), so signing them out
+   * would only make them sign straight back in to reactivate.
    */
   async disableUser(
     actor: UserWriteActor,
     targetUserId: string,
+    keepRefreshToken?: string | null,
   ): Promise<User> {
     const user = await this.requireWritableUser(actor, targetUserId);
 
@@ -293,7 +298,7 @@ export class UserService {
     // session for up to the refresh-token lifetime.
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id: user.id }, data: { isActive: false } });
-      await revokeUserSessions(tx, user.id);
+      await revokeUserSessions(tx, user.id, keepRefreshToken);
     });
 
     this.logger?.info({

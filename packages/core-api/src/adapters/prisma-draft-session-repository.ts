@@ -4,7 +4,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { DraftSessionRepository } from '@poolmaster/shared/db';
-import type { DraftPickHistory, DraftSession } from '@poolmaster/shared/domain';
+import type { DraftPickHistory, DraftSession, DraftStatus } from '@poolmaster/shared/domain';
 
 export class PrismaDraftSessionRepository implements DraftSessionRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -75,7 +75,7 @@ export class PrismaDraftSessionRepository implements DraftSessionRepository {
 function mapToSession(row: {
   id: string;
   contestId: string;
-  status: string;
+  status: DraftStatus;
   currentPickNumber: number;
   currentEntryId: string | null;
   startedAt: Date | null;
@@ -86,7 +86,7 @@ function mapToSession(row: {
   return {
     id: row.id,
     contestId: row.contestId,
-    status: row.status as DraftSession['status'],
+    status: row.status,
     currentPickNumber: row.currentPickNumber,
     currentEntryId: row.currentEntryId ?? undefined,
     startedAt: row.startedAt ?? undefined,

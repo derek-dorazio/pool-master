@@ -10,7 +10,7 @@
  * event and moves its lifecycle by hand (#126).
  */
 
-import type { Sport } from '@poolmaster/shared/domain';
+import type { IngestionJobStatus, Sport } from '@poolmaster/shared/domain';
 import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
@@ -53,7 +53,7 @@ export interface IngestionJobRecord {
   providerId: string;
   sport: Sport;
   eventExternalId?: string;
-  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+  status: IngestionJobStatus;
   startedAt?: Date;
   completedAt?: Date;
   recordsProcessed: number;
@@ -304,6 +304,10 @@ export class IngestionScheduler {
   }
 
   private async runHealthChecks(): Promise<void> {
+    if (!(await this.getGlobalConfig()).healthCheck.enabled) {
+      this.logger?.debug('Skipping provider health checks because they are disabled');
+      return;
+    }
     this.logger?.debug('Running provider health checks');
     const providers = this.registry.getAllProviders();
     for (const provider of providers) {

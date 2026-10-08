@@ -240,3 +240,31 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     jest.useRealTimers();
   });
 });
+
+describe('EventLifecycleScheduler after an admin cuts an event\'s round count', () => {
+  it('completes the event once its last counted round ends, ignoring an old round past the new count', async () => {
+    // A four-round event the admin cut to three rounds (weather): round 4 is still stored.
+    const { sportEvents, rounds } = storeWith([
+      {
+        event: { id: 'evt-1', status: 'IN_PROGRESS', rounds: 3, startDate: new Date('2026-06-01T00:00:00.000Z') },
+        rounds: [
+          { scheduledDate: new Date('2026-06-01T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-01T23:00:00.000Z') },
+          { scheduledDate: new Date('2026-06-02T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-02T23:00:00.000Z') },
+          { scheduledDate: new Date('2026-06-03T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-03T23:00:00.000Z') },
+          { scheduledDate: new Date('2026-06-04T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-04T23:00:00.000Z') },
+        ],
+      },
+    ]);
+    const eventLifecycleService = { applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
+    const now = () => new Date('2026-06-04T00:00:00.000Z');
+    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
+
+    await scheduler.runSweep();
+
+    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledWith({
+      sportEventId: 'evt-1',
+      toStatus: 'COMPLETED',
+      actor: { type: 'SYSTEM' },
+    });
+  });
+});

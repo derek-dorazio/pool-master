@@ -207,8 +207,8 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       select: { status: true, endsAt: true },
     })).resolves.toEqual({ status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') });
 
-    // A contest moved back out of COMPLETED is settled again: the next settlement recomputes
-    // the standing from the corrected scores.
+    // Reopening (OverrideService.reopenContest moves COMPLETED → ACTIVE) is the deliberate
+    // path back: the next settlement recomputes the standing from the corrected scores.
     await prisma.contest.update({ where: { id: directContest.id }, data: { status: 'ACTIVE' } });
     const third = await service.settleCompletedSportEvent(event.id);
 
@@ -228,54 +228,84 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       where: { contestEntryStanding: { contestId: directContest.id } },
     })).resolves.toBe(2);
   });
-  it('leaves a never-opened draft contest as a draft with no standings when its event completes', async () => {
+});
+
+describe('golf contest settlement — which contests settle', () => {
+  async function seedCompletedEvent(status: 'COMPLETED' | 'IN_PROGRESS' = 'COMPLETED') {
     const prisma = getPrisma();
-    const service = createGolfContestSettlementService(prisma);
     const suffix = randomUUID().slice(0, 8);
-    const owner = await createTestUser({ displayName: `Draft Settlement ${suffix}` });
     const sport = await prisma.sport.upsert({
       where: { name: Sport.GOLF },
       create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const league = await prisma.league.create({
-      data: { leagueCode: `GSD${suffix.toUpperCase()}`, name: `Draft Settlement League ${suffix}` },
-    });
-    await prisma.leagueMembership.create({
-      data: { leagueId: league.id, userId: owner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },
+      data: { leagueCode: `GSD${suffix.toUpperCase()}`, name: `Golf Settlement Draft League ${suffix}` },
     });
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `golf-draft-settlement-event-${suffix}`,
+        externalId: `golf-settlement-draft-${suffix}`,
         providerId: 'integration-test',
         sport: Sport.GOLF,
-        name: `Draft Settlement Open ${suffix}`,
+        name: `Golf Settlement Draft Open ${suffix}`,
         startDate: new Date('2026-05-28T12:00:00.000Z'),
         endDate: new Date('2026-05-31T22:00:00.000Z'),
-        status: 'COMPLETED',
+        status,
       },
     });
-    await createSettlementParticipant({
-      sportId: sport.id,
-      sportEventId: event.id,
-      name: `Solo ${suffix}`,
-      scoreToPar: -4,
-      strokes: 284,
-    });
+    await createSettlementParticipant({ sportId: sport.id, sportEventId: event.id, name: `Golfer ${suffix}`, scoreToPar: -3, strokes: 285 });
+    return { league, event, suffix };
+  }
+
+  it('leaves a never-opened DRAFT contest a draft with no standings when its event completes', async () => {
+    const prisma = getPrisma();
+    const service = createGolfContestSettlementService(prisma);
+    const { league, event, suffix } = await seedCompletedEvent();
     const draft = await createSettlementContest({
       leagueId: league.id,
       sportEventId: event.id,
       name: `Never Opened ${suffix}`,
       status: 'DRAFT',
     });
+    const active = await createSettlementContest({ leagueId: league.id, sportEventId: event.id, name: `Running ${suffix}` });
 
     const summary = await service.settleCompletedSportEvent(event.id);
 
-    expect(summary).toMatchObject({ contestsSettled: 0, contestsCompleted: 0 });
+    expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1 });
     await expect(prisma.contest.findUniqueOrThrow({ where: { id: draft.id }, select: { status: true } }))
       .resolves.toEqual({ status: 'DRAFT' });
+    await expect(prisma.contest.findUniqueOrThrow({ where: { id: active.id }, select: { status: true } }))
+      .resolves.toEqual({ status: 'COMPLETED' });
     await expect(prisma.contestEntryStanding.count({ where: { contestId: draft.id } })).resolves.toBe(0);
+  });
+
+  it('settles nothing while the event is not yet COMPLETED', async () => {
+    const prisma = getPrisma();
+    const service = createGolfContestSettlementService(prisma);
+    const { league, event, suffix } = await seedCompletedEvent('IN_PROGRESS');
+    const active = await createSettlementContest({ leagueId: league.id, sportEventId: event.id, name: `Still Playing ${suffix}` });
+
+    await expect(service.settleCompletedSportEvent(event.id)).resolves.toEqual({
+      sportEventId: event.id,
+      contestsSettled: 0,
+      contestsCompleted: 0,
+      standingsUpserted: 0,
+    });
+    await expect(prisma.contest.findUniqueOrThrow({ where: { id: active.id }, select: { status: true } }))
+      .resolves.toEqual({ status: 'ACTIVE' });
+  });
+
+  it('settles nothing for an event that does not exist', async () => {
+    const service = createGolfContestSettlementService(getPrisma());
+    const missingId = randomUUID();
+
+    await expect(service.settleCompletedSportEvent(missingId)).resolves.toEqual({
+      sportEventId: missingId,
+      contestsSettled: 0,
+      contestsCompleted: 0,
+      standingsUpserted: 0,
+    });
   });
 });
 
@@ -322,7 +352,7 @@ async function createSettlementContest(input: {
   name: string;
   /** Every real configuration carries a scoring rule (#246); false builds one that does not. */
   withScoringRule?: boolean;
-  status?: string;
+  status?: 'DRAFT' | 'OPEN' | 'ACTIVE';
 }) {
   const prisma = getPrisma();
   const contest = await prisma.contest.create({

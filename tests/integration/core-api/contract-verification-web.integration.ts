@@ -22,7 +22,6 @@ import {
   GenerateInviteLinkResponseSchema,
   ListLeagueInvitationsResponseSchema,
   ResendLeagueInvitationResponseSchema,
-  LeagueDashboardResponseSchema,
   LeagueResponseSchema,
   SendLeagueInvitationsResponseSchema,
   SquadListResponseSchema,
@@ -37,7 +36,6 @@ import type {
   GenerateInviteLinkResponse,
   LeagueContextResponse,
   SendLeagueInvitationsResponse,
-  SquadListResponse,
 } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
@@ -141,14 +139,14 @@ describe('Contract verification (web)', () => {
     expect(parsed.success).toBe(true);
   });
 
-  it('league invitation and dashboard routes match their response DTOs', async () => {
-    const owner = await createTestUser({ displayName: 'Contract Dashboard Owner' });
+  it('league invitation routes match their response DTOs', async () => {
+    const owner = await createTestUser({ displayName: 'Contract Invitations Owner' });
 
     const leagueRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: owner.headers,
-      payload: buildCreateLeaguePayload('Contract Dashboard League'),
+      payload: buildCreateLeaguePayload('Contract Invitations League'),
     });
     const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
@@ -211,15 +209,6 @@ describe('Contract verification (web)', () => {
     expect(ErrorEnvelopeSchema.safeParse(resendLinkRes.json()).success).toBe(true);
     expect(resendLinkRes.json<ErrorEnvelope>().error.code).toBe('LEAGUE_INVITATION_NOT_RESENDABLE');
 
-    const dashboardRes = await getApp().inject({
-      method: 'GET',
-      url: `${API_ROUTES.leagues.detail(leagueId)}/dashboard`,
-      headers: owner.headers,
-    });
-    expect(dashboardRes.statusCode).toBe(200);
-    expect(
-      LeagueDashboardResponseSchema.safeParse(dashboardRes.json()).success,
-    ).toBe(true);
   });
 
   it('league lifecycle routes match the shared response DTOs', async () => {
@@ -477,11 +466,23 @@ describe('Contract verification (web)', () => {
     expect(listRes.statusCode).toBe(200);
     expect(SquadListResponseSchema.safeParse(listRes.json()).success).toBe(true);
 
-    const squadId = listRes.json<SquadListResponse>().squads[0].id;
+    // Inactivating ends the owners' league memberships, so the league's only commissioner may
+    // not inactivate their own team. Inactivate a second member's team instead.
+    const member = await createTestUser({ displayName: 'Contract Team Member' });
+    const prisma = getPrisma();
+    await prisma.leagueMembership.create({
+      data: { leagueId, userId: member.user.id, role: 'MEMBER', status: 'ACTIVE', joinedAt: new Date() },
+    });
+    const memberSquad = await prisma.squad.create({
+      data: { leagueId, name: 'Contract Member Team', createdBy: member.user.id },
+    });
+    await prisma.squadMembership.create({
+      data: { squadId: memberSquad.id, leagueId, userId: member.user.id, status: 'ACTIVE', joinedAt: new Date() },
+    });
 
     const inactivateRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.squads.inactivate(leagueId, squadId),
+      url: API_ROUTES.squads.inactivate(leagueId, memberSquad.id),
       headers: withoutJsonBodyHeaders(owner.headers),
     });
 

@@ -54,7 +54,7 @@ export function draftsModule(fastify: FastifyInstance): void {
       tags: ['Drafts'],
       summary: 'Get current draft state for a contest',
       description:
-        'Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
+        'Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league\'s commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller\'s own entries, and entryId selects another team\'s entry only once picks are revealed (LOCKED onwards); otherwise it falls back to the caller\'s own.',
       operationId: 'getDraftState',
       params: contestIdParams,
       querystring: zodToJsonSchema(DraftStateQuerySchema),
@@ -72,8 +72,7 @@ export function draftsModule(fastify: FastifyInstance): void {
       tags: ['Drafts'],
       summary: 'Submit a draft pick',
       description:
-        'Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. '
-        + 'Picks change only while the contest is OPEN and before its event\'s scheduled start: 409 CONTEST_ENTRY_LOCKED otherwise.',
+        'Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event\'s start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise.',
       operationId: 'submitContestSelection',
       params: contestIdParams,
       body: zodToJsonSchema(SubmitPickRequestSchema),

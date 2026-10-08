@@ -4,7 +4,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { ContestEntryRepository, ContestEntryWithSquad } from '@poolmaster/shared/db';
-import type { ContestEntry } from '@poolmaster/shared/domain';
+import type { ContestEntry, ContestEntryStatus } from '@poolmaster/shared/domain';
 
 export class PrismaContestEntryRepository implements ContestEntryRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -88,7 +88,7 @@ function mapToEntry(row: {
   squadId: string;
   entryNumber: number;
   name: string;
-  status: string;
+  status: ContestEntryStatus;
   tiebreakerValue: number | null;
   isEliminated: boolean;
   createdAt: Date;
@@ -100,7 +100,7 @@ function mapToEntry(row: {
     squadId: row.squadId,
     entryNumber: row.entryNumber,
     name: row.name,
-    status: row.status as ContestEntry['status'],
+    status: row.status,
     tiebreakerValue: row.tiebreakerValue ?? undefined,
     isEliminated: row.isEliminated,
     createdAt: row.createdAt,

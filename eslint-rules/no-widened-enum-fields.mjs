@@ -19,15 +19,14 @@
  * this rule flags with no edit here.
  *
  * ONLY UNAMBIGUOUS FIELD NAMES ARE FLAGGED. A name counts only when EVERY model that
- * declares it types it as an enum. `status` is deliberately excluded today: it is an
- * enum on SportEvent, LeagueMembership, LeagueInvitation and Participant, but plain
- * `String` on Contest, ContestEntry, DraftSession and ProviderSyncRun. A hand-written row type does not say which model it mirrors, so
- * flagging `status: string` would be wrong wherever the schema itself says `String`.
+ * declares it types it as an enum. A hand-written row type does not say which model it
+ * mirrors, so flagging a name that is plain `String` on some model would be wrong
+ * wherever the schema itself says `String` (`role` is the live example: an enum on
+ * LeagueMembership, free text on Participant).
  *
- * This is self-expanding rather than a permanent carve-out: when those columns become
- * enums (the deferred schema work), `status` becomes unambiguous and the rule starts
- * covering it with no edit here. That is the whole reason the rule reads the schema
- * instead of hardcoding a list.
+ * This is self-expanding rather than a permanent carve-out: `status` was excluded until
+ * #186 made it an enum on every model, and the rule started covering it with no edit
+ * here. That is the whole reason the rule reads the schema instead of hardcoding a list.
  *
  * DELIBERATELY NOT FLAGGED — integration boundaries, per
  * `domain-model-conventions-rules.md` *Guiding Principle*: "the only acceptable use

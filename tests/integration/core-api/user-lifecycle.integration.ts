@@ -125,7 +125,7 @@ describe('shared user delete cascade (#202)', () => {
       const plainUser = await createTestUser({ lastName: 'Plain' });
 
       await expect(
-        isLastRootAdmin(new PrismaUserRepository(prisma), plainUser.user),
+        isLastRootAdmin(new PrismaUserRepository(prisma), { ...plainUser.user, isActive: true }),
       ).resolves.toBe(false);
     });
 
@@ -136,8 +136,8 @@ describe('shared user delete cascade (#202)', () => {
 
       const users = new PrismaUserRepository(prisma);
 
-      await expect(isLastRootAdmin(users, first.user)).resolves.toBe(false);
-      await expect(isLastRootAdmin(users, second.user)).resolves.toBe(false);
+      await expect(isLastRootAdmin(users, { ...first.user, isActive: true })).resolves.toBe(false);
+      await expect(isLastRootAdmin(users, { ...second.user, isActive: true })).resolves.toBe(false);
     });
   });
 

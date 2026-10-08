@@ -118,7 +118,11 @@ export function TeamOwnerActionMenu({
   const removeRequiresInactivation = activeOwnerCount <= 1;
   const testPrefix = `${surface}-owner-actions`;
 
+  // The league context carries the viewer's own role and the league's member count, and both
+  // change here: a commissioner may demote themselves, and removing an owner ends their membership.
   const ownerViewKeys = [
+    QueryKeys.leagues.detail(leagueCode),
+    QueryKeys.leagues.list,
     QueryKeys.leagues.members(leagueId),
     QueryKeys.leagueTeams.byLeague(leagueId),
     QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
@@ -270,7 +274,7 @@ export function TeamOwnerActionMenu({
               className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
               data-testid={`${testPrefix}-confirm-promote-${teamId}-${ownerUserId}`}
               disabled={actionIsPending}
-              onClick={() => void changeRoleMutation.mutateAsync('COMMISSIONER')}
+              onClick={() => void changeRoleMutation.mutateAsync('COMMISSIONER').catch(() => undefined)}
               type="button"
             >
               {changeRoleMutation.isPending ? 'Promoting...' : 'Promote'}
@@ -288,7 +292,7 @@ export function TeamOwnerActionMenu({
               className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
               data-testid={`${testPrefix}-confirm-demote-${teamId}-${ownerUserId}`}
               disabled={actionIsPending}
-              onClick={() => void changeRoleMutation.mutateAsync('MEMBER')}
+              onClick={() => void changeRoleMutation.mutateAsync('MEMBER').catch(() => undefined)}
               type="button"
             >
               {changeRoleMutation.isPending ? 'Demoting...' : 'Demote'}
@@ -326,7 +330,7 @@ export function TeamOwnerActionMenu({
                   className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                   data-testid={`${testPrefix}-confirm-remove-${teamId}-${ownerUserId}`}
                   disabled={actionIsPending}
-                  onClick={() => void removeOwnerMutation.mutateAsync()}
+                  onClick={() => void removeOwnerMutation.mutateAsync().catch(() => undefined)}
                   type="button"
                 >
                   {removeOwnerMutation.isPending ? 'Removing...' : 'Remove from team and league'}

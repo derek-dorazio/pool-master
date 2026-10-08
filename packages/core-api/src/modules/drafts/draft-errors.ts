@@ -45,14 +45,6 @@ export const draftErrors = {
    * Two wordings, one code: the draft-state read says "draft-room endpoints", the submission
    * says "pick submission". Both were inline in the route and both are kept verbatim.
    */
-  /** Same code and wording as a locked entry change: picks are part of the entry (#117). */
-  contestLocked: (contestId: string) =>
-    new DraftError(
-      `Contest ${contestId} entries can only be changed before the contest starts`,
-      'CONTEST_ENTRY_LOCKED',
-      409,
-    ),
-
   draftModeUnsupportedForRead: (selectionType: string) =>
     new DraftError(
       `${selectionType} draft-room endpoints are not implemented yet`,
@@ -65,6 +57,26 @@ export const draftErrors = {
       `${selectionType} pick submission is not implemented yet`,
       'DRAFT_MODE_UNSUPPORTED',
       501,
+    ),
+
+  /**
+   * Picks change only while the contest is OPEN, the same window and the same code as
+   * creating, editing or leaving the entry itself (`ContestService`, #117): a DRAFT is the
+   * commissioner's alone, and from LOCKED on every entry's picks are public.
+   */
+  selectionLocked: (contestId: string, status: string) =>
+    new DraftError(
+      `Contest ${contestId} is ${status}; picks can only be changed while it is open`,
+      'CONTEST_ENTRY_LOCKED',
+      409,
+    ),
+
+  /** The same lock, reached by the event's start time while the contest still says OPEN. */
+  selectionLockedByEventStart: (contestId: string) =>
+    new DraftError(
+      `Contest ${contestId}'s event has started; picks can no longer be changed`,
+      'CONTEST_ENTRY_LOCKED',
+      409,
     ),
 
   selectionConfigInvalid: (contestId: string) =>

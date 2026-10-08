@@ -56,11 +56,16 @@ export interface DraftContext {
   contest: Contest;
   configuration: ContestConfiguration | null;
   entries: ContestEntry[];
-  /** Whether the contest's entries, and so its picks, can change right now. */
-  entriesOpen: boolean;
   squadMemberships: SquadMembership[];
   selectionParticipants: SelectionParticipant[];
   tiers: DraftTierConfig[];
+  /**
+   * Whether the contest takes pick changes now: it is OPEN and its event has not reached its
+   * start time. The start time counts even while the contest still says OPEN, because the
+   * status follows the event's own move to IN_PROGRESS, which can lag the start or, with
+   * auto-lifecycle off, not come at all.
+   */
+  acceptsPicks: boolean;
 }
 
 /** A pick as the draft room reads it: the row, plus the canonical participant it points at. */

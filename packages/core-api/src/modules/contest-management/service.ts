@@ -594,7 +594,7 @@ function buildContestManagementDetail(
     templateVersion?: number | null;
     configJson?: GolfContestConfig;
     maxEntriesPerSquad?: number | null;
-    selectionType: string;
+    selectionType: SelectionType;
     rosterSize?: number;
     pickCount?: number;
     tierConfig?: unknown;
@@ -639,7 +639,7 @@ function toStoredGolfConfig(configuration: GolfContestConfig): GolfContestConfig
 function ensureTypedConfiguration(configuration: {
   configJson?: GolfContestConfig;
   maxEntriesPerSquad?: number | null;
-  selectionType: string;
+  selectionType: SelectionType;
   rosterSize?: number;
   pickCount?: number;
   tierConfig?: unknown;

@@ -4,7 +4,7 @@ import type {
   ContestRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { ContestStatus, Sport } from '@poolmaster/shared/domain';
+import { ContestStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   buildContestEntryStanding,
   rankContestEntryStandings,
@@ -35,17 +35,14 @@ function createNoopLogger(): LifecycleLogger {
 
 
 /**
- * The statuses settlement never touches. COMPLETED is already settled; CANCELLED is over; DRAFT
- * was never opened to the league (#117), and settling it would publish it as finished.
+ * What settlement never touches: a contest already settled or cancelled, and a DRAFT. A draft
+ * leaves only by being opened or deleted (#117), so completing one would publish a contest
+ * nobody could enter to the league as finished. Its event starting leaves it a draft too.
  */
-const UNSETTLED_STATUSES: readonly ContestStatus[] = [
-  ContestStatus.COMPLETED,
-  ContestStatus.CANCELLED,
-  ContestStatus.DRAFT,
-];
+const NOT_SETTLED: readonly ContestStatus[] = [ContestStatus.CANCELLED, ContestStatus.COMPLETED, ContestStatus.DRAFT];
 
 /** Every status settlement may complete a contest from. */
-const SETTLEABLE = Object.values(ContestStatus).filter((status) => !UNSETTLED_STATUSES.includes(status));
+const SETTLEABLE = Object.values(ContestStatus).filter((status) => !NOT_SETTLED.includes(status));
 
 export interface GolfContestSettlementSummary {
   sportEventId: string;
@@ -73,7 +70,7 @@ export class GolfContestSettlementService {
     input?: { completedAt?: Date },
   ): Promise<GolfContestSettlementSummary> {
     const sportEvent = await this.deps.sportEvents.findById(sportEventId);
-    if (!sportEvent || sportEvent.sport !== Sport.GOLF || sportEvent.status !== 'COMPLETED') {
+    if (!sportEvent || sportEvent.sport !== Sport.GOLF || sportEvent.status !== SportEventStatus.COMPLETED) {
       return {
         sportEventId,
         contestsSettled: 0,
@@ -93,7 +90,7 @@ export class GolfContestSettlementService {
     // it. Only a contest moved back out of COMPLETED would be settled again, and no route does
     // that today: the reopen endpoint, which nothing called, was deleted.
     const contests = await this.deps.contests.findBySportEvent(sportEventId, {
-      excludeStatuses: UNSETTLED_STATUSES,
+      excludeStatuses: NOT_SETTLED,
     });
 
     let standingsUpserted = 0;

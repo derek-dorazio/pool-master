@@ -365,18 +365,22 @@ ruleTester.run('no-widened-enum-fields', noWidenedEnumFields, {
     // Not an enum column at all.
     'interface R { name: string }',
     'interface R { id: string }',
-    // `status` is String on Contest/DraftSession/ContestEntry, so a hand-written row
-    // typing it `string` may well be correct — the rule cannot tell which model it
-    // mirrors, so it stays silent rather than guessing.
-    'interface R { status: string }',
-    // Same ambiguity for contestFormat (String on ContestConfigTemplate).
-    'interface R { contestFormat: string }',
     // A non-string annotation is a different question.
     'interface R { role: number }',
     // `role` is String on Participant, so a row typing it `string` may be correct.
     'interface R { role: string }',
   ],
   invalid: [
+    // #186 made `status` and `contestFormat` an enum on every model that declares them,
+    // so the rule now covers both with no edit to it.
+    {
+      code: 'interface R { status: string }',
+      errors: [{ messageId: 'widenedEnum' }],
+    },
+    {
+      code: 'interface R { contestFormat: string }',
+      errors: [{ messageId: 'widenedEnum', data: { name: 'contestFormat', enums: 'PrismaContestFormat' } }],
+    },
     {
       code: 'interface R { joinPolicy: string }',
       errors: [{ messageId: 'widenedEnum', data: { name: 'joinPolicy', enums: 'PrismaLeagueJoinPolicy' } }],
@@ -401,8 +405,6 @@ ruleTester.run('no-bare-enum-literals', noBareEnumLiterals, {
   valid: [
     // Naming the member is the point of the rule.
     'const a = x.syncScope === SportEventSyncScope.SCORES_ONLY;',
-    // `status` is String on six models, so a literal there has no enum to name.
-    "const a = x.status === 'ACTIVE';",
     // Not an enum-backed column.
     "const a = x.name === 'SCORES_ONLY';",
     // A value that is not a member of the column's enum is a different bug (tsc's).
@@ -411,6 +413,11 @@ ruleTester.run('no-bare-enum-literals', noBareEnumLiterals, {
     "const a = x.syncScope > 'SCORES_ONLY';",
   ],
   invalid: [
+    {
+      // #186 made `status` an enum on every model, so it is covered with no edit to the rule.
+      code: "const a = x.status === 'ACTIVE';",
+      errors: [{ messageId: 'bareLiteral', data: { field: 'status', value: 'ACTIVE' } }],
+    },
     {
       code: "const a = x.syncScope === 'SCORES_ONLY';",
       errors: [{ messageId: 'bareLiteral', data: { field: 'syncScope', value: 'SCORES_ONLY' } }],
