@@ -258,6 +258,7 @@ export type PickerModalProps<TItem extends PickerModalItem> =
   BaseModalTemplateProps & {
     canApply?: boolean;
     emptyMessage?: ReactNode;
+    errorMessage?: ReactNode;
     getItemLabel: (item: TItem) => string;
     isPending?: boolean;
     itemTestIdPrefix?: string;
@@ -278,6 +279,7 @@ export function PickerModal<TItem extends PickerModalItem>({
   canApply = true,
   description,
   emptyMessage = "No options are available.",
+  errorMessage,
   getItemLabel,
   isPending = false,
   itemTestIdPrefix = "picker-modal-item",
@@ -377,6 +379,11 @@ export function PickerModal<TItem extends PickerModalItem>({
           </p>
         )}
       </div>
+      {errorMessage ? (
+        <p className="mt-4 text-sm font-medium text-destructive" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
     </Modal>
   );
 }

@@ -151,7 +151,11 @@ export function GolfTournamentScoreSourceCard({
           <>
             <Button
               data-testid="root-admin-golf-tournament-link-open"
-              onClick={() => setLinkOpen(true)}
+              onClick={() => {
+                // A refusal from the simulated-event link must not greet the picker.
+                linkMutation.reset();
+                setLinkOpen(true);
+              }}
               size="sm"
               type="button"
               variant="secondary"
@@ -209,6 +213,11 @@ export function GolfTournamentScoreSourceCard({
             : providerId === null
               ? 'No provider is registered for golf.'
               : 'No provider events fall in this tournament’s date window.'
+        }
+        errorMessage={
+          linkMutation.isError
+            ? extractErrorMessage(linkMutation.error, { fallback: 'The link was rejected.' })
+            : undefined
         }
         getItemLabel={(item) => item.name}
         isPending={linkMutation.isPending}
