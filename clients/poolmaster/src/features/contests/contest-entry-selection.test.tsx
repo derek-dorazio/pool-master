@@ -168,11 +168,11 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
         setToggleRef={vi.fn()}
       />,
     );
-    return onParticipantSelect;
   }
 
   it("keeps a held golfer who has withdrawn clickable, so the entry can unselect them", async () => {
-    const onSelect = renderEditable(groupWithWithdrawn(["sep-1", "sep-2"]));
+    const onSelect = vi.fn();
+    renderEditable(groupWithWithdrawn(["sep-1", "sep-2"]), onSelect);
 
     const withdrawn = screen.getByTestId("contest-entry-participant-sep-2");
     expect(withdrawn).toBeEnabled();
