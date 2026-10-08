@@ -720,4 +720,119 @@ describe('CreateContestPage', () => {
       'This contest’s event has already started, so it can no longer be opened. Delete the draft instead.',
     );
   });
+
+  // A draft's event is fixed at create: neither update endpoint takes a sport event, so a change
+  // made on the setup page would be dropped without a word.
+  it('shows a draft\'s own event on its setup page and offers no way to change it', async () => {
+    primeCommonMocks();
+    listEventsMock.mockResolvedValue({
+      data: {
+        events: [
+          {
+            id: 'event-1',
+            sport: 'GOLF',
+            name: 'Masters Tournament',
+            status: 'SCHEDULED',
+            startDate: '2026-04-10T12:00:00.000Z',
+            participantCount: 144,
+            readinessStatus: 'CONTEST_ELIGIBLE',
+            readinessReasons: [],
+            contestEligible: true,
+          },
+          {
+            id: 'event-3',
+            sport: 'GOLF',
+            name: 'PGA Championship',
+            status: 'SCHEDULED',
+            startDate: '2026-05-15T12:00:00.000Z',
+            participantCount: 156,
+            readinessStatus: 'CONTEST_ELIGIBLE',
+            readinessReasons: [],
+            contestEligible: true,
+          },
+        ],
+      },
+    });
+    getContestConfigurationMock.mockResolvedValue({
+      data: { contest: { ...buildManagedContest('DRAFT'), sportEventId: 'event-3' } },
+    });
+
+    renderContestPage('/league/BIGDAWGS/contests/contest-90/manage');
+
+    expect(await screen.findByTestId('contest-sport-event')).toHaveValue('event-3');
+    expect(screen.getByTestId('contest-sport-event')).toBeDisabled();
+  });
+
+  it('keeps showing a draft\'s event after it has started, rather than swapping in another event', async () => {
+    primeCommonMocks();
+    listEventsMock.mockResolvedValue({
+      data: {
+        events: [
+          {
+            id: 'event-1',
+            sport: 'GOLF',
+            name: 'Masters Tournament',
+            status: 'SCHEDULED',
+            startDate: '2026-04-10T12:00:00.000Z',
+            participantCount: 144,
+            readinessStatus: 'CONTEST_ELIGIBLE',
+            readinessReasons: [],
+            contestEligible: true,
+          },
+          {
+            id: 'event-2',
+            sport: 'GOLF',
+            name: 'Players Championship',
+            status: 'IN_PROGRESS',
+            startDate: '2026-03-12T12:00:00.000Z',
+            participantCount: 144,
+            readinessStatus: 'EVENT_STARTED',
+            readinessReasons: ['EVENT_STARTED'],
+            contestEligible: false,
+          },
+        ],
+      },
+    });
+    getContestConfigurationMock.mockResolvedValue({
+      data: { contest: { ...buildManagedContest('DRAFT'), sportEventId: 'event-2' } },
+    });
+
+    renderContestPage('/league/BIGDAWGS/contests/contest-90/manage');
+
+    expect(await screen.findByTestId('contest-sport-event')).toHaveValue('event-2');
+    expect(screen.getByText('Already started')).toBeInTheDocument();
+  });
+
+  it('says the contest could not be saved, not created, when a draft edit is refused without a message', async () => {
+    primeCommonMocks();
+    getContestConfigurationMock.mockResolvedValue({ data: { contest: buildManagedContest('DRAFT') } });
+    updateContestMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR' } }, status: 500 });
+
+    renderContestPage('/league/BIGDAWGS/contests/contest-90/manage');
+
+    fireEvent.click(await screen.findByTestId('create-contest-submit'));
+
+    expect(await screen.findByTestId('create-contest-error')).toHaveTextContent(
+      'We could not save that contest. Please try again.',
+    );
+    expect(updateContestConfigurationMock).not.toHaveBeenCalled();
+  });
+
+  it('says the contest could not be deleted, not created, when a delete is refused without a message', async () => {
+    primeCommonMocks();
+    getContestConfigurationMock.mockResolvedValue({ data: { contest: buildManagedContest('DRAFT') } });
+    deleteContestMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR' } }, status: 500 });
+
+    renderContestPage('/league/BIGDAWGS/contests/contest-90/manage');
+
+    fireEvent.click(await screen.findByTestId('contest-delete'));
+
+    expect(await screen.findByTestId('create-contest-error')).toHaveTextContent(
+      'We could not delete that contest. Please try again.',
+    );
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'contest.delete.failed' }),
+      expect.any(String),
+    );
+  });
 });
