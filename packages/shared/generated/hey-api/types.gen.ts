@@ -5521,7 +5521,7 @@ export type SportEventDto = {
      */
     autoLifecycleEnabled: boolean;
     /**
-     * Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.)
+     * Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier.
      */
     tierCount: number;
     /**
@@ -5675,7 +5675,7 @@ export type SportEventListResponse = {
          */
         autoLifecycleEnabled: boolean;
         /**
-         * Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.)
+         * Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier.
          */
         tierCount: number;
         /**
@@ -5804,7 +5804,7 @@ export type SportEventResponse = {
          */
         autoLifecycleEnabled: boolean;
         /**
-         * Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.)
+         * Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier.
          */
         tierCount: number;
         /**
@@ -6024,7 +6024,7 @@ export type ImportSportEventYearFromProviderResponse = {
          */
         autoLifecycleEnabled: boolean;
         /**
-         * Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.)
+         * Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier.
          */
         tierCount: number;
         /**
@@ -6224,10 +6224,6 @@ export type SportEventTierDto = {
      * Order among the event's tiers; 1 first.
      */
     tierNumber: number;
-    /**
-     * Picks a contest takes from this tier by default.
-     */
-    defaultPickCount: number;
 };
 
 /**
@@ -6249,10 +6245,6 @@ export type SportEventTierListResponse = {
          * Order among the event's tiers; 1 first.
          */
         tierNumber: number;
-        /**
-         * Picks a contest takes from this tier by default.
-         */
-        defaultPickCount: number;
     }>;
 };
 
@@ -6264,7 +6256,6 @@ export type ReplaceSportEventTiersRequest = {
         tierKey: string;
         label: string;
         tierNumber: number;
-        defaultPickCount: number;
     }>;
     /**
      * A tierKey from this request; required when a removed tier still has participants in it.
@@ -7360,11 +7351,11 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * How many golfers each Team entry must pick.
+         * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
          */
-        rosterSize: number;
+        picksPerTier: number;
         /**
-         * How many golfer scores count toward the Team total.
+         * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
          */
         countedScores: number;
     };
@@ -8136,6 +8127,10 @@ export type ContestConfigurationDetailDto = {
      */
     maxEntriesPerSquad?: number | null;
     /**
+     * How many golfers an entry picks from each of the event's tiers in managed tiered golf contests.
+     */
+    picksPerTier?: number;
+    /**
      * How many roster scores count toward the entry total in managed golf contests.
      */
     countedScores?: number;
@@ -8234,6 +8229,10 @@ export type ContestResponse = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+        /**
+         * How many golfers an entry picks from each of the event's tiers in managed tiered golf contests.
+         */
+        picksPerTier?: number;
         /**
          * How many roster scores count toward the entry total in managed golf contests.
          */
@@ -15071,11 +15070,11 @@ export type GetContestConfigurationResponses = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * How many golfers each Team entry must pick.
+                 * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
                  */
-                rosterSize: number;
+                picksPerTier: number;
                 /**
-                 * How many golfer scores count toward the Team total.
+                 * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
                  */
                 countedScores: number;
                 /**
@@ -15103,10 +15102,6 @@ export type GetContestConfigurationResponses = {
                  * 1-based tier ordering.
                  */
                 tierNumber: number;
-                /**
-                 * Default number of golfers picked from this tier.
-                 */
-                defaultPickCount: number;
                 /**
                  * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
                  */
@@ -15161,11 +15156,11 @@ export type UpdateContestConfigurationData = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * How many golfers each Team entry must pick.
+         * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
          */
-        rosterSize: number;
+        picksPerTier: number;
         /**
-         * How many golfer scores count toward the Team total.
+         * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
          */
         countedScores: number;
     };
@@ -15349,11 +15344,11 @@ export type UpdateContestConfigurationResponses = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * How many golfers each Team entry must pick.
+                 * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
                  */
-                rosterSize: number;
+                picksPerTier: number;
                 /**
-                 * How many golfer scores count toward the Team total.
+                 * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
                  */
                 countedScores: number;
                 /**
@@ -15381,10 +15376,6 @@ export type UpdateContestConfigurationResponses = {
                  * 1-based tier ordering.
                  */
                 tierNumber: number;
-                /**
-                 * Default number of golfers picked from this tier.
-                 */
-                defaultPickCount: number;
                 /**
                  * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
                  */
@@ -15611,11 +15602,11 @@ export type OpenContestResponses = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * How many golfers each Team entry must pick.
+                 * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
                  */
-                rosterSize: number;
+                picksPerTier: number;
                 /**
-                 * How many golfer scores count toward the Team total.
+                 * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
                  */
                 countedScores: number;
                 /**
@@ -15643,10 +15634,6 @@ export type OpenContestResponses = {
                  * 1-based tier ordering.
                  */
                 tierNumber: number;
-                /**
-                 * Default number of golfers picked from this tier.
-                 */
-                defaultPickCount: number;
                 /**
                  * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
                  */
@@ -16834,11 +16821,11 @@ export type ListContestConfigTemplatesResponses = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * How many golfers each Team entry must pick.
+                 * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
                  */
-                rosterSize: number;
+                picksPerTier: number;
                 /**
-                 * How many golfer scores count toward the Team total.
+                 * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
                  */
                 countedScores: number;
             };
@@ -16882,11 +16869,11 @@ export type UpdateContestConfigTemplateData = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * How many golfers each Team entry must pick.
+             * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
              */
-            rosterSize: number;
+            picksPerTier: number;
             /**
-             * How many golfer scores count toward the Team total.
+             * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
              */
             countedScores: number;
         };
@@ -17057,11 +17044,11 @@ export type UpdateContestConfigTemplateResponses = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * How many golfers each Team entry must pick.
+                 * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
                  */
-                rosterSize: number;
+                picksPerTier: number;
                 /**
-                 * How many golfer scores count toward the Team total.
+                 * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
                  */
                 countedScores: number;
             };

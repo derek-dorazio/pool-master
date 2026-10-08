@@ -61,7 +61,7 @@ describe('Contest Validation Integration', () => {
     expect(createRes.statusCode).toBe(400);
     const body = createRes.json<unknown>();
     expect(ErrorEnvelopeSchema.safeParse(body).success).toBe(true);
-    expect(JSON.stringify(body)).toContain('rosterSize');
+    expect(JSON.stringify(body)).toContain('picksPerTier');
 
     const listRes = await getApp().inject({
       method: 'GET',
@@ -91,7 +91,7 @@ describe('Contest Validation Integration', () => {
         sportEventId: randomUUID(),
         contestFormat: ContestFormat.ROSTER,
         selectionType,
-        configuration: { rosterSize: 6, countedScores: 4 },
+        configuration: { picksPerTier: 1, countedScores: 4 },
       },
     });
 

@@ -35,8 +35,8 @@ afterAll(async () => {
 beforeEach(() => cleanupTestData());
 
 const TIERS = [
-  { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1, defaultPickCount: 1 },
-  { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2, defaultPickCount: 1 },
+  { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
+  { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
 ];
 
 function repos() {
@@ -320,15 +320,15 @@ describe('SportEventTierRepository and valuations', () => {
     const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana] = await createParticipants(['Ana']);
-    await tiers.createMany(event.id, [...TIERS, { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3, defaultPickCount: 1 }]);
+    await tiers.createMany(event.id, [...TIERS, { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3 }]);
     await field.createMany(event.id, [{ participantId: ana.id }]);
     const [entry] = await field.findBySportEvent(event.id);
     const tier3 = (await tiers.findBySportEvent(event.id))[2];
     await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier3.id, tierOrderIndex: 4, source: 'AUTO_ODDS' }]);
 
     await tiers.replace(event.id, [
-      { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 2, defaultPickCount: 1 },
-      { tierKey: 'tier-2', label: 'Top', tierNumber: 1, defaultPickCount: 2 },
+      { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 2 },
+      { tierKey: 'tier-2', label: 'Top', tierNumber: 1 },
     ], 'tier-2');
 
     const after = await tiers.findBySportEvent(event.id);

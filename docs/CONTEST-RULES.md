@@ -68,9 +68,9 @@ All survivor contests share these configurable options:
 ### Contest Formats
 
 **Tiered Pick Pool**
-- 4-10 tiers grouped by world ranking or odds
-- Pick 1 golfer per tier
-- Best N scores count (e.g., pick 6, use best 4)
+- 4-10 tiers grouped by world ranking or odds, set on the tournament and shared by every contest on it
+- The commissioner sets picks per tier (default 1); every tier takes the same number, so an entry picks tiers × picks per tier golfers
+- Best N scores count; N defaults to (tiers − 2) × picks per tier (e.g., pick 6, use best 4; pick 12, use best 8)
 - Lowest combined strokes wins
 - Non-exclusive (multiple managers can pick the same golfer)
 - Unplayed rounds score 80 strokes each (see *Unplayed rounds* under Stroke Play)

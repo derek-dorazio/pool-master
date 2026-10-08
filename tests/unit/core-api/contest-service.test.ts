@@ -195,7 +195,10 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
       countParticipants: jest.fn().mockImplementation(async (ids: readonly string[]) => new Map(ids.map((id) => [id, 1]))),
     }),
     eventParticipants: { listEventParticipants: jest.fn().mockResolvedValue([]) },
-    tiers: { getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([]) },
+    tiers: {
+      getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([]),
+      listTiers: jest.fn().mockResolvedValue([]),
+    },
     ...deps,
   });
 }
@@ -793,7 +796,7 @@ describe('ContestService', () => {
         contests: contestRepo,
         configurations: createMockContestConfigurationRepo({
           findByContest: jest.fn().mockResolvedValue({
-            configJson: { rosterSize: 6, countedScores: 4 },
+            configJson: { picksPerTier: 1, countedScores: 4 },
             maxEntriesPerSquad: null,
           }),
         }),
@@ -1373,6 +1376,7 @@ describe('ContestService', () => {
           { sportEventParticipantId: 'sport-event-participant-1', tierLabel: 'Tier A' },
           { sportEventParticipantId: 'sport-event-participant-2', tierLabel: 'Tier B' },
         ]),
+        listTiers: jest.fn().mockResolvedValue([]),
       };
       const mailDelivery = {
         providerName: 'smtp' as const,
@@ -1468,6 +1472,71 @@ describe('ContestService', () => {
       });
 
       expect(mailDelivery.send).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { savedPicks: 3, emailed: false },
+      { savedPicks: 4, emailed: true },
+    ])('requires the event\'s tier count times the contest\'s picksPerTier before the confirmation email (2 tiers × 2 picks, $savedPicks saved → emailed: $emailed)', async ({ savedPicks, emailed }) => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        sportEventId: 'event-1',
+        name: 'Masters Pick 4',
+        status: ContestStatus.OPEN,
+      });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const tiers = {
+        getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([]),
+        listTiers: jest.fn().mockResolvedValue([
+          { id: 'tier-1', sportEventId: 'event-1', tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
+          { id: 'tier-2', sportEventId: 'event-1', tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
+        ]),
+      };
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
+      };
+      const picks = Array.from({ length: savedPicks }, (_, index) => buildReceiptPick(
+        `pick-${index + 1}`,
+        `sport-event-participant-${index + 1}`,
+        `participant-${index + 1}`,
+        `Golfer ${index + 1}`,
+        `2026-01-01T12:0${index}:00.000Z`,
+      ));
+      const service = buildService({
+        contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
+        // A managed tiered configuration: no stored roster, only picks per tier.
+        configurations: createMockContestConfigurationRepo({
+          findByContest: jest.fn().mockResolvedValue({ configJson: { picksPerTier: 2, countedScores: 3 } }),
+        }),
+        leagues: fakeLeagueRepo({
+          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
+        }),
+        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
+        squads: createMockSquadRepo(),
+        squadMemberships: createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue(ACTIVE_SQUAD_MEMBERSHIP),
+        }),
+        entries: createMockEntryRepo({
+          findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
+          findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(271)),
+        }),
+        picks: fakeContestEntryPickRepo({
+          countByEntries: jest.fn().mockResolvedValue(new Map([['entry-1', savedPicks]])),
+          findByEntriesWithParticipant: jest.fn().mockResolvedValue(picks),
+        }),
+        tiers,
+        mailDelivery,
+      });
+
+      await service.updateEntry('contest-1', 'entry-1', 'user-1', {
+        tiebreakerValue: 271,
+      });
+
+      expect(tiers.listTiers).toHaveBeenCalledWith('event-1');
+      expect(mailDelivery.send).toHaveBeenCalledTimes(emailed ? 1 : 0);
     });
 
     it('pool-master-95b keeps the saved entry when confirmation email delivery fails', async () => {

@@ -161,16 +161,21 @@ describe('Contest management integration', () => {
     // Tiers/price are event-owned now (plans/124 §4.5/§4.6b) — the draft
     // room resolves selectionGroups through SportEventTierService, not a
     // contest-supplied tiers array, so the fixture needs a real
-    // SportEventTier + valuation row per golfer.
+    // SportEventTier + valuation row per golfer. Six tiers, so a contest picking one golfer
+    // per tier has a roster of 6 (#479: the roster is the event's tier count × picksPerTier).
     const tier = await prisma.sportEventTier.create({
       data: {
         sportEventId,
         tierKey: 'A',
         label: 'Tier A',
         tierNumber: 1,
-        defaultPickCount: 6,
       },
     });
+    for (const [index, tierKey] of ['B', 'C', 'D', 'E', 'F'].entries()) {
+      await prisma.sportEventTier.create({
+        data: { sportEventId, tierKey, label: `Tier ${tierKey}`, tierNumber: index + 2 },
+      });
+    }
     await prisma.sportEventParticipantValuation.create({
       data: {
         sportEventParticipantId: topEventParticipant.id,
@@ -201,7 +206,7 @@ describe('Contest management integration', () => {
         selectionType: 'TIERED',
         configuration: {
           maxEntriesPerSquad: 3,
-          rosterSize: 6,
+          picksPerTier: 1,
           countedScores: 4,
         },
       },
@@ -232,7 +237,7 @@ describe('Contest management integration', () => {
     expect(getRes.statusCode).toBe(200);
     const managedContest = getRes.json<ContestManagementResponse>().contest;
     expect(managedContest.id).toBe(contestId);
-    expect(managedContest.configuration.rosterSize).toBe(6);
+    expect(managedContest.configuration.picksPerTier).toBe(1);
     expect(managedContest.configuration.countedScores).toBe(4);
 
     // #117 — a draft takes no entries, not even its commissioner's.
@@ -251,14 +256,14 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         maxEntriesPerSquad: null,
-        rosterSize: 6,
+        picksPerTier: 1,
         countedScores: 5,
       },
     });
 
     expect(updateRes.statusCode).toBe(200);
     const updatedContest = updateRes.json<ContestManagementResponse>().contest;
-    expect(updatedContest.configuration.rosterSize).toBe(6);
+    expect(updatedContest.configuration.picksPerTier).toBe(1);
     expect(updatedContest.configuration.countedScores).toBe(5);
     expect(updatedContest.configuration.maxEntriesPerSquad).toBeNull();
 
@@ -313,7 +318,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         maxEntriesPerSquad: null,
-        rosterSize: 6,
+        picksPerTier: 1,
         countedScores: 4,
       },
     });
@@ -369,8 +374,8 @@ describe('Contest management integration', () => {
     expect(createRes.statusCode).toBe(201);
     const createdContest = createRes.json<ContestResponse>().contest;
     expect(createdContest.status).toBe(ContestStatus.DRAFT);
-    expect(createRes.json<ContestResponse>().contestConfiguration?.rosterSize).toBe(
-      defaultTemplate.configuration.rosterSize,
+    expect(createRes.json<ContestResponse>().contestConfiguration?.picksPerTier).toBe(
+      defaultTemplate.configuration.picksPerTier,
     );
 
     const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
@@ -431,7 +436,7 @@ describe('Contest management integration', () => {
         sportEventId,
         contestFormat: 'ROSTER',
         selectionType: 'BUDGET_PICK',
-        configuration: { rosterSize: 6, countedScores: 4 },
+        configuration: { picksPerTier: 1, countedScores: 4 },
       },
     });
 
@@ -463,7 +468,7 @@ describe('Contest management integration', () => {
         selectionType: 'TIERED',
         templateId: defaultTemplate.id,
         configuration: {
-          rosterSize: 6,
+          picksPerTier: 1,
           countedScores: 3,
         },
       },
@@ -475,7 +480,7 @@ describe('Contest management integration', () => {
     });
     expect(configuration.templateId).toBe(defaultTemplate.id);
     expect(configuration.configJson).toEqual({
-      rosterSize: 6,
+      picksPerTier: 1,
       countedScores: 3,
     });
   });
@@ -493,7 +498,7 @@ describe('Contest management integration', () => {
           sportEventId,
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
-          configuration: { rosterSize: 6, countedScores: 4 },
+          configuration: { picksPerTier: 1, countedScores: 4 },
         },
       });
       expect(createRes.statusCode).toBe(201);

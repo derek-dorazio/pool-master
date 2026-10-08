@@ -6396,7 +6396,7 @@ export interface components {
             syncScope: "NONE" | "SCORES_ONLY";
             /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
             autoLifecycleEnabled: boolean;
-            /** @description Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.) */
+            /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
             tierCount: number;
             /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
             contestCount: number;
@@ -6516,7 +6516,7 @@ export interface components {
                 syncScope: "NONE" | "SCORES_ONLY";
                 /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
                 autoLifecycleEnabled: boolean;
-                /** @description Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.) */
+                /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
                 /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
                 contestCount: number;
@@ -6615,7 +6615,7 @@ export interface components {
                 syncScope: "NONE" | "SCORES_ONLY";
                 /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
                 autoLifecycleEnabled: boolean;
-                /** @description Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.) */
+                /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
                 /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
                 contestCount: number;
@@ -6783,7 +6783,7 @@ export interface components {
                 syncScope: "NONE" | "SCORES_ONLY";
                 /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
                 autoLifecycleEnabled: boolean;
-                /** @description Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.) */
+                /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
                 /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
                 contestCount: number;
@@ -6943,8 +6943,6 @@ export interface components {
             label: string;
             /** @description Order among the event's tiers; 1 first. */
             tierNumber: number;
-            /** @description Picks a contest takes from this tier by default. */
-            defaultPickCount: number;
         };
         /** @description An event's tiers. */
         SportEventTierListResponse: {
@@ -6959,8 +6957,6 @@ export interface components {
                 label: string;
                 /** @description Order among the event's tiers; 1 first. */
                 tierNumber: number;
-                /** @description Picks a contest takes from this tier by default. */
-                defaultPickCount: number;
             }[];
         };
         /** @description The event's full tier list, replacing the current one. */
@@ -6969,7 +6965,6 @@ export interface components {
                 tierKey: string;
                 label: string;
                 tierNumber: number;
-                defaultPickCount: number;
             }[];
             /** @description A tierKey from this request; required when a removed tier still has participants in it. */
             reassignOrphansTo?: string;
@@ -7842,9 +7837,9 @@ export interface components {
             configuration?: {
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description How many golfers each Team entry must pick. */
-                rosterSize: number;
-                /** @description How many golfer scores count toward the Team total. */
+                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                picksPerTier: number;
+                /** @description How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier. */
                 countedScores: number;
             };
         };
@@ -8399,6 +8394,8 @@ export interface components {
             captainMultiplier?: number;
             /** @description Maximum entries a Team may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
+            /** @description How many golfers an entry picks from each of the event's tiers in managed tiered golf contests. */
+            picksPerTier?: number;
             /** @description How many roster scores count toward the entry total in managed golf contests. */
             countedScores?: number;
         };
@@ -8476,6 +8473,8 @@ export interface components {
                 captainMultiplier?: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+                /** @description How many golfers an entry picks from each of the event's tiers in managed tiered golf contests. */
+                picksPerTier?: number;
                 /** @description How many roster scores count toward the entry total in managed golf contests. */
                 countedScores?: number;
             } | null;
@@ -14369,9 +14368,9 @@ export interface operations {
                             configuration: {
                                 /** @description Maximum entries a Team may create. Null means unlimited. */
                                 maxEntriesPerSquad?: number | null;
-                                /** @description How many golfers each Team entry must pick. */
-                                rosterSize: number;
-                                /** @description How many golfer scores count toward the Team total. */
+                                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                                picksPerTier: number;
+                                /** @description How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier. */
                                 countedScores: number;
                                 /** @description Contest-configuration identifier. */
                                 id: string;
@@ -14386,8 +14385,6 @@ export interface operations {
                                 label: string;
                                 /** @description 1-based tier ordering. */
                                 tierNumber: number;
-                                /** @description Default number of golfers picked from this tier. */
-                                defaultPickCount: number;
                                 /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
                                 assignments: {
                                     /** @description Field entry the assignment belongs to. */
@@ -14515,9 +14512,9 @@ export interface operations {
                 "application/json": {
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description How many golfers each Team entry must pick. */
-                    rosterSize: number;
-                    /** @description How many golfer scores count toward the Team total. */
+                    /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                    picksPerTier: number;
+                    /** @description How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier. */
                     countedScores: number;
                 };
             };
@@ -14546,9 +14543,9 @@ export interface operations {
                             configuration: {
                                 /** @description Maximum entries a Team may create. Null means unlimited. */
                                 maxEntriesPerSquad?: number | null;
-                                /** @description How many golfers each Team entry must pick. */
-                                rosterSize: number;
-                                /** @description How many golfer scores count toward the Team total. */
+                                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                                picksPerTier: number;
+                                /** @description How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier. */
                                 countedScores: number;
                                 /** @description Contest-configuration identifier. */
                                 id: string;
@@ -14563,8 +14560,6 @@ export interface operations {
                                 label: string;
                                 /** @description 1-based tier ordering. */
                                 tierNumber: number;
-                                /** @description Default number of golfers picked from this tier. */
-                                defaultPickCount: number;
                                 /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
                                 assignments: {
                                     /** @description Field entry the assignment belongs to. */
@@ -14749,9 +14744,9 @@ export interface operations {
                             configuration: {
                                 /** @description Maximum entries a Team may create. Null means unlimited. */
                                 maxEntriesPerSquad?: number | null;
-                                /** @description How many golfers each Team entry must pick. */
-                                rosterSize: number;
-                                /** @description How many golfer scores count toward the Team total. */
+                                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                                picksPerTier: number;
+                                /** @description How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier. */
                                 countedScores: number;
                                 /** @description Contest-configuration identifier. */
                                 id: string;
@@ -14766,8 +14761,6 @@ export interface operations {
                                 label: string;
                                 /** @description 1-based tier ordering. */
                                 tierNumber: number;
-                                /** @description Default number of golfers picked from this tier. */
-                                defaultPickCount: number;
                                 /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
                                 assignments: {
                                     /** @description Field entry the assignment belongs to. */
@@ -15884,9 +15877,9 @@ export interface operations {
                             configuration: {
                                 /** @description Maximum entries a Team may create. Null means unlimited. */
                                 maxEntriesPerSquad?: number | null;
-                                /** @description How many golfers each Team entry must pick. */
-                                rosterSize: number;
-                                /** @description How many golfer scores count toward the Team total. */
+                                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                                picksPerTier: number;
+                                /** @description How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier. */
                                 countedScores: number;
                             };
                         }[];
@@ -15960,9 +15953,9 @@ export interface operations {
                     configuration?: {
                         /** @description Maximum entries a Team may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description How many golfers each Team entry must pick. */
-                        rosterSize: number;
-                        /** @description How many golfer scores count toward the Team total. */
+                        /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                        picksPerTier: number;
+                        /** @description How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier. */
                         countedScores: number;
                     };
                 };
@@ -16018,9 +16011,9 @@ export interface operations {
                             configuration: {
                                 /** @description Maximum entries a Team may create. Null means unlimited. */
                                 maxEntriesPerSquad?: number | null;
-                                /** @description How many golfers each Team entry must pick. */
-                                rosterSize: number;
-                                /** @description How many golfer scores count toward the Team total. */
+                                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                                picksPerTier: number;
+                                /** @description How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier. */
                                 countedScores: number;
                             };
                         };

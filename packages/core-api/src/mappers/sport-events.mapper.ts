@@ -96,7 +96,6 @@ export function mapSportEventTierToDto(tier: SportEventTier): SportEventTierDto 
     tierKey: tier.tierKey,
     label: tier.label,
     tierNumber: tier.tierNumber,
-    defaultPickCount: tier.defaultPickCount,
   };
 }
 

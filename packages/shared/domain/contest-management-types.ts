@@ -34,12 +34,15 @@ export interface PersistedGolfContestTierDefinition extends GolfContestTierDefin
  * override, so tierSource/tierGeneration/tiers all drop. cutRule/
  * playoffHandling/displayScoring/tiebreaker each had exactly one possible
  * value and zero real reads downstream — dropped as dead configuration, not
- * simplified. rosterSize/countedScores are the one thing that's genuinely a
+ * simplified. picksPerTier/countedScores are the one thing that's genuinely a
  * per-pool rule (two commissioners on the same tournament can legitimately
- * pick different roster sizes).
+ * pick different numbers per tier). The roster is the event's tier count times
+ * picksPerTier, derived on read (#479; see tiered-roster.ts).
  */
 export interface GolfTieredContestConfig {
-  rosterSize: number;
+  /** Picks every tier takes; the same for each tier. */
+  picksPerTier: number;
+  /** Best N picks that count toward the entry total; at most the derived roster size. */
   countedScores: number;
 }
 

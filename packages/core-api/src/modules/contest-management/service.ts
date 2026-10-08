@@ -30,8 +30,8 @@ import {
   ContestFormat,
   ContestStatus,
   ScoringEngine,
-  SelectionType,
   Sport,
+  getTieredRosterSize,
   isContestFormatValidForTournamentFormat,
 } from '@poolmaster/shared/domain';
 import { toGolfEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
@@ -147,7 +147,7 @@ export class ContestManagementService {
         resolvedConfiguration.configuration.maxEntriesPerSquad === null
           ? null
           : resolvedConfiguration.configuration.maxEntriesPerSquad,
-      ...deriveLegacyPersistenceFields(resolvedConfiguration.configuration),
+      isExclusive: false,
     });
 
     await syncDerivedScoring(
@@ -266,7 +266,7 @@ export class ContestManagementService {
       configJson: toStoredGolfConfig(input),
       maxEntriesPerSquad:
         input.maxEntriesPerSquad === null ? null : input.maxEntriesPerSquad,
-      ...deriveLegacyPersistenceFields(input),
+      isExclusive: false,
     });
 
     const refreshedConfiguration =
@@ -461,8 +461,7 @@ export class ContestManagementService {
 
   /**
    * Tiers are event-owned data now (plans/124 §4.6) — there's no per-contest
-   * custom list to validate a rosterSize against, only the event's own tier
-   * count. Skips validation when the event has no tiers yet (e.g. a legacy
+   * custom list to validate against, only the event's own tier count. Skips validation when the event has no tiers yet (e.g. a legacy
    * event never run through admin tier setup) — same "nothing to validate
    * against" behavior the old participantCount-based check had.
    */
@@ -477,7 +476,7 @@ export class ContestManagementService {
     if (tiers.length === 0) {
       return;
     }
-    assertRosterSizeFitsTierCount(configuration, tiers.length);
+    assertCountedScoresFitRoster(configuration, tiers.length);
   }
 }
 
@@ -501,46 +500,22 @@ export class ContestManagementError extends Error {
 }
 
 /**
- * Tiers are event-owned (plans/124 §4.6) — the contest only ever supplies
- * rosterSize/countedScores, so the only thing left to validate against the
- * event's tier structure is that rosterSize divides evenly across however
- * many tiers the event has (one or more picks per tier, never a partial
- * one) and that countedScores doesn't exceed rosterSize.
+ * Tiers are event-owned (plans/124 §4.6) and every tier takes the contest's
+ * picksPerTier (#479), so the roster is the event's tier count times
+ * picksPerTier. The only thing left to validate against the event is that
+ * countedScores doesn't exceed that roster.
  */
-function assertRosterSizeFitsTierCount(
+function assertCountedScoresFitRoster(
   configuration: ContestConfigurationRequest,
   tierCount: number,
 ): void {
-  if (tierCount === 0) {
-    return;
-  }
-
-  if (configuration.rosterSize % tierCount !== 0) {
+  const rosterSize = getTieredRosterSize(tierCount, configuration.picksPerTier);
+  if (configuration.countedScores > rosterSize) {
     throw new ContestManagementError(
-      `rosterSize (${configuration.rosterSize}) must divide evenly across the event's ${tierCount} tier(s).`,
+      `countedScores (${configuration.countedScores}) cannot exceed the roster of ${rosterSize} (${tierCount} tier(s) × ${configuration.picksPerTier} pick(s) per tier).`,
       'CONTEST_TIER_FIELD_OUT_OF_RANGE',
     );
   }
-  if (configuration.countedScores > configuration.rosterSize) {
-    throw new ContestManagementError(
-      `countedScores (${configuration.countedScores}) cannot exceed rosterSize (${configuration.rosterSize}).`,
-      'CONTEST_TIER_FIELD_OUT_OF_RANGE',
-    );
-  }
-}
-
-function deriveLegacyPersistenceFields(
-  configuration: ContestConfigurationRequest,
-): Partial<ContestConfiguration> {
-  // Tiers are event-owned, never a per-contest override (plans/124 §4.6) —
-  // SportEventTierService.getEffectiveTiersForSportEvent is the one path to a
-  // contest's effective tiers now; this function no longer computes or
-  // persists a contest-specific tierConfig snapshot.
-  return {
-    pickCount: configuration.rosterSize,
-    rosterSize: configuration.rosterSize,
-    isExclusive: false,
-  };
 }
 
 async function syncDerivedScoring(
@@ -594,10 +569,6 @@ function buildContestManagementDetail(
     templateVersion?: number | null;
     configJson?: GolfContestConfig;
     maxEntriesPerSquad?: number | null;
-    selectionType: SelectionType;
-    rosterSize?: number;
-    pickCount?: number;
-    tierConfig?: unknown;
   },
   effectiveTiers: GolfEffectiveTierDto[],
 ): ContestManagementDetailDto {
@@ -631,18 +602,18 @@ function buildContestManagementDetail(
  */
 function toStoredGolfConfig(configuration: GolfContestConfig): GolfContestConfig {
   return {
-    rosterSize: configuration.rosterSize,
+    picksPerTier: configuration.picksPerTier,
     countedScores: configuration.countedScores,
   };
 }
 
+/**
+ * A configuration's typed golf settings. Every tiered configuration carries them: the one create
+ * writes them, and #479's migration wrote them for rows saved before configJson existed.
+ */
 function ensureTypedConfiguration(configuration: {
   configJson?: GolfContestConfig;
   maxEntriesPerSquad?: number | null;
-  selectionType: SelectionType;
-  rosterSize?: number;
-  pickCount?: number;
-  tierConfig?: unknown;
 }): GolfContestConfig & {
   maxEntriesPerSquad?: number | null;
 } {
@@ -650,22 +621,6 @@ function ensureTypedConfiguration(configuration: {
     return {
       ...toStoredGolfConfig(configuration.configJson),
       maxEntriesPerSquad: configuration.maxEntriesPerSquad ?? null,
-    };
-  }
-
-  if (configuration.selectionType === SelectionType.TIERED) {
-    // Tier definitions themselves are event-owned now (plans/124 §4.6) —
-    // SportEventTierService.getEffectiveTiersForSportEvent is the one path to
-    // them; this fallback (for a contest with no typed configJson, e.g. one
-    // created through the legacy tierConfig-based create path) only needs
-    // to synthesize the trimmed { rosterSize, countedScores } shape.
-    return {
-      maxEntriesPerSquad: configuration.maxEntriesPerSquad ?? null,
-      rosterSize: configuration.rosterSize ?? configuration.pickCount ?? 6,
-      countedScores: Math.min(
-        configuration.rosterSize ?? configuration.pickCount ?? 4,
-        4,
-      ),
     };
   }
 

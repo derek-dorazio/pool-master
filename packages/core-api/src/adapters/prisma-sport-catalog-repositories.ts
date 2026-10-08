@@ -561,7 +561,7 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
         await tx.sportEventTier.upsert({
           where: { sportEventId_tierKey: { sportEventId, tierKey: tier.tierKey } },
           create: { sportEventId, ...tierColumns(tier) },
-          update: { label: tier.label, tierNumber: tier.tierNumber, defaultPickCount: tier.defaultPickCount },
+          update: { label: tier.label, tierNumber: tier.tierNumber },
         });
       }
       const removedIds = existing.filter((tier) => !keep.has(tier.tierKey)).map((tier) => tier.id);
@@ -821,7 +821,7 @@ export function toSportEventParticipant(row: Prisma.SportEventParticipantGetPayl
 }
 
 function tierColumns(tier: SportEventTierDefinition) {
-  return { tierKey: tier.tierKey, label: tier.label, tierNumber: tier.tierNumber, defaultPickCount: tier.defaultPickCount };
+  return { tierKey: tier.tierKey, label: tier.label, tierNumber: tier.tierNumber };
 }
 
 function toTier(row: Prisma.SportEventTierGetPayload<object>): SportEventTier {

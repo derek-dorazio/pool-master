@@ -54,7 +54,7 @@ function seedTemplates() {
           active: true,
           schemaVersion: 1,
           configuration: {
-            rosterSize: 6,
+            picksPerTier: 1,
             countedScores: 4,
           },
         },

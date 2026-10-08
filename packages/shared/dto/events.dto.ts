@@ -70,7 +70,7 @@ export const SportEventDtoSchema = z.object({
   sportLeagueId: z.string().uuid().describe('The sport league the event\'s series belongs to. Read through the series, not stored on the event.'),
   syncScope: z.nativeEnum(SportEventSyncScope).describe(`How much provider data this event accepts on sync. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
-  tierCount: z.number().int().describe(`Pick tiers defined for the event. ${ADMIN_ONLY}`),
+  tierCount: z.number().int().describe('Pick tiers defined for the event. A tiered contest\'s entry picks this many tiers times the contest\'s picksPerTier.'),
   contestCount: z.number().int().describe(`Contests run on the event, across every league; an event with any cannot be deleted. ${ADMIN_ONLY}`),
   allowedTransitions: z.array(EventStatusDtoSchema).describe(`Statuses the event may move to next, from the declared transition map. ${ADMIN_ONLY}`),
   metadata: JsonObjectSchema.describe(`Provider-emitted event metadata captured at field-load time. ${ADMIN_ONLY}`),
@@ -239,7 +239,6 @@ export const SportEventTierDtoSchema = z.object({
   tierKey: z.string().describe('Stable key; assignments name a tier by it.'),
   label: z.string(),
   tierNumber: z.number().int().describe('Order among the event\'s tiers; 1 first.'),
-  defaultPickCount: z.number().int().describe('Picks a contest takes from this tier by default.'),
 }).describe('A pick tier an event\'s field is divided into. Who is in it is on each field row\'s valuation.');
 export type SportEventTierDto = z.infer<typeof SportEventTierDtoSchema>;
 
@@ -253,7 +252,6 @@ export const ReplaceSportEventTiersRequestSchema = z.object({
     tierKey: z.string().min(1),
     label: z.string().min(1),
     tierNumber: z.number().int().min(1),
-    defaultPickCount: z.number().int().min(1),
   })).min(1),
   reassignOrphansTo: z.string().optional().describe('A tierKey from this request; required when a removed tier still has participants in it.'),
 }).describe('The event\'s full tier list, replacing the current one.');
