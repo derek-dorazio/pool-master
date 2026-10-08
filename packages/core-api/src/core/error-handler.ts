@@ -3,8 +3,9 @@ import type { ErrorEnvelope } from '@poolmaster/shared/dto/errors.dto';
 import { buildRequestLogBindings } from './logger';
 
 /**
- * What the handler receives: Fastify's own errors carry `code`, `statusCode` and `validation`, but
- * domain errors such as `LeagueNotFoundError` are plain `Error`s with none of them.
+ * What the handler receives: Fastify's own errors carry `code`, `statusCode` and `validation`, and
+ * domain errors carry their own `code` and, where they have one, `statusCode` (the not-found errors
+ * declare 404). The handler reads those fields and never the error's class name.
  */
 export type ErrorLike = Error & {
   code?: string;
@@ -13,23 +14,7 @@ export type ErrorLike = Error & {
 };
 
 function inferStatusCode(error: ErrorLike): number {
-  if (typeof error.statusCode === 'number') {
-    return error.statusCode;
-  }
-
-  switch (error.name) {
-    case 'ContestNotFoundError':
-    case 'ContestEntryNotFoundError':
-    case 'LeagueNotFoundError':
-    case 'ParticipantNotFoundError':
-    case 'InvitationNotFoundError':
-    case 'MemberNotFoundError':
-    case 'SquadNotFoundError':
-    case 'UserNotFoundError':
-      return 404;
-    default:
-      return 500;
-  }
+  return typeof error.statusCode === 'number' ? error.statusCode : 500;
 }
 
 function inferErrorCode(error: ErrorLike, statusCode: number): string {
@@ -37,33 +22,7 @@ function inferErrorCode(error: ErrorLike, statusCode: number): string {
     return error.code;
   }
 
-  switch (error.name) {
-    case 'ContestNotFoundError':
-      return 'CONTEST_NOT_FOUND';
-    case 'ContestEntryNotFoundError':
-      return 'CONTEST_ENTRY_NOT_FOUND';
-    case 'LeagueNotFoundError':
-      return 'LEAGUE_NOT_FOUND';
-    case 'ParticipantNotFoundError':
-      return 'PARTICIPANT_NOT_FOUND';
-    case 'InvitationNotFoundError':
-      return 'LEAGUE_INVITATION_NOT_FOUND';
-    case 'MemberNotFoundError':
-      return 'LEAGUE_MEMBER_NOT_FOUND';
-    case 'SquadNotFoundError':
-      return 'SQUAD_NOT_FOUND';
-    case 'UserNotFoundError':
-      return 'USER_NOT_FOUND';
-    case 'ContestOperationError':
-    case 'ContestEntryOperationError':
-    case 'InvitationInvalidError':
-    case 'MemberOperationError':
-    case 'SquadOperationError':
-    case 'ContestManagementError':
-      return 'BAD_REQUEST';
-    default:
-      return statusCode >= 500 ? 'INTERNAL_ERROR' : 'BAD_REQUEST';
-  }
+  return statusCode >= 500 ? 'INTERNAL_ERROR' : 'BAD_REQUEST';
 }
 
 export function createErrorEnvelope(

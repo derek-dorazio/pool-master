@@ -1067,6 +1067,9 @@ export class ContestService {
 }
 
 export class ContestNotFoundError extends Error {
+  readonly code = 'CONTEST_NOT_FOUND';
+  readonly statusCode = 404;
+
   constructor(contestId: string) {
     super(`Contest not found: ${contestId}`);
     this.name = 'ContestNotFoundError';
@@ -1108,6 +1111,9 @@ export class ContestEntryAccessError extends Error {
 }
 
 export class ContestEntryNotFoundError extends Error {
+  readonly code = 'CONTEST_ENTRY_NOT_FOUND';
+  readonly statusCode = 404;
+
   constructor(contestId: string, squadId: string) {
     super(`Contest entry not found for contest ${contestId} and squad ${squadId}`);
     this.name = 'ContestEntryNotFoundError';

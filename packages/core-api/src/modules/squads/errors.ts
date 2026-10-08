@@ -18,6 +18,9 @@ export class SquadOperationError extends Error {
 }
 
 export class SquadNotFoundError extends Error {
+  readonly code = 'SQUAD_NOT_FOUND';
+  readonly statusCode = 404;
+
   constructor(message: string) {
     super(message);
     this.name = 'SquadNotFoundError';
