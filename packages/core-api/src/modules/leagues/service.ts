@@ -564,6 +564,9 @@ export class LeagueService {
 }
 
 export class LeagueNotFoundError extends Error {
+  readonly code = 'LEAGUE_NOT_FOUND';
+  readonly statusCode = 404;
+
   constructor(leagueId: string) {
     super(`League not found: ${leagueId}`);
     this.name = 'LeagueNotFoundError';

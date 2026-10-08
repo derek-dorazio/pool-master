@@ -157,6 +157,9 @@ export class MemberService {
 }
 
 export class MemberNotFoundError extends Error {
+  readonly code = 'LEAGUE_MEMBER_NOT_FOUND';
+  readonly statusCode = 404;
+
   constructor(userId: string, leagueId: string) {
     super(`Member ${userId} not found in league ${leagueId}`);
     this.name = 'MemberNotFoundError';

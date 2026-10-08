@@ -226,6 +226,9 @@ export class ParticipantService {
 }
 
 export class ParticipantNotFoundError extends Error {
+  readonly code = 'PARTICIPANT_NOT_FOUND';
+  readonly statusCode = 404;
+
   constructor(participantId: string) {
     super(`Participant not found: ${participantId}`);
     this.name = 'ParticipantNotFoundError';
