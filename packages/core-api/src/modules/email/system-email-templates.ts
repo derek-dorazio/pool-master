@@ -1,4 +1,4 @@
-import { type EmailTemplateKey } from '@poolmaster/shared/dto';
+import type { EmailTemplateKey } from '@poolmaster/shared/dto';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
 
@@ -99,7 +99,6 @@ export function renderSystemEmailTemplate<Key extends SystemEmailTemplateKey>(
   const renderer = SYSTEM_EMAIL_TEMPLATE_RENDERERS[templateKey] as TemplateRenderer<Key>;
   return renderer(data);
 }
-
 
 const SYSTEM_EMAIL_TEMPLATE_RENDERERS: TemplateRendererMap = {
   LEAGUE_MEMBER_INVITE: renderLeagueMemberInviteEmail,
