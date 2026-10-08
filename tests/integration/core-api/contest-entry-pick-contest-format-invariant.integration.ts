@@ -130,7 +130,7 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
       squadId: squad.id,
       entryNumber: 1,
       name: `Invariant Entry ${suffix}`,
-      status: 'ACTIVE',
+      status: 'SUBMITTED',
     },
   });
 

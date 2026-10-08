@@ -24,6 +24,7 @@ import type { DraftService } from './service';
 type ContestParams = { contestId: string };
 type DraftStateRequest = FastifyRequest<{ Params: ContestParams; Querystring: DraftStateQuery }>;
 type SubmitSelectionRequest = FastifyRequest<{ Params: ContestParams; Body: SubmitPickRequest }>;
+type SubmitEntryRequest = FastifyRequest<{ Params: ContestParams & { entryId: string } }>;
 
 /**
  * Function-typed properties rather than method shorthand: the route passes each of these to
@@ -33,6 +34,7 @@ type SubmitSelectionRequest = FastifyRequest<{ Params: ContestParams; Body: Subm
 export interface DraftHandlers {
   getDraftState: (request: DraftStateRequest) => Promise<DraftStateResponse>;
   submitContestSelection: (request: SubmitSelectionRequest) => Promise<DraftPickResponse>;
+  submitContestEntry: (request: SubmitEntryRequest) => Promise<DraftStateResponse>;
 }
 
 export function createDraftHandlers(service: DraftService): DraftHandlers {
@@ -65,5 +67,15 @@ export function createDraftHandlers(service: DraftService): DraftHandlers {
     return toDraftStateResponse(result.view);
   }
 
-  return { getDraftState, submitContestSelection };
+  /** Submitting an entry answers with the refreshed room, as a pick does (#481). */
+  async function submitContestEntry(request: SubmitEntryRequest): Promise<DraftStateResponse> {
+    const view = await service.submitEntry({
+      contestId: request.params.contestId,
+      entryId: request.params.entryId,
+      actorUserId: request.authUser?.userId,
+    });
+    return toDraftStateResponse(view);
+  }
+
+  return { getDraftState, submitContestSelection, submitContestEntry };
 }

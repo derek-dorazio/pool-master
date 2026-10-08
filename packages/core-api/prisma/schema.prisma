@@ -348,8 +348,10 @@ enum PrismaPrizePayoutType {
   PERCENTAGE
 }
 
+/// DRAFT until its owner submits a valid lineup (#481); only SUBMITTED entries count anywhere.
 enum PrismaContestEntryStatus {
-  ACTIVE
+  DRAFT
+  SUBMITTED
   INACTIVE
 }
 
@@ -858,7 +860,7 @@ model ContestEntry {
   squadId         String                   @map("squad_id") @db.Uuid
   entryNumber     Int                      @default(1) @map("entry_number")
   name            String
-  status          PrismaContestEntryStatus @default(ACTIVE)
+  status          PrismaContestEntryStatus @default(DRAFT)
   tiebreakerValue Int?                     @map("tiebreaker_value")
   isEliminated    Boolean                  @default(false) @map("is_eliminated")
   createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz

@@ -310,7 +310,7 @@ describe('golf contest settlement — which contests settle', () => {
 });
 
 describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
-  it('freezes +8 for each of rounds 3 and 4 on par-72 rounds for a cut golfer and for one the feed never flagged', async () => {
+  it('freezes +8 for each of rounds 3 and 4 on par-72 rounds for a cut golfer and for one the feed never flagged, and scores no draft entry', async () => {
     const prisma = getPrisma();
     const service = createGolfContestSettlementService(prisma);
     const suffix = randomUUID().slice(0, 8);
@@ -387,10 +387,14 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
       },
     });
     const entry = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Leader and Cut', status: 'ACTIVE' },
+      data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Leader and Cut', status: 'SUBMITTED' },
     });
     const unflaggedEntry = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squad.id, entryNumber: 2, name: 'Leader and Unflagged', status: 'ACTIVE' },
+      data: { contestId: contest.id, squadId: squad.id, entryNumber: 2, name: 'Leader and Unflagged', status: 'SUBMITTED' },
+    });
+    // Never submitted: a draft is scored nowhere, 80s or not (#481).
+    const draftEntry = await prisma.contestEntry.create({
+      data: { contestId: contest.id, squadId: squad.id, entryNumber: 3, name: 'Draft Leader and Cut', status: 'DRAFT' },
     });
     await prisma.contestEntryPick.createMany({
       data: [
@@ -398,6 +402,8 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
         { entryId: entry.id, sportEventParticipantId: cut.id, contestFormat: 'ROSTER', slot: 2 },
         { entryId: unflaggedEntry.id, sportEventParticipantId: leader.id, contestFormat: 'ROSTER', slot: 1 },
         { entryId: unflaggedEntry.id, sportEventParticipantId: unflagged.id, contestFormat: 'ROSTER', slot: 2 },
+        { entryId: draftEntry.id, sportEventParticipantId: leader.id, contestFormat: 'ROSTER', slot: 1 },
+        { entryId: draftEntry.id, sportEventParticipantId: cut.id, contestFormat: 'ROSTER', slot: 2 },
       ],
     });
 
@@ -417,6 +423,7 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
       include: { golf: true },
     });
     expect(unflaggedStanding.golf?.totalScoreToPar).toBe(8);
+    await expect(prisma.contestEntryStanding.findFirst({ where: { contestEntryId: draftEntry.id } })).resolves.toBeNull();
   });
 });
 
@@ -509,7 +516,7 @@ async function createSettlementEntries(input: {
         squadId: input.squadOneId,
         entryNumber: 1,
         name: 'Winner',
-        status: 'ACTIVE',
+        status: 'SUBMITTED',
       },
     }),
     prisma.contestEntry.create({
@@ -518,7 +525,7 @@ async function createSettlementEntries(input: {
         squadId: input.squadTwoId,
         entryNumber: 2,
         name: 'Runner Up',
-        status: 'ACTIVE',
+        status: 'SUBMITTED',
       },
     }),
   ]);

@@ -334,9 +334,15 @@ export const ContestStatus = {
 } as const;
 export type ContestStatus = (typeof ContestStatus)[keyof typeof ContestStatus];
 
-/** Whether an entry still counts in its contest. INACTIVE entries are kept but left off standings. */
+/**
+ * Where an entry stands in its contest (#481). An entry is born DRAFT and its owner submits it
+ * once its lineup is complete. Only SUBMITTED entries count: the leaderboard, standings,
+ * settlement and member-visible entry counts all read them alone. A pick change that leaves a
+ * submitted lineup short sends it back to DRAFT. INACTIVE entries are kept but count nowhere.
+ */
 export const ContestEntryStatus = {
-  ACTIVE: 'ACTIVE',
+  DRAFT: 'DRAFT',
+  SUBMITTED: 'SUBMITTED',
   INACTIVE: 'INACTIVE',
 } as const;
 export type ContestEntryStatus = (typeof ContestEntryStatus)[keyof typeof ContestEntryStatus];

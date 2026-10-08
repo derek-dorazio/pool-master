@@ -754,10 +754,17 @@ contest also uses. The scheduled start closes the window even when the event's s
 numbered past the highest entry number the team holds in the contest, because leaving deletes
 the team's first entry and keeps the later ones.
 
+**An entry counts only once submitted** (#481). It is created `DRAFT`, and its owner submits it
+when the lineup is complete. The leaderboard, settlement, the contest-started email and a
+contest's `entryCount` read `SUBMITTED` entries alone. A draft is kept, never deleted, so its
+team can still see and finish it before tee-off; one left unsubmitted at tee-off simply doesn't
+count. `INACTIVE` entries are kept and count nowhere.
+
 | Operation | Role | Notes |
 |---|---|---|
 | Read the draft room | `member` | `getDraftState`. A `DRAFT` contest answers 404 `CONTEST_NOT_FOUND` to anyone but its league's commissioners and root admins, as the contest read does (#117). While the contest is `DRAFT` or `OPEN`, picks are hidden from other teams (`contestPicksRevealed`): the history carries only the caller's own entries, and `entryId` names another team's entry only from `LOCKED` on, falling back to the caller's own before that. Any active member of the entry's squad, co-owners included, reads it as their own |
-| Place, swap, unselect | squad member | `submitContestSelection`, only while the contest is `OPEN` and its event's start time has not passed (the status follows the event's move to `IN_PROGRESS`, which can lag): 409 `CONTEST_ENTRY_LOCKED` otherwise, the code the entry's own create, edit and leave answer. Re-picking a held golfer unselects it, and that works for a golfer who has since withdrawn; a new pick of a withdrawn golfer is 400 `PARTICIPANT_UNAVAILABLE` |
+| Place, swap, unselect | squad member | `submitContestSelection`, only while the contest is `OPEN` and its event's start time has not passed (the status follows the event's move to `IN_PROGRESS`, which can lag): 409 `CONTEST_ENTRY_LOCKED` otherwise, the code the entry's own create, edit and leave answer. Re-picking a held golfer unselects it, and that works for a golfer who has since withdrawn; a new pick of a withdrawn golfer is 400 `PARTICIPANT_UNAVAILABLE`. A change that leaves a `SUBMITTED` entry's lineup short sends it back to `DRAFT`; a swap within a full tier keeps it submitted |
+| Submit an entry | squad member | `submitContestEntry`, `POST /api/v1/drafts/:contestId/entries/:entryId/submit` (#481), in the same window as picks (409 `CONTEST_ENTRY_LOCKED`). The lineup must hold the full roster with exactly each tier's picks: 409 `ENTRY_LINEUP_INCOMPLETE` names the short tiers otherwise. Submitting a draft sends the "Entry submitted" email; submitting a submitted entry changes nothing |
 
 ## Platform and operations
 

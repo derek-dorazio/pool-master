@@ -312,6 +312,7 @@ export function LockedSelectionGroup({
 
 export function TiebreakerSelector({
   disabled,
+  isSubmitted,
   isSubmitting,
   onChange,
   onSubmit,
@@ -320,6 +321,8 @@ export function TiebreakerSelector({
   value,
 }: {
   disabled: boolean;
+  /** An entry already submitted is saved again with the same button, which says so. */
+  isSubmitted: boolean;
   isSubmitting: boolean;
   onChange: (value: string) => void;
   onSubmit: () => void;
@@ -350,7 +353,7 @@ export function TiebreakerSelector({
         disabled={submitDisabled}
         onClick={onSubmit}
       >
-        {isSubmitting ? "Submitting..." : "Submit entry"}
+        {isSubmitting ? "Submitting..." : isSubmitted ? "Save entry" : "Submit entry"}
       </Button>
     </Tile>
   );

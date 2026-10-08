@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
   AutoPickPolicy,
+  ContestEntryStatus,
   ContestStatus,
   ContestFormat,
   ParticipantScoringDefinitionIdSchema,
@@ -190,7 +191,7 @@ export const ContestEntryDtoSchema = z.object({
   squadName: z.string(),
   entryNumber: z.number().int().min(1),
   name: z.string(),
-  status: z.enum(['ACTIVE', 'INACTIVE']),
+  status: z.nativeEnum(ContestEntryStatus).describe('DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).'),
   tiebreakerValue: z.number().int().nullable().optional(),
   isEliminated: z.boolean(),
   picksCount: z.number().int().min(0).describe('Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.'),
@@ -237,7 +238,7 @@ export const ContestEntryStandingDtoSchema = z.object({
   entryNumber: z.number().int().min(1).describe('Entry number, for squads allowed several entries.'),
   squadId: z.string().describe('Squad identifier.'),
   squadName: z.string().describe('Squad display name.'),
-  status: z.enum(['ACTIVE', 'INACTIVE']).describe('Contest entry lifecycle status.'),
+  status: z.nativeEnum(ContestEntryStatus).describe('Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.'),
   position: z.number().int().nullable().describe('The entry\'s rank in the contest, direction-free: 1 is best in every sport. Null while unscored.'),
   displayPosition: z.string().nullable().describe('Position as shown, "T" prefixed for a tie.'),
   countingPickLimit: z.number().int().min(0).describe('How many picks count toward the total under the counting rule: its N.'),

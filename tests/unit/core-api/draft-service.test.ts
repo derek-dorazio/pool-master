@@ -109,14 +109,19 @@ function configuration(overrides: Partial<ContestConfiguration> = {}): ContestCo
   } as ContestConfiguration;
 }
 
-function entry(id: string, squadId: string, name = `Entry ${id}`): ContestEntry {
+function entry(
+  id: string,
+  squadId: string,
+  name = `Entry ${id}`,
+  status: ContestEntry['status'] = 'DRAFT',
+): ContestEntry {
   return {
     id,
     contestId: CONTEST_ID,
     squadId,
     entryNumber: 1,
     name,
-    status: 'ACTIVE',
+    status,
     tiebreakerValue: null,
     isEliminated: false,
     ...TIMESTAMPS,
@@ -864,5 +869,176 @@ describe('DraftService — rooms with missing or partial data', () => {
     const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
     expect(view.picks.map((row) => row.round)).toEqual([1, 2]);
+  });
+});
+
+// #481 — an entry is a draft until its owner submits a complete lineup, and only submitted
+// entries count. These suites take one pick per tier, so a complete lineup is one from each.
+describe('DraftService.submitEntry — an entry counts only once its owner submits a complete lineup', () => {
+  const COMPLETE = [pick('pick-a', 'p-a', 'sep-a'), pick('pick-d', 'p-d', 'sep-d')];
+  const ONE_PER_TIER = { configJson: { picksPerTier: 1, countedScores: 1 } };
+
+  function submitEntryInput(overrides: { entryId?: string; actorUserId?: string } = {}) {
+    return {
+      contestId: CONTEST_ID,
+      entryId: overrides.entryId ?? ENTRY_ID,
+      actorUserId: 'actorUserId' in overrides ? overrides.actorUserId : OWNER_USER_ID,
+    };
+  }
+
+  /** The adapter answers an update with the whole row; the generic fake echoes only the change. */
+  function withFullRowUpdates(deps: DraftServiceDeps, status: ContestEntry['status'] = 'DRAFT') {
+    (deps.entries.update as jest.Mock).mockImplementation(async (id: string, updates: Partial<ContestEntry>) => ({
+      ...entry(id, SQUAD_ID, `Entry ${id}`, status),
+      ...updates,
+    }));
+  }
+
+  it('submits a draft entry whose lineup fills every tier, and answers with the entry SUBMITTED', async () => {
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
+    withFullRowUpdates(deps);
+
+    const view = await service.submitEntry(submitEntryInput());
+
+    expect(deps.entries.update).toHaveBeenCalledWith(ENTRY_ID, { status: 'SUBMITTED' });
+    expect(view.selectedEntryId).toBe(ENTRY_ID);
+    expect(view.entries.find((row) => row.id === ENTRY_ID)?.status).toBe('SUBMITTED');
+  });
+
+  it('sends the Entry submitted confirmation once, when a draft is submitted, and not on a repeat submit', async () => {
+    const sendEntrySubmittedEmail = jest.fn().mockResolvedValue(undefined);
+    const first = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
+    withFullRowUpdates(first.deps);
+    first.deps.entryReceipts = { sendEntrySubmittedEmail };
+
+    await first.service.submitEntry(submitEntryInput());
+    expect(sendEntrySubmittedEmail).toHaveBeenCalledWith(CONTEST_ID, ENTRY_ID, OWNER_USER_ID);
+
+    const repeat = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
+    repeat.deps.entryReceipts = { sendEntrySubmittedEmail };
+    await repeat.service.submitEntry(submitEntryInput());
+    expect(sendEntrySubmittedEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses 409 ENTRY_LINEUP_INCOMPLETE naming the short tier, and leaves the entry a draft', async () => {
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: [pick('pick-a', 'p-a', 'sep-a')] });
+
+    await expect(service.submitEntry(submitEntryInput())).rejects.toMatchObject({
+      code: 'ENTRY_LINEUP_INCOMPLETE',
+      statusCode: 409,
+      message: `Entry ${ENTRY_ID} cannot be submitted until every tier is filled: Tier 2 still need picks`,
+    });
+    expect(deps.entries.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses 409 ENTRY_LINEUP_INCOMPLETE for an entry with no picks at all', async () => {
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: [] });
+
+    await expect(service.submitEntry(submitEntryInput())).rejects.toMatchObject({
+      code: 'ENTRY_LINEUP_INCOMPLETE',
+      statusCode: 409,
+    });
+    expect(deps.entries.update).not.toHaveBeenCalled();
+  });
+
+  it('changes nothing when the entry is already submitted, and answers with the room', async () => {
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
+
+    const view = await service.submitEntry(submitEntryInput());
+
+    expect(deps.entries.update).not.toHaveBeenCalled();
+    expect(view.entries.find((row) => row.id === ENTRY_ID)?.status).toBe('SUBMITTED');
+  });
+
+  it('refuses 409 CONTEST_ENTRY_LOCKED once the contest has left OPEN', async () => {
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, contest: { status: ContestStatus.LOCKED } });
+
+    await expect(service.submitEntry(submitEntryInput())).rejects.toMatchObject({
+      code: 'CONTEST_ENTRY_LOCKED',
+      statusCode: 409,
+      message: `Contest ${CONTEST_ID} is LOCKED; entries can only be submitted while it is open`,
+    });
+    expect(deps.entries.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses 409 CONTEST_ENTRY_LOCKED once the event has teed off, even while the contest still says OPEN', async () => {
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
+    (deps.sportEvents.findById as jest.Mock).mockResolvedValue({
+      id: EVENT_ID,
+      status: 'SCHEDULED',
+      startDate: new Date('2000-01-01T00:00:00.000Z'),
+    });
+
+    await expect(service.submitEntry(submitEntryInput())).rejects.toMatchObject({
+      code: 'CONTEST_ENTRY_LOCKED',
+      statusCode: 409,
+      message: `Contest ${CONTEST_ID}'s event has started; entries can no longer be submitted`,
+    });
+    expect(deps.entries.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses 404 ENTRY_NOT_FOUND, 401 AUTH_SESSION_REQUIRED and 403 DRAFT_ENTRY_ACCESS_DENIED in that order', async () => {
+    const { service } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
+
+    await expect(service.submitEntry(submitEntryInput({ entryId: 'missing', actorUserId: undefined })))
+      .rejects.toMatchObject({ code: 'ENTRY_NOT_FOUND', statusCode: 404 });
+    await expect(service.submitEntry(submitEntryInput({ actorUserId: undefined })))
+      .rejects.toMatchObject({ code: 'AUTH_SESSION_REQUIRED', statusCode: 401 });
+    await expect(service.submitEntry(submitEntryInput({ actorUserId: 'someone-else' })))
+      .rejects.toMatchObject({ code: 'DRAFT_ENTRY_ACCESS_DENIED', statusCode: 403 });
+  });
+
+  it('refuses 409 ENTRY_INACTIVE rather than bringing an inactive entry back into play', async () => {
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'INACTIVE')] });
+
+    await expect(service.submitEntry(submitEntryInput())).rejects.toMatchObject({
+      code: 'ENTRY_INACTIVE',
+      statusCode: 409,
+    });
+    expect(deps.entries.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('DraftService.submitSelection — a pick change on a submitted entry (#481)', () => {
+  const COMPLETE = [pick('pick-a', 'p-a', 'sep-a'), pick('pick-d', 'p-d', 'sep-d')];
+  const ONE_PER_TIER = { configJson: { picksPerTier: 1, countedScores: 1 } };
+
+  it('sends a submitted entry back to DRAFT when unselecting a golfer leaves its lineup short', async () => {
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
+    (deps.picks.findByEntriesWithParticipant as jest.Mock)
+      .mockResolvedValueOnce(COMPLETE)
+      .mockResolvedValue([COMPLETE[1]]);
+    (deps.entries.update as jest.Mock).mockImplementation(async (id: string, updates: Partial<ContestEntry>) => ({
+      ...entry(id, SQUAD_ID, 'Entry', 'SUBMITTED'),
+      ...updates,
+    }));
+
+    const result = await service.submitSelection(submit({ participantId: 'sep-a' }));
+
+    expect(result.outcome).toBe('toggled-off');
+    expect(deps.entries.update).toHaveBeenCalledWith(ENTRY_ID, { status: 'DRAFT' });
+    expect(result.view.entries.find((row) => row.id === ENTRY_ID)?.status).toBe('DRAFT');
+  });
+
+  it('keeps a submitted entry SUBMITTED when a swap within a full tier leaves the lineup complete', async () => {
+    const { service, deps, deletePick } = setup({ configuration: ONE_PER_TIER, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
+    (deps.picks.findByEntriesWithParticipant as jest.Mock)
+      .mockResolvedValueOnce(COMPLETE)
+      .mockResolvedValue([pick('pick-c', 'p-c', 'sep-c'), COMPLETE[1]]);
+
+    const result = await service.submitSelection(submit({ participantId: 'sep-c' }));
+
+    expect(result.outcome).toBe('placed');
+    expect(deletePick).toHaveBeenCalledWith('pick-a');
+    expect(deps.entries.update).not.toHaveBeenCalled();
+    expect(result.view.entries.find((row) => row.id === ENTRY_ID)?.status).toBe('SUBMITTED');
+  });
+
+  it('leaves a draft entry a draft without writing its status when a pick changes', async () => {
+    const { service, deps } = setup({ picks: [pick('pick-a', 'p-a', 'sep-a')] });
+
+    await service.submitSelection(submit({ participantId: 'sep-a' }));
+
+    expect(deps.entries.update).not.toHaveBeenCalled();
   });
 });

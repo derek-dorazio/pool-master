@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ContestStatus, formatParticipantStatusLabel } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, formatParticipantStatusLabel } from '@poolmaster/shared/domain';
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -34,6 +34,8 @@ import { ContestStatusBadge } from './contest-status-badge';
 import { OpenContestAction } from './open-contest-action';
 import {
   areContestEntriesOpen,
+  CONTEST_ENTRY_STATUS_LABELS,
+  CONTEST_ENTRY_STATUS_TONES,
   CONTEST_POLL_INTERVAL_MS,
   contestRefetchInterval,
   contestStatusLabel,
@@ -487,6 +489,15 @@ export function ContestDetailPage() {
                             Your team
                           </Chip>
                         ) : null}
+                        {entry.status === ContestEntryStatus.SUBMITTED ? null : (
+                          // A draft counts nowhere until its team submits it (#481).
+                          <Chip
+                            data-testid={`contest-board-entry-status-${entry.id}`}
+                            tone={CONTEST_ENTRY_STATUS_TONES[entry.status]}
+                          >
+                            {CONTEST_ENTRY_STATUS_LABELS[entry.status]}
+                          </Chip>
+                        )}
                       </div>
                       <div className="mt-1 text-sm text-muted-foreground">
                         {entry.squadName} · Entry {entry.entryNumber} · {entry.picksCount} picks made

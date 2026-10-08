@@ -13,6 +13,7 @@ import {
   buildSelectionParticipants,
   buildTierByParticipantId,
   buildValuationLookup,
+  findLineupShortfall,
   findTierByLabel,
   getRosterSize,
   isCommissionerRole,
@@ -65,7 +66,7 @@ function entry(id: string, squadId: string): ContestEntry {
     squadId,
     entryNumber: 1,
     name: `Entry ${id}`,
-    status: 'ACTIVE',
+    status: 'DRAFT',
     isEliminated: false,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -537,5 +538,45 @@ describe('#324 draft rules — contest shape', () => {
 
     expect(isRosterSelectionType(contest.selectionType)).toBe(true);
     expect(mapContestStatusToDraftStatus(contest.status, false)).toBe(DraftStatus.LIVE);
+  });
+});
+
+describe('draft rules — findLineupShortfall decides whether an entry may be submitted', () => {
+  const tiers = [
+    tier({ tierId: 'tier-1', tierName: 'Tier 1', tierNumber: 1, picksFromTier: 2, participantIds: ['a', 'b', 'c'] }),
+    tier({ tierId: 'tier-2', tierName: 'Tier 2', tierNumber: 2, picksFromTier: 1, participantIds: ['d', 'e'] }),
+  ];
+  const picks = (...ids: string[]) => ids.map((participantId) => ({ participantId }));
+
+  it('finds no shortfall when a tiered lineup holds exactly each tier\'s picks', () => {
+    expect(findLineupShortfall({ selectionType: SelectionType.TIERED, rosterSize: 3, tiers, picks: picks('a', 'b', 'd') }))
+      .toBeNull();
+  });
+
+  it('names every tier still short of its picks, with the picks held against the roster', () => {
+    expect(findLineupShortfall({ selectionType: SelectionType.TIERED, rosterSize: 3, tiers, picks: picks('a') }))
+      .toEqual({ pickCount: 1, rosterSize: 3, shortTierNames: ['Tier 1', 'Tier 2'] });
+  });
+
+  it('refuses a tiered lineup with the full pick count but the wrong spread across tiers', () => {
+    expect(findLineupShortfall({ selectionType: SelectionType.TIERED, rosterSize: 3, tiers, picks: picks('a', 'b', 'c') }))
+      .toEqual({ pickCount: 3, rosterSize: 3, shortTierNames: ['Tier 1', 'Tier 2'] });
+  });
+
+  it('refuses a tiered lineup whose extra pick sits on a golfer outside every tier', () => {
+    expect(findLineupShortfall({ selectionType: SelectionType.TIERED, rosterSize: 3, tiers, picks: picks('a', 'b', 'untiered') }))
+      .toEqual({ pickCount: 3, rosterSize: 3, shortTierNames: ['Tier 2'] });
+  });
+
+  it('judges a budget-pick lineup by its pick count alone', () => {
+    expect(findLineupShortfall({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, tiers: [], picks: picks('a', 'z') }))
+      .toBeNull();
+    expect(findLineupShortfall({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, tiers: [], picks: picks('a') }))
+      .toEqual({ pickCount: 1, rosterSize: 2, shortTierNames: [] });
+  });
+
+  it('never finds a lineup complete when the roster has no places', () => {
+    expect(findLineupShortfall({ selectionType: SelectionType.TIERED, rosterSize: 0, tiers: [], picks: [] }))
+      .toEqual({ pickCount: 0, rosterSize: 0, shortTierNames: [] });
   });
 });

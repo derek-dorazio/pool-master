@@ -23,6 +23,7 @@ import { PrismaContestRepository, PrismaLeagueMembershipRepository } from '../..
 import { leagueOfContest, requireMemberOfLeague } from '../leagues/permissions';
 import { createDraftHandlers } from './handler';
 import { createDraftService } from './wiring';
+import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 
 const contestIdParams = {
   type: 'object',
@@ -39,9 +40,21 @@ function draftErrorResponses(...statuses: number[]): Record<number, unknown> {
   return responses;
 }
 
-export function draftsModule(fastify: FastifyInstance): void {
+const contestEntryParams = {
+  type: 'object',
+  required: ['contestId', 'entryId'],
+  properties: {
+    contestId: { type: 'string', format: 'uuid' },
+    entryId: { type: 'string', format: 'uuid' },
+  },
+} as const;
+
+export function draftsModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
   const prisma = getAppPrisma(fastify);
-  const handlers = createDraftHandlers(createDraftService(prisma, fastify.log));
+  const handlers = createDraftHandlers(createDraftService(prisma, fastify.log, {
+    mailDelivery: opts.mailDelivery,
+    appBaseUrl: readApplicationBaseUrl(process.env),
+  }));
   // #291 — the draft room shows every entry's picks, so reading it needs membership of the
   // contest's league, as every other contest read does.
   const requireContestLeagueMember = requireMemberOfLeague(
@@ -72,7 +85,7 @@ export function draftsModule(fastify: FastifyInstance): void {
       tags: ['Drafts'],
       summary: 'Submit a draft pick',
       description:
-        'Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event\'s start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise.',
+        'Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event\'s start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. A change that leaves a SUBMITTED entry\'s lineup short sends the entry back to DRAFT; it must be submitted again to count.',
       operationId: 'submitContestSelection',
       params: contestIdParams,
       body: zodToJsonSchema(SubmitPickRequestSchema),
@@ -82,5 +95,21 @@ export function draftsModule(fastify: FastifyInstance): void {
       },
     },
     handler: handlers.submitContestSelection,
+  });
+
+  fastify.post('/:contestId/entries/:entryId/submit', {
+    schema: {
+      tags: ['Drafts'],
+      summary: 'Submit a contest entry',
+      description:
+        'Submits the caller\'s entry once its lineup is complete, and returns the refreshed draft state. An entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier\'s picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. Submitting an already submitted entry changes nothing. A later pick change that leaves the lineup short sends the entry back to DRAFT. Entries are submitted only while the contest is OPEN and its event\'s start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. Only a member of the entry\'s team may submit it: 403 DRAFT_ENTRY_ACCESS_DENIED otherwise.',
+      operationId: 'submitContestEntry',
+      params: contestEntryParams,
+      response: {
+        200: zodToJsonSchema(DraftStateResponseSchema),
+        ...draftErrorResponses(400, 401, 403, 404, 409, 501),
+      },
+    },
+    handler: handlers.submitContestEntry,
   });
 }

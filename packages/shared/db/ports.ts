@@ -343,8 +343,8 @@ export interface ContestEntryRepository {
   findById(id: string): Promise<ContestEntry | null>;
   findByIdWithSquad(id: string): Promise<ContestEntryWithSquad | null>;
   findByContest(contestId: string): Promise<ContestEntry[]>;
-  /** In entry-number order, then creation order; `activeOnly` leaves out INACTIVE entries. */
-  findByContestWithSquad(contestId: string, options?: { activeOnly?: boolean }): Promise<ContestEntryWithSquad[]>;
+  /** In entry-number order, then creation order; `submittedOnly` keeps SUBMITTED entries alone (#481). */
+  findByContestWithSquad(contestId: string, options?: { submittedOnly?: boolean }): Promise<ContestEntryWithSquad[]>;
   findBySquad(squadId: string): Promise<ContestEntry[]>;
   create(entry: Omit<ContestEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntry>;
   update(id: string, updates: Partial<ContestEntry>): Promise<ContestEntry>;

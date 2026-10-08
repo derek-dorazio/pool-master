@@ -154,7 +154,7 @@ async function seedContestFixture(contestFormat: string): Promise<FixtureContext
       squadId: squad.id,
       entryNumber: 1,
       name: `Entry ${suffix}`,
-      status: 'ACTIVE',
+      status: 'SUBMITTED',
     },
   });
 

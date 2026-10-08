@@ -9,6 +9,8 @@
  * contract change wearing a refactor's clothes.
  */
 
+import type { LineupShortfall } from './types';
+
 export class DraftError extends Error {
   constructor(
     message: string,
@@ -147,4 +149,33 @@ export const draftErrors = {
       'ENTRY_COMPLETE',
       400,
     ),
+
+  /** Submitting an entry closes with its picks (#481): the same window and the same code. */
+  submitLocked: (contestId: string, status: string) =>
+    new DraftError(
+      `Contest ${contestId} is ${status}; entries can only be submitted while it is open`,
+      'CONTEST_ENTRY_LOCKED',
+      409,
+    ),
+
+  submitLockedByEventStart: (contestId: string) =>
+    new DraftError(
+      `Contest ${contestId}'s event has started; entries can no longer be submitted`,
+      'CONTEST_ENTRY_LOCKED',
+      409,
+    ),
+
+  /** An entry is submitted only with a complete lineup (#481). Names the short tiers, if any. */
+  lineupIncomplete: (entryId: string, shortfall: LineupShortfall) =>
+    new DraftError(
+      shortfall.shortTierNames.length > 0
+        ? `Entry ${entryId} cannot be submitted until every tier is filled: ${shortfall.shortTierNames.join(', ')} still need picks`
+        : `Entry ${entryId} cannot be submitted until its lineup is complete: it holds ${shortfall.pickCount} of ${shortfall.rosterSize} picks`,
+      'ENTRY_LINEUP_INCOMPLETE',
+      409,
+    ),
+
+  /** An inactive entry counts nowhere and is not brought back by submitting it. */
+  entryInactive: (entryId: string) =>
+    new DraftError(`Entry ${entryId} is inactive and cannot be submitted`, 'ENTRY_INACTIVE', 409),
 } as const;

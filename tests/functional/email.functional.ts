@@ -7,6 +7,7 @@ import {
   resendLeagueInvitation,
   openContest,
   sendLeagueInvitations,
+  submitContestEntry,
   submitContestSelection,
   transitionEvent,
   updateContestEntry,
@@ -245,13 +246,16 @@ describe('SDK Functional: system emails', () => {
     const entered = await enterContest({ client: member.client, path: { contestId } });
     const entryId = entered.data?.entry.id as string;
     expect(entryId).toBeTruthy();
+    // #481: an entry with an incomplete lineup cannot be submitted.
+    const early = await submitContestEntry({ client: member.client, path: { contestId, entryId } });
+    expect(early.response.status).toBe(409);
+    expect(early.error?.error.code).toBe('ENTRY_LINEUP_INCOMPLETE');
     const picked = await submitContestSelection({
       client: member.client,
       path: { contestId },
       body: { entryId, participantId: event.sportEventParticipantId },
     });
     expect(picked.data?.isComplete).toBe(true);
-    // The confirmation goes out once the lineup and the tiebreaker are both in.
     expect(await sentMailWithSubject(member.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
 
     const completed = await updateContestEntry({
@@ -260,6 +264,12 @@ describe('SDK Functional: system emails', () => {
       body: { tiebreakerValue: -12 },
     });
     expect(completed.response.status).toBe(200);
+    // The confirmation goes out when the entry is submitted (#481), not when its details are saved.
+    expect(await sentMailWithSubject(member.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
+
+    const submitted = await submitContestEntry({ client: member.client, path: { contestId, entryId } });
+    expect(submitted.response.status).toBe(200);
+    expect(submitted.data?.entries.find((row) => row.id === entryId)?.status).toBe('SUBMITTED');
 
     const confirmations = await sentMailWithSubject(member.email, `Entry submitted: ${contestName}`);
     expect(confirmations).toHaveLength(1);

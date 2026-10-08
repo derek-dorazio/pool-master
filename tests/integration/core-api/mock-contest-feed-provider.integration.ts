@@ -415,7 +415,7 @@ async function createGolfLiveEntries(input: {
         squadId: input.leaderSquadId,
         entryNumber: 1,
         name: `Leader ${input.contestId.slice(0, 8)}`,
-        status: 'ACTIVE',
+        status: 'SUBMITTED',
       },
     }),
     prisma.contestEntry.create({
@@ -424,7 +424,7 @@ async function createGolfLiveEntries(input: {
         squadId: input.chaserSquadId,
         entryNumber: 2,
         name: `Chaser ${input.contestId.slice(0, 8)}`,
-        status: 'ACTIVE',
+        status: 'SUBMITTED',
       },
     }),
   ]);

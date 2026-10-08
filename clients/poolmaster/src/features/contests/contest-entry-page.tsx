@@ -1,12 +1,12 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { getContest, getDraftState, listContestEntries, submitContestSelection, updateContestEntry, type GetDraftStateResponses, type ContestDto, type ContestEntryListResponse } from '@/lib/api';
+import { getContest, getDraftState, listContestEntries, submitContestEntry, submitContestSelection, updateContestEntry, type GetDraftStateResponses, type ContestDto, type ContestEntryListResponse } from '@/lib/api';
 import {
   buildLeagueContestPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
-import { ContestStatus, PARTICIPANT_SCORING_DEFINITIONS, SelectionType } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, PARTICIPANT_SCORING_DEFINITIONS, SelectionType } from '@poolmaster/shared/domain';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
@@ -30,7 +30,13 @@ import {
   TiebreakerSelector,
   type SelectionGroup,
 } from './contest-entry-selection';
-import { areContestEntriesOpen, CONTEST_STATUS_TONES, contestStatusLabel } from './contest-status';
+import {
+  areContestEntriesOpen,
+  CONTEST_ENTRY_STATUS_LABELS,
+  CONTEST_ENTRY_STATUS_TONES,
+  CONTEST_STATUS_TONES,
+  contestStatusLabel,
+} from './contest-status';
 import { useContestSchedule } from './use-contest-schedule';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -517,6 +523,44 @@ export function ContestEntryPage() {
     },
   });
 
+  // Submitting is what makes the entry count (#481); the server refuses an incomplete lineup.
+  const submitEntryMutation = useInvalidatingMutation({
+    mutationFn: async () => {
+      const response = await submitContestEntry({ path: { contestId, entryId } });
+      if (!response.data) {
+        throwApiError(response.error, 'Contest entry submit response is missing data.');
+      }
+      return response.data;
+    },
+    onSuccess: (draftState) => {
+      logger.info(
+        {
+          action: 'contestEntry.submit.succeeded',
+          data: { contestId, entryId },
+        },
+        'Submitted contest entry',
+      );
+      queryClient.setQueryData<DraftState>(draftStateQueryKey, draftState);
+    },
+    invalidates: [
+      QueryKeys.contests.detail(contestId),
+      QueryKeys.contestEntries.byContest(contestId),
+    ],
+    onError: (error) => {
+      const payload = {
+        action: 'contestEntry.submit.failed',
+        data: { contestId, entryId },
+        err: error,
+      };
+
+      if (error instanceof ApiError) {
+        logger.warn(payload, 'Contest entry submit was rejected');
+      } else {
+        logger.error(payload, 'Contest entry submit failed unexpectedly');
+      }
+    },
+  });
+
   if (contestQuery.isLoading || draftStateQuery.isLoading || contestEntriesQuery.isLoading) {
     return <LoadingState body="Loading contest entry..." />;
   }
@@ -551,6 +595,10 @@ export function ContestEntryPage() {
   // asked for, so a different selected entry means this one's picks are not ours to see yet.
   const picksHidden = draftState.selectedEntryId !== entryId;
   const selectedEntry = draftState.entries.find((entry) => entry.id === entryId) ?? null;
+  // The room's copy is the fresher one: a pick change answers with it, and a change that leaves
+  // a submitted lineup short sends the entry back to DRAFT there.
+  const entryStatus = selectedEntry?.status ?? entrySummary?.status ?? ContestEntryStatus.DRAFT;
+  const isSubmitted = entryStatus === ContestEntryStatus.SUBMITTED;
   const selectionGroups = picksHidden ? [] : draftState.selectionGroups ?? [];
   const completionStats = getCompletionStats(selectionGroups);
   const nextIncompleteGroupId = getNextIncompleteGroupId(selectionGroups);
@@ -573,12 +621,15 @@ export function ContestEntryPage() {
     || !lineupComplete
     || !hasSelectedTiebreaker
     || saveEntryDetailsMutation.isPending
+    || submitEntryMutation.isPending
     || submitSelectionMutation.isPending;
 
-  // A failed save stays on the page: the mutation's own error state shows the reason.
+  // Saves the tiebreaker, then submits. A failure at either step stays on the page: each
+  // mutation's own error state shows the reason.
   async function submitEntry() {
     try {
       await saveEntryDetailsMutation.mutateAsync();
+      await submitEntryMutation.mutateAsync();
     } catch {
       return;
     }
@@ -606,9 +657,16 @@ export function ContestEntryPage() {
       <Tile padding="lg">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
-            <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
-              {getContestPhaseLabel(contest, isEditable)}
-            </StatusBadge>
+            <div className="flex flex-wrap gap-2">
+              <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
+                {getContestPhaseLabel(contest, isEditable)}
+              </StatusBadge>
+              {picksHidden ? null : (
+                <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[entryStatus]}>
+                  {CONTEST_ENTRY_STATUS_LABELS[entryStatus]}
+                </StatusBadge>
+              )}
+            </div>
             <div>
               <h2 className="text-3xl font-semibold tracking-tight" data-testid="contest-entry-heading">
                 {selectedEntry?.name ?? entrySummary?.name ?? 'Contest entry'}
@@ -694,7 +752,7 @@ export function ContestEntryPage() {
             <DefinitionList
               className="mt-5"
               items={[
-                { id: 'entry-status', label: 'Entry status', value: entrySummary?.status ?? 'ACTIVE' },
+                { id: 'entry-status', label: 'Entry status', value: CONTEST_ENTRY_STATUS_LABELS[entryStatus] },
                 { id: 'contest-phase', label: 'Contest phase', value: getContestPhaseLabel(contest, isEditable) },
                 { id: 'created', label: 'Created', value: formatDateTimeDisplay(entrySummary?.createdAt) },
                 { id: 'last-updated', label: 'Last updated', value: formatDateTimeDisplay(entrySummary?.updatedAt) },
@@ -802,16 +860,31 @@ export function ContestEntryPage() {
               );
             })}
 
+            {isMyEntry && isEditable && !isSubmitted ? (
+              <Alert data-testid="contest-entry-not-submitted" title="Not submitted" tone="warning">
+                {lineupComplete
+                  ? 'Your lineup is complete. Choose a tiebreaker and submit it: an entry only counts once it is submitted.'
+                  : 'This entry only counts once its lineup is complete and submitted. A change that leaves a submitted lineup short needs submitting again.'}
+              </Alert>
+            ) : null}
+
             {submitSelectionMutation.isError ? (
               <Alert tone="danger">
                 {extractErrorMessage(submitSelectionMutation.error, { fallback: 'We could not save this entry right now.' })}
               </Alert>
             ) : null}
 
+            {submitEntryMutation.isError ? (
+              <Alert data-testid="contest-entry-submit-error" tone="danger">
+                {extractErrorMessage(submitEntryMutation.error, { fallback: 'We could not submit this entry right now.' })}
+              </Alert>
+            ) : null}
+
             {isEditable && isMyEntry && lineupComplete ? (
               <TiebreakerSelector
-                disabled={saveEntryDetailsMutation.isPending}
-                isSubmitting={saveEntryDetailsMutation.isPending}
+                disabled={saveEntryDetailsMutation.isPending || submitEntryMutation.isPending}
+                isSubmitted={isSubmitted}
+                isSubmitting={saveEntryDetailsMutation.isPending || submitEntryMutation.isPending}
                 onChange={setTiebreakerDraft}
                 onSubmit={() => void submitEntry()}
                 options={TIEBREAKER_OPTIONS}

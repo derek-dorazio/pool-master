@@ -58,7 +58,7 @@ describe('ContestService entries — entering a contest', () => {
 
     const stored = world.entriesOf(contest.id, squad.id);
     expect(stored).toHaveLength(1);
-    expect(stored[0]).toMatchObject({ entryNumber: 1, name: 'Birdie Brigade Entry 1', status: 'ACTIVE' });
+    expect(stored[0]).toMatchObject({ entryNumber: 1, name: 'Birdie Brigade Entry 1', status: 'DRAFT' });
     expect(dto).toMatchObject({ id: stored[0].id, squadName: 'Birdie Brigade', picksCount: 0 });
   });
 
@@ -364,13 +364,16 @@ describe('ContestService entries — confirmation email', () => {
     return { ...context, contest };
   }
 
-  it('emails the owner a confirmation once the lineup is complete and a tiebreaker is saved', async () => {
+  it('emails the owner a confirmation when a complete entry with a tiebreaker is submitted', async () => {
     const mail = capturingMail();
     const { world, owner, contest, service } = setupOnTieredEvent({ mailDelivery: mail });
     const created = await service.createEntry(contest.id, owner.id);
     completeLineup(world, created.id);
-
     await service.updateEntry(contest.id, created.id, owner.id, { tiebreakerValue: -10 });
+    // Saving the tiebreaker sends nothing: the confirmation is the submit's (#481).
+    expect(mail.sent).toHaveLength(0);
+
+    await service.sendEntrySubmittedEmail(contest.id, created.id, owner.id);
 
     expect(mail.sent).toHaveLength(1);
     expect(mail.sent[0].to).toBe('olive@example.com');
@@ -378,37 +381,27 @@ describe('ContestService entries — confirmation email', () => {
     expect(mail.sent[0].text).toContain('-10');
   });
 
-  it('sends no confirmation while the lineup is short of the roster size', async () => {
-    const mail = capturingMail();
-    const { world, owner, contest, service } = setupOnTieredEvent({ mailDelivery: mail });
-    const created = await service.createEntry(contest.id, owner.id);
-    world.addPick(created.id, 'sep-1');
-
-    await service.updateEntry(contest.id, created.id, owner.id, { tiebreakerValue: -10 });
-
-    expect(mail.sent).toHaveLength(0);
-  });
-
-  it('sends no confirmation for a complete lineup with no tiebreaker', async () => {
+  it('emails the confirmation for a lineup submitted without a tiebreaker, showing the tiebreaker as None', async () => {
     const mail = capturingMail();
     const { world, owner, contest, service } = setupOnTieredEvent({ mailDelivery: mail });
     const created = await service.createEntry(contest.id, owner.id);
     completeLineup(world, created.id);
 
-    await service.updateEntry(contest.id, created.id, owner.id, { name: 'Renamed' });
+    await service.sendEntrySubmittedEmail(contest.id, created.id, owner.id);
 
-    expect(mail.sent).toHaveLength(0);
+    expect(mail.sent).toHaveLength(1);
+    expect(mail.sent[0].text).toContain('Tiebreaker: None');
   });
 
-  it('still saves the entry when the confirmation email fails to send', async () => {
+  it('resolves without throwing when the confirmation email fails to send', async () => {
     const { world, owner, contest, service } = setupOnTieredEvent({
       mailDelivery: { send: async () => { throw new Error('SMTP down'); } } as unknown as MailDeliveryProvider,
     });
     const created = await service.createEntry(contest.id, owner.id);
     completeLineup(world, created.id);
-
     await service.updateEntry(contest.id, created.id, owner.id, { tiebreakerValue: -4 });
 
+    await expect(service.sendEntrySubmittedEmail(contest.id, created.id, owner.id)).resolves.toBeUndefined();
     expect(world.entries.get(created.id)?.tiebreakerValue).toBe(-4);
   });
 });
@@ -486,15 +479,16 @@ describe('ContestService entries — reads', () => {
     await expect(service.getMyEntry(contest.id, commissioner.id)).resolves.toBeNull();
   });
 
-  it('counts entries per contest, with zero for a contest nobody entered', async () => {
+  it('counts submitted entries per contest, leaving unsubmitted drafts out, with zero for a contest nobody entered', async () => {
     const { world, league, owner, rival, contest, service } = setup();
     const empty = world.addContest(league.id);
-    await service.createEntry(contest.id, owner.id);
+    const submitted = await service.createEntry(contest.id, owner.id);
     await service.createEntry(contest.id, rival.id);
+    await world.entryRepo().update(submitted.id, { status: 'SUBMITTED' });
 
     const counts = await service.countEntriesByContest([contest.id, empty.id]);
 
-    expect(counts.get(contest.id)).toBe(2);
+    expect(counts.get(contest.id)).toBe(1);
     expect(counts.get(empty.id)).toBe(0);
     await expect(service.countEntriesByContest([])).resolves.toEqual(new Map());
   });

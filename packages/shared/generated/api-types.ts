@@ -2349,9 +2349,29 @@ export interface paths {
         put?: never;
         /**
          * Submit a draft pick
-         * @description Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise.
+         * @description Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. A change that leaves a SUBMITTED entry's lineup short sends the entry back to DRAFT; it must be submitted again to count.
          */
         post: operations["submitContestSelection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drafts/{contestId}/entries/{entryId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit a contest entry
+         * @description Submits the caller's entry once its lineup is complete, and returns the refreshed draft state. An entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. Submitting an already submitted entry changes nothing. A later pick change that leaves the lineup short sends the entry back to DRAFT. Entries are submitted only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. Only a member of the entry's team may submit it: 403 DRAFT_ENTRY_ACCESS_DENIED otherwise.
+         */
+        post: operations["submitContestEntry"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7896,8 +7916,11 @@ export interface components {
             squadName: string;
             entryNumber: number;
             name: string;
-            /** @enum {string} */
-            status: "ACTIVE" | "INACTIVE";
+            /**
+             * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+             * @enum {string}
+             */
+            status: "DRAFT" | "SUBMITTED" | "INACTIVE";
             tiebreakerValue?: number | null;
             isEliminated: boolean;
             /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
@@ -8034,10 +8057,10 @@ export interface components {
             /** @description Squad display name. */
             squadName: string;
             /**
-             * @description Contest entry lifecycle status.
+             * @description Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.
              * @enum {string}
              */
-            status: "ACTIVE" | "INACTIVE";
+            status: "DRAFT" | "SUBMITTED" | "INACTIVE";
             /** @description The entry's rank in the contest, direction-free: 1 is best in every sport. Null while unscored. */
             position: number | null;
             /** @description Position as shown, "T" prefixed for a tie. */
@@ -8301,10 +8324,10 @@ export interface components {
                 /** @description Squad display name. */
                 squadName: string;
                 /**
-                 * @description Contest entry lifecycle status.
+                 * @description Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.
                  * @enum {string}
                  */
-                status: "ACTIVE" | "INACTIVE";
+                status: "DRAFT" | "SUBMITTED" | "INACTIVE";
                 /** @description The entry's rank in the contest, direction-free: 1 is best in every sport. Null while unscored. */
                 position: number | null;
                 /** @description Position as shown, "T" prefixed for a tie. */
@@ -8521,8 +8544,11 @@ export interface components {
                 squadName: string;
                 entryNumber: number;
                 name: string;
-                /** @enum {string} */
-                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+                 * @enum {string}
+                 */
+                status: "DRAFT" | "SUBMITTED" | "INACTIVE";
                 tiebreakerValue?: number | null;
                 isEliminated: boolean;
                 /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
@@ -8569,8 +8595,11 @@ export interface components {
                 squadName: string;
                 entryNumber: number;
                 name: string;
-                /** @enum {string} */
-                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+                 * @enum {string}
+                 */
+                status: "DRAFT" | "SUBMITTED" | "INACTIVE";
                 tiebreakerValue?: number | null;
                 isEliminated: boolean;
                 /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
@@ -8625,8 +8654,11 @@ export interface components {
                 squadName: string;
                 entryNumber: number;
                 name: string;
-                /** @enum {string} */
-                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+                 * @enum {string}
+                 */
+                status: "DRAFT" | "SUBMITTED" | "INACTIVE";
                 tiebreakerValue?: number | null;
                 isEliminated: boolean;
                 /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
@@ -8671,8 +8703,11 @@ export interface components {
                 squadName: string;
                 entryNumber: number;
                 name: string;
-                /** @enum {string} */
-                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+                 * @enum {string}
+                 */
+                status: "DRAFT" | "SUBMITTED" | "INACTIVE";
                 tiebreakerValue?: number | null;
                 isEliminated: boolean;
                 /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
@@ -21756,6 +21791,11 @@ export interface operations {
                             name: string;
                             /** @description Whether the entry currently has the active turn. */
                             isOnClock: boolean;
+                            /**
+                             * @description DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
+                             * @enum {string}
+                             */
+                            status: "DRAFT" | "SUBMITTED" | "INACTIVE";
                         }[];
                         draftPickHistories: {
                             pickNumber: number;
@@ -22005,6 +22045,294 @@ export interface operations {
                             name: string;
                             /** @description Whether the entry currently has the active turn. */
                             isOnClock: boolean;
+                            /**
+                             * @description DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
+                             * @enum {string}
+                             */
+                            status: "DRAFT" | "SUBMITTED" | "INACTIVE";
+                        }[];
+                        draftPickHistories: {
+                            pickNumber: number;
+                            round: number;
+                            pickInRound: number;
+                            entryId: string;
+                            entryName: string;
+                            participantId: string | null;
+                            participantName: string | null;
+                            role?: string;
+                            team?: string;
+                            price?: number;
+                            tierId?: string;
+                            tierName?: string;
+                            autoPicked: boolean;
+                            isSkipped?: boolean;
+                            /**
+                             * Format: date-time
+                             * @description When the pick was made or skipped.
+                             */
+                            pickedAt: string;
+                        }[];
+                        availableParticipantIds: string[];
+                        selectedEntryId?: string | null;
+                        selectedEntryName?: string | null;
+                        tiebreakerValue?: number | null;
+                        selectionGroups?: {
+                            groupId: string;
+                            groupName: string;
+                            groupNumber: number;
+                            picksFromGroup: number;
+                            /** @description Selections currently saved on the selected entry for this group. */
+                            selectedParticipantIds: string[];
+                            /** @description Selectable participants shown inside the group. */
+                            participants: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                participantName: string;
+                                role?: string | null;
+                                team?: string | null;
+                                status?: string | null;
+                                price?: number | null;
+                                ranking?: number | null;
+                                orderIndex?: number | null;
+                                isAvailable: boolean;
+                                unavailableReason?: string | null;
+                                /** @description Whether the currently selected entry has this participant selected. */
+                                isSelected?: boolean;
+                            }[];
+                        }[];
+                        isComplete: boolean;
+                        pickEmEvents?: {
+                            id: string;
+                            eventId: string | null;
+                            period: number;
+                            matchupIndex: number;
+                            homeParticipantId: string | null;
+                            homeParticipantName: string | null;
+                            awayParticipantId: string | null;
+                            awayParticipantName: string | null;
+                            /** Format: date-time */
+                            eventTime: string | null;
+                            /** Format: date-time */
+                            deadline: string | null;
+                            isLocked: boolean;
+                            myPickParticipantId: string | null;
+                            confidenceWeight: number | null;
+                            /** @description Optional label used for compact pick-em presentation. */
+                            label: string | null;
+                        }[];
+                        /** @description Bracket pick data when relevant to the draft. */
+                        bracketMatchups?: {
+                            id: string;
+                            roundNumber: number;
+                            matchNumber: number;
+                            label: string | null;
+                            isLocked: boolean;
+                            /** @description Minimal team identity used in bracket pick-em draft payloads. */
+                            topTeam: {
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            /** @description Minimal team identity used in bracket pick-em draft payloads. */
+                            bottomTeam: {
+                                id: string;
+                                name: string;
+                                seed: number | null;
+                            } | null;
+                            /** @description Winning team identifier when the matchup has been decided. */
+                            winnerId: string | null;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    submitContestEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Draft-state response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contestId: string;
+                        contestName: string;
+                        /** @enum {string} */
+                        selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                        isTurnBased: boolean;
+                        isCommissioner?: boolean;
+                        rosterSize: number;
+                        /** @description Contest-configuration subset required by draft-room clients. */
+                        contestConfiguration?: {
+                            isExclusive: boolean;
+                            rounds?: number;
+                            pickCount?: number;
+                            rosterSize?: number;
+                            budget?: number;
+                            timePerPickSeconds?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            /** @description Tier configuration when the contest uses tiered selection. */
+                            tierConfig?: {
+                                tierId: string;
+                                tierName: string;
+                                tierNumber: number;
+                                picksFromTier: number;
+                            }[];
+                        } | null;
+                        /** @enum {string} */
+                        status: "PENDING" | "LIVE" | "PAUSED" | "COMPLETE";
+                        currentPickNumber: number;
+                        currentRound: number;
+                        totalPicks: number;
+                        totalRounds: number;
+                        currentEntryId: string | null;
+                        currentEntryName: string | null;
+                        myEntryId: string | null;
+                        isMyPick: boolean;
+                        timePerPickSeconds: number;
+                        /** Format: date-time */
+                        currentTurnStartedAt: string | null;
+                        entries: {
+                            /** @description Entry identifier. */
+                            id: string;
+                            /** @description User that owns the entry. */
+                            userId: string;
+                            /** @description Entry display name. */
+                            name: string;
+                            /** @description Whether the entry currently has the active turn. */
+                            isOnClock: boolean;
+                            /**
+                             * @description DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
+                             * @enum {string}
+                             */
+                            status: "DRAFT" | "SUBMITTED" | "INACTIVE";
                         }[];
                         draftPickHistories: {
                             pickNumber: number;

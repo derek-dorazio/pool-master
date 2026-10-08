@@ -118,6 +118,7 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
     render(
       <TiebreakerSelector
         disabled={false}
+        isSubmitted={false}
         isSubmitting={false}
         onChange={handleChange}
         onSubmit={handleSubmit}
@@ -135,6 +136,24 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
 
     expect(handleChange).toHaveBeenCalledWith("-1");
     expect(handleSubmit).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("contest-entry-submit")).toHaveTextContent("Submit entry");
+  });
+
+  it("labels the action Save entry for an entry that is already submitted", () => {
+    render(
+      <TiebreakerSelector
+        disabled={false}
+        isSubmitted
+        isSubmitting={false}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        options={[0]}
+        submitDisabled={false}
+        value="0"
+      />,
+    );
+
+    expect(screen.getByTestId("contest-entry-submit")).toHaveTextContent("Save entry");
   });
 });
 

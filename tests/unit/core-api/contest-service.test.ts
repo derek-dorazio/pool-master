@@ -91,7 +91,7 @@ const DEFAULT_ENTRY_WITH_SQUAD = {
   squadId: 'squad-1',
   entryNumber: 1,
   name: "Derek's Squad Entry 1",
-  status: 'ACTIVE' as const,
+  status: 'SUBMITTED' as const,
   tiebreakerValue: undefined,
   isEliminated: false,
   createdAt: new Date('2026-01-01'),
@@ -115,7 +115,7 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
       squadId: 'squad-1',
       entryNumber: 1,
       name: 'Ace Squad Entry 1',
-      status: 'ACTIVE',
+      status: 'SUBMITTED',
       isEliminated: false,
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
@@ -229,7 +229,7 @@ const UNSUBMITTED_ENTRY = {
   squadId: 'squad-1',
   entryNumber: 1,
   name: "Derek's Squad Entry 1",
-  status: 'ACTIVE' as const,
+  status: 'SUBMITTED' as const,
   tiebreakerValue: undefined,
   isEliminated: false,
   createdAt: new Date('2026-01-01'),
@@ -476,7 +476,7 @@ describe('ContestService', () => {
       expect(result.map((contest) => contest.id)).toEqual(expected);
     });
 
-    it('pool-master-d0v counts entries for league contest summaries', async () => {
+    it('counts only submitted entries for league contest summaries, leaving drafts out', async () => {
       const [firstContest, secondContest] = [
         buildContest({ id: 'contest-1' }),
         buildContest({ id: 'contest-2' }),
@@ -487,10 +487,11 @@ describe('ContestService', () => {
       const entryRepo = createMockEntryRepo({
         findByContest: jest.fn()
           .mockResolvedValueOnce([
-            { id: 'entry-1' },
-            { id: 'entry-2' },
+            { id: 'entry-1', status: 'SUBMITTED' },
+            { id: 'entry-2', status: 'SUBMITTED' },
+            { id: 'entry-draft', status: 'DRAFT' },
           ])
-          .mockResolvedValueOnce([{ id: 'entry-3' }]),
+          .mockResolvedValueOnce([{ id: 'entry-3', status: 'SUBMITTED' }]),
       });
       const service = buildService({
         contests: contestRepo,
@@ -676,7 +677,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -779,7 +780,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -990,7 +991,7 @@ describe('ContestService', () => {
       expect(rory?.rounds.map(({ round, golf }) => formatRound({ status: round.status, ...golf! })))
         .toEqual(['69', '-2']);
       // Entry order is the port's contract (entryNumber, then createdAt); only active entries count.
-      expect(entryRepo.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { activeOnly: true });
+      expect(entryRepo.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { submittedOnly: true });
       expect(listEventParticipants).toHaveBeenCalledWith('event-1');
     });
 
@@ -1011,7 +1012,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -1065,7 +1066,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -1076,7 +1077,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 2,
             name: "Derek's Squad Entry 2",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -1088,7 +1089,7 @@ describe('ContestService', () => {
           squadId: 'squad-1',
           entryNumber: id === 'entry-1' ? 1 : 2,
           name: updates.name ?? "Derek's Squad Entry 1",
-          status: 'ACTIVE',
+          status: 'SUBMITTED',
           isEliminated: false,
           createdAt: new Date('2026-01-01'),
           updatedAt: new Date('2026-01-02'),
@@ -1144,7 +1145,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             tiebreakerValue: null,
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
@@ -1156,7 +1157,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 2,
             name: 'Second Bullet',
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             tiebreakerValue: null,
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
@@ -1245,7 +1246,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'ACTIVE',
+            status: 'SUBMITTED',
             tiebreakerValue: null,
             isEliminated: false,
             createdAt: new Date('2026-01-01'),
@@ -1277,7 +1278,7 @@ describe('ContestService', () => {
       expect(result.tiebreakerValue).toBe(271);
     });
 
-    it('pool-master-95b sends confirmation email after a completed entry is saved', async () => {
+    it('sends the Entry submitted confirmation with each tier\'s golfer, the tiebreaker and a link to the entry', async () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1336,9 +1337,7 @@ describe('ContestService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      await service.updateEntry('contest-1', 'entry-1', 'user-1', {
-        tiebreakerValue: 271,
-      });
+      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1');
 
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -1361,7 +1360,7 @@ describe('ContestService', () => {
       expect(sentMessage.html).toContain('Prime Time Commissioner');
     });
 
-    it('pool-master-piv falls back to SportEventTierService for the email tier grouping when the contest has no typed tierConfig', async () => {
+    it('falls back to SportEventTierService for the email tier grouping when the contest has no typed tierConfig', async () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1412,9 +1411,7 @@ describe('ContestService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      await service.updateEntry('contest-1', 'entry-1', 'user-1', {
-        tiebreakerValue: 271,
-      });
+      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1');
 
       expect(tiers.getEffectiveValuationsForSportEvent).toHaveBeenCalledWith('event-1');
       const sentMessage = mailDelivery.send.mock.calls[0][0];
@@ -1422,124 +1419,7 @@ describe('ContestService', () => {
       expect(sentMessage.text).toContain('Tier B: Tommy Fleetwood');
     });
 
-    it('pool-master-95b skips confirmation email until roster and tiebreaker are complete', async () => {
-      const contest = buildContest({
-        id: 'contest-1',
-        leagueId: 'league-1',
-        name: 'Masters Pick 2',
-        status: ContestStatus.OPEN,
-      });
-      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
-      const mailDelivery = {
-        providerName: 'smtp' as const,
-        send: jest.fn(),
-      };
-      const service = buildService({
-        contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
-        configurations: createMockContestConfigurationRepo({
-          findByContest: jest.fn().mockResolvedValue({
-            tierConfig: [
-              { tierName: 'Tier A', tierNumber: 1, picksFromTier: 1, participantIds: ['participant-1'] },
-              { tierName: 'Tier B', tierNumber: 2, picksFromTier: 1, participantIds: ['participant-2'] },
-            ],
-            rosterSize: 2,
-          }),
-        }),
-        leagues: fakeLeagueRepo({
-          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
-        }),
-        memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
-        squads: createMockSquadRepo(),
-        squadMemberships: createMockSquadMembershipRepo({
-          findByLeagueAndUser: jest.fn().mockResolvedValue(ACTIVE_SQUAD_MEMBERSHIP),
-        }),
-        entries: createMockEntryRepo({
-          findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
-          findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(271)),
-        }),
-        // One of the two roster spots is filled.
-        picks: fakeContestEntryPickRepo({
-          countByEntries: jest.fn().mockResolvedValue(new Map([['entry-1', 1]])),
-          findByEntriesWithParticipant: jest.fn().mockResolvedValue([
-            buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
-          ]),
-        }),
-        mailDelivery: mailDelivery,
-      });
-
-      await service.updateEntry('contest-1', 'entry-1', 'user-1', {
-        tiebreakerValue: 271,
-      });
-
-      expect(mailDelivery.send).not.toHaveBeenCalled();
-    });
-
-    it.each([
-      { savedPicks: 3, emailed: false },
-      { savedPicks: 4, emailed: true },
-    ])('requires the event\'s tier count times the contest\'s picksPerTier before the confirmation email (2 tiers × 2 picks, $savedPicks saved → emailed: $emailed)', async ({ savedPicks, emailed }) => {
-      const contest = buildContest({
-        id: 'contest-1',
-        leagueId: 'league-1',
-        sportEventId: 'event-1',
-        name: 'Masters Pick 4',
-        status: ContestStatus.OPEN,
-      });
-      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
-      const tiers = {
-        getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([]),
-        listTiers: jest.fn().mockResolvedValue([
-          { id: 'tier-1', sportEventId: 'event-1', tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
-          { id: 'tier-2', sportEventId: 'event-1', tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
-        ]),
-      };
-      const mailDelivery = {
-        providerName: 'smtp' as const,
-        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
-      };
-      const picks = Array.from({ length: savedPicks }, (_, index) => buildReceiptPick(
-        `pick-${index + 1}`,
-        `sport-event-participant-${index + 1}`,
-        `participant-${index + 1}`,
-        `Golfer ${index + 1}`,
-        `2026-01-01T12:0${index}:00.000Z`,
-      ));
-      const service = buildService({
-        contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
-        // A managed tiered configuration: no stored roster, only picks per tier.
-        configurations: createMockContestConfigurationRepo({
-          findByContest: jest.fn().mockResolvedValue({ configJson: { picksPerTier: 2, countedScores: 3 } }),
-        }),
-        leagues: fakeLeagueRepo({
-          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
-        }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
-        memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
-        squads: createMockSquadRepo(),
-        squadMemberships: createMockSquadMembershipRepo({
-          findByLeagueAndUser: jest.fn().mockResolvedValue(ACTIVE_SQUAD_MEMBERSHIP),
-        }),
-        entries: createMockEntryRepo({
-          findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
-          findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(271)),
-        }),
-        picks: fakeContestEntryPickRepo({
-          countByEntries: jest.fn().mockResolvedValue(new Map([['entry-1', savedPicks]])),
-          findByEntriesWithParticipant: jest.fn().mockResolvedValue(picks),
-        }),
-        tiers,
-        mailDelivery,
-      });
-
-      await service.updateEntry('contest-1', 'entry-1', 'user-1', {
-        tiebreakerValue: 271,
-      });
-
-      expect(tiers.listTiers).toHaveBeenCalledWith('event-1');
-      expect(mailDelivery.send).toHaveBeenCalledTimes(emailed ? 1 : 0);
-    });
-
-    it('pool-master-95b keeps the saved entry when confirmation email delivery fails', async () => {
+    it('resolves rather than throwing when confirmation delivery fails, so the submit it follows still succeeds', async () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1582,11 +1462,58 @@ describe('ContestService', () => {
         mailDelivery: mailDelivery,
       });
 
-      await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', {
-        tiebreakerValue: -12,
-      })).resolves.toEqual(expect.objectContaining({ id: 'entry-1' }));
-      expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { tiebreakerValue: -12 });
+      await expect(service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1')).resolves.toBeUndefined();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
+      expect(entryRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('sends no confirmation when a complete entry\'s tiebreaker is saved: only submitting the entry sends it', async () => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        name: 'Masters Pick 1',
+        status: ContestStatus.OPEN,
+      });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const entryRepo = createMockEntryRepo({
+        findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
+        findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(-12)),
+      });
+      const mailDelivery = {
+        providerName: 'ses' as const,
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'ses', messageId: 'mail-1' })),
+      };
+      const service = buildService({
+        contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
+        configurations: createMockContestConfigurationRepo({
+          findByContest: jest.fn().mockResolvedValue({
+            tierConfig: [{ tierName: 'Tier A', tierNumber: 1, picksFromTier: 1, participantIds: ['participant-1'] }],
+            rosterSize: 1,
+          }),
+        }),
+        leagues: fakeLeagueRepo({
+          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
+        }),
+        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
+        squads: createMockSquadRepo(),
+        squadMemberships: createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue(ACTIVE_SQUAD_MEMBERSHIP),
+        }),
+        entries: entryRepo,
+        picks: fakeContestEntryPickRepo({
+          countByEntries: jest.fn().mockResolvedValue(new Map([['entry-1', 1]])),
+          findByEntriesWithParticipant: jest.fn().mockResolvedValue([
+            buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
+          ]),
+        }),
+        mailDelivery: mailDelivery,
+      });
+
+      await service.updateEntry('contest-1', 'entry-1', 'user-1', { tiebreakerValue: -12 });
+
+      expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { tiebreakerValue: -12 });
+      expect(mailDelivery.send).not.toHaveBeenCalled();
     });
   });
 

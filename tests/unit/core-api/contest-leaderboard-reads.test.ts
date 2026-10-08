@@ -63,7 +63,7 @@ describe('contest leaderboard reads', () => {
       }),
     }, 'contest-1');
 
-    expect(entries.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { activeOnly: true });
+    expect(entries.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { submittedOnly: true });
     expect(rows.map((row) => [row.id, row.squad.name, row.picks])).toEqual([
       ['entry-1', 'Squad One', [{ id: 'pick-1', sportEventParticipantId: 'sep-1', pickedAt, slot: null }]],
       ['entry-2', 'Squad Two', []],

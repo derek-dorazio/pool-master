@@ -7425,7 +7425,10 @@ export type ContestEntryDto = {
     squadName: string;
     entryNumber: number;
     name: string;
-    status: 'ACTIVE' | 'INACTIVE';
+    /**
+     * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+     */
+    status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
     tiebreakerValue?: number | null;
     isEliminated: boolean;
     /**
@@ -7631,9 +7634,9 @@ export type ContestEntryStandingDto = {
      */
     squadName: string;
     /**
-     * Contest entry lifecycle status.
+     * Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.
      */
-    status: 'ACTIVE' | 'INACTIVE';
+    status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
     /**
      * The entry's rank in the contest, direction-free: 1 is best in every sport. Null while unscored.
      */
@@ -7986,9 +7989,9 @@ export type ContestLeaderboardResponse = {
          */
         squadName: string;
         /**
-         * Contest entry lifecycle status.
+         * Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.
          */
-        status: 'ACTIVE' | 'INACTIVE';
+        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
         /**
          * The entry's rank in the contest, direction-free: 1 is best in every sport. Null while unscored.
          */
@@ -8287,7 +8290,10 @@ export type ContestEntryResponse = {
         squadName: string;
         entryNumber: number;
         name: string;
-        status: 'ACTIVE' | 'INACTIVE';
+        /**
+         * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+         */
+        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
         tiebreakerValue?: number | null;
         isEliminated: boolean;
         /**
@@ -8346,7 +8352,10 @@ export type ContestEntryDetailResponse = {
         squadName: string;
         entryNumber: number;
         name: string;
-        status: 'ACTIVE' | 'INACTIVE';
+        /**
+         * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+         */
+        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
         tiebreakerValue?: number | null;
         isEliminated: boolean;
         /**
@@ -8421,7 +8430,10 @@ export type ContestEntryListResponse = {
         squadName: string;
         entryNumber: number;
         name: string;
-        status: 'ACTIVE' | 'INACTIVE';
+        /**
+         * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+         */
+        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
         tiebreakerValue?: number | null;
         isEliminated: boolean;
         /**
@@ -8476,7 +8488,10 @@ export type MyContestEntryResponse = {
         squadName: string;
         entryNumber: number;
         name: string;
-        status: 'ACTIVE' | 'INACTIVE';
+        /**
+         * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+         */
+        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
         tiebreakerValue?: number | null;
         isEliminated: boolean;
         /**
@@ -23408,6 +23423,10 @@ export type GetDraftStateResponses = {
              * Whether the entry currently has the active turn.
              */
             isOnClock: boolean;
+            /**
+             * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
+             */
+            status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
         }>;
         draftPickHistories: Array<{
             pickNumber: number;
@@ -23738,6 +23757,10 @@ export type SubmitContestSelectionResponses = {
              * Whether the entry currently has the active turn.
              */
             isOnClock: boolean;
+            /**
+             * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
+             */
+            status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
         }>;
         draftPickHistories: Array<{
             pickNumber: number;
@@ -23847,3 +23870,326 @@ export type SubmitContestSelectionResponses = {
 };
 
 export type SubmitContestSelectionResponse = SubmitContestSelectionResponses[keyof SubmitContestSelectionResponses];
+
+export type SubmitContestEntryData = {
+    body?: never;
+    path: {
+        contestId: string;
+        entryId: string;
+    };
+    query?: never;
+    url: '/api/v1/drafts/{contestId}/entries/{entryId}/submit';
+};
+
+export type SubmitContestEntryErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    501: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type SubmitContestEntryError = SubmitContestEntryErrors[keyof SubmitContestEntryErrors];
+
+export type SubmitContestEntryResponses = {
+    /**
+     * Draft-state response.
+     */
+    200: {
+        contestId: string;
+        contestName: string;
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+        isTurnBased: boolean;
+        isCommissioner?: boolean;
+        rosterSize: number;
+        /**
+         * Contest-configuration subset required by draft-room clients.
+         */
+        contestConfiguration?: {
+            isExclusive: boolean;
+            rounds?: number;
+            pickCount?: number;
+            rosterSize?: number;
+            budget?: number;
+            timePerPickSeconds?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            /**
+             * Tier configuration when the contest uses tiered selection.
+             */
+            tierConfig?: Array<{
+                tierId: string;
+                tierName: string;
+                tierNumber: number;
+                picksFromTier: number;
+            }>;
+        } | null;
+        status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
+        currentPickNumber: number;
+        currentRound: number;
+        totalPicks: number;
+        totalRounds: number;
+        currentEntryId: string | null;
+        currentEntryName: string | null;
+        myEntryId: string | null;
+        isMyPick: boolean;
+        timePerPickSeconds: number;
+        currentTurnStartedAt: string | null;
+        entries: Array<{
+            /**
+             * Entry identifier.
+             */
+            id: string;
+            /**
+             * User that owns the entry.
+             */
+            userId: string;
+            /**
+             * Entry display name.
+             */
+            name: string;
+            /**
+             * Whether the entry currently has the active turn.
+             */
+            isOnClock: boolean;
+            /**
+             * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
+             */
+            status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+        }>;
+        draftPickHistories: Array<{
+            pickNumber: number;
+            round: number;
+            pickInRound: number;
+            entryId: string;
+            entryName: string;
+            participantId: string | null;
+            participantName: string | null;
+            role?: string;
+            team?: string;
+            price?: number;
+            tierId?: string;
+            tierName?: string;
+            autoPicked: boolean;
+            isSkipped?: boolean;
+            /**
+             * When the pick was made or skipped.
+             */
+            pickedAt: string;
+        }>;
+        availableParticipantIds: Array<string>;
+        selectedEntryId?: string | null;
+        selectedEntryName?: string | null;
+        tiebreakerValue?: number | null;
+        selectionGroups?: Array<{
+            groupId: string;
+            groupName: string;
+            groupNumber: number;
+            picksFromGroup: number;
+            /**
+             * Selections currently saved on the selected entry for this group.
+             */
+            selectedParticipantIds: Array<string>;
+            /**
+             * Selectable participants shown inside the group.
+             */
+            participants: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                role?: string | null;
+                team?: string | null;
+                status?: string | null;
+                price?: number | null;
+                ranking?: number | null;
+                orderIndex?: number | null;
+                isAvailable: boolean;
+                unavailableReason?: string | null;
+                /**
+                 * Whether the currently selected entry has this participant selected.
+                 */
+                isSelected?: boolean;
+            }>;
+        }>;
+        isComplete: boolean;
+        pickEmEvents?: Array<{
+            id: string;
+            eventId: string | null;
+            period: number;
+            matchupIndex: number;
+            homeParticipantId: string | null;
+            homeParticipantName: string | null;
+            awayParticipantId: string | null;
+            awayParticipantName: string | null;
+            eventTime: string | null;
+            deadline: string | null;
+            isLocked: boolean;
+            myPickParticipantId: string | null;
+            confidenceWeight: number | null;
+            /**
+             * Optional label used for compact pick-em presentation.
+             */
+            label: string | null;
+        }>;
+        /**
+         * Bracket pick data when relevant to the draft.
+         */
+        bracketMatchups?: Array<{
+            id: string;
+            roundNumber: number;
+            matchNumber: number;
+            label: string | null;
+            isLocked: boolean;
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
+            topTeam: {
+                id: string;
+                name: string;
+                seed: number | null;
+            } | null;
+            /**
+             * Minimal team identity used in bracket pick-em draft payloads.
+             */
+            bottomTeam: {
+                id: string;
+                name: string;
+                seed: number | null;
+            } | null;
+            /**
+             * Winning team identifier when the matchup has been decided.
+             */
+            winnerId: string | null;
+        }>;
+    };
+};
+
+export type SubmitContestEntryResponse = SubmitContestEntryResponses[keyof SubmitContestEntryResponses];
