@@ -42,6 +42,7 @@ const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
 
 // The tiebreaker is a predicted winning score relative to par.
 const formatTiebreaker = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format;
+const HIDDEN_PICKS_HELPER = 'Hidden until the contest locks';
 
 // The entry page says what an open contest means for this entry; every other status reads as it
 // does on every contest page.
@@ -631,19 +632,21 @@ export function ContestEntryPage() {
 
         <MetricGrid className="mt-6 md:grid-cols-4">
           <MetricTile
-            helperText="Tiers complete"
+            helperText={picksHidden ? HIDDEN_PICKS_HELPER : 'Tiers complete'}
             label="Tier progress"
-            value={`${completionStats.completedTiers}/${selectionGroups.length || 0}`}
+            value={picksHidden ? 'Hidden' : `${completionStats.completedTiers}/${selectionGroups.length || 0}`}
           />
           <MetricTile
-            helperText="Lineup slots filled"
+            helperText={picksHidden ? HIDDEN_PICKS_HELPER : 'Lineup slots filled'}
             label="Picks saved"
-            value={`${completionStats.totalSelections}/${completionStats.requiredSelections}`}
+            value={picksHidden ? 'Hidden' : `${completionStats.totalSelections}/${completionStats.requiredSelections}`}
           />
           <MetricTile
             helperText={(
               <span data-testid="contest-entry-tiebreaker-summary">
-                {savedTiebreaker !== null
+                {picksHidden
+                  ? HIDDEN_PICKS_HELPER
+                  : savedTiebreaker !== null
                   ? `Relative to par ${formatTiebreaker(savedTiebreaker)}`
                   : isEditable
                     ? 'Needed after lineup is complete'
@@ -653,13 +656,15 @@ export function ContestEntryPage() {
             label="Tiebreaker"
             value={(
               <span data-testid="contest-entry-tiebreaker-status">
-                {hasSavedTiebreaker ? 'Saved' : isEditable ? 'Needed' : 'Closed'}
+                {picksHidden ? 'Hidden' : hasSavedTiebreaker ? 'Saved' : isEditable ? 'Needed' : 'Closed'}
               </span>
             )}
           />
           <MetricTile
             helperText={
-              isEditable
+              picksHidden
+                ? HIDDEN_PICKS_HELPER
+                : isEditable
                 ? nextIncompleteGroupId
                   ? `Next focus: ${selectionGroups.find((group) => group.groupId === nextIncompleteGroupId)?.groupName ?? 'Open tier'}`
                   : 'Lineup is fully selected'
