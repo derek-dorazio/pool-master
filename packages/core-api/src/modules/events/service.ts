@@ -334,6 +334,9 @@ export class SportEventService {
    */
   async updateEvent(sportEventId: string, updates: SportEventUpdate): Promise<SportEventSummary> {
     const { startDate: startedAt, rounds: roundCount } = await this.requireEvent(sportEventId);
+    // Three writes, not one transaction: a failure after the first leaves the rounds behind the
+    // event's new dates. The round writes only reject a round the event lacks, and they read the
+    // event's rounds first, so in practice they don't fail here.
     await this.deps.sportEvents.update(sportEventId, updates);
     const startDate = updates.startDate ?? startedAt;
     const shiftMs = startDate.getTime() - startedAt.getTime();

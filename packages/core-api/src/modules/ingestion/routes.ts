@@ -1,6 +1,7 @@
 /**
  * Ingestion module — the operations over sports-data ingestion: providers, sync submissions
- * and their history, competitors a provider could not match, and the provider catalog browse. Mounted at /api/v1/ingestion.
+ * and their history, competitors a provider could not match, and the provider catalog
+ * browse. Mounted at /api/v1/ingestion.
  *
  * Every operation is root-admin (#205): `admin` is the permission, `ingestion` is what these
  * operations administer. Binding an unmatched competitor to a participant is an operation on
