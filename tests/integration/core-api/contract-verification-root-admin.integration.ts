@@ -3,7 +3,6 @@ import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import {
   UserResetPasswordResponseSchema,
-  ProviderEventCleanupResponseSchema,
   ContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
   IngestionScheduleConfigSchema,
@@ -43,7 +42,6 @@ import type {
   ParticipantProviderMappingResponse,
   PollIntervalConfig,
   ProviderCatalogEventListResponse,
-  ProviderEventCleanupResponse,
   ProviderListResponse,
   ProviderManualSyncSubmissionResponse,
   ProviderSyncRunListResponse,
@@ -836,16 +834,14 @@ describe('Contract verification (root admin)', () => {
       });
       expect(sportSyncRes.statusCode).toBe(404);
 
-      const cleanupDryRunRes = await app.inject({
+      // ADR-0009 — the stale provider event cleanup is retired with the sync that made stale events.
+      const cleanupRes = await app.inject({
         method: 'POST',
         url: '/api/v1/ingestion/stale-events/cleanup',
         headers: rootAdmin.headers,
         payload: { mode: 'DRY_RUN' },
       });
-      expect(cleanupDryRunRes.statusCode).toBe(200);
-      expect(ProviderEventCleanupResponseSchema.safeParse(cleanupDryRunRes.json()).success).toBe(true);
-      expect(cleanupDryRunRes.json<ProviderEventCleanupResponse>().mode).toBe('DRY_RUN');
-      expect(cleanupDryRunRes.json<ProviderEventCleanupResponse>().executed).toBe(false);
+      expect(cleanupRes.statusCode).toBe(404);
     } finally {
       await app.close();
     }

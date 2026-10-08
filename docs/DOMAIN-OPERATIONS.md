@@ -681,9 +681,13 @@ sync (`submitSportSync`). Events are created and linked by the root admin; the p
 upcoming-event catalog is read only on demand. The two remaining feeds, `EVENTPARTICIPANTS` and
 `EVENTLIVESCORES`, are event-scoped and reach only linked (`SCORES_ONLY`) events. A field sync
 writes the field and its size, never the event's details or status, and a score for a round the
-admin did not schedule is skipped, never creating the round (#435). An event's lifecycle is moved
+admin did not schedule is skipped, never creating the round (#435). A live score is written only
+while its event is `IN_PROGRESS`: before, there is nothing to score, and after, corrections are
+the admin's alone. An event's lifecycle is moved
 by the admin or by the date-driven lifecycle scheduler. Sync-run history rows for the retired
-feeds were deleted by migration, and stored ingestion config drops their keys on boot.
+feeds were deleted by migration, and stored ingestion config drops their keys on boot. The stale
+provider event cleanup went too: it cleared events sync used to create, and every event is now an
+admin's (ADR-0009).
 
 ## Contests and entries
 
@@ -781,7 +785,6 @@ refreshes them from the database every 30 seconds, and every save is recorded in
 | List sync runs | `rootAdmin` | `listProviderSyncRuns` — filtered by provider, sport and status, bounded by a submission-time window (`from`/`to`, default the last 6 hours). Unpaged (§16): the window is the bound |
 | Submit an event sync | `rootAdmin` | `submitEventSync` — 202 with one `SUBMITTED` run per feed; the runs execute after acceptance. An event whose `syncScope` forbids a feed is 409 |
 | List unmapped competitors | `rootAdmin` | `listUnmappedProviderParticipants` — competitors a provider reports that no participant is mapped to. `bindParticipantProviderMapping` (above) repairs each |
-| Clean up stale provider events | `rootAdmin` | `cleanupStaleProviderEvents` — `DRY_RUN` inventories, `EXECUTE` deletes the unblocked; an event a contest references is never deleted |
 | Browse a provider's catalog | `rootAdmin` | `listProviderCatalogEvents` — live provider events, each the full `ProviderEventDto`; without `from`/`to` it returns every event the provider has, with no window around today (#402) |
 
 Deleted in #205, all unbuilt or unused: the health and error-log surface (service health,

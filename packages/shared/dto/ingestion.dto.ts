@@ -1,6 +1,6 @@
 /**
  * Ingestion DTOs (#205) — providers, sync submissions and their history, competitors a
- * provider could not match, the stale-event cleanup, and the provider catalog browse.
+ * provider could not match, and the provider catalog browse.
  * Every operation is root-admin; `admin` is the permission, `ingestion` is what they administer.
  */
 import { z } from 'zod';
@@ -218,69 +218,6 @@ export const UnmappedProviderParticipantListResponseSchema = z.object({
 }).describe('Every unmapped competitor across the scheduled sports of every provider.');
 export type UnmappedProviderParticipantListResponse = z.infer<typeof UnmappedProviderParticipantListResponseSchema>;
 
-// --- Stale provider event cleanup ---
-
-export const ProviderEventCleanupModeSchema = z.enum(['DRY_RUN', 'EXECUTE']);
-export type ProviderEventCleanupMode = z.infer<typeof ProviderEventCleanupModeSchema>;
-
-export const ProviderEventCleanupRequestSchema = z.object({
-  mode: ProviderEventCleanupModeSchema.describe('DRY_RUN inventories stale event rows without deleting. EXECUTE deletes rows that are eligible and not contest-referenced.'),
-}).describe('Stale provider event cleanup request.');
-export type ProviderEventCleanupRequest = z.infer<typeof ProviderEventCleanupRequestSchema>;
-
-export const ProviderEventCleanupGroupDtoSchema = z.object({
-  key: z.string().describe('Grouping key, such as a sport, provider id, or status.'),
-  eventCount: z.number().int().min(0).describe('Number of inventoried stale events in this group.'),
-  deletableEventCount: z.number().int().min(0).describe('Number of events in this group eligible for deletion.'),
-  deletedEventCount: z.number().int().min(0).describe('Number of events in this group deleted by this request. Zero for dry runs.'),
-}).describe('Grouped stale event cleanup inventory counts.');
-export type ProviderEventCleanupGroupDto = z.infer<typeof ProviderEventCleanupGroupDtoSchema>;
-
-export const ProviderEventCleanupSummaryDtoSchema = z.object({
-  inventoriedEventCount: z.number().int().min(0).describe('Total stale provider events inventoried by the cleanup rules.'),
-  deletableEventCount: z.number().int().min(0).describe('Inventoried events eligible for deletion.'),
-  blockedEventCount: z.number().int().min(0).describe('Inventoried events retained because contest or pick references protect them.'),
-  deletedEventCount: z.number().int().min(0).describe('Events deleted by this request. Zero for dry runs.'),
-  sportEventParticipantCount: z.number().int().min(0).describe('Event participant rows attached to inventoried stale events.'),
-  valuationCount: z.number().int().min(0).describe('Event participant valuation rows attached to inventoried stale events.'),
-  roundCount: z.number().int().min(0).describe('Per-round participant rows attached to inventoried stale events.'),
-  pickCount: z.number().int().min(0).describe('Contest entry pick rows referencing inventoried stale event participants. These protect an event from deletion.'),
-}).describe('Aggregate stale provider event cleanup summary.');
-export type ProviderEventCleanupSummaryDto = z.infer<typeof ProviderEventCleanupSummaryDtoSchema>;
-
-export const ProviderEventCleanupRowDtoSchema = z.object({
-  id: z.string().uuid().describe('Internal SportEvent identifier.'),
-  providerId: z.string().describe('Provider/source associated with the stale event row.'),
-  externalId: z.string().describe('Provider-side event identifier.'),
-  sport: z.string().describe('Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values.'),
-  name: z.string().describe('Current persisted event name.'),
-  status: z.string().describe('Current persisted event status.'),
-  startDate: z.string().datetime().describe('Persisted event start date.'),
-  endDate: z.string().datetime().nullable().describe('Persisted event end date, when known.'),
-  staleReason: z.enum(['NON_GOLF_EVENT', 'PAST_GOLF_EVENT']).describe('Cleanup rule that selected this stale event for inventory.'),
-  deletable: z.boolean().describe('Whether EXECUTE mode will delete this event.'),
-  deleted: z.boolean().describe('Whether this request deleted this event. Always false for dry runs.'),
-  blockedReasons: z.array(z.enum(['DIRECT_CONTEST_REFERENCE', 'CONTEST_ENTRY_PICK_REFERENCE'])).describe('Contest-related references that protect this event from deletion.'),
-  directContestCount: z.number().int().min(0).describe('Number of Contest rows directly pointing at this event.'),
-  sportEventParticipantCount: z.number().int().min(0).describe('Number of SportEventParticipant rows attached to this event.'),
-  valuationCount: z.number().int().min(0).describe('Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event.'),
-  roundCount: z.number().int().min(0).describe('Number of per-round participant rows (SportEventParticipantRound) attached through this event.'),
-  pickCount: z.number().int().min(0).describe('Number of ContestEntryPick rows referencing participants in this event.'),
-}).describe('Single stale provider event cleanup inventory row.');
-export type ProviderEventCleanupRowDto = z.infer<typeof ProviderEventCleanupRowDtoSchema>;
-
-export const ProviderEventCleanupResponseSchema = z.object({
-  mode: ProviderEventCleanupModeSchema.describe('Requested cleanup mode.'),
-  executed: z.boolean().describe('Whether this request performed deletion.'),
-  inventoriedAt: z.string().datetime().describe('When the inventory was computed.'),
-  summary: ProviderEventCleanupSummaryDtoSchema,
-  bySport: z.array(ProviderEventCleanupGroupDtoSchema).describe('Inventory grouped by event sport.'),
-  byProvider: z.array(ProviderEventCleanupGroupDtoSchema).describe('Inventory grouped by provider id.'),
-  byStatus: z.array(ProviderEventCleanupGroupDtoSchema).describe('Inventory grouped by persisted event status.'),
-  events: z.array(ProviderEventCleanupRowDtoSchema).describe('Per-event cleanup inventory rows.'),
-}).describe('Stale provider event cleanup result: the inventory, and what an EXECUTE deleted.');
-export type ProviderEventCleanupResponse = z.infer<typeof ProviderEventCleanupResponseSchema>;
-
 // --- Provider catalog browse (plans/124 §3.4/§4.4/§5.1) ---
 //
 // Lives in ingestion rather than golf because it is about a provider's catalog, not golf
@@ -328,9 +265,6 @@ registerSchema('ProviderSyncRunListResponse', ProviderSyncRunListResponseSchema)
 registerSchema('ProviderManualSyncSubmissionResponse', ProviderManualSyncSubmissionResponseSchema);
 registerSchema('UnmappedProviderParticipantDto', UnmappedProviderParticipantDtoSchema);
 registerSchema('UnmappedProviderParticipantListResponse', UnmappedProviderParticipantListResponseSchema);
-registerSchema('ProviderEventCleanupRequest', ProviderEventCleanupRequestSchema);
-registerSchema('ProviderEventCleanupRowDto', ProviderEventCleanupRowDtoSchema);
-registerSchema('ProviderEventCleanupResponse', ProviderEventCleanupResponseSchema);
 registerSchema('ProviderEventDto', ProviderEventDtoSchema);
 registerSchema('ProviderCatalogEventListQuery', ProviderCatalogEventListQuerySchema);
 registerSchema('ProviderCatalogEventListResponse', ProviderCatalogEventListResponseSchema);

@@ -302,14 +302,6 @@ export class InMemorySportEvents {
           lastChangedAt: changed.length > 0 ? new Date(Math.max(...changed)) : null,
         }];
       })),
-      countFieldRecords: async (ids) => new Map(ids.map((id) => {
-        const entryIds = new Set(this.field.filter((row) => row.sportEventId === id).map((row) => row.id));
-        return [id, {
-          valuations: this.valuationRows.filter((row) => entryIds.has(row.sportEventParticipantId)).length,
-          rounds: this.participantRoundRows.filter((row) => entryIds.has(row.sportEventParticipantId)).length,
-          picks: [...entryIds].reduce((sum, entryId) => sum + (this.picksByEntry.get(entryId) ?? 0), 0),
-        }];
-      })),
       findAutoLifecycleCandidates: async () => this.events.filter((row) => (
         row.autoLifecycleEnabled
         && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS')
