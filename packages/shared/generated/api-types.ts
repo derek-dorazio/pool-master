@@ -1224,66 +1224,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/contests/{contestId}/reopen": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reopen a closed contest
-         * @description Reopens a previously closed contest so commissioner workflows can resume or correct the contest lifecycle.
-         */
-        post: operations["reopenContest"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/close": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Close a contest early
-         * @description Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop. A draft is refused with 409 CONTEST_CLOSE_STATUS_INVALID: open it to the league or delete it instead.
-         */
-        post: operations["closeContest"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/extend-deadline": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Extend the contest end deadline
-         * @description Moves the contest deadline later to keep the contest open longer without recreating it.
-         */
-        post: operations["extendContestDeadline"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/contest-config-templates/": {
         parameters: {
             query?: never;
@@ -6239,14 +6179,6 @@ export interface components {
             name?: string;
             /** @description Optional tiebreaker prediction saved on the contest entry. */
             tiebreakerValue?: number | null;
-        };
-        /** @description Request payload for extending a contest end time. */
-        ExtendContestDeadlineRequest: {
-            /**
-             * Format: date-time
-             * @description Replacement contest end timestamp.
-             */
-            newEnd: string;
         };
         /** @description A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields). */
         ContestDto: {
@@ -15757,76 +15689,6 @@ export interface operations {
                             details?: unknown;
                         };
                     };
-                };
-            };
-        };
-    };
-    reopenContest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Single-contest response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ContestResponse"];
-                };
-            };
-        };
-    };
-    closeContest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Single-contest response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ContestResponse"];
-                };
-            };
-        };
-    };
-    extendContestDeadline: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ExtendContestDeadlineRequest"];
-            };
-        };
-        responses: {
-            /** @description Single-contest response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
         };

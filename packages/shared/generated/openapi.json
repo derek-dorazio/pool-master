@@ -9783,21 +9783,6 @@
         "additionalProperties": false,
         "description": "Request payload for updating a contest entry while the contest is still joinable."
       },
-      "ExtendContestDeadlineRequest": {
-        "type": "object",
-        "properties": {
-          "newEnd": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Replacement contest end timestamp."
-          }
-        },
-        "required": [
-          "newEnd"
-        ],
-        "additionalProperties": false,
-        "description": "Request payload for extending a contest end time."
-      },
       "ContestDto": {
         "type": "object",
         "properties": {
@@ -31676,112 +31661,6 @@
                   ],
                   "additionalProperties": false,
                   "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/contests/{contestId}/reopen": {
-      "post": {
-        "operationId": "reopenContest",
-        "summary": "Reopen a closed contest",
-        "tags": [
-          "Contests"
-        ],
-        "description": "Reopens a previously closed contest so commissioner workflows can resume or correct the contest lifecycle.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Single-contest response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ContestResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/contests/{contestId}/close": {
-      "post": {
-        "operationId": "closeContest",
-        "summary": "Close a contest early",
-        "tags": [
-          "Contests"
-        ],
-        "description": "Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop. A draft is refused with 409 CONTEST_CLOSE_STATUS_INVALID: open it to the league or delete it instead.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Single-contest response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ContestResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/contests/{contestId}/extend-deadline": {
-      "post": {
-        "operationId": "extendContestDeadline",
-        "summary": "Extend the contest end deadline",
-        "tags": [
-          "Contests"
-        ],
-        "description": "Moves the contest deadline later to keep the contest open longer without recreating it.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ExtendContestDeadlineRequest"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Single-contest response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ContestResponse"
                 }
               }
             }

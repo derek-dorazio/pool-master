@@ -11,7 +11,6 @@
  */
 import {
   acceptInvitation,
-  closeContest,
   deleteContest,
   enterContest,
   generateInviteLink,
@@ -135,16 +134,6 @@ describe('SDK Functional: contest authorization by id (#193)', () => {
     expectFunctionalError(deleteResponse, { status: 403, code: 'LEAGUE_MEMBERSHIP_REQUIRED' });
 
     await expectContestUnchanged(commissioner, contestId);
-  });
-
-  it('refuses a league member a lifecycle override, and the override does not run behind the 403', async () => {
-    const { commissioner, member, contestId } = await buildContestWithMemberAndOutsider();
-
-    const response = await closeContest({ client: member.client, path: { contestId } });
-
-    expectFunctionalError(response, { status: 403, code: 'LEAGUE_PERMISSION_DENIED' });
-    const reread = await getContest({ client: commissioner.client, path: { contestId } });
-    expect(reread.data?.contest.status).toBe('OPEN');
   });
 
   it('still lets the commissioner update and delete the contest while it is a draft', async () => {
