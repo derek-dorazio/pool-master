@@ -252,11 +252,12 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
       tags: ['Leagues'],
       summary: 'Send email invitations to join a league',
       description:
-        'Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response.',
+        'Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.',
       operationId: 'sendLeagueInvitations',
       body: schemaRef('SendLeagueInvitationsRequest'),
       response: {
         201: schemaRef('SendLeagueInvitationsResponse'),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
         502: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -286,7 +287,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
       tags: ['Leagues'],
       summary: 'Resend an email invitation',
       description:
-        'Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.',
+        'Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.',
       operationId: 'resendLeagueInvitation',
       response: {
         200: schemaRef('ResendLeagueInvitationResponse'),
@@ -305,11 +306,12 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
       tags: ['Leagues'],
       summary: 'Generate a shareable invite link',
       description:
-        'Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints.',
+        'Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints. An inactive league refuses with 400 `LEAGUE_INACTIVE`.',
       operationId: 'generateInviteLink',
       body: schemaRef('GenerateInviteLinkRequest'),
       response: {
         201: schemaRef('GenerateInviteLinkResponse'),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },

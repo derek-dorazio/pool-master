@@ -395,7 +395,7 @@ export const listLeagueInvitations = <ThrowOnError extends boolean = false>(opti
 /**
  * Send email invitations to join a league
  *
- * Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response.
+ * Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
  */
 export const sendLeagueInvitations = <ThrowOnError extends boolean = false>(options: Options<SendLeagueInvitationsData, ThrowOnError>) => (options.client ?? client).post<SendLeagueInvitationsResponses, SendLeagueInvitationsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -410,7 +410,7 @@ export const sendLeagueInvitations = <ThrowOnError extends boolean = false>(opti
 /**
  * Resend an email invitation
  *
- * Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.
+ * Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.
  */
 export const resendLeagueInvitation = <ThrowOnError extends boolean = false>(options: Options<ResendLeagueInvitationData, ThrowOnError>) => (options.client ?? client).post<ResendLeagueInvitationResponses, ResendLeagueInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -421,7 +421,7 @@ export const resendLeagueInvitation = <ThrowOnError extends boolean = false>(opt
 /**
  * Generate a shareable invite link
  *
- * Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints.
+ * Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
  */
 export const generateInviteLink = <ThrowOnError extends boolean = false>(options: Options<GenerateInviteLinkData, ThrowOnError>) => (options.client ?? client).post<GenerateInviteLinkResponses, GenerateInviteLinkErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -623,7 +623,7 @@ export const listSquadOwnerInvitations = <ThrowOnError extends boolean = false>(
 /**
  * Invite a co-owner by email
  *
- * Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. Active team owners, league commissioners, and root admins may start this flow.
+ * Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active team owners, league commissioners, and root admins may start this flow.
  */
 export const createSquadOwnerInvitation = <ThrowOnError extends boolean = false>(options: Options<CreateSquadOwnerInvitationData, ThrowOnError>) => (options.client ?? client).post<CreateSquadOwnerInvitationResponses, CreateSquadOwnerInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -638,7 +638,7 @@ export const createSquadOwnerInvitation = <ThrowOnError extends boolean = false>
 /**
  * Replace an active team owner
  *
- * Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email. Active team owners, league commissioners, and root admins may start this flow.
+ * Guided replacement flow that removes the selected current owner (ending their team and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A team owner may replace a co-owner; a league commissioner or root admin may also replace a team's only owner, and the team stays active for the replacement.
  */
 export const replaceSquadOwner = <ThrowOnError extends boolean = false>(options: Options<ReplaceSquadOwnerData, ThrowOnError>) => (options.client ?? client).post<ReplaceSquadOwnerResponses, ReplaceSquadOwnerErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -675,7 +675,7 @@ export const getInvitationPreview = <ThrowOnError extends boolean = false>(optio
 /**
  * Accept a league invitation using an invite code
  *
- * Accepts an invitation for the authenticated user and creates or reactivates a MEMBER membership in the target league.
+ * Accepts an invitation for the authenticated user and creates or reactivates a MEMBER membership in the target league. An email invitation can be accepted only by the account whose email it was sent to (400 `LEAGUE_INVITATION_EMAIL_MISMATCH`); an invite link can be used by anyone holding it. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
  */
 export const acceptInvitation = <ThrowOnError extends boolean = false>(options: Options<AcceptInvitationData, ThrowOnError>) => (options.client ?? client).post<AcceptInvitationResponses, AcceptInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -701,7 +701,7 @@ export const getTeamOwnerInvitationPreview = <ThrowOnError extends boolean = fal
 /**
  * Accept a team-owner invitation using an invite code
  *
- * Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team.
+ * Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`.
  */
 export const acceptTeamOwnerInvitation = <ThrowOnError extends boolean = false>(options: Options<AcceptTeamOwnerInvitationData, ThrowOnError>) => (options.client ?? client).post<AcceptTeamOwnerInvitationResponses, AcceptTeamOwnerInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -720,7 +720,7 @@ export const acceptTeamOwnerInvitation = <ThrowOnError extends boolean = false>(
  *
  * Unauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.
  *
- * The account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person.
+ * The account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
  */
 export const registerWithTeamOwnerInvitation = <ThrowOnError extends boolean = false>(options: Options<RegisterWithTeamOwnerInvitationData, ThrowOnError>) => (options.client ?? client).post<RegisterWithTeamOwnerInvitationResponses, RegisterWithTeamOwnerInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

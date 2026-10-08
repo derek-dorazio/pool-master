@@ -556,7 +556,7 @@ export interface paths {
         put?: never;
         /**
          * Send email invitations to join a league
-         * @description Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response.
+         * @description Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
          */
         post: operations["sendLeagueInvitations"];
         delete?: never;
@@ -576,7 +576,7 @@ export interface paths {
         put?: never;
         /**
          * Resend an email invitation
-         * @description Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.
+         * @description Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.
          */
         post: operations["resendLeagueInvitation"];
         delete?: never;
@@ -596,7 +596,7 @@ export interface paths {
         put?: never;
         /**
          * Generate a shareable invite link
-         * @description Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints.
+         * @description Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
          */
         post: operations["generateInviteLink"];
         delete?: never;
@@ -870,7 +870,7 @@ export interface paths {
         put?: never;
         /**
          * Invite a co-owner by email
-         * @description Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. Active team owners, league commissioners, and root admins may start this flow.
+         * @description Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active team owners, league commissioners, and root admins may start this flow.
          */
         post: operations["createSquadOwnerInvitation"];
         delete?: never;
@@ -890,7 +890,7 @@ export interface paths {
         put?: never;
         /**
          * Replace an active team owner
-         * @description Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email. Active team owners, league commissioners, and root admins may start this flow.
+         * @description Guided replacement flow that removes the selected current owner (ending their team and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A team owner may replace a co-owner; a league commissioner or root admin may also replace a team's only owner, and the team stays active for the replacement.
          */
         post: operations["replaceSquadOwner"];
         delete?: never;
@@ -950,7 +950,7 @@ export interface paths {
         put?: never;
         /**
          * Accept a league invitation using an invite code
-         * @description Accepts an invitation for the authenticated user and creates or reactivates a MEMBER membership in the target league.
+         * @description Accepts an invitation for the authenticated user and creates or reactivates a MEMBER membership in the target league. An email invitation can be accepted only by the account whose email it was sent to (400 `LEAGUE_INVITATION_EMAIL_MISMATCH`); an invite link can be used by anyone holding it. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
          */
         post: operations["acceptInvitation"];
         delete?: never;
@@ -990,7 +990,7 @@ export interface paths {
         put?: never;
         /**
          * Accept a team-owner invitation using an invite code
-         * @description Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team.
+         * @description Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`.
          */
         post: operations["acceptTeamOwnerInvitation"];
         delete?: never;
@@ -1014,7 +1014,7 @@ export interface paths {
          *
          *     Unauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.
          *
-         *     The account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person.
+         *     The account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
          */
         post: operations["registerWithTeamOwnerInvitation"];
         delete?: never;
@@ -11969,6 +11969,25 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -12129,6 +12148,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GenerateInviteLinkResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */

@@ -5,6 +5,7 @@
 import type { League as PrismaLeague, Prisma, PrismaClient } from '@prisma/client';
 import type { LeagueRepository, LeagueSearchFilters } from '@poolmaster/shared/db';
 import type { JoinPolicy, League, LeagueIconKey } from '@poolmaster/shared/domain';
+import { LeagueMembershipStatus as MembershipStatus } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueRepository implements LeagueRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -42,8 +43,10 @@ export class PrismaLeagueRepository implements LeagueRepository {
     // One join, replacing the service-level findByUser's membership fetch plus a findById
     // per membership (#202). A join cannot produce the orphaned-membership case that
     // version had to log and skip, because it only returns leagues that exist.
+    // ACTIVE only: a removed member keeps an INACTIVE row (so a re-invitation can restore it),
+    // and that row must not keep the league in their list.
     const rows = await this.prisma.league.findMany({
-      where: { memberships: { some: { userId } } },
+      where: { memberships: { some: { userId, status: MembershipStatus.ACTIVE } } },
       orderBy: { createdAt: 'desc' },
     });
     return rows.map(mapToLeague);
