@@ -963,6 +963,14 @@ describe('mock contest feed provider event-first verification', () => {
     expect(beforeLive.entries.every((entry) => entry.golf?.totalScoreToPar === null)).toBe(true);
     expect(beforeLive.entries.every((entry) => entry.scoredPickCount === 0)).toBe(true);
 
+    // Live scores are accepted only while the event is in progress, and the provider never
+    // moves its status (#435): the admin starts it.
+    await eventLifecycleService.applySportEventStatusTransition({
+      sportEventId: event.id,
+      toStatus: 'IN_PROGRESS',
+      actor: { type: 'ROOT_ADMIN' },
+    });
+
     const r2Complete = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
@@ -1030,13 +1038,11 @@ describe('mock contest feed provider event-first verification', () => {
 
     // #435 — the provider never moves an event's status; the admin (or the lifecycle
     // scheduler) does, and completing the event settles its contests.
-    for (const toStatus of ['IN_PROGRESS', 'COMPLETED'] as const) {
-      await eventLifecycleService.applySportEventStatusTransition({
-        sportEventId: event.id,
-        toStatus,
-        actor: { type: 'ROOT_ADMIN' },
-      });
-    }
+    await eventLifecycleService.applySportEventStatusTransition({
+      sportEventId: event.id,
+      toStatus: 'COMPLETED',
+      actor: { type: 'ROOT_ADMIN' },
+    });
 
     await expect(prisma.sportEvent.findUniqueOrThrow({
       where: {

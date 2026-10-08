@@ -6,7 +6,8 @@
  *      payloads fail here, not inside the persistence path).
  *   2. Resolve provider-side `participantExternalId` to internal
  *      `SportEventParticipant.id` UUIDs.
- *   3. Persist the per-category detail rows (Phase 4 ships the GOLF
+ *   3. Skip the update unless the event is IN_PROGRESS.
+ *   4. Persist the per-category detail rows (Phase 4 ships the GOLF
  *      variant, delegated to `GolfScoreService` — plans/124 §3.1; other
  *      categories throw `LiveScoreUnsupportedError`).
  *
@@ -21,6 +22,7 @@ import {
   LiveScoreResultSchema,
   type LiveScoreResult,
 } from '@poolmaster/shared/dto';
+import { SportEventStatus } from '@poolmaster/shared/domain';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
 import { createGolfScoreService } from '../../events/wiring';
@@ -84,7 +86,7 @@ export async function publishLiveScoreUpdate(
   // to one event, then dispatch to the per-category persistence path.
   const sportEvent = await deps.prisma.sportEvent.findUnique({
     where: { providerId_externalId: { providerId: deps.providerId, externalId: validated.externalEventId } },
-    select: { id: true, rounds: true },
+    select: { id: true, rounds: true, status: true },
   });
   if (!sportEvent) {
     deps.logger?.warn(
@@ -95,6 +97,24 @@ export async function publishLiveScoreUpdate(
       'Skipping live-score persistence — no internal SportEvent matches (providerId, externalEventId)',
     );
     // The WARN above is the diagnostic record.
+    return {
+      updatesReturned,
+      updatesPersisted: 0,
+      updatesSkipped: updatesReturned,
+      writeDiagnostics: emptySyncWriteDiagnostics(),
+    };
+  }
+
+  // A live score is accepted only while its event is in progress: before, there is nothing to
+  // score; after, the admin alone corrects scores (#116) and settlement has already run.
+  if (sportEvent.status !== SportEventStatus.IN_PROGRESS) {
+    deps.logger?.warn(
+      {
+        action: 'liveScore.publish.eventNotInProgress',
+        data: { providerId: deps.providerId, externalEventId: validated.externalEventId, sportEventId: sportEvent.id, status: sportEvent.status },
+      },
+      'Skipping live-score persistence — the event is not in progress',
+    );
     return {
       updatesReturned,
       updatesPersisted: 0,
