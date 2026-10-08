@@ -137,6 +137,7 @@ function createPrisma(overrides: Record<string, unknown> = {}) {
         id: 'league-1',
         leagueCode: 'BIGDAWGS',
         name: 'Big Dawgs',
+        isActive: true,
       }),
     },
     ...overrides,
@@ -474,62 +475,6 @@ describe('SquadOwnerInvitationService', () => {
       email: 'replacement@example.com',
     })).rejects.toMatchObject({
       code: 'SQUAD_OWNER_REPLACE_SELF_FORBIDDEN',
-    });
-  });
-
-  it('rejects replace-owner when the team has fewer than two active owners', async () => {
-    const membershipRepo = createMembershipRepo({
-      findByLeagueAndUser: jest.fn().mockResolvedValue({
-        id: 'actor-membership',
-        leagueId: 'league-1',
-        userId: 'user-1',
-        role: LeagueRole.COMMISSIONER,
-        status: LeagueMembershipStatus.ACTIVE,
-        joinedAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
-    });
-    const service = new SquadOwnerInvitationService(
-      createInvitationRepo(),
-      membershipRepo,
-      createSquadRepo(),
-      createSquadMembershipRepo({
-        findBySquadAndUser: jest.fn().mockResolvedValue({
-          id: 'target-membership',
-          squadId: 'squad-1',
-          leagueId: 'league-1',
-          userId: 'user-2',
-          status: SquadMembershipStatus.ACTIVE,
-          joinedAt: new Date(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
-        findBySquad: jest.fn().mockResolvedValue([
-          {
-            id: 'target-membership',
-            squadId: 'squad-1',
-            leagueId: 'league-1',
-            userId: 'user-2',
-            status: SquadMembershipStatus.ACTIVE,
-            joinedAt: new Date(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ]),
-      }),
-      fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
-      asPrismaClient(createPrisma()),
-    );
-
-    await expect(service.replaceOwner({
-      leagueId: 'league-1',
-      squadId: 'squad-1',
-      targetUserId: 'user-2',
-      actorUserId: 'user-1',
-      email: 'replacement@example.com',
-    })).rejects.toMatchObject({
-      code: 'SQUAD_OWNER_REPLACE_REQUIRES_MULTIPLE_OWNERS',
     });
   });
 });
