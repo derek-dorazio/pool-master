@@ -456,3 +456,121 @@ describe('JoinTeamOwnerPage', () => {
     });
   });
 });
+
+describe('Joining a team as a co-owner from an invite link', () => {
+  afterEach(() => {
+    for (const mock of [
+      acceptTeamOwnerInvitationMock, registerWithTeamOwnerInvitationMock, getCurrentUserMock,
+      getTeamOwnerInvitationPreviewMock, logoutUserMock, refreshTokenMock,
+    ]) {
+      mock.mockReset();
+    }
+  });
+
+  function preview(status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED' = 'PENDING') {
+    return {
+      data: {
+        invitation: {
+          inviteCode: 'TEAM123',
+          status,
+          league: { id: 'league-1', leagueCode: 'BIGDAWGS', name: 'Big Dawgs' },
+          team: { id: 'team-1', name: 'Beer Bellies', iconKey: 'CAPTAIN_SMILE_FIELD' },
+          roleAfterAccept: 'MEMBER',
+        },
+      },
+    };
+  }
+
+  function signIn() {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1', email: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio',
+          isActive: true, isRootAdmin: false, createdAt: '2026-04-16T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+  }
+
+  function signOut() {
+    getCurrentUserMock.mockRejectedValue(new Error('Not authenticated'));
+    refreshTokenMock.mockResolvedValue({ data: null });
+  }
+
+  it.each([
+    ['EXPIRED', 'This invitation has expired. Ask the commissioner for a new one.'],
+    ['REVOKED', 'This invitation was withdrawn. Ask the commissioner for a new one.'],
+    ['ACCEPTED', 'This invitation has already been used.'],
+  ] as const)('explains to a signed-in viewer that a %s team invite cannot be used, with no join button', async (status, message) => {
+    signIn();
+    getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview(status));
+
+    renderJoinTeamOwnerPage();
+
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Join as co-owner' })).not.toBeInTheDocument();
+  });
+
+  it('does not offer a signed-out visitor the registration form for an expired team invite', async () => {
+    signOut();
+    getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview('EXPIRED'));
+
+    renderJoinTeamOwnerPage();
+
+    expect(await screen.findByText('This invitation has expired. Ask the commissioner for a new one.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create account and join team' })).not.toBeInTheDocument();
+  });
+
+  it('says the team invitation could not be loaded and offers no join button when the preview fails', async () => {
+    signIn();
+    getTeamOwnerInvitationPreviewMock.mockResolvedValue({ error: { code: 'NOT_FOUND', message: 'Not found.' }, status: 404 });
+
+    renderJoinTeamOwnerPage();
+
+    expect(await screen.findByText('We could not load this team invitation.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Join as co-owner' })).not.toBeInTheDocument();
+  });
+
+  it('will not register a visitor whose form is incomplete, and names the missing fields', async () => {
+    signOut();
+    getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview());
+
+    renderJoinTeamOwnerPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Create account and join team' }));
+
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'First name' })).toHaveAttribute('aria-invalid', 'true'));
+    expect(screen.getByRole('textbox', { name: 'Username' })).toHaveAttribute('aria-invalid', 'true');
+    expect(registerWithTeamOwnerInvitationMock).not.toHaveBeenCalled();
+  });
+
+  it('registers with a trimmed, lower-cased username and the invite code, never an email', async () => {
+    signOut();
+    getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview());
+    registerWithTeamOwnerInvitationMock.mockResolvedValue({
+      error: { code: 'SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS', message: 'exists' },
+    });
+
+    renderJoinTeamOwnerPage();
+
+    fireEvent.change(await screen.findByRole('textbox', { name: 'First name' }), { target: { value: ' Jordan ' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Last name' }), { target: { value: ' Rivers ' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Username' }), { target: { value: '  JRivers ' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'correct-horse-battery-1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create account and join team' }));
+
+    expect(await screen.findByText(
+      'An account already exists for the email this invitation was sent to. Sign in to accept it.',
+    )).toBeInTheDocument();
+    expect(registerWithTeamOwnerInvitationMock).toHaveBeenCalledWith({
+      body: {
+        inviteCode: 'TEAM123',
+        username: 'jrivers',
+        password: 'correct-horse-battery-1',
+        firstName: 'Jordan',
+        lastName: 'Rivers',
+      },
+    });
+  });
+});
