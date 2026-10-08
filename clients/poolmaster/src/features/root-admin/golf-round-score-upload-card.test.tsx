@@ -174,4 +174,49 @@ describe('GolfRoundScoreUploadCard', () => {
       'Scores of a completed tournament cannot change.',
     );
   });
+
+  it('shows the to-par change in the preview, so a to-par-only correction does not read as no change', async () => {
+    previewEventGolfRoundScoresMock.mockResolvedValue({
+      data: {
+        rows: [
+          previewRow({
+            change: 'UPDATE',
+            before: { strokes: 70, scoreToPar: -1, thru: 18, status: 'COMPLETED' },
+            after: { strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' },
+          }),
+        ],
+        rollup: { total: 1, matched: 1, unresolved: 0, ambiguous: 0 },
+      },
+    });
+    renderCard();
+
+    pasteAndPreview();
+
+    const table = await screen.findByTestId('root-admin-golf-scores-upload-preview-table');
+    const [, dataRow] = within(table).getAllByRole('row');
+    expect(dataRow).toHaveTextContent('70 (-1)·Completed → 70 (-2)·Completed');
+  });
+
+  it('shows a dash for the strokes of a row with none, never the word "null"', async () => {
+    previewEventGolfRoundScoresMock.mockResolvedValue({
+      data: {
+        rows: [
+          previewRow({
+            row: { playerName: 'Rory McIlroy', strokes: null, scoreToPar: -1, status: 'IN_PROGRESS' },
+            change: 'SKIPPED',
+            after: { strokes: null, scoreToPar: -1, thru: null, status: 'IN_PROGRESS' },
+          }),
+        ],
+        rollup: { total: 1, matched: 1, unresolved: 0, ambiguous: 0 },
+      },
+    });
+    renderCard();
+
+    pasteAndPreview();
+
+    const table = await screen.findByTestId('root-admin-golf-scores-upload-preview-table');
+    expect(table).not.toHaveTextContent('null');
+    const [, dataRow] = within(table).getAllByRole('row');
+    expect(dataRow).toHaveTextContent('— → — (-1)·In progress');
+  });
 });
