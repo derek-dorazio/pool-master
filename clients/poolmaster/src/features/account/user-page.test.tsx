@@ -758,4 +758,60 @@ describe('UserPage', () => {
     expect(await within(dialog).findByText(/league-scoped data/)).toBeVisible();
     expect(screen.queryByTestId('user-page-delete-success')).not.toBeInTheDocument();
   });
+
+  it('shows an error state when a root admin opens a user who cannot be read', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+
+    renderUserPage('/users/user-missing');
+
+    expect(await screen.findByTestId('root-admin-user-page-error')).toBeVisible();
+  });
+
+  it('reactivates an inactive user from the root-admin page and closes the dialog', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isActive: false });
+    enableUserMock.mockResolvedValue({ data: { user: buildCurrentUser({ id: 'user-2', isActive: true }) } });
+
+    renderUserPage('/users/user-2');
+
+    expect(await screen.findByTestId('root-admin-user-inactive-banner')).toBeVisible();
+    fireEvent.click(screen.getByTestId('root-admin-user-open-lifecycle'));
+    await screen.findByTestId('root-admin-user-lifecycle-dialog');
+    fireEvent.click(screen.getByTestId('root-admin-user-submit-lifecycle'));
+
+    await waitFor(() => expect(enableUserMock).toHaveBeenCalledWith({ path: { userId: 'user-2' } }));
+    await waitFor(() => expect(screen.queryByTestId('root-admin-user-lifecycle-dialog')).not.toBeInTheDocument());
+  });
+
+  it('shows the server refusal in the role dialog when demoting the last root admin', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isRootAdmin: true });
+    setUserRootAdminMock.mockResolvedValue({
+      error: { error: { code: 'LAST_ROOT_ADMIN', message: 'Cannot remove the last remaining root admin.' } },
+    });
+
+    renderUserPage('/users/user-2');
+
+    await screen.findByTestId('root-admin-user-page');
+    fireEvent.click(screen.getByTestId('root-admin-user-open-role'));
+    const dialog = await screen.findByTestId('root-admin-user-role-dialog');
+    fireEvent.click(screen.getByTestId('root-admin-user-submit-role'));
+
+    expect(await within(dialog).findByText(/last remaining root admin/)).toBeVisible();
+  });
+
+  it('keeps the delete button disabled until the confirmation matches the viewed user\'s email', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isActive: false });
+
+    renderUserPage('/users/user-2');
+
+    await screen.findByTestId('root-admin-user-page');
+    fireEvent.click(screen.getByTestId('root-admin-user-open-delete'));
+    await screen.findByTestId('root-admin-user-delete-dialog');
+    fireEvent.change(screen.getByTestId('root-admin-user-delete-confirmation'), { target: { value: 'someone@example.com' } });
+
+    expect(screen.getByTestId('root-admin-user-submit-delete')).toBeDisabled();
+    expect(deleteUserMock).not.toHaveBeenCalled();
+  });
 });
