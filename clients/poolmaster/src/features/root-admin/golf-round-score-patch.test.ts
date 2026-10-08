@@ -30,6 +30,12 @@ describe('buildRoundScorePatch', () => {
     expect(buildRoundScorePatch(row, { strokes: '70', scoreToPar: '-2', thru: '18', status: 'IN_PROGRESS', completedAt: '' })).toBeNull();
   });
 
+  it('sends thru null when the admin blanks a stored thru, and nothing when it was already blank', () => {
+    expect(buildRoundScorePatch(row, { thru: '' })).toEqual({ thru: null });
+    expect(buildRoundScorePatch(row, { thru: '  ' })).toEqual({ thru: null });
+    expect(buildRoundScorePatch(scoreRow({ thru: null }), { thru: '' })).toBeNull();
+  });
+
   it('sends each edited field and leaves unchanged fields out', () => {
     expect(buildRoundScorePatch(row, { strokes: '69', status: 'COMPLETED' })).toEqual({
       strokes: 69,

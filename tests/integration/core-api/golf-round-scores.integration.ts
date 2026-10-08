@@ -258,6 +258,28 @@ describe('Golf round scores — admin correction surface', () => {
     expect(res.json<SportEventParticipantResponse>().participant.rounds[0]).toMatchObject({ completedAt: null, status: 'COMPLETED' });
   });
 
+  it('a PATCH with thru null clears the stored thru, so the golfer no longer shows as mid-round', async () => {
+    const { event, rory } = await createField('patch-clear-thru');
+    await createGolfScoreService(getPrisma()).applyRoundScores(event.id, 1, [
+      row(rory.participant.id, { thru: 12, status: 'IN_PROGRESS' }),
+    ]);
+    const admin = await createTestUser({ isRootAdmin: true });
+
+    const res = await getApp().inject({
+      method: 'PATCH',
+      url: `/api/v1/events/${event.id}/rounds/1/golf-scores/${rory.sep.id}`,
+      headers: admin.headers,
+      payload: { thru: null },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const round = await getPrisma().sportEventParticipantRound.findFirstOrThrow({
+      where: { sportEventParticipantId: rory.sep.id },
+      include: { golf: true },
+    });
+    expect(round.golf).toMatchObject({ strokes: 68, thru: null });
+  });
+
   it.each([
     ['0 strokes', { strokes: 0 }],
     ['negative strokes', { strokes: -1 }],
