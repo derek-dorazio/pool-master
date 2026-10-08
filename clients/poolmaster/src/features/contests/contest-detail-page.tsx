@@ -422,7 +422,8 @@ export function ContestDetailPage() {
               <Button
                 data-testid="contest-board-create-entry"
                 disabled={enterContestMutation.isPending}
-                onClick={() => void enterContestMutation.mutateAsync()}
+                // The mutation's own error state shows a refusal.
+                onClick={() => void enterContestMutation.mutateAsync().catch(() => undefined)}
               >
                 {enterContestMutation.isPending ? 'Creating...' : 'Create entry'}
               </Button>
@@ -548,7 +549,7 @@ export function ContestDetailPage() {
                               void renameEntryMutation.mutateAsync({
                                 entryId: entry.id,
                                 name: renameDraft.trim(),
-                              })
+                              }).catch(() => undefined)
                             }
                           >
                             {renameEntryMutation.isPending ? 'Saving...' : 'Save name'}
