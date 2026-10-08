@@ -129,6 +129,7 @@ describe('My Team lifecycle', () => {
     expect(invalidatedKeys(invalidateSpy)).toEqual(
       expect.arrayContaining([
         QueryKeys.leagues.detail('BIGDAWGS'),
+        QueryKeys.leagues.list,
         QueryKeys.leagues.members('league-1'),
         QueryKeys.leagueTeams.byLeague('league-1'),
         QueryKeys.leagueTeamOwnerInvitations.byLeague('league-1'),

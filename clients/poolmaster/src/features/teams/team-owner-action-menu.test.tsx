@@ -133,7 +133,11 @@ describe('TeamOwnerActionMenu', () => {
       expect(screen.queryByTestId('teams-owner-actions-dialog-team-1-user-2')).not.toBeInTheDocument(),
     );
     expect(invalidatedKeys(invalidateSpy)).toEqual(
-      expect.arrayContaining([QueryKeys.leagues.detail('BIGDAWGS'), QueryKeys.leagueTeams.byLeague('league-1')]),
+      expect.arrayContaining([
+        QueryKeys.leagues.detail('BIGDAWGS'),
+        QueryKeys.leagues.list,
+        QueryKeys.leagueTeams.byLeague('league-1'),
+      ]),
     );
   });
 
