@@ -560,10 +560,12 @@ export class ContestService {
       );
     }
     if (!context.squadMembership) {
-      this.logger.warn({ contestId, userId }, 'contest entry delete missing squad manager');
+      // The same code the route's requireOwnSquad gate answers, so the state reads one way
+      // whoever reaches it (a root admin passes the gate and lands here).
+      this.logger.warn({ contestId, userId }, 'contest entry delete missing squad');
       throw new ContestEntryAccessError(
-        'You do not manage a squad in this league',
-        'SQUAD_MANAGER_REQUIRED',
+        'You must have an active team in this league to perform this action',
+        'SQUAD_MEMBERSHIP_REQUIRED',
       );
     }
 
