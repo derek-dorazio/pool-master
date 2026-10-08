@@ -1,5 +1,5 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
-import type { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestStatus } from '@poolmaster/shared/domain';
 import type { StatusBadgeProps } from '@/features/shared/ui';
 
 /**
@@ -40,6 +40,23 @@ export function contestStatusLabel(status: ContestStatus) {
 
 export function isHistoricalContest(status: ContestStatus) {
   return status === 'COMPLETED' || status === 'CANCELLED';
+}
+
+/**
+ * Whether a member can still enter, rename or change picks: the contest is OPEN and its
+ * scheduled start (the event's start, the server's entry cutoff) has not passed. The contest can
+ * still read OPEN after tee-off when the event's In Progress update is late; the server refuses
+ * changes then, so the page stops offering them. Without a known start, OPEN alone decides.
+ */
+export function areContestEntriesOpen(
+  status: ContestStatus,
+  startsAt: string | null | undefined,
+  now: Date = new Date(),
+) {
+  if (status !== ContestStatus.OPEN) {
+    return false;
+  }
+  return !startsAt || now.getTime() < new Date(startsAt).getTime();
 }
 
 export function shouldPollContestEntries(status: ContestStatus | null | undefined) {

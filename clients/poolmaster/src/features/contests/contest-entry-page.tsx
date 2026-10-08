@@ -30,9 +30,9 @@ import {
   TiebreakerSelector,
   type SelectionGroup,
 } from './contest-entry-selection';
-import { CONTEST_STATUS_TONES, contestStatusLabel } from './contest-status';
+import { areContestEntriesOpen, CONTEST_STATUS_TONES, contestStatusLabel } from './contest-status';
 import { useContestSchedule } from './use-contest-schedule';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -46,8 +46,12 @@ const HIDDEN_PICKS_HELPER = 'Hidden until the contest locks';
 
 // The entry page says what an open contest means for this entry; every other status reads as it
 // does on every contest page.
-function getContestPhaseLabel(contest: ContestDto) {
-  return contest.status === ContestStatus.OPEN ? 'Editable until the event starts' : contestStatusLabel(contest.status);
+function getContestPhaseLabel(contest: ContestDto, entriesOpen: boolean) {
+  if (entriesOpen) {
+    return 'Editable until the event starts';
+  }
+  // Still OPEN past its start means the event has teed off and the In Progress update is late.
+  return contest.status === ContestStatus.OPEN ? 'Entries closed' : contestStatusLabel(contest.status);
 }
 
 function getCompletionStats(selectionGroups: SelectionGroup[]) {
@@ -218,7 +222,7 @@ export function ContestEntryPage() {
   const { league: contestLeague } = useLeagueContextById(contestQuery.data?.leagueId);
   // The event's start is the entry cutoff (#431); the contest's status follows the event's own
   // move to in progress, which can lag the start, and the server refuses picks from the start on.
-  const contestSchedule = useContestSchedule(contestQuery.data);
+  const schedule = useContestSchedule(contestQuery.data);
   const detailsSeedSource = useMemo(() => {
     if (!draftStateQuery.data) {
       return null;
@@ -426,10 +430,10 @@ export function ContestEntryPage() {
         err: error,
       };
 
-      if (error instanceof Error) {
-        logger.error(payload, 'Contest entry detail save failed unexpectedly');
-      } else {
+      if (error instanceof ApiError) {
         logger.warn(payload, 'Contest entry detail save was rejected');
+      } else {
+        logger.error(payload, 'Contest entry detail save failed unexpectedly');
       }
     },
   });
@@ -505,10 +509,10 @@ export function ContestEntryPage() {
         err: error,
       };
 
-      if (error instanceof Error) {
-        logger.error(payload, 'Contest selection failed unexpectedly');
-      } else {
+      if (error instanceof ApiError) {
         logger.warn(payload, 'Contest selection was rejected');
+      } else {
+        logger.error(payload, 'Contest selection failed unexpectedly');
       }
     },
   });
@@ -542,8 +546,7 @@ export function ContestEntryPage() {
   const entrySummary = contestEntriesQuery.data?.entries.find((entry) => entry.id === entryId) ?? null;
   const myEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
   const isMyEntry = myEntryIds.includes(entryId);
-  const eventHasStarted = contestSchedule !== null && Date.parse(contestSchedule.startsAt) <= Date.now();
-  const isEditable = contest.status === ContestStatus.OPEN && !eventHasStarted;
+  const isEditable = areContestEntriesOpen(contest.status, schedule?.startsAt);
   // Before the contest locks, the server answers the viewer's own entry when another team's is
   // asked for, so a different selected entry means this one's picks are not ours to see yet.
   const picksHidden = draftState.selectedEntryId !== entryId;
@@ -572,8 +575,13 @@ export function ContestEntryPage() {
     || saveEntryDetailsMutation.isPending
     || submitSelectionMutation.isPending;
 
+  // A failed save stays on the page: the mutation's own error state shows the reason.
   async function submitEntry() {
-    await saveEntryDetailsMutation.mutateAsync();
+    try {
+      await saveEntryDetailsMutation.mutateAsync();
+    } catch {
+      return;
+    }
     navigate(backToContestPath, {
       state: { leagueCode: backLeagueCode },
     });
@@ -599,7 +607,7 @@ export function ContestEntryPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
             <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
-              {getContestPhaseLabel(contest)}
+              {getContestPhaseLabel(contest, isEditable)}
             </StatusBadge>
             <div>
               <h2 className="text-3xl font-semibold tracking-tight" data-testid="contest-entry-heading">
@@ -687,7 +695,7 @@ export function ContestEntryPage() {
               className="mt-5"
               items={[
                 { id: 'entry-status', label: 'Entry status', value: entrySummary?.status ?? 'ACTIVE' },
-                { id: 'contest-phase', label: 'Contest phase', value: getContestPhaseLabel(contest) },
+                { id: 'contest-phase', label: 'Contest phase', value: getContestPhaseLabel(contest, isEditable) },
                 { id: 'created', label: 'Created', value: formatDateTimeDisplay(entrySummary?.createdAt) },
                 { id: 'last-updated', label: 'Last updated', value: formatDateTimeDisplay(entrySummary?.updatedAt) },
               ]}

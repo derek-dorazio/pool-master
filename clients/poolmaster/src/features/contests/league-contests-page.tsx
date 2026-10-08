@@ -92,7 +92,10 @@ export function LeagueContestsPage() {
       const contestIds = await Promise.all(
         activeContestIds.map(async (contestId) => {
           const response = await getMyContestEntry({ path: { contestId } });
-          return response.data?.entry ? contestId : null;
+          if (!response.data) {
+            throwApiError(response.error, "My contest entry response is missing data.");
+          }
+          return response.data.entry ? contestId : null;
         }),
       );
 
@@ -105,6 +108,22 @@ export function LeagueContestsPage() {
     enabled: Boolean(leagueId && isMyEntriesFilter && activeContestIds.length),
     retry: false,
   });
+  useEffect(() => {
+    if (!myContestIdsQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: "leagueContests.myEntries.failed",
+        data: {
+          leagueCode,
+        },
+        err: myContestIdsQuery.error,
+      },
+      "League Contests page failed to load the team's contest entries",
+    );
+  }, [leagueCode, myContestIdsQuery.error, myContestIdsQuery.isError, logger]);
   const visibleActiveContests = useMemo(() => {
     if (!isMyEntriesFilter) {
       return activeContests;
@@ -191,6 +210,8 @@ export function LeagueContestsPage() {
               <p className="text-sm text-muted-foreground">
                 Loading your contests...
               </p>
+            ) : isMyEntriesFilter && myContestIdsQuery.isError ? (
+              <ErrorState body="We couldn't load your contests." />
             ) : visibleActiveContests.length ? (
               visibleActiveContests.map((contest) => (
                 <ContestListCard

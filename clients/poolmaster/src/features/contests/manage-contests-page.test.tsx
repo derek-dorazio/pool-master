@@ -57,9 +57,11 @@ function renderManageContestsPage() {
 
 function primeCommonMocks({
   isRootAdmin = false,
+  leagueActive = true,
   leagueRole = 'COMMISSIONER',
 }: {
   isRootAdmin?: boolean;
+  leagueActive?: boolean;
   leagueRole?: 'COMMISSIONER' | 'MEMBER';
 } = {}) {
   getCurrentUserMock.mockResolvedValue({
@@ -83,7 +85,7 @@ function primeCommonMocks({
         leagueCode: 'BIGDAWGS',
         name: 'Big Dawgs',
         description: 'A commissioner-run league',
-        isActive: true,
+        isActive: leagueActive,
         iconKey: 'TROPHY',
         memberCount: 12,
         activeContestCount: 2,
@@ -196,5 +198,81 @@ describe('ManageContestsPage', () => {
       'href',
       '/league/BIGDAWGS',
     );
+  });
+
+  it('offers a commissioner of an active league "Create first contest" when the league has none', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({ data: { contests: [] } });
+
+    renderManageContestsPage();
+
+    expect(await screen.findByTestId('manage-contests-empty')).toHaveTextContent('No contests yet');
+    expect(screen.getByRole('link', { name: 'Create first contest' })).toHaveAttribute(
+      'href',
+      '/league/BIGDAWGS/contests/new',
+    );
+    expect(screen.getByTestId('manage-contests-create-link')).toBeInTheDocument();
+  });
+
+  it('marks an inactive league and offers no way to create a contest in it', async () => {
+    primeCommonMocks({ leagueActive: false });
+    listContestsMock.mockResolvedValue({ data: { contests: [] } });
+
+    renderManageContestsPage();
+
+    expect(await screen.findByTestId('manage-contests-empty')).toBeInTheDocument();
+    expect(screen.getByText('League inactive')).toBeInTheDocument();
+    expect(screen.queryByTestId('manage-contests-create-link')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Create first contest' })).not.toBeInTheDocument();
+  });
+
+  it('says there are no active contests when the league\'s only contest is cancelled, and counts its missing entries as 0', async () => {
+    primeCommonMocks({ isRootAdmin: true, leagueRole: 'MEMBER' });
+    listContestsMock.mockResolvedValue({
+      data: {
+        contests: [{
+          id: 'contest-2',
+          name: 'Players Championship',
+          status: 'CANCELLED',
+          contestType: 'ROSTER',
+          selectionType: 'TIERED',
+          scoringEngine: 'STROKE_PLAY',
+          leagueId: 'league-1',
+          sport: 'GOLF',
+        }],
+      },
+    });
+
+    renderManageContestsPage();
+
+    expect(await screen.findByTestId('manage-contests-row-contest-2')).toHaveTextContent('0 entries');
+    expect(screen.getByText('No active contests right now.')).toBeInTheDocument();
+  });
+
+  it('shows an error instead of an empty list when the contest list fails to load', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } },
+      status: 500,
+    });
+
+    renderManageContestsPage();
+
+    expect(await screen.findByText("We couldn't load contests for this league.")).toBeInTheDocument();
+    expect(screen.queryByTestId('manage-contests-empty')).not.toBeInTheDocument();
+  });
+
+  it('shows the league load error with a way back when the league cannot be read', async () => {
+    primeCommonMocks();
+    getLeagueByCodeMock.mockResolvedValue({
+      error: { error: { code: 'LEAGUE_NOT_FOUND', message: 'No league' } },
+      status: 404,
+    });
+
+    renderManageContestsPage();
+
+    expect(await screen.findByRole('link', { name: 'Back to welcome' })).toHaveAttribute('href', '/welcome');
+    expect(screen.queryByTestId('manage-contests-page')).not.toBeInTheDocument();
+    expect(listContestsMock).not.toHaveBeenCalled();
   });
 });

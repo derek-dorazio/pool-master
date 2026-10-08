@@ -139,6 +139,7 @@ function renderContestEntryPage() {
 
 function primeCommonMocks(overrides?: {
   contestStatus?: 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED';
+  sportEventId?: string;
 }) {
   getContestMock.mockResolvedValue({
     data: {
@@ -150,6 +151,7 @@ function primeCommonMocks(overrides?: {
         contestType: 'ROSTER',
         selectionType: 'TIERED',
         scoringEngine: 'STROKE_PLAY',
+        ...(overrides?.sportEventId ? { sportEventId: overrides.sportEventId } : {}),
       },
     },
   });
@@ -282,6 +284,7 @@ describe('ContestEntryPage', () => {
   afterEach(() => {
     getContestMock.mockReset();
     getDraftStateMock.mockReset();
+    getEventMock.mockReset();
     getLeagueMock.mockReset();
     listContestEntriesMock.mockReset();
     submitContestSelectionMock.mockReset();
@@ -620,6 +623,42 @@ describe('ContestEntryPage', () => {
     expect(screen.queryByText(replaced)).not.toBeInTheDocument();
   });
 
+  // The server refuses picks once the event's scheduled start passes, even while the contest
+  // still reads OPEN because the In Progress update is late.
+  it('shows a read-only saved lineup once the event\'s scheduled start has passed, though the contest still reads OPEN', async () => {
+    primeCommonMocks({ sportEventId: 'event-1' });
+    getEventMock.mockResolvedValue({
+      data: {
+        event: {
+          id: 'event-1',
+          startDate: new Date(Date.now() - 60 * 60_000).toISOString(),
+          endDate: new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString(),
+        },
+      },
+    });
+    getDraftStateMock.mockResolvedValue({
+      data: buildDraftState([
+        {
+          groupId: 'tier-1',
+          groupName: 'Tier 1',
+          groupNumber: 1,
+          picksFromGroup: 1,
+          selectedParticipantIds: ['sep-1'],
+          participants: [buildGolfParticipant('sep-1', 'Scottie Scheffler', 1, true)],
+        },
+      ]),
+    });
+
+    renderContestEntryPage();
+
+    await waitFor(() => expect(getEventMock).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(screen.getByTestId('contest-entry-builder-heading')).toHaveTextContent('Saved lineup detail'),
+    );
+    expect(screen.queryByTestId('contest-entry-name-input')).not.toBeInTheDocument();
+    expect(screen.queryByText('Editable until the event starts')).not.toBeInTheDocument();
+  });
+
   it('shows the entry load failure state when the draft-state query fails', async () => {
     primeCommonMocks();
     getDraftStateMock.mockRejectedValue(new Error('Draft state unavailable'));
@@ -747,6 +786,74 @@ describe('ContestEntryPage', () => {
 
     selectedParticipantIds = ['sep-1'];
     deferredSelection.resolve({ data: buildDraftState(buildSelectionGroups()) });
+  });
+
+  it('keeps the member on the entry page with the refusal shown when saving the finished entry is refused', async () => {
+    primeCommonMocks();
+    getDraftStateMock.mockResolvedValue({
+      data: buildDraftState([
+        {
+          groupId: 'tier-1',
+          groupName: 'Tier 1',
+          groupNumber: 1,
+          picksFromGroup: 1,
+          selectedParticipantIds: ['sep-1'],
+          participants: [buildGolfParticipant('sep-1', 'Scottie Scheffler', 1, true)],
+        },
+      ]),
+    });
+    updateContestEntryMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_ENTRY_LOCKED', message: 'Entries for this contest are closed.' } },
+      status: 409,
+    });
+
+    renderContestEntryPage();
+
+    fireEvent.change(await screen.findByTestId('contest-entry-tiebreaker-select'), {
+      target: { value: '-12' },
+    });
+    fireEvent.click(screen.getByTestId('contest-entry-submit'));
+
+    expect(await screen.findByText('Entries for this contest are closed.')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-page')).not.toBeInTheDocument();
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'contestEntry.saveDetails.failed' }),
+      expect.any(String),
+    );
+    expect(mockLogger.error).not.toHaveBeenCalled();
+  });
+
+  it('puts a refused pick back and shows the refusal, logged as a rejection rather than a crash', async () => {
+    primeCommonMocks();
+    getDraftStateMock.mockResolvedValue({
+      data: buildDraftState([
+        {
+          groupId: 'tier-1',
+          groupName: 'Tier 1',
+          groupNumber: 1,
+          picksFromGroup: 1,
+          selectedParticipantIds: [],
+          participants: [buildGolfParticipant('sep-1', 'Scottie Scheffler', 1, false)],
+        },
+      ]),
+    });
+    submitContestSelectionMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_ENTRY_LOCKED', message: 'Entries for this contest are closed.' } },
+      status: 409,
+    });
+
+    renderContestEntryPage();
+
+    const scottie = await screen.findByTestId('contest-entry-participant-sep-1');
+    fireEvent.click(scottie);
+
+    expect(await screen.findByText('Entries for this contest are closed.')).toBeInTheDocument();
+    expect(within(screen.getByTestId('contest-entry-participant-sep-1')).getByRole('checkbox')).not.toBeChecked();
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'contestEntry.selection.failed' }),
+      expect.any(String),
+    );
+    expect(mockLogger.error).not.toHaveBeenCalled();
   });
 });
 

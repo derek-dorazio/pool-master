@@ -13,7 +13,7 @@ export type ContestSchedule = {
  * scheduled start and end.
  *
  * The contest's own times are lifecycle stamps: `startsAt` is written when the event goes live,
- * `endsAt` when the contest settles or a commissioner extends its deadline. Before then they are
+ * `endsAt` when the contest settles. Before then they are
  * empty, which is the whole time a member is deciding whether to enter, so the event's schedule
  * fills in. The event's start is also the entry cutoff (#430, #431). The event is cached whole
  * under its shared key; contests on the same event share one read.

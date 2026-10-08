@@ -33,6 +33,7 @@ import {
 import { ContestStatusBadge } from './contest-status-badge';
 import { OpenContestAction } from './open-contest-action';
 import {
+  areContestEntriesOpen,
   CONTEST_POLL_INTERVAL_MS,
   contestRefetchInterval,
   contestStatusLabel,
@@ -288,9 +289,9 @@ export function ContestDetailPage() {
   const totalCount = entries.length;
   const myCount = myEntries.length;
   const visibleEntries = myOnly ? myEntries : entries;
-  const isOpen = contest.status === ContestStatus.OPEN;
+  const entriesOpen = areContestEntriesOpen(contest.status, schedule?.startsAt);
   const isDraft = contest.status === ContestStatus.DRAFT;
-  const canCreateEntry = isOpen && Boolean(myTeamId);
+  const canCreateEntry = entriesOpen && Boolean(myTeamId);
   // Only commissioners can read a draft at all (#117); the check keeps the release action theirs
   // in the UI too.
   const canOpenToLeague = isDraft && (viewer.isCommissioner || viewer.isRootAdmin);
@@ -421,7 +422,8 @@ export function ContestDetailPage() {
               <Button
                 data-testid="contest-board-create-entry"
                 disabled={enterContestMutation.isPending}
-                onClick={() => void enterContestMutation.mutateAsync()}
+                // The mutation's own error state shows a refusal.
+                onClick={() => void enterContestMutation.mutateAsync().catch(() => undefined)}
               >
                 {enterContestMutation.isPending ? 'Creating...' : 'Create entry'}
               </Button>
@@ -458,7 +460,7 @@ export function ContestDetailPage() {
               const isOwnEntry = myTeamId !== null && entry.squadId === myTeamId;
               const isExpanded = expandedEntryId === entry.id;
               const isRenaming = renameEntryId === entry.id;
-              const canRename = isOwnEntry && isOpen;
+              const canRename = isOwnEntry && entriesOpen;
               const showPicks = isExpanded && (picksRevealed || isOwnEntry);
               const showHiddenPlaceholder = isExpanded && !picksRevealed && !isOwnEntry;
 
@@ -502,7 +504,7 @@ export function ContestDetailPage() {
                       >
                         {isExpanded ? 'Hide' : 'View'}
                       </Button>
-                      {isOwnEntry && isOpen ? (
+                      {isOwnEntry && entriesOpen ? (
                         <Button
                           aria-label={`Edit ${entry.name}`}
                           asChild
@@ -547,7 +549,7 @@ export function ContestDetailPage() {
                               void renameEntryMutation.mutateAsync({
                                 entryId: entry.id,
                                 name: renameDraft.trim(),
-                              })
+                              }).catch(() => undefined)
                             }
                           >
                             {renameEntryMutation.isPending ? 'Saving...' : 'Save name'}

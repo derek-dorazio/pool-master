@@ -290,7 +290,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(getEventMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'event-1' } }));
   });
 
-  it('shows the contest\'s own end once a commissioner has extended it, over the event\'s scheduled end', async () => {
+  it('shows the contest\'s own end once it has one, over the event\'s scheduled end', async () => {
     primeMocks({ sportEventId: 'event-1', endsAt: '2026-04-14T18:00:00.000Z' });
     getEventMock.mockResolvedValue({
       data: {
@@ -551,6 +551,59 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(screen.queryByTestId('contest-settled-note')).not.toBeInTheDocument();
   });
 
+  // The server refuses new entries, renames and pick changes once the event's scheduled start
+  // passes, even while the contest still reads OPEN because the In Progress update is late.
+  it('offers no create, rename or edit on an OPEN contest once its event\'s scheduled start has passed', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      sportEventId: 'event-1',
+      entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })],
+    });
+    getEventMock.mockResolvedValue({
+      data: {
+        event: {
+          id: 'event-1',
+          startDate: new Date(Date.now() - 60 * 60_000).toISOString(),
+          endDate: new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString(),
+        },
+      },
+    });
+
+    renderContestBoard();
+
+    await screen.findByTestId('contest-detail-starts');
+    await screen.findByTestId('contest-board-total-count');
+    expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-rename-entry-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-edit-entry-entry-1')).not.toBeInTheDocument();
+  });
+
+  it('still offers create, rename and edit on an OPEN contest whose event starts later', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      sportEventId: 'event-1',
+      entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })],
+    });
+    getEventMock.mockResolvedValue({
+      data: {
+        event: {
+          id: 'event-1',
+          startDate: new Date(Date.now() + 60 * 60_000).toISOString(),
+          endDate: new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString(),
+        },
+      },
+    });
+
+    renderContestBoard();
+
+    await screen.findByTestId('contest-detail-starts');
+    expect(await screen.findByTestId('contest-board-create-entry')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-board-rename-entry-1')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-board-edit-entry-entry-1')).toBeInTheDocument();
+  });
+
   it('hides the create-entry button when the contest is not OPEN', async () => {
     primeMocks({
       contestStatus: 'LOCKED',
@@ -644,5 +697,98 @@ describe('ContestDetailPage (Contest Board)', () => {
     await screen.findByRole('heading', { name: 'Masters Pick 6' });
     await waitFor(() => expect(getLeagueMock).toHaveBeenCalled());
     expect(screen.queryByTestId('contest-open-to-league')).not.toBeInTheDocument();
+  });
+
+  it('shows why a new entry was refused and stays on the board', async () => {
+    primeMocks({ contestStatus: 'OPEN', entries: [] });
+    enterContestMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_ENTRY_LIMIT_REACHED', message: 'Your team already has the most entries allowed.' } },
+      status: 409,
+    });
+
+    renderContestBoard();
+
+    fireEvent.click(await screen.findByTestId('contest-board-create-entry'));
+
+    expect(await screen.findByTestId('contest-board-create-error')).toHaveTextContent(
+      'Your team already has the most entries allowed.',
+    );
+    expect(screen.queryByTestId('contest-entry-page')).not.toBeInTheDocument();
+  });
+
+  it('keeps the rename open with the refusal shown when the name is refused, and restores it on cancel', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })],
+    });
+    updateContestEntryMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_ENTRY_NAME_TAKEN', message: 'Your team already has an entry with that name.' } },
+      status: 409,
+    });
+
+    renderContestBoard();
+
+    fireEvent.click(await screen.findByTestId('contest-board-rename-entry-1'));
+    fireEvent.change(await screen.findByTestId('contest-board-rename-input-entry-1'), {
+      target: { value: 'Birdie Hunters Entry 2' },
+    });
+    fireEvent.click(screen.getByTestId('contest-board-rename-save-entry-1'));
+
+    expect(await screen.findByText('Your team already has an entry with that name.')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-board-rename-input-entry-1')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-board-rename-cancel-entry-1'));
+    expect(screen.queryByTestId('contest-board-rename-input-entry-1')).not.toBeInTheDocument();
+    expect(screen.queryByText('Your team already has an entry with that name.')).not.toBeInTheDocument();
+  });
+
+  it('shows the load error when the contest cannot be read', async () => {
+    primeMocks();
+    getContestMock.mockResolvedValue({ error: { error: { code: 'CONTEST_NOT_FOUND', message: 'No contest' } }, status: 404 });
+
+    renderContestBoard();
+
+    expect(await screen.findByText("We couldn't load this contest.")).toBeInTheDocument();
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'contestBoard.contest.failed' }),
+      expect.any(String),
+    );
+  });
+
+  it('shows an entries error, not an empty board, when the entries cannot be read', async () => {
+    primeMocks();
+    listContestEntriesMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } }, status: 500 });
+
+    renderContestBoard();
+
+    expect(await screen.findByText("We couldn't load the current contest entries.")).toBeInTheDocument();
+    expect(screen.queryByText('No contest entries exist yet.')).not.toBeInTheDocument();
+  });
+
+  it('says the team has no entry when "My entries only" is on and it has none', async () => {
+    primeMocks({
+      entries: [buildEntry({ id: 'entry-3', squadId: 'squad-other', squadName: 'Other Team', name: 'Other Team Entry 1' })],
+    });
+
+    renderContestBoard();
+
+    fireEvent.click(await screen.findByTestId('contest-board-my-only-toggle'));
+
+    expect(await screen.findByText('Your team does not have an entry in this contest yet.')).toBeInTheDocument();
+  });
+
+  it('says an own entry has no picks yet when it is opened before any golfer is chosen', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1', participants: [] })],
+    });
+
+    renderContestBoard();
+
+    fireEvent.click(await screen.findByTestId('contest-board-toggle-entry-1'));
+
+    expect(await screen.findByText('This entry does not have any picked participants yet.')).toBeInTheDocument();
   });
 });
