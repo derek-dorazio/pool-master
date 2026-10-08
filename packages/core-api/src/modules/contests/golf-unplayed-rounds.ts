@@ -6,9 +6,10 @@
  * Which rounds are unplayed:
  * - a golfer out of the event (cut, withdrawn or disqualified, or removed from the field):
  *   every scheduled round they did not finish, including the one they withdrew during;
- * - a golfer still in it with no score at all: every round the field has moved past (a later
- *   round has started, or the event is complete). A golfer still in it with a score keeps
- *   their live to-par untouched, so a round suspended overnight is never penalised.
+ * - once the event is complete, every golfer the same way: there is nothing left to wait for;
+ * - mid-event, a golfer still in it with no score at all: every round the field has moved past
+ *   (a later round has started). A golfer still in it with a score keeps their live to-par
+ *   untouched until the event completes, so a round suspended overnight is never penalised.
  *
  * A round's par is the event's `roundsPar` when an admin set one, else strokes minus to-par
  * on any golfer's finished round of that number. With neither, the round is not penalised
@@ -37,11 +38,16 @@ export interface GolfContestScore {
   unplayedRoundNumbers: number[];
 }
 
-/** A round played to the end: completed, or completed and then cut on. */
+/**
+ * A round played to the end: completed, completed and then cut on, or all 18 holes scored
+ * while the status has not caught up (the event can complete before the last group's round
+ * flips to COMPLETED).
+ */
 function isRoundFinished(round: ParticipantRoundView): boolean {
   return round.golf !== null && (
     round.round.status === ParticipantRoundStatus.COMPLETED
     || round.round.status === ParticipantRoundStatus.MISSED_CUT
+    || (round.round.status === ParticipantRoundStatus.IN_PROGRESS && round.golf.thru === 18)
   );
 }
 
@@ -106,10 +112,13 @@ export function scoreGolferForContest(
     return { unplayedRoundNumbers, penalty };
   };
 
-  // Out of the event: the rounds they finished, then 80 for every other scheduled round. A
-  // round they withdrew partway through is dropped for its 80.
-  if (isOutOfEvent(row)) {
-    const finished = new Map(row.rounds.filter(isRoundFinished).map((round) => [round.round.roundNumber, round]));
+  const finished = new Map(row.rounds.filter(isRoundFinished).map((round) => [round.round.roundNumber, round]));
+  const missesScheduledRound = context.scheduledRoundNumbers.some((roundNumber) => !finished.has(roundNumber));
+
+  // Out of the event, or the event is over and they did not finish every round: the rounds
+  // they finished, then 80 for every other scheduled round. A round they withdrew partway
+  // through is dropped for its 80.
+  if (isOutOfEvent(row) || (context.eventComplete && missesScheduledRound)) {
     const { unplayedRoundNumbers, penalty } = scoreUnplayed(
       context.scheduledRoundNumbers.filter((roundNumber) => !finished.has(roundNumber)),
     );
@@ -120,17 +129,15 @@ export function scoreGolferForContest(
     return { score: hasScore ? played + penalty : null, unplayedRoundNumbers };
   }
 
-  // Still in it with a score: their live event to-par, untouched.
+  // Still in it with a score (or done with every round): their live event to-par, untouched.
   const live = row.standing?.golf?.eventScoreToPar ?? null;
   if (live !== null || row.rounds.length > 0) {
     return { score: live, unplayedRoundNumbers: [] };
   }
 
-  // Still in it with no score at all: 80 for each round the field has moved past.
+  // Mid-event, still in it with no score at all: 80 for each round the field has moved past.
   const { unplayedRoundNumbers, penalty } = scoreUnplayed(
-    context.scheduledRoundNumbers.filter(
-      (roundNumber) => context.eventComplete || roundNumber < context.highestStartedRound,
-    ),
+    context.scheduledRoundNumbers.filter((roundNumber) => roundNumber < context.highestStartedRound),
   );
   return { score: unplayedRoundNumbers.length > 0 ? penalty : null, unplayedRoundNumbers };
 }

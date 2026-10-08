@@ -122,9 +122,10 @@ choice of penalty is not built yet).
 - **Withdrawn or disqualified, or removed from the field:** every scheduled round they did not
   finish, including the one they withdrew during. A golfer who withdrew before teeing off
   scores 80 in every round.
-- **No score at all while still in the field:** each round the field has moved past (a later
-  round has started, or the event is complete). A golfer still in the event with any score
-  keeps their live score, so play suspended overnight is never penalised.
+- **Once the event is complete:** every round any golfer did not finish, whatever their status.
+- **Mid-event, no score at all while still in the field:** each round the field has moved past
+  (a later round has started). A golfer still in the event with any score keeps their live
+  score until it completes, so play suspended overnight is never penalised.
 
 Contests rank on to-par, so a round's 80 counts as **80 minus that round's par**: +8 on a par 72.
 Par is the event's *par per round* when an admin set it, otherwise strokes minus to-par on any
