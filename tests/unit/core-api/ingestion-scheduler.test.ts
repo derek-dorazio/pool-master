@@ -64,7 +64,6 @@ function createMockRegistry(
   jest.spyOn(registry, 'getProvider').mockReturnValue(provider);
   jest.spyOn(registry, 'getSupportedSports').mockReturnValue(supportedSports);
   jest.spyOn(registry, 'getAllProviders').mockReturnValue(provider ? [provider] : []);
-  jest.spyOn(registry, 'updateHealth').mockImplementation(() => undefined);
   return registry;
 }
 
@@ -925,13 +924,6 @@ describe('IngestionScheduler', () => {
 
       await scheduler['runHealthChecks']();
 
-      expect(registry.updateHealth).toHaveBeenCalledWith('mock-provider', {
-        providerId: 'mock-provider',
-        status: 'DOWN',
-        errorRateLastHour: 1,
-        latencyMsP95: 0,
-        message: 'Health check failed: health endpoint timeout',
-      });
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({
           providerId: 'mock-provider',
@@ -1133,7 +1125,6 @@ describe('IngestionScheduler provider health checks', () => {
     scheduler.stop();
 
     expect(provider.healthCheck).not.toHaveBeenCalled();
-    expect(registry.updateHealth).not.toHaveBeenCalled();
   });
 
   it('checks provider health on the configured interval while health checks are on', async () => {
@@ -1155,7 +1146,6 @@ describe('IngestionScheduler provider health checks', () => {
 
     // Once at start, then every five minutes: at 5 and 10 minutes.
     expect(provider.healthCheck).toHaveBeenCalledTimes(3);
-    expect(registry.updateHealth).toHaveBeenCalledWith('mock-provider', expect.objectContaining({ status: 'HEALTHY' }));
   });
 });
 

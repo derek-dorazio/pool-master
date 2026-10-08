@@ -36,8 +36,6 @@ export type {
   Contest,
   ContestEntry,
   DomainEntity,
-  DraftPickHistory,
-  DraftSession,
   InjuryStatus,
   IntermediatePrize,
   League,

@@ -313,20 +313,12 @@ export class IngestionScheduler {
     for (const provider of providers) {
       try {
         const health = await provider.healthCheck();
-        this.registry.updateHealth(provider.providerId, health);
         this.logger?.info({
           providerId: provider.providerId,
           status: health.status,
         }, 'Completed provider health check');
       } catch (error) {
         const failure = toIngestionFailureLog(error);
-        this.registry.updateHealth(provider.providerId, {
-          providerId: provider.providerId,
-          status: 'DOWN',
-          errorRateLastHour: 1,
-          latencyMsP95: 0,
-          message: `Health check failed: ${failure.errorMessage}`,
-        });
         this.logger?.error({
           providerId: provider.providerId,
           ...failure,

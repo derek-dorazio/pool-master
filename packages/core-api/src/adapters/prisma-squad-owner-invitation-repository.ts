@@ -88,9 +88,6 @@ export class PrismaSquadOwnerInvitationRepository
     return mapToInvitation(row);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.squadOwnerInvitation.delete({ where: { id } });
-  }
 }
 
 function mapToInvitation(row: PrismaSquadOwnerInvitation): SquadOwnerInvitation {

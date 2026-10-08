@@ -136,9 +136,6 @@ export class PrismaUserRepository implements UserRepository {
     return mapToUser(row);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.user.delete({ where: { id } });
-  }
 }
 
 function buildUserWhere(filters: UserSearchFilters): Prisma.UserWhereInput {

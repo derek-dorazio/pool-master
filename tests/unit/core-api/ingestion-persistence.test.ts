@@ -215,7 +215,7 @@ describe('IngestionPersistence', () => {
       ],
     };
 
-    await expect(persistence.persistEventDetail(detail)).resolves.toEqual({
+    await expect(persistence.persistEventDetailWithDiagnostics(detail).then((result) => result.value)).resolves.toEqual({
       eventsPersisted: 1,
       participantsPersisted: 1,
       sportEventParticipantsPersisted: 1,
@@ -393,7 +393,7 @@ describe('IngestionPersistence', () => {
       ],
     };
 
-    await expect(persistence.persistEventDetail(detail)).resolves.toEqual({
+    await expect(persistence.persistEventDetailWithDiagnostics(detail).then((result) => result.value)).resolves.toEqual({
       eventsPersisted: 1,
       participantsPersisted: 1,
       sportEventParticipantsPersisted: 1,
@@ -459,7 +459,7 @@ describe('IngestionPersistence', () => {
     };
     const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
 
-    await persistence.persistEvents([buildInProgressEvent()]);
+    await persistence.persistEventsWithDiagnostics([buildInProgressEvent()]);
 
     const [updateArg] = prisma.sportEvent.update.mock.calls[0];
     expect(updateArg.data).not.toHaveProperty('status');

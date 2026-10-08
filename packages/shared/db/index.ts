@@ -17,7 +17,6 @@ export type {
   ContestEntryRepository,
   ContestEntryWithSquad,
   ContestRepository,
-  DraftSessionRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,

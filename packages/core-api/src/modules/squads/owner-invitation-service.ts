@@ -51,10 +51,6 @@ export class SquadOwnerInvitationService {
     private readonly prisma: PrismaClient,
   ) {}
 
-  async listInvitations(leagueId: string, actorUserId: string): Promise<TeamOwnerInvitationDto[]> {
-    return this.listInvitationsForViewer(leagueId, actorUserId, false);
-  }
-
   async listInvitationsForViewer(
     leagueId: string,
     actorUserId: string,

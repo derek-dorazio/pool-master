@@ -172,8 +172,6 @@ export class InMemorySportEvents {
     return {
       findById: async (id) => this.participants.find((row) => row.id === id) ?? null,
       findByIds: async (ids) => this.participants.filter((row) => ids.includes(row.id)),
-      findBySport: async (sportId) => this.participants.filter((row) => row.sportId === sportId),
-      findByExternalId: async () => null,
       search: async () => [...this.participants],
       findMatching: async (sportId, query) => this.participants.filter((row) => (
         row.sportId === sportId
@@ -182,18 +180,14 @@ export class InMemorySportEvents {
         && (query.name === undefined || row.name.toLowerCase() === query.name.toLowerCase())
       )),
       create: async () => { throw new Error('not used'); },
-      createMany: async () => 0,
       update: async () => { throw new Error('not used'); },
     };
   }
 
   mappingRepo(): ParticipantProviderMappingRepository {
     return {
-      findByProvider: async (providerId, externalId) => this.mappings.find((row) => row.providerId === providerId && row.externalId === externalId) ?? null,
       findByParticipant: async (participantId) => this.mappings.filter((row) => row.participantId === participantId),
-      findByParticipants: async (ids) => this.mappings.filter((row) => ids.includes(row.participantId)),
       findByProviderExternalIds: async (providerId, externalIds) => this.mappings.filter((row) => row.providerId === providerId && externalIds.includes(row.externalId)),
-      create: async () => { throw new Error('not used'); },
       bind: async (mapping) => {
         this.mappings = this.mappings.filter((row) => !(row.providerId === mapping.providerId && row.externalId === mapping.externalId));
         const row = stamp({ id: this.id('mapping'), ...mapping });

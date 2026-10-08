@@ -152,7 +152,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     update: async () => {
       throw new Error('in-memory league world does not model user updates');
     },
-    delete: async (id) => users.remove(id),
   };
 
   const leagueRepo: LeagueRepository = {
@@ -172,7 +171,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     },
     create: async (row) => leagues.insert(row),
     update: async (id, updates) => leagues.patch(id, updates),
-    delete: async (id) => leagues.remove(id),
   };
 
   const membershipRepo: LeagueMembershipRepository = {
@@ -196,7 +194,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       return memberships.insert(row);
     },
     update: async (id, updates) => memberships.patch(id, updates),
-    delete: async (id) => memberships.remove(id),
   };
 
   const squadRepo: SquadRepository = {
@@ -207,7 +204,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       one(squads.where((row) => row.leagueId === leagueId && row.name === name)),
     create: async (row) => squads.insert(row),
     update: async (id, updates) => squads.patch(id, updates),
-    delete: async (id) => squads.remove(id),
   };
 
   const squadMembershipRepo: SquadMembershipRepository = {
@@ -226,7 +222,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       return squadMemberships.insert(row);
     },
     update: async (id, updates) => squadMemberships.patch(id, updates),
-    delete: async (id) => squadMemberships.remove(id),
   };
 
   const leagueInvitationRepo: LeagueInvitationRepository = {
@@ -238,7 +233,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
         row.leagueId === leagueId && row.email === email && row.status === InvitationStatus.PENDING)),
     create: async (row) => leagueInvitations.insert(row),
     update: async (id, updates) => leagueInvitations.patch(id, updates),
-    delete: async (id) => leagueInvitations.remove(id),
   };
 
   const ownerInvitationRepo: SquadOwnerInvitationRepository = {
@@ -250,7 +244,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
         row.leagueId === leagueId && row.email === email && row.status === SquadOwnerInvitationStatus.PENDING)),
     create: async (row) => ownerInvitations.insert(row),
     update: async (id, updates) => ownerInvitations.patch(id, updates),
-    delete: async (id) => ownerInvitations.remove(id),
   };
 
   let userSequence = 0;

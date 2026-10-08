@@ -9,11 +9,6 @@ import type { ContestEntry, ContestEntryStatus } from '@poolmaster/shared/domain
 export class PrismaContestEntryRepository implements ContestEntryRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findById(id: string): Promise<ContestEntry | null> {
-    const row = await this.prisma.contestEntry.findUnique({ where: { id } });
-    return row ? mapToEntry(row) : null;
-  }
-
   async findByIdWithSquad(id: string): Promise<ContestEntryWithSquad | null> {
     const row = await this.prisma.contestEntry.findUnique({
       where: { id },

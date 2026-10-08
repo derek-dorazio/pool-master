@@ -623,12 +623,12 @@ describe('mock contest feed provider event-first verification', () => {
       startDate: detail!.startDate,
     });
 
-    const persistDetailResult = await persistence.persistEventDetail(detail!);
+    const persistDetailResult = (await persistence.persistEventDetailWithDiagnostics(detail!)).value;
     expect(persistDetailResult.eventsPersisted).toBe(1);
     expect(persistDetailResult.participantsPersisted).toBe(detail?.participants.length);
     expect(persistDetailResult.sportEventParticipantsPersisted).toBe(detail?.participants.length);
 
-    await expect(persistence.persistEventDetail(detail!)).resolves.toEqual({
+    await expect(persistence.persistEventDetailWithDiagnostics(detail!).then((result) => result.value)).resolves.toEqual({
       eventsPersisted: 1,
       participantsPersisted: detail?.participants.length,
       sportEventParticipantsPersisted: detail?.participants.length,
@@ -700,7 +700,7 @@ describe('mock contest feed provider event-first verification', () => {
     expect(detail!.startDate.toISOString()).not.toBe(adminStart.toISOString());
     expect(detail!.name).not.toBe('Admin Spring Classic');
 
-    const result = await persistence.persistEventDetail(detail!);
+    const result = (await persistence.persistEventDetailWithDiagnostics(detail!)).value;
 
     expect(result.sportEventParticipantsPersisted).toBe(detail!.participants.length);
     const after = await prisma.sportEvent.findUniqueOrThrow({ where: { id: linked.id } });
@@ -1131,7 +1131,7 @@ describe('mock contest feed provider event-first verification', () => {
     const persistence = new IngestionPersistence(prisma);
     const scheduler = new IngestionScheduler(registry, {
       onEventDetail: async (detail) => {
-        await persistence.persistEventDetail(detail);
+        await persistence.persistEventDetailWithDiagnostics(detail);
       },
       onLiveScores: async () => emptyLiveScorePersistenceResult(),
     });

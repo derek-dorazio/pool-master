@@ -55,9 +55,6 @@ export class PrismaSquadRepository implements SquadRepository {
     return mapToSquad(row);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.squad.delete({ where: { id } });
-  }
 }
 
 function mapToSquad(row: PrismaSquad): Squad {

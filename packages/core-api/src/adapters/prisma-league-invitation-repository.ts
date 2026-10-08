@@ -73,9 +73,6 @@ export class PrismaLeagueInvitationRepository implements LeagueInvitationReposit
     return mapToInvitation(row);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.leagueInvitation.delete({ where: { id } });
-  }
 }
 
 function mapToInvitation(row: PrismaLeagueInvitation): LeagueInvitation {

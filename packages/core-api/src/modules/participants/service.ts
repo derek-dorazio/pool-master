@@ -68,10 +68,6 @@ export class ParticipantService {
     return this.participantRepo.findById(id);
   }
 
-  async findBySport(sportId: string): Promise<Participant[]> {
-    return this.participantRepo.findBySport(sportId);
-  }
-
   /** The whole result for the query and filters — narrowed, never paged (§16). */
   async search(input: SearchParticipantsInput): Promise<Participant[]> {
     const participants = await this.participantRepo.search(input.query ?? '', input.filters);
@@ -199,13 +195,6 @@ export class ParticipantService {
 
   async getProviderMappings(participantId: string): Promise<ParticipantProviderMapping[]> {
     return this.providerMappingRepo.findByParticipant(participantId);
-  }
-
-  async findByProvider(
-    providerId: string,
-    externalId: string,
-  ): Promise<Participant | null> {
-    return this.participantRepo.findByExternalId(providerId, externalId);
   }
 
   /**

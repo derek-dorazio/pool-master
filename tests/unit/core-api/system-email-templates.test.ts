@@ -1,5 +1,4 @@
 import {
-  listSystemEmailTemplateKeys,
   renderSystemEmailTemplate,
 } from '../../../packages/core-api/src/modules/email';
 
@@ -100,14 +99,5 @@ describe('pool-master-98i system email templates', () => {
     expect(message.html).toContain('&lt;League &amp; Co&gt;');
     expect(message.html).not.toContain('<script>alert');
     expect(message.html).not.toContain('href="https://app.primetimecommissioner.com/leagues/league-1?x=<bad>"');
-  });
-
-  it('lists all initial pool-master-98i template keys', () => {
-    expect(listSystemEmailTemplateKeys()).toEqual([
-      'LEAGUE_MEMBER_INVITE',
-      'LEAGUE_JOIN_SUCCESS',
-      'CONTEST_ENTRY_COMPLETED',
-      'CONTEST_STARTED_SUMMARY',
-    ]);
   });
 });

@@ -389,8 +389,8 @@ describe('SquadOwnerInvitationService — listing and revoking', () => {
     seedOwnerInvitation(setup, { email: 'a@example.com', squadId: setup.ownerSquad.id });
     seedOwnerInvitation(setup, { email: 'b@example.com', squadId: setup.commissionerSquad.id });
 
-    const forCommissioner = await setup.service.listInvitations(setup.league.id, setup.commissioner.id);
-    const forOwner = await setup.service.listInvitations(setup.league.id, setup.owner.id);
+    const forCommissioner = await setup.service.listInvitationsForViewer(setup.league.id, setup.commissioner.id, false);
+    const forOwner = await setup.service.listInvitationsForViewer(setup.league.id, setup.owner.id, false);
 
     expect(forCommissioner.map((invitation) => invitation.email).sort()).toEqual(['a@example.com', 'b@example.com']);
     expect(forOwner.map((invitation) => invitation.email)).toEqual(['a@example.com']);
@@ -410,7 +410,7 @@ describe('SquadOwnerInvitationService — listing and revoking', () => {
     seedOwnerInvitation(setup, { squadId: doomed.id });
     setup.world.tables.squads.remove(doomed.id);
 
-    await expect(setup.service.listInvitations(setup.league.id, setup.commissioner.id))
+    await expect(setup.service.listInvitationsForViewer(setup.league.id, setup.commissioner.id, false))
       .rejects.toMatchObject({ code: 'SQUAD_OWNER_INVITATION_TARGET_MISSING' });
   });
 

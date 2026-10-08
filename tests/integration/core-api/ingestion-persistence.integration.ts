@@ -94,7 +94,7 @@ describe('IngestionPersistence', () => {
       startDate: detail.startDate,
     });
 
-    const result = await persistence.persistEventDetail(detail);
+    const result = (await persistence.persistEventDetailWithDiagnostics(detail)).value;
 
     expect(result).toMatchObject({
       eventsPersisted: 1,
@@ -162,7 +162,7 @@ describe('IngestionPersistence', () => {
       startDate: detail.startDate,
     });
 
-    await persistence.persistEventDetail(detail);
+    await persistence.persistEventDetailWithDiagnostics(detail);
 
     const rows = await prisma.sportEventParticipant.findMany({
       where: { sportEventId: event.id },
@@ -210,9 +210,9 @@ describe('IngestionPersistence', () => {
       name: first.name,
       startDate: first.startDate,
     });
-    await persistence.persistEventDetail(first);
+    await persistence.persistEventDetailWithDiagnostics(first);
 
-    await persistence.persistEventDetail(
+    await persistence.persistEventDetailWithDiagnostics(
       rankedFieldDetail('integration-ranked-refresh', [rankedGolfer('ingestion-ranked-3')]),
     );
 
@@ -232,9 +232,9 @@ describe('IngestionPersistence', () => {
       name: first.name,
       startDate: first.startDate,
     });
-    await persistence.persistEventDetail(first);
+    await persistence.persistEventDetailWithDiagnostics(first);
 
-    await persistence.persistEventDetail(
+    await persistence.persistEventDetailWithDiagnostics(
       rankedFieldDetail('integration-ranked-overwrite', [rankedGolfer('ingestion-ranked-4', 5)]),
     );
 

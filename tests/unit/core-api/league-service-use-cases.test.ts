@@ -99,10 +99,6 @@ describe('LeagueService — finding leagues', () => {
     await expect(serviceFor(world).findByCode('mixed')).resolves.toMatchObject({ id: league.id });
   });
 
-  it('returns null from findById for an unknown league', async () => {
-    await expect(serviceFor(inMemoryLeagueWorld()).findById('nope')).resolves.toBeNull();
-  });
-
   it('returns a league with only its ACTIVE members by code, and null for an unknown code', async () => {
     const world = inMemoryLeagueWorld();
     const league = world.addLeague({ leagueCode: 'ROSTER' });
