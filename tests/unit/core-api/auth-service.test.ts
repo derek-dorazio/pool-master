@@ -158,16 +158,29 @@ describe('AuthService', () => {
       } satisfies Partial<AuthError>);
     });
 
-    it('rejects an inactive account with a distinct code, not INVALID_CREDENTIALS', async () => {
+    it('signs in an inactive account, because the user must be able to reactivate it (A9)', async () => {
       const passwordHash = await bcrypt.hash('Password123!', 10);
       const users = fakeUserRepo({
         findByIdentifier: jest.fn().mockResolvedValue(buildUser({ isActive: false })),
       });
       const service = new AuthService(users, asPrismaClient(createPrismaMock(passwordHash)));
 
-      await expect(service.login('user@example.com', 'Password123!')).rejects.toMatchObject({
-        code: 'ACCOUNT_INACTIVE',
-        statusCode: 403,
+      await expect(service.login('user@example.com', 'Password123!')).resolves.toMatchObject({
+        user: { id: 'user-1', isActive: false },
+        tokens: { accessToken: expect.any(String) },
+      });
+    });
+
+    it('still refuses an inactive account with the wrong password', async () => {
+      const passwordHash = await bcrypt.hash('Password123!', 10);
+      const users = fakeUserRepo({
+        findByIdentifier: jest.fn().mockResolvedValue(buildUser({ isActive: false })),
+      });
+      const service = new AuthService(users, asPrismaClient(createPrismaMock(passwordHash)));
+
+      await expect(service.login('user@example.com', 'WrongPassword123!')).rejects.toMatchObject({
+        code: 'INVALID_CREDENTIALS',
+        statusCode: 401,
       } satisfies Partial<AuthError>);
     });
 
@@ -218,7 +231,7 @@ describe('AuthService', () => {
       expect(result.accessToken).toBeTruthy();
     });
 
-    it('rejects a token whose user has gone inactive', async () => {
+    it('refreshes the session of an inactive account, which stays signed in to reactivate (A9)', async () => {
       const prisma = createPrismaMock();
       prisma.refreshToken.findUnique.mockResolvedValue({
         id: 'refresh-1',
@@ -230,10 +243,7 @@ describe('AuthService', () => {
       });
       const service = new AuthService(fakeUserRepo(), asPrismaClient(prisma));
 
-      await expect(service.refresh('refresh-token')).rejects.toMatchObject({
-        code: 'ACCOUNT_INACTIVE',
-        statusCode: 403,
-      } satisfies Partial<AuthError>);
+      await expect(service.refresh('refresh-token')).resolves.toMatchObject({ sessionId: 'session-1' });
     });
 
     it('rejects a missing token and an expired one alike', async () => {

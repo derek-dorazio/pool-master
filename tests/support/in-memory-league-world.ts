@@ -145,7 +145,8 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     },
     findByIdentifier: async (identifier) =>
       one(users.where((row) => row.email === identifier || row.username === identifier)),
-    countRootAdmins: async () => users.where((row) => row.isRootAdmin === true).length,
+    countActiveRootAdmins: async () =>
+      users.where((row) => row.isRootAdmin === true && row.isActive).length,
     create: async (row) => users.insert(row),
     // Account edits are outside the league world; no league use case writes a user.
     update: async () => {

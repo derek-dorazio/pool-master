@@ -292,7 +292,7 @@ export interface paths {
         put?: never;
         /**
          * Disable a user
-         * @description Sets isActive = false and revokes every live session, atomically. Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining root admin. Disabling yourself clears your session cookies.
+         * @description Sets isActive = false and revokes every live session, atomically, except, when you inactivate yourself, the cookie session you did it from (A9: an inactive account may still sign in to reactivate or delete itself). Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining active root admin.
          */
         post: operations["disableUser"];
         delete?: never;
@@ -9951,25 +9951,6 @@ export interface operations {
                     };
                 };
             };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
         };
     };
     refreshToken: {
@@ -10078,6 +10059,25 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -10141,6 +10141,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10154,6 +10155,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -10220,6 +10240,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10347,6 +10368,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10468,6 +10490,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10589,6 +10612,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10606,6 +10630,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -10691,6 +10734,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10818,6 +10862,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10831,6 +10876,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResetPasswordResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -10897,6 +10961,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -10910,6 +10975,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -10995,6 +11079,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -11008,6 +11093,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -11093,6 +11197,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -11106,6 +11211,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RevokeUserSessionsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -11172,6 +11296,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description `me` for the authenticated caller, or a user id. */
                 userId: string;
             };
             cookie?: never;
@@ -11194,6 +11319,25 @@ export interface operations {
                          * @enum {boolean}
                          */
                         success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
                     };
                 };
             };

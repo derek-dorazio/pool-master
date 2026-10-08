@@ -25,7 +25,24 @@ import { createUserHandlers } from './handler';
 import { UserService } from './user-service';
 import { AuthService } from '../auth/auth-service';
 
-/** Every user route can 401, 403 and 404; the rest are per-operation. */
+/**
+ * `:userId` is the caller's `me` or a user id. Anything else is a 400 here rather than reaching
+ * the database: the column is a uuid, and Postgres answered a malformed one with an error that
+ * surfaced as a 500.
+ */
+const USER_ID_PARAMS = {
+  type: 'object',
+  required: ['userId'],
+  properties: {
+    userId: {
+      type: 'string',
+      pattern: '^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$',
+      description: '`me` for the authenticated caller, or a user id.',
+    },
+  },
+} as const;
+
+/** Every user route can 401, 403 and 404, and every `:userId` route 400; the rest are per-operation. */
 function withUserErrorResponses(
   success: Record<number, unknown>,
   extra: number[] = [],
@@ -33,6 +50,7 @@ function withUserErrorResponses(
   const envelope = zodToJsonSchema(ErrorEnvelopeSchema);
   return {
     ...success,
+    400: envelope,
     401: envelope,
     403: envelope,
     404: envelope,
@@ -75,6 +93,7 @@ export function usersModule(fastify: FastifyInstance): void {
       description:
         'Returns one user as the canonical UserDto. `me` resolves to the authenticated caller. Access rule A6: the subject themselves, or a root admin. Carries no viewer context (A8).',
       operationId: 'getUser',
+      params: USER_ID_PARAMS,
       response: withUserErrorResponses({ 200: schemaRef('UserResponse') }),
     },
     handler: handlers.readUser,
@@ -87,6 +106,7 @@ export function usersModule(fastify: FastifyInstance): void {
       description:
         'Updates email, first name and last name. One operation for either caller — the subject themselves or a root admin (A6). The email must be unique across account emails and usernames.',
       operationId: 'updateUserProfile',
+      params: USER_ID_PARAMS,
       body: schemaRef('UserProfileUpdateRequest'),
       response: withUserErrorResponses({ 200: schemaRef('UserResponse') }, [400, 409]),
     },
@@ -100,6 +120,7 @@ export function usersModule(fastify: FastifyInstance): void {
       description:
         'Updates the login username after confirming it is unique across usernames AND emails, because login accepts either.',
       operationId: 'updateUserUsername',
+      params: USER_ID_PARAMS,
       body: schemaRef('UserUsernameUpdateRequest'),
       response: withUserErrorResponses({ 200: schemaRef('UserResponse') }, [400, 409]),
     },
@@ -113,6 +134,7 @@ export function usersModule(fastify: FastifyInstance): void {
       description:
         'Updates locale, timezone and date/time formatting. An omitted field is left unchanged; an explicit null clears it.',
       operationId: 'updateUserPreferences',
+      params: USER_ID_PARAMS,
       body: schemaRef('UserPreferencesUpdateRequest'),
       response: withUserErrorResponses({ 200: schemaRef('UserResponse') }, [409]),
     },
@@ -126,6 +148,7 @@ export function usersModule(fastify: FastifyInstance): void {
       description:
         'Changes the password after validating the current one. Self only (A6): a root admin resetting somebody else uses the reset operation, which has a different subject rather than merely a different precondition. Other sessions are revoked while the caller stays signed in.',
       operationId: 'changeUserPassword',
+      params: USER_ID_PARAMS,
       body: schemaRef('UserPasswordChangeRequest'),
       response: withUserErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 409]),
     },
@@ -139,6 +162,7 @@ export function usersModule(fastify: FastifyInstance): void {
       description:
         'Generates a temporary password for the target user, revokes their live sessions, and returns the credential for the root admin to relay. Root admin only (A6).',
       operationId: 'resetUserPassword',
+      params: USER_ID_PARAMS,
       response: withUserErrorResponses({ 200: schemaRef('UserResetPasswordResponse') }),
     },
     handler: handlers.resetPassword,
@@ -149,8 +173,9 @@ export function usersModule(fastify: FastifyInstance): void {
       tags: ['Users'],
       summary: 'Disable a user',
       description:
-        'Sets isActive = false and revokes every live session, atomically. Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining root admin. Disabling yourself clears your session cookies.',
+        'Sets isActive = false and revokes every live session, atomically, except, when you inactivate yourself, the cookie session you did it from (A9: an inactive account may still sign in to reactivate or delete itself). Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining active root admin.',
       operationId: 'disableUser',
+      params: USER_ID_PARAMS,
       response: withUserErrorResponses({ 200: schemaRef('UserResponse') }, [409]),
     },
     handler: handlers.disableUser,
@@ -163,6 +188,7 @@ export function usersModule(fastify: FastifyInstance): void {
       description:
         'Sets isActive = true. Self-reactivation and admin-enable are ONE operation (A6). Idempotent. Re-enabling yourself rotates a fresh session so the account is immediately usable.',
       operationId: 'enableUser',
+      params: USER_ID_PARAMS,
       response: withUserErrorResponses({ 200: schemaRef('UserResponse') }, [409]),
     },
     handler: handlers.enableUser,
@@ -175,6 +201,7 @@ export function usersModule(fastify: FastifyInstance): void {
       description:
         'Revokes all refresh tokens, forcing re-authentication. Self sign-out-everywhere and admin force-logout are ONE operation (A6).',
       operationId: 'revokeUserSessions',
+      params: USER_ID_PARAMS,
       response: withUserErrorResponses({ 200: schemaRef('RevokeUserSessionsResponse') }),
     },
     handler: handlers.revokeSessions,
@@ -187,6 +214,7 @@ export function usersModule(fastify: FastifyInstance): void {
       description:
         'Removes the user row and the user-owned data that references it, in one transaction. Self-delete and admin-delete are ONE operation (A6). Gated: the account must already be inactive — the one place isActive is a write precondition rather than a read filter (A9) — the exact email must be confirmed, no league-scoped data may remain, and the last root admin cannot be removed.',
       operationId: 'deleteUser',
+      params: USER_ID_PARAMS,
       body: schemaRef('UserDeleteRequest'),
       response: withUserErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 409]),
     },
@@ -200,6 +228,7 @@ export function usersModule(fastify: FastifyInstance): void {
       description:
         'Root admin only (A6). Self-demotion is permitted: the only rule is that the platform keeps an administrator, which the last-root-admin guard enforces for every caller. A demotion also revokes the subject\'s sessions so the removed authority cannot be used until re-login.',
       operationId: 'setUserRootAdmin',
+      params: USER_ID_PARAMS,
       body: schemaRef('SetUserRootAdminRequest'),
       response: withUserErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [409]),
     },
