@@ -27,6 +27,7 @@ import {
   createParticipant,
   createSportLeague,
   listEventParticipants,
+  listParticipantLeagueAffiliations,
   listEvents,
   listParticipants,
   listSportLeagues,
@@ -186,11 +187,15 @@ export async function seedGolf(seed: GolfSeedFile, options: SeedGolfOptions): Pr
     const tourClient = await options.getClient();
     const sportLeagueId = await ensureTour(tourClient, tour.name);
     const participantIds = await ensurePlayers(tourClient, golf.id, tour.players);
-    await must(applyParticipantLeagueAffiliationUpload({
-      client: tourClient,
-      path: { sportLeagueId },
-      body: { rows: tour.players.map((player) => ({ participantId: participantIds.get(player.key)!, ranking: player.ranking })) },
-    }), `Set ${tour.name} rankings`);
+    // Only golfers not yet on the tour get the seed's ranking; an existing affiliation keeps its own.
+    const { affiliations } = await must(listParticipantLeagueAffiliations({ client: tourClient, path: { sportLeagueId } }), `List ${tour.name} golfers`);
+    const affiliated = new Set(affiliations.map((affiliation) => affiliation.participantId));
+    const rows = tour.players
+      .map((player) => ({ participantId: participantIds.get(player.key)!, ranking: player.ranking }))
+      .filter((row) => !affiliated.has(row.participantId));
+    if (rows.length > 0) {
+      await must(applyParticipantLeagueAffiliationUpload({ client: tourClient, path: { sportLeagueId }, body: { rows } }), `Add golfers to ${tour.name}`);
+    }
     log(`${tour.name}: ${tour.players.length} golfers ready.`);
 
     const { events: existing } = await must(listEvents({ client: tourClient, query: { sportLeagueId, eventYear: seed.season } }), `List ${tour.name} tournaments`);

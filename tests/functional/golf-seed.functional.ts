@@ -87,7 +87,7 @@ afterAll(async () => {
 });
 
 describe('Golf manual-testing seed through the admin API', () => {
-  it('releases every seeded tournament a week ahead, with its field, tiers and stored final scores, and a second run skips them all', async () => {
+  it('releases every seeded tournament a week ahead, with its field, tiers and stored final scores, and a second run skips them all and keeps hand-edited tour rankings', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Seed Admin' });
     await promoteToRootAdmin(admin);
     const client = admin.client;
@@ -117,6 +117,14 @@ describe('Golf manual-testing seed through the admin API', () => {
     expect(byName.get(`${RUN} Golfer 12`)!.standing).toMatchObject({ position: null, status: 'WITHDRAWN' });
     expect(byName.get(`${RUN} Golfer 12`)!.rounds.find((round) => round.roundNumber === 2)?.status).toBe('DNF');
 
+    // A ranking an admin changed by hand survives the next run.
+    const db = getFunctionalPrisma();
+    const golferOne = await db.participant.findFirstOrThrow({ where: { externalId: `${RUN}-p1` } });
+    await db.participantLeagueAffiliation.update({
+      where: { participantId_sportLeagueId: { participantId: golferOne.id, sportLeagueId: tour.id } },
+      data: { ranking: 99 },
+    });
+
     const second = await seedGolf(seed, { getClient, now: NOW });
     expect(second).toEqual([{
       tour: TOUR,
@@ -125,5 +133,9 @@ describe('Golf manual-testing seed through the admin API', () => {
     }]);
     const golfers = (await listParticipants({ client, query: { sportId: golfSportId, q: RUN } })).data!.participants;
     expect(golfers).toHaveLength(12);
+    const affiliation = await db.participantLeagueAffiliation.findUniqueOrThrow({
+      where: { participantId_sportLeagueId: { participantId: golferOne.id, sportLeagueId: tour.id } },
+    });
+    expect(affiliation.ranking).toBe(99);
   });
 });

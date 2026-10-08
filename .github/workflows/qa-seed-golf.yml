@@ -32,8 +32,11 @@ jobs:
       - run: npm ci
       - name: Build the shared package the generated SDK resolves through
         run: npm run build --workspace @poolmaster/shared
+      # bash -o pipefail, so a failed seed fails the step rather than reporting tee's exit
+      # code, and stderr goes to the log the summary reads.
       - name: Seed QA
-        run: npm run seed:golf | tee seed.log
+        shell: bash
+        run: npm run seed:golf 2>&1 | tee seed.log
       - name: Summary
         if: always()
         run: |
