@@ -10,7 +10,7 @@ import type {
   ProviderSyncRunRepository,
   ProviderSyncRunUpdate,
 } from '@poolmaster/shared/db';
-import type { ProviderSyncRun, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
+import type { ProviderSyncRun, Sport } from '@poolmaster/shared/domain';
 
 export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -63,7 +63,7 @@ function toProviderSyncRun(row: ProviderSyncRunRow): ProviderSyncRun {
     providerId: row.providerId,
     sport: row.sport as Sport,
     eventId: row.eventId,
-    status: row.status as ProviderSyncRunStatus,
+    status: row.status,
     startedAt: row.startedAt,
     completedAt: row.completedAt,
     createdAt: row.createdAt,

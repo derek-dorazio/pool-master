@@ -6,7 +6,7 @@
  */
 
 import type { DomainEntity, Participant } from './types';
-import type { ParticipantStandingStatus, ValuationSource } from './enums';
+import type { ParticipantRoundStatus, ParticipantStandingStatus, ValuationSource } from './enums';
 
 /** A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
 export interface SportLeague extends DomainEntity {
@@ -48,7 +48,7 @@ export interface SportEventParticipantRound extends DomainEntity {
   sportEventParticipantId: string;
   sportEventRoundId: string;
   roundNumber: number;
-  status: string;
+  status: ParticipantRoundStatus;
   completedAt: Date | null;
 }
 

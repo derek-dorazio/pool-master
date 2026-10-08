@@ -7121,8 +7121,11 @@ export interface components {
             /** Format: uuid */
             sportEventRoundId: string;
             roundNumber: number;
-            /** @description Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT. */
-            status: string;
+            /**
+             * @description Progress through the round.
+             * @enum {string}
+             */
+            status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.
@@ -7285,8 +7288,11 @@ export interface components {
                 /** Format: uuid */
                 sportEventRoundId: string;
                 roundNumber: number;
-                /** @description Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT. */
-                status: string;
+                /**
+                 * @description Progress through the round.
+                 * @enum {string}
+                 */
+                status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -7464,8 +7470,11 @@ export interface components {
                     /** Format: uuid */
                     sportEventRoundId: string;
                     roundNumber: number;
-                    /** @description Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT. */
-                    status: string;
+                    /**
+                     * @description Progress through the round.
+                     * @enum {string}
+                     */
+                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                     /**
                      * Format: date-time
                      * @description ISO 8601 datetime string.
@@ -7682,8 +7691,11 @@ export interface components {
                     /** Format: uuid */
                     sportEventRoundId: string;
                     roundNumber: number;
-                    /** @description Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT. */
-                    status: string;
+                    /**
+                     * @description Progress through the round.
+                     * @enum {string}
+                     */
+                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                     /**
                      * Format: date-time
                      * @description ISO 8601 datetime string.
@@ -7834,7 +7846,8 @@ export interface components {
             draftMode?: string;
             rounds?: number;
             timePerPickSeconds?: number;
-            autoPickPolicy?: string;
+            /** @enum {string} */
+            autoPickPolicy?: "QUEUE_THEN_BEST" | "BEST_AVAILABLE" | "RANDOM";
             tierConfig?: {
                 /** @description Stable tier identifier. */
                 tierId: string;
@@ -8307,8 +8320,11 @@ export interface components {
                     /** Format: uuid */
                     sportEventRoundId: string;
                     roundNumber: number;
-                    /** @description Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT. */
-                    status: string;
+                    /**
+                     * @description Progress through the round.
+                     * @enum {string}
+                     */
+                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                     /**
                      * Format: date-time
                      * @description ISO 8601 datetime string.
@@ -8394,7 +8410,8 @@ export interface components {
             draftMode?: string;
             rounds?: number;
             timePerPickSeconds?: number;
-            autoPickPolicy?: string;
+            /** @enum {string} */
+            autoPickPolicy?: "QUEUE_THEN_BEST" | "BEST_AVAILABLE" | "RANDOM";
             tierConfig?: {
                 /** @description Stable tier identifier. */
                 tierId: string;
@@ -8470,7 +8487,8 @@ export interface components {
                 draftMode?: string;
                 rounds?: number;
                 timePerPickSeconds?: number;
-                autoPickPolicy?: string;
+                /** @enum {string} */
+                autoPickPolicy?: "QUEUE_THEN_BEST" | "BEST_AVAILABLE" | "RANDOM";
                 tierConfig?: {
                     /** @description Stable tier identifier. */
                     tierId: string;
@@ -8805,14 +8823,16 @@ export interface components {
                     strokes: number | null;
                     scoreToPar: number;
                     thru: number | null;
-                    status: string;
+                    /** @enum {string} */
+                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                 } | null;
                 /** @description What is stored now; null when nothing is. */
                 after: {
                     strokes: number | null;
                     scoreToPar: number;
                     thru: number | null;
-                    status: string;
+                    /** @enum {string} */
+                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                 } | null;
             }[];
             /** @description Counts by resolution. */
@@ -9489,8 +9509,11 @@ export interface components {
             sport: string;
             /** @description Current persisted event name. */
             name: string;
-            /** @description Current persisted event status. */
-            status: string;
+            /**
+             * @description Current persisted event status.
+             * @enum {string}
+             */
+            status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
             /**
              * Format: date-time
              * @description Persisted event start date.
@@ -9604,8 +9627,11 @@ export interface components {
                 sport: string;
                 /** @description Current persisted event name. */
                 name: string;
-                /** @description Current persisted event status. */
-                status: string;
+                /**
+                 * @description Current persisted event status.
+                 * @enum {string}
+                 */
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /**
                  * Format: date-time
                  * @description Persisted event start date.

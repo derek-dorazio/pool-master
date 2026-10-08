@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
   ParticipantInactiveReason,
+  ParticipantRoundStatus,
   ParticipantStandingStatus,
   Sport,
   SportEventStatus,
@@ -311,7 +312,7 @@ export const SportEventParticipantRoundDtoSchema = z.object({
   id: z.string().uuid(),
   sportEventRoundId: z.string().uuid(),
   roundNumber: z.number().int(),
-  status: z.string().describe('Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT.'),
+  status: z.nativeEnum(ParticipantRoundStatus).describe('Progress through the round.'),
   completedAt: DateTimeSchema.nullable(),
   golf: SportEventParticipantGolfRoundDtoSchema.nullable().describe('Present once a golf round is scored.'),
 }).describe('A field row\'s part in one round.');

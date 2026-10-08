@@ -18,7 +18,6 @@ describe('participant scoring definitions', () => {
 
     it('renders a completed round as its strokes', () => {
       expect(formatRound({ status: 'COMPLETED', strokes: 69, scoreToPar: -3 })).toBe('69');
-      expect(formatRound({ status: 'COMPLETE', strokes: 72, scoreToPar: 0 })).toBe('72');
     });
 
     it('renders a round still in progress against par, with level par as "E"', () => {
