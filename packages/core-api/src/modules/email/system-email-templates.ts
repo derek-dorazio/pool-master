@@ -1,7 +1,4 @@
-import { EmailTemplateKeySchema, type EmailTemplateKey } from '@poolmaster/shared/dto';
-
-/** Declared once in the shared contract, so EMAIL_CONFIG has a switch for every template. */
-export const SYSTEM_EMAIL_TEMPLATE_KEYS = EmailTemplateKeySchema.options;
+import type { EmailTemplateKey } from '@poolmaster/shared/dto';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
 
@@ -101,10 +98,6 @@ export function renderSystemEmailTemplate<Key extends SystemEmailTemplateKey>(
 ): SystemEmailMessage {
   const renderer = SYSTEM_EMAIL_TEMPLATE_RENDERERS[templateKey] as TemplateRenderer<Key>;
   return renderer(data);
-}
-
-export function listSystemEmailTemplateKeys(): readonly SystemEmailTemplateKey[] {
-  return SYSTEM_EMAIL_TEMPLATE_KEYS;
 }
 
 const SYSTEM_EMAIL_TEMPLATE_RENDERERS: TemplateRendererMap = {

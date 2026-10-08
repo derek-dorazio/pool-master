@@ -70,9 +70,6 @@ export class PrismaSquadMembershipRepository implements SquadMembershipRepositor
     return mapToSquadMembership(row);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.squadMembership.delete({ where: { id } });
-  }
 }
 
 function mapToSquadMembership(row: PrismaSquadMembership): SquadMembership {

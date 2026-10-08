@@ -56,7 +56,6 @@ import type {
   ContestEntryStandingRepository,
   ContestPrizeDefinitionRepository,
   ContestRepository,
-  DraftSessionRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
@@ -112,7 +111,6 @@ export function fakeUserRepo(overrides: Partial<UserRepository> = {}): UserRepos
     countActiveRootAdmins: jest.fn().mockResolvedValue(0),
     create: echoCreate('user'),
     update: echoUpdate(),
-    delete: nothing(),
     ...overrides,
   };
 }
@@ -125,7 +123,6 @@ export function fakeLeagueRepo(overrides: Partial<LeagueRepository> = {}): Leagu
     findByUser: many(),
     create: echoCreate('league'),
     update: echoUpdate(),
-    delete: nothing(),
     ...overrides,
   };
 }
@@ -140,7 +137,6 @@ export function fakeLeagueMembershipRepo(
     findByLeagueAndUser: one(),
     create: echoCreate('league-membership'),
     update: echoUpdate(),
-    delete: nothing(),
     ...overrides,
   };
 }
@@ -152,7 +148,6 @@ export function fakeSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRe
     findByLeagueAndName: one(),
     create: echoCreate('squad'),
     update: echoUpdate(),
-    delete: nothing(),
     ...overrides,
   };
 }
@@ -167,7 +162,6 @@ export function fakeSquadMembershipRepo(
     findByLeagueAndUser: one(),
     create: echoCreate('squad-membership'),
     update: echoUpdate(),
-    delete: nothing(),
     ...overrides,
   };
 }
@@ -182,7 +176,6 @@ export function fakeSquadOwnerInvitationRepo(
     findPendingByLeagueAndEmail: one(),
     create: echoCreate('squad-owner-invitation'),
     update: echoUpdate(),
-    delete: nothing(),
     ...overrides,
   };
 }
@@ -200,7 +193,6 @@ export function fakeLeagueInvitationRepo(
     findByEmail: one(),
     create: echoCreate('league-invitation'),
     update: echoUpdate(),
-    delete: nothing(),
     ...overrides,
   };
 }
@@ -292,12 +284,9 @@ export function fakeParticipantRepo(
   return {
     findById: one(),
     findByIds: many(),
-    findBySport: many(),
-    findByExternalId: one(),
     search: many(),
     findMatching: many(),
     create: echoCreate('participant'),
-    createMany: jest.fn().mockResolvedValue(0),
     update: echoUpdate(),
     ...overrides,
   };
@@ -308,11 +297,8 @@ export function fakeParticipantProviderMappingRepo(
 ): ParticipantProviderMappingRepository {
   return {
     // findByProvider is a single row per the port; findByParticipant is a collection.
-    findByProvider: one(),
     findByParticipant: many(),
-    findByParticipants: many(),
     findByProviderExternalIds: many(),
-    create: echoCreate('participant-provider-mapping'),
     bind: echoCreate('participant-provider-mapping'),
     ...overrides,
   };
@@ -335,7 +321,6 @@ export function fakeContestEntryRepo(
   overrides: Partial<ContestEntryRepository> = {},
 ): ContestEntryRepository {
   return {
-    findById: one(),
     findByIdWithSquad: one(),
     findByContest: many(),
     findByContestWithSquad: many(),
@@ -343,20 +328,6 @@ export function fakeContestEntryRepo(
     create: echoCreate('contest-entry'),
     update: echoUpdate(),
     delete: nothing(),
-    ...overrides,
-  };
-}
-
-export function fakeDraftSessionRepo(
-  overrides: Partial<DraftSessionRepository> = {},
-): DraftSessionRepository {
-  return {
-    findById: one(),
-    findByContest: one(),
-    create: echoCreate('draft-session'),
-    update: echoUpdate(),
-    getPickHistories: many(),
-    addPickHistory: echoCreate('draft-pick-history'),
     ...overrides,
   };
 }

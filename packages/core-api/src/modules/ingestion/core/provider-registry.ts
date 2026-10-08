@@ -1,6 +1,5 @@
 /**
- * ProviderRegistry — manages explicit provider registration, lookup, and health
- * reporting.
+ * ProviderRegistry — manages explicit provider registration and lookup.
  *
  * The active service tier must only call explicitly configured external data
  * providers. Hidden in-process fallback providers are not allowed because they
@@ -8,7 +7,7 @@
  */
 
 import { MANUAL_ADMIN_PROVIDER_ID, type Sport } from '@poolmaster/shared/domain';
-import type { SportDataProvider, ProviderHealthStatus } from './provider-interface';
+import type { SportDataProvider } from './provider-interface';
 
 type Priority = 'PRIMARY';
 
@@ -16,7 +15,6 @@ interface RegisteredProvider {
   provider: SportDataProvider;
   priority: Priority;
   sport: Sport;
-  health: ProviderHealthStatus;
 }
 
 export class ProviderRegistry {
@@ -39,12 +37,6 @@ export class ProviderRegistry {
       provider,
       priority,
       sport,
-      health: {
-        providerId: provider.providerId,
-        status: 'HEALTHY',
-        errorRateLastHour: 0,
-        latencyMsP95: 0,
-      },
     });
   }
 
@@ -64,14 +56,6 @@ export class ProviderRegistry {
     return null;
   }
 
-  /** Returns all registered providers for a sport. */
-  getProvidersForSport(sport: Sport): SportDataProvider[] {
-    const result: SportDataProvider[] = [];
-    const primary = this.providers.get(`${sport}:PRIMARY`);
-    if (primary) result.push(primary.provider);
-    return result;
-  }
-
   /** Returns all unique registered providers. */
   getAllProviders(): SportDataProvider[] {
     const seen = new Set<string>();
@@ -83,28 +67,6 @@ export class ProviderRegistry {
       }
     }
     return result;
-  }
-
-  /** Updates health status for a provider. */
-  updateHealth(providerId: string, health: ProviderHealthStatus): void {
-    for (const [, reg] of this.providers) {
-      if (reg.provider.providerId === providerId) {
-        reg.health = health;
-      }
-    }
-  }
-
-  /** Returns health report for all registered providers. */
-  getHealthReport(): ProviderHealthStatus[] {
-    const seen = new Set<string>();
-    const report: ProviderHealthStatus[] = [];
-    for (const reg of this.providers.values()) {
-      if (!seen.has(reg.provider.providerId)) {
-        seen.add(reg.provider.providerId);
-        report.push(reg.health);
-      }
-    }
-    return report;
   }
 
   /** Returns all sports that have at least one registered provider. */

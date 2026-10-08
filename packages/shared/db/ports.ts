@@ -8,8 +8,6 @@
 import type {
   Contest,
   ContestEntry,
-  DraftPickHistory,
-  DraftSession,
   League,
   LeagueInvitation,
   LeagueMembership,
@@ -133,7 +131,6 @@ export interface UserRepository {
    * surface offers.
    */
   update(id: string, updates: UserUpdate): Promise<User>;
-  delete(id: string): Promise<void>;
 }
 
 // --- League ---
@@ -171,7 +168,6 @@ export interface LeagueRepository {
 
   create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt'>): Promise<League>;
   update(id: string, updates: Partial<League>): Promise<League>;
-  delete(id: string): Promise<void>;
 }
 
 export interface LeagueMembershipRepository {
@@ -191,7 +187,6 @@ export interface LeagueMembershipRepository {
   findByLeagueAndUser(leagueId: string, userId: string): Promise<LeagueMembership | null>;
   create(membership: Omit<LeagueMembership, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueMembership>;
   update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership>;
-  delete(id: string): Promise<void>;
 }
 
 export interface SquadRepository {
@@ -208,7 +203,6 @@ export interface SquadRepository {
   findByLeagueAndName(leagueId: string, name: string): Promise<Squad | null>;
   create(squad: Omit<Squad, 'id' | 'createdAt' | 'updatedAt'>): Promise<Squad>;
   update(id: string, updates: Partial<Squad>): Promise<Squad>;
-  delete(id: string): Promise<void>;
 }
 
 export interface SquadMembershipRepository {
@@ -225,7 +219,6 @@ export interface SquadMembershipRepository {
     membership: Omit<SquadMembership, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<SquadMembership>;
   update(id: string, updates: Partial<SquadMembership>): Promise<SquadMembership>;
-  delete(id: string): Promise<void>;
 }
 
 export interface SquadOwnerInvitationRepository {
@@ -240,7 +233,6 @@ export interface SquadOwnerInvitationRepository {
     invitation: Omit<SquadOwnerInvitation, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<SquadOwnerInvitation>;
   update(id: string, updates: Partial<SquadOwnerInvitation>): Promise<SquadOwnerInvitation>;
-  delete(id: string): Promise<void>;
 }
 
 export interface LeagueInvitationRepository {
@@ -250,7 +242,6 @@ export interface LeagueInvitationRepository {
   findByEmail(leagueId: string, email: string): Promise<LeagueInvitation | null>;
   create(invitation: Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueInvitation>;
   update(id: string, updates: Partial<LeagueInvitation>): Promise<LeagueInvitation>;
-  delete(id: string): Promise<void>;
 }
 
 // --- Sport & Participant ---
@@ -267,24 +258,18 @@ export interface ParticipantSearchFilters {
 export interface ParticipantRepository {
   findById(id: string): Promise<Participant | null>;
   findByIds(ids: readonly string[]): Promise<Participant[]>;
-  findBySport(sportId: string): Promise<Participant[]>;
-  findByExternalId(providerId: string, externalId: string): Promise<Participant | null>;
   /** Whole result, narrowed by the query and filters — never paged (§16). Ordered by name. */
   search(query: string, filters: ParticipantSearchFilters): Promise<Participant[]>;
   /** Candidates for an upload row within one sport; exact match on each identifier given. */
   findMatching(sportId: string, query: ParticipantMatchQuery): Promise<Participant[]>;
   create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant>;
-  createMany(participants: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<number>;
   update(id: string, updates: Partial<Participant>): Promise<Participant>;
 }
 
 export interface ParticipantProviderMappingRepository {
-  findByProvider(providerId: string, externalId: string): Promise<ParticipantProviderMapping | null>;
   findByParticipant(participantId: string): Promise<ParticipantProviderMapping[]>;
-  findByParticipants(participantIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
   /** Every mapping a provider has for these of its identifiers. */
   findByProviderExternalIds(providerId: string, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
-  create(mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt'>): Promise<ParticipantProviderMapping>;
   /**
    * Binds a provider identity to a participant. A provider identity maps to one participant,
    * so an identity already bound elsewhere moves to this one.
@@ -340,7 +325,6 @@ export interface ContestEntryWithSquad extends ContestEntry {
 }
 
 export interface ContestEntryRepository {
-  findById(id: string): Promise<ContestEntry | null>;
   findByIdWithSquad(id: string): Promise<ContestEntryWithSquad | null>;
   findByContest(contestId: string): Promise<ContestEntry[]>;
   /** In entry-number order, then creation order; `submittedOnly` keeps SUBMITTED entries alone (#481). */
@@ -351,15 +335,3 @@ export interface ContestEntryRepository {
   delete(id: string): Promise<void>;
 }
 
-// --- Draft Session (Snake Draft only) ---
-
-export interface DraftSessionRepository {
-  findById(id: string): Promise<DraftSession | null>;
-  findByContest(contestId: string): Promise<DraftSession | null>;
-  create(session: Omit<DraftSession, 'id' | 'createdAt' | 'updatedAt'>): Promise<DraftSession>;
-  update(id: string, updates: Partial<DraftSession>): Promise<DraftSession>;
-  getPickHistories(sessionId: string): Promise<DraftPickHistory[]>;
-  addPickHistory(
-    pickHistory: Omit<DraftPickHistory, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<DraftPickHistory>;
-}

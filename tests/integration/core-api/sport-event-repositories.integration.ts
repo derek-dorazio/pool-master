@@ -434,7 +434,7 @@ describe('Participant and provider-mapping repositories — additions', () => {
     });
 
     await expect(participants.findByIds([ana.id, randomUUID()])).resolves.toEqual([expect.objectContaining({ id: ana.id })]);
-    await expect(mappings.findByParticipants([ana.id])).resolves.toEqual([expect.objectContaining({ externalId: 'pg-1' })]);
+    await expect(mappings.findByParticipant(ana.id)).resolves.toEqual([expect.objectContaining({ externalId: 'pg-1' })]);
     await expect(mappings.findByProviderExternalIds('integration-test', ['pg-1', 'pg-2'])).resolves.toEqual([
       expect.objectContaining({ participantId: ana.id }),
     ]);

@@ -13,7 +13,6 @@ import type {
   ContestStatus,
   ContestFormat,
   DateFormat,
-  DraftStatus,
   InjuryStatusCode,
   InvitationStatus,
   JoinPolicy,
@@ -291,28 +290,6 @@ export interface ContestEntryPick extends DomainEntity {
   draftRound?: number;
   draftPickNumber?: number;
   pickedAt: Date;
-}
-
-// --- Draft Session (Snake Draft only) ---
-
-export interface DraftSession extends DomainEntity {
-  contestId: string;
-  status: DraftStatus;
-  currentPickNumber: number;
-  currentEntryId?: string;
-  startedAt?: Date;
-  currentTurnStartedAt?: Date;
-}
-
-/** Historical record of a draft pick. */
-export interface DraftPickHistory extends DomainEntity {
-  draftSessionId: string;
-  pickId: string;
-  entryId: string;
-  pickNumber: number;
-  round: number;
-  pickInRound: number;
-  autoPicked: boolean;
 }
 
 // --- Payout Configuration ---

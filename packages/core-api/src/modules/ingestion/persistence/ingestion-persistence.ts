@@ -28,22 +28,6 @@ export class IngestionPersistence {
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
-  /**
-   * Update the sport events already linked to these provider events, by (providerId,
-   * externalId). Returns the number of events persisted.
-   *
-   * Only the field size is written. An admin owns every event's name, venue, dates, rounds,
-   * timing and status, so a provider's copy of them is ignored (ADR-0009, #435).
-   *
-   * Sync never creates a SportEvent (plans/147). An event is an edition of a series in a
-   * sport league, and a provider event names neither, so a row created here would have
-   * to guess its tour. A provider event no event is linked to is skipped and logged; an
-   * admin creates the event (from the provider event, or by hand) and links it.
-   */
-  async persistEvents(events: SportEvent[]): Promise<number> {
-    return (await this.persistEventsWithDiagnostics(events)).count;
-  }
-
   async persistEventsWithDiagnostics(
     events: SportEvent[],
   ): Promise<PersistenceDiagnosticsResult<number>> {
@@ -211,20 +195,6 @@ export class IngestionPersistence {
 
     this.logger?.info({ count }, 'Persisted participants from ingestion');
     return count;
-  }
-
-  /**
-   * Persist a full event detail payload and link the event-scoped participants.
-   *
-   * This is the first-pass bridge between provider event detail responses and
-   * the new event-participant model used by scoring and roster picks.
-   */
-  async persistEventDetail(detail: SportEventDetail): Promise<{
-    eventsPersisted: number;
-    participantsPersisted: number;
-    sportEventParticipantsPersisted: number;
-  }> {
-    return (await this.persistEventDetailWithDiagnostics(detail)).value;
   }
 
   async persistEventDetailWithDiagnostics(detail: SportEventDetail): Promise<PersistenceDiagnosticsResult<{

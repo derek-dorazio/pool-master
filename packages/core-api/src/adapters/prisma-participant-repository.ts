@@ -14,22 +14,6 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     return row ? mapToParticipant(row) : null;
   }
 
-  async findBySport(sportId: string): Promise<Participant[]> {
-    const rows = await this.prisma.participant.findMany({
-      where: { sportId },
-      orderBy: { name: 'asc' },
-    });
-    return rows.map(mapToParticipant);
-  }
-
-  async findByExternalId(providerId: string, externalId: string): Promise<Participant | null> {
-    const mapping = await this.prisma.participantProviderMapping.findUnique({
-      where: { providerId_externalId: { providerId, externalId } },
-      include: { participant: true },
-    });
-    return mapping ? mapToParticipant(mapping.participant) : null;
-  }
-
   async search(query: string, filters: ParticipantSearchFilters): Promise<Participant[]> {
     const where: Record<string, unknown> = {};
 
@@ -86,30 +70,6 @@ export class PrismaParticipantRepository implements ParticipantRepository {
   async create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant> {
     const row = await this.prisma.participant.create({ data: toParticipantCreateData(participant) });
     return mapToParticipant(row);
-  }
-
-  async createMany(participants: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<number> {
-    const result = await this.prisma.participant.createMany({
-      data: participants.map((p) => ({
-        sportId: p.sportId,
-        name: p.name,
-        participantType: p.participantType,
-        externalId: p.externalId,
-        firstName: p.firstName,
-        lastName: p.lastName,
-        shortName: p.shortName,
-        nationality: p.nationality,
-        role: p.role,
-        teamAffiliation: p.teamAffiliation,
-        status: p.status,
-        injuryStatus: p.injuryStatus as object,
-        photoUrl: p.photoUrl,
-        photoLastUpdated: p.photoLastUpdated,
-        externalIds: p.externalIds as object,
-      })),
-      skipDuplicates: true,
-    });
-    return result.count;
   }
 
   async update(id: string, updates: Partial<Participant>): Promise<Participant> {

@@ -333,7 +333,6 @@ export class InMemoryContestWorld {
 
   entryRepo(): ContestEntryRepository {
     return {
-      findById: async (id) => this.entries.get(id) ?? null,
       findByIdWithSquad: async (id) => {
         const entry = this.entries.get(id);
         return entry ? this.withSquad(entry) : null;
@@ -428,9 +427,6 @@ export class InMemoryContestWorld {
         this.memberships.set(id, updated);
         return updated;
       },
-      delete: async (id) => {
-        this.memberships.delete(id);
-      },
     };
   }
 
@@ -450,9 +446,6 @@ export class InMemoryContestWorld {
         const updated = { ...existing, ...updates };
         this.squads.set(id, updated);
         return updated;
-      },
-      delete: async (id) => {
-        this.squads.delete(id);
       },
     };
   }
@@ -483,9 +476,6 @@ export class InMemoryContestWorld {
         const updated = { ...existing, ...updates };
         this.squadMemberships.set(id, updated);
         return updated;
-      },
-      delete: async (id) => {
-        this.squadMemberships.delete(id);
       },
     };
   }

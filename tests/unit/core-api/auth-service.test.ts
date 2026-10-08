@@ -292,27 +292,13 @@ describe('AuthService', () => {
       } satisfies Partial<AuthError>);
     });
 
-    it('refuses to issue a session or read a profile for a user who does not exist', async () => {
+    it('refuses to issue a session for a user who does not exist', async () => {
       const service = new AuthService(fakeUserRepo(), asPrismaClient(createPrismaMock()));
 
       await expect(service.issueSessionForUser('missing-user')).rejects.toMatchObject({
         code: 'USER_NOT_FOUND',
         statusCode: 404,
       } satisfies Partial<AuthError>);
-      await expect(service.getProfile('missing-user')).rejects.toMatchObject({
-        code: 'USER_NOT_FOUND',
-        statusCode: 404,
-      } satisfies Partial<AuthError>);
-    });
-
-    it('returns the canonical User from getProfile, with no password hash on it', async () => {
-      const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
-      const service = new AuthService(users, asPrismaClient(createPrismaMock()));
-
-      const profile = await service.getProfile('user-1');
-
-      expect(profile).toEqual(buildUser());
-      expect(profile).not.toHaveProperty('passwordHash');
     });
   });
 });

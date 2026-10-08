@@ -1,5 +1,5 @@
 import type { FastifyBaseLogger } from 'fastify';
-import type { ClientLogBatch, ClientLogLevel } from '@poolmaster/shared/dto';
+import type { ClientLogBatch } from '@poolmaster/shared/dto';
 
 /**
  * Per-process, per-IP, per-minute. **Not a fleet-wide ceiling** — the window below lives in an
@@ -176,6 +176,3 @@ export class ClientLogService {
   }
 }
 
-export function isClientLogLevel(value: string): value is ClientLogLevel {
-  return ['debug', 'info', 'warn', 'error', 'fatal'].includes(value);
-}

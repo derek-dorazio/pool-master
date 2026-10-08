@@ -145,10 +145,6 @@ export class LeagueService {
     return { league, membership };
   }
 
-  async findById(leagueId: string): Promise<League | null> {
-    return this.deps.leagues.findById(leagueId);
-  }
-
   async findByCode(leagueCode: string): Promise<League | null> {
     return this.deps.leagues.findByCode(leagueCode.toUpperCase());
   }

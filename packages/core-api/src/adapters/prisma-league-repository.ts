@@ -81,9 +81,6 @@ export class PrismaLeagueRepository implements LeagueRepository {
     return mapToLeague(row);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.league.delete({ where: { id } });
-  }
 }
 
 function mapToLeague(row: PrismaLeague): League {

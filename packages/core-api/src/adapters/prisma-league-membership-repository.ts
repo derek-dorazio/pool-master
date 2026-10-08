@@ -76,9 +76,6 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
     return mapToMembership(row);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.leagueMembership.delete({ where: { id } });
-  }
 }
 
 function mapToMembership(row: PrismaLeagueMembership): LeagueMembership {

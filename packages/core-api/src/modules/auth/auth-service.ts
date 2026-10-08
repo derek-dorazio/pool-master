@@ -235,29 +235,6 @@ export class AuthService {
     }, 'Revoked refresh token');
   }
 
-  /**
-   * Returns the user profile for a given user ID.
-   */
-  async getProfile(userId: string): Promise<User> {
-    this.logger?.debug({
-      action: 'authService.getProfile.start',
-      data: { userId },
-    }, 'Loading authenticated user profile');
-    const user = await this.users.findById(userId);
-    if (!user) {
-      this.logger?.warn({
-        action: 'authService.getProfile.notFound',
-        data: { userId },
-      }, 'Authenticated user profile was not found');
-      throw new AuthError('User not found', 'USER_NOT_FOUND', 404);
-    }
-    this.logger?.info({
-      action: 'authService.getProfile.success',
-      data: { userId },
-    }, 'Loaded authenticated user profile');
-    return user;
-  }
-
   async issueSessionForUser(userId: string): Promise<TokenPair> {
     this.logger?.debug({
       action: 'authService.issueSession.start',
