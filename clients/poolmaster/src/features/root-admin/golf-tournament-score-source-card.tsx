@@ -210,6 +210,11 @@ export function GolfTournamentScoreSourceCard({
               ? 'No provider is registered for golf.'
               : 'No provider events fall in this tournament’s date window.'
         }
+        errorMessage={
+          linkMutation.isError
+            ? extractErrorMessage(linkMutation.error, { fallback: 'The link was rejected.' })
+            : undefined
+        }
         getItemLabel={(item) => item.name}
         isPending={linkMutation.isPending}
         items={pickerItems}

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getIngestionSchedule, resetIngestionSchedule, updateIngestionSchedule } from '@/lib/api';
 import {
   AdminConfigPage,
+  Alert,
   Button,
   Checkbox,
   FormField,
@@ -20,7 +21,7 @@ import {
 } from './root-admin-sync-config-utils';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { throwApiError } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 
 type IngestionEditableField =
   | 'enabled'
@@ -130,7 +131,10 @@ export function RootAdminIngestionSchedulePage() {
         actions: (
           <Button
             disabled={resetIngestionConfigMutation.isPending}
-            onClick={() => resetIngestionConfigMutation.mutate()}
+            onClick={() => {
+              ingestionConfigMutation.reset();
+              resetIngestionConfigMutation.mutate();
+            }}
             type="button"
             variant="secondary"
           >
@@ -151,13 +155,31 @@ export function RootAdminIngestionSchedulePage() {
       state={pageState}
       testId="root-admin-ingestion-schedule-page"
     >
+      {ingestionConfigMutation.isError || resetIngestionConfigMutation.isError ? (
+        <Alert
+          className="mb-4"
+          data-testid="root-admin-ingestion-page-error"
+          tone="danger"
+        >
+          {ingestionConfigMutation.isError
+            ? extractErrorMessage(ingestionConfigMutation.error, {
+                fallback: 'We could not save the ingestion schedule.',
+              })
+            : extractErrorMessage(resetIngestionConfigMutation.error, {
+                fallback: 'We could not reset the ingestion schedule.',
+              })}
+        </Alert>
+      ) : null}
       {draft ? (
         <FormEditorSection
           footer={(
             <Button
               data-testid="root-admin-ingestion-page-save"
               disabled={ingestionConfigMutation.isPending}
-              onClick={() => ingestionConfigMutation.mutate(draft)}
+              onClick={() => {
+                resetIngestionConfigMutation.reset();
+                ingestionConfigMutation.mutate(draft);
+              }}
               type="button"
             >
               {ingestionConfigMutation.isPending
