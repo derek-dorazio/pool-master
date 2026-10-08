@@ -262,7 +262,7 @@ describe('SportEventParticipantRepository — the field', () => {
     ]);
 
     const rows = await field.findBySportEvent(event.id);
-    expect(rows.map((row) => [row.participantId, row.seedNumber])).toEqual([[cal.id, 1], [ben.id, 2], [ana.id, null]]);
+    expect(rows.map((row) => [row.participantId, row.seedNumber])).toEqual([[cal.id, 1], [ben.id, 2], [ana.id, undefined]]);
   });
 
   it('patches rows and manual prices all or none; undefined leaves a column, null clears it', async () => {

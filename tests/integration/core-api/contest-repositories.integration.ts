@@ -216,9 +216,27 @@ describe('ContestRepository', () => {
     ]);
     expect(remaining).toEqual([0, 0, 0, 0, 0, 0, 0]);
   });
+
+  it('updates only the contest fields given and returns the contest with its event\'s sport, as every read does', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Before', ContestStatus.DRAFT);
+    const startsAt = new Date('2026-06-04T12:00:00.000Z');
+
+    const renamed = await repos().contests.update(contest.id, { name: 'After', startsAt, isExclusive: true });
+
+    expect(renamed).toEqual(expect.objectContaining({
+      name: 'After',
+      startsAt,
+      isExclusive: true,
+      status: ContestStatus.DRAFT,
+      sportEventId: event.id,
+      sport: Sport.GOLF,
+    }));
+    await expect(repos().contests.findById(contest.id)).resolves.toEqual(renamed);
+  });
 });
 
-describe('ContestEntryRepository — entries with their squad', () => {
+describe('ContestEntryRepository', () => {
   it('lists a contest\'s entries by entry number with squad names, optionally only the submitted ones', async () => {
     const prisma = getPrisma();
     const { league, squads, event, suffix } = await createLeagueAndEvent();
@@ -252,6 +270,39 @@ describe('ContestEntryRepository — entries with their squad', () => {
     expect(submitted.map((entry) => entry.id)).toEqual([first.id, second.id]);
     expect(one).toEqual(expect.objectContaining({ id: second.id, entryNumber: 2, squadName: `Bravo ${suffix}` }));
     await expect(repos().entries.findByIdWithSquad(randomUUID())).resolves.toBeNull();
+  });
+
+  it('updates only the entry fields given, leaving the others as stored', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Entry Update');
+    const entry = await prisma.contestEntry.create({
+      data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Original', tiebreakerValue: 270 },
+    });
+
+    const updated = await repos().entries.update(entry.id, { name: 'Renamed', status: 'SUBMITTED' });
+
+    expect(updated).toEqual(expect.objectContaining({
+      id: entry.id,
+      name: 'Renamed',
+      status: 'SUBMITTED',
+      tiebreakerValue: 270,
+      isEliminated: false,
+    }));
+  });
+
+  it('deletes one entry and leaves the contest\'s other entries', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Entry Delete');
+    const [leaving, staying] = await Promise.all([
+      prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Leaving' } }),
+      prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[1].id, entryNumber: 1, name: 'Staying' } }),
+    ]);
+
+    await repos().entries.delete(leaving.id);
+
+    expect((await repos().entries.findByContest(contest.id)).map((entry) => entry.id)).toEqual([staying.id]);
   });
 });
 
@@ -311,6 +362,37 @@ describe('ContestEntryPickRepository — read-only', () => {
     expect(counts).toEqual(new Map([[picked.id, 2]]));
     await expect(repos().picks.findByEntries([])).resolves.toEqual([]);
     await expect(repos().picks.countByEntries([])).resolves.toEqual(new Map());
+  });
+
+  it('finds a golfer\'s picks and counts picks across one contest\'s entries, ignoring other contests', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event, field } = await createLeagueAndEvent();
+    const [contest, other] = [
+      await createContest(league.id, event.id, 'Exclusive'),
+      await createContest(league.id, event.id, 'Other'),
+    ];
+    const [alpha, bravo, elsewhere] = await Promise.all([
+      prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Alpha' } }),
+      prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[1].id, entryNumber: 1, name: 'Bravo' } }),
+      prisma.contestEntry.create({ data: { contestId: other.id, squadId: squads[0].id, entryNumber: 1, name: 'Elsewhere' } }),
+    ]);
+    const pick = (entryId: string, sportEventParticipantId: string, slot: number, minute: number) => prisma.contestEntryPick.create({
+      data: {
+        entryId, sportEventParticipantId, contestFormat: 'ROSTER', slot,
+        pickedAt: new Date(`2026-06-01T12:0${minute}:00.000Z`),
+      },
+    });
+    const bravoPick = await pick(bravo.id, field[0].id, 1, 1);
+    const alphaPick = await pick(alpha.id, field[0].id, 1, 0);
+    await pick(alpha.id, field[1].id, 2, 2);
+    await pick(elsewhere.id, field[0].id, 1, 3);
+
+    const golferPicks = await repos().picks.findByContestAndParticipant(contest.id, field[0].id);
+
+    expect(golferPicks.map((row) => row.id)).toEqual([alphaPick.id, bravoPick.id]);
+    await expect(repos().picks.findByContestAndParticipant(contest.id, field[2].id)).resolves.toEqual([]);
+    await expect(repos().picks.countByContest(contest.id)).resolves.toBe(3);
+    await expect(repos().picks.countByContest(other.id)).resolves.toBe(1);
   });
 
   it('has no insert: ContestEntryPickService.createPick stays the single insert path (plans/117 §7.1)', () => {
