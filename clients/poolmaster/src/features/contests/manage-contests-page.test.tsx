@@ -226,7 +226,7 @@ describe('ManageContestsPage', () => {
     expect(screen.queryByRole('link', { name: 'Create first contest' })).not.toBeInTheDocument();
   });
 
-  it('says there are no active contests when the league's only contest is cancelled, and counts its missing entries as 0', async () => {
+  it('says there are no active contests when the league\'s only contest is cancelled, and counts its missing entries as 0', async () => {
     primeCommonMocks({ isRootAdmin: true, leagueRole: 'MEMBER' });
     listContestsMock.mockResolvedValue({
       data: {
