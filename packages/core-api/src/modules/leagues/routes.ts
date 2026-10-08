@@ -31,13 +31,9 @@ import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
 import { createBulkHandlers } from './bulk-handler';
 import { getAppPrisma } from '../../core/prisma-context';
-import {
-  createMailDeliveryProvider,
-  readApplicationBaseUrl,
-  readMailDeliveryConfig,
-} from '../email';
+import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 
-export function leaguesModule(fastify: FastifyInstance): void {
+export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
   // Routes below $ref named components, so they must be registered on this instance.
   void fastify.register(schemaComponentsPlugin);
 
@@ -48,10 +44,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const userRepo = new PrismaUserRepository(prisma);
-  const mailDelivery = createMailDeliveryProvider(
-    readMailDeliveryConfig(process.env),
-    fastify.log,
-  );
+  const mailDelivery = opts.mailDelivery;
   const appBaseUrl = readApplicationBaseUrl(process.env);
 
   const leagueService = new LeagueService({
@@ -272,6 +265,41 @@ export function leaguesModule(fastify: FastifyInstance): void {
     handler: invitation.sendInvitations,
   });
 
+  fastify.get('/:id/invitations', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'List a league\'s outstanding invitations',
+      description:
+        'Lists the league\'s outstanding invitations, newest first: every PENDING email invite and join link, plus email invites that expired without being accepted. Accepted and cancelled invitations are not listed. Commissioner only.',
+      operationId: 'listLeagueInvitations',
+      response: {
+        200: schemaRef('ListLeagueInvitationsResponse'),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: invitation.listInvitations,
+  });
+
+  fastify.post('/:id/invitations/:invitationId/resend', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Resend an email invitation',
+      description:
+        'Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.',
+      operationId: 'resendLeagueInvitation',
+      response: {
+        200: schemaRef('ResendLeagueInvitationResponse'),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        409: zodToJsonSchema(ErrorEnvelopeSchema),
+        502: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: invitation.resendInvitation,
+  });
+
   fastify.post('/:id/invite-link', {
     schema: {
       tags: ['Leagues'],
@@ -292,14 +320,15 @@ export function leaguesModule(fastify: FastifyInstance): void {
   fastify.delete('/:id/invite-link/:code', {
     schema: {
       tags: ['Leagues'],
-      summary: 'Revoke an invite link',
+      summary: 'Cancel an invitation',
       description:
-        'Revokes a previously created shareable invite link so the invite code can no longer be accepted by future users.',
+        'Cancels an outstanding invitation by its invite code, a shareable join link or an email invite, so the code can no longer be accepted. The invitation becomes REVOKED. An invitation already accepted or cancelled is refused with 409 LEAGUE_INVITATION_NOT_CANCELLABLE.',
       operationId: 'revokeInviteLink',
       response: {
         200: zodToJsonSchema(SuccessSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
+        409: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     preHandler: requireCommissioner(membershipRepo),

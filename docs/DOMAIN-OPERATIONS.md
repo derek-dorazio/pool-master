@@ -756,14 +756,19 @@ went with it.
 
 ### PlatformRuntimeConfig — `platform`
 
-Runtime-tunable settings groups, one JSON document each: the client poll intervals and the
-ingestion schedule. Every group is owned by `AppSettingsService` (#450): each core-api task
+Runtime-tunable settings groups, one JSON document each: the client poll intervals, the
+ingestion schedule, and email (`EMAIL_CONFIG`: whether system email is sent, per-email switches,
+Reply-To; see `docs/EMAIL-DELIVERY.md`). Every group is owned by `AppSettingsService` (#450): each core-api task
 refreshes them from the database every 30 seconds, and every save is recorded in
 `platform_runtime_config_history`. Which settings belong here and which stay in env is
 `rules/architecture-rules.md` §6 *Runtime settings live in the database, not in env*.
 
 | Operation | Role | Notes |
 |---|---|---|
+| List, read settings groups | `rootAdmin` | `listSettingsGroups`, `getSettingsGroup` — value in use, defaults, `stored` or `defaults`, who last saved it. The `/manage/settings` page |
+| Save, reset a settings group | `rootAdmin` | `updateSettingsGroup` (the whole value plus `expectedUpdatedAt`; 409 `SETTINGS_CONFLICT` if someone saved in between), `resetSettingsGroup` |
+| Read a group's recent changes | `rootAdmin` | `listSettingsGroupHistory` — newest first, at most 20; the limit is the bound on an append-only history |
+| Switch email, or one email, off | `rootAdmin` | `updateSettingsGroup` on `EMAIL_CONFIG`, from the Email card of `/manage/settings`. A skipped email still counts as sent |
 | Read, update, reset poll intervals | `rootAdmin` | `getPollIntervals`, `updatePollIntervals` (a partial patch), `resetPollIntervals` |
 | Read, update, reset the ingestion schedule | `rootAdmin` | `getIngestionSchedule`, `updateIngestionSchedule`, `resetIngestionSchedule` |
 | Set, reset one sport's override | `rootAdmin` | `setSportIngestionOverride`, `resetSportIngestionOverride` |

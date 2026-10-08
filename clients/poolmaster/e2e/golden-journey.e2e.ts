@@ -433,9 +433,11 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('league-summary-description')).toHaveText(description);
     });
 
-    await test.step('generate the join URL', async () => {
+    await test.step('generate the join URL on Teams and Owners, and see it pending', async () => {
+      // #221 — inviting members lives with the roster, beside the invites still pending.
+      await page.goto(`/league/${run.leagueCode}/teams`);
       await page.getByTestId('league-open-invite-members').click();
-      const created = await submitAndRead<{ invitation: { inviteCode: string } }>(
+      const created = await submitAndRead<{ invitation: { id: string; inviteCode: string } }>(
         page,
         'league-create-join-url',
         'POST',
@@ -446,6 +448,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       // The hand-off to act 3: the string a commissioner would copy and send.
       state.joinUrl = await joinUrl.inputValue();
       await page.keyboard.press('Escape');
+      await expect(page.getByTestId(`league-invitation-${created.invitation.id}`)).toContainText('Join link');
     });
 
     await test.step('the commissioner logs out', async () => {

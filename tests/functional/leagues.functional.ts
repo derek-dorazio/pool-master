@@ -10,8 +10,11 @@ import {
   getLeague,
   inactivateLeague,
   leaveLeague,
+  listLeagueInvitations,
   listLeagueMembers,
   listLeagues,
+  revokeInviteLink,
+  sendLeagueInvitations,
   listLeagueSquads,
   removeMember,
   updateLeagueDetails,
@@ -210,6 +213,79 @@ describe('SDK Functional: Leagues', () => {
       status: 400,
       code: 'LEAGUE_ICON_READ_ONLY_WHEN_INACTIVE',
     });
+  });
+
+  it('lists a league\'s pending invites to its commissioner until each is accepted or cancelled, and refuses to cancel one already accepted', async () => {
+    const commissioner = await buildRegisteredUser({ displayName: 'Listing Commissioner' });
+    const invitee = await buildRegisteredUser({ displayName: 'Accepting Invitee' });
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: buildCreateLeagueBody('Pending Invites League'),
+    });
+    const leagueId = createResponse.data?.league.id as string;
+    const emailInvite = await sendLeagueInvitations({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: { emails: [invitee.email, `cancelled-${randomUUID().slice(0, 8)}@functional.test`] },
+    });
+    const [acceptedInvite, cancelledInvite] = emailInvite.data?.sent ?? [];
+    const linkInvite = await generateInviteLink({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: {},
+    });
+
+    const before = await listLeagueInvitations({ client: commissioner.client, path: { id: leagueId } });
+    expect(before.response.status).toBe(200);
+    const byId = (a: string, b: string) => a.localeCompare(b);
+    expect(before.data?.invitations.map((invitation) => invitation.id).sort(byId)).toEqual(
+      [acceptedInvite.id, cancelledInvite.id, linkInvite.data?.invitation.id as string].sort(byId),
+    );
+
+    await acceptInvitation({ client: invitee.client, body: { inviteCode: acceptedInvite.inviteCode } });
+    const cancelled = await revokeInviteLink({
+      client: commissioner.client,
+      path: { id: leagueId, code: cancelledInvite.inviteCode },
+    });
+    expect(cancelled.response.status).toBe(200);
+
+    const after = await listLeagueInvitations({ client: commissioner.client, path: { id: leagueId } });
+    expect(after.data?.invitations.map((invitation) => invitation.id)).toEqual([
+      linkInvite.data?.invitation.id,
+    ]);
+    const cancelledAccept = await acceptInvitation({
+      client: invitee.client,
+      body: { inviteCode: cancelledInvite.inviteCode },
+    });
+    expect(cancelledAccept.response.status).toBe(400);
+
+    // An accepted invite cannot be cancelled after the fact; it stays ACCEPTED.
+    const lateCancel = await revokeInviteLink({
+      client: commissioner.client,
+      path: { id: leagueId, code: acceptedInvite.inviteCode },
+    });
+    expect(lateCancel.response.status).toBe(409);
+    expect(lateCancel.error?.error.code).toBe('LEAGUE_INVITATION_NOT_CANCELLABLE');
+    const acceptedRow = await getFunctionalPrisma().leagueInvitation.findUniqueOrThrow({
+      where: { id: acceptedInvite.id },
+    });
+    expect(acceptedRow.status).toBe('ACCEPTED');
+  });
+
+  it('refuses a plain member the pending invites list', async () => {
+    const commissioner = await buildRegisteredUser({ displayName: 'Guarding Commissioner' });
+    const member = await buildRegisteredUser({ displayName: 'Curious Member' });
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: buildCreateLeagueBody('Guarded Invites League'),
+    });
+    const leagueId = createResponse.data?.league.id as string;
+    const link = await generateInviteLink({ client: commissioner.client, path: { id: leagueId }, body: {} });
+    await acceptInvitation({ client: member.client, body: { inviteCode: link.data?.invitation.inviteCode as string } });
+
+    const response = await listLeagueInvitations({ client: member.client, path: { id: leagueId } });
+
+    expect(response.response.status).toBe(403);
   });
 
   it('generates a commissioner invite link and accepts it for another authenticated user', async () => {

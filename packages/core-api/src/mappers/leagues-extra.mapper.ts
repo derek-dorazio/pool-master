@@ -1,5 +1,5 @@
-import type { LeagueMembership, User } from '@poolmaster/shared/domain';
-import type { LeagueMembershipDto } from '@poolmaster/shared/dto';
+import type { LeagueInvitation, LeagueMembership, User } from '@poolmaster/shared/domain';
+import type { LeagueInvitationDto, LeagueMembershipDto } from '@poolmaster/shared/dto';
 import { toUserDto } from './users.mapper';
 
 /**
@@ -28,5 +28,25 @@ export function mapLeagueMembershipToDto(
     createdAt: membership.createdAt.toISOString(),
     updatedAt: membership.updatedAt.toISOString(),
     user: toUserDto(user),
+  };
+}
+
+/** A league invitation → DTO. Email and join-link invitations share the one shape. */
+export function mapLeagueInvitationToDto(invitation: LeagueInvitation): LeagueInvitationDto {
+  return {
+    id: invitation.id,
+    leagueId: invitation.leagueId,
+    email: invitation.email ?? null,
+    inviteCode: invitation.inviteCode,
+    inviteType: invitation.inviteType,
+    status: invitation.status,
+    maxUses: invitation.maxUses,
+    currentUses: invitation.currentUses,
+    invitedBy: invitation.invitedBy,
+    expiresAt: invitation.expiresAt?.toISOString() ?? null,
+    acceptedAt: invitation.acceptedAt?.toISOString() ?? null,
+    acceptedBy: invitation.acceptedBy ?? null,
+    createdAt: invitation.createdAt.toISOString(),
+    updatedAt: invitation.updatedAt.toISOString(),
   };
 }

@@ -149,17 +149,6 @@ variable "mock_contest_feed_provider_bootstrap_image_tag" {
   default     = "bootstrap"
 }
 
-variable "email_provider" {
-  description = "EMAIL_PROVIDER for core-api: ses, smtp or disabled. Leave empty for the environment default: disabled on QA until real delivery is set up (#120), ses elsewhere."
-  type        = string
-  default     = ""
-
-  validation {
-    condition     = contains(["", "ses", "smtp", "disabled"], var.email_provider)
-    error_message = "email_provider must be empty, ses, smtp or disabled."
-  }
-}
-
 variable "sport_data_default_provider" {
   description = "Default sports data provider id for the environment. Leave empty to defer binding to application configuration."
   type        = string

@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { TeamsPage } from './teams-page';
@@ -12,6 +12,7 @@ const {
   getCurrentUserMock,
   getLeagueByCodeMock,
   inactivateLeagueSquadMock,
+  listLeagueInvitationsMock,
   listLeagueMembersMock,
   listLeagueSquadsMock,
   listSquadOwnerInvitationsMock,
@@ -38,6 +39,7 @@ const {
     getCurrentUserMock: vi.fn(),
     getLeagueByCodeMock: vi.fn(),
     inactivateLeagueSquadMock: vi.fn(),
+    listLeagueInvitationsMock: vi.fn(),
     listLeagueMembersMock: vi.fn(),
     listLeagueSquadsMock: vi.fn(),
     listSquadOwnerInvitationsMock: vi.fn(),
@@ -61,6 +63,7 @@ bindApiMocks({
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
   inactivateLeagueSquad: inactivateLeagueSquadMock,
+  listLeagueInvitations: listLeagueInvitationsMock,
   listLeagueMembers: listLeagueMembersMock,
   listLeagueSquads: listLeagueSquadsMock,
   listSquadOwnerInvitations: listSquadOwnerInvitationsMock,
@@ -239,7 +242,12 @@ function primeAuthenticatedLeague(role: 'COMMISSIONER' | 'MEMBER' = 'COMMISSIONE
 }
 
 describe('TeamsPage', () => {
+  beforeEach(() => {
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
+  });
+
   afterEach(() => {
+    listLeagueInvitationsMock.mockReset();
     createSquadOwnerInvitationMock.mockReset();
     inactivateLeagueSquadMock.mockReset();
     revokeSquadOwnerInvitationMock.mockReset();
@@ -373,6 +381,9 @@ describe('TeamsPage', () => {
     expect(screen.getByTestId('squad-actions-revoke-team-1-invite-1')).toBeInTheDocument();
     expect(screen.getByTestId('squad-actions-open-invite-team-1')).toBeInTheDocument();
     expect(screen.getByTestId('squad-actions-open-inactivate-team-1')).toBeInTheDocument();
+    // #221 — inviting new members, and the invites still pending, live here for a commissioner.
+    expect(await screen.findByTestId('league-invitations-empty')).toBeInTheDocument();
+    expect(screen.getByTestId('league-open-invite-members')).toBeEnabled();
   });
 
   it('shows each owner\'s league join date as small muted text beside their name', async () => {
@@ -600,6 +611,8 @@ describe('TeamsPage', () => {
     expect(await screen.findByTestId('squad-actions-open-invite-team-1')).toBeInTheDocument();
     expect(screen.queryByTestId('squad-actions-open-inactivate-team-1')).not.toBeInTheDocument();
     expect(screen.queryByTestId('squad-actions-team-2')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('league-invitations')).not.toBeInTheDocument();
+    expect(listLeagueInvitationsMock).not.toHaveBeenCalled();
   });
 
   it('hides the squad actions while the league is inactive', async () => {

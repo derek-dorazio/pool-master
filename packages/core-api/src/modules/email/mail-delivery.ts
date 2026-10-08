@@ -7,7 +7,7 @@ import nodemailer, { type Transporter } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import type { FastifyBaseLogger } from 'fastify';
 
-export type MailDeliveryProviderName = 'smtp' | 'ses' | 'disabled';
+export type MailDeliveryProviderName = 'smtp' | 'ses';
 
 export interface MailDeliveryMessage {
   to: string | string[];
@@ -27,6 +27,8 @@ export interface MailDeliveryMessage {
 export interface MailDeliveryResult {
   provider: MailDeliveryProviderName;
   messageId?: string;
+  /** Set when EMAIL_CONFIG switched the email off, so nothing was submitted. */
+  skipped?: 'emailDisabled' | 'templateDisabled';
 }
 
 export interface MailDeliveryProvider {
@@ -37,7 +39,6 @@ export interface MailDeliveryProvider {
 export interface MailDeliveryConfig {
   provider: MailDeliveryProviderName;
   fromEmail: string;
-  replyToEmail?: string;
   smtp?: SmtpMailDeliveryConfig;
   ses?: SesMailDeliveryConfig;
 }
@@ -120,7 +121,7 @@ export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
       const result = await this.transport.sendMail({
         from: this.config.fromEmail,
         to: recipients,
-        replyTo: message.replyTo ?? this.config.replyToEmail,
+        replyTo: message.replyTo,
         subject: message.subject,
         text: message.text,
         html: message.html,
@@ -197,11 +198,10 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
       },
     }, 'Submitting SES email');
     try {
-      const replyTo = message.replyTo ?? this.config.replyToEmail;
       const command = new SendEmailCommand({
         Source: this.config.fromEmail,
         Destination: { ToAddresses: recipients },
-        ReplyToAddresses: replyTo ? [replyTo] : undefined,
+        ReplyToAddresses: message.replyTo ? [message.replyTo] : undefined,
         ConfigurationSetName: configurationSetName || undefined,
         Message: {
           Subject: { Data: message.subject, Charset: 'UTF-8' },
@@ -243,32 +243,6 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
   }
 }
 
-/**
- * `EMAIL_PROVIDER=disabled`: an environment that must not send mail yet (QA until real delivery
- * is set up, #120). Every send succeeds without contacting anyone, so invite by email still
- * creates the invitation; the skip is logged with ids only, never the body.
- */
-export class DisabledMailDeliveryProvider implements MailDeliveryProvider {
-  readonly providerName = 'disabled' as const;
-
-  constructor(private readonly logger?: FastifyBaseLogger) {}
-
-  send(message: MailDeliveryMessage): Promise<MailDeliveryResult> {
-    this.logger?.info({
-      action: 'mailDelivery.disabled.skip',
-      data: {
-        toCount: normalizeRecipients(message.to).length,
-        templateKey: message.metadata?.templateKey ?? null,
-        leagueId: message.metadata?.leagueId ?? null,
-        contestId: message.metadata?.contestId ?? null,
-        entryId: message.metadata?.entryId ?? null,
-        invitationId: message.metadata?.invitationId ?? null,
-      },
-    }, 'Email delivery is disabled; skipped sending email');
-    return Promise.resolve({ provider: this.providerName });
-  }
-}
-
 export function readMailDeliveryConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): MailDeliveryConfig {
@@ -276,17 +250,11 @@ export function readMailDeliveryConfig(
   const fromEmail = provider === 'ses'
     ? env.SES_FROM_EMAIL ?? env.SMTP_FROM ?? 'noreply@poolmaster.local'
     : env.SMTP_FROM ?? env.SES_FROM_EMAIL ?? 'noreply@poolmaster.local';
-  const replyToEmail = env.EMAIL_REPLY_TO?.trim() || undefined;
-
-  if (provider === 'disabled') {
-    return { provider, fromEmail, replyToEmail };
-  }
 
   if (provider === 'smtp') {
     return {
       provider,
       fromEmail,
-      replyToEmail,
       smtp: {
         host: env.SMTP_HOST ?? 'localhost',
         port: parsePort(env.SMTP_PORT, 1025),
@@ -300,7 +268,6 @@ export function readMailDeliveryConfig(
   return {
     provider,
     fromEmail,
-    replyToEmail,
     ses: {
       region: env.AWS_REGION ?? 'us-east-1',
       endpoint: env.AWS_ENDPOINT?.trim() || undefined,
@@ -315,9 +282,6 @@ export function createMailDeliveryProvider(
   config: MailDeliveryConfig = readMailDeliveryConfig(),
   logger?: FastifyBaseLogger,
 ): MailDeliveryProvider {
-  if (config.provider === 'disabled') {
-    return new DisabledMailDeliveryProvider(logger);
-  }
   if (config.provider === 'smtp') {
     return new SmtpMailDeliveryProvider(config, undefined, logger);
   }
@@ -330,7 +294,7 @@ export function readApplicationBaseUrl(env: NodeJS.ProcessEnv = process.env): st
 
 function parseProviderName(value: string): MailDeliveryProviderName {
   const provider = value.trim().toLowerCase();
-  if (provider === 'smtp' || provider === 'ses' || provider === 'disabled') return provider;
+  if (provider === 'smtp' || provider === 'ses') return provider;
   throw new MailDeliveryConfigError(`Unsupported EMAIL_PROVIDER: ${value}`);
 }
 

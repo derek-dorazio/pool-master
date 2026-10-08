@@ -44,6 +44,13 @@ import { PollConfigService } from '../../packages/core-api/src/modules/platform/
 import { IngestionConfigService } from '../../packages/core-api/src/modules/platform/ingestion-config-service';
 import { AppSettingsService } from '../../packages/core-api/src/modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from '../../packages/core-api/src/modules/platform/settings-groups';
+import { PlatformSettingsService } from '../../packages/core-api/src/modules/platform/platform-settings-service';
+import {
+  EMAIL_SETTINGS,
+  SettingsAwareMailDeliveryProvider,
+  createMailDeliveryProvider,
+  readMailDeliveryConfig,
+} from '../../packages/core-api/src/modules/email';
 import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
@@ -52,6 +59,7 @@ import {
   PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
+  PrismaUserRepository,
 } from '../../packages/core-api/src/adapters';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
@@ -103,6 +111,9 @@ const MAIL_ENVIRONMENT_KEYS = [
 ] as const;
 type MailEnvironmentKey = (typeof MAIL_ENVIRONMENT_KEYS)[number];
 
+/** The shared app's settings cache; `cleanupTestData` refreshes it so deleted rows are not served. */
+let appSettings: AppSettingsService | undefined;
+
 /** Get the shared Fastify app instance (created once per test suite). */
 export function getApp(): FastifyInstance {
   return app;
@@ -124,17 +135,27 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(authGuard);
   testApp.setErrorHandler(globalErrorHandler);
 
-  // The ingestion and platform services index.ts builds, without the background scheduler.
+  // The ingestion, platform and mail services index.ts builds, without the background scheduler.
   const providerRegistry = new ProviderRegistry();
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
-  const appSettings = new AppSettingsService({
+  const settings = new AppSettingsService({
     repository: runtimeConfigRepository,
     groups: SETTINGS_GROUPS,
     env: process.env,
   });
-  await appSettings.load();
-  const pollConfigService = new PollConfigService(appSettings);
-  const ingestionConfigService = new IngestionConfigService(appSettings);
+  await settings.load();
+  appSettings = settings;
+  const mailDelivery = new SettingsAwareMailDeliveryProvider(
+    createMailDeliveryProvider(readMailDeliveryConfig(process.env)),
+    () => settings.get(EMAIL_SETTINGS),
+  );
+  const pollConfigService = new PollConfigService(settings);
+  const ingestionConfigService = new IngestionConfigService(settings);
+  const platformSettingsService = new PlatformSettingsService({
+    settings,
+    runtimeConfigs: runtimeConfigRepository,
+    users: new PrismaUserRepository(prisma),
+  });
   const ingestionService = new IngestionService({
     registry: providerRegistry,
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -145,15 +166,15 @@ async function buildTestApp(): Promise<FastifyInstance> {
 
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth' });
-  testApp.register(leaguesModule, { prefix: '/api/v1/leagues' });
+  testApp.register(leaguesModule, { prefix: '/api/v1/leagues', mailDelivery });
   testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
-  testApp.register(invitationsModule, { prefix: '/api/v1/invitations' });
+  testApp.register(invitationsModule, { prefix: '/api/v1/invitations', mailDelivery });
   testApp.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations' });
-  testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
+  testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', mailDelivery });
   testApp.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',
   });
-  testApp.register(contestsByIdModule, { prefix: '/api/v1/contests' });
+  testApp.register(contestsByIdModule, { prefix: '/api/v1/contests', mailDelivery });
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users' });
   testApp.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry });
@@ -161,7 +182,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
-  testApp.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService });
+  testApp.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService, platformSettingsService });
   testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
 
   await testApp.ready();
@@ -197,28 +218,6 @@ export function getSentMail(): CapturedMail[] {
     throw new Error('Integration mail sink not started — call setupIntegrationTests() first.');
   }
   return integrationSmtpServer.messages;
-}
-
-/**
- * A second app built under different mail settings, e.g. `{ EMAIL_PROVIDER: 'disabled' }`. The
- * modules read the mail environment once, when the app becomes ready, so the overrides are
- * restored afterwards and the shared app is untouched. The caller closes the returned app.
- */
-export async function buildTestAppWithMailEnv(
-  overrides: Partial<Record<MailEnvironmentKey, string>>,
-): Promise<FastifyInstance> {
-  const saved = Object.fromEntries(
-    Object.keys(overrides).map((key) => [key, process.env[key]]),
-  );
-  Object.assign(process.env, overrides);
-  try {
-    return await buildTestApp();
-  } finally {
-    for (const [key, value] of Object.entries(saved)) {
-      if (value === undefined) delete process.env[key];
-      else process.env[key] = value;
-    }
-  }
 }
 
 /** Tear down after all tests. */
@@ -678,6 +677,7 @@ export async function cleanupTestData(): Promise<void> {
 
   await prisma.platformRuntimeConfig.deleteMany();
   await prisma.platformRuntimeConfigHistory.deleteMany();
+  await appSettings?.refresh();
   if (userIds.length > 0) {
     await prisma.refreshToken.deleteMany({
       where: { userId: { in: userIds } },

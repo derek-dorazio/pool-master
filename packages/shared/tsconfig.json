@@ -11,8 +11,6 @@
     "db/**/*",
     "utils/**/*",
     "src/**/*",
-    "i18n/**/*",
-    "i18n/locales/**/*.json",
     "api-routes.ts",
     "index.ts",
     "dto/**/*",
