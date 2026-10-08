@@ -39,6 +39,17 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 
+/** Resolves once some backend in the test database is waiting on a lock another one holds. */
+async function waitForBlockedBackend(): Promise<void> {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const [{ waiting }] = await getPrisma().$queryRaw<Array<{ waiting: number }>>`
+      SELECT count(*)::int AS waiting FROM pg_locks WHERE NOT granted`;
+    if (waiting > 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  throw new Error('No backend blocked on a lock within 5 seconds');
+}
+
 function coreApiTask(): AppSettingsService {
   return new AppSettingsService({
     repository: new PrismaPlatformRuntimeConfigRepository(getPrisma()),
@@ -164,8 +175,9 @@ describe('settings registry on Postgres', () => {
       changedById: admin.user.id,
       expectedUpdatedAt: null,
     });
-    // Give the losing save time to reach the blocked insert before the winner commits.
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // Release the winner only once the losing save is waiting on its lock, so the loser meets
+    // the row at the unique key rather than finding it committed.
+    await waitForBlockedBackend();
     release();
     await winner;
     const result = await losing;
