@@ -502,6 +502,18 @@ describe('InvitationService — who may accept, and inactive leagues', () => {
     expect(world.tables.leagueInvitations.where(() => true)).toEqual([]);
   });
 
+  it('refuses to resend an email invitation for an inactive league with LEAGUE_INACTIVE, sending nothing and keeping its code', async () => {
+    const mail = recordingMail();
+    const { world, commissioner, league, service } = setup({ mail: mail.provider });
+    const invitation = seedInvitation(world, league, commissioner, { email: 'invitee@example.com' });
+    world.tables.leagues.patch(league.id, { isActive: false });
+
+    await expect(service.resendEmailInvitation(league.id, invitation.id, commissioner.id))
+      .rejects.toMatchObject({ code: 'LEAGUE_INACTIVE' });
+    expect(mail.sent).toEqual([]);
+    expect(world.tables.leagueInvitations.get(invitation.id)?.inviteCode).toBe(invitation.inviteCode);
+  });
+
   it('refuses to accept an invitation into an inactive league with LEAGUE_INACTIVE, creating no membership', async () => {
     const { world, commissioner, league, service } = setup();
     const invitation = seedInvitation(world, league, commissioner, { inviteType: InviteType.LINK, maxUses: 0 });
