@@ -1275,7 +1275,7 @@ describe('ContestService', () => {
       expect(result.tiebreakerValue).toBe(271);
     });
 
-    it('pool-master-95b sends confirmation email after a completed entry is saved', async () => {
+    it('sends the Entry submitted confirmation with each tier\'s golfer, the tiebreaker and a link to the entry', async () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1334,9 +1334,7 @@ describe('ContestService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      await service.updateEntry('contest-1', 'entry-1', 'user-1', {
-        tiebreakerValue: 271,
-      });
+      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1');
 
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -1359,7 +1357,7 @@ describe('ContestService', () => {
       expect(sentMessage.html).toContain('Prime Time Commissioner');
     });
 
-    it('pool-master-piv falls back to SportEventTierService for the email tier grouping when the contest has no typed tierConfig', async () => {
+    it('falls back to SportEventTierService for the email tier grouping when the contest has no typed tierConfig', async () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1409,9 +1407,7 @@ describe('ContestService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      await service.updateEntry('contest-1', 'entry-1', 'user-1', {
-        tiebreakerValue: 271,
-      });
+      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1');
 
       expect(tiers.getEffectiveValuationsForSportEvent).toHaveBeenCalledWith('event-1');
       const sentMessage = mailDelivery.send.mock.calls[0][0];
@@ -1419,7 +1415,7 @@ describe('ContestService', () => {
       expect(sentMessage.text).toContain('Tier B: Tommy Fleetwood');
     });
 
-    it('pool-master-95b skips confirmation email until roster and tiebreaker are complete', async () => {
+    it('skips the Entry submitted confirmation for an entry without a full roster', async () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1464,14 +1460,12 @@ describe('ContestService', () => {
         mailDelivery: mailDelivery,
       });
 
-      await service.updateEntry('contest-1', 'entry-1', 'user-1', {
-        tiebreakerValue: 271,
-      });
+      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1');
 
       expect(mailDelivery.send).not.toHaveBeenCalled();
     });
 
-    it('pool-master-95b keeps the saved entry when confirmation email delivery fails', async () => {
+    it('resolves rather than throwing when confirmation delivery fails, so the submit it follows still succeeds', async () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1514,11 +1508,58 @@ describe('ContestService', () => {
         mailDelivery: mailDelivery,
       });
 
-      await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', {
-        tiebreakerValue: -12,
-      })).resolves.toEqual(expect.objectContaining({ id: 'entry-1' }));
-      expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { tiebreakerValue: -12 });
+      await expect(service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1')).resolves.toBeUndefined();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
+      expect(entryRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('sends no confirmation when a complete entry\'s tiebreaker is saved: only submitting the entry sends it (#481)', async () => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        name: 'Masters Pick 1',
+        status: ContestStatus.OPEN,
+      });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const entryRepo = createMockEntryRepo({
+        findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
+        findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(-12)),
+      });
+      const mailDelivery = {
+        providerName: 'ses' as const,
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'ses', messageId: 'mail-1' })),
+      };
+      const service = buildService({
+        contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
+        configurations: createMockContestConfigurationRepo({
+          findByContest: jest.fn().mockResolvedValue({
+            tierConfig: [{ tierName: 'Tier A', tierNumber: 1, picksFromTier: 1, participantIds: ['participant-1'] }],
+            rosterSize: 1,
+          }),
+        }),
+        leagues: fakeLeagueRepo({
+          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
+        }),
+        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
+        squads: createMockSquadRepo(),
+        squadMemberships: createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue(ACTIVE_SQUAD_MEMBERSHIP),
+        }),
+        entries: entryRepo,
+        picks: fakeContestEntryPickRepo({
+          countByEntries: jest.fn().mockResolvedValue(new Map([['entry-1', 1]])),
+          findByEntriesWithParticipant: jest.fn().mockResolvedValue([
+            buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
+          ]),
+        }),
+        mailDelivery: mailDelivery,
+      });
+
+      await service.updateEntry('contest-1', 'entry-1', 'user-1', { tiebreakerValue: -12 });
+
+      expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { tiebreakerValue: -12 });
+      expect(mailDelivery.send).not.toHaveBeenCalled();
     });
   });
 

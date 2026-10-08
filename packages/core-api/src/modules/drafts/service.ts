@@ -47,7 +47,7 @@ import type {
   SquadMembershipRepository,
 } from '@poolmaster/shared/db';
 import type { ContestEntryPickService } from '../contest-entry-picks';
-import { contestPicksRevealed } from '../contests/service';
+import { contestPicksRevealed, type ContestService } from '../contests/service';
 import { areContestEntriesOpen } from '../contests/entry-window';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { draftErrors } from './draft-errors';
@@ -93,6 +93,11 @@ export interface DraftServiceDeps {
    */
   pickWrites: ContestEntryPickService;
   tiers: SportEventTierService;
+  /**
+   * Sends the "Entry submitted" confirmation once an entry is submitted (#481). Optional so the
+   * room can be built without mail; the contests module owns the email.
+   */
+  entryReceipts?: Pick<ContestService, 'sendEntrySubmittedEmail'>;
   /** Read for the event's start time, the cutoff for pick changes. */
   sportEvents: Pick<SportEventRepository, 'findById'>;
   now?: () => Date;
@@ -380,6 +385,7 @@ export class DraftService {
         { action: 'draft.submitEntry.submitted', data: { contestId, entryId } },
         'Submitted a contest entry',
       );
+      await this.deps.entryReceipts?.sendEntrySubmittedEmail(contestId, entryId, actorUserId);
     }
 
     return this.buildRoomView({ context: submittedContext, selectedEntryId: entryId, actorUserId });

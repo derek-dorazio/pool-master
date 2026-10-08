@@ -351,13 +351,16 @@ describe('ContestService entries — confirmation email', () => {
     for (let i = 1; i <= 6; i++) world.addPick(entryId, `sep-${i}`);
   }
 
-  it('emails the owner a confirmation once the lineup is complete and a tiebreaker is saved', async () => {
+  it('emails the owner a confirmation when a complete entry with a tiebreaker is submitted', async () => {
     const mail = capturingMail();
     const { world, owner, contest, service } = setup({ mailDelivery: mail });
     const created = await service.createEntry(contest.id, owner.id);
     completeLineup(world, created.id);
-
     await service.updateEntry(contest.id, created.id, owner.id, { tiebreakerValue: -10 });
+    // Saving the tiebreaker sends nothing: the confirmation is the submit's (#481).
+    expect(mail.sent).toHaveLength(0);
+
+    await service.sendEntrySubmittedEmail(contest.id, created.id, owner.id);
 
     expect(mail.sent).toHaveLength(1);
     expect(mail.sent[0].to).toBe('olive@example.com');
@@ -370,8 +373,9 @@ describe('ContestService entries — confirmation email', () => {
     const { world, owner, contest, service } = setup({ mailDelivery: mail });
     const created = await service.createEntry(contest.id, owner.id);
     world.addPick(created.id, 'sep-1');
-
     await service.updateEntry(contest.id, created.id, owner.id, { tiebreakerValue: -10 });
+
+    await service.sendEntrySubmittedEmail(contest.id, created.id, owner.id);
 
     expect(mail.sent).toHaveLength(0);
   });
@@ -382,20 +386,20 @@ describe('ContestService entries — confirmation email', () => {
     const created = await service.createEntry(contest.id, owner.id);
     completeLineup(world, created.id);
 
-    await service.updateEntry(contest.id, created.id, owner.id, { name: 'Renamed' });
+    await service.sendEntrySubmittedEmail(contest.id, created.id, owner.id);
 
     expect(mail.sent).toHaveLength(0);
   });
 
-  it('still saves the entry when the confirmation email fails to send', async () => {
+  it('resolves without throwing when the confirmation email fails to send', async () => {
     const { world, owner, contest, service } = setup({
       mailDelivery: { send: async () => { throw new Error('SMTP down'); } } as unknown as MailDeliveryProvider,
     });
     const created = await service.createEntry(contest.id, owner.id);
     completeLineup(world, created.id);
-
     await service.updateEntry(contest.id, created.id, owner.id, { tiebreakerValue: -4 });
 
+    await expect(service.sendEntrySubmittedEmail(contest.id, created.id, owner.id)).resolves.toBeUndefined();
     expect(world.entries.get(created.id)?.tiebreakerValue).toBe(-4);
   });
 });

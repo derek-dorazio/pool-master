@@ -208,7 +208,7 @@ export function buildApp() {
   // =========================================================================
   // Draft module
   // =========================================================================
-  app.register(draftsModule, { prefix: '/api/v1/drafts' });
+  app.register(draftsModule, { prefix: '/api/v1/drafts', mailDelivery });
 
   // =========================================================================
   // Lifecycle hooks

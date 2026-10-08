@@ -1093,7 +1093,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     expect(screen.getByTestId('contest-entry-readonly-tiebreaker')).toHaveTextContent('Winning score relative to par');
     expect(screen.queryByTestId('contest-entry-participant-sep-3')).not.toBeInTheDocument();
   });
-  describe('submitting an entry (#481)', () => {
+  describe('submitting an entry', () => {
     const completeGroups = () => [
       {
         groupId: 'tier-1',

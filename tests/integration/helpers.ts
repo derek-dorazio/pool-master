@@ -182,7 +182,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
-  testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
+  testApp.register(draftsModule, { prefix: '/api/v1/drafts', mailDelivery });
   testApp.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService, platformSettingsService });
   testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
 

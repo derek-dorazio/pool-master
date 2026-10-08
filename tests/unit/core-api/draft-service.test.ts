@@ -891,6 +891,21 @@ describe('DraftService.submitEntry — an entry counts only once its owner submi
     expect(view.entries.find((row) => row.id === ENTRY_ID)?.status).toBe('SUBMITTED');
   });
 
+  it('sends the Entry submitted confirmation once, when a draft is submitted, and not on a repeat submit', async () => {
+    const sendEntrySubmittedEmail = jest.fn().mockResolvedValue(undefined);
+    const first = setup({ picks: COMPLETE });
+    withFullRowUpdates(first.deps);
+    first.deps.entryReceipts = { sendEntrySubmittedEmail };
+
+    await first.service.submitEntry(submitEntryInput());
+    expect(sendEntrySubmittedEmail).toHaveBeenCalledWith(CONTEST_ID, ENTRY_ID, OWNER_USER_ID);
+
+    const repeat = setup({ picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
+    repeat.deps.entryReceipts = { sendEntrySubmittedEmail };
+    await repeat.service.submitEntry(submitEntryInput());
+    expect(sendEntrySubmittedEmail).toHaveBeenCalledTimes(1);
+  });
+
   it('refuses 409 ENTRY_LINEUP_INCOMPLETE naming the short tier, and leaves the entry a draft', async () => {
     const { service, deps } = setup({ picks: [pick('pick-a', 'p-a', 'sep-a'), pick('pick-b', 'p-b', 'sep-b')] });
 

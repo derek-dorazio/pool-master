@@ -225,7 +225,7 @@ describe('SDK Functional: contest reads and entry access (#291)', () => {
     expect(reread.response.status).toBe(200);
     expect(reread.data?.entry.id).toBe(entryId);
     expect(reread.data?.entry.name).toBe(originalName);
-    expect(reread.data?.entry.status).toBe('ACTIVE');
+    expect(reread.data?.entry.status).toBe('DRAFT');
     expect(reread.data?.entry.tiebreakerValue ?? null).toBeNull();
   });
 

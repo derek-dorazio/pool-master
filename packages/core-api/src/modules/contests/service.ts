@@ -657,12 +657,16 @@ export class ContestService {
 
     await this.deps.entries.update(entryId, pendingUpdates);
     const dto = await this.loadEntryDtoById(entryId);
-    await this.deliverContestEntryCompletedEmail(contestId, entryId, userId);
     this.logger.info({ contestId, entryId, userId }, 'contest entry update completed');
     return dto;
   }
 
-  private async deliverContestEntryCompletedEmail(
+  /**
+   * The "Entry submitted" confirmation, sent by the draft room when an entry is submitted
+   * (#481). Before the explicit submit it went out on whichever edit first left the entry with
+   * a full lineup and a tiebreaker. Still skipped for an incomplete lineup or no tiebreaker.
+   */
+  async sendEntrySubmittedEmail(
     contestId: string,
     entryId: string,
     userId: string,

@@ -629,7 +629,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expect(enterResponse.data).toBeDefined();
     expect(enterResponse.data?.contestId).toBe(contestId);
-    expect(enterResponse.data?.entry.status).toBe('ACTIVE');
+    expect(enterResponse.data?.entry.status).toBe('DRAFT');
     expect(enterResponse.data?.entry.entryNumber).toBe(1);
 
     const secondEnterResponse = await enterContest({
@@ -668,13 +668,13 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(entriesResponse.data?.myEntryId).toBe(enterResponse.data?.entry.id);
     expect(entriesResponse.data?.entries).toHaveLength(1);
 
-    // The league's contest list counts the entry. Before #247 this route's service had no entry
-    // reads wired, so every contest listed `entryCount: 0`.
+    // The league's contest list counts submitted entries only (#481): this one is still an
+    // unsubmitted draft with no picks, so it is listed above but not counted.
     const listedWithEntry = await listContests({
       client: commissioner.client,
       path: { id: league.id },
     });
-    expect(listedWithEntry.data?.contests.find((contest) => contest.id === contestId)?.entryCount).toBe(1);
+    expect(listedWithEntry.data?.contests.find((contest) => contest.id === contestId)?.entryCount).toBe(0);
 
     const leaveResponse = await leaveContest({
       client: commissioner.client,
@@ -725,7 +725,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expect(reenterResponse.data).toBeDefined();
     expect(reenterResponse.data?.contestId).toBe(contestId);
-    expect(reenterResponse.data?.entry.status).toBe('ACTIVE');
+    expect(reenterResponse.data?.entry.status).toBe('DRAFT');
     expect(reenterResponse.data?.entry.entryNumber).toBe(1);
   });
 

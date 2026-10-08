@@ -17,10 +17,16 @@ import {
   PrismaSquadMembershipRepository,
 } from '../../adapters';
 import { ContestEntryPickService } from '../contest-entry-picks';
+import { createContestService } from '../contests/wiring';
+import type { MailDeliveryProvider } from '../email';
 import { createSportEventTierService } from '../events/wiring';
 import { DraftService } from './service';
 
-export function createDraftService(prisma: PrismaClient, logger?: FastifyBaseLogger): DraftService {
+export function createDraftService(
+  prisma: PrismaClient,
+  logger: FastifyBaseLogger,
+  options?: { mailDelivery?: MailDeliveryProvider; appBaseUrl?: string },
+): DraftService {
   return new DraftService({
     contests: new PrismaContestRepository(prisma),
     configurations: new PrismaContestConfigurationRepository(prisma),
@@ -35,6 +41,7 @@ export function createDraftService(prisma: PrismaClient, logger?: FastifyBaseLog
     pickWrites: new ContestEntryPickService(prisma, logger),
     tiers: createSportEventTierService(prisma, logger),
     sportEvents: new PrismaSportEventRepository(prisma),
+    entryReceipts: createContestService(prisma, logger, options),
     logger,
   });
 }

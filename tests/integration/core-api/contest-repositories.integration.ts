@@ -219,31 +219,37 @@ describe('ContestRepository', () => {
 });
 
 describe('ContestEntryRepository — entries with their squad', () => {
-  it('lists a contest\'s entries by entry number with squad names, optionally only the active ones', async () => {
+  it('lists a contest\'s entries by entry number with squad names, optionally only the submitted ones', async () => {
     const prisma = getPrisma();
     const { league, squads, event, suffix } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'Entries');
     // Inserted out of order, so the order below is the adapter's, not insertion order.
     const second = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squads[1].id, entryNumber: 2, name: 'Second' },
+      data: { contestId: contest.id, squadId: squads[1].id, entryNumber: 2, name: 'Second', status: 'SUBMITTED' },
     });
     const first = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'First' },
+      data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'First', status: 'SUBMITTED' },
     });
     const inactive = await prisma.contestEntry.create({
       data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 3, name: 'Inactive', status: 'INACTIVE' },
     });
+    // Stored without a status: the column defaults to DRAFT (#481), which counts nowhere.
+    const draft = await prisma.contestEntry.create({
+      data: { contestId: contest.id, squadId: squads[1].id, entryNumber: 4, name: 'Draft' },
+    });
 
     const all = await repos().entries.findByContestWithSquad(contest.id);
-    const active = await repos().entries.findByContestWithSquad(contest.id, { submittedOnly: true });
+    const submitted = await repos().entries.findByContestWithSquad(contest.id, { submittedOnly: true });
     const one = await repos().entries.findByIdWithSquad(second.id);
 
     expect(all.map((entry) => [entry.id, entry.squadName])).toEqual([
       [first.id, `Alpha ${suffix}`],
       [second.id, `Bravo ${suffix}`],
       [inactive.id, `Alpha ${suffix}`],
+      [draft.id, `Bravo ${suffix}`],
     ]);
-    expect(active.map((entry) => entry.id)).toEqual([first.id, second.id]);
+    expect(draft.status).toBe('DRAFT');
+    expect(submitted.map((entry) => entry.id)).toEqual([first.id, second.id]);
     expect(one).toEqual(expect.objectContaining({ id: second.id, entryNumber: 2, squadName: `Bravo ${suffix}` }));
     await expect(repos().entries.findByIdWithSquad(randomUUID())).resolves.toBeNull();
   });
@@ -397,7 +403,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
       });
     }
     await prisma.contestEntry.create({
-      data: { contestId: open.id, squadId: squads[0].id, entryNumber: 1, name: 'Alpha Entry' },
+      data: { contestId: open.id, squadId: squads[0].id, entryNumber: 1, name: 'Alpha Entry', status: 'SUBMITTED' },
     });
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
     const lifecycle = createEventLifecycleService(prisma, {

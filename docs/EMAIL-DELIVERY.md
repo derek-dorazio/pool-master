@@ -94,14 +94,16 @@ resend again. When `EMAIL_CONFIG` has the league invite email switched off, a
 resend still renews the code and reports success; the email is skipped, so the
 commissioner shares the new link another way.
 
-Contest entry confirmation emails are best-effort receipts. The saved entry is
-not rolled back when provider submission fails; PoolMaster logs the template,
-league, contest, and entry identifiers for follow-up.
+Contest entry confirmation emails ("Entry submitted") are best-effort receipts,
+sent when a member submits an entry (#481), not when its picks or tiebreaker
+are saved. A repeat submit of an already submitted entry sends nothing. The
+submitted entry is not rolled back when provider submission fails; PoolMaster
+logs the template, league, contest, and entry identifiers for follow-up.
 
 Contest started summary emails are sent when a sport event moves to
 `IN_PROGRESS` (a root admin's transition, or the lifecycle scheduler) and first
 moves its contests from `OPEN` or `LOCKED` to `ACTIVE`. They go to the league's
-commissioners and each entrant's team members, once each. An already-active
+commissioners and the team members of each submitted entry, once each. An already-active
 contest is not told again. Delivery is best effort; the transition still
 succeeds if the provider rejects the email,
 and PoolMaster logs the template, league, contest, and user identifiers.
