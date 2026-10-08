@@ -692,4 +692,49 @@ describe('ContestLeaderboardPage', () => {
       '/league/BIGDAWGS/contests/contest-1',
     );
   });
+
+  it('shows a server failure with no refusal code under the generic error, and logs it', async () => {
+    getContestMock.mockReset();
+    getGolfContestLeaderboardMock.mockReset();
+    getContestMock.mockResolvedValue(contestResponse('ACTIVE'));
+    getGolfContestLeaderboardMock.mockResolvedValue({ error: undefined, response: { status: 500 } });
+
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('contest-leaderboard-error')).toBeInTheDocument();
+    expect(screen.getByText('We couldn\'t load this leaderboard.')).toBeInTheDocument();
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'contestLeaderboard.load.failed' }),
+      'Contest leaderboard failed to load',
+    );
+  });
+
+  it('puts the refusal code in the error\'s test id, so a refusal can be told apart from a failure', async () => {
+    primeMocks({ leaderboardError: { code: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN', message: 'Picks are hidden.' } });
+
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('contest-leaderboard-error-CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN')).toBeInTheDocument();
+  });
+
+  it('says the contest could not load when the contest read fails even though the leaderboard loaded', async () => {
+    primeMocks();
+    getContestMock.mockReset();
+    getContestMock.mockResolvedValue({ error: { error: { code: 'CONTEST_NOT_FOUND', message: 'Contest not found' } }, response: { status: 404 } });
+
+    renderLeaderboard();
+
+    expect(await screen.findByText('We couldn\'t load this contest.')).toBeInTheDocument();
+  });
+
+  it('shows an entry with no golfer rows as having no picks to show, instead of an empty block', async () => {
+    const base = leaderboardResponse().data;
+    primeMocks({ leaderboard: { ...base, entries: [{ ...base.entries[0], picks: [], scoredPickCount: 0 }] } });
+
+    renderLeaderboard();
+
+    const entry = await screen.findByTestId('contest-leaderboard-entry-entry-1');
+    expect(entry).toHaveTextContent('This entry has no scored picks yet.');
+    expect(entry).toHaveTextContent('0 scored');
+  });
 });
