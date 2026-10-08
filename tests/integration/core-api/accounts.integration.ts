@@ -207,7 +207,7 @@ describe('refresh and logout', () => {
     expect(errorCode(response)).toBe('INVALID_REFRESH_TOKEN');
   });
 
-  it('refuses to refresh the session of an account made inactive behind its back with 403 ACCOUNT_INACTIVE', async () => {
+  it('refreshes the session of an inactive account, which stays signed in so it can reactivate', async () => {
     const session = await signedIn();
     await getPrisma().user.update({ where: { id: session.userId }, data: { isActive: false } });
 
@@ -217,8 +217,7 @@ describe('refresh and logout', () => {
       payload: { refreshToken: session.refreshToken },
     });
 
-    expect(response.statusCode).toBe(403);
-    expect(errorCode(response)).toBe('ACCOUNT_INACTIVE');
+    expect(response.statusCode).toBe(200);
   });
 
   it('logs out by revoking the cookie session\'s refresh token and clearing all three cookies', async () => {
@@ -491,8 +490,9 @@ describe('passwords', () => {
 });
 
 describe('account lifecycle', () => {
-  it('inactivating your own account revokes every session, clears the cookies, and refuses sign-in', async () => {
+  it('inactivating your own account keeps your session, revokes the others, and lets you reactivate', async () => {
     const session = await signedIn();
+    await login(session.identity.email);
 
     const response = await getApp().inject({
       method: 'POST',
@@ -502,9 +502,32 @@ describe('account lifecycle', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json<UserResponse>().user.isActive).toBe(false);
-    expect(response.cookies.every((cookie) => cookie.maxAge === 0)).toBe(true);
+    expect(response.cookies).toEqual([]);
+    const live = await getPrisma().refreshToken.findMany({ where: { userId: session.userId, revokedAt: null } });
+    expect(live.map((row) => row.token)).toEqual([session.refreshToken]);
+
+    const reactivated = await getApp().inject({
+      method: 'POST',
+      url: '/api/v1/users/me/enable',
+      headers: session.cookieSession,
+    });
+    expect(reactivated.json<UserResponse>().user.isActive).toBe(true);
+  });
+
+  it('an account a root admin disabled loses every session but can sign in again, as inactive, to reactivate', async () => {
+    const admin = await createTestUser({ isRootAdmin: true });
+    const session = await signedIn();
+
+    await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/users/${session.userId}/disable`,
+      headers: withoutJsonBodyHeaders(admin.headers),
+    });
     expect(await liveRefreshTokens(session.userId)).toBe(0);
-    expect(errorCode(await login(session.identity.email))).toBe('ACCOUNT_INACTIVE');
+
+    const signIn = await login(session.identity.email);
+    expect(signIn.statusCode).toBe(200);
+    expect(signIn.json<AuthResponse>().user.isActive).toBe(false);
   });
 
   it('lets a root admin disable and re-enable a user without touching the admin\'s own cookies', async () => {
