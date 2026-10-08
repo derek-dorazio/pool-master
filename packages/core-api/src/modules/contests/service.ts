@@ -1024,9 +1024,7 @@ export class ContestService {
   }
 
   private async entryHasSelections(entryId: string): Promise<boolean> {
-    // Picks alone decide it: every DraftPickHistory row references an existing pick (a required
-    // foreign key), so the draft-history count the raw read also added could never be non-zero
-    // while the pick count was zero.
+    // Picks alone decide whether an entry has selections.
     const pickCounts = await this.deps.picks.countByEntries([entryId]);
     return (pickCounts.get(entryId) ?? 0) > 0;
   }

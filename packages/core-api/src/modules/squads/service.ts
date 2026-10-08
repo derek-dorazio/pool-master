@@ -419,11 +419,6 @@ export class SquadService {
       ).map((entry) => entry.id);
 
       if (entryIds.length > 0) {
-        await tx.draftPickHistory.deleteMany({
-          where: {
-            entryId: { in: entryIds },
-          },
-        });
         await tx.contestEntryPick.deleteMany({
           where: {
             entryId: { in: entryIds },

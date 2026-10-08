@@ -113,8 +113,6 @@ export class PrismaContestRepository implements ContestRepository {
     // standings cascade from the contest.
     await this.prisma.$transaction([
       this.prisma.contestEntryPick.deleteMany({ where: { entry: { contestId: id } } }),
-      this.prisma.draftPickHistory.deleteMany({ where: { session: { contestId: id } } }),
-      this.prisma.draftSession.deleteMany({ where: { contestId: id } }),
       this.prisma.contestEntry.deleteMany({ where: { contestId: id } }),
       this.prisma.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId: id } } }),
       this.prisma.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId: id } } }),

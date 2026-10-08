@@ -413,15 +413,6 @@ async function cleanupContestArtifacts(
     return;
   }
 
-  await database.draftPickHistory.deleteMany({
-    where: {
-      entry: {
-        contestId: {
-          in: contestIds,
-        },
-      },
-    },
-  });
   await database.contestEntryPick.deleteMany({
     where: {
       entry: {
@@ -440,13 +431,6 @@ async function cleanupContestArtifacts(
     },
   });
   await database.contestEntry.deleteMany({
-    where: {
-      contestId: {
-        in: contestIds,
-      },
-    },
-  });
-  await database.draftSession.deleteMany({
     where: {
       contestId: {
         in: contestIds,
@@ -495,15 +479,6 @@ async function cleanupSportEventParticipantArtifacts(
     return;
   }
 
-  await database.draftPickHistory.deleteMany({
-    where: {
-      pick: {
-        sportEventParticipantId: {
-          in: sportEventParticipantIds,
-        },
-      },
-    },
-  });
   await database.sportEventParticipantGolfRound.deleteMany({
     where: {
       participantRound: {

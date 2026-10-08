@@ -470,7 +470,7 @@ Never a sports team. Unique on `(leagueId, name)`.
 | List for a league | `member`, `commissioner` | **A4** · takes a league |
 | Update name, icon | `member:own`, `commissioner` | **A5 + A7** |
 | Activate / inactivate *(soft)* | `member:own`, `commissioner` | **A5 + A7** · `isActive`. The normal path |
-| Delete permanently *(hard)* | `commissioner` | `deleteInactiveSquad` — **gated: throws unless already inactive**, then cascades to `contestEntry`, `contestEntryPick` and `draftPickHistory`. See the note below |
+| Delete permanently *(hard)* | `commissioner` | `deleteInactiveSquad` — **gated: throws unless already inactive**, then cascades to `contestEntry` and `contestEntryPick`. See the note below |
 
 ### SquadMembership — the User↔Squad edge, and ownership
 
