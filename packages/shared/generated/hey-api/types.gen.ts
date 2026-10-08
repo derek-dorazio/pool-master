@@ -1912,7 +1912,7 @@ export type UserResetPasswordResponse = {
  */
 export type UserDeleteRequest = {
     /**
-     * Exact email confirmation required before permanently deleting the inactive account.
+     * Email confirmation required before permanently deleting the inactive account. Matched after trimming and lowercasing.
      */
     email: string;
 };

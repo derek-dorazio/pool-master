@@ -18,7 +18,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
-import { SuccessSchema } from './common.dto';
+import { EmailInputSchema, SuccessSchema } from './common.dto';
 
 export const UserDtoSchema = z.object({
   id: z.string().describe('Stable user identifier.'),
@@ -68,11 +68,7 @@ export type UserListResponse = z.infer<typeof UserListResponseSchema>;
 // deleted with them.
 
 export const UserProfileUpdateRequestSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .email()
-    .describe('Updated primary contact email address.'),
+  email: EmailInputSchema.describe('Updated primary contact email address.'),
   firstName: z
     .string()
     .trim()
@@ -154,10 +150,7 @@ export const UserResetPasswordResponseSchema = z.object({
 export type UserResetPasswordResponse = z.infer<typeof UserResetPasswordResponseSchema>;
 
 export const UserDeleteRequestSchema = z.object({
-  email: z
-    .string()
-    .email()
-    .describe('Exact email confirmation required before permanently deleting the inactive account.'),
+  email: EmailInputSchema.describe('Email confirmation required before permanently deleting the inactive account. Matched after trimming and lowercasing.'),
 }).describe('Permanent-delete confirmation payload.');
 export type UserDeleteRequest = z.infer<typeof UserDeleteRequestSchema>;
 

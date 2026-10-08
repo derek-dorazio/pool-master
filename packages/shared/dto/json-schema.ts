@@ -8,8 +8,45 @@
  * follow those local refs once Fastify embeds the schema inside the OpenAPI
  * spec's paths, so we inline them here.
  */
-import { zodToJsonSchema as convert } from 'zod-to-json-schema';
-import type { ZodType } from 'zod';
+import { zodToJsonSchema as convert, type PostProcessCallback } from 'zod-to-json-schema';
+import type { ZodType, ZodTypeDef } from 'zod';
+
+/**
+ * The string normalisations a Zod schema can declare (`.trim()`, `.toLowerCase()`,
+ * `.toUpperCase()`), named as Zod names their checks.
+ */
+export const StringTransform = {
+  TRIM: 'trim',
+  TO_LOWER_CASE: 'toLowerCase',
+  TO_UPPER_CASE: 'toUpperCase',
+} as const;
+export type StringTransform = (typeof StringTransform)[keyof typeof StringTransform];
+
+/**
+ * JSON Schema has no way to say "trim this", so a Zod `.trim()` used to vanish in conversion
+ * and Fastify validated the raw value: `" derek@x.com "` failed `format: email` before any
+ * service could trim it (#500). The converter now records each normalisation under this
+ * keyword, in the order Zod applies them, and core-api's validator applies them to the
+ * request before checking the value. It is an `x-` extension, so OpenAPI tooling ignores it.
+ */
+export const STRING_TRANSFORM_KEYWORD = 'x-transform';
+
+const STRING_TRANSFORMS: ReadonlySet<string> = new Set(Object.values(StringTransform));
+
+interface ZodStringDefShape extends ZodTypeDef {
+  typeName?: string;
+  checks?: readonly { kind: string }[];
+}
+
+const recordStringTransforms: PostProcessCallback = (jsonSchema, def) => {
+  const stringDef = def as ZodStringDefShape;
+  if (jsonSchema === undefined || stringDef.typeName !== 'ZodString') return jsonSchema;
+  const transforms = (stringDef.checks ?? [])
+    .map((check) => check.kind)
+    .filter((kind) => STRING_TRANSFORMS.has(kind));
+  if (transforms.length === 0) return jsonSchema;
+  return Object.assign({}, jsonSchema, { [STRING_TRANSFORM_KEYWORD]: transforms });
+};
 
 // zod-to-json-schema's own signature makes TypeScript instantiate a type that is
 // excessively deep, and ts-jest fails compilation with TS2589 at the call site
@@ -20,7 +57,7 @@ import type { ZodType } from 'zod';
 // eslint-disable-next-line no-restricted-syntax -- see above; TS2589 without it
 const convertToJsonSchema = convert as unknown as (
   schema: ZodType<unknown>,
-  options: { target: 'openApi3' }
+  options: { target: 'openApi3'; postProcess: PostProcessCallback }
 ) => unknown;
 
 /**
@@ -54,6 +91,6 @@ function resolveLocalRefs(node: unknown, root: Record<string, unknown>): unknown
 }
 
 export function zodToJsonSchema(schema: ZodType<unknown>): Record<string, unknown> {
-  const raw = convertToJsonSchema(schema, { target: 'openApi3' }) as Record<string, unknown>;
+  const raw = convertToJsonSchema(schema, { target: 'openApi3', postProcess: recordStringTransforms }) as Record<string, unknown>;
   return resolveLocalRefs(raw, raw) as Record<string, unknown>;
 }

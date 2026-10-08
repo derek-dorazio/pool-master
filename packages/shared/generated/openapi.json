@@ -3129,19 +3129,29 @@
           "email": {
             "type": "string",
             "format": "email",
-            "description": "Updated primary contact email address."
+            "description": "Updated primary contact email address.",
+            "x-transform": [
+              "trim",
+              "toLowerCase"
+            ]
           },
           "firstName": {
             "type": "string",
             "minLength": 1,
             "maxLength": 100,
-            "description": "Updated first name."
+            "description": "Updated first name.",
+            "x-transform": [
+              "trim"
+            ]
           },
           "lastName": {
             "type": "string",
             "minLength": 1,
             "maxLength": 100,
-            "description": "Updated last name."
+            "description": "Updated last name.",
+            "x-transform": [
+              "trim"
+            ]
           }
         },
         "required": [
@@ -3160,7 +3170,10 @@
             "minLength": 3,
             "maxLength": 100,
             "pattern": "^\\S+$",
-            "description": "Updated unique login username."
+            "description": "Updated unique login username.",
+            "x-transform": [
+              "trim"
+            ]
           }
         },
         "required": [
@@ -3179,6 +3192,9 @@
             ],
             "minLength": 1,
             "maxLength": 100,
+            "x-transform": [
+              "trim"
+            ],
             "description": "Preferred IANA timezone. Omit to leave unchanged; null to clear it."
           },
           "locale": {
@@ -3188,6 +3204,9 @@
             ],
             "minLength": 1,
             "maxLength": 20,
+            "x-transform": [
+              "trim"
+            ],
             "description": "Preferred locale. Omit to leave unchanged; null to clear it."
           },
           "timeFormat": {
@@ -3270,7 +3289,11 @@
           "email": {
             "type": "string",
             "format": "email",
-            "description": "Exact email confirmation required before permanently deleting the inactive account."
+            "description": "Email confirmation required before permanently deleting the inactive account. Matched after trimming and lowercasing.",
+            "x-transform": [
+              "trim",
+              "toLowerCase"
+            ]
           }
         },
         "required": [
@@ -3344,12 +3367,19 @@
             "minLength": 3,
             "maxLength": 100,
             "pattern": "^\\S+$",
-            "description": "Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field."
+            "description": "Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field.",
+            "x-transform": [
+              "trim"
+            ]
           },
           "email": {
             "type": "string",
             "format": "email",
-            "description": "Primary contact email address for the user account."
+            "description": "Primary contact email address for the user account.",
+            "x-transform": [
+              "trim",
+              "toLowerCase"
+            ]
           },
           "password": {
             "type": "string",
@@ -3387,7 +3417,10 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 100,
-            "description": "Username or email used to sign in to an existing account."
+            "description": "Username or email used to sign in to an existing account.",
+            "x-transform": [
+              "trim"
+            ]
           },
           "password": {
             "type": "string",
@@ -5074,11 +5107,17 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 100,
-            "description": "Updated primary league name shown in selectors, tiles, and league home."
+            "description": "Updated primary league name shown in selectors, tiles, and league home.",
+            "x-transform": [
+              "trim"
+            ]
           },
           "description": {
             "type": "string",
             "maxLength": 500,
+            "x-transform": [
+              "trim"
+            ],
             "description": "Optional updated commissioner-facing league description. Omit or send an empty value to clear it."
           }
         },
@@ -5131,7 +5170,11 @@
             "type": "array",
             "items": {
               "type": "string",
-              "format": "email"
+              "format": "email",
+              "x-transform": [
+                "trim",
+                "toLowerCase"
+              ]
             },
             "minItems": 1,
             "maxItems": 50,
@@ -5290,6 +5333,9 @@
           "search": {
             "type": "string",
             "minLength": 1,
+            "x-transform": [
+              "trim"
+            ],
             "description": "Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16."
           },
           "isActive": {
@@ -7268,7 +7314,11 @@
           "email": {
             "type": "string",
             "format": "email",
-            "description": "Email address for the intended co-owner."
+            "description": "Email address for the intended co-owner.",
+            "x-transform": [
+              "trim",
+              "toLowerCase"
+            ]
           }
         },
         "required": [
@@ -7283,7 +7333,11 @@
           "email": {
             "type": "string",
             "format": "email",
-            "description": "Email address for the replacement owner."
+            "description": "Email address for the replacement owner.",
+            "x-transform": [
+              "trim",
+              "toLowerCase"
+            ]
           }
         },
         "required": [
@@ -7320,7 +7374,10 @@
             "minLength": 3,
             "maxLength": 100,
             "pattern": "^\\S+$",
-            "description": "Unique login identifier chosen by the invitee. The account email is not chosen here — it is the address the invitation was sent to."
+            "description": "Unique login identifier chosen by the invitee. The account email is not chosen here — it is the address the invitation was sent to.",
+            "x-transform": [
+              "trim"
+            ]
           },
           "password": {
             "type": "string",
@@ -14470,6 +14527,9 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 100,
+            "x-transform": [
+              "trim"
+            ],
             "description": "Unique entry name shown anywhere the team entry is listed."
           },
           "tiebreakerValue": {
@@ -22701,7 +22761,10 @@
           {
             "schema": {
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "x-transform": [
+                "trim"
+              ]
             },
             "in": "query",
             "name": "search",

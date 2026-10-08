@@ -159,6 +159,20 @@ For every API endpoint:
 4. Provide `tags`, `summary`, descriptive endpoint documentation, and unique `operationId`.
 5. Regenerate and validate the shared OpenAPI/client artifacts.
 
+### Request Normalisation Lives on the DTO
+
+Trimming and case-folding a request string is declared on its Zod schema (`.trim()`,
+`.toLowerCase()`), never left to the service. JSON Schema cannot say either, so
+`zodToJsonSchema()` records them under `x-transform` and core-api's Ajv plugin applies them
+before the rest of the schema checks the value. Without that, `" derek@x.com "` fails
+`format: email` before any service code runs.
+
+- Every email a request carries uses `EmailInputSchema` from `common.dto.ts` (trimmed and
+  lowercased).
+- Every `Fastify()` that registers routes, in the app or in a test, passes
+  `ajv: FASTIFY_AJV_OPTIONS`. Ajv refuses a schema whose keyword it does not know, and an
+  app built without the option would also skip the normalisation.
+
 ### Mapper File Requirement
 
 Every module that registers Fastify routes **must** have a corresponding mapper file at `packages/core-api/src/mappers/<module>.mapper.ts`. The mapper file must export named functions (e.g., `mapContestToDto`, `mapLeagueToListItem`) that handlers call to transform service/domain results into DTO shapes.

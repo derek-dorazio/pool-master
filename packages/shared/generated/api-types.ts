@@ -3567,7 +3567,7 @@ export interface components {
         UserDeleteRequest: {
             /**
              * Format: email
-             * @description Exact email confirmation required before permanently deleting the inactive account.
+             * @description Email confirmation required before permanently deleting the inactive account. Matched after trimming and lowercasing.
              */
             email: string;
         };

@@ -11,7 +11,7 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
 } from '../domain/enums';
-import { DateTimeSchema } from './common.dto';
+import { DateTimeSchema, EmailInputSchema } from './common.dto';
 import { SquadMembershipDtoSchema } from './squads.dto';
 import { UserDtoSchema } from './users.dto';
 
@@ -80,7 +80,7 @@ export const UpdateLeagueIconRequestSchema = z.object({
 export type UpdateLeagueIconRequest = z.infer<typeof UpdateLeagueIconRequestSchema>;
 
 export const SendLeagueInvitationsRequestSchema = z.object({
-  emails: z.array(z.string().email()).min(1).max(50).describe('Email recipients to invite into the league.'),
+  emails: z.array(EmailInputSchema).min(1).max(50).describe('Email recipients to invite into the league.'),
   message: z.string().max(500).optional().describe('Optional commissioner note included with the invitation email.'),
 }).describe('Commissioner request payload for sending direct email invites.');
 export type SendLeagueInvitationsRequest = z.infer<typeof SendLeagueInvitationsRequestSchema>;
