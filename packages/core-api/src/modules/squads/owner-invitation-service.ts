@@ -307,7 +307,11 @@ export class SquadOwnerInvitationService {
     return { invitation, email: invitation.email };
   }
 
-  /** The PENDING-and-unexpired check, shared by both acceptance paths. */
+  /**
+   * The PENDING-and-unexpired check, shared by both acceptance paths. It also refuses a team that
+   * has gone inactive since the invitation was sent: removing a team's last owner inactivates it
+   * and leaves its pending invitations in place, and accepting one must not revive it (#488).
+   */
   private async requirePendingInvitation(inviteCode: string): Promise<SquadOwnerInvitation> {
     const invitation = await this.invitationRepo.findByCode(inviteCode);
     if (!invitation) {
@@ -329,6 +333,13 @@ export class SquadOwnerInvitationService {
       );
     }
     await this.requireActiveLeague(invitation.leagueId);
+    const squad = await this.squadRepo.findById(invitation.squadId);
+    if (!squad?.isActive) {
+      throw new SquadOwnerInvitationOperationError(
+        'This team is no longer active, so its invitation cannot be accepted.',
+        'SQUAD_INACTIVE',
+      );
+    }
     return invitation;
   }
 
@@ -526,11 +537,6 @@ export class SquadOwnerInvitationService {
         status: SquadMembershipStatus.ACTIVE,
         joinedAt: new Date(),
       });
-    }
-
-    const squad = await this.squadRepo.findById(squadId);
-    if (squad && !squad.isActive) {
-      await this.squadRepo.update(squadId, { isActive: true });
     }
   }
 
