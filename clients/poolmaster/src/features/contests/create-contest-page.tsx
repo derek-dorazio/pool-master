@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
-import type { SportEventDto, GetContestConfigurationResponses, ListContestConfigTemplatesResponses } from '@/lib/api';
+import type { SportEventDto, ContestManagementDetailDto, ContestConfigTemplateDto } from '@/lib/api';
 import type { CreateContestRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
@@ -59,8 +59,8 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type ManagedContest = GetContestConfigurationResponses[200]['contest'];
-type ContestConfigTemplate = ListContestConfigTemplatesResponses[200]['templates'][number];
+type ManagedContest = ContestManagementDetailDto;
+type ContestConfigTemplate = ContestConfigTemplateDto;
 
 const contestSetupFormSchema = z.object({
   contestName: z.string().trim().min(1, 'Contest name is required.'),

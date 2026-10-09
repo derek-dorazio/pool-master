@@ -1,6 +1,6 @@
-import type { ListContestConfigTemplatesResponses } from '@/lib/api';
+import type { ContestConfigTemplateDto } from '@/lib/api';
 
-export type ContestConfigTemplate = ListContestConfigTemplatesResponses[200]['templates'][number];
+export type ContestConfigTemplate = ContestConfigTemplateDto;
 
 export function cloneContestTemplate(template: ContestConfigTemplate): ContestConfigTemplate {
   return {

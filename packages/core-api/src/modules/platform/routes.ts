@@ -7,7 +7,6 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { zodToJsonSchema } from '@poolmaster/shared/dto';
 import type { IngestionScheduleConfigOverride } from '@poolmaster/shared/dto/config.dto';
 import type { SettingsGroupUpdateRequest } from '@poolmaster/shared/dto/settings.dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
@@ -15,7 +14,8 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components this module's routes $ref (#192).
 import '@poolmaster/shared/dto/config.dto';
 import '@poolmaster/shared/dto/settings.dto';
-import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+// Registers ErrorEnvelope, which this module's error responses $ref (#192).
+import '@poolmaster/shared/dto/errors.dto';
 import type { IngestionConfigService } from './ingestion-config-service';
 import type { PlatformSettingsService } from './platform-settings-service';
 import {
@@ -63,8 +63,8 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       operationId: 'listSettingsGroups',
       response: {
         200: schemaRef('SettingsGroupList'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
       },
     },
     handler: async () => toSettingsGroupListDto(await platformSettings.list()),
@@ -79,9 +79,9 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       params: settingsKeyParams,
       response: {
         200: schemaRef('SettingsGroup'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
       },
     },
     handler: async (request: FastifyRequest<{ Params: { key: string } }>) =>
@@ -99,11 +99,11 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       body: schemaRef('SettingsGroupUpdateRequest'),
       response: {
         200: schemaRef('SettingsGroup'),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
-        409: zodToJsonSchema(ErrorEnvelopeSchema),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+        409: schemaRef('ErrorEnvelope'),
       },
     },
     handler: async (
@@ -127,9 +127,9 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       params: settingsKeyParams,
       response: {
         200: schemaRef('SettingsGroup'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
       },
     },
     handler: async (request: FastifyRequest<{ Params: { key: string } }>) =>
@@ -145,9 +145,9 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       params: settingsKeyParams,
       response: {
         200: schemaRef('SettingsChangeList'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
       },
     },
     handler: async (request: FastifyRequest<{ Params: { key: string } }>) =>
@@ -167,8 +167,8 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       operationId: 'getIngestionSchedule',
       response: {
         200: schemaRef('IngestionScheduleConfig'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
       },
     },
     handler: async () => {
@@ -185,8 +185,8 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       operationId: 'updateIngestionSchedule',
       response: {
         200: schemaRef('IngestionScheduleConfig'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
       },
       body: schemaRef('IngestionScheduleConfigOverride'),
     },
@@ -209,8 +209,8 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       operationId: 'setSportIngestionOverride',
       response: {
         200: schemaRef('IngestionScheduleConfig'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
       },
       body: schemaRef('IngestionScheduleConfigOverride'),
     },
@@ -239,8 +239,8 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       operationId: 'resetSportIngestionOverride',
       response: {
         200: schemaRef('IngestionScheduleConfig'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
       },
     },
     handler: async (
@@ -266,8 +266,8 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       operationId: 'resetIngestionSchedule',
       response: {
         200: schemaRef('IngestionScheduleConfig'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
       },
     },
     handler: async (request: FastifyRequest) => {

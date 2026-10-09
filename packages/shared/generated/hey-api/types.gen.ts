@@ -5,6 +5,16 @@ export type ClientOptions = {
 };
 
 /**
+ * Minimal success response envelope.
+ */
+export type SuccessResponse = {
+    /**
+     * Confirms that the requested operation succeeded.
+     */
+    success: true;
+};
+
+/**
  * A system email template.
  */
 export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY';
@@ -4665,6 +4675,557 @@ export type TeamOwnerInvitationPreviewResponse = {
 };
 
 /**
+ * Approved commissioner-managed contest configuration payload for golf-first contest creation.
+ */
+export type ContestConfigurationRequest = {
+    /**
+     * Maximum entries a Team may create. Null means unlimited.
+     */
+    maxEntriesPerSquad?: number | null;
+    /**
+     * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
+     */
+    picksPerTier: number;
+    /**
+     * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+     */
+    countedScores: number;
+};
+
+/**
+ * One inherited event tier and its golfer assignments.
+ */
+export type GolfEffectiveTierDto = {
+    /**
+     * Stable per-event tier key.
+     */
+    tierKey: string;
+    /**
+     * Commissioner-facing tier label.
+     */
+    label: string;
+    /**
+     * 1-based tier ordering.
+     */
+    tierNumber: number;
+    /**
+     * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
+     */
+    assignments: Array<{
+        /**
+         * Field entry the assignment belongs to.
+         */
+        sportEventParticipantId: string;
+        /**
+         * Global golfer identity.
+         */
+        participantId: string;
+        /**
+         * Within-tier ordering position; null when the golfer has no explicit order.
+         */
+        tierOrderIndex: number | null;
+        /**
+         * Per-golfer budget price when the event defines one; null otherwise.
+         */
+        price: number | null;
+    }>;
+};
+
+/**
+ * Golf-first contest-management detail returned to commissioner tooling.
+ */
+export type ContestManagementDetailDto = {
+    /**
+     * Contest identifier.
+     */
+    id: string;
+    /**
+     * League that owns the contest.
+     */
+    leagueId: string;
+    /**
+     * Sport event attached to the contest.
+     */
+    sportEventId: string;
+    /**
+     * Contest display name.
+     */
+    name: string;
+    status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+    /**
+     * Current commissioner-managed contest configuration.
+     */
+    configuration: {
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+        /**
+         * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
+         */
+        picksPerTier: number;
+        /**
+         * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+         */
+        countedScores: number;
+        /**
+         * Contest-configuration identifier.
+         */
+        id: string;
+        /**
+         * Contest that owns the configuration.
+         */
+        contestId: string;
+    };
+    /**
+     * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+     */
+    effectiveTiers: Array<{
+        /**
+         * Stable per-event tier key.
+         */
+        tierKey: string;
+        /**
+         * Commissioner-facing tier label.
+         */
+        label: string;
+        /**
+         * 1-based tier ordering.
+         */
+        tierNumber: number;
+        /**
+         * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
+         */
+        assignments: Array<{
+            /**
+             * Field entry the assignment belongs to.
+             */
+            sportEventParticipantId: string;
+            /**
+             * Global golfer identity.
+             */
+            participantId: string;
+            /**
+             * Within-tier ordering position; null when the golfer has no explicit order.
+             */
+            tierOrderIndex: number | null;
+            /**
+             * Per-golfer budget price when the event defines one; null otherwise.
+             */
+            price: number | null;
+        }>;
+    }>;
+    /**
+     * When the contest was created.
+     */
+    createdAt: string;
+    /**
+     * When the contest was last updated.
+     */
+    updatedAt: string;
+    /**
+     * Seeded template chosen when the contest was created, if any.
+     */
+    templateId?: string | null;
+    /**
+     * Schema/template version captured when the contest was created, if any.
+     */
+    templateVersion?: number | null;
+};
+
+/**
+ * Seeded commissioner-facing contest configuration template.
+ */
+export type ContestConfigTemplateDto = {
+    /**
+     * Seeded contest template identifier.
+     */
+    id: string;
+    /**
+     * Sport this template applies to.
+     */
+    sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+    /**
+     * Optional event-type scope for the template.
+     */
+    eventType?: string | null;
+    /**
+     * Contest type that may use the template.
+     */
+    contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
+    /**
+     * How an entry picks in a contest created from this template.
+     */
+    selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+    /**
+     * Stable machine key for the template.
+     */
+    templateKey: string;
+    /**
+     * Commissioner-facing template label.
+     */
+    name: string;
+    /**
+     * Commissioner-facing template description.
+     */
+    description: string;
+    /**
+     * Display order for template selection.
+     */
+    sortOrder: number;
+    /**
+     * Whether the template should be preselected in the create flow.
+     */
+    isDefault: boolean;
+    /**
+     * Whether the template is currently selectable.
+     */
+    active: boolean;
+    /**
+     * Version of the configuration schema metadata expected by the template.
+     */
+    schemaVersion: number;
+    /**
+     * Seeded configuration payload copied into a contest instance when the template is chosen.
+     */
+    configuration: {
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+        /**
+         * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
+         */
+        picksPerTier: number;
+        /**
+         * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+         */
+        countedScores: number;
+    };
+};
+
+/**
+ * Managed-contest detail response.
+ */
+export type ContestManagementResponse = {
+    /**
+     * Golf-first contest-management detail returned to commissioner tooling.
+     */
+    contest: {
+        /**
+         * Contest identifier.
+         */
+        id: string;
+        /**
+         * League that owns the contest.
+         */
+        leagueId: string;
+        /**
+         * Sport event attached to the contest.
+         */
+        sportEventId: string;
+        /**
+         * Contest display name.
+         */
+        name: string;
+        status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+        /**
+         * Current commissioner-managed contest configuration.
+         */
+        configuration: {
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
+            /**
+             * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
+             */
+            picksPerTier: number;
+            /**
+             * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+             */
+            countedScores: number;
+            /**
+             * Contest-configuration identifier.
+             */
+            id: string;
+            /**
+             * Contest that owns the configuration.
+             */
+            contestId: string;
+        };
+        /**
+         * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+         */
+        effectiveTiers: Array<{
+            /**
+             * Stable per-event tier key.
+             */
+            tierKey: string;
+            /**
+             * Commissioner-facing tier label.
+             */
+            label: string;
+            /**
+             * 1-based tier ordering.
+             */
+            tierNumber: number;
+            /**
+             * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
+             */
+            assignments: Array<{
+                /**
+                 * Field entry the assignment belongs to.
+                 */
+                sportEventParticipantId: string;
+                /**
+                 * Global golfer identity.
+                 */
+                participantId: string;
+                /**
+                 * Within-tier ordering position; null when the golfer has no explicit order.
+                 */
+                tierOrderIndex: number | null;
+                /**
+                 * Per-golfer budget price when the event defines one; null otherwise.
+                 */
+                price: number | null;
+            }>;
+        }>;
+        /**
+         * When the contest was created.
+         */
+        createdAt: string;
+        /**
+         * When the contest was last updated.
+         */
+        updatedAt: string;
+        /**
+         * Seeded template chosen when the contest was created, if any.
+         */
+        templateId?: string | null;
+        /**
+         * Schema/template version captured when the contest was created, if any.
+         */
+        templateVersion?: number | null;
+    };
+};
+
+/**
+ * Filters for listing contest configuration templates. Every filter is optional.
+ */
+export type ListContestConfigTemplatesQuery = {
+    /**
+     * Only templates for this sport.
+     */
+    sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+    /**
+     * Only templates for this contest format.
+     */
+    contestFormat?: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
+    /**
+     * Templates for this event type, plus the ones that apply to any event type.
+     */
+    eventType?: string;
+    /**
+     * Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.
+     */
+    active?: boolean;
+};
+
+/**
+ * Available seeded contest templates for commissioner create flow.
+ */
+export type ContestConfigTemplateListResponse = {
+    templates: Array<{
+        /**
+         * Seeded contest template identifier.
+         */
+        id: string;
+        /**
+         * Sport this template applies to.
+         */
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        /**
+         * Optional event-type scope for the template.
+         */
+        eventType?: string | null;
+        /**
+         * Contest type that may use the template.
+         */
+        contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
+        /**
+         * How an entry picks in a contest created from this template.
+         */
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+        /**
+         * Stable machine key for the template.
+         */
+        templateKey: string;
+        /**
+         * Commissioner-facing template label.
+         */
+        name: string;
+        /**
+         * Commissioner-facing template description.
+         */
+        description: string;
+        /**
+         * Display order for template selection.
+         */
+        sortOrder: number;
+        /**
+         * Whether the template should be preselected in the create flow.
+         */
+        isDefault: boolean;
+        /**
+         * Whether the template is currently selectable.
+         */
+        active: boolean;
+        /**
+         * Version of the configuration schema metadata expected by the template.
+         */
+        schemaVersion: number;
+        /**
+         * Seeded configuration payload copied into a contest instance when the template is chosen.
+         */
+        configuration: {
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
+            /**
+             * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
+             */
+            picksPerTier: number;
+            /**
+             * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+             */
+            countedScores: number;
+        };
+    }>;
+};
+
+/**
+ * Contest template update payload. Every field optional; at least one is required.
+ */
+export type UpdateContestConfigTemplateRequest = {
+    /**
+     * Updated template display name.
+     */
+    name?: string;
+    /**
+     * Updated template description.
+     */
+    description?: string;
+    /**
+     * Updated sort order for the template within its create-flow group.
+     */
+    sortOrder?: number;
+    /**
+     * Whether this template should be the default choice for future create flows in its scope.
+     */
+    isDefault?: boolean;
+    /**
+     * Whether commissioners can select this template in future create flows.
+     */
+    active?: boolean;
+    /**
+     * Updated persisted configuration payload copied into future contests when this template is selected.
+     */
+    configuration?: {
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+        /**
+         * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
+         */
+        picksPerTier: number;
+        /**
+         * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+         */
+        countedScores: number;
+    };
+};
+
+/**
+ * A single contest configuration template.
+ */
+export type ContestConfigTemplateResponse = {
+    /**
+     * Seeded commissioner-facing contest configuration template.
+     */
+    template: {
+        /**
+         * Seeded contest template identifier.
+         */
+        id: string;
+        /**
+         * Sport this template applies to.
+         */
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        /**
+         * Optional event-type scope for the template.
+         */
+        eventType?: string | null;
+        /**
+         * Contest type that may use the template.
+         */
+        contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
+        /**
+         * How an entry picks in a contest created from this template.
+         */
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+        /**
+         * Stable machine key for the template.
+         */
+        templateKey: string;
+        /**
+         * Commissioner-facing template label.
+         */
+        name: string;
+        /**
+         * Commissioner-facing template description.
+         */
+        description: string;
+        /**
+         * Display order for template selection.
+         */
+        sortOrder: number;
+        /**
+         * Whether the template should be preselected in the create flow.
+         */
+        isDefault: boolean;
+        /**
+         * Whether the template is currently selectable.
+         */
+        active: boolean;
+        /**
+         * Version of the configuration schema metadata expected by the template.
+         */
+        schemaVersion: number;
+        /**
+         * Seeded configuration payload copied into a contest instance when the template is chosen.
+         */
+        configuration: {
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
+            /**
+             * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
+             */
+            picksPerTier: number;
+            /**
+             * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+             */
+            countedScores: number;
+        };
+    };
+};
+
+/**
  * A provider's identifier for a participant — how synced data finds them.
  */
 export type ParticipantProviderMappingDto = {
@@ -5076,6 +5637,58 @@ export type ParticipantResponse = {
          * When the participant record was last updated.
          */
         updatedAt: string;
+    };
+};
+
+/**
+ * A new participant for the shared catalog.
+ */
+export type CreateParticipantRequest = {
+    /**
+     * Sport the participant competes in.
+     */
+    sportId: string;
+    /**
+     * Primary participant display name.
+     */
+    name: string;
+    /**
+     * Whether the participant is one person or a team.
+     */
+    participantType: 'INDIVIDUAL' | 'TEAM';
+    /**
+     * Primary provider identifier.
+     */
+    externalId?: string;
+    /**
+     * First name when the participant is a person.
+     */
+    firstName?: string;
+    /**
+     * Last name when the participant is a person.
+     */
+    lastName?: string;
+    /**
+     * Short-form display name for compact UI surfaces.
+     */
+    shortName?: string;
+    /**
+     * Participant nationality or country code.
+     */
+    nationality?: string;
+    /**
+     * Playing role ("GOLFER", "QB").
+     */
+    role?: string;
+    /**
+     * Current team affiliation.
+     */
+    teamAffiliation?: string;
+    /**
+     * Map of provider identifiers keyed by provider code.
+     */
+    externalIds?: {
+        [key: string]: string;
     };
 };
 
@@ -8980,6 +9593,374 @@ export type ContestEntryDeletionResponse = {
 };
 
 /**
+ * Optional query parameters for loading draft or selection state.
+ */
+export type DraftStateQuery = {
+    /**
+     * Specific contest entry to view within roster-based selection flows.
+     */
+    entryId?: string;
+};
+
+/**
+ * Request payload for submitting a draft pick.
+ */
+export type SubmitPickRequest = {
+    /**
+     * Entry making the pick.
+     */
+    entryId: string;
+    /**
+     * Participant being selected.
+     */
+    participantId: string;
+};
+
+/**
+ * Draft-state response.
+ */
+export type DraftStateResponse = {
+    contestId: string;
+    contestName: string;
+    selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+    isTurnBased: boolean;
+    isCommissioner?: boolean;
+    rosterSize: number;
+    /**
+     * Contest-configuration subset required by draft-room clients.
+     */
+    contestConfiguration?: {
+        isExclusive: boolean;
+        rounds?: number;
+        pickCount?: number;
+        rosterSize?: number;
+        budget?: number;
+        timePerPickSeconds?: number;
+        picksPerPeriod?: number;
+        roundValues?: Array<number>;
+        startRound?: string;
+        /**
+         * Tier configuration when the contest uses tiered selection.
+         */
+        tierConfig?: Array<{
+            tierId: string;
+            tierName: string;
+            tierNumber: number;
+            picksFromTier: number;
+        }>;
+    } | null;
+    status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
+    currentPickNumber: number;
+    currentRound: number;
+    totalPicks: number;
+    totalRounds: number;
+    currentEntryId: string | null;
+    currentEntryName: string | null;
+    myEntryId: string | null;
+    isMyPick: boolean;
+    timePerPickSeconds: number;
+    currentTurnStartedAt: string | null;
+    entries: Array<{
+        /**
+         * Entry identifier.
+         */
+        id: string;
+        /**
+         * User that owns the entry.
+         */
+        userId: string;
+        /**
+         * Entry display name.
+         */
+        name: string;
+        /**
+         * Whether the entry currently has the active turn.
+         */
+        isOnClock: boolean;
+        /**
+         * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
+         */
+        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+    }>;
+    draftPickHistories: Array<{
+        pickNumber: number;
+        round: number;
+        pickInRound: number;
+        entryId: string;
+        entryName: string;
+        participantId: string | null;
+        participantName: string | null;
+        role?: string;
+        team?: string;
+        price?: number;
+        tierId?: string;
+        tierName?: string;
+        autoPicked: boolean;
+        isSkipped?: boolean;
+        /**
+         * When the pick was made or skipped.
+         */
+        pickedAt: string;
+    }>;
+    availableParticipantIds: Array<string>;
+    selectedEntryId?: string | null;
+    selectedEntryName?: string | null;
+    tiebreakerValue?: number | null;
+    selectionGroups?: Array<{
+        groupId: string;
+        groupName: string;
+        groupNumber: number;
+        picksFromGroup: number;
+        /**
+         * Selections currently saved on the selected entry for this group.
+         */
+        selectedParticipantIds: Array<string>;
+        /**
+         * Selectable participants shown inside the group.
+         */
+        participants: Array<{
+            sportEventParticipantId: string;
+            participantId: string;
+            participantName: string;
+            role?: string | null;
+            team?: string | null;
+            status?: string | null;
+            price?: number | null;
+            ranking?: number | null;
+            orderIndex?: number | null;
+            isAvailable: boolean;
+            unavailableReason?: string | null;
+            /**
+             * Whether the currently selected entry has this participant selected.
+             */
+            isSelected?: boolean;
+        }>;
+    }>;
+    isComplete: boolean;
+    pickEmEvents?: Array<{
+        id: string;
+        eventId: string | null;
+        period: number;
+        matchupIndex: number;
+        homeParticipantId: string | null;
+        homeParticipantName: string | null;
+        awayParticipantId: string | null;
+        awayParticipantName: string | null;
+        eventTime: string | null;
+        deadline: string | null;
+        isLocked: boolean;
+        myPickParticipantId: string | null;
+        confidenceWeight: number | null;
+        /**
+         * Optional label used for compact pick-em presentation.
+         */
+        label: string | null;
+    }>;
+    /**
+     * Bracket pick data when relevant to the draft.
+     */
+    bracketMatchups?: Array<{
+        id: string;
+        roundNumber: number;
+        matchNumber: number;
+        label: string | null;
+        isLocked: boolean;
+        /**
+         * Minimal team identity used in bracket pick-em draft payloads.
+         */
+        topTeam: {
+            id: string;
+            name: string;
+            seed: number | null;
+        } | null;
+        /**
+         * Minimal team identity used in bracket pick-em draft payloads.
+         */
+        bottomTeam: {
+            id: string;
+            name: string;
+            seed: number | null;
+        } | null;
+        /**
+         * Winning team identifier when the matchup has been decided.
+         */
+        winnerId: string | null;
+    }>;
+};
+
+/**
+ * Draft response returned immediately after a pick mutation.
+ */
+export type DraftPickResponse = {
+    contestId: string;
+    contestName: string;
+    selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+    isTurnBased: boolean;
+    isCommissioner?: boolean;
+    rosterSize: number;
+    /**
+     * Contest-configuration subset required by draft-room clients.
+     */
+    contestConfiguration?: {
+        isExclusive: boolean;
+        rounds?: number;
+        pickCount?: number;
+        rosterSize?: number;
+        budget?: number;
+        timePerPickSeconds?: number;
+        picksPerPeriod?: number;
+        roundValues?: Array<number>;
+        startRound?: string;
+        /**
+         * Tier configuration when the contest uses tiered selection.
+         */
+        tierConfig?: Array<{
+            tierId: string;
+            tierName: string;
+            tierNumber: number;
+            picksFromTier: number;
+        }>;
+    } | null;
+    status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
+    currentPickNumber: number;
+    currentRound: number;
+    totalPicks: number;
+    totalRounds: number;
+    currentEntryId: string | null;
+    currentEntryName: string | null;
+    myEntryId: string | null;
+    isMyPick: boolean;
+    timePerPickSeconds: number;
+    currentTurnStartedAt: string | null;
+    entries: Array<{
+        /**
+         * Entry identifier.
+         */
+        id: string;
+        /**
+         * User that owns the entry.
+         */
+        userId: string;
+        /**
+         * Entry display name.
+         */
+        name: string;
+        /**
+         * Whether the entry currently has the active turn.
+         */
+        isOnClock: boolean;
+        /**
+         * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
+         */
+        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+    }>;
+    draftPickHistories: Array<{
+        pickNumber: number;
+        round: number;
+        pickInRound: number;
+        entryId: string;
+        entryName: string;
+        participantId: string | null;
+        participantName: string | null;
+        role?: string;
+        team?: string;
+        price?: number;
+        tierId?: string;
+        tierName?: string;
+        autoPicked: boolean;
+        isSkipped?: boolean;
+        /**
+         * When the pick was made or skipped.
+         */
+        pickedAt: string;
+    }>;
+    availableParticipantIds: Array<string>;
+    selectedEntryId?: string | null;
+    selectedEntryName?: string | null;
+    tiebreakerValue?: number | null;
+    selectionGroups?: Array<{
+        groupId: string;
+        groupName: string;
+        groupNumber: number;
+        picksFromGroup: number;
+        /**
+         * Selections currently saved on the selected entry for this group.
+         */
+        selectedParticipantIds: Array<string>;
+        /**
+         * Selectable participants shown inside the group.
+         */
+        participants: Array<{
+            sportEventParticipantId: string;
+            participantId: string;
+            participantName: string;
+            role?: string | null;
+            team?: string | null;
+            status?: string | null;
+            price?: number | null;
+            ranking?: number | null;
+            orderIndex?: number | null;
+            isAvailable: boolean;
+            unavailableReason?: string | null;
+            /**
+             * Whether the currently selected entry has this participant selected.
+             */
+            isSelected?: boolean;
+        }>;
+    }>;
+    isComplete: boolean;
+    pickEmEvents?: Array<{
+        id: string;
+        eventId: string | null;
+        period: number;
+        matchupIndex: number;
+        homeParticipantId: string | null;
+        homeParticipantName: string | null;
+        awayParticipantId: string | null;
+        awayParticipantName: string | null;
+        eventTime: string | null;
+        deadline: string | null;
+        isLocked: boolean;
+        myPickParticipantId: string | null;
+        confidenceWeight: number | null;
+        /**
+         * Optional label used for compact pick-em presentation.
+         */
+        label: string | null;
+    }>;
+    /**
+     * Bracket pick data when relevant to the draft.
+     */
+    bracketMatchups?: Array<{
+        id: string;
+        roundNumber: number;
+        matchNumber: number;
+        label: string | null;
+        isLocked: boolean;
+        /**
+         * Minimal team identity used in bracket pick-em draft payloads.
+         */
+        topTeam: {
+            id: string;
+            name: string;
+            seed: number | null;
+        } | null;
+        /**
+         * Minimal team identity used in bracket pick-em draft payloads.
+         */
+        bottomTeam: {
+            id: string;
+            name: string;
+            seed: number | null;
+        } | null;
+        /**
+         * Winning team identifier when the matchup has been decided.
+         */
+        winnerId: string | null;
+    }>;
+};
+
+/**
  * A round of golf scores.
  */
 export type GolfRoundScoreUploadRequest = {
@@ -10172,6 +11153,81 @@ export type ClientLogBatch = {
     }>;
 };
 
+/**
+ * Public service version metadata for deployment and stale-release diagnostics.
+ */
+export type ServiceVersionResponse = {
+    /**
+     * Version metadata response schema version.
+     */
+    schemaVersion: 1;
+    /**
+     * Runtime environment name such as development, qa, staging, or production.
+     */
+    environment: string;
+    /**
+     * UTC build timestamp supplied by CI, when available.
+     */
+    buildTimeUtc: string | null;
+    /**
+     * Git branch or ref name supplied by CI, when available.
+     */
+    gitRef: string | null;
+    /**
+     * Core API service version metadata.
+     */
+    service: {
+        /**
+         * Package or runtime component name.
+         */
+        name: string;
+        /**
+         * Semantic package version or deployment version label.
+         */
+        version: string;
+        /**
+         * Git SHA for this component build, when supplied by CI.
+         */
+        gitSha: string | null;
+        /**
+         * CI build or run number for this component build, when supplied by CI.
+         */
+        buildNumber: string | null;
+    };
+    /**
+     * Non-secret runtime metadata useful during operational debugging.
+     */
+    runtime: {
+        /**
+         * Node.js runtime version running the service.
+         */
+        nodeVersion: string;
+    };
+};
+
+/**
+ * Standard API error envelope.
+ */
+export type ErrorEnvelope = {
+    /**
+     * Error payload object.
+     */
+    error: {
+        /**
+         * Stable machine-readable error code.
+         */
+        code: string;
+        /**
+         * Human-readable error summary safe to show to clients.
+         */
+        message: string;
+        /**
+         * Optional structured details for client-specific handling or diagnostics.
+         */
+        details?: unknown;
+    };
+};
+
 export type GetHealthData = {
     body?: never;
     path?: never;
@@ -10197,54 +11253,7 @@ export type GetRootVersionResponses = {
     /**
      * Public service version metadata for deployment and stale-release diagnostics.
      */
-    200: {
-        /**
-         * Version metadata response schema version.
-         */
-        schemaVersion: 1;
-        /**
-         * Runtime environment name such as development, qa, staging, or production.
-         */
-        environment: string;
-        /**
-         * UTC build timestamp supplied by CI, when available.
-         */
-        buildTimeUtc: string | null;
-        /**
-         * Git branch or ref name supplied by CI, when available.
-         */
-        gitRef: string | null;
-        /**
-         * Core API service version metadata.
-         */
-        service: {
-            /**
-             * Package or runtime component name.
-             */
-            name: string;
-            /**
-             * Semantic package version or deployment version label.
-             */
-            version: string;
-            /**
-             * Git SHA for this component build, when supplied by CI.
-             */
-            gitSha: string | null;
-            /**
-             * CI build or run number for this component build, when supplied by CI.
-             */
-            buildNumber: string | null;
-        };
-        /**
-         * Non-secret runtime metadata useful during operational debugging.
-         */
-        runtime: {
-            /**
-             * Node.js runtime version running the service.
-             */
-            nodeVersion: string;
-        };
-    };
+    200: ServiceVersionResponse;
 };
 
 export type GetRootVersionResponse = GetRootVersionResponses[keyof GetRootVersionResponses];
@@ -10260,47 +11269,11 @@ export type RegisterUserErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type RegisterUserError = RegisterUserErrors[keyof RegisterUserErrors];
@@ -10325,25 +11298,7 @@ export type LoginUserErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
 };
 
 export type LoginUserError = LoginUserErrors[keyof LoginUserErrors];
@@ -10368,25 +11323,7 @@ export type RefreshTokenErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
 };
 
 export type RefreshTokenError = RefreshTokenErrors[keyof RefreshTokenErrors];
@@ -10411,25 +11348,7 @@ export type LogoutUserErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
 };
 
 export type LogoutUserError = LogoutUserErrors[keyof LogoutUserErrors];
@@ -10438,12 +11357,7 @@ export type LogoutUserResponses = {
     /**
      * Minimal success response envelope.
      */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
+    200: SuccessResponse;
 };
 
 export type LogoutUserResponse = LogoutUserResponses[keyof LogoutUserResponses];
@@ -10462,91 +11376,19 @@ export type ListUsersErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ListUsersError = ListUsersErrors[keyof ListUsersErrors];
@@ -10576,113 +11418,23 @@ export type DeleteUserErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type DeleteUserError = DeleteUserErrors[keyof DeleteUserErrors];
@@ -10691,12 +11443,7 @@ export type DeleteUserResponses = {
     /**
      * Minimal success response envelope.
      */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
+    200: SuccessResponse;
 };
 
 export type DeleteUserResponse = DeleteUserResponses[keyof DeleteUserResponses];
@@ -10717,91 +11464,19 @@ export type GetUserErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetUserError = GetUserErrors[keyof GetUserErrors];
@@ -10831,113 +11506,23 @@ export type UpdateUserProfileErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type UpdateUserProfileError = UpdateUserProfileErrors[keyof UpdateUserProfileErrors];
@@ -10967,113 +11552,23 @@ export type UpdateUserUsernameErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type UpdateUserUsernameError = UpdateUserUsernameErrors[keyof UpdateUserUsernameErrors];
@@ -11103,113 +11598,23 @@ export type UpdateUserPreferencesErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type UpdateUserPreferencesError = UpdateUserPreferencesErrors[keyof UpdateUserPreferencesErrors];
@@ -11239,113 +11644,23 @@ export type ChangeUserPasswordErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type ChangeUserPasswordError = ChangeUserPasswordErrors[keyof ChangeUserPasswordErrors];
@@ -11354,12 +11669,7 @@ export type ChangeUserPasswordResponses = {
     /**
      * Minimal success response envelope.
      */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
+    200: SuccessResponse;
 };
 
 export type ChangeUserPasswordResponse = ChangeUserPasswordResponses[keyof ChangeUserPasswordResponses];
@@ -11380,91 +11690,19 @@ export type ResetUserPasswordErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ResetUserPasswordError = ResetUserPasswordErrors[keyof ResetUserPasswordErrors];
@@ -11494,113 +11732,23 @@ export type DisableUserErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type DisableUserError = DisableUserErrors[keyof DisableUserErrors];
@@ -11630,113 +11778,23 @@ export type EnableUserErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type EnableUserError = EnableUserErrors[keyof EnableUserErrors];
@@ -11766,91 +11824,19 @@ export type RevokeUserSessionsErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type RevokeUserSessionsError = RevokeUserSessionsErrors[keyof RevokeUserSessionsErrors];
@@ -11880,113 +11866,23 @@ export type SetUserRootAdminErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type SetUserRootAdminError = SetUserRootAdminErrors[keyof SetUserRootAdminErrors];
@@ -11995,12 +11891,7 @@ export type SetUserRootAdminResponses = {
     /**
      * Minimal success response envelope.
      */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
+    200: SuccessResponse;
 };
 
 export type SetUserRootAdminResponse = SetUserRootAdminResponses[keyof SetUserRootAdminResponses];
@@ -12016,54 +11907,7 @@ export type GetVersionResponses = {
     /**
      * Public service version metadata for deployment and stale-release diagnostics.
      */
-    200: {
-        /**
-         * Version metadata response schema version.
-         */
-        schemaVersion: 1;
-        /**
-         * Runtime environment name such as development, qa, staging, or production.
-         */
-        environment: string;
-        /**
-         * UTC build timestamp supplied by CI, when available.
-         */
-        buildTimeUtc: string | null;
-        /**
-         * Git branch or ref name supplied by CI, when available.
-         */
-        gitRef: string | null;
-        /**
-         * Core API service version metadata.
-         */
-        service: {
-            /**
-             * Package or runtime component name.
-             */
-            name: string;
-            /**
-             * Semantic package version or deployment version label.
-             */
-            version: string;
-            /**
-             * Git SHA for this component build, when supplied by CI.
-             */
-            gitSha: string | null;
-            /**
-             * CI build or run number for this component build, when supplied by CI.
-             */
-            buildNumber: string | null;
-        };
-        /**
-         * Non-secret runtime metadata useful during operational debugging.
-         */
-        runtime: {
-            /**
-             * Node.js runtime version running the service.
-             */
-            nodeVersion: string;
-        };
-    };
+    200: ServiceVersionResponse;
 };
 
 export type GetVersionResponse = GetVersionResponses[keyof GetVersionResponses];
@@ -12092,47 +11936,11 @@ export type ListLeaguesErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type ListLeaguesError = ListLeaguesErrors[keyof ListLeaguesErrors];
@@ -12157,47 +11965,11 @@ export type CreateLeagueErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type CreateLeagueError = CreateLeagueErrors[keyof CreateLeagueErrors];
@@ -12224,47 +11996,11 @@ export type DeleteLeagueErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type DeleteLeagueError = DeleteLeagueErrors[keyof DeleteLeagueErrors];
@@ -12273,12 +12009,7 @@ export type DeleteLeagueResponses = {
     /**
      * Minimal success response envelope.
      */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
+    200: SuccessResponse;
 };
 
 export type DeleteLeagueResponse = DeleteLeagueResponses[keyof DeleteLeagueResponses];
@@ -12296,69 +12027,15 @@ export type GetLeagueErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetLeagueError = GetLeagueErrors[keyof GetLeagueErrors];
@@ -12385,69 +12062,15 @@ export type GetLeagueByCodeErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetLeagueByCodeError = GetLeagueByCodeErrors[keyof GetLeagueByCodeErrors];
@@ -12474,47 +12097,11 @@ export type UpdateLeagueDetailsErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type UpdateLeagueDetailsError = UpdateLeagueDetailsErrors[keyof UpdateLeagueDetailsErrors];
@@ -12541,47 +12128,11 @@ export type UpdateLeagueIconErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type UpdateLeagueIconError = UpdateLeagueIconErrors[keyof UpdateLeagueIconErrors];
@@ -12608,47 +12159,11 @@ export type InactivateLeagueErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type InactivateLeagueError = InactivateLeagueErrors[keyof InactivateLeagueErrors];
@@ -12675,47 +12190,11 @@ export type ActivateLeagueErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ActivateLeagueError = ActivateLeagueErrors[keyof ActivateLeagueErrors];
@@ -12742,25 +12221,7 @@ export type ListLeagueInvitationsErrors = {
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type ListLeagueInvitationsError = ListLeagueInvitationsErrors[keyof ListLeagueInvitationsErrors];
@@ -12787,69 +12248,15 @@ export type SendLeagueInvitationsErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    502: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    502: ErrorEnvelope;
 };
 
 export type SendLeagueInvitationsError = SendLeagueInvitationsErrors[keyof SendLeagueInvitationsErrors];
@@ -12877,91 +12284,19 @@ export type ResendLeagueInvitationErrors = {
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    502: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    502: ErrorEnvelope;
 };
 
 export type ResendLeagueInvitationError = ResendLeagueInvitationErrors[keyof ResendLeagueInvitationErrors];
@@ -12988,47 +12323,11 @@ export type GenerateInviteLinkErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type GenerateInviteLinkError = GenerateInviteLinkErrors[keyof GenerateInviteLinkErrors];
@@ -13056,69 +12355,15 @@ export type RevokeInviteLinkErrors = {
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type RevokeInviteLinkError = RevokeInviteLinkErrors[keyof RevokeInviteLinkErrors];
@@ -13127,12 +12372,7 @@ export type RevokeInviteLinkResponses = {
     /**
      * Minimal success response envelope.
      */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
+    200: SuccessResponse;
 };
 
 export type RevokeInviteLinkResponse = RevokeInviteLinkResponses[keyof RevokeInviteLinkResponses];
@@ -13150,47 +12390,11 @@ export type ListLeagueMembersErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type ListLeagueMembersError = ListLeagueMembersErrors[keyof ListLeagueMembersErrors];
@@ -13218,69 +12422,15 @@ export type ChangeMemberRoleErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ChangeMemberRoleError = ChangeMemberRoleErrors[keyof ChangeMemberRoleErrors];
@@ -13308,69 +12458,15 @@ export type RemoveMemberErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type RemoveMemberError = RemoveMemberErrors[keyof RemoveMemberErrors];
@@ -13379,12 +12475,7 @@ export type RemoveMemberResponses = {
     /**
      * Minimal success response envelope.
      */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
+    200: SuccessResponse;
 };
 
 export type RemoveMemberResponse = RemoveMemberResponses[keyof RemoveMemberResponses];
@@ -13402,69 +12493,15 @@ export type LeaveLeagueErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type LeaveLeagueError = LeaveLeagueErrors[keyof LeaveLeagueErrors];
@@ -13473,12 +12510,7 @@ export type LeaveLeagueResponses = {
     /**
      * Minimal success response envelope.
      */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
+    200: SuccessResponse;
 };
 
 export type LeaveLeagueResponse = LeaveLeagueResponses[keyof LeaveLeagueResponses];
@@ -13496,47 +12528,11 @@ export type ImportMembersErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type ImportMembersError = ImportMembersErrors[keyof ImportMembersErrors];
@@ -13563,91 +12559,19 @@ export type ListLeagueSquadsErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ListLeagueSquadsError = ListLeagueSquadsErrors[keyof ListLeagueSquadsErrors];
@@ -13674,91 +12598,19 @@ export type CreateLeagueSquadErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type CreateLeagueSquadError = CreateLeagueSquadErrors[keyof CreateLeagueSquadErrors];
@@ -13786,91 +12638,19 @@ export type DeleteLeagueSquadErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type DeleteLeagueSquadError = DeleteLeagueSquadErrors[keyof DeleteLeagueSquadErrors];
@@ -13879,12 +12659,7 @@ export type DeleteLeagueSquadResponses = {
     /**
      * Minimal success response envelope.
      */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
+    200: SuccessResponse;
 };
 
 export type DeleteLeagueSquadResponse = DeleteLeagueSquadResponses[keyof DeleteLeagueSquadResponses];
@@ -13903,91 +12678,19 @@ export type GetLeagueSquadErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetLeagueSquadError = GetLeagueSquadErrors[keyof GetLeagueSquadErrors];
@@ -14015,91 +12718,19 @@ export type UpdateLeagueSquadErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type UpdateLeagueSquadError = UpdateLeagueSquadErrors[keyof UpdateLeagueSquadErrors];
@@ -14127,91 +12758,19 @@ export type InactivateLeagueSquadErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type InactivateLeagueSquadError = InactivateLeagueSquadErrors[keyof InactivateLeagueSquadErrors];
@@ -14239,91 +12798,19 @@ export type AddSquadOwnerErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type AddSquadOwnerError = AddSquadOwnerErrors[keyof AddSquadOwnerErrors];
@@ -14352,91 +12839,19 @@ export type RemoveSquadOwnerErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type RemoveSquadOwnerError = RemoveSquadOwnerErrors[keyof RemoveSquadOwnerErrors];
@@ -14463,91 +12878,19 @@ export type ListSquadOwnerInvitationsErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ListSquadOwnerInvitationsError = ListSquadOwnerInvitationsErrors[keyof ListSquadOwnerInvitationsErrors];
@@ -14575,91 +12918,19 @@ export type CreateSquadOwnerInvitationErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type CreateSquadOwnerInvitationError = CreateSquadOwnerInvitationErrors[keyof CreateSquadOwnerInvitationErrors];
@@ -14688,91 +12959,19 @@ export type ReplaceSquadOwnerErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ReplaceSquadOwnerError = ReplaceSquadOwnerErrors[keyof ReplaceSquadOwnerErrors];
@@ -14800,91 +12999,19 @@ export type RevokeSquadOwnerInvitationErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type RevokeSquadOwnerInvitationError = RevokeSquadOwnerInvitationErrors[keyof RevokeSquadOwnerInvitationErrors];
@@ -14911,47 +13038,11 @@ export type GetInvitationPreviewErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetInvitationPreviewError = GetInvitationPreviewErrors[keyof GetInvitationPreviewErrors];
@@ -14976,69 +13067,15 @@ export type AcceptInvitationErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type AcceptInvitationError = AcceptInvitationErrors[keyof AcceptInvitationErrors];
@@ -15065,47 +13102,11 @@ export type GetTeamOwnerInvitationPreviewErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetTeamOwnerInvitationPreviewError = GetTeamOwnerInvitationPreviewErrors[keyof GetTeamOwnerInvitationPreviewErrors];
@@ -15130,69 +13131,15 @@ export type AcceptTeamOwnerInvitationErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type AcceptTeamOwnerInvitationError = AcceptTeamOwnerInvitationErrors[keyof AcceptTeamOwnerInvitationErrors];
@@ -15217,69 +13164,15 @@ export type RegisterWithTeamOwnerInvitationErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type RegisterWithTeamOwnerInvitationError = RegisterWithTeamOwnerInvitationErrors[keyof RegisterWithTeamOwnerInvitationErrors];
@@ -15306,47 +13199,11 @@ export type ListContestsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type ListContestsError = ListContestsErrors[keyof ListContestsErrors];
@@ -15373,91 +13230,19 @@ export type CreateContestErrors = {
     /**
      * CONTEST_CONFIGURATION_REQUIRED when neither `templateId` nor `configuration` is supplied; otherwise a request that does not match the schema.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type CreateContestError = CreateContestErrors[keyof CreateContestErrors];
@@ -15485,91 +13270,19 @@ export type GetContestConfigurationErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetContestConfigurationError = GetContestConfigurationErrors[keyof GetContestConfigurationErrors];
@@ -15578,131 +13291,13 @@ export type GetContestConfigurationResponses = {
     /**
      * Managed-contest detail response.
      */
-    200: {
-        /**
-         * Golf-first contest-management detail returned to commissioner tooling.
-         */
-        contest: {
-            /**
-             * Contest identifier.
-             */
-            id: string;
-            /**
-             * League that owns the contest.
-             */
-            leagueId: string;
-            /**
-             * Sport event attached to the contest.
-             */
-            sportEventId: string;
-            /**
-             * Contest display name.
-             */
-            name: string;
-            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            /**
-             * Current commissioner-managed contest configuration.
-             */
-            configuration: {
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number | null;
-                /**
-                 * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
-                 */
-                picksPerTier: number;
-                /**
-                 * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
-                 */
-                countedScores: number;
-                /**
-                 * Contest-configuration identifier.
-                 */
-                id: string;
-                /**
-                 * Contest that owns the configuration.
-                 */
-                contestId: string;
-            };
-            /**
-             * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
-             */
-            effectiveTiers: Array<{
-                /**
-                 * Stable per-event tier key.
-                 */
-                tierKey: string;
-                /**
-                 * Commissioner-facing tier label.
-                 */
-                label: string;
-                /**
-                 * 1-based tier ordering.
-                 */
-                tierNumber: number;
-                /**
-                 * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
-                 */
-                assignments: Array<{
-                    /**
-                     * Field entry the assignment belongs to.
-                     */
-                    sportEventParticipantId: string;
-                    /**
-                     * Global golfer identity.
-                     */
-                    participantId: string;
-                    /**
-                     * Within-tier ordering position; null when the golfer has no explicit order.
-                     */
-                    tierOrderIndex: number | null;
-                    /**
-                     * Per-golfer budget price when the event defines one; null otherwise.
-                     */
-                    price: number | null;
-                }>;
-            }>;
-            /**
-             * When the contest was created.
-             */
-            createdAt: string;
-            /**
-             * When the contest was last updated.
-             */
-            updatedAt: string;
-            /**
-             * Seeded template chosen when the contest was created, if any.
-             */
-            templateId?: string | null;
-            /**
-             * Schema/template version captured when the contest was created, if any.
-             */
-            templateVersion?: number | null;
-        };
-    };
+    200: ContestManagementResponse;
 };
 
 export type GetContestConfigurationResponse = GetContestConfigurationResponses[keyof GetContestConfigurationResponses];
 
 export type UpdateContestConfigurationData = {
-    /**
-     * Approved commissioner-managed contest configuration payload for golf-first contest creation.
-     */
-    body: {
-        /**
-         * Maximum entries a Team may create. Null means unlimited.
-         */
-        maxEntriesPerSquad?: number | null;
-        /**
-         * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
-         */
-        picksPerTier: number;
-        /**
-         * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
-         */
-        countedScores: number;
-    };
+    body: ContestConfigurationRequest;
     path: {
         id: string;
         contestId: string;
@@ -15715,135 +13310,27 @@ export type UpdateContestConfigurationErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * CONTEST_CONFIGURATION_LOCKED — the contest has been opened to the league (it is not DRAFT), so its configuration can no longer change.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type UpdateContestConfigurationError = UpdateContestConfigurationErrors[keyof UpdateContestConfigurationErrors];
@@ -15852,109 +13339,7 @@ export type UpdateContestConfigurationResponses = {
     /**
      * Managed-contest detail response.
      */
-    200: {
-        /**
-         * Golf-first contest-management detail returned to commissioner tooling.
-         */
-        contest: {
-            /**
-             * Contest identifier.
-             */
-            id: string;
-            /**
-             * League that owns the contest.
-             */
-            leagueId: string;
-            /**
-             * Sport event attached to the contest.
-             */
-            sportEventId: string;
-            /**
-             * Contest display name.
-             */
-            name: string;
-            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            /**
-             * Current commissioner-managed contest configuration.
-             */
-            configuration: {
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number | null;
-                /**
-                 * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
-                 */
-                picksPerTier: number;
-                /**
-                 * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
-                 */
-                countedScores: number;
-                /**
-                 * Contest-configuration identifier.
-                 */
-                id: string;
-                /**
-                 * Contest that owns the configuration.
-                 */
-                contestId: string;
-            };
-            /**
-             * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
-             */
-            effectiveTiers: Array<{
-                /**
-                 * Stable per-event tier key.
-                 */
-                tierKey: string;
-                /**
-                 * Commissioner-facing tier label.
-                 */
-                label: string;
-                /**
-                 * 1-based tier ordering.
-                 */
-                tierNumber: number;
-                /**
-                 * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
-                 */
-                assignments: Array<{
-                    /**
-                     * Field entry the assignment belongs to.
-                     */
-                    sportEventParticipantId: string;
-                    /**
-                     * Global golfer identity.
-                     */
-                    participantId: string;
-                    /**
-                     * Within-tier ordering position; null when the golfer has no explicit order.
-                     */
-                    tierOrderIndex: number | null;
-                    /**
-                     * Per-golfer budget price when the event defines one; null otherwise.
-                     */
-                    price: number | null;
-                }>;
-            }>;
-            /**
-             * When the contest was created.
-             */
-            createdAt: string;
-            /**
-             * When the contest was last updated.
-             */
-            updatedAt: string;
-            /**
-             * Seeded template chosen when the contest was created, if any.
-             */
-            templateId?: string | null;
-            /**
-             * Schema/template version captured when the contest was created, if any.
-             */
-            templateVersion?: number | null;
-        };
-    };
+    200: ContestManagementResponse;
 };
 
 export type UpdateContestConfigurationResponse = UpdateContestConfigurationResponses[keyof UpdateContestConfigurationResponses];
@@ -15973,135 +13358,27 @@ export type OpenContestErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND when the contest's event is gone.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * CONTEST_NOT_DRAFT — the contest is already open, or past it. CONTEST_EVENT_ALREADY_STARTED — the event's start time has passed or it is IN_PROGRESS, COMPLETED or CANCELLED; the draft stays a draft.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event's tiers; edit the draft first.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type OpenContestError = OpenContestErrors[keyof OpenContestErrors];
@@ -16110,109 +13387,7 @@ export type OpenContestResponses = {
     /**
      * Managed-contest detail response.
      */
-    200: {
-        /**
-         * Golf-first contest-management detail returned to commissioner tooling.
-         */
-        contest: {
-            /**
-             * Contest identifier.
-             */
-            id: string;
-            /**
-             * League that owns the contest.
-             */
-            leagueId: string;
-            /**
-             * Sport event attached to the contest.
-             */
-            sportEventId: string;
-            /**
-             * Contest display name.
-             */
-            name: string;
-            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            /**
-             * Current commissioner-managed contest configuration.
-             */
-            configuration: {
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number | null;
-                /**
-                 * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
-                 */
-                picksPerTier: number;
-                /**
-                 * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
-                 */
-                countedScores: number;
-                /**
-                 * Contest-configuration identifier.
-                 */
-                id: string;
-                /**
-                 * Contest that owns the configuration.
-                 */
-                contestId: string;
-            };
-            /**
-             * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
-             */
-            effectiveTiers: Array<{
-                /**
-                 * Stable per-event tier key.
-                 */
-                tierKey: string;
-                /**
-                 * Commissioner-facing tier label.
-                 */
-                label: string;
-                /**
-                 * 1-based tier ordering.
-                 */
-                tierNumber: number;
-                /**
-                 * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
-                 */
-                assignments: Array<{
-                    /**
-                     * Field entry the assignment belongs to.
-                     */
-                    sportEventParticipantId: string;
-                    /**
-                     * Global golfer identity.
-                     */
-                    participantId: string;
-                    /**
-                     * Within-tier ordering position; null when the golfer has no explicit order.
-                     */
-                    tierOrderIndex: number | null;
-                    /**
-                     * Per-golfer budget price when the event defines one; null otherwise.
-                     */
-                    price: number | null;
-                }>;
-            }>;
-            /**
-             * When the contest was created.
-             */
-            createdAt: string;
-            /**
-             * When the contest was last updated.
-             */
-            updatedAt: string;
-            /**
-             * Seeded template chosen when the contest was created, if any.
-             */
-            templateId?: string | null;
-            /**
-             * Schema/template version captured when the contest was created, if any.
-             */
-            templateVersion?: number | null;
-        };
-    };
+    200: ContestManagementResponse;
 };
 
 export type OpenContestResponse = OpenContestResponses[keyof OpenContestResponses];
@@ -16230,91 +13405,19 @@ export type DeleteContestErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type DeleteContestError = DeleteContestErrors[keyof DeleteContestErrors];
@@ -16323,12 +13426,7 @@ export type DeleteContestResponses = {
     /**
      * Minimal success response envelope.
      */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
+    200: SuccessResponse;
 };
 
 export type DeleteContestResponse = DeleteContestResponses[keyof DeleteContestResponses];
@@ -16346,69 +13444,15 @@ export type GetContestErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetContestError = GetContestErrors[keyof GetContestErrors];
@@ -16435,91 +13479,19 @@ export type UpdateContestErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type UpdateContestError = UpdateContestErrors[keyof UpdateContestErrors];
@@ -16546,91 +13518,19 @@ export type ListContestEntriesErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ListContestEntriesError = ListContestEntriesErrors[keyof ListContestEntriesErrors];
@@ -16658,91 +13558,19 @@ export type GetContestEntryErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetContestEntryError = GetContestEntryErrors[keyof GetContestEntryErrors];
@@ -16770,69 +13598,15 @@ export type UpdateContestEntryErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type UpdateContestEntryError = UpdateContestEntryErrors[keyof UpdateContestEntryErrors];
@@ -16859,91 +13633,19 @@ export type GetGolfContestLeaderboardErrors = {
     /**
      * CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _SPORT_UNSUPPORTED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetGolfContestLeaderboardError = GetGolfContestLeaderboardErrors[keyof GetGolfContestLeaderboardErrors];
@@ -16970,91 +13672,19 @@ export type LeaveContestErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type LeaveContestError = LeaveContestErrors[keyof LeaveContestErrors];
@@ -17081,91 +13711,19 @@ export type GetMyContestEntryErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetMyContestEntryError = GetMyContestEntryErrors[keyof GetMyContestEntryErrors];
@@ -17192,113 +13750,23 @@ export type EnterContestErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type EnterContestError = EnterContestErrors[keyof EnterContestErrors];
@@ -17340,47 +13808,11 @@ export type ListContestConfigTemplatesErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
 };
 
 export type ListContestConfigTemplatesError = ListContestConfigTemplatesErrors[keyof ListContestConfigTemplatesErrors];
@@ -17389,122 +13821,13 @@ export type ListContestConfigTemplatesResponses = {
     /**
      * Available seeded contest templates for commissioner create flow.
      */
-    200: {
-        templates: Array<{
-            /**
-             * Seeded contest template identifier.
-             */
-            id: string;
-            /**
-             * Sport this template applies to.
-             */
-            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            /**
-             * Optional event-type scope for the template.
-             */
-            eventType?: string | null;
-            /**
-             * Contest type that may use the template.
-             */
-            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
-            /**
-             * How an entry picks in a contest created from this template.
-             */
-            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
-            /**
-             * Stable machine key for the template.
-             */
-            templateKey: string;
-            /**
-             * Commissioner-facing template label.
-             */
-            name: string;
-            /**
-             * Commissioner-facing template description.
-             */
-            description: string;
-            /**
-             * Display order for template selection.
-             */
-            sortOrder: number;
-            /**
-             * Whether the template should be preselected in the create flow.
-             */
-            isDefault: boolean;
-            /**
-             * Whether the template is currently selectable.
-             */
-            active: boolean;
-            /**
-             * Version of the configuration schema metadata expected by the template.
-             */
-            schemaVersion: number;
-            /**
-             * Seeded configuration payload copied into a contest instance when the template is chosen.
-             */
-            configuration: {
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number | null;
-                /**
-                 * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
-                 */
-                picksPerTier: number;
-                /**
-                 * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
-                 */
-                countedScores: number;
-            };
-        }>;
-    };
+    200: ContestConfigTemplateListResponse;
 };
 
 export type ListContestConfigTemplatesResponse = ListContestConfigTemplatesResponses[keyof ListContestConfigTemplatesResponses];
 
 export type UpdateContestConfigTemplateData = {
-    /**
-     * Contest template update payload. Every field optional; at least one is required.
-     */
-    body: {
-        /**
-         * Updated template display name.
-         */
-        name?: string;
-        /**
-         * Updated template description.
-         */
-        description?: string;
-        /**
-         * Updated sort order for the template within its create-flow group.
-         */
-        sortOrder?: number;
-        /**
-         * Whether this template should be the default choice for future create flows in its scope.
-         */
-        isDefault?: boolean;
-        /**
-         * Whether commissioners can select this template in future create flows.
-         */
-        active?: boolean;
-        /**
-         * Updated persisted configuration payload copied into future contests when this template is selected.
-         */
-        configuration?: {
-            /**
-             * Maximum entries a Team may create. Null means unlimited.
-             */
-            maxEntriesPerSquad?: number | null;
-            /**
-             * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
-             */
-            picksPerTier: number;
-            /**
-             * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
-             */
-            countedScores: number;
-        };
-    };
+    body: UpdateContestConfigTemplateRequest;
     path: {
         templateId: string;
     };
@@ -17516,91 +13839,19 @@ export type UpdateContestConfigTemplateErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type UpdateContestConfigTemplateError = UpdateContestConfigTemplateErrors[keyof UpdateContestConfigTemplateErrors];
@@ -17609,78 +13860,7 @@ export type UpdateContestConfigTemplateResponses = {
     /**
      * A single contest configuration template.
      */
-    200: {
-        /**
-         * Seeded commissioner-facing contest configuration template.
-         */
-        template: {
-            /**
-             * Seeded contest template identifier.
-             */
-            id: string;
-            /**
-             * Sport this template applies to.
-             */
-            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            /**
-             * Optional event-type scope for the template.
-             */
-            eventType?: string | null;
-            /**
-             * Contest type that may use the template.
-             */
-            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
-            /**
-             * How an entry picks in a contest created from this template.
-             */
-            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
-            /**
-             * Stable machine key for the template.
-             */
-            templateKey: string;
-            /**
-             * Commissioner-facing template label.
-             */
-            name: string;
-            /**
-             * Commissioner-facing template description.
-             */
-            description: string;
-            /**
-             * Display order for template selection.
-             */
-            sortOrder: number;
-            /**
-             * Whether the template should be preselected in the create flow.
-             */
-            isDefault: boolean;
-            /**
-             * Whether the template is currently selectable.
-             */
-            active: boolean;
-            /**
-             * Version of the configuration schema metadata expected by the template.
-             */
-            schemaVersion: number;
-            /**
-             * Seeded configuration payload copied into a contest instance when the template is chosen.
-             */
-            configuration: {
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number | null;
-                /**
-                 * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
-                 */
-                picksPerTier: number;
-                /**
-                 * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
-                 */
-                countedScores: number;
-            };
-        };
-    };
+    200: ContestConfigTemplateResponse;
 };
 
 export type UpdateContestConfigTemplateResponse = UpdateContestConfigTemplateResponses[keyof UpdateContestConfigTemplateResponses];
@@ -17717,25 +13897,7 @@ export type ListEventsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
 };
 
 export type ListEventsError = ListEventsErrors[keyof ListEventsErrors];
@@ -17760,113 +13922,23 @@ export type CreateEventErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type CreateEventError = CreateEventErrors[keyof CreateEventErrors];
@@ -17893,91 +13965,19 @@ export type DeleteEventErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type DeleteEventError = DeleteEventErrors[keyof DeleteEventErrors];
@@ -18004,47 +14004,11 @@ export type GetEventErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetEventError = GetEventErrors[keyof GetEventErrors];
@@ -18071,69 +14035,15 @@ export type UpdateEventErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type UpdateEventError = UpdateEventErrors[keyof UpdateEventErrors];
@@ -18158,113 +14068,23 @@ export type CloneEventYearErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type CloneEventYearError = CloneEventYearErrors[keyof CloneEventYearErrors];
@@ -18289,91 +14109,19 @@ export type ImportEventYearFromProviderErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type ImportEventYearFromProviderError = ImportEventYearFromProviderErrors[keyof ImportEventYearFromProviderErrors];
@@ -18398,113 +14146,23 @@ export type CreateEventFromProviderEventErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type CreateEventFromProviderEventError = CreateEventFromProviderEventErrors[keyof CreateEventFromProviderEventErrors];
@@ -18531,113 +14189,23 @@ export type ReleaseEventErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * SPORT_EVENT_NOT_DRAFT: the event has already been released. SPORT_EVENT_ALREADY_STARTED: its start time has passed.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * SPORT_EVENT_NOT_READY: the field is not loaded, or an active participant has no tier.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type ReleaseEventError = ReleaseEventErrors[keyof ReleaseEventErrors];
@@ -18664,91 +14232,19 @@ export type TransitionEventErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type TransitionEventError = TransitionEventErrors[keyof TransitionEventErrors];
@@ -18775,69 +14271,15 @@ export type UnlinkEventScoreSourceErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type UnlinkEventScoreSourceError = UnlinkEventScoreSourceErrors[keyof UnlinkEventScoreSourceErrors];
@@ -18864,113 +14306,23 @@ export type LinkEventScoreSourceErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type LinkEventScoreSourceError = LinkEventScoreSourceErrors[keyof LinkEventScoreSourceErrors];
@@ -18997,113 +14349,23 @@ export type GetEventLiveSimulationErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type GetEventLiveSimulationError = GetEventLiveSimulationErrors[keyof GetEventLiveSimulationErrors];
@@ -19130,135 +14392,27 @@ export type StartEventLiveSimulationErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type StartEventLiveSimulationError = StartEventLiveSimulationErrors[keyof StartEventLiveSimulationErrors];
@@ -19285,47 +14439,11 @@ export type ListEventRoundsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ListEventRoundsError = ListEventRoundsErrors[keyof ListEventRoundsErrors];
@@ -19352,69 +14470,15 @@ export type UpdateEventRoundsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type UpdateEventRoundsError = UpdateEventRoundsErrors[keyof UpdateEventRoundsErrors];
@@ -19441,47 +14505,11 @@ export type ListEventParticipantsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ListEventParticipantsError = ListEventParticipantsErrors[keyof ListEventParticipantsErrors];
@@ -19508,91 +14536,19 @@ export type UpdateEventParticipantsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type UpdateEventParticipantsError = UpdateEventParticipantsErrors[keyof UpdateEventParticipantsErrors];
@@ -19619,69 +14575,15 @@ export type AddEventParticipantsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type AddEventParticipantsError = AddEventParticipantsErrors[keyof AddEventParticipantsErrors];
@@ -19708,113 +14610,23 @@ export type SeedEventParticipantsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type SeedEventParticipantsError = SeedEventParticipantsErrors[keyof SeedEventParticipantsErrors];
@@ -19841,113 +14653,23 @@ export type RefreshEventParticipantsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type RefreshEventParticipantsError = RefreshEventParticipantsErrors[keyof RefreshEventParticipantsErrors];
@@ -19974,91 +14696,19 @@ export type PreviewEventParticipantUploadErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type PreviewEventParticipantUploadError = PreviewEventParticipantUploadErrors[keyof PreviewEventParticipantUploadErrors];
@@ -20085,113 +14735,23 @@ export type ApplyEventParticipantUploadErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type ApplyEventParticipantUploadError = ApplyEventParticipantUploadErrors[keyof ApplyEventParticipantUploadErrors];
@@ -20219,91 +14779,19 @@ export type RemoveEventParticipantErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type RemoveEventParticipantError = RemoveEventParticipantErrors[keyof RemoveEventParticipantErrors];
@@ -20330,47 +14818,11 @@ export type ListEventTiersErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ListEventTiersError = ListEventTiersErrors[keyof ListEventTiersErrors];
@@ -20397,113 +14849,23 @@ export type ReplaceEventTiersErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type ReplaceEventTiersError = ReplaceEventTiersErrors[keyof ReplaceEventTiersErrors];
@@ -20530,91 +14892,19 @@ export type AutoAssignEventTiersErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type AutoAssignEventTiersError = AutoAssignEventTiersErrors[keyof AutoAssignEventTiersErrors];
@@ -20641,113 +14931,23 @@ export type ReplaceEventTierAssignmentsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type ReplaceEventTierAssignmentsError = ReplaceEventTierAssignmentsErrors[keyof ReplaceEventTierAssignmentsErrors];
@@ -20774,91 +14974,19 @@ export type AutoAssignEventPricesErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type AutoAssignEventPricesError = AutoAssignEventPricesErrors[keyof AutoAssignEventPricesErrors];
@@ -20886,113 +15014,23 @@ export type PreviewEventGolfRoundScoresErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type PreviewEventGolfRoundScoresError = PreviewEventGolfRoundScoresErrors[keyof PreviewEventGolfRoundScoresErrors];
@@ -21020,113 +15058,23 @@ export type ApplyEventGolfRoundScoresErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type ApplyEventGolfRoundScoresError = ApplyEventGolfRoundScoresErrors[keyof ApplyEventGolfRoundScoresErrors];
@@ -21155,113 +15103,23 @@ export type UpdateEventParticipantGolfRoundScoreErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type UpdateEventParticipantGolfRoundScoreError = UpdateEventParticipantGolfRoundScoreErrors[keyof UpdateEventParticipantGolfRoundScoreErrors];
@@ -21311,25 +15169,7 @@ export type ListSportLeaguesErrors = {
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ListSportLeaguesError = ListSportLeaguesErrors[keyof ListSportLeaguesErrors];
@@ -21354,69 +15194,15 @@ export type CreateSportLeagueErrors = {
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type CreateSportLeagueError = CreateSportLeagueErrors[keyof CreateSportLeagueErrors];
@@ -21443,25 +15229,7 @@ export type GetSportLeagueErrors = {
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetSportLeagueError = GetSportLeagueErrors[keyof GetSportLeagueErrors];
@@ -21488,69 +15256,15 @@ export type UpdateSportLeagueErrors = {
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type UpdateSportLeagueError = UpdateSportLeagueErrors[keyof UpdateSportLeagueErrors];
@@ -21577,25 +15291,7 @@ export type ListParticipantLeagueAffiliationsErrors = {
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ListParticipantLeagueAffiliationsError = ListParticipantLeagueAffiliationsErrors[keyof ListParticipantLeagueAffiliationsErrors];
@@ -21622,47 +15318,11 @@ export type UpdateParticipantLeagueAffiliationRankingsErrors = {
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type UpdateParticipantLeagueAffiliationRankingsError = UpdateParticipantLeagueAffiliationRankingsErrors[keyof UpdateParticipantLeagueAffiliationRankingsErrors];
@@ -21689,69 +15349,15 @@ export type CreateParticipantLeagueAffiliationErrors = {
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type CreateParticipantLeagueAffiliationError = CreateParticipantLeagueAffiliationErrors[keyof CreateParticipantLeagueAffiliationErrors];
@@ -21779,47 +15385,11 @@ export type DeleteParticipantLeagueAffiliationErrors = {
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type DeleteParticipantLeagueAffiliationError = DeleteParticipantLeagueAffiliationErrors[keyof DeleteParticipantLeagueAffiliationErrors];
@@ -21846,47 +15416,11 @@ export type PreviewParticipantLeagueAffiliationUploadErrors = {
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type PreviewParticipantLeagueAffiliationUploadError = PreviewParticipantLeagueAffiliationUploadErrors[keyof PreviewParticipantLeagueAffiliationUploadErrors];
@@ -21913,69 +15447,15 @@ export type ApplyParticipantLeagueAffiliationUploadErrors = {
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type ApplyParticipantLeagueAffiliationUploadError = ApplyParticipantLeagueAffiliationUploadErrors[keyof ApplyParticipantLeagueAffiliationUploadErrors];
@@ -22019,21 +15499,7 @@ export type ListParticipantsResponses = {
 export type ListParticipantsResponse = ListParticipantsResponses[keyof ListParticipantsResponses];
 
 export type CreateParticipantData = {
-    body: {
-        sportId: string;
-        name: string;
-        participantType: 'INDIVIDUAL' | 'TEAM';
-        externalId?: string;
-        firstName?: string;
-        lastName?: string;
-        shortName?: string;
-        nationality?: string;
-        role?: string;
-        teamAffiliation?: string;
-        externalIds?: {
-            [key: string]: unknown;
-        };
-    };
+    body: CreateParticipantRequest;
     path?: never;
     query?: never;
     url: '/api/v1/participants/';
@@ -22043,25 +15509,7 @@ export type CreateParticipantErrors = {
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type CreateParticipantError = CreateParticipantErrors[keyof CreateParticipantErrors];
@@ -22088,25 +15536,7 @@ export type GetParticipantErrors = {
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetParticipantError = GetParticipantErrors[keyof GetParticipantErrors];
@@ -22133,47 +15563,11 @@ export type UpdateParticipantErrors = {
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type UpdateParticipantError = UpdateParticipantErrors[keyof UpdateParticipantErrors];
@@ -22200,25 +15594,7 @@ export type ListParticipantProviderMappingsErrors = {
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ListParticipantProviderMappingsError = ListParticipantProviderMappingsErrors[keyof ListParticipantProviderMappingsErrors];
@@ -22245,69 +15621,15 @@ export type BindParticipantProviderMappingErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type BindParticipantProviderMappingError = BindParticipantProviderMappingErrors[keyof BindParticipantProviderMappingErrors];
@@ -22332,47 +15654,11 @@ export type ListSettingsGroupsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type ListSettingsGroupsError = ListSettingsGroupsErrors[keyof ListSettingsGroupsErrors];
@@ -22402,69 +15688,15 @@ export type GetSettingsGroupErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type GetSettingsGroupError = GetSettingsGroupErrors[keyof GetSettingsGroupErrors];
@@ -22494,113 +15726,23 @@ export type UpdateSettingsGroupErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
 };
 
 export type UpdateSettingsGroupError = UpdateSettingsGroupErrors[keyof UpdateSettingsGroupErrors];
@@ -22630,69 +15772,15 @@ export type ResetSettingsGroupErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ResetSettingsGroupError = ResetSettingsGroupErrors[keyof ResetSettingsGroupErrors];
@@ -22722,69 +15810,15 @@ export type ListSettingsGroupHistoryErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ListSettingsGroupHistoryError = ListSettingsGroupHistoryErrors[keyof ListSettingsGroupHistoryErrors];
@@ -22809,47 +15843,11 @@ export type GetIngestionScheduleErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type GetIngestionScheduleError = GetIngestionScheduleErrors[keyof GetIngestionScheduleErrors];
@@ -22874,47 +15872,11 @@ export type UpdateIngestionScheduleErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type UpdateIngestionScheduleError = UpdateIngestionScheduleErrors[keyof UpdateIngestionScheduleErrors];
@@ -22941,47 +15903,11 @@ export type SetSportIngestionOverrideErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type SetSportIngestionOverrideError = SetSportIngestionOverrideErrors[keyof SetSportIngestionOverrideErrors];
@@ -23008,47 +15934,11 @@ export type ResetSportIngestionOverrideErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type ResetSportIngestionOverrideError = ResetSportIngestionOverrideErrors[keyof ResetSportIngestionOverrideErrors];
@@ -23073,47 +15963,11 @@ export type ResetIngestionScheduleErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type ResetIngestionScheduleError = ResetIngestionScheduleErrors[keyof ResetIngestionScheduleErrors];
@@ -23138,47 +15992,11 @@ export type ListProvidersErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type ListProvidersError = ListProvidersErrors[keyof ListProvidersErrors];
@@ -23215,47 +16033,11 @@ export type ListProviderSyncRunsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type ListProviderSyncRunsError = ListProviderSyncRunsErrors[keyof ListProviderSyncRunsErrors];
@@ -23283,113 +16065,23 @@ export type SubmitEventSyncErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    422: ErrorEnvelope;
 };
 
 export type SubmitEventSyncError = SubmitEventSyncErrors[keyof SubmitEventSyncErrors];
@@ -23414,47 +16106,11 @@ export type ListUnmappedProviderParticipantsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
 };
 
 export type ListUnmappedProviderParticipantsError = ListUnmappedProviderParticipantsErrors[keyof ListUnmappedProviderParticipantsErrors];
@@ -23496,69 +16152,15 @@ export type ListProviderCatalogEventsErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
 };
 
 export type ListProviderCatalogEventsError = ListProviderCatalogEventsErrors[keyof ListProviderCatalogEventsErrors];
@@ -23583,69 +16185,15 @@ export type IngestClientLogsErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    413: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    413: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    429: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    429: ErrorEnvelope;
 };
 
 export type IngestClientLogsError = IngestClientLogsErrors[keyof IngestClientLogsErrors];
@@ -23677,91 +16225,19 @@ export type GetDraftStateErrors = {
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    501: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    501: ErrorEnvelope;
 };
 
 export type GetDraftStateError = GetDraftStateErrors[keyof GetDraftStateErrors];
@@ -23770,192 +16246,13 @@ export type GetDraftStateResponses = {
     /**
      * Draft-state response.
      */
-    200: {
-        contestId: string;
-        contestName: string;
-        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
-        isTurnBased: boolean;
-        isCommissioner?: boolean;
-        rosterSize: number;
-        /**
-         * Contest-configuration subset required by draft-room clients.
-         */
-        contestConfiguration?: {
-            isExclusive: boolean;
-            rounds?: number;
-            pickCount?: number;
-            rosterSize?: number;
-            budget?: number;
-            timePerPickSeconds?: number;
-            picksPerPeriod?: number;
-            roundValues?: Array<number>;
-            startRound?: string;
-            /**
-             * Tier configuration when the contest uses tiered selection.
-             */
-            tierConfig?: Array<{
-                tierId: string;
-                tierName: string;
-                tierNumber: number;
-                picksFromTier: number;
-            }>;
-        } | null;
-        status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
-        currentPickNumber: number;
-        currentRound: number;
-        totalPicks: number;
-        totalRounds: number;
-        currentEntryId: string | null;
-        currentEntryName: string | null;
-        myEntryId: string | null;
-        isMyPick: boolean;
-        timePerPickSeconds: number;
-        currentTurnStartedAt: string | null;
-        entries: Array<{
-            /**
-             * Entry identifier.
-             */
-            id: string;
-            /**
-             * User that owns the entry.
-             */
-            userId: string;
-            /**
-             * Entry display name.
-             */
-            name: string;
-            /**
-             * Whether the entry currently has the active turn.
-             */
-            isOnClock: boolean;
-            /**
-             * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
-             */
-            status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
-        }>;
-        draftPickHistories: Array<{
-            pickNumber: number;
-            round: number;
-            pickInRound: number;
-            entryId: string;
-            entryName: string;
-            participantId: string | null;
-            participantName: string | null;
-            role?: string;
-            team?: string;
-            price?: number;
-            tierId?: string;
-            tierName?: string;
-            autoPicked: boolean;
-            isSkipped?: boolean;
-            /**
-             * When the pick was made or skipped.
-             */
-            pickedAt: string;
-        }>;
-        availableParticipantIds: Array<string>;
-        selectedEntryId?: string | null;
-        selectedEntryName?: string | null;
-        tiebreakerValue?: number | null;
-        selectionGroups?: Array<{
-            groupId: string;
-            groupName: string;
-            groupNumber: number;
-            picksFromGroup: number;
-            /**
-             * Selections currently saved on the selected entry for this group.
-             */
-            selectedParticipantIds: Array<string>;
-            /**
-             * Selectable participants shown inside the group.
-             */
-            participants: Array<{
-                sportEventParticipantId: string;
-                participantId: string;
-                participantName: string;
-                role?: string | null;
-                team?: string | null;
-                status?: string | null;
-                price?: number | null;
-                ranking?: number | null;
-                orderIndex?: number | null;
-                isAvailable: boolean;
-                unavailableReason?: string | null;
-                /**
-                 * Whether the currently selected entry has this participant selected.
-                 */
-                isSelected?: boolean;
-            }>;
-        }>;
-        isComplete: boolean;
-        pickEmEvents?: Array<{
-            id: string;
-            eventId: string | null;
-            period: number;
-            matchupIndex: number;
-            homeParticipantId: string | null;
-            homeParticipantName: string | null;
-            awayParticipantId: string | null;
-            awayParticipantName: string | null;
-            eventTime: string | null;
-            deadline: string | null;
-            isLocked: boolean;
-            myPickParticipantId: string | null;
-            confidenceWeight: number | null;
-            /**
-             * Optional label used for compact pick-em presentation.
-             */
-            label: string | null;
-        }>;
-        /**
-         * Bracket pick data when relevant to the draft.
-         */
-        bracketMatchups?: Array<{
-            id: string;
-            roundNumber: number;
-            matchNumber: number;
-            label: string | null;
-            isLocked: boolean;
-            /**
-             * Minimal team identity used in bracket pick-em draft payloads.
-             */
-            topTeam: {
-                id: string;
-                name: string;
-                seed: number | null;
-            } | null;
-            /**
-             * Minimal team identity used in bracket pick-em draft payloads.
-             */
-            bottomTeam: {
-                id: string;
-                name: string;
-                seed: number | null;
-            } | null;
-            /**
-             * Winning team identifier when the matchup has been decided.
-             */
-            winnerId: string | null;
-        }>;
-    };
+    200: DraftStateResponse;
 };
 
 export type GetDraftStateResponse = GetDraftStateResponses[keyof GetDraftStateResponses];
 
 export type SubmitContestSelectionData = {
-    /**
-     * Request payload for submitting a draft pick.
-     */
-    body: {
-        /**
-         * Entry making the pick.
-         */
-        entryId: string;
-        /**
-         * Participant being selected.
-         */
-        participantId: string;
-    };
+    body: SubmitPickRequest;
     path: {
         contestId: string;
     };
@@ -23967,135 +16264,27 @@ export type SubmitContestSelectionErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    501: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    501: ErrorEnvelope;
 };
 
 export type SubmitContestSelectionError = SubmitContestSelectionErrors[keyof SubmitContestSelectionErrors];
@@ -24104,174 +16293,7 @@ export type SubmitContestSelectionResponses = {
     /**
      * Draft response returned immediately after a pick mutation.
      */
-    200: {
-        contestId: string;
-        contestName: string;
-        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
-        isTurnBased: boolean;
-        isCommissioner?: boolean;
-        rosterSize: number;
-        /**
-         * Contest-configuration subset required by draft-room clients.
-         */
-        contestConfiguration?: {
-            isExclusive: boolean;
-            rounds?: number;
-            pickCount?: number;
-            rosterSize?: number;
-            budget?: number;
-            timePerPickSeconds?: number;
-            picksPerPeriod?: number;
-            roundValues?: Array<number>;
-            startRound?: string;
-            /**
-             * Tier configuration when the contest uses tiered selection.
-             */
-            tierConfig?: Array<{
-                tierId: string;
-                tierName: string;
-                tierNumber: number;
-                picksFromTier: number;
-            }>;
-        } | null;
-        status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
-        currentPickNumber: number;
-        currentRound: number;
-        totalPicks: number;
-        totalRounds: number;
-        currentEntryId: string | null;
-        currentEntryName: string | null;
-        myEntryId: string | null;
-        isMyPick: boolean;
-        timePerPickSeconds: number;
-        currentTurnStartedAt: string | null;
-        entries: Array<{
-            /**
-             * Entry identifier.
-             */
-            id: string;
-            /**
-             * User that owns the entry.
-             */
-            userId: string;
-            /**
-             * Entry display name.
-             */
-            name: string;
-            /**
-             * Whether the entry currently has the active turn.
-             */
-            isOnClock: boolean;
-            /**
-             * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
-             */
-            status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
-        }>;
-        draftPickHistories: Array<{
-            pickNumber: number;
-            round: number;
-            pickInRound: number;
-            entryId: string;
-            entryName: string;
-            participantId: string | null;
-            participantName: string | null;
-            role?: string;
-            team?: string;
-            price?: number;
-            tierId?: string;
-            tierName?: string;
-            autoPicked: boolean;
-            isSkipped?: boolean;
-            /**
-             * When the pick was made or skipped.
-             */
-            pickedAt: string;
-        }>;
-        availableParticipantIds: Array<string>;
-        selectedEntryId?: string | null;
-        selectedEntryName?: string | null;
-        tiebreakerValue?: number | null;
-        selectionGroups?: Array<{
-            groupId: string;
-            groupName: string;
-            groupNumber: number;
-            picksFromGroup: number;
-            /**
-             * Selections currently saved on the selected entry for this group.
-             */
-            selectedParticipantIds: Array<string>;
-            /**
-             * Selectable participants shown inside the group.
-             */
-            participants: Array<{
-                sportEventParticipantId: string;
-                participantId: string;
-                participantName: string;
-                role?: string | null;
-                team?: string | null;
-                status?: string | null;
-                price?: number | null;
-                ranking?: number | null;
-                orderIndex?: number | null;
-                isAvailable: boolean;
-                unavailableReason?: string | null;
-                /**
-                 * Whether the currently selected entry has this participant selected.
-                 */
-                isSelected?: boolean;
-            }>;
-        }>;
-        isComplete: boolean;
-        pickEmEvents?: Array<{
-            id: string;
-            eventId: string | null;
-            period: number;
-            matchupIndex: number;
-            homeParticipantId: string | null;
-            homeParticipantName: string | null;
-            awayParticipantId: string | null;
-            awayParticipantName: string | null;
-            eventTime: string | null;
-            deadline: string | null;
-            isLocked: boolean;
-            myPickParticipantId: string | null;
-            confidenceWeight: number | null;
-            /**
-             * Optional label used for compact pick-em presentation.
-             */
-            label: string | null;
-        }>;
-        /**
-         * Bracket pick data when relevant to the draft.
-         */
-        bracketMatchups?: Array<{
-            id: string;
-            roundNumber: number;
-            matchNumber: number;
-            label: string | null;
-            isLocked: boolean;
-            /**
-             * Minimal team identity used in bracket pick-em draft payloads.
-             */
-            topTeam: {
-                id: string;
-                name: string;
-                seed: number | null;
-            } | null;
-            /**
-             * Minimal team identity used in bracket pick-em draft payloads.
-             */
-            bottomTeam: {
-                id: string;
-                name: string;
-                seed: number | null;
-            } | null;
-            /**
-             * Winning team identifier when the matchup has been decided.
-             */
-            winnerId: string | null;
-        }>;
-    };
+    200: DraftPickResponse;
 };
 
 export type SubmitContestSelectionResponse = SubmitContestSelectionResponses[keyof SubmitContestSelectionResponses];
@@ -24290,135 +16312,27 @@ export type SubmitContestEntryErrors = {
     /**
      * Standard API error envelope.
      */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    403: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    404: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
-    501: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
+    501: ErrorEnvelope;
 };
 
 export type SubmitContestEntryError = SubmitContestEntryErrors[keyof SubmitContestEntryErrors];
@@ -24427,174 +16341,7 @@ export type SubmitContestEntryResponses = {
     /**
      * Draft-state response.
      */
-    200: {
-        contestId: string;
-        contestName: string;
-        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
-        isTurnBased: boolean;
-        isCommissioner?: boolean;
-        rosterSize: number;
-        /**
-         * Contest-configuration subset required by draft-room clients.
-         */
-        contestConfiguration?: {
-            isExclusive: boolean;
-            rounds?: number;
-            pickCount?: number;
-            rosterSize?: number;
-            budget?: number;
-            timePerPickSeconds?: number;
-            picksPerPeriod?: number;
-            roundValues?: Array<number>;
-            startRound?: string;
-            /**
-             * Tier configuration when the contest uses tiered selection.
-             */
-            tierConfig?: Array<{
-                tierId: string;
-                tierName: string;
-                tierNumber: number;
-                picksFromTier: number;
-            }>;
-        } | null;
-        status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
-        currentPickNumber: number;
-        currentRound: number;
-        totalPicks: number;
-        totalRounds: number;
-        currentEntryId: string | null;
-        currentEntryName: string | null;
-        myEntryId: string | null;
-        isMyPick: boolean;
-        timePerPickSeconds: number;
-        currentTurnStartedAt: string | null;
-        entries: Array<{
-            /**
-             * Entry identifier.
-             */
-            id: string;
-            /**
-             * User that owns the entry.
-             */
-            userId: string;
-            /**
-             * Entry display name.
-             */
-            name: string;
-            /**
-             * Whether the entry currently has the active turn.
-             */
-            isOnClock: boolean;
-            /**
-             * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
-             */
-            status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
-        }>;
-        draftPickHistories: Array<{
-            pickNumber: number;
-            round: number;
-            pickInRound: number;
-            entryId: string;
-            entryName: string;
-            participantId: string | null;
-            participantName: string | null;
-            role?: string;
-            team?: string;
-            price?: number;
-            tierId?: string;
-            tierName?: string;
-            autoPicked: boolean;
-            isSkipped?: boolean;
-            /**
-             * When the pick was made or skipped.
-             */
-            pickedAt: string;
-        }>;
-        availableParticipantIds: Array<string>;
-        selectedEntryId?: string | null;
-        selectedEntryName?: string | null;
-        tiebreakerValue?: number | null;
-        selectionGroups?: Array<{
-            groupId: string;
-            groupName: string;
-            groupNumber: number;
-            picksFromGroup: number;
-            /**
-             * Selections currently saved on the selected entry for this group.
-             */
-            selectedParticipantIds: Array<string>;
-            /**
-             * Selectable participants shown inside the group.
-             */
-            participants: Array<{
-                sportEventParticipantId: string;
-                participantId: string;
-                participantName: string;
-                role?: string | null;
-                team?: string | null;
-                status?: string | null;
-                price?: number | null;
-                ranking?: number | null;
-                orderIndex?: number | null;
-                isAvailable: boolean;
-                unavailableReason?: string | null;
-                /**
-                 * Whether the currently selected entry has this participant selected.
-                 */
-                isSelected?: boolean;
-            }>;
-        }>;
-        isComplete: boolean;
-        pickEmEvents?: Array<{
-            id: string;
-            eventId: string | null;
-            period: number;
-            matchupIndex: number;
-            homeParticipantId: string | null;
-            homeParticipantName: string | null;
-            awayParticipantId: string | null;
-            awayParticipantName: string | null;
-            eventTime: string | null;
-            deadline: string | null;
-            isLocked: boolean;
-            myPickParticipantId: string | null;
-            confidenceWeight: number | null;
-            /**
-             * Optional label used for compact pick-em presentation.
-             */
-            label: string | null;
-        }>;
-        /**
-         * Bracket pick data when relevant to the draft.
-         */
-        bracketMatchups?: Array<{
-            id: string;
-            roundNumber: number;
-            matchNumber: number;
-            label: string | null;
-            isLocked: boolean;
-            /**
-             * Minimal team identity used in bracket pick-em draft payloads.
-             */
-            topTeam: {
-                id: string;
-                name: string;
-                seed: number | null;
-            } | null;
-            /**
-             * Minimal team identity used in bracket pick-em draft payloads.
-             */
-            bottomTeam: {
-                id: string;
-                name: string;
-                seed: number | null;
-            } | null;
-            /**
-             * Winning team identifier when the matchup has been decided.
-             */
-            winnerId: string | null;
-        }>;
-    };
+    200: DraftStateResponse;
 };
 
 export type SubmitContestEntryResponse = SubmitContestEntryResponses[keyof SubmitContestEntryResponses];

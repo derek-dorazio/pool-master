@@ -703,7 +703,7 @@ export const getTeamOwnerInvitationPreview = <ThrowOnError extends boolean = fal
 /**
  * Accept a team-owner invitation using an invite code
  *
- * Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`.
+ * Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a team that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
  */
 export const acceptTeamOwnerInvitation = <ThrowOnError extends boolean = false>(options: Options<AcceptTeamOwnerInvitationData, ThrowOnError>) => (options.client ?? client).post<AcceptTeamOwnerInvitationResponses, AcceptTeamOwnerInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -722,7 +722,7 @@ export const acceptTeamOwnerInvitation = <ThrowOnError extends boolean = false>(
  *
  * Unauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.
  *
- * The account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
+ * The account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a team that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
  */
 export const registerWithTeamOwnerInvitation = <ThrowOnError extends boolean = false>(options: Options<RegisterWithTeamOwnerInvitationData, ThrowOnError>) => (options.client ?? client).post<RegisterWithTeamOwnerInvitationResponses, RegisterWithTeamOwnerInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

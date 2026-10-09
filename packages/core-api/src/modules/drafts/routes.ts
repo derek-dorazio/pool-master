@@ -10,14 +10,10 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import {
-  zodToJsonSchema,
-  DraftStateQuerySchema,
-  DraftStateResponseSchema,
-  DraftPickResponseSchema,
-  ErrorEnvelopeSchema,
-  SubmitPickRequestSchema,
-} from '@poolmaster/shared/dto';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaContestRepository, PrismaLeagueMembershipRepository } from '../../adapters';
 import { leagueOfContest, requireMemberOfLeague } from '../leagues/permissions';
@@ -35,7 +31,7 @@ const contestIdParams = {
 function draftErrorResponses(...statuses: number[]): Record<number, unknown> {
   const responses: Record<number, unknown> = {};
   for (const status of statuses) {
-    responses[status] = zodToJsonSchema(ErrorEnvelopeSchema);
+    responses[status] = schemaRef('ErrorEnvelope');
   }
   return responses;
 }
@@ -50,6 +46,8 @@ const contestEntryParams = {
 } as const;
 
 export function draftsModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
+  void fastify.register(schemaComponentsPlugin);
+
   const prisma = getAppPrisma(fastify);
   const handlers = createDraftHandlers(createDraftService(prisma, fastify.log, {
     mailDelivery: opts.mailDelivery,
@@ -70,9 +68,9 @@ export function draftsModule(fastify: FastifyInstance, opts: MailModuleOptions):
         'Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league\'s commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller\'s own entries, and entryId selects another team\'s entry only once picks are revealed (LOCKED onwards); otherwise it falls back to the caller\'s own.',
       operationId: 'getDraftState',
       params: contestIdParams,
-      querystring: zodToJsonSchema(DraftStateQuerySchema),
+      querystring: schemaRef('DraftStateQuery'),
       response: {
-        200: zodToJsonSchema(DraftStateResponseSchema),
+        200: schemaRef('DraftStateResponse'),
         ...draftErrorResponses(401, 403, 404, 501),
       },
     },
@@ -88,9 +86,9 @@ export function draftsModule(fastify: FastifyInstance, opts: MailModuleOptions):
         'Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event\'s start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. A change that leaves a SUBMITTED entry\'s lineup short sends the entry back to DRAFT; it must be submitted again to count.',
       operationId: 'submitContestSelection',
       params: contestIdParams,
-      body: zodToJsonSchema(SubmitPickRequestSchema),
+      body: schemaRef('SubmitPickRequest'),
       response: {
-        200: zodToJsonSchema(DraftPickResponseSchema),
+        200: schemaRef('DraftPickResponse'),
         ...draftErrorResponses(400, 401, 403, 404, 409, 501),
       },
     },
@@ -106,7 +104,7 @@ export function draftsModule(fastify: FastifyInstance, opts: MailModuleOptions):
       operationId: 'submitContestEntry',
       params: contestEntryParams,
       response: {
-        200: zodToJsonSchema(DraftStateResponseSchema),
+        200: schemaRef('DraftStateResponse'),
         ...draftErrorResponses(400, 401, 403, 404, 409, 501),
       },
     },

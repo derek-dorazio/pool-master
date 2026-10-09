@@ -4,13 +4,14 @@ These rules define consistency conventions for the PoolMaster domain model
 itself. Use them when proposing, reviewing, or implementing schema/entity/DTO
 shape changes.
 
-This file is intentionally separate from
-[model-change-rules.md](./model-change-rules.md):
+This file is intentionally separate from two others:
 
 - `domain-model-conventions-rules.md` defines **what a consistent model should
   look like**
-- `model-change-rules.md` defines **the process/checklist for changing a model
-  safely**
+- [model-change-rules.md](./model-change-rules.md) defines **the process/checklist
+  for changing a model safely**
+- [domain-model-concepts.md](./domain-model-concepts.md) says **what the model is** —
+  the entity chain, what each entity means and is called on screen, and the verbs
 
 ---
 
@@ -118,7 +119,8 @@ This allows PoolMaster to keep the primary active/inactive filter simple while
 still supporting richer lifecycle semantics later.
 
 Do not over-model reason enums preemptively when current product behavior only
-needs active vs inactive.
+needs active vs inactive. `SportEventParticipant.inactiveReason` (`WITHDRAWN`,
+`ELIMINATED`) is the reference case of one that earned its place.
 
 ### Start with the simplest lifecycle
 
@@ -132,6 +134,10 @@ step:
 3. `inactiveReason`, when *why* it is inactive genuinely matters
 4. `status`, when workflow or business-state tracking is required — invitation and contest
    lifecycles are the reference cases
+
+`LeagueMembership` and `SquadMembership` depart from this: each carries a
+`status` of only `ACTIVE | INACTIVE`, which is step 2's meaning under step 4's name. Do not
+copy that shape onto a new entity.
 
 ### Filtering
 
@@ -379,6 +385,7 @@ longer-prefixed name wins:
   prefix clarifies the parent.
 - `SportEvent` not `Event` — `Event` overloads with DOM and Node events, and with "domain
   event" as a general term.
+- `SportLeague` not `League` — `League` is already the office pool.
 
 This is **not** a rule to prefix every entity. It's a rule to disambiguate
 where there's collision risk. Bare names that have only one referent in the
@@ -409,26 +416,23 @@ today's variants.
 
 ---
 
-## 12. League, Squad, and Membership Vocabulary
+## 12. League, Squad, and Membership Invariants
 
-These terms are settled. Do not introduce synonyms or sub-concepts for them.
+What a Squad, a membership and an owner *are* is
+[domain-model-concepts.md](./domain-model-concepts.md) §2 *Vocabulary*. These are the
+rules the model holds them to. Do not introduce synonyms or sub-concepts for them.
 
-### Squad is the league's team
+### Squad, never team, in the contract layer
 
-A **Squad** is a team *within a PoolMaster league*. It is never a sports team — a
-real-world team (where one exists for a sport) is a `Participant` or an event-scoped
-entity, never a `Squad`.
-
-Where UI copy says "team", the entity is `Squad`. Route paths, DTO fields and
-variable names use **Squad**. `teams[]` as a field name for squads is wrong.
+Route paths, DTO fields and variable names use **Squad**. `teams[]` as a field name for
+squads is wrong. The reasoning, and the UI-side half of the rule, is
+`rules/poolmaster-webapp-rules.md` §1 *"Team" Is A UI Label, Not A Domain Term*.
 
 ### Squad member and squad owner are the same thing
 
-`SquadMembership` has **no role column**. Every member of a squad is an owner of that
-squad; the words are synonyms. If a squad has seven members, all seven are owners.
-
-There is no primary owner, no secondary owner, no owner-versus-member distinction. Do
-not add one, and do not name a field `owners` when the entity is `SquadMembership`.
+`SquadMembership` has **no role column**. Every member of a squad is an owner of it. There
+is no primary owner, no secondary owner, no owner-versus-member distinction. Do not add
+one, and do not name a field `owners` when the entity is `SquadMembership`.
 
 Contrast with `LeagueMembership`, which *does* carry `role: COMMISSIONER | MEMBER` —
 that distinction is real and belongs to the league edge, not the squad edge.
@@ -547,11 +551,11 @@ model?** The answer either changes the model — a new entity, edge, field or op
 or reveals the concept already exists under another name. Both are progress. Inventing
 a parallel shape is neither.
 
-**A written convention has already proven insufficient here.** §8 has forbidden
-per-page DTO variants since the repository's first commit, naming
-`LeagueSummaryDto` / `LeagueDetailDto` as the explicit counter-example — and both exist
-in the published contract today. Treat this section as a hard stop, not guidance, and
-prefer a mechanical guard over a restated rule.
+**A written convention has already proven insufficient here.** §8 forbade per-page DTO
+variants from the repository's first commit, naming `LeagueSummaryDto` /
+`LeagueDetailDto` as the explicit counter-example — and both shipped in the published
+contract anyway, until the identity refactor deleted them. Treat this section as a hard
+stop, not guidance, and prefer a mechanical guard over a restated rule.
 
 ---
 
@@ -566,21 +570,10 @@ contains proof that someone already understood the problem, so the next reader f
 plausible paths with no signal that one is abandoned. "Does it exist?" is the wrong
 question — the answer is usually yes.
 
-### Measured instances
-
-All found in one pass over the identity cluster (#201, #202, #206):
-
-| The mechanism that existed | What bypassed it |
-|---|---|
-| `auth.mapper.ts` — all four exports | The auth handler shaped all five responses inline. **The entire mapper was dead code.** Response DTOs were enforced only by Fastify's serializer dropping undeclared fields, which is how `sessionId` reached three response bodies with no compile error |
-| `tryAttachOptionalAuthUser` populating `request.authUser` on the client-logs route | The handler read session and user identity from the request **body** instead, making both forgeable (#206) |
-| `auth.isRootAdmin`, exposed at `auth-provider.tsx:175` | ~12 sites read the same global boolean off a league or squad. `app-shell.tsx` uses both sources in one file — `auth.isRootAdmin` at line 49, `activeLeague?.isRootAdmin` at line 64 |
-| `UserRepository` | `admin/user-service.ts` (36 raw Prisma calls) and `account/service.ts` (26) bypass it entirely |
-| `SquadRepository.findByLeague` | `admin/team-service.ts` hand-rolls `prisma.squad.findMany` with an inline `select`, then maps to a shape it invented |
-| `UserProfileDto` — the canonical user shape | `AdminTeamOwnerSummaryDto` was invented as a 3-field projection of it |
-| The URL-scoped, client-cached league context | Viewer relationship fields duplicated onto every league and squad row (A8 in `docs/DOMAIN-OPERATIONS.md`) |
-
-Seven instances, one cluster. Assume more.
+One pass over the identity cluster (#201, #202, #206) found seven: a whole mapper that no
+handler called, a request decorator bypassed by reading identity from the request body, a
+repository port bypassed by 60-odd raw Prisma calls, and four more. All were removed. Assume
+any cluster holds more.
 
 ### The rule
 
@@ -596,8 +589,8 @@ bypass does.** A slice is not done while both paths ship. Specifically:
 3. **Dead code that encodes a convention is worse than absent code.** `auth.mapper.ts`
    looked like the convention was being followed. Delete it or use it; never leave it.
 4. **Prefer the compiler over the serializer.** A contract enforced only by a runtime
-   stripping unknown fields is not enforced. That single gap produced three of the rows
-   above.
+   stripping unknown fields is not enforced. The dead mapper was invisible for exactly that
+   reason: Fastify's serializer dropped what the handlers shaped wrongly.
 
 ### Every slice ends with a residue sweep
 
@@ -635,15 +628,6 @@ bound, the answer is a tighter filter or a retention policy, not a page paramete
 - Repository ports that take paging arguments or return `{ items, total }`. A port is not
   a place to hide a page either: `UserRepository.findAll` takes filters and returns
   `User[]`.
-
-### Removed — nothing pages any more
-
-`adminListUsers` was converted with this rule (#202). Slice 2's three went in #235 —
-`listEvents` and `listParticipants` lost their paging, and `adminListEvents` was removed —
-and the two audit reads, `adminListAuditLog` and `adminExportAuditLog`, went with the audit
-feature in #255. Slice 4 finished it (#205): `adminSearchErrors` went with the unbuilt
-error-log surface, and with it `PaginatedSchema`, which only its response used; `ParticipantRepository.search`
-takes filters and returns `Participant[]`.
 
 **Append-only history is bounded by a window, not a page.** The sync-run history grows
 without bound, so `listProviderSyncRuns` (formerly `adminListProviderSyncRuns`, which took

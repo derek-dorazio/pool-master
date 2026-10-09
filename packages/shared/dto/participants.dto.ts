@@ -80,6 +80,23 @@ export const ParticipantResponseSchema = z.object({
 
 // --- Requests ---
 
+export const CreateParticipantRequestSchema = z.object({
+  sportId: z.string().min(1).describe('Sport the participant competes in.'),
+  name: z.string().min(1).max(500).describe('Primary participant display name.'),
+  participantType: z
+    .enum([ParticipantType.INDIVIDUAL, ParticipantType.TEAM])
+    .describe('Whether the participant is one person or a team.'),
+  externalId: z.string().optional().describe('Primary provider identifier.'),
+  firstName: z.string().max(255).optional().describe('First name when the participant is a person.'),
+  lastName: z.string().max(255).optional().describe('Last name when the participant is a person.'),
+  shortName: z.string().max(100).optional().describe('Short-form display name for compact UI surfaces.'),
+  nationality: z.string().max(10).optional().describe('Participant nationality or country code.'),
+  role: z.string().max(50).optional().describe('Playing role ("GOLFER", "QB").'),
+  teamAffiliation: z.string().max(255).optional().describe('Current team affiliation.'),
+  externalIds: StringRecordSchema.optional().describe('Map of provider identifiers keyed by provider code.'),
+}).describe('A new participant for the shared catalog.');
+export type CreateParticipantRequest = z.infer<typeof CreateParticipantRequestSchema>;
+
 export const UpdateParticipantRequestSchema = z.object({
   name: z.string().min(1).max(500).optional().describe('Primary participant display name.'),
   firstName: z.string().max(255).optional().describe('First name when the participant is a person.'),
@@ -131,4 +148,5 @@ registerSchema('ParticipantDto', ParticipantDtoSchema);
 registerSchema('ParticipantListQuery', ParticipantListQuerySchema);
 registerSchema('ParticipantListResponse', ParticipantListResponseSchema);
 registerSchema('ParticipantResponse', ParticipantResponseSchema);
+registerSchema('CreateParticipantRequest', CreateParticipantRequestSchema);
 registerSchema('UpdateParticipantRequest', UpdateParticipantRequestSchema);
