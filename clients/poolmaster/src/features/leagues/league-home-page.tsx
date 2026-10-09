@@ -16,7 +16,7 @@ import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import { useLeagueContextGuard } from './league-context-guard';
-import { pickUpNextContest } from './league-home';
+import { pickUpNextContest, type MyEntriesState } from './league-home';
 import { LiveStandingsCard, OtherContestsCard, UpNextCard, YourTeamCard } from './league-home-cards';
 import { LeagueIcon } from './league-icon';
 import { buildLeagueContestsPath, buildLeagueTeamPath } from './league-routing';
@@ -101,6 +101,9 @@ export function LeagueHomePage() {
   );
   const myTeam = squadsQuery.data?.find((squad) => squad.id === viewer.mySquadId) ?? null;
   const hasTeam = viewer.mySquadId !== null;
+  const entriesState: MyEntriesState = myEntries.isError
+    ? 'failed'
+    : myEntries.isLoading ? 'loading' : 'ready';
 
   return (
     <section className="space-y-6" data-testid="league-home">
@@ -146,6 +149,7 @@ export function LeagueHomePage() {
           <div className="grid gap-5">
             {upNext ? (
               <UpNextCard
+                entriesState={entriesState}
                 hasTeam={hasTeam}
                 leagueCode={leagueCode}
                 myEntries={myEntries.entriesByContestId.get(upNext.contest.id)}
@@ -157,6 +161,7 @@ export function LeagueHomePage() {
               <OtherContestsCard
                 contests={otherContests}
                 entriesByContestId={myEntries.entriesByContestId}
+                entriesState={entriesState}
                 hasTeam={hasTeam}
                 leagueCode={leagueCode}
               />

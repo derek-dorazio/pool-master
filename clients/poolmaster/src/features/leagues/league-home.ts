@@ -8,6 +8,9 @@ import { buildLeaderboardView } from '@/features/contests/contest-leaderboard';
 import { areContestEntriesOpen } from '@/features/contests/contest-status';
 import type { ContestSchedule } from '@/features/contests/use-contest-schedule';
 
+/** Whether the viewer's entries in the current contests are known yet. */
+export type MyEntriesState = 'loading' | 'failed' | 'ready';
+
 export type UpNextContest = {
   contest: ContestDto;
   /** The entry cutoff: the event's scheduled start. */

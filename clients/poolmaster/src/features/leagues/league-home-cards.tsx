@@ -12,7 +12,13 @@ import {
 } from '@/features/shared/ui';
 import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
 import { TeamIcon } from '@/features/teams/team-icon';
-import { buildTopStandings, countdownUntil, type StandingRow, type UpNextContest } from './league-home';
+import {
+  buildTopStandings,
+  countdownUntil,
+  type MyEntriesState,
+  type StandingRow,
+  type UpNextContest,
+} from './league-home';
 import {
   buildLeagueContestEntryPath,
   buildLeagueContestLeaderboardPath,
@@ -56,16 +62,26 @@ function HomeCard({
   );
 }
 
+const ENTRY_STATE_NOTE = {
+  failed: "We couldn't check your entry.",
+  loading: 'Checking your entry...',
+} as const;
+
 /** What the viewer's entries in a contest mean for them, and where to go next. */
 function describeMyEntry(
   leagueCode: string,
   contest: ContestDto,
   myEntries: readonly ContestEntryDto[] | undefined,
+  entriesState: MyEntriesState,
   hasTeam: boolean,
 ) {
   const contestPath = buildLeagueContestPath(leagueCode, contest.id);
   if (!hasTeam) {
     return { label: 'View contest', note: 'Create your team to enter.', to: contestPath };
+  }
+  // Until the entries are known, offering to make picks could start a second entry.
+  if (entriesState !== 'ready') {
+    return { label: 'View contest', note: ENTRY_STATE_NOTE[entriesState], to: contestPath };
   }
   const submitted = myEntries?.find((entry) => entry.status === ContestEntryStatus.SUBMITTED);
   if (submitted) {
@@ -87,12 +103,14 @@ function describeMyEntry(
 }
 
 export function UpNextCard({
+  entriesState,
   hasTeam,
   leagueCode,
   myEntries,
   now,
   upNext,
 }: {
+  entriesState: MyEntriesState;
   hasTeam: boolean;
   leagueCode: string;
   myEntries: readonly ContestEntryDto[] | undefined;
@@ -100,7 +118,7 @@ export function UpNextCard({
   upNext: UpNextContest;
 }) {
   const countdown = countdownUntil(upNext.closesAt, now);
-  const next = describeMyEntry(leagueCode, upNext.contest, myEntries, hasTeam);
+  const next = describeMyEntry(leagueCode, upNext.contest, myEntries, entriesState, hasTeam);
   const parts = [
     { label: 'Days', value: countdown.days },
     { label: 'Hours', value: countdown.hours },
@@ -149,11 +167,13 @@ export function UpNextCard({
 export function OtherContestsCard({
   contests,
   entriesByContestId,
+  entriesState,
   hasTeam,
   leagueCode,
 }: {
   contests: readonly ContestDto[];
   entriesByContestId: ReadonlyMap<string, ContestEntryDto[]>;
+  entriesState: MyEntriesState;
   hasTeam: boolean;
   leagueCode: string;
 }) {
@@ -173,7 +193,11 @@ export function OtherContestsCard({
                 <div className="min-w-0">
                   <div className="truncate font-semibold text-foreground">{contest.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {!hasTeam ? 'Create your team to enter' : hasEntry ? 'Your team has an entry' : 'Your team has not entered'}
+                    {!hasTeam
+                      ? 'Create your team to enter'
+                      : entriesState !== 'ready'
+                        ? ENTRY_STATE_NOTE[entriesState]
+                        : hasEntry ? 'Your team has an entry' : 'Your team has not entered'}
                   </div>
                 </div>
                 <div className="flex flex-none items-center gap-2">

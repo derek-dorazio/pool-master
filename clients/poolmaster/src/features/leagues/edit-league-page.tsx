@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { LeagueIconKey } from '@poolmaster/shared/domain';
 import { updateLeagueDetails, updateLeagueIcon, type LeagueDto } from '@/lib/api';
@@ -36,6 +36,10 @@ export function EditLeaguePage() {
   // The guard above this page has already loaded the league context.
   if (!league) {
     return null;
+  }
+  // An inactive league is read-only; its settings page says why Edit is unavailable.
+  if (!league.isActive) {
+    return <Navigate replace to={buildLeagueAdminPath(league.leagueCode)} />;
   }
 
   // Keyed by the league so the draft is built once per league and a background refetch never
