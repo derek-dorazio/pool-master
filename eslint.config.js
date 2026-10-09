@@ -123,9 +123,9 @@ export default tseslint.config(
       // why. Re-measure them when typescript-eslint is upgraded, since the preset can grow.
       //
       // Options, not rules: strict's options account for most of the count.
-      // `ignoreArrowShorthand` takes no-confusing-void-expression from 481 to 2; the
-      // remaining 479 were `onClick={() => setOpen(true)}`-style arrows, where returning
-      // the void call is the idiom, not a confusion.
+      // `ignoreArrowShorthand` clears 479 of no-confusing-void-expression's 481 findings;
+      // those were `onClick={() => setOpen(true)}`-style arrows, where returning the void
+      // call is the idiom, not a confusion. The other 2 (`void navigate(...)`) were fixed.
       '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
       // Strict's options forbid numbers in templates: all 291 findings were numbers
       // (`${count} entries`). Everything else strict rejects (nullish, boolean, any,
