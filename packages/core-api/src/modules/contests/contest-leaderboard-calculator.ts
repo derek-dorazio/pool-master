@@ -10,6 +10,8 @@ import {
   ParticipantScoringDefinitionIdSchema,
   rankSortedScores,
   type ContestEntryStatus,
+  type GolfContestConfig,
+  type Unvalidated,
   type ParticipantScoringDefinition,
   type ParticipantScoringDefinitionId,
   type ScoreDirection,
@@ -69,7 +71,7 @@ export function resolveContestCountingRule(
   const configJson = configuration?.configJson;
   const configRecord =
     configJson && typeof configJson === 'object' && !Array.isArray(configJson)
-      ? configJson as Record<string, unknown>
+      ? configJson as Unvalidated<GolfContestConfig>
       : null;
   const countedScores = readPositiveInteger(configRecord?.countedScores)
     ?? readPositiveInteger(configuration?.rosterSize)
