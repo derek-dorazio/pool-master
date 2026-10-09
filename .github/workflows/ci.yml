@@ -269,8 +269,9 @@ jobs:
         run: npm run test:integration -- --shard=${{ matrix.shard }}/2
 
   # The required check and deploy-publish-images' dependency keep this name, so sharding
-  # changed neither. It skips when the shards skip (a PR with no service change), which
-  # branch protection counts as passing, exactly as the unsharded job did.
+  # changed neither. It skips whenever the shards skip, which branch protection counts as
+  # passing, exactly as the unsharded job did: on a PR with no service change, and when
+  # all-contract-gates fails (that required check is already red, so nothing slips through).
   service-integration-tests:
     name: service-integration-tests
     runs-on: ubuntu-latest
