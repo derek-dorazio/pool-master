@@ -16,8 +16,8 @@ Choosing between them: a comment can only constrain code that already exists, so
 
 - **Short.** Target ~1 page. Title, status, context, decision, consequences, alternatives considered.
 - **Numbered.** `NNNN-kebab-case-title.md`, sequential (`0001-…`, `0002-…`, …).
-- **Immutable once accepted.** Do not edit historical ADRs. When a decision changes, write a new ADR that references and supersedes the old one; leave the old one in place for context.
-- **Scoped to cross-cutting decisions.** Architecture patterns, cross-codebase conventions, hard boundaries, tooling choices. Not feature scope; not task lists; not things better captured in a plan or a rule.
+- **Immutable once accepted.** Do not edit historical ADRs. When a decision changes, write a new ADR that references and supersedes the old one; leave the old one in place for context. The exception is a record that should never have been an ADR — feature design filed here for want of a better home. Move its durable content to `rules/` and delete it; git keeps the file.
+- **Scoped to how the system is built.** Architecture patterns, cross-codebase conventions, tooling choices. Not how a feature behaves; not task lists; not things better captured in a plan or a rule.
 
 ## Statuses
 
@@ -30,12 +30,14 @@ Choosing between them: a comment can only constrain code that already exists, so
 Good ADR candidates:
 
 - Choice of a cross-cutting tool or convention (e.g. which task tracker, which API client, which test framework layer).
-- A hard boundary that future work must respect (e.g. account-scope vs league-scope separation).
-- A choice that was genuinely deliberated and has consequences if revisited.
+- A system-shaping constraint that many modules must build around (e.g. every event is admin-authored and providers only link scores).
+
+Being deliberated, and having rejected alternatives, is not enough on its own: every feature-design fork has both. The *subject* must be cross-cutting.
 
 Not ADR candidates:
 
-- Feature scope or sequencing (those are plans).
+- Feature scope, sequencing or behaviour — who may press which button, which page an action lives on (plans while in flight, then `rules/` or `rules/domain-model-concepts.md`).
+- A hard boundary that future work must respect. That is a prohibition, and prohibitions are rules.
 - Implementation details local to a module (those are code comments or rules).
 - Current process or rules (those are `rules/`).
 
@@ -52,7 +54,6 @@ Not ADR candidates:
 - [ADR-0001 — Beads as the live task tracker](./0001-beads-as-live-task-tracker.md) *(superseded by ADR-0006)*
 - [ADR-0002 — Plans are narrative; deleted after their tracking epic closes](./0002-plans-as-narrative-delete-after-epic-closes.md)
 - [ADR-0003 — Tech specs are pre-implementation only; deleted after ship](./0003-tech-specs-pre-implementation-only.md)
-- [ADR-0004 — Team is the league-facing entity; User page is account-scope only](./0004-team-centric-league-account-scope-boundary.md)
 - [ADR-0005 — Cross-tier log correlation via client trace/request IDs](./0005-cross-tier-log-correlation.md)
 - [ADR-0006 — GitHub Issues as the live task tracker](./0006-github-issues-as-live-task-tracker.md) *(supersedes ADR-0001)*
 - [ADR-0007 — Small validity matrices live in code, not the database](./0007-small-validity-matrices-live-in-code.md)
