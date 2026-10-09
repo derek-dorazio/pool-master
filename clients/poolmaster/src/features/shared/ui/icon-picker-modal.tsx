@@ -1,12 +1,10 @@
 import type { ReactNode } from "react";
 import { Button } from "./button";
+import { IconPalette, type IconPaletteOption } from "./icon-palette";
 import { Modal } from "./modal";
 import { Tile } from "./tile";
 
-export type IconPickerOption<Key extends string> = {
-  key: Key;
-  label: string;
-};
+export type IconPickerOption<Key extends string> = IconPaletteOption<Key>;
 
 type IconPickerModalProps<
   Key extends string,
@@ -87,32 +85,17 @@ export function IconPickerModal<
           </div>
         </div>
 
-        <div
-          className="mt-4 grid max-h-80 gap-2 overflow-y-auto pr-1 sm:grid-cols-4"
-          data-testid={paletteTestId}
-        >
-          {options.map((icon) => {
-            const isSelected = value === icon.key;
-            return (
-              <button
-                aria-pressed={isSelected}
-                className={`rounded-[1rem] border px-2 py-3 text-center transition ${
-                  isSelected
-                    ? "border-primary bg-primary/10 text-foreground"
-                    : "border-border bg-card text-muted-foreground hover:bg-muted/40"
-                }`}
-                data-testid={`${optionTestIdPrefix}-${icon.key}`}
-                disabled={!canSelect}
-                key={icon.key}
-                onClick={() => onSelect(icon.key)}
-                type="button"
-              >
-                {renderOptionIcon(icon)}
-                <div className="mt-2 text-xs font-medium">{icon.label}</div>
-              </button>
-            );
-          })}
-        </div>
+        <IconPalette
+          aria-label={title}
+          className="mt-4"
+          disabled={!canSelect}
+          onSelect={onSelect}
+          optionTestIdPrefix={optionTestIdPrefix}
+          options={options}
+          renderOptionIcon={renderOptionIcon}
+          testId={paletteTestId}
+          value={value}
+        />
 
         {errorMessage ? (
           <p className="mt-4 text-sm text-destructive">{errorMessage}</p>

@@ -49,8 +49,6 @@ export const QueryKeys = {
         ? (['poolmaster', 'league-contests'] as const)
         : (['poolmaster', 'league-contests', filters.leagueId] as const),
     detail: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId] as const,
-    myEntries: (leagueId: QueryKeyId, contestIds: readonly string[]) =>
-      ['poolmaster', 'league-contests', leagueId, 'my-entries', contestIds] as const,
     leaderboard: (contestId: QueryKeyId) =>
       ['poolmaster', 'contest', contestId, 'leaderboard'] as const,
     standings: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId, 'standings'] as const,
@@ -71,7 +69,6 @@ export const QueryKeys = {
     all: ['poolmaster', 'contest-entries'] as const,
     byContest: (contestId: QueryKeyId) => ['poolmaster', 'contest-entries', contestId] as const,
     detail: (entryId: QueryKeyId) => ['poolmaster', 'contest-entries', entryId] as const,
-    me: (contestId: QueryKeyId) => ['poolmaster', 'contest-entries', contestId, 'me'] as const,
   },
   selectionStates: {
     all: ['poolmaster', 'selection-state'] as const,

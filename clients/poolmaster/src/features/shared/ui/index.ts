@@ -1,7 +1,7 @@
 export { ActionList, ActionTile } from "./action-list";
 export { Alert, Callout } from "./alert";
-export { AppNavigationMenu } from "./app-navigation";
-export type { AppNavigationItem } from "./app-navigation";
+export { AdminAreaLayout, LeagueMenu } from "./nav-menus";
+export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
 export type { BulkUploadFormat, BulkUploadPanelProps } from "./bulk-upload-panel";
 export { parseDelimitedRecords } from "./bulk-upload-parse";
@@ -36,9 +36,12 @@ export type {
   TextareaProps,
 } from "./form-field";
 export { FileInput } from "./file-input";
+export { FormPage } from "./form-page";
 export type { FileInputProps } from "./file-input";
 export { IconAvatar, IconBadge } from "./icon-avatar";
+export { IconPalette } from "./icon-palette";
 export { IconPickerModal } from "./icon-picker-modal";
+export { IdentityHeading } from "./identity-heading";
 export type { IconPickerOption } from "./icon-picker-modal";
 export { ListCard, ListEmptyRow, ListStack } from "./list-card";
 export {
@@ -57,6 +60,7 @@ export type {
 export { ServerErrorBar } from "./server-error";
 export type { ServerErrorDisplayProps } from "./server-error";
 export { PageSection, SectionActions, SectionHeader } from "./section";
+export { DangerZone, DangerZoneAction, SettingsRow, SettingsSection } from "./settings-section";
 export { EmptyState, ErrorState, LoadingState } from "./state";
 export { ProgressIndicator, Skeleton } from "./progress";
 export {

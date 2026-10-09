@@ -65,6 +65,14 @@ export function buildLeagueContestManagePath(leagueCode: string, contestId: stri
   return `/league/${leagueCode}/contests/${contestId}/manage`;
 }
 
+export function buildLeagueAdminPath(leagueCode: string) {
+  return `/league/${leagueCode}/admin`;
+}
+
+export function buildLeagueAdminEditPath(leagueCode: string) {
+  return `/league/${leagueCode}/admin/edit`;
+}
+
 export function buildInvitePath(inviteCode: string) {
   return `/invite/${inviteCode}`;
 }

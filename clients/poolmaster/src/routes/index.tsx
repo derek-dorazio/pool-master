@@ -12,7 +12,10 @@ import { LeagueContestHistoryPage } from '@/features/contests/league-contest-his
 import { LeagueContestsPage } from '@/features/contests/league-contests-page';
 import { ManageContestsPage } from '@/features/contests/manage-contests-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
-import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
+import { CommissionerToolsLayout } from '@/features/leagues/commissioner-tools-layout';
+import { EditLeaguePage } from '@/features/leagues/edit-league-page';
+import { LeagueHomePage } from '@/features/leagues/league-home-page';
+import { LeagueSettingsPage } from '@/features/leagues/league-settings-page';
 import { WelcomePage } from '@/features/leagues/leagues-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminContentConfigurationListPage } from '@/features/root-admin/root-admin-content-configuration-list-page';
@@ -48,7 +51,7 @@ import {
   LegacyJoinInviteRedirect,
   LegacyLeagueEntriesRedirect,
 } from './legacy-redirects';
-import { MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
+import { CommissionerRouteGuard, MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
 
 export const router = createBrowserRouter([
   {
@@ -96,7 +99,26 @@ export const router = createBrowserRouter([
           },
           {
             path: 'league/:leagueCode',
-            element: <LeagueDetailPage />,
+            element: <LeagueHomePage />,
+          },
+          {
+            path: 'league/:leagueCode/admin',
+            element: <CommissionerRouteGuard />,
+            children: [
+              {
+                element: <CommissionerToolsLayout />,
+                children: [
+                  {
+                    index: true,
+                    element: <LeagueSettingsPage />,
+                  },
+                  {
+                    path: 'edit',
+                    element: <EditLeaguePage />,
+                  },
+                ],
+              },
+            ],
           },
           {
             path: 'league/:leagueCode/contests/new',

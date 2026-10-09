@@ -26,6 +26,12 @@ Use page templates when a page matches an existing workflow shape:
   actions.
 - `PublicInviteJoinPage` for public invitation or join surfaces.
 
+League pages and administration areas use the pieces named in
+`rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
+`AdminAreaLayout`, `IdentityHeading`, `SettingsSection` / `SettingsRow`,
+`DangerZone` / `DangerZoneAction`, and `FormPage` for a full-page edit
+(with `IconPalette` when the form picks an icon).
+
 Feature pages should keep route-specific copy and generated-SDK calls local, but
 they should not duplicate header, grid-shell, detail/actions, lifecycle, or
 public-join layout code when a template fits.

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import {
   Outlet,
   useLocation,
@@ -11,22 +11,10 @@ import { getLogger } from "@/lib/logger";
 import { AccountMenu } from "@/features/account/account-menu";
 import { buildUserPath } from "@/features/account/user-routing";
 import { formatUserName } from "@/features/account/user-name";
-import {
-  AppNavigationMenu,
-  type AppNavigationItem,
-} from "@/features/shared/ui";
 import { CreateLeagueModal } from "@/features/leagues/create-league-modal";
 import { buildCreateLeagueDestination } from "@/features/leagues/create-league-form";
-import {
-  buildLeagueContestCreatePath,
-  buildLeagueContestHistoryPath,
-  buildLeagueContestsPath,
-  buildLeagueHistoryPath,
-  buildLeagueMyContestsPath,
-  buildLeaguePath,
-  buildLeagueTeamPath,
-  buildLeagueTeamsPath,
-} from "@/features/leagues/league-routing";
+import { buildLeagueAdminPath } from "@/features/leagues/league-routing";
+import { LeagueMenuBar } from "@/features/leagues/league-menu-bar";
 import { useLeaguesQuery } from "@/features/leagues/use-leagues-query";
 import { LeagueSelector } from "./league-selector";
 
@@ -47,103 +35,15 @@ export function AppShell() {
     enabled: shouldLoadLeagueShell,
   });
   const activeLeagueCode = leagueCode ?? null;
-  const activeLeague = useMemo(
-    () =>
-      leagues?.find((league) => league.leagueCode === activeLeagueCode) ?? null,
-    [activeLeagueCode, leagues],
-  );
-  // #202 (A8) — commissioner comes from the viewer's own memberships beside the league list,
-  // and root admin from the cached session user. Neither is a field on a league.
-  const canManageActiveLeague = Boolean(
-    activeLeague && (commissionerLeagueIds.has(activeLeague.id) || auth.isRootAdmin),
-  );
-  const canCreateActiveLeagueContest =
-    canManageActiveLeague && activeLeague?.isActive !== false;
   const isCreateLeagueOpen = searchParams.get("createLeague") === "1";
-  const leagueMenuDisabled = !activeLeagueCode;
-  const currentRoute = `${location.pathname}${location.search}`;
-  const appMenuClassName =
-    "border-inverse-border bg-on-inverse-subtle text-on-inverse hover:border-primary/50 hover:bg-on-inverse-hover disabled:text-on-inverse-muted";
-
-  const myTeamMenuItems = useMemo<AppNavigationItem[]>(() => {
-    if (!activeLeagueCode) {
-      return [];
-    }
-
-    const teamPath = buildLeagueTeamPath(activeLeagueCode);
-    const myContestsPath = buildLeagueMyContestsPath(activeLeagueCode);
-    const historyPath = buildLeagueHistoryPath(activeLeagueCode);
-
-    return [
-      {
-        isActive: location.pathname === teamPath,
-        label: "Team Details",
-        testId: "app-menu-my-team-details",
-        to: teamPath,
-      },
-      {
-        isActive: currentRoute === myContestsPath,
-        label: "My Contests",
-        testId: "app-menu-my-contests",
-        to: myContestsPath,
-      },
-      {
-        isActive: location.pathname === historyPath,
-        label: "My History",
-        testId: "app-menu-my-history",
-        to: historyPath,
-      },
-    ];
-  }, [activeLeagueCode, currentRoute, location.pathname]);
-
-  const leagueMenuItems = useMemo<AppNavigationItem[]>(() => {
-    if (!activeLeagueCode) {
-      return [];
-    }
-
-    const leaguePath = buildLeaguePath(activeLeagueCode);
-    const teamsPath = buildLeagueTeamsPath(activeLeagueCode);
-    const contestsPath = buildLeagueContestsPath(activeLeagueCode);
-    const contestHistoryPath = buildLeagueContestHistoryPath(activeLeagueCode);
-
-    return [
-      {
-        isActive: location.pathname === leaguePath,
-        label: "League Details",
-        testId: "app-menu-league-details",
-        to: leaguePath,
-      },
-      {
-        isActive: location.pathname === teamsPath,
-        label: "Teams and Owners",
-        testId: "app-menu-league-teams",
-        to: teamsPath,
-      },
-      {
-        isActive: currentRoute === contestsPath,
-        label: "Active Contests",
-        testId: "app-menu-active-contests",
-        to: contestsPath,
-      },
-      {
-        isActive: location.pathname === contestHistoryPath,
-        label: "Contest History",
-        testId: "app-menu-contest-history",
-        to: contestHistoryPath,
-      },
-      {
-        hidden: !canCreateActiveLeagueContest,
-        label: "Create Contest",
-        testId: "app-menu-create-contest",
-        to: buildLeagueContestCreatePath(activeLeagueCode),
-      },
-    ];
-  }, [
-    activeLeagueCode,
-    canCreateActiveLeagueContest,
-    currentRoute,
-    location.pathname,
-  ]);
+  // Commissioner tools has its own area header, so the member menu stands down there.
+  const isCommissionerToolsRoute = Boolean(
+    activeLeagueCode
+      && (location.pathname === buildLeagueAdminPath(activeLeagueCode)
+        || location.pathname.startsWith(`${buildLeagueAdminPath(activeLeagueCode)}/`)),
+  );
+  const showLeagueMenu =
+    auth.isAuthenticated && Boolean(activeLeagueCode) && !isCommissionerToolsRoute;
 
   function openCreateLeague() {
     logger.info(
@@ -238,45 +138,25 @@ export function AppShell() {
             </div>
 
             {shouldLoadLeagueShell ? (
-              <>
-                <LeagueSelector
-                  activeLeagueCode={activeLeagueCode}
-                  commissionerLeagueIds={commissionerLeagueIds}
-                  leagues={leagues ?? []}
-                  onCreateLeague={openCreateLeague}
-                  onNavigate={(path) => {
-                    logger.info(
-                      {
-                        action: "appShell.league.navigate",
-                        data: {
-                          from: location.pathname,
-                          to: path,
-                        },
+              <LeagueSelector
+                activeLeagueCode={activeLeagueCode}
+                commissionerLeagueIds={commissionerLeagueIds}
+                leagues={leagues ?? []}
+                onCreateLeague={openCreateLeague}
+                onNavigate={(path) => {
+                  logger.info(
+                    {
+                      action: "appShell.league.navigate",
+                      data: {
+                        from: location.pathname,
+                        to: path,
                       },
-                      "Navigating to selected league from app shell",
-                    );
-                    navigate(path);
-                  }}
-                />
-                <nav className="flex items-center gap-2" aria-label="Primary">
-                  <AppNavigationMenu
-                    className={appMenuClassName}
-                    disabled={leagueMenuDisabled}
-                    items={myTeamMenuItems}
-                    label="My Team"
-                    triggerTestId="app-menu-my-team-trigger"
-                  />
-
-                  <AppNavigationMenu
-                    className={appMenuClassName}
-                    contentClassName="min-w-60"
-                    disabled={leagueMenuDisabled}
-                    items={leagueMenuItems}
-                    label="League"
-                    triggerTestId="app-menu-league-trigger"
-                  />
-                </nav>
-              </>
+                    },
+                    "Navigating to selected league from app shell",
+                  );
+                  navigate(path);
+                }}
+              />
             ) : null}
           </div>
 
@@ -321,6 +201,8 @@ export function AppShell() {
           </div>
         </div>
       </header>
+
+      {showLeagueMenu && activeLeagueCode ? <LeagueMenuBar leagueCode={activeLeagueCode} /> : null}
 
       <div className="mx-auto max-w-6xl px-6 py-10">
         <main>

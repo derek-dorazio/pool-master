@@ -3,9 +3,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import {
   getContest,
-  getGolfContestLeaderboard,
   type ContestDto,
-  type ContestLeaderboardResponse,
 } from '@/lib/api';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
@@ -24,14 +22,13 @@ import {
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import {
-  CONTEST_POLL_INTERVAL_MS,
   contestRefetchInterval,
   refreshOnContestStatusChange,
-  shouldPollContestEntries,
 } from './contest-status';
 import { ContestStatusBadge } from './contest-status-badge';
 import { buildLeaderboardView, type LeaderboardEntryRow } from './contest-leaderboard';
 import { ContestStatus } from '@poolmaster/shared/domain';
+import { useContestLeaderboardQuery } from './use-contest-leaderboard';
 
 /**
  * The member-facing contest leaderboard (#110, #111, #112).
@@ -207,25 +204,11 @@ export function ContestLeaderboardPage() {
     refetchInterval: (query) => contestRefetchInterval(query.state.data?.status),
   });
 
-  const leaderboardQuery = useQuery({
-    queryKey: QueryKeys.contests.leaderboard(contestId),
-    queryFn: async (): Promise<ContestLeaderboardResponse> => {
-      const response = await getGolfContestLeaderboard({ path: { contestId } });
-
-      if (!response.data) {
-        throwApiError(response.error, 'Contest leaderboard response is missing data.');
-      }
-
-      return response.data;
-    },
-    enabled: Boolean(contestId),
-    retry: false,
-    // #112 — the same cadence the contest board polls entries on, driven by the same
-    // predicate. The contest read above refreshes until settlement (#362), so this starts
-    // when play starts and stops when the contest settles, and each status change it sees
-    // reads the leaderboard once more, which is how the final standings land.
-    refetchInterval: shouldPollContestEntries(contestQuery.data?.status) ? CONTEST_POLL_INTERVAL_MS : false,
-  });
+  // #112 — the same cadence the contest board polls entries on, driven by the same predicate.
+  // The contest read above refreshes until settlement (#362), so this starts when play starts and
+  // stops when the contest settles, and each status change it sees reads the leaderboard once
+  // more, which is how the final standings land.
+  const leaderboardQuery = useContestLeaderboardQuery(contestId, contestQuery.data?.status);
 
   useEffect(() => {
     if (!leaderboardQuery.isError) {

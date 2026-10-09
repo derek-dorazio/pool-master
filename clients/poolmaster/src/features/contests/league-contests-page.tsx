@@ -1,17 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import type { ContestDto } from '@/lib/api';
 import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo } from "react";
-import { throwApiError } from "@/lib/errors";
-import {
-  getMyContestEntry,
-  listContests,
-} from "@/lib/api";
 import { useLeagueContextGuard } from "@/features/leagues/league-context-guard";
 import {
   buildLeagueContestCreatePath,
   buildLeagueContestsManagePath,
-  buildLeaguePath,
 } from "@/features/leagues/league-routing";
 import { getLogger } from "@/lib/logger";
 import {
@@ -21,15 +13,15 @@ import {
   LinkButton,
   ListStack,
   LoadingState,
-  MetricGrid,
-  MetricTile,
   PageHeader,
   Tile,
 } from "@/features/shared/ui";
 import { isHistoricalContest } from "./contest-status";
 import { ContestListCard } from "./contest-list-card";
-import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
+import { ContestsViewSwitch } from './contests-view-switch';
+import { useMyContestEntries } from './use-contest-entries';
+import { useLeagueContestsQuery } from './use-league-contests-query';
 
 
 export function LeagueContestsPage() {
@@ -62,20 +54,7 @@ export function LeagueContestsPage() {
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   const leagueId = league?.id ?? "";
-  const contestsQuery = useQuery({
-    queryKey: QueryKeys.contests.list({ leagueId }),
-    queryFn: async (): Promise<ContestDto[]> => {
-      const response = await listContests({ path: { id: leagueId } });
-
-      if (!response.data?.contests) {
-        throwApiError(response.error, "Contest list response is missing data.");
-      }
-
-      return response.data.contests;
-    },
-    enabled: Boolean(leagueId),
-    retry: false,
-  });
+  const contestsQuery = useLeagueContestsQuery(leagueId);
 
   const contests = useMemo(() => contestsQuery.data ?? [], [contestsQuery.data]);
   const activeContests = useMemo(
@@ -86,30 +65,12 @@ export function LeagueContestsPage() {
     () => activeContests.map((contest) => contest.id),
     [activeContests],
   );
-  const myContestIdsQuery = useQuery({
-    queryKey: QueryKeys.contests.myEntries(leagueId, activeContestIds),
-    queryFn: async (): Promise<Set<string>> => {
-      const contestIds = await Promise.all(
-        activeContestIds.map(async (contestId) => {
-          const response = await getMyContestEntry({ path: { contestId } });
-          if (!response.data) {
-            throwApiError(response.error, "My contest entry response is missing data.");
-          }
-          return response.data.entry ? contestId : null;
-        }),
-      );
-
-      return new Set(
-        contestIds.filter((contestId): contestId is string =>
-          Boolean(contestId),
-        ),
-      );
-    },
-    enabled: Boolean(leagueId && isMyEntriesFilter && activeContestIds.length),
-    retry: false,
-  });
+  const myEntries = useMyContestEntries(
+    isMyEntriesFilter ? activeContestIds : [],
+    viewer.mySquadId,
+  );
   useEffect(() => {
-    if (!myContestIdsQuery.isError) {
+    if (!myEntries.isError) {
       return;
     }
 
@@ -119,19 +80,19 @@ export function LeagueContestsPage() {
         data: {
           leagueCode,
         },
-        err: myContestIdsQuery.error,
       },
       "League Contests page failed to load the team's contest entries",
     );
-  }, [leagueCode, myContestIdsQuery.error, myContestIdsQuery.isError, logger]);
+  }, [leagueCode, myEntries.isError, logger]);
   const visibleActiveContests = useMemo(() => {
     if (!isMyEntriesFilter) {
       return activeContests;
     }
 
-    const myContestIds = myContestIdsQuery.data ?? new Set<string>();
-    return activeContests.filter((contest) => myContestIds.has(contest.id));
-  }, [activeContests, isMyEntriesFilter, myContestIdsQuery.data]);
+    return activeContests.filter(
+      (contest) => (myEntries.entriesByContestId.get(contest.id)?.length ?? 0) > 0,
+    );
+  }, [activeContests, isMyEntriesFilter, myEntries.entriesByContestId]);
   const leagueContext = useLeagueContextGuard(leagueQuery, {
     loadingBody: "Loading league contests...",
   });
@@ -166,23 +127,18 @@ export function LeagueContestsPage() {
             ) : null}
           </>
         }
-        breadcrumbs={[
-          { href: buildLeaguePath(league.leagueCode), label: "League Home" },
-          { label: isMyEntriesFilter ? "My Contests" : "Active Contests" },
-        ]}
         description={
           isMyEntriesFilter
-            ? "Open active contests where your team has an entry."
+            ? "Active contests where your team has an entry."
             : "Active contests in this league."
         }
-        title={isMyEntriesFilter ? "My Contests" : "Active Contests"}
+        title="Contests"
       />
 
-      <MetricGrid>
-        <MetricTile label="League" value={league.name} />
-        <MetricTile label="Active" value={activeContests.length} />
-        <MetricTile label="Shown" value={visibleActiveContests.length} />
-      </MetricGrid>
+      <ContestsViewSwitch
+        leagueCode={league.leagueCode}
+        value={isMyEntriesFilter ? "mine" : "active"}
+      />
 
       {contestsQuery.isLoading ? (
         <LoadingState body="Loading contests..." />
@@ -206,11 +162,11 @@ export function LeagueContestsPage() {
           </div>
 
           <ListStack className="mt-5">
-            {isMyEntriesFilter && myContestIdsQuery.isLoading ? (
+            {isMyEntriesFilter && myEntries.isLoading ? (
               <p className="text-sm text-muted-foreground">
                 Loading your contests...
               </p>
-            ) : isMyEntriesFilter && myContestIdsQuery.isError ? (
+            ) : isMyEntriesFilter && myEntries.isError ? (
               <ErrorState body="We couldn't load your contests." />
             ) : visibleActiveContests.length ? (
               visibleActiveContests.map((contest) => (

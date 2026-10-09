@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { type SquadDto, type TeamOwnerInvitationDto, listLeagueSquads, listSquadOwnerInvitations } from '@/lib/api';
+import { type TeamOwnerInvitationDto, listSquadOwnerInvitations } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import {
   ActionList,
@@ -20,6 +20,7 @@ import { getLogger } from '@/lib/logger';
 import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
+import { LeaveLeagueSection } from '@/features/leagues/leave-league-section';
 import { MyTeamDetailsTile, MyTeamIconModal, MyTeamNameModal } from './my-team-details';
 import { MyTeamHeader } from './my-team-header';
 import { MyTeamLifecycleActions, MyTeamLifecycleDialogs, MyTeamLifecycleNotices } from './my-team-lifecycle';
@@ -29,6 +30,7 @@ import { useMyTeamDetails } from './use-my-team-details';
 import { useMyTeamLifecycle } from './use-my-team-lifecycle';
 import { useMyTeamOwners } from './use-my-team-owners';
 import { SquadMembershipStatus } from '@poolmaster/shared/domain';
+import { useLeagueSquadsQuery } from './use-league-squads-query';
 
 /**
  * Team Home. Owns the league and squad queries, decides which squad is selected and what the
@@ -72,20 +74,7 @@ export function MyTeamPage() {
   // Shared with the other team surface: one roster query, one index by user.
   const { membersByUserId: leagueMembersByUserId } = useLeagueMembersQuery(leagueId);
 
-  const teamsQuery = useQuery({
-    queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
-    queryFn: async (): Promise<SquadDto[]> => {
-      const response = await listLeagueSquads({ path: { id: leagueId } });
-
-      if (!response.data?.squads) {
-        throwApiError(response.error, 'Team list response is missing data.');
-      }
-
-      return response.data.squads;
-    },
-    enabled: Boolean(leagueId),
-    retry: false,
-  });
+  const teamsQuery = useLeagueSquadsQuery(leagueId);
 
   const ownerInvitationsQuery = useQuery({
     queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
@@ -290,6 +279,8 @@ export function MyTeamPage() {
           />
         )}
       />
+
+      {!viewer.isRootAdmin ? <LeaveLeagueSection league={league} /> : null}
 
       <MyTeamNameModal
         canManageSelectedTeam={canManageSelectedTeam}
