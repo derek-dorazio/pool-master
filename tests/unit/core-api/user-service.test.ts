@@ -8,13 +8,11 @@
  * becomes visible: that **both callers reach the same operation**, and that the authority rule
  * decides who may.
  *
- * Per plans/145 "Test layering", these assert returned values, typed errors, the ABSENCE of a
- * write (which is how idempotence and a short-circuiting guard are observable at all), and the
- * atomicity of writes that must land together. Query shapes belong to the
- * adapter and are covered against real Postgres in
- * `tests/integration/core-api/identity-repositories.integration.ts`.
+ * These assert returned values and typed errors. What each operation writes — the flag, the
+ * revoked sessions, the delete cascade, and the no-ops that write nothing — is asserted against
+ * Postgres in `tests/integration/core-api/accounts.integration.ts` and
+ * `user-lifecycle.integration.ts` (#209); query shapes in `identity-repositories.integration.ts`.
  */
-import type { Prisma } from '@prisma/client';
 import { expect } from '@jest/globals';
 import bcrypt from 'bcryptjs';
 import { UserService } from '../../../packages/core-api/src/modules/users/user-service';
@@ -44,22 +42,13 @@ const stranger = { userId: 'other-1', isRootAdmin: false };
 
 function createPrismaMock(passwordHash: string | null = null) {
   const tx = {
-    user: {
-      update: jest.fn<Promise<undefined>, [Prisma.UserUpdateArgs]>().mockResolvedValue(undefined),
-      delete: jest.fn().mockResolvedValue(undefined),
-    },
-    refreshToken: {
-      updateMany: jest.fn().mockResolvedValue({ count: 2 }),
-      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-    },
-    leagueInvitation: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
+    user: { update: jest.fn().mockResolvedValue(undefined) },
+    refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 2 }) },
   };
 
   const prisma = {
     // The ONE read that stays on Prisma: passwordHash is a secret the port never returns.
     user: { findUnique: jest.fn().mockResolvedValue({ passwordHash }) },
-    // The non-transactional revoke, used by revokeSessions.
-    refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 3 }) },
     // The delete-dependency counts. Zero means nothing blocks the delete.
     leagueMembership: { count: jest.fn().mockResolvedValue(0) },
     squadMembership: { count: jest.fn().mockResolvedValue(0) },
@@ -67,7 +56,7 @@ function createPrismaMock(passwordHash: string | null = null) {
     $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<void>) => callback(tx)),
   };
 
-  return { prisma, tx };
+  return { prisma };
 }
 
 function serviceFor(user: User | null, extra: Parameters<typeof fakeUserRepo>[0] = {}) {
@@ -80,8 +69,8 @@ function serviceFor(user: User | null, extra: Parameters<typeof fakeUserRepo>[0]
     })),
     ...extra,
   });
-  const { prisma, tx } = createPrismaMock();
-  return { users, prisma, tx, service: new UserService(users, asPrismaClient(prisma), undefined) };
+  const { prisma } = createPrismaMock();
+  return { users, prisma, service: new UserService(users, asPrismaClient(prisma), undefined) };
 }
 
 beforeEach(() => {
@@ -234,28 +223,6 @@ describe('profile, username and preferences', () => {
 });
 
 describe('passwords', () => {
-  it('keeps the calling session alive and revokes every other one', async () => {
-    const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
-    const { prisma, tx } = createPrismaMock(await bcrypt.hash('CurrentPass123!', 10));
-    const service = new UserService(users, asPrismaClient(prisma));
-
-    await service.changeOwnPassword(self, 'user-1', {
-      currentPassword: 'CurrentPass123!',
-      newPassword: 'NewPass456!',
-      confirmNewPassword: 'NewPass456!',
-      currentRefreshToken: 'keep-me',
-    });
-
-    // Deliberately NOT the blanket revoke: the caller stays signed in.
-    expect(tx.refreshToken.updateMany).toHaveBeenCalledWith({
-      where: { userId: 'user-1', revokedAt: null, NOT: { token: 'keep-me' } },
-      data: { revokedAt: expect.any(Date) },
-    });
-    const nextHash = tx.user.update.mock.calls[0][0].data.passwordHash;
-    if (typeof nextHash !== 'string') throw new Error('expected a hashed password string to be written');
-    await expect(bcrypt.compare('NewPass456!', nextHash)).resolves.toBe(true);
-  });
-
   it('refuses to let even a root admin change somebody else’s password this way', async () => {
     // A6 separates the two by SUBJECT: changing your own requires the current password,
     // resetting another's does not. They are two operations, and this is the self one.
@@ -295,21 +262,6 @@ describe('passwords', () => {
       })).rejects.toMatchObject({ code: 'ACCOUNT_PASSWORD_UNAVAILABLE', statusCode: 409 });
   });
 
-  it('resets another user’s password to a temporary credential, revoking their sessions atomically', async () => {
-    const { users, prisma, tx, service } = serviceFor(buildUser());
-    void users;
-
-    const result = await service.resetPassword(rootAdmin, 'user-1');
-
-    expect(result.temporaryPassword).toMatch(/^Pm-/);
-    // The returned credential must be the one actually stored, hashed.
-    const nextHash = tx.user.update.mock.calls[0][0].data.passwordHash;
-    if (typeof nextHash !== 'string') throw new Error('expected a hashed password string to be written');
-    await expect(bcrypt.compare(result.temporaryPassword, nextHash)).resolves.toBe(true);
-    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(tx.refreshToken.updateMany).toHaveBeenCalled();
-  });
-
   it('reserves the reset for a root admin', async () => {
     const { service } = serviceFor(buildUser());
 
@@ -319,63 +271,23 @@ describe('passwords', () => {
 });
 
 describe('disable and enable — one operation, either caller', () => {
-  it('disables atomically, writing the flag and the revoke in one transaction', async () => {
-    const { prisma, tx, service } = serviceFor(buildUser());
-
-    await service.disableUser(self, 'user-1');
-
-    // Both writes go through the SAME transaction client. Previously they were two separate
-    // statements, so a failure between them left the user flagged inactive with live refresh
-    // tokens — disabled in the UI, still able to refresh for the token's lifetime.
-    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(tx.user.update).toHaveBeenCalledWith({
-      where: { id: 'user-1' },
-      data: { isActive: false },
-    });
-    expect(tx.refreshToken.updateMany).toHaveBeenCalled();
-    // The non-transactional client must not be the one doing the revoke.
-    expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
-  });
-
-  it('reaches the same operation whether the subject or a root admin asks', async () => {
-    const asSelf = serviceFor(buildUser());
-    await asSelf.service.disableUser(self, 'user-1');
-
-    const asAdmin = serviceFor(buildUser());
-    await asAdmin.service.disableUser(rootAdmin, 'user-1');
-
-    // Identical write, one implementation. Before #202 these were `inactivateAccount` and
-    // `adminDisableUser`, and only the admin half carried the last-root-admin guard.
-    for (const { tx } of [asSelf, asAdmin]) {
-      expect(tx.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
-        data: { isActive: false },
-      });
-      expect(tx.refreshToken.updateMany).toHaveBeenCalled();
-    }
-  });
-
-  it('treats disabling an already-inactive user as a no-op', async () => {
-    const { prisma, users, service } = serviceFor(buildUser({ isActive: false }));
+  it('returns an already-inactive user as they are when asked to disable them', async () => {
+    const { service } = serviceFor(buildUser({ isActive: false }));
 
     await expect(service.disableUser(rootAdmin, 'user-1')).resolves.toMatchObject({
       isActive: false,
     });
-    // No write at all, through either client, for a change that did not happen.
-    expect(prisma.$transaction).not.toHaveBeenCalled();
-    expect(users.update).not.toHaveBeenCalled();
   });
 
   it('refuses to disable the last remaining root admin, whoever asks', async () => {
     for (const actor of [self, rootAdmin]) {
-      const { prisma, service } = serviceFor(
+      const { service } = serviceFor(
         buildUser({ isRootAdmin: true }),
         { countActiveRootAdmins: jest.fn().mockResolvedValue(1) },
       );
 
       await expect(service.disableUser(actor, 'user-1'))
         .rejects.toMatchObject({ code: 'ACCOUNT_LAST_ROOT_ADMIN', statusCode: 409 });
-      expect(prisma.$transaction).not.toHaveBeenCalled();
     }
   });
 
@@ -394,51 +306,29 @@ describe('disable and enable — one operation, either caller', () => {
 });
 
 describe('revoke sessions — one operation, either caller', () => {
-  it('revokes every live session and reports how many', async () => {
-    const { prisma, service } = serviceFor(buildUser());
-
-    await expect(service.revokeSessions(self, 'user-1')).resolves.toBe(3);
-    expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
-      where: { userId: 'user-1', revokedAt: null },
-      data: { revokedAt: expect.any(Date) },
-    });
-  });
-
-  it('rejects a missing user before revoking anything', async () => {
-    const { prisma, service } = serviceFor(null);
+  it('refuses to revoke the sessions of a user who does not exist with 404 USER_NOT_FOUND', async () => {
+    const { service } = serviceFor(null);
 
     await expect(service.revokeSessions(rootAdmin, 'missing'))
       .rejects.toMatchObject({ code: 'USER_NOT_FOUND', statusCode: 404 });
-    expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
   });
 });
 
 describe('permanent delete — one operation, either caller', () => {
   const inactive = () => buildUser({ isActive: false });
 
-  it('cascades the delete after exact email confirmation', async () => {
-    const { tx, service } = serviceFor(inactive());
-
-    await expect(service.deleteUser(self, 'user-1', 'user@example.com')).resolves.toBeUndefined();
-
-    expect(tx.user.delete).toHaveBeenCalledWith({ where: { id: 'user-1' } });
-    expect(tx.refreshToken.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
-  });
-
   it('rejects an ACTIVE account — the one place isActive gates a write (A9)', async () => {
-    const { prisma, service } = serviceFor(buildUser());
+    const { service } = serviceFor(buildUser());
 
     await expect(service.deleteUser(rootAdmin, 'user-1', 'user@example.com'))
       .rejects.toMatchObject({ code: 'ACCOUNT_DELETE_REQUIRES_INACTIVE', statusCode: 409 });
-    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it('rejects a confirmation email that does not match exactly', async () => {
-    const { prisma, service } = serviceFor(inactive());
+    const { service } = serviceFor(inactive());
 
     await expect(service.deleteUser(self, 'user-1', 'wrong@example.com'))
       .rejects.toMatchObject({ code: 'ACCOUNT_DELETE_CONFIRMATION_MISMATCH', statusCode: 400 });
-    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it('rejects an account that still holds league-scoped data', async () => {
@@ -447,74 +337,50 @@ describe('permanent delete — one operation, either caller', () => {
 
     await expect(service.deleteUser(self, 'user-1', 'user@example.com'))
       .rejects.toMatchObject({ code: 'ACCOUNT_DELETE_DEPENDENCIES_EXIST', statusCode: 409 });
-    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it('refuses the last root admin, even though they are already inactive', async () => {
     // Belt and braces with the disable gate: a root admin who went inactive before that rule
     // existed can still reach delete, and this must not be the path that empties the
     // root-admin set.
-    const { prisma, service } = serviceFor(
+    const { service } = serviceFor(
       buildUser({ isActive: false, isRootAdmin: true }),
       { countActiveRootAdmins: jest.fn().mockResolvedValue(0) },
     );
 
     await expect(service.deleteUser(rootAdmin, 'user-1', 'user@example.com'))
       .rejects.toMatchObject({ code: 'ACCOUNT_LAST_ROOT_ADMIN', statusCode: 409 });
-    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });
 
 describe('the root-admin role', () => {
-  it('promotes without revoking sessions, and demotes with a revoke', async () => {
-    const promote = serviceFor(buildUser());
-    await promote.service.setRootAdmin(rootAdmin, 'user-1', true);
-    expect(promote.tx.user.update).toHaveBeenCalledWith({
-      where: { id: 'user-1' },
-      data: { isRootAdmin: true },
-    });
-    // Gaining authority does not invalidate the session that already exists.
-    expect(promote.tx.refreshToken.updateMany).not.toHaveBeenCalled();
-
-    const demote = serviceFor(
-      buildUser({ isRootAdmin: true }),
-      { countActiveRootAdmins: jest.fn().mockResolvedValue(2) },
-    );
-    await demote.service.setRootAdmin(rootAdmin, 'user-1', false);
-    // Losing authority must invalidate it immediately, not at the next login.
-    expect(demote.tx.refreshToken.updateMany).toHaveBeenCalled();
-  });
-
   it('lets a root admin demote THEMSELVES while another remains', async () => {
     // #202 — the self-demotion block is gone. The only rule is that the platform keeps an
     // administrator, and that is the count; with two, one stepping down is legitimate.
-    const { tx, service } = serviceFor(
+    const { service } = serviceFor(
       buildUser({ id: 'admin-1', isRootAdmin: true }),
       { countActiveRootAdmins: jest.fn().mockResolvedValue(2) },
     );
 
     await expect(service.setRootAdmin(rootAdmin, 'admin-1', false)).resolves.toBeUndefined();
-    expect(tx.user.update).toHaveBeenCalled();
   });
 
   it('refuses to remove the last remaining root admin', async () => {
-    const { prisma, service } = serviceFor(
+    const { service } = serviceFor(
       buildUser({ isRootAdmin: true }),
       { countActiveRootAdmins: jest.fn().mockResolvedValue(1) },
     );
 
     await expect(service.setRootAdmin(rootAdmin, 'user-1', false))
       .rejects.toMatchObject({ code: 'LAST_ROOT_ADMIN', statusCode: 409 });
-    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
-  it('treats an unchanged role as a no-op, without counting or writing', async () => {
-    const { users, prisma, service } = serviceFor(buildUser({ isRootAdmin: true }));
+  it('treats an unchanged role as a no-op that never counts the root admins', async () => {
+    const { users, service } = serviceFor(buildUser({ isRootAdmin: true }));
 
     await expect(service.setRootAdmin(rootAdmin, 'user-1', true)).resolves.toBeUndefined();
 
     expect(users.countActiveRootAdmins).not.toHaveBeenCalled();
-    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it('is root-admin only', async () => {

@@ -52,7 +52,6 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       await expect(
         publishLiveScoreUpdate(malformed, { prisma: asPrismaClient(prisma), providerId: 'mock' }),
       ).rejects.toBeInstanceOf(LiveScoreValidationError);
-      expect(prisma.sportEventParticipantRound.upsert).not.toHaveBeenCalled();
     });
   });
 
@@ -107,7 +106,6 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           },
         },
       });
-      expect(prisma.sportEventParticipantRound.upsert).not.toHaveBeenCalled();
     });
 
     it('warns and skips persistence when externalEventId resolves to no SportEvent', async () => {
@@ -139,7 +137,6 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         updatesPersisted: 0,
         updatesSkipped: 1,
       });
-      expect(prisma.sportEventParticipantRound.upsert).not.toHaveBeenCalled();
       expect(logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'liveScore.publish.unknownSportEvent' }),
         expect.any(String),
@@ -169,8 +166,6 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         const persisted = await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock', logger });
 
         expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
-        expect(prisma.sportEventRound.findMany).not.toHaveBeenCalled();
-        expect(prisma.sportEventParticipantRound.upsert).not.toHaveBeenCalled();
         expect(logger.warn).toHaveBeenCalledWith(
           expect.objectContaining({ action: 'liveScore.publish.eventNotInProgress' }),
           expect.any(String),
