@@ -15,12 +15,7 @@ async function main(): Promise<void> {
     app.log.error({ error }, 'Mock contest feed app.ready() failed');
   }
 
-  const spec = (app as unknown as { swagger?: () => unknown }).swagger?.();
-  if (!spec) {
-    console.error('swagger() not available — is @fastify/swagger registered?');
-    process.exit(1);
-  }
-
+  const spec = app.swagger();
   rewriteNullableToOpenApi31(spec);
 
   const generatedDir = resolve(process.cwd(), 'generated');
@@ -40,7 +35,7 @@ async function main(): Promise<void> {
   process.exit(0);
 }
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   console.error('Failed to export OpenAPI spec:', error);
   process.exit(1);
 });

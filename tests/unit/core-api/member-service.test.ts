@@ -17,10 +17,10 @@ import { buildMembership } from '../../factories';
 import {
   fakeLeagueMembershipRepo,
   fakeSquadMembershipRepo,
+  fakeSquadOwnerInvitationRepo,
   fakeSquadRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
-import { asPrismaClient } from '../../support/prisma-double';
 
 function createMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
@@ -48,25 +48,6 @@ function createSquadMembershipRepo(
   });
 }
 
-function createPrisma() {
-  const tx = {
-    user: { update: jest.fn().mockResolvedValue(undefined) },
-    refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
-  };
-
-  return {
-    user: {
-      findUnique: jest.fn().mockResolvedValue({
-        id: 'user-1',
-        isActive: true,
-        isRootAdmin: false,
-      }),
-    },
-    $transaction: jest.fn(async (callback: (transaction: typeof tx) => Promise<void>) => callback(tx)),
-    __tx: tx,
-  };
-}
-
 describe('MemberService', () => {
   beforeEach(() => {
     jest.resetAllMocks();
@@ -84,9 +65,9 @@ describe('MemberService', () => {
     });
     const service = new MemberService(
       membershipRepo,
-      asPrismaClient(createPrisma()),
       createSquadRepo(),
       createSquadMembershipRepo(),
+      fakeSquadOwnerInvitationRepo(),
     );
 
     const updatedMembership = await service.changeRole({
@@ -105,9 +86,9 @@ describe('MemberService', () => {
   it('rejects changing the role for a missing member', async () => {
     const service = new MemberService(
       createMembershipRepo(),
-      asPrismaClient(createPrisma()),
       createSquadRepo(),
       createSquadMembershipRepo(),
+      fakeSquadOwnerInvitationRepo(),
     );
 
     await expect(service.changeRole({
@@ -127,9 +108,9 @@ describe('MemberService', () => {
     });
     const service = new MemberService(
       membershipRepo,
-      asPrismaClient(createPrisma()),
       createSquadRepo(),
       createSquadMembershipRepo(),
+      fakeSquadOwnerInvitationRepo(),
     );
 
     await expect(service.changeRole({
@@ -154,9 +135,9 @@ describe('MemberService', () => {
     });
     const service = new MemberService(
       membershipRepo,
-      asPrismaClient(createPrisma()),
       createSquadRepo(),
       createSquadMembershipRepo(),
+      fakeSquadOwnerInvitationRepo(),
     );
 
     await expect(service.changeRole({
@@ -210,9 +191,9 @@ describe('MemberService', () => {
     });
     const service = new MemberService(
       membershipRepo,
-      asPrismaClient(createPrisma()),
       squadRepo,
       squadMembershipRepo,
+      fakeSquadOwnerInvitationRepo(),
     );
 
     await service.removeMember('league-1', 'user-1');
@@ -246,9 +227,9 @@ describe('MemberService', () => {
     });
     const service = new MemberService(
       membershipRepo,
-      asPrismaClient(createPrisma()),
       createSquadRepo(),
       createSquadMembershipRepo(),
+      fakeSquadOwnerInvitationRepo(),
     );
 
     await expect(service.removeMember('league-1', 'user-1')).rejects.toBeInstanceOf(MemberOperationError);

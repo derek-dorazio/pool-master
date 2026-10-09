@@ -200,7 +200,7 @@ export class SquadOwnerInvitationService {
     });
     // Replacing a sole owner leaves the team ownerless until the replacement accepts, and the
     // unit above inactivates an ownerless team. It is being handed on, not closed, so it stays
-    // active and keeps its entries.
+    // active and keeps its entries and its pending invitations, this one included.
     if (activeOwners.length < 2) {
       await this.squadRepo.update(input.squadId, { isActive: true });
     }
@@ -309,8 +309,9 @@ export class SquadOwnerInvitationService {
 
   /**
    * The PENDING-and-unexpired check, shared by both acceptance paths. It also refuses a team that
-   * has gone inactive since the invitation was sent: removing a team's last owner inactivates it
-   * and leaves its pending invitations in place, and accepting one must not revive it (#488).
+   * has gone inactive since the invitation was sent. Every path that inactivates a team revokes
+   * its pending invitations (#529), so this is the backstop: accepting one must never revive an
+   * inactive team (#488).
    */
   private async requirePendingInvitation(inviteCode: string): Promise<SquadOwnerInvitation> {
     const invitation = await this.invitationRepo.findByCode(inviteCode);

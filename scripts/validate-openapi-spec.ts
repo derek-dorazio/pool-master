@@ -69,13 +69,13 @@ function hasJsonResponse(responses: Record<string, { content?: Record<string, un
 function main() {
   const specPath = resolve(__dirname, '../packages/shared/generated/openapi.json');
   const raw = readFileSync(specPath, 'utf-8');
-  const spec: OpenAPISpec = JSON.parse(raw);
+  const spec = JSON.parse(raw) as OpenAPISpec;
 
   const issues: string[] = [];
   let checkedCount = 0;
   let passCount = 0;
 
-  for (const [path, methods] of Object.entries(spec.paths).sort()) {
+  for (const [path, methods] of Object.entries(spec.paths).sort(([a], [b]) => a.localeCompare(b))) {
     if (!isPriorityRoute(path)) continue;
 
     for (const method of HTTP_METHODS) {

@@ -1,0 +1,19 @@
+{
+  // #539 — the scripts that run under tsx (OpenAPI export, golf seed tooling, and the repo-root
+  // OpenAPI validator that checks this package's spec) are tooling, not package source, so they
+  // stay out of `tsconfig.json` and `dist`. This program exists so they are still typechecked
+  // and linted.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "../..",
+    "noEmit": true,
+    // tsx runs these, and two read `import.meta.url`; the base's Node16 resolution would read
+    // them as CommonJS (the package is not `"type": "module"`) and reject that.
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    // The golf seed CLI calls the API through the generated hey-api fetch client, which is
+    // DOM-typed (BodyInit, RequestInit) — the same reason tests/tsconfig.json lists it.
+    "lib": ["ES2022", "DOM"]
+  },
+  "include": ["scripts/**/*.ts", "../../scripts/**/*.ts"]
+}

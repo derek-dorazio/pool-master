@@ -21,13 +21,12 @@
     "generate": "npm run generate:openapi && npm run generate:client"
   },
   "dependencies": {
-    "@poolmaster/shared": "*",
     "@fastify/swagger": "9.9.0",
     "@fastify/swagger-ui": "^5.2.5",
+    "@poolmaster/shared": "*",
     "fastify": "^5.0.0"
   },
   "devDependencies": {
-    "@hey-api/client-fetch": "^0.13.1",
     "@hey-api/openapi-ts": "^0.95.0",
     "tsx": "^4.19.0",
     "typescript": "~6.0.3"

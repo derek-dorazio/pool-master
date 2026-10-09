@@ -53,11 +53,7 @@ async function main() {
   }
 
   // Get the generated OpenAPI spec
-  const spec = (app as any).swagger?.();
-  if (!spec) {
-    console.error('swagger() not available — is @fastify/swagger registered?');
-    process.exit(1);
-  }
+  const spec = app.swagger();
 
   // Resolve local $ref pointers that @fastify/swagger creates when identical
   // sub-schemas are reused.  These local refs (e.g. "#/properties/activeTenants")
@@ -66,9 +62,9 @@ async function main() {
   function resolveRefs(node: unknown, schemaRoot: unknown): unknown {
     if (node === null || typeof node !== 'object') return node;
     if (Array.isArray(node)) return node.map((i) => resolveRefs(i, schemaRoot));
-    const obj = node as Record<string, unknown>;
-    if (typeof obj.$ref === 'string' && (obj.$ref as string).startsWith('#/')) {
-      const parts = (obj.$ref as string).slice(2).split('/');
+    const obj = node as Record<string, unknown> & { $ref?: unknown };
+    if (typeof obj.$ref === 'string' && obj.$ref.startsWith('#/')) {
+      const parts = obj.$ref.slice(2).split('/');
       let target: unknown = schemaRoot;
       for (const p of parts) {
         if (target === null || typeof target !== 'object') return obj;
@@ -83,25 +79,30 @@ async function main() {
     return out;
   }
 
+  // The schema-bearing parts of an operation. Everything else in the spec is walked as
+  // `unknown` and left alone.
+  interface MediaTypes { [mediaType: string]: { schema?: unknown } | undefined }
+  interface SchemaBearingOperation {
+    requestBody?: { content?: MediaTypes };
+    responses?: { [status: string]: { content?: MediaTypes } | undefined };
+  }
+  function resolveMediaRefs(content: MediaTypes | undefined): void {
+    for (const media of Object.values(content ?? {})) {
+      if (media?.schema) media.schema = resolveRefs(media.schema, media.schema);
+    }
+  }
+
   // Walk every operation's schema objects and resolve local $refs
-  for (const methods of Object.values(spec.paths ?? {})) {
-    for (const op of Object.values(methods as Record<string, any>)) {
-      if (!op || typeof op !== 'object') continue;
+  for (const methods of Object.values(spec.paths ?? {}) as unknown[]) {
+    if (!methods || typeof methods !== 'object') continue;
+    for (const op of Object.values(methods as Record<string, unknown>)) {
+      if (!op || typeof op !== 'object' || Array.isArray(op)) continue;
+      const operation = op as SchemaBearingOperation;
       // Resolve refs in request body schemas
-      if (op.requestBody?.content) {
-        for (const media of Object.values(op.requestBody.content as Record<string, any>)) {
-          if (media?.schema) media.schema = resolveRefs(media.schema, media.schema);
-        }
-      }
+      resolveMediaRefs(operation.requestBody?.content);
       // Resolve refs in response schemas
-      if (op.responses) {
-        for (const resp of Object.values(op.responses as Record<string, any>)) {
-          if (resp?.content) {
-            for (const media of Object.values(resp.content as Record<string, any>)) {
-              if (media?.schema) media.schema = resolveRefs(media.schema, media.schema);
-            }
-          }
-        }
+      for (const resp of Object.values(operation.responses ?? {})) {
+        resolveMediaRefs(resp?.content);
       }
     }
   }
@@ -120,13 +121,13 @@ async function main() {
 
   console.log(`OpenAPI spec exported to ${outPath}`);
   console.log(`  Paths: ${Object.keys(spec.paths ?? {}).length}`);
-  console.log(`  Version: ${spec.info?.version}`);
+  console.log(`  Version: ${spec.info.version}`);
 
   try { await app.close(); } catch { /* ignore */ }
   process.exit(0);
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error('Failed to export OpenAPI spec:', err);
   process.exit(1);
 });

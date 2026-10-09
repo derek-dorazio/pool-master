@@ -111,7 +111,7 @@ The package includes its own local export and client-generation setup:
 - `npm run generate:client --workspace @poolmaster/mock-contest-feed-provider`
 - `npm run generate --workspace @poolmaster/mock-contest-feed-provider`
 
-The OpenAPI export writes to `packages/mock-contest-feed-provider/generated/openapi.json`, and the generated client output lives under `packages/mock-contest-feed-provider/generated/hey-api/`.
+The OpenAPI export writes to `packages/mock-contest-feed-provider/generated/openapi.json`, and its generated response types live in `packages/mock-contest-feed-provider/generated/hey-api/types.gen.ts`. Only types are generated: core-api reads the feed through its own adapter, not a generated client.
 
 ## Scenario Files
 

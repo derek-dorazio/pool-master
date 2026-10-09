@@ -6,7 +6,7 @@
     "build": "tsc && node --env-file-if-exists=../../.env scripts/write-version-info.mjs",
     "dev": "node --env-file-if-exists=../../.env scripts/write-version-info.mjs && tsx watch --env-file-if-exists=../../.env src/index.ts",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.node.json",
     "lint": "eslint src/"
   },
   "dependencies": {
