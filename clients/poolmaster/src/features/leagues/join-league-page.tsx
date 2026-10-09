@@ -30,6 +30,7 @@ import { TeamIcon } from '@/features/teams/team-icon';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { ApiError, throwApiError } from '@/lib/errors';
+import type { ParsedRouteState } from '@/routes/route-state';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -142,7 +143,18 @@ export function JoinLeaguePage() {
           team.members?.some((member) => member.userId === user.id && member.status === SquadMembershipStatus.ACTIVE),
         );
 
-        if (myTeam) {
+        if (!myTeam) {
+          // The name and icon have nowhere to go, which is as much a failed save as a refused rename.
+          teamSetupFailed = true;
+          logger.warn(
+            {
+              action: 'leagueInvite.teamSetup.failed',
+              data: { inviteCode, leagueId },
+              err: squadsResponse.error,
+            },
+            'Joined the league but could not find the new team to save its chosen name and icon',
+          );
+        } else {
           const needsTeamUpdate = myTeam.name !== nextTeamName || myTeam.iconKey !== selectedIconKey;
 
           if (needsTeamUpdate) {
@@ -202,7 +214,10 @@ export function JoinLeaguePage() {
       );
       if (leagueCode) {
         rememberRecentLeagueCode(leagueCode);
-        navigate(buildLeaguePath(leagueCode), teamSetupFailed ? { state: { teamSetupFailed } } : undefined);
+        navigate(
+          buildLeaguePath(leagueCode),
+          teamSetupFailed ? { state: { teamSetupFailed } satisfies ParsedRouteState } : undefined,
+        );
       }
     },
     invalidates: [

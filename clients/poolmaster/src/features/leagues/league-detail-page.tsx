@@ -63,7 +63,17 @@ export function LeagueDetailPage() {
   const auth = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const teamSetupFailed = parseRouteState(location.state).teamSetupFailed === true;
+  // Read once and remembered for this league only, because the effect below drops it from history
+  // so Back or a reload does not show the notice again.
+  const [teamSetupFailedLeagueCode] = useState(() =>
+    parseRouteState(location.state).teamSetupFailed ? leagueCode : null,
+  );
+  const teamSetupFailed = teamSetupFailedLeagueCode === leagueCode;
+  useEffect(() => {
+    if (parseRouteState(location.state).teamSetupFailed) {
+      void navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+    }
+  }, [location.pathname, location.search, location.state, navigate]);
   const queryClient = useQueryClient();
   const logger = getLogger().child({
     feature: 'league-detail-page',
