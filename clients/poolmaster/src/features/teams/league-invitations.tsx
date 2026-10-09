@@ -8,7 +8,6 @@ import {
   resendLeagueInvitation,
   revokeInviteLink,
   sendLeagueInvitations,
-  type LeagueDto,
   type LeagueInvitationDto,
   type LeagueMembershipDto,
   type SendLeagueInvitationsResponse,
@@ -21,7 +20,6 @@ import {
   Button,
   Chip,
   DateDisplay,
-  DefinitionList,
   FormField,
   Input,
   Tile,
@@ -44,7 +42,6 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
  */
 type LeagueInvitationsProps = {
   isInactiveLeague: boolean;
-  joinPolicy: LeagueDto['joinPolicy'];
   leagueId: string;
   leagueName: string;
   membersByUserId: Map<string, LeagueMembershipDto>;
@@ -73,7 +70,6 @@ function describeInviteResult(result: SendLeagueInvitationsResponse): string | n
 
 export function LeagueInvitations({
   isInactiveLeague,
-  joinPolicy,
   leagueId,
   leagueName,
   membersByUserId,
@@ -370,12 +366,7 @@ export function LeagueInvitations({
         testId="league-invitations-section"
         title="Invite Members"
       >
-        <DefinitionList
-          className="sm:grid-cols-1"
-          items={[{ id: 'join-policy', label: 'Join policy', value: joinPolicy }]}
-        />
-
-        <FormField className="mt-5" label="Join URL">
+        <FormField label="Join URL">
           <div className="flex flex-col gap-3 sm:flex-row">
             <Input
               aria-label="Join URL"

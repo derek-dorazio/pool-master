@@ -15,7 +15,6 @@ import type {
   DateFormat,
   InjuryStatusCode,
   InvitationStatus,
-  JoinPolicy,
   InviteType,
   LeagueIconKey,
   LeagueMembershipStatus,
@@ -72,7 +71,6 @@ export interface League extends DomainEntity {
   description?: string | null;
   isActive: boolean;
   iconKey: LeagueIconKey;
-  joinPolicy: JoinPolicy;
 }
 
 /** User membership within a league. */
@@ -271,7 +269,6 @@ export interface ContestEntry extends DomainEntity {
   name: string;
   status: ContestEntryStatus;
   tiebreakerValue?: number | null;
-  isEliminated: boolean;
 }
 
 /**

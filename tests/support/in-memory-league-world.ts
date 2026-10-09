@@ -39,7 +39,6 @@ import type {
 } from '@poolmaster/shared/domain';
 import {
   InvitationStatus,
-  JoinPolicy,
   LeagueIconKey,
   LeagueMembershipStatus,
   LeagueRole,
@@ -276,7 +275,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
         name: `League ${leagueSequence}`,
         isActive: true,
         iconKey: LeagueIconKey.TROPHY,
-        joinPolicy: JoinPolicy.COMMISSIONER_ONLY,
         ...overrides,
       });
     },

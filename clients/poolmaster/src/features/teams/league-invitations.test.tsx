@@ -56,7 +56,6 @@ function renderInvitations({ isInactiveLeague = false } = {}) {
     <QueryClientProvider client={queryClient}>
       <LeagueInvitations
         isInactiveLeague={isInactiveLeague}
-        joinPolicy="COMMISSIONER_ONLY"
         leagueId="league-1"
         leagueName="Big Dawgs"
         membersByUserId={membersByUserId}

@@ -443,7 +443,7 @@ edge. A6 restricts *writing* other users, not reading them.
 | Read one | `member`, `rootAdmin` | **A2** |
 | Read by invite code | `authenticated` | Precedes membership, so it cannot require it |
 | List | `member`, `rootAdmin` | **A1 + A2** · a member gets their leagues (scoped read), root admin gets all (`findAll`). **One operation, scoped by role** |
-| Update details, icon, join policy | `commissioner` | **A3** |
+| Update details, icon | `commissioner` | **A3** |
 | Activate / inactivate *(soft)* | `commissioner` | **A3** · `isActive` |
 | Delete permanently *(hard)* | `commissioner` | A3 · `deleteInactiveLeague` — **gated: throws unless already inactive**, and requires typing the `leagueCode` to confirm |
 
@@ -722,7 +722,7 @@ and an optional event type.
 | Update configuration | `commissioner` | `updateContestConfiguration` (was `updateManagedContestConfiguration` until #248). `DRAFT` only: refused with 409 `CONTEST_CONFIGURATION_LOCKED` once the contest is opened to the league (#117). Members enter against these rules, so nothing reopens them: no operation returns a contest to `DRAFT` |
 | List for a league | `authenticated` today | `listContests`. `DRAFT` contests are listed only to the league's commissioners and root admins (#117); the contest detail read answers a draft 404 to anyone else, and a league's `activeContestCount` never counts drafts. **No league check** — any signed-in user can list any league's contests; contest authorization is #193, which does not yet list this route. Each row carries `entryCount`; until #247 the league-scoped list reported 0 for every contest, because its service was built without the entry reads |
 | Delete | `authenticated` today | `deleteContest`, `DRAFT` only. **No league check** (#193, held for discussion: any signed-in user can delete any `DRAFT` contest). Takes the entries, picks, draft state, configuration and the configuration's scoring rules and prize definitions with it; before #247 a configuration with a scoring rule made the delete fail |
-| Start | *(event lifecycle)* | When its event moves to `IN_PROGRESS`, every `OPEN` or `LOCKED` contest on it becomes `ACTIVE` in one guarded write, and its commissioners and entrants are emailed once; a re-sent transition finds nothing left to start |
+| Start | *(event lifecycle)* | When its event moves to `IN_PROGRESS`, every `OPEN` contest on it becomes `ACTIVE` in one guarded write, and its commissioners and entrants are emailed once; a re-sent transition finds nothing left to start |
 | Read the golf leaderboard | `member` | `getGolfContestLeaderboard`, answering the cross-sport `ContestLeaderboardResponse` (#248): entry standings (`ContestEntryStandingDto`, with the golf total on its golf extension), the event's field as its own `SportEventParticipantDto` rows, and `scoringDefinitionId` — the definition it was ranked by, which a client renders scores and rounds through. Golf only today. Live contests compute from event scores; a `COMPLETED` contest answers from its `ContestEntryStanding` rows (#246), so a score correction after settlement does not rewrite a finished result. A configuration with no scoring rule is 400 `CONTEST_GOLF_LEADERBOARD_SCORING_RULE_MISSING` — there is no golf fallback |
 
 ### ContestEntryStanding
@@ -733,7 +733,7 @@ An entry's result, frozen when its contest settles — cross-sport core plus a s
 
 | Operation | Role | Notes |
 |---|---|---|
-| Write | *(settlement)* | Written once per entry when the linked event completes; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; a `DRAFT` (never opened) or `CANCELLED` contest is skipped too and keeps its status, since a draft leaves only by being opened or deleted (#117). No route moves a contest back out of `COMPLETED` (the unused reopen, close-early and extend-deadline endpoints were deleted) |
+| Write | *(settlement)* | Written once per entry when the linked event completes; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; a `DRAFT` (never opened) contest is skipped too and keeps its status, since a draft leaves only by being opened or deleted (#117). No route moves a contest back out of `COMPLETED` (the unused reopen, close-early and extend-deadline endpoints were deleted) |
 | Read | `member` | Through the golf leaderboard of a `COMPLETED` contest |
 
 ### ContestEntryPick
@@ -760,11 +760,11 @@ the team's first entry and keeps the later ones.
 when the lineup is complete. The leaderboard, settlement, the contest-started email and a
 contest's `entryCount` read `SUBMITTED` entries alone. A draft is kept, never deleted, so its
 team can still see and finish it before tee-off; one left unsubmitted at tee-off simply doesn't
-count. `INACTIVE` entries are kept and count nowhere.
+count.
 
 | Operation | Role | Notes |
 |---|---|---|
-| Read the draft room | `member` | `getDraftState`. A `DRAFT` contest answers 404 `CONTEST_NOT_FOUND` to anyone but its league's commissioners and root admins, as the contest read does (#117). While the contest is `DRAFT` or `OPEN`, picks are hidden from other teams (`contestPicksRevealed`): the history carries only the caller's own entries, and `entryId` names another team's entry only from `LOCKED` on, falling back to the caller's own before that. Any active member of the entry's squad, co-owners included, reads it as their own |
+| Read the draft room | `member` | `getDraftState`. A `DRAFT` contest answers 404 `CONTEST_NOT_FOUND` to anyone but its league's commissioners and root admins, as the contest read does (#117). While the contest is `DRAFT` or `OPEN`, picks are hidden from other teams (`contestPicksRevealed`): the history carries only the caller's own entries, and `entryId` names another team's entry only from `ACTIVE` on, falling back to the caller's own before that. Any active member of the entry's squad, co-owners included, reads it as their own |
 | Place, swap, unselect | squad member | `submitContestSelection`, only while the contest is `OPEN` and its event's start time has not passed (the status follows the event's move to `IN_PROGRESS`, which can lag): 409 `CONTEST_ENTRY_LOCKED` otherwise, the code the entry's own create, edit and leave answer. Re-picking a held golfer unselects it, and that works for a golfer who has since withdrawn; a new pick of a withdrawn golfer is 400 `PARTICIPANT_UNAVAILABLE`. A change that leaves a `SUBMITTED` entry's lineup short sends it back to `DRAFT`; a swap within a full tier keeps it submitted |
 | Submit an entry | squad member | `submitContestEntry`, `POST /api/v1/drafts/:contestId/entries/:entryId/submit` (#481), in the same window as picks (409 `CONTEST_ENTRY_LOCKED`). The lineup must hold the full roster with exactly each tier's picks: 409 `ENTRY_LINEUP_INCOMPLETE` names the short tiers otherwise. Submitting a draft sends the "Entry submitted" email; submitting a submitted entry changes nothing |
 

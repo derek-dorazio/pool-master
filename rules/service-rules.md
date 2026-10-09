@@ -50,6 +50,10 @@ Two variables, each with one owner and one set of legal values (#184):
   for the same question; `ENVIRONMENT` and `APP_ENV` were both tried and removed.
 - Test suites set what they need (`POOLMASTER_ENVIRONMENT=test`, `LOG_LEVEL=warn`) in test
   setup; production code has no test branch.
+- Which build is running is not read from the environment at all. It is
+  `version-info.json`, written at build time by `packages/core-api/scripts/write-version-info.mjs`
+  and read only through `core/version-info.ts` (#180). The build fails without a version;
+  test setups write the file with the same script.
 
 ---
 

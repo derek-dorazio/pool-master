@@ -540,11 +540,6 @@ export function LeagueDetailPage() {
                   value: <span className="font-mono">{league.leagueCode}</span>,
                 },
                 {
-                  id: 'join-policy',
-                  label: 'Join policy',
-                  value: <span data-testid="league-join-policy">{league.joinPolicy}</span>,
-                },
-                {
                   id: 'created',
                   label: 'Created',
                   value: formatDateDisplay(league.createdAt, 'Unknown'),

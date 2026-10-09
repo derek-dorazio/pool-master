@@ -135,7 +135,7 @@ Do these two in this order.
    and when the simulation finishes, and it refreshes that every 30 seconds, including
    after you leave and come back. By default each round takes 20 minutes, so a full
    tournament takes 80 minutes.
-2. On the Workflow card, *Move to In Progress*. Open and locked contests on the tournament
+2. On the Workflow card, *Move to In Progress*. Open contests on the tournament
    become active, and the live-score sync starts polling it.
 
 Start the simulation first anyway. A simulated event has no scores until its simulation

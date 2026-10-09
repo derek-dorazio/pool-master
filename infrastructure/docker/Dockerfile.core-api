@@ -2,6 +2,7 @@ FROM node:24.21.0-bookworm-slim AS base
 WORKDIR /app
 
 COPY package.json package-lock.json tsconfig.base.json ./
+COPY types/ ./types/
 COPY packages/shared/ ./packages/shared/
 COPY packages/mock-contest-feed-provider/ ./packages/mock-contest-feed-provider/
 COPY packages/core-api/ ./packages/core-api/
@@ -25,12 +26,27 @@ RUN npx prisma generate --schema=packages/core-api/prisma/schema.prisma
 # Build core-api
 RUN cd packages/core-api && npx tsc
 
+# Record which build this is (#180). Last in the stage so a new commit's values do not
+# invalidate the cached install and compile layers above. The generator fails the build
+# when SERVICE_VERSION is empty, rather than baking in a made-up version.
+ARG SERVICE_VERSION
+ARG SERVICE_GIT_SHA
+ARG BUILD_NUMBER
+ARG GIT_REF
+RUN cd packages/core-api \
+    && POOLMASTER_SERVICE_VERSION="$SERVICE_VERSION" \
+       POOLMASTER_SERVICE_GIT_SHA="$SERVICE_GIT_SHA" \
+       POOLMASTER_BUILD_NUMBER="$BUILD_NUMBER" \
+       POOLMASTER_GIT_REF="$GIT_REF" \
+       node scripts/write-version-info.mjs
+
 # --- Runtime ---
 FROM node:24.21.0-bookworm-slim
 WORKDIR /app
 
 COPY --from=base /app/packages/core-api/dist ./dist
 COPY --from=base /app/packages/core-api/package.json ./
+COPY --from=base /app/packages/core-api/version-info.json ./
 COPY --from=base /app/packages/core-api/scripts ./scripts
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/packages/shared ./packages/shared

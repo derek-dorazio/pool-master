@@ -2285,7 +2285,7 @@ export interface paths {
         };
         /**
          * Get current draft state for a contest
-         * @description Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (LOCKED onwards); otherwise it falls back to the caller's own.
+         * @description Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (ACTIVE onwards); otherwise it falls back to the caller's own.
          */
         get: operations["getDraftState"];
         put?: never;
@@ -2347,6 +2347,50 @@ export interface components {
              * @enum {boolean}
              */
             success: true;
+        };
+        /** @description Version metadata for one deployed component. */
+        VersionComponent: {
+            /** @description Package or runtime component name. */
+            name: string;
+            /** @description Semantic package version or deployment version label. */
+            version: string;
+            /** @description Git SHA for this component build, when supplied by CI. */
+            gitSha: string | null;
+            /** @description CI build or run number for this component build, when supplied by CI. */
+            buildNumber: string | null;
+        };
+        /** @description Public service version metadata for deployment and stale-release diagnostics. */
+        ServiceVersionResponse: {
+            /**
+             * @description Version metadata response schema version.
+             * @enum {number}
+             */
+            schemaVersion: 1;
+            /** @description Runtime environment name: development, test, ci, qa, staging, or prod. */
+            environment: string;
+            /**
+             * Format: date-time
+             * @description UTC time this build was made, from version-info.json.
+             */
+            buildTimeUtc: string | null;
+            /** @description Git branch or ref name supplied by CI, when available. */
+            gitRef: string | null;
+            /** @description Core API service version metadata. */
+            service: {
+                /** @description Package or runtime component name. */
+                name: string;
+                /** @description Semantic package version or deployment version label. */
+                version: string;
+                /** @description Git SHA for this component build, when supplied by CI. */
+                gitSha: string | null;
+                /** @description CI build or run number for this component build, when supplied by CI. */
+                buildNumber: string | null;
+            };
+            /** @description Non-secret runtime metadata useful during operational debugging. */
+            runtime: {
+                /** @description Node.js runtime version running the service. */
+                nodeVersion: string;
+            };
         };
         /** @description A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row. */
         UserDto: {
@@ -3249,11 +3293,6 @@ export interface components {
             /** @description Number of currently active contests associated with the league. */
             activeContestCount: number;
             /**
-             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-             * @enum {string}
-             */
-            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-            /**
              * Format: date-time
              * @description League creation timestamp in ISO 8601 format.
              */
@@ -3429,11 +3468,6 @@ export interface components {
                 /** @description Number of currently active contests associated with the league. */
                 activeContestCount: number;
                 /**
-                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                 * @enum {string}
-                 */
-                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                /**
                  * Format: date-time
                  * @description League creation timestamp in ISO 8601 format.
                  */
@@ -3463,11 +3497,6 @@ export interface components {
                 memberCount: number;
                 /** @description Number of currently active contests associated with the league. */
                 activeContestCount: number;
-                /**
-                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                 * @enum {string}
-                 */
-                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
                 /**
                  * Format: date-time
                  * @description League creation timestamp in ISO 8601 format.
@@ -3644,11 +3673,6 @@ export interface components {
                 memberCount: number;
                 /** @description Number of currently active contests associated with the league. */
                 activeContestCount: number;
-                /**
-                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                 * @enum {string}
-                 */
-                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
                 /**
                  * Format: date-time
                  * @description League creation timestamp in ISO 8601 format.
@@ -4360,7 +4384,7 @@ export interface components {
             /** @description Contest display name. */
             name: string;
             /** @enum {string} */
-            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+            status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
             /** @description Current commissioner-managed contest configuration. */
             configuration: {
                 /** @description Maximum entries a Team may create. Null means unlimited. */
@@ -4473,7 +4497,7 @@ export interface components {
                 /** @description Contest display name. */
                 name: string;
                 /** @enum {string} */
-                status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
                 /** @description Current commissioner-managed contest configuration. */
                 configuration: {
                     /** @description Maximum entries a Team may create. Null means unlimited. */
@@ -7183,7 +7207,7 @@ export interface components {
             id: string;
             name: string;
             /** @enum {string} */
-            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+            status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
             /** @enum {string} */
             contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
             /** @enum {string} */
@@ -7218,9 +7242,8 @@ export interface components {
              * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
              * @enum {string}
              */
-            status: "DRAFT" | "SUBMITTED" | "INACTIVE";
+            status: "DRAFT" | "SUBMITTED";
             tiebreakerValue?: number | null;
-            isEliminated: boolean;
             /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
             picksCount: number;
             /**
@@ -7358,7 +7381,7 @@ export interface components {
              * @description Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.
              * @enum {string}
              */
-            status: "DRAFT" | "SUBMITTED" | "INACTIVE";
+            status: "DRAFT" | "SUBMITTED";
             /** @description The entry's rank in the contest, direction-free: 1 is best in every sport. Null while unscored. */
             position: number | null;
             /** @description Position as shown, "T" prefixed for a tie. */
@@ -7625,7 +7648,7 @@ export interface components {
                  * @description Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.
                  * @enum {string}
                  */
-                status: "DRAFT" | "SUBMITTED" | "INACTIVE";
+                status: "DRAFT" | "SUBMITTED";
                 /** @description The entry's rank in the contest, direction-free: 1 is best in every sport. Null while unscored. */
                 position: number | null;
                 /** @description Position as shown, "T" prefixed for a tie. */
@@ -7727,7 +7750,7 @@ export interface components {
                 id: string;
                 name: string;
                 /** @enum {string} */
-                status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
                 /** @enum {string} */
                 contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                 /** @enum {string} */
@@ -7806,7 +7829,7 @@ export interface components {
                 id: string;
                 name: string;
                 /** @enum {string} */
-                status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
                 /** @enum {string} */
                 contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                 /** @enum {string} */
@@ -7846,9 +7869,8 @@ export interface components {
                  * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
                  * @enum {string}
                  */
-                status: "DRAFT" | "SUBMITTED" | "INACTIVE";
+                status: "DRAFT" | "SUBMITTED";
                 tiebreakerValue?: number | null;
-                isEliminated: boolean;
                 /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
                 picksCount: number;
                 /**
@@ -7897,9 +7919,8 @@ export interface components {
                  * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
                  * @enum {string}
                  */
-                status: "DRAFT" | "SUBMITTED" | "INACTIVE";
+                status: "DRAFT" | "SUBMITTED";
                 tiebreakerValue?: number | null;
-                isEliminated: boolean;
                 /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
                 picksCount: number;
                 /**
@@ -7956,9 +7977,8 @@ export interface components {
                  * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
                  * @enum {string}
                  */
-                status: "DRAFT" | "SUBMITTED" | "INACTIVE";
+                status: "DRAFT" | "SUBMITTED";
                 tiebreakerValue?: number | null;
-                isEliminated: boolean;
                 /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
                 picksCount: number;
                 /**
@@ -8005,9 +8025,8 @@ export interface components {
                  * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
                  * @enum {string}
                  */
-                status: "DRAFT" | "SUBMITTED" | "INACTIVE";
+                status: "DRAFT" | "SUBMITTED";
                 tiebreakerValue?: number | null;
-                isEliminated: boolean;
                 /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
                 picksCount: number;
                 /**
@@ -8114,7 +8133,7 @@ export interface components {
                  * @description DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
                  * @enum {string}
                  */
-                status: "DRAFT" | "SUBMITTED" | "INACTIVE";
+                status: "DRAFT" | "SUBMITTED";
             }[];
             draftPickHistories: {
                 pickNumber: number;
@@ -8262,7 +8281,7 @@ export interface components {
                  * @description DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
                  * @enum {string}
                  */
-                status: "DRAFT" | "SUBMITTED" | "INACTIVE";
+                status: "DRAFT" | "SUBMITTED";
             }[];
             draftPickHistories: {
                 pickNumber: number;
@@ -10588,39 +10607,6 @@ export interface components {
                 };
                 err?: unknown;
             }[];
-        };
-        /** @description Public service version metadata for deployment and stale-release diagnostics. */
-        ServiceVersionResponse: {
-            /**
-             * @description Version metadata response schema version.
-             * @enum {number}
-             */
-            schemaVersion: 1;
-            /** @description Runtime environment name: development, test, ci, qa, staging, or prod. */
-            environment: string;
-            /**
-             * Format: date-time
-             * @description UTC build timestamp supplied by CI, when available.
-             */
-            buildTimeUtc: string | null;
-            /** @description Git branch or ref name supplied by CI, when available. */
-            gitRef: string | null;
-            /** @description Core API service version metadata. */
-            service: {
-                /** @description Package or runtime component name. */
-                name: string;
-                /** @description Semantic package version or deployment version label. */
-                version: string;
-                /** @description Git SHA for this component build, when supplied by CI. */
-                gitSha: string | null;
-                /** @description CI build or run number for this component build, when supplied by CI. */
-                buildNumber: string | null;
-            };
-            /** @description Non-secret runtime metadata useful during operational debugging. */
-            runtime: {
-                /** @description Node.js runtime version running the service. */
-                nodeVersion: string;
-            };
         };
         /** @description Standard API error envelope. */
         ErrorEnvelope: {

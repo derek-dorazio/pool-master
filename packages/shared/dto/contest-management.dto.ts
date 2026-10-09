@@ -192,11 +192,8 @@ export const ContestManagementDetailDtoSchema = z.object({
   status: z.enum([
     ContestStatus.DRAFT,
     ContestStatus.OPEN,
-    ContestStatus.DRAFTING,
-    ContestStatus.LOCKED,
     ContestStatus.ACTIVE,
     ContestStatus.COMPLETED,
-    ContestStatus.CANCELLED,
   ]),
   configuration: ContestConfigurationDtoSchema.describe('Current commissioner-managed contest configuration.'),
   effectiveTiers: z.array(GolfEffectiveTierDtoSchema).describe(

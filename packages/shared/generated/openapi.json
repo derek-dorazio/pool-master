@@ -35,6 +35,131 @@
         "additionalProperties": false,
         "description": "Minimal success response envelope."
       },
+      "VersionComponent": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Package or runtime component name."
+          },
+          "version": {
+            "type": "string",
+            "description": "Semantic package version or deployment version label."
+          },
+          "gitSha": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Git SHA for this component build, when supplied by CI."
+          },
+          "buildNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "CI build or run number for this component build, when supplied by CI."
+          }
+        },
+        "required": [
+          "name",
+          "version",
+          "gitSha",
+          "buildNumber"
+        ],
+        "additionalProperties": false,
+        "description": "Version metadata for one deployed component."
+      },
+      "ServiceVersionResponse": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "number",
+            "enum": [
+              1
+            ],
+            "description": "Version metadata response schema version."
+          },
+          "environment": {
+            "type": "string",
+            "description": "Runtime environment name: development, test, ci, qa, staging, or prod."
+          },
+          "buildTimeUtc": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "UTC time this build was made, from version-info.json."
+          },
+          "gitRef": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Git branch or ref name supplied by CI, when available."
+          },
+          "service": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Package or runtime component name."
+              },
+              "version": {
+                "type": "string",
+                "description": "Semantic package version or deployment version label."
+              },
+              "gitSha": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Git SHA for this component build, when supplied by CI."
+              },
+              "buildNumber": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "CI build or run number for this component build, when supplied by CI."
+              }
+            },
+            "required": [
+              "name",
+              "version",
+              "gitSha",
+              "buildNumber"
+            ],
+            "additionalProperties": false,
+            "description": "Core API service version metadata."
+          },
+          "runtime": {
+            "type": "object",
+            "properties": {
+              "nodeVersion": {
+                "type": "string",
+                "description": "Node.js runtime version running the service."
+              }
+            },
+            "required": [
+              "nodeVersion"
+            ],
+            "additionalProperties": false,
+            "description": "Non-secret runtime metadata useful during operational debugging."
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "environment",
+          "buildTimeUtc",
+          "gitRef",
+          "service",
+          "runtime"
+        ],
+        "additionalProperties": false,
+        "description": "Public service version metadata for deployment and stale-release diagnostics."
+      },
       "UserDto": {
         "type": "object",
         "properties": {
@@ -2590,15 +2715,6 @@
             "type": "number",
             "description": "Number of currently active contests associated with the league."
           },
-          "joinPolicy": {
-            "type": "string",
-            "enum": [
-              "COMMISSIONER_ONLY",
-              "LINK_INVITE",
-              "OPEN"
-            ],
-            "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
-          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -2612,8 +2728,7 @@
           "isActive",
           "iconKey",
           "memberCount",
-          "activeContestCount",
-          "joinPolicy"
+          "activeContestCount"
         ],
         "additionalProperties": false,
         "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -2986,15 +3101,6 @@
                 "type": "number",
                 "description": "Number of currently active contests associated with the league."
               },
-              "joinPolicy": {
-                "type": "string",
-                "enum": [
-                  "COMMISSIONER_ONLY",
-                  "LINK_INVITE",
-                  "OPEN"
-                ],
-                "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
-              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
@@ -3008,8 +3114,7 @@
               "isActive",
               "iconKey",
               "memberCount",
-              "activeContestCount",
-              "joinPolicy"
+              "activeContestCount"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3084,15 +3189,6 @@
                 "type": "number",
                 "description": "Number of currently active contests associated with the league."
               },
-              "joinPolicy": {
-                "type": "string",
-                "enum": [
-                  "COMMISSIONER_ONLY",
-                  "LINK_INVITE",
-                  "OPEN"
-                ],
-                "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
-              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
@@ -3106,8 +3202,7 @@
               "isActive",
               "iconKey",
               "memberCount",
-              "activeContestCount",
-              "joinPolicy"
+              "activeContestCount"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3476,15 +3571,6 @@
                   "type": "number",
                   "description": "Number of currently active contests associated with the league."
                 },
-                "joinPolicy": {
-                  "type": "string",
-                  "enum": [
-                    "COMMISSIONER_ONLY",
-                    "LINK_INVITE",
-                    "OPEN"
-                  ],
-                  "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
-                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time",
@@ -3498,8 +3584,7 @@
                 "isActive",
                 "iconKey",
                 "memberCount",
-                "activeContestCount",
-                "joinPolicy"
+                "activeContestCount"
               ],
               "additionalProperties": false,
               "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -5578,11 +5663,8 @@
             "enum": [
               "DRAFT",
               "OPEN",
-              "DRAFTING",
-              "LOCKED",
               "ACTIVE",
-              "COMPLETED",
-              "CANCELLED"
+              "COMPLETED"
             ]
           },
           "configuration": {
@@ -5892,11 +5974,8 @@
                 "enum": [
                   "DRAFT",
                   "OPEN",
-                  "DRAFTING",
-                  "LOCKED",
                   "ACTIVE",
-                  "COMPLETED",
-                  "CANCELLED"
+                  "COMPLETED"
                 ]
               },
               "configuration": {
@@ -12798,11 +12877,8 @@
             "enum": [
               "DRAFT",
               "OPEN",
-              "DRAFTING",
-              "LOCKED",
               "ACTIVE",
-              "COMPLETED",
-              "CANCELLED"
+              "COMPLETED"
             ]
           },
           "contestFormat": {
@@ -12923,8 +12999,7 @@
             "type": "string",
             "enum": [
               "DRAFT",
-              "SUBMITTED",
-              "INACTIVE"
+              "SUBMITTED"
             ],
             "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
           },
@@ -12933,9 +13008,6 @@
               "integer",
               "null"
             ]
-          },
-          "isEliminated": {
-            "type": "boolean"
           },
           "picksCount": {
             "type": "integer",
@@ -13015,7 +13087,6 @@
           "entryNumber",
           "name",
           "status",
-          "isEliminated",
           "picksCount",
           "createdAt",
           "updatedAt"
@@ -13328,8 +13399,7 @@
             "type": "string",
             "enum": [
               "DRAFT",
-              "SUBMITTED",
-              "INACTIVE"
+              "SUBMITTED"
             ],
             "description": "Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked."
           },
@@ -14042,8 +14112,7 @@
                   "type": "string",
                   "enum": [
                     "DRAFT",
-                    "SUBMITTED",
-                    "INACTIVE"
+                    "SUBMITTED"
                   ],
                   "description": "Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked."
                 },
@@ -14374,11 +14443,8 @@
                 "enum": [
                   "DRAFT",
                   "OPEN",
-                  "DRAFTING",
-                  "LOCKED",
                   "ACTIVE",
-                  "COMPLETED",
-                  "CANCELLED"
+                  "COMPLETED"
                 ]
               },
               "contestFormat": {
@@ -14650,11 +14716,8 @@
                   "enum": [
                     "DRAFT",
                     "OPEN",
-                    "DRAFTING",
-                    "LOCKED",
                     "ACTIVE",
-                    "COMPLETED",
-                    "CANCELLED"
+                    "COMPLETED"
                   ]
                 },
                 "contestFormat": {
@@ -14790,8 +14853,7 @@
                 "type": "string",
                 "enum": [
                   "DRAFT",
-                  "SUBMITTED",
-                  "INACTIVE"
+                  "SUBMITTED"
                 ],
                 "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
               },
@@ -14800,9 +14862,6 @@
                   "integer",
                   "null"
                 ]
-              },
-              "isEliminated": {
-                "type": "boolean"
               },
               "picksCount": {
                 "type": "integer",
@@ -14882,7 +14941,6 @@
               "entryNumber",
               "name",
               "status",
-              "isEliminated",
               "picksCount",
               "createdAt",
               "updatedAt"
@@ -14935,8 +14993,7 @@
                 "type": "string",
                 "enum": [
                   "DRAFT",
-                  "SUBMITTED",
-                  "INACTIVE"
+                  "SUBMITTED"
                 ],
                 "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
               },
@@ -14945,9 +15002,6 @@
                   "integer",
                   "null"
                 ]
-              },
-              "isEliminated": {
-                "type": "boolean"
               },
               "picksCount": {
                 "type": "integer",
@@ -15027,7 +15081,6 @@
               "entryNumber",
               "name",
               "status",
-              "isEliminated",
               "picksCount",
               "createdAt",
               "updatedAt"
@@ -15105,8 +15158,7 @@
                   "type": "string",
                   "enum": [
                     "DRAFT",
-                    "SUBMITTED",
-                    "INACTIVE"
+                    "SUBMITTED"
                   ],
                   "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
                 },
@@ -15115,9 +15167,6 @@
                     "integer",
                     "null"
                   ]
-                },
-                "isEliminated": {
-                  "type": "boolean"
                 },
                 "picksCount": {
                   "type": "integer",
@@ -15197,7 +15246,6 @@
                 "entryNumber",
                 "name",
                 "status",
-                "isEliminated",
                 "picksCount",
                 "createdAt",
                 "updatedAt"
@@ -15255,8 +15303,7 @@
                 "type": "string",
                 "enum": [
                   "DRAFT",
-                  "SUBMITTED",
-                  "INACTIVE"
+                  "SUBMITTED"
                 ],
                 "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
               },
@@ -15265,9 +15312,6 @@
                   "integer",
                   "null"
                 ]
-              },
-              "isEliminated": {
-                "type": "boolean"
               },
               "picksCount": {
                 "type": "integer",
@@ -15347,7 +15391,6 @@
               "entryNumber",
               "name",
               "status",
-              "isEliminated",
               "picksCount",
               "createdAt",
               "updatedAt"
@@ -15593,8 +15636,7 @@
                   "type": "string",
                   "enum": [
                     "DRAFT",
-                    "SUBMITTED",
-                    "INACTIVE"
+                    "SUBMITTED"
                   ],
                   "description": "DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481)."
                 }
@@ -16228,8 +16270,7 @@
                   "type": "string",
                   "enum": [
                     "DRAFT",
-                    "SUBMITTED",
-                    "INACTIVE"
+                    "SUBMITTED"
                   ],
                   "description": "DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481)."
                 }
@@ -23190,96 +23231,6 @@
           "entries"
         ],
         "additionalProperties": false
-      },
-      "ServiceVersionResponse": {
-        "type": "object",
-        "properties": {
-          "schemaVersion": {
-            "type": "number",
-            "enum": [
-              1
-            ],
-            "description": "Version metadata response schema version."
-          },
-          "environment": {
-            "type": "string",
-            "description": "Runtime environment name: development, test, ci, qa, staging, or prod."
-          },
-          "buildTimeUtc": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "description": "UTC build timestamp supplied by CI, when available."
-          },
-          "gitRef": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Git branch or ref name supplied by CI, when available."
-          },
-          "service": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "description": "Package or runtime component name."
-              },
-              "version": {
-                "type": "string",
-                "description": "Semantic package version or deployment version label."
-              },
-              "gitSha": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "Git SHA for this component build, when supplied by CI."
-              },
-              "buildNumber": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "CI build or run number for this component build, when supplied by CI."
-              }
-            },
-            "required": [
-              "name",
-              "version",
-              "gitSha",
-              "buildNumber"
-            ],
-            "additionalProperties": false,
-            "description": "Core API service version metadata."
-          },
-          "runtime": {
-            "type": "object",
-            "properties": {
-              "nodeVersion": {
-                "type": "string",
-                "description": "Node.js runtime version running the service."
-              }
-            },
-            "required": [
-              "nodeVersion"
-            ],
-            "additionalProperties": false,
-            "description": "Non-secret runtime metadata useful during operational debugging."
-          }
-        },
-        "required": [
-          "schemaVersion",
-          "environment",
-          "buildTimeUtc",
-          "gitRef",
-          "service",
-          "runtime"
-        ],
-        "additionalProperties": false,
-        "description": "Public service version metadata for deployment and stale-release diagnostics."
       },
       "ErrorEnvelope": {
         "type": "object",
@@ -32961,7 +32912,7 @@
         "tags": [
           "Drafts"
         ],
-        "description": "Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (LOCKED onwards); otherwise it falls back to the caller's own.",
+        "description": "Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (ACTIVE onwards); otherwise it falls back to the caller's own.",
         "parameters": [
           {
             "schema": {

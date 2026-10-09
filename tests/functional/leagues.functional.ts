@@ -541,7 +541,6 @@ describe('SDK Functional: Leagues', () => {
 
     const leagueId = createResponse.data?.league.id;
     expect(leagueId).toBeTruthy();
-    expect(createResponse.data?.league.joinPolicy).toBe('COMMISSIONER_ONLY');
     expect(createResponse.data?.league.isActive).toBe(true);
 
     const invitationResponse = await generateInviteLink({

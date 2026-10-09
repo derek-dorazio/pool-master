@@ -35,11 +35,11 @@ function createNoopLogger(): LifecycleLogger {
 
 
 /**
- * What settlement never touches: a contest already settled or cancelled, and a DRAFT. A draft
+ * What settlement never touches: a contest already settled, and a DRAFT. A draft
  * leaves only by being opened or deleted (#117), so completing one would publish a contest
  * nobody could enter to the league as finished. Its event starting leaves it a draft too.
  */
-const NOT_SETTLED: readonly ContestStatus[] = [ContestStatus.CANCELLED, ContestStatus.COMPLETED, ContestStatus.DRAFT];
+const NOT_SETTLED: readonly ContestStatus[] = [ContestStatus.COMPLETED, ContestStatus.DRAFT];
 
 /** Every status settlement may complete a contest from. */
 const SETTLEABLE = Object.values(ContestStatus).filter((status) => !NOT_SETTLED.includes(status));

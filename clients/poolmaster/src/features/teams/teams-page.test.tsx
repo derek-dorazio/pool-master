@@ -117,7 +117,6 @@ function buildLeague() {
     iconKey: 'TROPHY',
     memberCount: 2,
     activeContestCount: 0,
-    joinPolicy: 'COMMISSIONER_ONLY',
     createdAt: '2026-04-16T00:00:00.000Z',
   } as const;
 }

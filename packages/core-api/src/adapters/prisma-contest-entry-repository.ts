@@ -53,7 +53,6 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
         name: entry.name,
         status: entry.status,
         tiebreakerValue: entry.tiebreakerValue,
-        isEliminated: entry.isEliminated,
       },
     });
     return mapToEntry(row);
@@ -66,7 +65,6 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.tiebreakerValue !== undefined && { tiebreakerValue: updates.tiebreakerValue }),
-        ...(updates.isEliminated !== undefined && { isEliminated: updates.isEliminated }),
       },
     });
     return mapToEntry(row);
@@ -85,7 +83,6 @@ function mapToEntry(row: {
   name: string;
   status: ContestEntryStatus;
   tiebreakerValue: number | null;
-  isEliminated: boolean;
   createdAt: Date;
   updatedAt: Date;
 }): ContestEntry {
@@ -97,7 +94,6 @@ function mapToEntry(row: {
     name: row.name,
     status: row.status,
     tiebreakerValue: row.tiebreakerValue ?? undefined,
-    isEliminated: row.isEliminated,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

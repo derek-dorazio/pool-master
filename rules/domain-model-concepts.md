@@ -96,8 +96,8 @@ A UI Label, Not A Domain Term*.
 - **League**: the office pool is `League`; a real-world tour is `SportLeague`.
 - **Draft**: three unrelated things. `DRAFT` is the first status of a `SportEvent`, a
   `Contest` and a `ContestEntry` (not yet released, opened, or submitted). The **draft room**
-  is the screen where an entry's picks are made. `SNAKE_DRAFT` and the contest status
-  `DRAFTING` are an unbuilt selection mode; only `TIERED` exists.
+  is the screen where an entry's picks are made. `SNAKE_DRAFT` is an unbuilt selection
+  mode; only `TIERED` exists.
 - **Round**: an event's scheduled round (`SportEventRound`), one golfer's round
   (`SportEventParticipantRound`), and a snake-draft round (`draftRound`, unused).
 - **Member**: a league member (`LeagueMembership`) or a squad member, which is the same as a
@@ -150,7 +150,7 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 | **enter a contest**, **create an entry** | A squad owner creates a `ContestEntry`, status `DRAFT`, numbered after the squad's highest entry in that contest |
 | **draft**, **make picks**, **pick a golfer** | Add, swap or remove `ContestEntryPick`s on an entry in the draft room. Tiered selection only: the configuration says how many picks come from each event tier |
 | **submit an entry** | `DRAFT` → `SUBMITTED`, refused unless the lineup is complete. Only submitted entries count on the leaderboard and in settlement. A later change that leaves the lineup short sends it back to `DRAFT`; a draft left at tee-off simply does not count |
-| **lock a contest**, **entries close** | There is no lock action. Entries and picks change only while the contest is `OPEN` **and** its event's scheduled start (tee-off) has not passed — `areContestEntriesOpen`. Settings locked earlier, when the contest opened. The `LOCKED` status is unused |
+| **lock a contest**, **entries close** | There is no lock action. Entries and picks change only while the contest is `OPEN` **and** its event's scheduled start (tee-off) has not passed — `areContestEntriesOpen`. Settings locked earlier, when the contest opened |
 | **start**, **go live** | The event moves to `IN_PROGRESS` (by the lifecycle scheduler from the round schedule, or by an admin) and every `OPEN` contest on it becomes `ACTIVE`. **Picks are revealed** to the league from here; before it each team sees only its own |
 | **score a round**, **scores come in** | A `SportEventParticipantRound` and its golf row are written, by the provider sync for a linked event or by an admin's correction, and the event standings are recomputed. Scoring stops at the event's scheduled round count; playoff holes are not a round |
 | **unplayed round** | In contest scoring only, a round a golfer did not play (cut, withdrawn, disqualified, or the event ended) scores 80 strokes, counted against that round's par. The event's own standing keeps the golfer's real score |
@@ -164,7 +164,6 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 
 - **Money changes hands outside PoolMaster.** Prize definitions describe the payout; nothing
   pays it.
-- **Contest statuses `DRAFTING`, `LOCKED` and `CANCELLED`, and entry status `INACTIVE`,
-  exist in the enums but nothing sets them.** Do not build on them as if they had meaning.
-- **`League.joinPolicy` is stored and editable, but no join path reads it.** Every join is
-  through an invitation.
+- **A contest cannot be cancelled, and an entry cannot be made inactive.** A contest is
+  `DRAFT`, `OPEN`, `ACTIVE` or `COMPLETED`; an entry is `DRAFT` or `SUBMITTED`.
+- **A league has no join policy.** Every join is through an invitation.

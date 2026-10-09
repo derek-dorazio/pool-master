@@ -172,7 +172,6 @@ export async function buildLeagueWithCommissioner(overrides?: {
     activeContestCount: number;
     isActive: boolean;
     iconKey: string;
-    joinPolicy: string;
     createdAt?: string;
     description?: string | null;
     role?: string;

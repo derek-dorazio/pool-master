@@ -20,7 +20,7 @@ import {
   revokeUserSessions,
 } from '../../../packages/core-api/src/modules/users/user-lifecycle';
 import { PrismaUserRepository } from '../../../packages/core-api/src/adapters';
-import { JoinPolicy, LeagueIconKey, LeagueRole, LeagueMembershipStatus } from '@poolmaster/shared/domain';
+import { LeagueIconKey, LeagueRole, LeagueMembershipStatus } from '@poolmaster/shared/domain';
 
 const LEAGUE_CODE_PREFIX = 'ULIFE';
 
@@ -52,7 +52,6 @@ describe('shared user delete cascade (#202)', () => {
         name: 'Cascade League',
         isActive: true,
         iconKey: LeagueIconKey.TROPHY,
-        joinPolicy: JoinPolicy.COMMISSIONER_ONLY,
       },
     });
     await prisma.leagueInvitation.create({
@@ -83,7 +82,6 @@ describe('shared user delete cascade (#202)', () => {
         name: 'Blocking League',
         isActive: true,
         iconKey: LeagueIconKey.TROPHY,
-        joinPolicy: JoinPolicy.COMMISSIONER_ONLY,
       },
     });
     await prisma.leagueMembership.create({

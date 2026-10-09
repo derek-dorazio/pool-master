@@ -606,7 +606,6 @@ describe('Contract verification (root admin)', () => {
         description: 'Managed through contract verification.',
         isActive: true,
         iconKey: 'TROPHY',
-        joinPolicy: 'COMMISSIONER_ONLY',
       },
     });
     await getPrisma().leagueMembership.create({

@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
   InvitationStatus,
-  JoinPolicy,
   InviteType,
   LeagueIconKey,
   LeagueMembershipStatus,
@@ -126,10 +125,9 @@ export type ImportLeagueMembersRequest = z.infer<typeof ImportLeagueMembersReque
 /**
  * A league. The canonical League shape (#202 step 3.4).
  *
- * This was two schemas and five viewer fields. `LeagueDetailDto` was
- * `LeagueSummaryDto.extend({ joinPolicy })` — a pure view variant, and the reason the webapp
- * grew a `toLeagueSummary()` that hand-projected one down to the other field by field. One
- * schema now carries `joinPolicy`.
+ * This was two schemas and five viewer fields: `LeagueDetailDto` was a pure view variant of
+ * `LeagueSummaryDto`, and the reason the webapp grew a `toLeagueSummary()` that hand-projected
+ * one down to the other field by field. One schema now serves both.
  *
  * **It carries no viewer context** (access rule A8). Gone: `memberType`,
  * `leagueRelationship` and `isRootAdmin`. Those made the DTO a function of *who asked* —
@@ -174,9 +172,6 @@ export const LeagueDtoSchema = z.object({
     .describe('Selected built-in league icon key from the curated PoolMaster icon catalog.'),
   memberCount: z.number().describe('Current number of memberships in the league.'),
   activeContestCount: z.number().describe('Number of currently active contests associated with the league.'),
-  joinPolicy: z
-    .enum([JoinPolicy.COMMISSIONER_ONLY, JoinPolicy.LINK_INVITE, JoinPolicy.OPEN])
-    .describe('League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.'),
   createdAt: z.string().datetime().optional().describe('League creation timestamp in ISO 8601 format.'),
 }).describe('A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object.');
 export type LeagueDto = z.infer<typeof LeagueDtoSchema>;

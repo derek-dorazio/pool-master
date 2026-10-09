@@ -20,7 +20,6 @@ type LeagueFixture = Pick<
   | 'iconKey'
   | 'memberCount'
   | 'activeContestCount'
-  | 'joinPolicy'
   | 'createdAt'
 >;
 
@@ -115,7 +114,6 @@ const baseLeague: LeagueFixture = {
   iconKey: LeagueIconKey.TROPHY,
   memberCount: 2,
   activeContestCount: 1,
-  joinPolicy: 'COMMISSIONER_ONLY',
   createdAt: '2026-04-15T00:00:00.000Z',
 };
 

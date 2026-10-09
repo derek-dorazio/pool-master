@@ -60,7 +60,6 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
       leagueCode: `PIN${suffix.toUpperCase()}`,
       name: `Invariant League ${suffix}`,
       iconKey: 'TROPHY',
-      joinPolicy: 'COMMISSIONER_ONLY',
     },
   });
   await prisma.leagueMembership.create({

@@ -1,56 +1,34 @@
-import { readAppEnv } from '../../core/config';
-
-export interface VersionEnvironment {
-  readonly POOLMASTER_ENVIRONMENT?: string;
-  readonly POOLMASTER_SERVICE_VERSION?: string;
-  readonly POOLMASTER_SERVICE_GIT_SHA?: string;
-  readonly POOLMASTER_BUILD_NUMBER?: string;
-  readonly POOLMASTER_BUILD_TIME_UTC?: string;
-  readonly POOLMASTER_GIT_REF?: string;
-  readonly GITHUB_SHA?: string;
-  readonly GITHUB_RUN_NUMBER?: string;
-  readonly GITHUB_REF_NAME?: string;
-}
+import { readAppEnv, type AppEnvironment } from '../../core/config';
+import { readVersionInfo, type VersionInfo } from '../../core/version-info';
 
 export interface ServiceVersionRecord {
-  readonly environment: string;
-  readonly buildTimeUtc: string | null;
+  readonly environment: AppEnvironment;
+  readonly buildTimeUtc: string;
   readonly gitRef: string | null;
-  readonly service: {
-    readonly name: string;
-    readonly version: string;
-    readonly gitSha: string | null;
-    readonly buildNumber: string | null;
-  };
+  readonly service: VersionInfo['service'];
   readonly runtime: {
     readonly nodeVersion: string;
   };
 }
 
+/**
+ * What `/version` reports: the build identity from version-info.json (#180), the environment
+ * this process runs in, and the Node runtime. No value is defaulted here; every reader throws
+ * when its source is missing.
+ */
 export class VersionService {
   constructor(
-    private readonly env: VersionEnvironment = process.env,
+    private readonly build: VersionInfo = readVersionInfo(),
+    private readonly environment: AppEnvironment = readAppEnv(),
     private readonly nodeVersion: string = process.version,
   ) {}
 
   getVersion(): ServiceVersionRecord {
-    const gitSha = this.env.POOLMASTER_SERVICE_GIT_SHA
-      ?? this.env.GITHUB_SHA
-      ?? null;
-    const version = this.env.POOLMASTER_SERVICE_VERSION
-      ?? gitSha
-      ?? '0.1.0';
-
     return {
-      environment: readAppEnv(this.env),
-      buildTimeUtc: this.env.POOLMASTER_BUILD_TIME_UTC ?? null,
-      gitRef: this.env.POOLMASTER_GIT_REF ?? this.env.GITHUB_REF_NAME ?? null,
-      service: {
-        name: '@poolmaster/core-api',
-        version,
-        gitSha,
-        buildNumber: this.env.POOLMASTER_BUILD_NUMBER ?? this.env.GITHUB_RUN_NUMBER ?? null,
-      },
+      environment: this.environment,
+      buildTimeUtc: this.build.buildTimeUtc,
+      gitRef: this.build.gitRef,
+      service: this.build.service,
       runtime: {
         nodeVersion: this.nodeVersion,
       },

@@ -9,6 +9,7 @@ module.exports = {
   moduleNameMapper: {
     '^@poolmaster/shared/(.*)$': '<rootDir>/packages/shared/$1',
   },
+  globalSetup: '<rootDir>/tests/support/version-info-global-setup.cjs',
   testTimeout: 30_000,
   // Run serially — integration tests share a database
   maxWorkers: 1,

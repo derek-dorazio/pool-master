@@ -18,16 +18,23 @@ process.env.OPENAPI_EXPORT = 'true';
 // OpenAPI. A placeholder is sufficient and never reaches a request path.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'openapi-export-placeholder-not-a-real-secret';
 // #134 — same shape as the JWT_SECRET line above, for the same reason. buildApp()
-// constructs the logger, which reads POOLMASTER_ENVIRONMENT and the service version
-// through core/config.ts and throws when either is unset. This script is a build
-// tool, not a deployment: it boots the app only to walk route schemas and never
-// serves a request, so it declares its own identity. `??=` keeps a real value when
-// one is already set, so running this inside CI or a configured shell is unchanged.
+// constructs the logger, which reads POOLMASTER_ENVIRONMENT through core/config.ts and
+// the version from version-info.json (#180), and throws when either is missing. This
+// script is a build tool, not a deployment: it boots the app only to walk route schemas
+// and never serves a request, so it declares its own identity. `??=` keeps a real value
+// when one is already set, and an existing version-info.json from a build is kept.
 process.env.POOLMASTER_ENVIRONMENT ??= 'development';
-process.env.POOLMASTER_SERVICE_VERSION ??= '0.0.0-openapi-export';
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+
+if (!existsSync(resolve(__dirname, '..', 'version-info.json'))) {
+  execFileSync(process.execPath, [resolve(__dirname, 'write-version-info.mjs')], {
+    env: { ...process.env, POOLMASTER_SERVICE_VERSION: process.env.POOLMASTER_SERVICE_VERSION || '0.0.0-openapi-export' },
+    stdio: ['ignore', 'ignore', 'inherit'],
+  });
+}
 
 import { rewriteNullableToOpenApi31 } from '@poolmaster/shared/openapi';
 

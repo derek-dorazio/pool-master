@@ -102,7 +102,6 @@ function leagueContext() {
       iconKey: 'TROPHY',
       memberCount: 2,
       activeContestCount: 2,
-      joinPolicy: 'COMMISSIONER_ONLY',
       createdAt: '2026-04-15T00:00:00.000Z',
     },
     membership: {
@@ -361,7 +360,6 @@ describe('MyTeamHistoryPage', () => {
               entryNumber: 1,
               name: 'Original Team Entry 1',
               status: 'ACTIVE',
-              isEliminated: false,
               createdAt: '2026-04-15T00:00:00.000Z',
               updatedAt: '2026-04-15T00:00:00.000Z',
             },
@@ -384,7 +382,6 @@ describe('MyTeamHistoryPage', () => {
               entryNumber: 2,
               name: 'Original Team Entry 2',
               status: 'ACTIVE',
-              isEliminated: false,
               createdAt: '2026-04-15T00:00:00.000Z',
               updatedAt: '2026-04-15T00:00:00.000Z',
             },

@@ -166,7 +166,7 @@ describe('LeagueService — the "mine" league list', () => {
     expect(row).toMatchObject({ memberCount: 2, activeContestCount: 3 });
     expect(groupBy).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({
-        status: { in: [ContestStatus.OPEN, ContestStatus.DRAFTING, ContestStatus.LOCKED, ContestStatus.ACTIVE] },
+        status: { in: [ContestStatus.OPEN, ContestStatus.ACTIVE] },
       }),
     }));
   });

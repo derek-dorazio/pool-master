@@ -92,7 +92,6 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
       memberCount: 1,
       activeContestCount: 0,
       createdAt: '2026-04-15T00:00:00.000Z',
-      joinPolicy: 'COMMISSIONER_ONLY',
     });
     createLeagueMock.mockResolvedValue(apiSuccess(createLeagueData(createdLeague)));
 

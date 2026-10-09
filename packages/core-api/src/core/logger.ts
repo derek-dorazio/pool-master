@@ -3,7 +3,8 @@ import type {
   FastifyRequest,
   FastifyServerOptions,
 } from 'fastify';
-import { readAppEnv, readServiceVersion } from './config';
+import { readAppEnv } from './config';
+import { readVersionInfo } from './version-info';
 
 /** The options-object form of Fastify's `logger` setting (Fastify does not export the pino type). */
 type FastifyLoggerSettings = Exclude<FastifyServerOptions['logger'], boolean | undefined>;
@@ -63,7 +64,7 @@ export function createFastifyLoggerOptions(
     base: {
       service: serviceName,
       env: readAppEnv(),
-      version: readServiceVersion(),
+      version: readVersionInfo().service.version,
     },
     redact: {
       paths: REDACT_PATHS,
