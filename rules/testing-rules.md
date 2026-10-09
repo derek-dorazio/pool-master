@@ -444,12 +444,11 @@ What belongs here is what a gate failure means for a *test*:
   - rerun the exact command once Postgres is available
   - if `poolmaster_test` still looks dirty, use `npm run db:test:reset` or the
     matching `:fresh` script (`test:service:integration:fresh`,
-    `test:service:functional-api:fresh`, `test:coverage:service:fresh`)
-  - **an agent session cannot use any of those.** They all run `prisma migrate reset`,
-    which Prisma refuses in a non-interactive agent environment, and the `:fresh`
-    scripts therefore fail before reaching the suite they wrap. Use
-    `npm run db:test:migrate` (`migrate deploy`) instead, and reach for a real reset
-    only in a human shell.
+    `test:service:functional-api:fresh`, `test:coverage:service:fresh`). These
+    work from agent sessions too: the reset drops and recreates the `public` schema
+    through `prisma db execute`, then runs `migrate deploy`, rather than calling
+    `prisma migrate reset`, which Prisma refuses for an AI agent. It refuses any
+    database whose name does not end in `_test`.
 - Backend work must not be pushed with required test gates intentionally
   skipped. CI is confirmation, not the first place we discover missing local
   validation.
