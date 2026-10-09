@@ -58,6 +58,7 @@ declare global {
 
       // test harnesses
       CI?: string;
+      DATABASE_URL?: string;
       FUNCTIONAL_RUN_ID?: string;
       FUNCTIONAL_INVOCATION_ID?: string;
       FUNCTIONAL_SERVER_STATE_FILE?: string;
