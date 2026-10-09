@@ -11,7 +11,9 @@
 import { randomUUID } from 'node:crypto';
 import type { LightMyRequestResponse } from 'fastify';
 import type { AuthResponse, UserListResponse, UserResponse } from '@poolmaster/shared/dto';
+import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
+  buildCreateLeaguePayload,
   cleanupTestData,
   createTestUser,
   getApp,
@@ -588,6 +590,8 @@ describe('account lifecycle', () => {
     const whileActive = await deleteWith(session.identity.email);
     await getPrisma().user.update({ where: { id: session.userId }, data: { isActive: false } });
     const mistyped = await deleteWith(`x${session.identity.email}`);
+    expect(await getPrisma().user.findUnique({ where: { id: session.userId } })).not.toBeNull();
+    expect(await liveRefreshTokens(session.userId)).toBe(1);
     const deleted = await deleteWith(session.identity.email);
 
     expect(errorCode(whileActive)).toBe('ACCOUNT_DELETE_REQUIRES_INACTIVE');
@@ -596,10 +600,51 @@ describe('account lifecycle', () => {
     expect(await getPrisma().user.findUnique({ where: { id: session.userId } })).toBeNull();
     expect(await getPrisma().refreshToken.count({ where: { userId: session.userId } })).toBe(0);
   });
+  it('treats disabling an account that is already inactive as a no-op that leaves its sessions alone', async () => {
+    const admin = await createTestUser({ isRootAdmin: true });
+    const session = await signedIn();
+    await getPrisma().user.update({ where: { id: session.userId }, data: { isActive: false } });
+    const before = await getPrisma().user.findUniqueOrThrow({ where: { id: session.userId } });
+
+    const response = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/users/${session.userId}/disable`,
+      headers: withoutJsonBodyHeaders(admin.headers),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json<UserResponse>().user.isActive).toBe(false);
+    expect(await liveRefreshTokens(session.userId)).toBe(1);
+    expect((await getPrisma().user.findUniqueOrThrow({ where: { id: session.userId } })).updatedAt).toEqual(before.updatedAt);
+  });
+
+  it('refuses to delete an inactive account that still belongs to a league with 409, and keeps it', async () => {
+    const admin = await createTestUser({ isRootAdmin: true });
+    const session = await signedIn();
+    const league = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.create,
+      headers: session.bearer,
+      payload: buildCreateLeaguePayload('Blocks Account Delete'),
+    });
+    expect(league.statusCode).toBe(201);
+    await getPrisma().user.update({ where: { id: session.userId }, data: { isActive: false } });
+
+    const response = await getApp().inject({
+      method: 'DELETE',
+      url: `/api/v1/users/${session.userId}`,
+      headers: admin.headers,
+      payload: { email: session.identity.email },
+    });
+
+    expect(errorCode(response)).toBe('ACCOUNT_DELETE_DEPENDENCIES_EXIST');
+    expect(await getPrisma().user.findUnique({ where: { id: session.userId } })).not.toBeNull();
+    expect(await liveRefreshTokens(session.userId)).toBe(1);
+  });
 });
 
 describe('the root-admin role', () => {
-  it('grants the role, which takes effect on the next sign-in, and revokes sessions on removal', async () => {
+  it('grants the role without signing anyone out, takes effect on the next sign-in, and revokes sessions on removal', async () => {
     const admin = await createTestUser({ isRootAdmin: true });
     const session = await signedIn();
     const setRole = (isRootAdmin: boolean) => getApp().inject({
@@ -610,6 +655,7 @@ describe('the root-admin role', () => {
     });
 
     expect((await setRole(true)).statusCode).toBe(200);
+    expect(await liveRefreshTokens(session.userId)).toBe(1);
     const stillOldToken = await getApp().inject({ method: 'GET', url: '/api/v1/users', headers: session.bearer });
     const relogin = (await login(session.identity.email)).json<AuthResponse>();
     const withNewToken = await getApp().inject({
@@ -637,5 +683,38 @@ describe('the root-admin role', () => {
 
     expect(response.statusCode).toBe(403);
     expect((await getPrisma().user.findUniqueOrThrow({ where: { id: session.userId } })).isRootAdmin).toBe(false);
+  });
+
+  it('lets a root admin step down while another root admin remains', async () => {
+    await createTestUser({ isRootAdmin: true });
+    const admin = await createTestUser({ isRootAdmin: true });
+
+    const response = await getApp().inject({
+      method: 'POST',
+      url: '/api/v1/users/me/root-admin',
+      headers: admin.headers,
+      payload: { isRootAdmin: false },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect((await getPrisma().user.findUniqueOrThrow({ where: { id: admin.user.id } })).isRootAdmin).toBe(false);
+  });
+
+  it('treats granting the role to a user who already holds it as a no-op that writes nothing', async () => {
+    const admin = await createTestUser({ isRootAdmin: true });
+    const other = await createTestUser({ isRootAdmin: true });
+    const before = await getPrisma().user.findUniqueOrThrow({ where: { id: other.user.id } });
+
+    const response = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/users/${other.user.id}/root-admin`,
+      headers: admin.headers,
+      payload: { isRootAdmin: true },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const after = await getPrisma().user.findUniqueOrThrow({ where: { id: other.user.id } });
+    expect(after.isRootAdmin).toBe(true);
+    expect(after.updatedAt).toEqual(before.updatedAt);
   });
 });
