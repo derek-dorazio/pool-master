@@ -98,7 +98,6 @@ try {
       '  output: {',
       `    path: ${JSON.stringify(tempGenerated)}`,
       '  },',
-      "  client: '@hey-api/client-fetch',",
       '};',
       '',
     ].join('\n'),
