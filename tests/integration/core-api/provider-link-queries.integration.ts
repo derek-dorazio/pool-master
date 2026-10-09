@@ -82,12 +82,12 @@ describe('EventScoreSourceService links', () => {
     return new EventScoreSourceService(getPrisma(), registryWith(provider));
   }
 
-  async function createEvent(name: string) {
+  async function createEvent(name: string, sport: Sport = Sport.GOLF) {
     return new PrismaSportEventRepository(getPrisma()).create({
       ...(await freshEventEdition(getPrisma())),
       externalId: `manual-${randomUUID()}`,
       providerId: 'integration-test',
-      sport: Sport.GOLF,
+      sport,
       name,
       startDate: new Date('2026-06-04T12:00:00.000Z'),
       endDate: new Date('2026-06-07T12:00:00.000Z'),
@@ -126,6 +126,24 @@ describe('EventScoreSourceService links', () => {
     await expect(service().linkScoreSource(first.id, link)).resolves.toBeUndefined();
     const unchanged = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: second.id } });
     expect(unchanged.providerId).toBe('integration-test');
+  });
+
+  it('refuses a link to a provider nobody registered, leaving the event unlinked', async () => {
+    const event = await createEvent('Unregistered Feed Open');
+
+    await expect(service().linkScoreSource(event.id, { providerId: 'no-such-feed', externalId: 'x-2026' }))
+      .rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 404 });
+    const unchanged = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } });
+    expect(unchanged).toEqual(expect.objectContaining({ providerId: 'integration-test', syncScope: 'NONE' }));
+  });
+
+  it('refuses a link to a provider that does not cover the event\'s sport, leaving the event unlinked', async () => {
+    const event = await createEvent('Tennis Open', Sport.TENNIS);
+
+    await expect(service().linkScoreSource(event.id, { providerId: 'integration-feed', externalId: 'tennis-2026' }))
+      .rejects.toMatchObject({ code: 'PROVIDER_SPORT_MISMATCH', statusCode: 422 });
+    const unchanged = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } });
+    expect(unchanged).toEqual(expect.objectContaining({ providerId: 'integration-test', syncScope: 'NONE' }));
   });
 
   it('refuses to link or unlink an event that does not exist', async () => {

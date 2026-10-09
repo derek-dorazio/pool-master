@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { activateLeague, deleteLeague, inactivateLeague, leaveLeague, updateLeagueDetails, updateLeagueIcon, type LeagueDto, type SuccessResponse } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
@@ -36,6 +36,8 @@ import { LeagueSummaryCard } from './league-summary-card';
 import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { parseRouteState } from '@/routes/route-state';
+import { buildLeagueTeamPath } from './league-routing';
 
 type LeaveLeagueResult = SuccessResponse;
 type ActiveLeagueDialog = 'details' | 'inactivate' | 'leave' | null;
@@ -60,6 +62,18 @@ export function LeagueDetailPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const auth = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Read once and remembered for this league only, because the effect below drops it from history
+  // so Back or a reload does not show the notice again.
+  const [teamSetupFailedLeagueCode] = useState(() =>
+    parseRouteState(location.state).teamSetupFailed ? leagueCode : null,
+  );
+  const teamSetupFailed = teamSetupFailedLeagueCode === leagueCode;
+  useEffect(() => {
+    if (parseRouteState(location.state).teamSetupFailed) {
+      void navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+    }
+  }, [location.pathname, location.search, location.state, navigate]);
   const queryClient = useQueryClient();
   const logger = getLogger().child({
     feature: 'league-detail-page',
@@ -374,6 +388,14 @@ export function LeagueDetailPage() {
 
   return (
     <section className="space-y-6" data-testid="league-home">
+      {teamSetupFailed ? (
+        <Alert data-testid="league-team-setup-failed" tone="warning">
+          <p>You&apos;re in the league. We couldn&apos;t save your team name and icon. You can set them from Team Home.</p>
+          <LinkButton className="mt-3" to={buildLeagueTeamPath(leagueCode)} variant="subtle">
+            Team Home
+          </LinkButton>
+        </Alert>
+      ) : null}
       {isInactiveLeague ? (
         <Alert
           data-testid="league-inactive-banner"

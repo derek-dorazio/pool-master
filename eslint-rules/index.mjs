@@ -21,6 +21,7 @@ import noParallelApiTypes from './no-parallel-api-types.mjs';
 import noInlineQueryKeys from './no-inline-query-keys.mjs';
 import noInlineThemeStyles from './no-inline-theme-styles.mjs';
 import noMockedApi from './no-mocked-api.mjs';
+import noNodeEnvReads from './no-node-env-reads.mjs';
 import noRawThemeColors from './no-raw-theme-colors.mjs';
 import noUnawaitedSendError from './no-unawaited-send-error.mjs';
 
@@ -37,6 +38,7 @@ export default {
     'no-widened-enum-fields': noWidenedEnumFields,
     'no-inline-theme-styles': noInlineThemeStyles,
     'no-mocked-api': noMockedApi,
+    'no-node-env-reads': noNodeEnvReads,
     'no-raw-theme-colors': noRawThemeColors,
     'no-unawaited-send-error': noUnawaitedSendError,
   },

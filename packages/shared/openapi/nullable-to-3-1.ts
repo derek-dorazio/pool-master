@@ -22,7 +22,23 @@
  * Whenever a node is made nullable, `null` is also added to any `enum` array.
  */
 
-type JsonRecord = Record<string, unknown>;
+/**
+ * A schema object in the exported spec. The keywords this rewrite reads are named;
+ * every other keyword rides through the index signature untouched. Values stay
+ * `unknown` because the spec is checked here, not trusted.
+ */
+interface JsonRecord {
+  type?: unknown;
+  nullable?: unknown;
+  enum?: unknown;
+  allOf?: unknown;
+  oneOf?: unknown;
+  anyOf?: unknown;
+  $ref?: unknown;
+  description?: unknown;
+  properties?: unknown;
+  [keyword: string]: unknown;
+}
 
 function isRecord(value: unknown): value is JsonRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

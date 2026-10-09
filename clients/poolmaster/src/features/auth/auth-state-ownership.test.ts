@@ -6,7 +6,6 @@ describe('pool-master-rop.78.11 auth state ownership', () => {
     const authMirrorModules = import.meta.glob('./session-store.ts');
 
     expect(Object.keys(authMirrorModules)).toHaveLength(0);
-    expect((packageJson as { dependencies?: Record<string, string> }).dependencies?.zustand)
-      .toBeUndefined();
+    expect(Object.keys(packageJson.dependencies)).not.toContain('zustand');
   });
 });

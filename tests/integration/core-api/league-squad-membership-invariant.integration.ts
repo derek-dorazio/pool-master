@@ -252,3 +252,48 @@ describe('League/squad membership invariant', () => {
     await expect(findInvariantViolations(leagueId)).resolves.toEqual([]);
   });
 });
+
+describe('Removing a member from a league', () => {
+  it('ends their league and squad memberships but leaves their account active, so a re-invite can restore them', async () => {
+    const commissioner = await createTestUser({ displayName: 'Removal Commissioner' });
+    const member = await createTestUser({ displayName: 'Removal Member' });
+    const leagueRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.create,
+      headers: commissioner.headers,
+      payload: buildCreateLeaguePayload('Removal League'),
+    });
+    const removalLeagueId = leagueRes.json<LeagueContextResponse>().league.id;
+    const inviteRes = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/leagues/${removalLeagueId}/invitations`,
+      headers: commissioner.headers,
+      payload: { emails: [member.user.email] },
+    });
+    const acceptRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.invitations.accept,
+      headers: member.headers,
+      payload: { inviteCode: inviteRes.json<SendLeagueInvitationsResponse>().sent[0].inviteCode },
+    });
+    expect(acceptRes.statusCode).toBe(201);
+
+    const removeRes = await getApp().inject({
+      method: 'DELETE',
+      url: API_ROUTES.leagues.removeMember(removalLeagueId, member.user.id),
+      headers: withoutJsonBodyHeaders(commissioner.headers),
+    });
+
+    expect(removeRes.statusCode).toBe(200);
+    const prisma = getPrisma();
+    expect((await prisma.leagueMembership.findFirstOrThrow({
+      where: { leagueId: removalLeagueId, userId: member.user.id },
+    })).status).toBe('INACTIVE');
+    expect((await prisma.squadMembership.findFirstOrThrow({
+      where: { leagueId: removalLeagueId, userId: member.user.id },
+    })).status).toBe('INACTIVE');
+    // This was their only league, and the account is still theirs to use.
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: member.user.id } })).isActive).toBe(true);
+    await expect(findInvariantViolations(removalLeagueId)).resolves.toEqual([]);
+  });
+});

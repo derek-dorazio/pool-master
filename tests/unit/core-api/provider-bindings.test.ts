@@ -5,6 +5,9 @@ import {
   registerConfiguredProviders,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-bindings';
 
+/** A local run. `NODE_ENV` is what a bundler or Jest might set; it must not matter. */
+const LOCAL = { POOLMASTER_ENVIRONMENT: 'development' } as const;
+
 describe('provider bindings', () => {
   it('loads provider binding configuration from environment variables', () => {
     const config = loadProviderBindingsFromEnv({
@@ -28,6 +31,7 @@ describe('provider bindings', () => {
     const registry = new ProviderRegistry();
 
     registerConfiguredProviders(registry, {
+      ...LOCAL,
       SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
       SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
         providers: {
@@ -49,7 +53,8 @@ describe('provider bindings', () => {
 
     expect(() =>
       registerConfiguredProviders(registry, {
-        ENVIRONMENT: 'production',
+        NODE_ENV: 'production',
+        POOLMASTER_ENVIRONMENT: 'prod',
         SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
         SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
           providers: {
@@ -68,13 +73,15 @@ describe('provider bindings', () => {
 
     expect(() =>
       registerConfiguredProviders(registry, {
-        ENVIRONMENT: 'production',
+        NODE_ENV: 'production',
+        POOLMASTER_ENVIRONMENT: 'prod',
       }),
     ).toThrow('No sport data provider is configured for this runtime.');
 
     expect(() =>
       registerConfiguredProviders(qaRegistry, {
-        ENVIRONMENT: 'qa',
+        NODE_ENV: 'production',
+        POOLMASTER_ENVIRONMENT: 'qa',
       }),
     ).toThrow('No sport data provider is configured for this runtime.');
   });
@@ -84,7 +91,8 @@ describe('provider bindings', () => {
 
     expect(() =>
       registerConfiguredProviders(registry, {
-        ENVIRONMENT: 'production',
+        NODE_ENV: 'production',
+        POOLMASTER_ENVIRONMENT: 'prod',
         SPORT_DATA_ALLOW_MOCK_PROVIDER_IN_STRICT_RUNTIME: 'true',
         SPORT_DATA_MOCK_PROVIDER_OVERRIDE_REASON: ' test ',
         SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
@@ -104,7 +112,8 @@ describe('provider bindings', () => {
     const productionOverrideRegistry = new ProviderRegistry();
 
     registerConfiguredProviders(qaRegistry, {
-      ENVIRONMENT: 'qa',
+      NODE_ENV: 'production',
+      POOLMASTER_ENVIRONMENT: 'qa',
       SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
       SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
         providers: {
@@ -116,7 +125,8 @@ describe('provider bindings', () => {
     });
 
     registerConfiguredProviders(productionOverrideRegistry, {
-      ENVIRONMENT: 'production',
+      NODE_ENV: 'production',
+      POOLMASTER_ENVIRONMENT: 'prod',
       SPORT_DATA_ALLOW_MOCK_PROVIDER_IN_STRICT_RUNTIME: 'true',
       SPORT_DATA_MOCK_PROVIDER_OVERRIDE_REASON: 'emergency provider outage drill',
       SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
@@ -133,12 +143,41 @@ describe('provider bindings', () => {
     expect(productionOverrideRegistry.getProvider(Sport.GOLF)?.providerId).toBe('mock-contest-feed');
   });
 
+  it('rejects the mock provider in prod with the exact values Terraform sets (NODE_ENV=production, POOLMASTER_ENVIRONMENT=prod)', () => {
+    expect(() =>
+      registerConfiguredProviders(new ProviderRegistry(), {
+        NODE_ENV: 'production',
+        POOLMASTER_ENVIRONMENT: 'prod',
+        SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
+        SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
+          providers: { 'mock-contest-feed': { baseUrl: 'http://mock.prod.internal:3105' } },
+        }),
+      }),
+    ).toThrow('Mock sport data provider "mock-contest-feed" is not allowed in this runtime.');
+  });
+
+  it('ignores the retired ENVIRONMENT variable, so setting it cannot change provider selection', () => {
+    const registry = new ProviderRegistry();
+
+    registerConfiguredProviders(registry, {
+      ENVIRONMENT: 'prod',
+      POOLMASTER_ENVIRONMENT: 'development',
+      SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
+      SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
+        providers: { 'mock-contest-feed': { baseUrl: 'http://localhost:3105' } },
+      }),
+    });
+
+    expect(registry.getProvider(Sport.GOLF)?.providerId).toBe('mock-contest-feed');
+  });
+
   it('pool-master-rop.68.1.1: rejects stale Golf provider adapter IDs instead of registering removed providers', () => {
     const registry = new ProviderRegistry();
     const oddsRegistry = new ProviderRegistry();
 
     expect(() =>
       registerConfiguredProviders(registry, {
+        ...LOCAL,
         SPORT_DATA_DEFAULT_PROVIDER: 'pga-tour',
         SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
           providers: {
@@ -150,6 +189,7 @@ describe('provider bindings', () => {
 
     expect(() =>
       registerConfiguredProviders(oddsRegistry, {
+        ...LOCAL,
         SPORT_DATA_DEFAULT_PROVIDER: 'the-odds-api',
         SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
           providers: {
@@ -165,6 +205,7 @@ describe('provider bindings', () => {
     for (const removedProviderId of ['espn', 'openf1']) {
       expect(() =>
         registerConfiguredProviders(new ProviderRegistry(), {
+          ...LOCAL,
           SPORT_DATA_DEFAULT_PROVIDER: removedProviderId,
           SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
             providers: {
@@ -179,7 +220,7 @@ describe('provider bindings', () => {
   it('does not silently register hidden providers when the environment is unconfigured', () => {
     const registry = new ProviderRegistry();
 
-    registerConfiguredProviders(registry, {});
+    registerConfiguredProviders(registry, { ...LOCAL });
 
     expect(registry.getSupportedSports()).toEqual([]);
   });
@@ -214,6 +255,7 @@ describe('provider bindings', () => {
     const registry = new ProviderRegistry();
 
     expect(() => registerConfiguredProviders(registry, {
+      ...LOCAL,
       SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
       SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({ providers: {} }),
     })).toThrow('Configured default provider "mock-contest-feed" is missing from SPORT_DATA_PROVIDER_BINDINGS_JSON.');
@@ -224,6 +266,7 @@ describe('provider bindings', () => {
     const registry = new ProviderRegistry();
 
     expect(() => registerConfiguredProviders(registry, {
+      ...LOCAL,
       SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
       SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({ providers: { 'mock-contest-feed': {} } }),
     })).toThrow('Provider "mock-contest-feed" requires a baseUrl binding.');

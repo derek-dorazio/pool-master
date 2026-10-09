@@ -10269,7 +10269,7 @@ export interface components {
              * @enum {number}
              */
             schemaVersion: 1;
-            /** @description Runtime environment name such as development, qa, staging, or production. */
+            /** @description Runtime environment name: development, test, ci, qa, staging, or prod. */
             environment: string;
             /**
              * Format: date-time

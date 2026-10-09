@@ -13,14 +13,12 @@ import {
   buildSelectionParticipants,
   buildTierByParticipantId,
   buildValuationLookup,
-  findLineupShortfall,
   findTierByLabel,
-  getRosterSize,
   isCommissionerRole,
-  isRosterSelectionType,
   mapContestStatusToDraftStatus,
-  resolveTieredPlacement,
 } from '../../../packages/core-api/src/modules/drafts/draft-rules';
+import { findSelectionEngine } from '../../../packages/core-api/src/modules/drafts/selection-engines/registry';
+import { tieredSelectionEngine } from '../../../packages/core-api/src/modules/drafts/selection-engines/tiered';
 import type {
   DraftTierConfig,
   ParticipantValuation,
@@ -113,43 +111,11 @@ function participant(id: string, overrides: Partial<Participant> = {}): Particip
   } as Participant;
 }
 
-describe('#324 draft rules — selection type and role predicates', () => {
-  it('serves tiered and budget-pick rooms and no other selection type', () => {
-    expect(isRosterSelectionType(SelectionType.TIERED)).toBe(true);
-    expect(isRosterSelectionType(SelectionType.BUDGET_PICK)).toBe(true);
-    expect(isRosterSelectionType(SelectionType.SNAKE_DRAFT)).toBe(false);
-    expect(isRosterSelectionType(SelectionType.PICK_EM)).toBe(false);
-  });
-
+describe('#324 draft rules — role predicate', () => {
   it('treats only the COMMISSIONER role as commissioner, including for an absent role', () => {
     expect(isCommissionerRole('COMMISSIONER')).toBe(true);
     expect(isCommissionerRole('MEMBER')).toBe(false);
     expect(isCommissionerRole(undefined)).toBe(false);
-  });
-});
-
-describe('#324 draft rules — getRosterSize', () => {
-  it('reads a budget-pick roster off the configuration, and 0 when it carries none', () => {
-    expect(getRosterSize(SelectionType.BUDGET_PICK, configuration({ rosterSize: 6 }), [])).toBe(6);
-    expect(getRosterSize(SelectionType.BUDGET_PICK, configuration(), [])).toBe(0);
-    expect(getRosterSize(SelectionType.BUDGET_PICK, null, [])).toBe(0);
-  });
-
-  it('adds up a tiered roster from the tiers, ignoring the configured roster size', () => {
-    const tiers = [
-      tier({ tierNumber: 1, picksFromTier: 2 }),
-      tier({ tierId: 'tier-2', tierNumber: 2, picksFromTier: 3 }),
-    ];
-
-    expect(getRosterSize(SelectionType.TIERED, configuration({ rosterSize: 99 }), tiers)).toBe(5);
-  });
-
-  it('gives a tiered contest with no tiers a roster of 0 — what SELECTION_CONFIG_INVALID rests on', () => {
-    expect(getRosterSize(SelectionType.TIERED, configuration({ rosterSize: 6 }), [])).toBe(0);
-  });
-
-  it('gives any other selection type a roster of 0', () => {
-    expect(getRosterSize(SelectionType.SNAKE_DRAFT, configuration({ rosterSize: 6 }), [tier()])).toBe(0);
   });
 });
 
@@ -244,7 +210,7 @@ describe('#324 draft rules — buildDraftTiers and buildValuationLookup', () => 
     const tiers = buildDraftTiers(groups, 2);
 
     expect(tiers.map((draftTier) => draftTier.picksFromTier)).toEqual([2, 2, 2]);
-    expect(getRosterSize(SelectionType.TIERED, configuration(), tiers)).toBe(6);
+    expect(tieredSelectionEngine.rosterSize({ configuration: configuration(), tiers })).toBe(6);
   });
 
   it('gives every tier no picks when the contest supplies 0 picks per tier, so the tiered roster is 0', () => {
@@ -255,7 +221,7 @@ describe('#324 draft rules — buildDraftTiers and buildValuationLookup', () => 
     const tiers = buildDraftTiers(groups, 0);
 
     expect(tiers[0].picksFromTier).toBe(0);
-    expect(getRosterSize(SelectionType.TIERED, configuration(), tiers)).toBe(0);
+    expect(tieredSelectionEngine.rosterSize({ configuration: configuration(), tiers })).toBe(0);
   });
 
   // pool-master-753 — carried over from the deleted loadDraftContext suite. A price-only
@@ -393,117 +359,6 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
   });
 });
 
-describe('#324 draft rules — resolveTieredPlacement', () => {
-  const TIERS = [
-    tier({ tierId: 'tier-1', tierName: 'Tier 1', tierNumber: 1, picksFromTier: 2, participantIds: ['a', 'b', 'c'] }),
-    tier({ tierId: 'tier-2', tierName: 'Tier 2', tierNumber: 2, picksFromTier: 1, participantIds: ['d', 'e'] }),
-  ];
-  const ROSTER_SIZE = 3;
-
-  it('places a first pick in tier 1 at round 1', () => {
-    expect(
-      resolveTieredPlacement({ tier: TIERS[0], tiers: TIERS, existingPicks: [], rosterSize: ROSTER_SIZE }),
-    ).toEqual({ kind: 'place', draftRound: 1 });
-  });
-
-  it('places a second pick in tier 1 at round 2', () => {
-    expect(
-      resolveTieredPlacement({
-        tier: TIERS[0],
-        tiers: TIERS,
-        existingPicks: [{ id: 'pick-a', participantId: 'a' }],
-        rosterSize: ROSTER_SIZE,
-      }),
-    ).toEqual({ kind: 'place', draftRound: 2 });
-  });
-
-  it('counts the rounds the earlier tiers take before placing in a later one', () => {
-    expect(
-      resolveTieredPlacement({
-        tier: TIERS[1],
-        tiers: TIERS,
-        existingPicks: [
-          { id: 'pick-a', participantId: 'a' },
-          { id: 'pick-b', participantId: 'b' },
-        ],
-        rosterSize: ROSTER_SIZE,
-      }),
-    ).toEqual({ kind: 'place', draftRound: 3 });
-  });
-
-  // The central rule, and the one the deleted engines had backwards: given a full tier, the
-  // engine rejected the pick; the live route replaces it. This assertion is the difference.
-  it('replaces the tier\'s last pick when the tier is already full, rather than rejecting', () => {
-    expect(
-      resolveTieredPlacement({
-        tier: TIERS[0],
-        tiers: TIERS,
-        existingPicks: [
-          { id: 'pick-a', participantId: 'a' },
-          { id: 'pick-b', participantId: 'b' },
-        ],
-        rosterSize: ROSTER_SIZE,
-      }),
-    ).toEqual({ kind: 'replace', draftRound: 2, replacedPickId: 'pick-b' });
-  });
-
-  it('replaces within a full tier even when the whole entry is full', () => {
-    expect(
-      resolveTieredPlacement({
-        tier: TIERS[1],
-        tiers: TIERS,
-        existingPicks: [
-          { id: 'pick-a', participantId: 'a' },
-          { id: 'pick-b', participantId: 'b' },
-          { id: 'pick-d', participantId: 'd' },
-        ],
-        rosterSize: ROSTER_SIZE,
-      }),
-    ).toEqual({ kind: 'replace', draftRound: 3, replacedPickId: 'pick-d' });
-  });
-
-  it('answers entry-complete only for a full entry with no pick in this tier to displace', () => {
-    expect(
-      resolveTieredPlacement({
-        tier: TIERS[1],
-        tiers: TIERS,
-        existingPicks: [
-          { id: 'pick-a', participantId: 'a' },
-          { id: 'pick-b', participantId: 'b' },
-          { id: 'pick-c', participantId: 'c' },
-        ],
-        rosterSize: 3,
-      }),
-    ).toEqual({ kind: 'entry-complete' });
-  });
-
-  it('places, not replaces, a tier that contributes no picks while the entry has room', () => {
-    const zeroPickTier = tier({ tierId: 'tier-0', tierNumber: 1, picksFromTier: 0, participantIds: ['z'] });
-
-    expect(
-      resolveTieredPlacement({
-        tier: zeroPickTier,
-        tiers: [zeroPickTier, TIERS[1]],
-        existingPicks: [],
-        rosterSize: 1,
-      }),
-    ).toEqual({ kind: 'place', draftRound: 0 });
-  });
-
-  it('answers entry-complete for a zero-pick tier once the entry is full, having nothing to displace', () => {
-    const zeroPickTier = tier({ tierId: 'tier-0', tierNumber: 1, picksFromTier: 0, participantIds: ['z'] });
-
-    expect(
-      resolveTieredPlacement({
-        tier: zeroPickTier,
-        tiers: [zeroPickTier, TIERS[1]],
-        existingPicks: [{ id: 'pick-d', participantId: 'd' }],
-        rosterSize: 1,
-      }),
-    ).toEqual({ kind: 'entry-complete' });
-  });
-});
-
 describe('#324 draft rules — tier lookups', () => {
   const TIERS = [
     tier({ tierId: 'tier-1', tierName: 'Tier 1', participantIds: ['a', 'b'] }),
@@ -527,52 +382,12 @@ describe('#324 draft rules — tier lookups', () => {
 
 // A compile-time anchor rather than a behavioural one: the two reads the room makes of a
 // contest are typed off the domain Contest, so a selection type added to the enum fails here
-// rather than silently falling through isRosterSelectionType.
+// rather than silently falling through the engine registry.
 describe('#324 draft rules — contest shape', () => {
   it('reads selection type and status off the domain contest', () => {
     const contest = { selectionType: SelectionType.TIERED, status: 'OPEN' } as Contest;
 
-    expect(isRosterSelectionType(contest.selectionType)).toBe(true);
+    expect(findSelectionEngine(contest.selectionType)?.selectionType).toBe(SelectionType.TIERED);
     expect(mapContestStatusToDraftStatus(contest.status, false)).toBe(DraftStatus.LIVE);
-  });
-});
-
-describe('draft rules — findLineupShortfall decides whether an entry may be submitted', () => {
-  const tiers = [
-    tier({ tierId: 'tier-1', tierName: 'Tier 1', tierNumber: 1, picksFromTier: 2, participantIds: ['a', 'b', 'c'] }),
-    tier({ tierId: 'tier-2', tierName: 'Tier 2', tierNumber: 2, picksFromTier: 1, participantIds: ['d', 'e'] }),
-  ];
-  const picks = (...ids: string[]) => ids.map((participantId) => ({ participantId }));
-
-  it('finds no shortfall when a tiered lineup holds exactly each tier\'s picks', () => {
-    expect(findLineupShortfall({ selectionType: SelectionType.TIERED, rosterSize: 3, tiers, picks: picks('a', 'b', 'd') }))
-      .toBeNull();
-  });
-
-  it('names every tier still short of its picks, with the picks held against the roster', () => {
-    expect(findLineupShortfall({ selectionType: SelectionType.TIERED, rosterSize: 3, tiers, picks: picks('a') }))
-      .toEqual({ pickCount: 1, rosterSize: 3, shortTierNames: ['Tier 1', 'Tier 2'] });
-  });
-
-  it('refuses a tiered lineup with the full pick count but the wrong spread across tiers', () => {
-    expect(findLineupShortfall({ selectionType: SelectionType.TIERED, rosterSize: 3, tiers, picks: picks('a', 'b', 'c') }))
-      .toEqual({ pickCount: 3, rosterSize: 3, shortTierNames: ['Tier 1', 'Tier 2'] });
-  });
-
-  it('refuses a tiered lineup whose extra pick sits on a golfer outside every tier', () => {
-    expect(findLineupShortfall({ selectionType: SelectionType.TIERED, rosterSize: 3, tiers, picks: picks('a', 'b', 'untiered') }))
-      .toEqual({ pickCount: 3, rosterSize: 3, shortTierNames: ['Tier 2'] });
-  });
-
-  it('judges a budget-pick lineup by its pick count alone', () => {
-    expect(findLineupShortfall({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, tiers: [], picks: picks('a', 'z') }))
-      .toBeNull();
-    expect(findLineupShortfall({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, tiers: [], picks: picks('a') }))
-      .toEqual({ pickCount: 1, rosterSize: 2, shortTierNames: [] });
-  });
-
-  it('never finds a lineup complete when the roster has no places', () => {
-    expect(findLineupShortfall({ selectionType: SelectionType.TIERED, rosterSize: 0, tiers: [], picks: [] }))
-      .toEqual({ pickCount: 0, rosterSize: 0, shortTierNames: [] });
   });
 });

@@ -102,31 +102,6 @@ function createProvisioningUsers() {
   });
 }
 
-function createMockLifecyclePrisma() {
-  const tx = {
-    draftPickHistory: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    contestEntryPick: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    contestEntry: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    draftSession: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    participantContestScoringRule: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    contestPrizeDefinition: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    contestConfiguration: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    contest: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    leagueInvitation: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    squadOwnerInvitation: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    squadMembership: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    leagueMembership: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    squad: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    league: { delete: jest.fn().mockResolvedValue(undefined) },
-  };
-
-  const prisma = {
-    $transaction: jest.fn(async (callback: (transaction: typeof tx) => Promise<void>) => callback(tx)),
-  };
-
-  return { prisma, tx };
-}
-
 describe('LeagueService', () => {
   describe('createLeague', () => {
     it('creates a league and a COMMISSIONER membership', async () => {
@@ -389,9 +364,8 @@ describe('LeagueService', () => {
         createService({ membershipRepo, prisma }).listLeagues({ scope: 'all', userId: 'user-1' }),
       ).resolves.toEqual([]);
 
-      // An empty `in` list would scan; both count reads are skipped entirely.
+      // An empty `in` list would scan, so the member count is skipped entirely.
       expect(membershipRepo.countActiveByLeagues).not.toHaveBeenCalled();
-      expect(prisma.contest.groupBy).not.toHaveBeenCalled();
     });
 
     it('attaches the viewer\'s own membership, and null for a league they do not belong to', async () => {
@@ -610,11 +584,9 @@ describe('LeagueService', () => {
           isActive: true,
         })),
       });
-      const { prisma } = createMockLifecyclePrisma();
       const service = new LeagueService({
         leagues: leagueRepo,
         memberships: createMockMembershipRepo(),
-        prisma: prisma as never,
         users: fakeUserRepo(),
       });
 
@@ -632,11 +604,9 @@ describe('LeagueService', () => {
           isActive: false,
         })),
       });
-      const { prisma } = createMockLifecyclePrisma();
       const service = new LeagueService({
         leagues: leagueRepo,
         memberships: createMockMembershipRepo(),
-        squads: prisma as never,
         users: fakeUserRepo(),
       });
 
@@ -644,31 +614,6 @@ describe('LeagueService', () => {
         code: 'LEAGUE_DELETE_CONFIRMATION_MISMATCH',
         statusCode: 400,
       });
-    });
-
-    it('deletes league-owned rows in a transaction while preserving user accounts', async () => {
-      const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(buildLeague({
-          id: 'league-1',
-          leagueCode: 'DELETE01',
-          isActive: false,
-        })),
-      });
-      const { prisma, tx } = createMockLifecyclePrisma();
-      const service = new LeagueService({
-        leagues: leagueRepo,
-        memberships: createMockMembershipRepo(),
-        prisma: prisma as never,
-        users: fakeUserRepo(),
-      });
-
-      await service.deleteInactiveLeague('league-1', 'DELETE01');
-
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-      expect(tx.contest.deleteMany).toHaveBeenCalledWith({ where: { leagueId: 'league-1' } });
-      expect(tx.squadOwnerInvitation.deleteMany).toHaveBeenCalledWith({ where: { leagueId: 'league-1' } });
-      expect(tx.leagueMembership.deleteMany).toHaveBeenCalledWith({ where: { leagueId: 'league-1' } });
-      expect(tx.league.delete).toHaveBeenCalledWith({ where: { id: 'league-1' } });
     });
   });
 

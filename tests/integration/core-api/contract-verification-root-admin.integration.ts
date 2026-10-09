@@ -901,7 +901,7 @@ describe('Contract verification (root admin)', () => {
           }),
         }),
       );
-      expect((completedRun.payloadJson as Record<string, unknown>).responsePayload).toBeUndefined();
+      expect(completedRun.payloadJson).not.toHaveProperty('responsePayload');
     } finally {
       await app.close();
     }

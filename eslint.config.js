@@ -386,6 +386,13 @@ export default tseslint.config(
       }],
     },
   },
+  {
+    // Which environment this is comes from POOLMASTER_ENVIRONMENT via readAppEnv(); NODE_ENV
+    // is the Node ecosystem's and is "production" in every deployment (#184). No allowlist.
+    files: ['packages/*/src/**/*.ts'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-node-env-reads': 'error' },
+  },
 
   // ---------------------------------------------------------------------------
   // Third-party plugins (#156). Each was measured at zero findings against the

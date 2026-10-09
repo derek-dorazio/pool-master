@@ -9,7 +9,7 @@
 import type { z } from 'zod';
 
 /** The process environment a group's code defaults may depend on (e.g. which environment this is). */
-export type SettingsEnvironment = Readonly<Record<string, string | undefined>>;
+export type SettingsEnvironment = Readonly<NodeJS.ProcessEnv>;
 
 export interface SettingsGroup<T> {
   /** The `config_key` the payload is stored under. Never renamed once deployed. */

@@ -157,7 +157,7 @@ describe('#531 migration: unused statuses and columns are removed', () => {
       COMPLETED: 'COMPLETED',
       CANCELLED: 'COMPLETED',
     });
-    expect(result.defaults.contests).toBe(`'DRAFT'::"PrismaContestStatus"`);
+    expect(result.defaults['contests']).toBe(`'DRAFT'::"PrismaContestStatus"`);
   });
 
   it('leaves only DRAFT and SUBMITTED entries, moving a leftover INACTIVE entry to DRAFT so it still counts nowhere', async () => {
@@ -165,7 +165,7 @@ describe('#531 migration: unused statuses and columns are removed', () => {
 
     expect(result.entryStatusValues).toEqual(['DRAFT', 'SUBMITTED']);
     expect(result.entryStatusByName).toEqual({ DRAFT: 'DRAFT', SUBMITTED: 'SUBMITTED', INACTIVE: 'DRAFT' });
-    expect(result.defaults.contest_entries).toBe(`'DRAFT'::"PrismaContestEntryStatus"`);
+    expect(result.defaults['contest_entries']).toBe(`'DRAFT'::"PrismaContestEntryStatus"`);
   });
 
   it('drops the entry elimination flag, the league join policy and its type', async () => {

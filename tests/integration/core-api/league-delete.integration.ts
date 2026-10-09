@@ -30,7 +30,7 @@ afterAll(async () => {
 });
 
 describe('Deleting an inactive league', () => {
-  it('deletes a league whose team has a pending team-owner invitation, removing the invitation with it', async () => {
+  it('deletes a league with its contests, invitations, memberships and teams, and keeps its members\' accounts', async () => {
     const commissioner = await createTestUser({ displayName: 'Delete Commissioner' });
     const leagueRes = await getApp().inject({
       method: 'POST',
@@ -58,6 +58,14 @@ describe('Deleting an inactive league', () => {
     expect(inviteRes.statusCode).toBe(201);
     expect(inviteRes.json<TeamOwnerInvitationResponse>().invitation.status).toBe('PENDING');
 
+    // A contest and a league invitation, so every league-owned table the delete clears has a row.
+    await getPrisma().contest.create({
+      data: { leagueId: league.id, name: 'Doomed Contest', selectionType: 'TIERED', scoringEngine: 'STROKE_PLAY' },
+    });
+    await getPrisma().leagueInvitation.create({
+      data: { leagueId: league.id, inviteCode: `delete-${league.id.slice(0, 8)}`, invitedBy: commissioner.user.id },
+    });
+
     const inactivateRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.inactivate(league.id),
@@ -77,5 +85,10 @@ describe('Deleting an inactive league', () => {
     await expect(prisma.league.findUnique({ where: { id: league.id } })).resolves.toBeNull();
     await expect(prisma.squadOwnerInvitation.count({ where: { leagueId: league.id } })).resolves.toBe(0);
     await expect(prisma.squad.count({ where: { leagueId: league.id } })).resolves.toBe(0);
+    await expect(prisma.contest.count({ where: { leagueId: league.id } })).resolves.toBe(0);
+    await expect(prisma.leagueInvitation.count({ where: { leagueId: league.id } })).resolves.toBe(0);
+    await expect(prisma.leagueMembership.count({ where: { leagueId: league.id } })).resolves.toBe(0);
+    // The league goes; its members' accounts do not.
+    await expect(prisma.user.findUnique({ where: { id: commissioner.user.id } })).resolves.toMatchObject({ isActive: true });
   });
 });

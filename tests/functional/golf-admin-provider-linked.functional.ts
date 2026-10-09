@@ -53,7 +53,7 @@ import {
 // scheduled-event-reader concern, not reachable through the SDK. Coverage:
 //   - ingestion-service.test.ts "pool-master-5h3" — the manual event-sync
 //     guard permits EVENTPARTICIPANTS for SCORES_ONLY (rejects only NONE).
-//   - scheduled-event-reader.test.ts — both scheduled feeds pick only linked
+//   - scheduled-event-reader.integration.ts — both scheduled feeds pick only linked
 //     (SCORES_ONLY) events, never an unlinked NONE one (#435).
 
 const MOCK_PROVIDER_ID = 'mock-contest-feed';

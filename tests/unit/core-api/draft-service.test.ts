@@ -644,6 +644,27 @@ describe('#324 DraftService.submitSelection — the guards, in order', () => {
     expect(deletePick).not.toHaveBeenCalled();
   });
 
+  // An engine's rejection is answered after the shared exclusivity check. The one input where
+  // that order shows is a budget-pick re-pick of a golfer another entry also holds, a state an
+  // exclusive contest reaches only through two concurrent picks: exclusivity answers first.
+  it('answers 400 PARTICIPANT_ALREADY_TAKEN, not DUPLICATE_PICK, when an exclusive budget-pick entry re-picks a golfer another entry also holds', async () => {
+    const { service, createPick } = setup({
+      contest: { selectionType: SelectionType.BUDGET_PICK },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, isExclusive: true },
+      picks: [pick('pick-a', 'p-a', 'sep-a')],
+      contestPicksForParticipant: [
+        pick('pick-a', 'p-a', 'sep-a'),
+        pick('pick-other', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID }),
+      ] as unknown as ContestEntryPick[],
+    });
+
+    await expect(service.submitSelection(submit())).rejects.toMatchObject({
+      code: 'PARTICIPANT_ALREADY_TAKEN',
+      statusCode: 400,
+    });
+    expect(createPick).not.toHaveBeenCalled();
+  });
+
   it('answers 400 ENTRY_COMPLETE when a full budget-pick entry submits again', async () => {
     const { service, createPick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
@@ -1029,5 +1050,51 @@ describe('DraftService.submitSelection — a pick change on a submitted entry (#
     await service.submitSelection(submit({ participantId: 'sep-a' }));
 
     expect(deps.entries.update).not.toHaveBeenCalled();
+  });
+});
+
+// Exclusivity is the shared handler's, not an engine's (#198): it is driven by the contest's
+// configuration and must hold the same way whichever engine serves the room. Each engine is
+// run at both settings so a later move of the rule into one engine, or out of the handler,
+// fails here for the engine it drops.
+describe.each([
+  { selectionType: SelectionType.TIERED, configuration: {} },
+  { selectionType: SelectionType.BUDGET_PICK, configuration: { rosterSize: 2 } },
+])('DraftService exclusivity in a $selectionType room', ({ selectionType, configuration: typeConfiguration }) => {
+  const takenByOtherEntry = [pick('pick-other', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID })];
+  const roomWith = (isExclusive: boolean, extra: SetupOptions = {}) =>
+    setup({
+      contest: { selectionType },
+      configuration: { selectionType, isExclusive, ...typeConfiguration },
+      ...extra,
+    });
+
+  it('refuses 400 PARTICIPANT_ALREADY_TAKEN for a golfer another entry holds when the contest is exclusive', async () => {
+    const { service, createPick } = roomWith(true, {
+      contestPicksForParticipant: takenByOtherEntry as unknown as ContestEntryPick[],
+    });
+
+    await expect(service.submitSelection(submit())).rejects.toMatchObject({
+      code: 'PARTICIPANT_ALREADY_TAKEN',
+      statusCode: 400,
+    });
+    expect(createPick).not.toHaveBeenCalled();
+  });
+
+  it('places a golfer another entry holds when the contest is not exclusive', async () => {
+    const { service, createPick } = roomWith(false, {
+      contestPicksForParticipant: takenByOtherEntry as unknown as ContestEntryPick[],
+    });
+
+    await expect(service.submitSelection(submit())).resolves.toMatchObject({ outcome: 'placed' });
+    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: 'sep-a' }));
+  });
+
+  it('drops a golfer another entry holds from the available ids only when the contest is exclusive', async () => {
+    const exclusive = await roomWith(true, { picks: takenByOtherEntry }).service.getDraftState({ contestId: CONTEST_ID });
+    const shared = await roomWith(false, { picks: takenByOtherEntry }).service.getDraftState({ contestId: CONTEST_ID });
+
+    expect(exclusive.availableSportEventParticipantIds).not.toContain('sep-a');
+    expect(shared.availableSportEventParticipantIds).toContain('sep-a');
   });
 });

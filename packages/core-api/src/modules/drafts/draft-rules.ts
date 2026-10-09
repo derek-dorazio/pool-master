@@ -4,17 +4,16 @@
  * Every function here is a function of its arguments: no Prisma, no ports, no request, no
  * state. That is deliberate. #323 deleted an `engine/` directory of stateful classes that
  * enforced three rules where the live route enforced ten, and disagreed with it on the
- * central one. The good half of those engines was always the arithmetic — roster size, the
- * status derivation, where a tiered pick lands — and it belongs here, where it can be called
- * and tested without an HTTP request or a database.
+ * central one. The good half of those engines was always the arithmetic, and it belongs in
+ * pure functions that can be called and tested without an HTTP request or a database. What
+ * differs by selection type (roster size, where a pick lands, lineup completeness) lives in
+ * `selection-engines/` (#198), behind one interface; what stays here is shared by every type.
  */
 
 import {
   deriveLegacyParticipantStatus,
   DraftStatus,
-  SelectionType,
   type Contest,
-  type ContestConfiguration,
   type ContestEntry,
   type Participant,
   type SportEventParticipant,
@@ -23,73 +22,12 @@ import {
 import type { SportEventTierGroup, ParticipantValuationView } from '../events/sport-event-tier-service';
 import type {
   DraftTierConfig,
-  LineupShortfall,
   ParticipantValuation,
   SelectionParticipant,
-  TieredPlacement,
 } from './types';
-
-/** The two selection types the draft-room surface serves; anything else answers 501. */
-export function isRosterSelectionType(selectionType: Contest['selectionType']): boolean {
-  return selectionType === SelectionType.TIERED || selectionType === SelectionType.BUDGET_PICK;
-}
 
 export function isCommissionerRole(role: unknown): boolean {
   return role === 'COMMISSIONER';
-}
-
-/**
- * How many picks a full roster holds. A budget-pick contest carries the number on its
- * configuration; a tiered contest's roster is however many picks its tiers ask for added up
- * (the event's tier count times the contest's picks per tier, #479), which is why a tiered
- * room with no tiers has a roster size of 0 and rejects every submission with
- * `SELECTION_CONFIG_INVALID`.
- */
-export function getRosterSize(
-  selectionType: Contest['selectionType'],
-  configuration: ContestConfiguration | null,
-  tiers: readonly DraftTierConfig[],
-): number {
-  if (selectionType === SelectionType.BUDGET_PICK) return configuration?.rosterSize ?? 0;
-  if (selectionType === SelectionType.TIERED) {
-    return tiers.reduce((sum, tier) => sum + tier.picksFromTier, 0);
-  }
-  return 0;
-}
-
-/**
- * Whether an entry's lineup may be submitted, and if not, why (#481). Null means it is
- * complete: exactly `rosterSize` picks and, in a tiered contest, exactly as many picks from
- * each tier as the tier asks for. A roster size of 0 (a tiered room with no tiers) is never
- * complete, because there is nothing to submit.
- *
- * The draft room cannot overfill a tier (a full tier replaces) or a roster (`ENTRY_COMPLETE`),
- * so in practice a shortfall is always a lineup with too few picks. The per-tier check still
- * runs on its own, because a pick on a golfer later moved out of every tier counts towards the
- * roster but fills no tier.
- */
-export function findLineupShortfall(input: {
-  selectionType: Contest['selectionType'];
-  rosterSize: number;
-  tiers: readonly DraftTierConfig[];
-  /** The entry's picks, each with the canonical participant it points at. */
-  picks: readonly { participantId: string }[];
-}): LineupShortfall | null {
-  const { selectionType, rosterSize, tiers, picks } = input;
-  const shortTierNames = selectionType === SelectionType.TIERED
-    ? tiers
-      .filter((tier) => {
-        const tierParticipantIds = new Set(tier.participantIds);
-        const picksInTier = picks.filter((pick) => tierParticipantIds.has(pick.participantId));
-        return picksInTier.length !== tier.picksFromTier;
-      })
-      .map((tier) => tier.tierName)
-    : [];
-
-  if (rosterSize > 0 && picks.length === rosterSize && shortTierNames.length === 0) {
-    return null;
-  }
-  return { pickCount: picks.length, rosterSize, shortTierNames };
 }
 
 /**
@@ -220,52 +158,6 @@ export function buildSelectionParticipants(input: {
       // the read returned. Ordering by id keeps the room's participant list stable instead.
       return left.sportEventParticipantId.localeCompare(right.sportEventParticipantId);
     });
-}
-
-/**
- * Where a tiered selection lands within the entry, and which pick it displaces.
- *
- * The central rule, and the one the deleted engines got backwards: **a full tier replaces, it
- * does not reject.** When the entry already holds as many picks from this tier as the tier
- * asks for, the oldest-first list's last pick is displaced and the new one takes its round.
- * `ENTRY_COMPLETE` is for a full entry with no tier to replace within — which is why the
- * replacement check runs first and the completeness check consults its result.
- *
- * A tier configured to contribute no picks is the degenerate case worth naming: every entry
- * already holds "enough" picks from it, but there is no pick to displace, so a full entry
- * answers `entry-complete` and an unfull one simply places.
- */
-export function resolveTieredPlacement(input: {
-  tier: DraftTierConfig;
-  tiers: readonly DraftTierConfig[];
-  /** The entry's picks, oldest first, each with the canonical participant it points at. */
-  existingPicks: readonly { id: string; participantId: string }[];
-  rosterSize: number;
-}): TieredPlacement {
-  const { tier, tiers, existingPicks, rosterSize } = input;
-
-  const participantIdsInTier = new Set(tier.participantIds);
-  const picksInTier = existingPicks.filter((pick) => participantIdsInTier.has(pick.participantId));
-  const replacedPickId =
-    picksInTier.length >= tier.picksFromTier
-      ? picksInTier[picksInTier.length - 1]?.id ?? null
-      : null;
-
-  if (existingPicks.length >= rosterSize && !replacedPickId) {
-    return { kind: 'entry-complete' };
-  }
-
-  const effectivePicksInTierCount = replacedPickId
-    ? tier.picksFromTier - 1
-    : Math.min(picksInTier.length, tier.picksFromTier - 1);
-  const roundsBeforeTier = tiers
-    .filter((item) => item.tierNumber < tier.tierNumber)
-    .reduce((sum, item) => sum + item.picksFromTier, 0);
-  const draftRound = roundsBeforeTier + effectivePicksInTierCount + 1;
-
-  return replacedPickId
-    ? { kind: 'replace', draftRound, replacedPickId }
-    : { kind: 'place', draftRound };
 }
 
 /**

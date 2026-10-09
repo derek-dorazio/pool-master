@@ -26,7 +26,9 @@ import type {
   ContestEntry,
   ContestConfiguration,
   LeagueMembership,
+  PersistedGolfContestTierDefinition,
   SquadMembership,
+  Unvalidated,
 } from '@poolmaster/shared/domain';
 import {
   ContestEntryStatus,
@@ -1207,7 +1209,7 @@ function readEmailTierDefinitions(tierConfig: unknown): EmailTierDefinition[] {
   if (!Array.isArray(tierConfig)) return [];
   return tierConfig
     .map((tier, index) => {
-      const record = tier as Record<string, unknown>;
+      const record = tier as Unvalidated<PersistedGolfContestTierDefinition>;
       return {
         // eslint-disable-next-line @typescript-eslint/no-base-to-string -- reading legacy/untrusted stored JSON config; the fallback chain is the safety net, not the type.
         tierId: String(record.tierId ?? record.tierName ?? `tier-${index + 1}`),
