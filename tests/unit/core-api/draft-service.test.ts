@@ -645,6 +645,27 @@ describe('#324 DraftService.submitSelection — the guards, in order', () => {
     expect(deletePick).not.toHaveBeenCalled();
   });
 
+  // An engine's rejection is answered after the shared exclusivity check. The one input where
+  // that order shows is a budget-pick re-pick of a golfer another entry also holds, a state an
+  // exclusive contest reaches only through two concurrent picks: exclusivity answers first.
+  it('answers 400 PARTICIPANT_ALREADY_TAKEN, not DUPLICATE_PICK, when an exclusive budget-pick entry re-picks a golfer another entry also holds', async () => {
+    const { service, createPick } = setup({
+      contest: { selectionType: SelectionType.BUDGET_PICK },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, isExclusive: true },
+      picks: [pick('pick-a', 'p-a', 'sep-a')],
+      contestPicksForParticipant: [
+        pick('pick-a', 'p-a', 'sep-a'),
+        pick('pick-other', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID }),
+      ] as unknown as ContestEntryPick[],
+    });
+
+    await expect(service.submitSelection(submit())).rejects.toMatchObject({
+      code: 'PARTICIPANT_ALREADY_TAKEN',
+      statusCode: 400,
+    });
+    expect(createPick).not.toHaveBeenCalled();
+  });
+
   it('answers 400 ENTRY_COMPLETE when a full budget-pick entry submits again', async () => {
     const { service, createPick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
