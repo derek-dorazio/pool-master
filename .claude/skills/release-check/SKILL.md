@@ -16,9 +16,8 @@ Use `npm run lint` rather than a hand-written `eslint` glob. The glob has change
 a copied one goes stale silently — which is exactly how a rule ends up enforced over fewer
 files than anyone believes.
 
-In an agent session, reset the disposable test database with `npm run db:test:migrate`, not
-`db:test:reset` or a `:fresh` script — Prisma refuses `migrate reset` non-interactively.
-`rules/testing-rules.md` §3 *Required Local Quality Gates* has the rest of what a
+A dirty test database is reset with `npm run db:test:reset` or a `:fresh` script, from an
+agent session too. `rules/testing-rules.md` §3 *Required Local Quality Gates* has the rest of what a
 DB-backed failure means.
 
 ## When a gate fails
