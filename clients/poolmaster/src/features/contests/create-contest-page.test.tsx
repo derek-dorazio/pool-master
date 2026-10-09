@@ -739,7 +739,7 @@ describe('CreateContestPage', () => {
 
   // pool-master-41t — a failed managed-contest load surfaces the page-level
   // error state rather than a half-rendered manage form.
-  it('shows the error state when the managed contest fails to load', async () => {
+  it('shows a contest-setup error, not a league error, when the managed contest fails to load', async () => {
     primeCommonMocks();
     getContestConfigurationMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL_ERROR', message: 'Managed contest lookup failed.' } },
@@ -747,7 +747,9 @@ describe('CreateContestPage', () => {
 
     renderContestPage('/league/BIGDAWGS/admin/contests/contest-err');
 
-    expect(await screen.findByTestId('create-contest-page-error')).toBeInTheDocument();
+    expect(await screen.findByTestId('create-contest-page-error')).toHaveTextContent(
+      "We couldn't load this contest's setup.",
+    );
     expect(screen.queryByTestId('inherited-tiers-panel')).not.toBeInTheDocument();
   });
 
