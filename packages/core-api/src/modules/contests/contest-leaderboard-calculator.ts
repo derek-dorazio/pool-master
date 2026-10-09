@@ -11,6 +11,7 @@ import {
   rankSortedScores,
   type ContestEntryStatus,
   type GolfContestConfig,
+  type Unvalidated,
   type ParticipantScoringDefinition,
   type ParticipantScoringDefinitionId,
   type ScoreDirection,
@@ -19,7 +20,6 @@ import type {
   ContestEntryStandingRow,
   ScoredContestEntryPickRow,
 } from '../../mappers/contests.mapper';
-import type { Unvalidated } from '../../core/unvalidated';
 
 export interface ContestCountingRule {
   type: 'BEST_N_GOLFERS';

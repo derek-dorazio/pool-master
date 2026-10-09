@@ -28,6 +28,7 @@ import type {
   LeagueMembership,
   PersistedGolfContestTierDefinition,
   SquadMembership,
+  Unvalidated,
 } from '@poolmaster/shared/domain';
 import {
   ContestEntryStatus,
@@ -59,7 +60,6 @@ import {
   toParticipantScores,
 } from './contest-leaderboard-reads';
 import { areContestEntriesOpen } from './entry-window';
-import type { Unvalidated } from '../../core/unvalidated';
 import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import {

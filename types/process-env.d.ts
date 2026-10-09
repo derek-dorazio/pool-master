@@ -21,7 +21,6 @@ declare global {
       APP_BASE_URL?: string;
       AUTO_START_SCHEDULER?: string;
       POOLMASTER_DISABLE_AUTO_START?: string;
-      INGESTION_SCHEDULE_CONFIG?: string;
       CLIENT_LOGS_RATE_LIMIT_PER_MIN?: string;
       OPENAPI_EXPORT?: string;
 
