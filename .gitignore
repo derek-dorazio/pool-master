@@ -3,6 +3,8 @@ node_modules
 
 # Build output
 dist/
+# Written by packages/core-api/scripts/write-version-info.mjs at build and test time (#180)
+packages/core-api/version-info.json
 *.tsbuildinfo
 packages/*/src/**/*.js
 packages/*/src/**/*.js.map

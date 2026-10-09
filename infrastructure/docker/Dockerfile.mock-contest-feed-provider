@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY tsconfig.base.json ./
+COPY types/ ./types/
 COPY packages/shared/package*.json ./packages/shared/
 COPY packages/mock-contest-feed-provider/package*.json ./packages/mock-contest-feed-provider/
 

@@ -52,11 +52,11 @@ const env = {
   // jest workers need it too. Same literal as the dev placeholder.
   JWT_SECRET: process.env.JWT_SECRET ?? 'poolmaster-dev-secret-change-in-production',
   // #134 — the same buildApp() path also constructs the logger, which reads
-  // POOLMASTER_ENVIRONMENT and the service version and throws when either is
-  // unset. Set for the same workers and the same reason as JWT_SECRET above.
+  // POOLMASTER_ENVIRONMENT and throws when it is unset. Set for the same workers
+  // and the same reason as JWT_SECRET above. The version comes from
+  // version-info.json, which the functional global setup writes (#180).
   POOLMASTER_ENVIRONMENT: process.env.POOLMASTER_ENVIRONMENT ?? 'test',
   LOG_LEVEL: process.env.LOG_LEVEL ?? 'warn',
-  POOLMASTER_SERVICE_VERSION: process.env.POOLMASTER_SERVICE_VERSION ?? '0.0.0-fapi',
 };
 
 const buildResult = run('npm', ['run', 'build', '--workspace', '@poolmaster/shared'], env);

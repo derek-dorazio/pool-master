@@ -3,6 +3,7 @@ const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { spawn } = require('node:child_process');
 const { isPidAlive, terminatePid } = require('./process-control.cjs');
+const { writeTestVersionInfo } = require('../support/version-info-global-setup.cjs');
 
 const rootDir = path.join(process.cwd());
 const invocationId = process.env.FUNCTIONAL_INVOCATION_ID || randomUUID();
@@ -181,7 +182,6 @@ async function startDaemon(runId) {
       // identity the logger requires. Same reason as JWT_SECRET above.
       POOLMASTER_ENVIRONMENT: process.env.POOLMASTER_ENVIRONMENT || 'test',
       LOG_LEVEL: process.env.LOG_LEVEL || 'warn',
-      POOLMASTER_SERVICE_VERSION: process.env.POOLMASTER_SERVICE_VERSION || '0.0.0-fapi',
       NODE_V8_COVERAGE: functionalServerV8CoverageDir,
       OPENAPI_EXPORT: 'false',
       POOLMASTER_DISABLE_AUTO_START: 'true',
@@ -276,6 +276,8 @@ async function ensureSharedServer(runId) {
 }
 
 module.exports = async () => {
+  // #180 — the spawned server and in-process apps read their version from this file.
+  writeTestVersionInfo();
   fs.mkdirSync(path.dirname(stateFilePath), { recursive: true });
   if (fs.existsSync(stateFilePath)) {
     fs.rmSync(stateFilePath, { force: true });
