@@ -268,7 +268,8 @@ coverage in sync with any changed API shape (notably the `participantStatus` →
 
 - `plans/124-golf-admin-tournament-management.md` — the event-owned tier/price/field model;
   §4.1's `isActive`/`inactiveReason` is this plan's one real dependency.
-- `plans/125-sync-flow-deprecation.md` — `EVENTLIVESCORES` remains the score source this
-  leaderboard ultimately reads through `SportEventParticipant`/`SportEventParticipantGolfRound`.
+- #122 (closed; its plan was deleted, retrieve with
+  `git show 44b0a7a:plans/125-sync-flow-deprecation.md`) — `EVENTLIVESCORES` remains the score
+  source this leaderboard ultimately reads through `SportEventParticipant`/`SportEventParticipantGolfRound`.
 - `pool-master-eux.5` — the prior slice that deliberately deferred golf-specific score/rank
   display out of the generic contest detail page, which this plan finishes.

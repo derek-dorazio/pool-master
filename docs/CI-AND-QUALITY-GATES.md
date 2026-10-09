@@ -665,17 +665,16 @@ Local service tests run against the disposable `poolmaster_test` database. When 
 interrupted run leaves residue, recreate it rather than hand-editing rows:
 
 ```bash
-# Drop, re-migrate, and reseed the disposable test database (human shell only).
+# Empty the disposable test database and re-apply every migration (no seed).
 npm run db:test:reset
 
-# Or recreate it as part of the run (human shell only).
+# Or recreate it as part of the run.
 npm run test:service:functional-api:fresh
 npm run test:service:integration:fresh
-
-# In an agent session: Prisma refuses `migrate reset` non-interactively,
-# so apply pending migrations instead.
-npm run db:test:migrate
 ```
+
+Both work from a human shell and an agent session alike: the reset does not call
+`prisma migrate reset`, which Prisma refuses for an AI agent.
 
 Some scanners accept a `--warn-only` flag for local debugging when you want to
 see findings without a non-zero exit. Whether a scanner is warn-only in CI is
@@ -854,7 +853,7 @@ release, and the mock contest feed provider has its own suite.
 - **Reproduce one shard locally:** `npm run test:integration -- --shard=1/2` (not the `test:service:integration` alias, which drops the flag: npm reads it as its own config).
 - **Required pre-push gate:** `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:integration`.
 - **Coverage policy:** **No threshold** in `tests/integration/jest.config.js`, and no coverage in CI. Integration coverage is collected only for the merged report in `coverage.yml`.
-- **Database setup:** `npm run db:test:reset` recreates the test DB; `npm run db:test:migrate` applies migrations. `db:test:recreate` is the canonical pre-run reset.
+- **Database setup:** `npm run db:test:reset` recreates the test DB (empty schema, every migration applied); `npm run db:test:migrate` applies pending migrations only.
 
 ### 3. Backend functional API / FAPI (`tests/functional/**/*.functional.ts`)
 
