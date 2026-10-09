@@ -10,7 +10,9 @@ import type {
   ProviderSyncRunDto,
   UnmappedProviderParticipantDto,
 } from '@poolmaster/shared/dto';
+import { ProviderSyncRequestPayloadDtoSchema } from '@poolmaster/shared/dto';
 import type { ProviderSyncRun } from '@poolmaster/shared/domain';
+import type { FastifyBaseLogger } from 'fastify';
 import type { SportEvent as ProviderEvent } from '../modules/ingestion/core/provider-interface';
 import type {
   ProviderManualSyncSubmissionResult,
@@ -32,7 +34,26 @@ export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummary
   };
 }
 
-export function toProviderSyncRunDto(run: ProviderSyncRun): ProviderSyncRunDto {
+/**
+ * The stored payload is JSON from whichever release wrote the run. Its `requestPayload` is
+ * typed in the contract, so it is parsed here: one written in an older shape is left out and
+ * logged, rather than failing the serializer for every run in the list.
+ */
+export function toProviderSyncRunDto(
+  run: ProviderSyncRun,
+  logger?: Pick<FastifyBaseLogger, 'warn'>,
+): ProviderSyncRunDto {
+  const { requestPayload: storedRequest, ...rest } = run.payload;
+  const parsedRequest = storedRequest === undefined
+    ? undefined
+    : ProviderSyncRequestPayloadDtoSchema.safeParse(storedRequest);
+  if (parsedRequest && !parsedRequest.success) {
+    logger?.warn({
+      action: 'ingestion.syncRun.requestPayloadSkipped',
+      data: { syncRunId: run.id },
+    }, 'Left a sync run\'s request payload out: it was stored in a shape the contract no longer has');
+  }
+  const payload = parsedRequest?.success ? { ...rest, requestPayload: parsedRequest.data } : rest;
   return {
     id: run.id,
     providerId: run.providerId,
@@ -42,7 +63,7 @@ export function toProviderSyncRunDto(run: ProviderSyncRun): ProviderSyncRunDto {
     startedAt: run.startedAt?.toISOString() ?? null,
     completedAt: run.completedAt?.toISOString() ?? null,
     createdAt: run.createdAt.toISOString(),
-    payload: run.payload,
+    payload,
   };
 }
 
@@ -54,7 +75,7 @@ export function toProviderManualSyncSubmissionResponse(
     eventId: result.eventId,
     requestedFeeds: result.requestedFeeds,
     submittedAt: result.submittedAt.toISOString(),
-    syncRuns: result.syncRuns.map(toProviderSyncRunDto),
+    syncRuns: result.syncRuns.map((run) => toProviderSyncRunDto(run)),
   };
 }
 
