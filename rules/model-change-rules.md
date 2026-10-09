@@ -75,7 +75,7 @@ layers are still shaped like the old model, the slice remains `In Progress`.
   documented boundary reason not to.
 - [ ] Update or add the DTO Zod schema in `packages/shared/dto/`.
 - [ ] Update the backend mapper in `packages/core-api/src/mappers/`.
-- [ ] Update route request/response schemas in `routes.ts` using `zodToJsonSchema()`.
+- [ ] Update route request/response schemas in `routes.ts` as named components (`registerSchema` + `schemaRef`, `rules/service-rules.md` §4).
 - [ ] Ensure `operationId`, `summary`, and `tags` remain correct.
 - [ ] Add or refresh descriptions where field/object/endpoint meaning is not
   obvious from names alone.

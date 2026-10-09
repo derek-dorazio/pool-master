@@ -66,7 +66,7 @@
     "api:generate": "npx @hey-api/openapi-ts -f packages/shared/openapi-ts.config.ts && npx openapi-typescript packages/shared/generated/openapi.json -o packages/shared/generated/api-types.ts",
     "api:check": "node scripts/check-openapi-fresh.mjs && node scripts/generate-api-routes.mjs --check",
     "api:routes": "node scripts/generate-api-routes.mjs",
-    "api:validate": "node --import tsx scripts/validate-openapi-spec.ts",
+    "api:validate": "node --import tsx scripts/validate-openapi-spec.ts && node scripts/check-openapi-named-schemas.mjs",
     "api:refresh": "npm run api:export && npm run api:generate && npm run api:routes",
     "rules:check:skill-references": "node scripts/check-skill-references.mjs",
     "rules:check:plan-references": "node scripts/check-plan-references.mjs --warn-only",

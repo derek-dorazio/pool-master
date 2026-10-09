@@ -2,7 +2,7 @@
  * Common DTO schemas shared across all API endpoints.
  */
 import { z } from 'zod';
-import { ErrorEnvelopeSchema } from './errors.dto';
+import { registerSchema } from './schema-registry';
 
 // --- Primitives ---
 
@@ -17,14 +17,11 @@ export const StringRecordSchema = z.record(z.string()).describe('String-keyed re
  */
 export const EmailInputSchema = z.string().trim().toLowerCase().email();
 
-// --- Error Envelope ---
-// Compatibility alias for older imports. New code should prefer ErrorEnvelopeSchema directly.
-export const ApiErrorSchema = ErrorEnvelopeSchema;
-export type ApiError = z.infer<typeof ApiErrorSchema>;
-
 // --- Success Envelope ---
 
-export const SuccessSchema = z.object({
+export const SuccessResponseSchema = z.object({
   success: z.literal(true).describe('Confirms that the requested operation succeeded.'),
 }).describe('Minimal success response envelope.');
-export type SuccessResponse = z.infer<typeof SuccessSchema>;
+export type SuccessResponse = z.infer<typeof SuccessResponseSchema>;
+// The shared acknowledgement for deletes and other actions that return nothing else (#192).
+registerSchema('SuccessResponse', SuccessResponseSchema);

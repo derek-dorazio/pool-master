@@ -14,7 +14,8 @@ import { AuthService } from './auth-service';
 import { createAuthHandlers } from './handler';
 import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaUserRepository } from '../../adapters';
-import { ErrorEnvelopeSchema, SuccessSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
+// Registers ErrorEnvelope and SuccessResponse, which this module's routes $ref (#192).
+import '@poolmaster/shared/dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components this module's routes $ref (#192).
@@ -39,8 +40,8 @@ export function authModule(fastify: FastifyInstance): void {
       body: schemaRef('RegisterRequest'),
       response: {
         201: schemaRef('AuthResponse'),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
-        409: zodToJsonSchema(ErrorEnvelopeSchema),
+        400: schemaRef('ErrorEnvelope'),
+        409: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handlers.register,
@@ -57,7 +58,7 @@ export function authModule(fastify: FastifyInstance): void {
       body: schemaRef('LoginRequest'),
       response: {
         200: schemaRef('AuthResponse'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handlers.login,
@@ -73,7 +74,7 @@ export function authModule(fastify: FastifyInstance): void {
       operationId: 'refreshToken',
       response: {
         200: schemaRef('TokenRefreshResponse'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handlers.refresh,
@@ -88,8 +89,8 @@ export function authModule(fastify: FastifyInstance): void {
         'Revokes the current refresh-token session so the browser or client must authenticate again before making further authenticated requests.',
       operationId: 'logoutUser',
       response: {
-        200: zodToJsonSchema(SuccessSchema),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        200: schemaRef('SuccessResponse'),
+        400: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handlers.logout,

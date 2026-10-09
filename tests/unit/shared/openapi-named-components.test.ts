@@ -15,7 +15,9 @@
  *     function return type) survived in test fixtures — a half-converted module.
  *   - A blanket rewrite matched `ListLeaguesResponses` inside
  *     `AdminListLeaguesResponses` and renamed a type belonging to an unconverted
- *     module. Overreach reads as progress unless something asserts the opposite.
+ *     module. A mirror test asserted unconverted maps survived until every operation
+ *     was converted; `scripts/check-openapi-named-schemas.mjs` now refuses any inline
+ *     schema, so there is nothing unconverted left to protect.
  *
  * And a third, which this guard itself missed for a slice: checking only `responses.200`
  * hid every 201-returning operation, so a converted module kept `[201]` derivations and
@@ -138,17 +140,5 @@ describe('#192: converted modules leave no derivations behind', () => {
     // Deleting the derivations is the deliverable, not cleanup. Leaving one beside
     // the import gives two ways to name one shape and no signal which is current.
     expect(filesIndexing(responseMap)).toBe('');
-  });
-
-  it('rule: unconverted modules keep their response maps', () => {
-    // The mirror of the above, and the one that catches OVERREACH: a rewrite that
-    // matched a converted map's name as a substring of an unconverted one would
-    // otherwise look like extra progress. At least one unconverted operation's map
-    // must still be indexed somewhere, or this conversion has reached too far.
-    const stillInline = operations()
-      .filter(({ op }) => !hasSuccessRef(op))
-      .map(({ operationId }) => responseMapName(operationId));
-    const anyStillIndexed = stillInline.some((m) => filesIndexing(m) !== '');
-    expect(anyStillIndexed).toBe(true);
   });
 });
