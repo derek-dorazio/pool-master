@@ -64,7 +64,7 @@ export function teamInvitationsModule(fastify: FastifyInstance): void {
       tags: ['Squads'],
       summary: 'Accept a team-owner invitation using an invite code',
       description:
-        'Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`.',
+        'Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a team that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.',
       operationId: 'acceptTeamOwnerInvitation',
       body: schemaRef('AcceptTeamOwnerInvitationRequest'),
       response: {
@@ -82,7 +82,7 @@ export function teamInvitationsModule(fastify: FastifyInstance): void {
       tags: ['Squads'],
       summary: 'Register a new account against a team-owner invitation and accept it',
       description:
-        'Creates a PoolMaster account for an invited co-owner who does not have one yet, then joins them to the league and the invited team — registration, league membership and team ownership in a single request. Returns the new account with a session, so the invitee is signed in and lands on their team.\n\nUnauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.\n\nThe account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`.',
+        'Creates a PoolMaster account for an invited co-owner who does not have one yet, then joins them to the league and the invited team — registration, league membership and team ownership in a single request. Returns the new account with a session, so the invitee is signed in and lands on their team.\n\nUnauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.\n\nThe account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a team that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.',
       operationId: 'registerWithTeamOwnerInvitation',
       body: schemaRef('RegisterWithTeamOwnerInvitationRequest'),
       response: {

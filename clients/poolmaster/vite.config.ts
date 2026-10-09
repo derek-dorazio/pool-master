@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   const assetBase = process.env.APP_ASSET_BASE ?? '/';
@@ -107,10 +107,6 @@ export default defineConfig(() => {
       port: 4175,
       strictPort: true,
       proxy: apiProxy,
-    },
-    test: {
-      include: ['src/**/*.{test,spec}.{ts,tsx}'],
-      exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
     },
   };
 });

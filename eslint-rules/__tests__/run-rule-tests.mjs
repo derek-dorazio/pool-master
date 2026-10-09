@@ -21,6 +21,7 @@ import noBareEnumLiterals from '../no-bare-enum-literals.mjs';
 import noInlineThemeStyles from '../no-inline-theme-styles.mjs';
 import noMockedApi from '../no-mocked-api.mjs';
 import noNodeEnvReads from '../no-node-env-reads.mjs';
+import noRawThemeColors from '../no-raw-theme-colors.mjs';
 import noUnawaitedSendError from '../no-unawaited-send-error.mjs';
 
 const ruleTester = new RuleTester({
@@ -156,6 +157,33 @@ ruleTester.run('no-inline-theme-styles', noInlineThemeStyles, {
     { code: 'const b = <span style={{ fontSize: 14 }} />;', errors: [{ messageId: 'inlineThemeStyle' }] },
     { code: "const c = <span style={{ color: 'inherit' }} />;", errors: [{ messageId: 'inlineThemeStyle' }] },
     { code: 'const d = <span style={{ background: `red` }} />;', errors: [{ messageId: 'inlineThemeStyle' }] },
+  ],
+});
+
+ruleTester.run('no-raw-theme-colors', noRawThemeColors, {
+  valid: [
+    // Semantic tokens are what the rule pushes toward.
+    'const a = <div className="bg-primary text-muted-foreground border-border" />;',
+    // An issue number in a comment is not a colour. The scanner's regex pass
+    // reported `#206` here, which cost two PRs a lint round each.
+    '// see #206 and #abc\nconst b = 1;',
+    '/* #fff */ const c = 2;',
+    // A colour scale name without a shade is not a raw scale class.
+    "const d = 'text-red';",
+    // Not a colour-bearing utility prefix.
+    "const e = 'p-500 gap-200';",
+  ],
+  invalid: [
+    {
+      code: 'const a = <div className="rounded bg-red-500 text-slate-700/80" />;',
+      errors: [{ messageId: 'rawThemeColor', data: { matches: 'bg-red-500, text-slate-700/80' } }],
+    },
+    { code: "const b = cn('p-2', 'border-gray-200');", errors: [{ messageId: 'rawThemeColor' }] },
+    // Template chunks are checked; the interpolation itself is not a literal.
+    { code: 'const c = `ring-blue-300 ${extra}`;', errors: [{ messageId: 'rawThemeColor' }] },
+    { code: "const d = { color: '#1a2b3c' };", errors: [{ messageId: 'rawThemeColor' }] },
+    { code: "const e = 'rgba(0, 0, 0, 0.5)';", errors: [{ messageId: 'rawThemeColor' }] },
+    { code: 'const f = <span>hsl(10, 20%, 30%)</span>;', errors: [{ messageId: 'rawThemeColor' }] },
   ],
 });
 

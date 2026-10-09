@@ -64,9 +64,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint src/",
-    "generate": "npx @hey-api/openapi-ts -f openapi-ts.config.ts"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.node.json",
+    "lint": "eslint src/"
   },
   "dependencies": {
     "zod": "^3.23.0",
