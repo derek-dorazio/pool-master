@@ -11,6 +11,7 @@ module.exports = {
     '^@poolmaster/mock-contest-feed-provider/generated/hey-api/types$':
       '<rootDir>/packages/mock-contest-feed-provider/generated/hey-api/types.gen.ts',
   },
+  globalSetup: '<rootDir>/tests/support/version-info-global-setup.cjs',
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   coverageDirectory: '<rootDir>/coverage',
   // #302 — no coverageProvider here: CI's gating run uses Jest's default (Babel), which is the

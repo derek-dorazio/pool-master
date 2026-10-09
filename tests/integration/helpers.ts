@@ -200,13 +200,12 @@ export async function setupIntegrationTests(): Promise<void> {
   if (!process.env.JWT_SECRET) {
     process.env.JWT_SECRET = JWT_SECRET;
   }
-  // #134 — POOLMASTER_ENVIRONMENT and a version source are likewise required
-  // with no fallback, and this config has no setupFilesAfterEach, so they are
-  // set here rather than in tests/setup.ts. buildTestApp() creates a logger,
-  // which reads both.
+  // #134 — POOLMASTER_ENVIRONMENT is likewise required with no fallback, and
+  // this config has no setupFilesAfterEach, so it is set here rather than in
+  // tests/setup.ts. buildTestApp() creates a logger, which reads it. The version
+  // comes from version-info.json, written by this config's globalSetup (#180).
   process.env.POOLMASTER_ENVIRONMENT ??= 'test';
   process.env.LOG_LEVEL ??= 'warn';
-  process.env.RELEASE_VERSION ??= '0.0.0-test';
   prisma = new PrismaClient();
   await prisma.$connect();
   await cleanupTestData();

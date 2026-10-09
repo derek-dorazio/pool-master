@@ -55,7 +55,7 @@ export function readJwtSecret(): string {
 }
 
 // ---------------------------------------------------------------------------
-// Deployment identity: environment name and running version
+// Deployment identity: environment name (the running version is core/version-info.ts)
 // ---------------------------------------------------------------------------
 
 export class RequiredEnvMissingError extends Error {
@@ -128,40 +128,6 @@ export function readAppEnv(
     throw new Error(
       `POOLMASTER_ENVIRONMENT "${raw}" is not a known environment. `
       + `Use one of: ${[...APP_ENVIRONMENTS].join(', ')}.`,
-    );
-  }
-  return value;
-}
-
-/**
- * Resolve the running service version and throw if no source provides one.
- *
- * `POOLMASTER_SERVICE_VERSION` is listed first because it is the name the deploy
- * pipeline actually sets — `.github/workflows/ci.yml` injects it into the core-api
- * ECS task definition from the full commit SHA. The rest are accepted aliases for
- * local runs and other harnesses.
- *
- * This chain is NOT a fallback: every entry is an environment variable, and the
- * function still throws when none is set. A `?? 'literal'` at the end would be the
- * banned pattern — a name list is not.
- *
- * `npm_package_version` is last and is set only when the process was started
- * through an npm script. A container running `node dist/index.js` has none of
- * these unless the deployment supplies one — which is the point: a service that
- * cannot say what version it is running should not start, rather than reporting a
- * number someone hardcoded once.
- */
-export function readServiceVersion(): string {
-  const value = process.env.POOLMASTER_SERVICE_VERSION
-    || process.env.RELEASE_VERSION
-    || process.env.APP_VERSION
-    || process.env.GIT_SHA
-    || process.env.npm_package_version;
-  if (!value || value.trim().length === 0) {
-    throw new RequiredEnvMissingError(
-      'POOLMASTER_SERVICE_VERSION',
-      'health output and log lines report the running version',
-      'Set POOLMASTER_SERVICE_VERSION (or RELEASE_VERSION / APP_VERSION / GIT_SHA) at deploy time.',
     );
   }
   return value;

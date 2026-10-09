@@ -2392,6 +2392,50 @@ export interface components {
              */
             success: true;
         };
+        /** @description Version metadata for one deployed component. */
+        VersionComponent: {
+            /** @description Package or runtime component name. */
+            name: string;
+            /** @description Semantic package version or deployment version label. */
+            version: string;
+            /** @description Git SHA for this component build, when supplied by CI. */
+            gitSha: string | null;
+            /** @description CI build or run number for this component build, when supplied by CI. */
+            buildNumber: string | null;
+        };
+        /** @description Public service version metadata for deployment and stale-release diagnostics. */
+        ServiceVersionResponse: {
+            /**
+             * @description Version metadata response schema version.
+             * @enum {number}
+             */
+            schemaVersion: 1;
+            /** @description Runtime environment name: development, test, ci, qa, staging, or prod. */
+            environment: string;
+            /**
+             * Format: date-time
+             * @description UTC time this build was made, from version-info.json.
+             */
+            buildTimeUtc: string | null;
+            /** @description Git branch or ref name supplied by CI, when available. */
+            gitRef: string | null;
+            /** @description Core API service version metadata. */
+            service: {
+                /** @description Package or runtime component name. */
+                name: string;
+                /** @description Semantic package version or deployment version label. */
+                version: string;
+                /** @description Git SHA for this component build, when supplied by CI. */
+                gitSha: string | null;
+                /** @description CI build or run number for this component build, when supplied by CI. */
+                buildNumber: string | null;
+            };
+            /** @description Non-secret runtime metadata useful during operational debugging. */
+            runtime: {
+                /** @description Node.js runtime version running the service. */
+                nodeVersion: string;
+            };
+        };
         /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
         PollIntervalConfig: {
             /** @description Recommended refresh interval for standings and leaderboard surfaces. */
@@ -10261,39 +10305,6 @@ export interface components {
                 };
                 err?: unknown;
             }[];
-        };
-        /** @description Public service version metadata for deployment and stale-release diagnostics. */
-        ServiceVersionResponse: {
-            /**
-             * @description Version metadata response schema version.
-             * @enum {number}
-             */
-            schemaVersion: 1;
-            /** @description Runtime environment name: development, test, ci, qa, staging, or prod. */
-            environment: string;
-            /**
-             * Format: date-time
-             * @description UTC build timestamp supplied by CI, when available.
-             */
-            buildTimeUtc: string | null;
-            /** @description Git branch or ref name supplied by CI, when available. */
-            gitRef: string | null;
-            /** @description Core API service version metadata. */
-            service: {
-                /** @description Package or runtime component name. */
-                name: string;
-                /** @description Semantic package version or deployment version label. */
-                version: string;
-                /** @description Git SHA for this component build, when supplied by CI. */
-                gitSha: string | null;
-                /** @description CI build or run number for this component build, when supplied by CI. */
-                buildNumber: string | null;
-            };
-            /** @description Non-secret runtime metadata useful during operational debugging. */
-            runtime: {
-                /** @description Node.js runtime version running the service. */
-                nodeVersion: string;
-            };
         };
         /** @description Standard API error envelope. */
         ErrorEnvelope: {
