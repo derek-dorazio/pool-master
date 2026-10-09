@@ -9,7 +9,6 @@ import {
   INGESTION_SCHEDULE_SETTINGS,
   IngestionConfigService,
 } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
-import { PollConfigService, POLL_INTERVAL_SETTINGS } from '../../../packages/core-api/src/modules/platform/poll-config-service';
 import { defineSettingsGroup } from '../../../packages/core-api/src/modules/platform/settings-group';
 import type { SettingsGroup } from '../../../packages/core-api/src/modules/platform/settings-group';
 import { SETTINGS_GROUPS } from '../../../packages/core-api/src/modules/platform/settings-groups';
@@ -299,20 +298,6 @@ describe('platform config services on the settings registry', () => {
     return { repository, settings };
   }
 
-  it('updates and resets poll config, storing each change', async () => {
-    const { repository, settings } = await loaded();
-    const service = new PollConfigService(settings, fakeLogger());
-
-    await expect(service.updateConfig({ draft: 15000 }, 'admin-1')).resolves.toEqual(
-      expect.objectContaining({ draft: 15000, standings: 10000 }),
-    );
-    await expect(service.resetDefaults('admin-1')).resolves.toEqual(
-      expect.objectContaining({ draft: 10000 }),
-    );
-    expect(repository.rows.get(POLL_INTERVAL_SETTINGS.key)?.configJson).toEqual(expect.objectContaining({ draft: 10000 }));
-    expect(repository.history).toHaveLength(2);
-  });
-
   it('ingestion config defaults the scheduled field sync to off, keeps live scores on, and has no schedule or results feed', async () => {
     const { settings } = await loaded();
     const service = new IngestionConfigService(settings, fakeLogger());
@@ -377,21 +362,13 @@ describe('platform config services on the settings registry', () => {
     const taskB = await loaded(repository);
     const ingestionOnA = new IngestionConfigService(taskA.settings, fakeLogger());
     const ingestionOnB = new IngestionConfigService(taskB.settings, fakeLogger());
-    const pollOnA = new PollConfigService(taskA.settings, fakeLogger());
-    const pollOnB = new PollConfigService(taskB.settings, fakeLogger());
 
     await ingestionOnA.setPerSportOverride('GOLF', { eventLiveScores: { intervalSeconds: 20 } }, 'admin-1');
     await ingestionOnB.updateConfig({ eventLiveScores: { intervalSeconds: 45 } }, 'admin-2');
-    await pollOnA.updateConfig({ draft: 12000 }, 'admin-1');
-    await pollOnB.updateConfig({ standings: 15000 }, 'admin-2');
 
     expect(repository.rows.get(INGESTION_SCHEDULE_SETTINGS.key)?.configJson).toEqual(expect.objectContaining({
       eventLiveScores: { enabled: true, intervalSeconds: 45 },
       perSportOverrides: { GOLF: { eventLiveScores: { intervalSeconds: 20 } } },
-    }));
-    expect(repository.rows.get(POLL_INTERVAL_SETTINGS.key)?.configJson).toEqual(expect.objectContaining({
-      draft: 12000,
-      standings: 15000,
     }));
   });
 

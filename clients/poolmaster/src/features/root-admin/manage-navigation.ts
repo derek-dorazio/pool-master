@@ -80,7 +80,7 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     group: 'operations',
     title: 'Settings',
     description:
-      'How the app behaves, changeable without a deploy: poll intervals, the ingestion schedule, and who changed them last.',
+      'How the app behaves, changeable without a deploy: the ingestion schedule, system email, and who changed them last.',
     to: '/manage/settings',
   },
 ];
@@ -96,7 +96,6 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   'sync-config': 'Sync Configuration',
   'run-event-sync': 'Run Event Sync',
   'unmapped-participants': 'Unmapped Competitors',
-  'poll-intervals': 'Poll Intervals',
   'ingestion-schedule': 'Global Ingestion Schedule',
   'sport-overrides': 'Sport Ingestion Overrides',
   golf: 'Golf',

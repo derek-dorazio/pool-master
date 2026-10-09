@@ -10,7 +10,7 @@ import {
   TierSource,
   ValuationSource,
 } from '@poolmaster/shared/domain';
-import { DateTimeSchema, JsonObjectSchema } from './common.dto';
+import { DateTimeSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 import { UploadRowResolutionDtoSchema } from './sport-catalog.dto';
 
@@ -73,7 +73,6 @@ export const SportEventDtoSchema = z.object({
   tierCount: z.number().int().describe('Pick tiers defined for the event. A tiered contest\'s entry picks this many tiers times the contest\'s picksPerTier.'),
   contestCount: z.number().int().describe(`Contests run on the event, across every league; an event with any cannot be deleted. ${ADMIN_ONLY}`),
   allowedTransitions: z.array(EventStatusDtoSchema).describe(`Statuses the event may move to next, from the declared transition map. ${ADMIN_ONLY}`),
-  metadata: JsonObjectSchema.describe(`Provider-emitted event metadata captured at field-load time. ${ADMIN_ONLY}`),
   createdAt: DateTimeSchema.describe('When the event row was created.'),
   updatedAt: DateTimeSchema.describe('When the event row was last updated.'),
 }).describe('A real-world event a contest can be run on — a golf tournament, a race, a match.');

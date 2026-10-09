@@ -1,7 +1,6 @@
 /**
  * Platform module — the runtime-tunable platform settings: every settings group by key (#450),
- * plus the original client poll interval and ingestion schedule routes, which read and write
- * the same groups. Mounted at /api/v1/platform.
+ * plus the original ingestion schedule routes, which read and write the same group. Mounted at /api/v1/platform.
  *
  * Every operation is root-admin (#205): `admin` is the permission, `platform` is what these
  * operations administer.
@@ -17,7 +16,6 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import '@poolmaster/shared/dto/config.dto';
 import '@poolmaster/shared/dto/settings.dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
-import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
 import type { PlatformSettingsService } from './platform-settings-service';
 import {
@@ -33,7 +31,6 @@ import { requireAuthUser } from '../../plugins/auth-guard';
 // ---------------------------------------------------------------------------
 
 export interface PlatformModuleOptions {
-  pollConfigService: PollConfigService;
   ingestionConfigService: IngestionConfigService;
   platformSettingsService: PlatformSettingsService;
 }
@@ -42,7 +39,6 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
   void fastify.register(schemaComponentsPlugin);
   fastify.addHook('onRequest', requireRootAdmin);
 
-  const pollConfig = opts.pollConfigService;
   const ingestionConfig = opts.ingestionConfigService;
   const platformSettings = opts.platformSettingsService;
 
@@ -54,7 +50,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
     type: 'object',
     required: ['key'],
     properties: {
-      key: { type: 'string', description: 'The settings group key, e.g. POLL_INTERVAL_CONFIG.' },
+      key: { type: 'string', description: 'The settings group key, e.g. EMAIL_CONFIG.' },
     },
   } as const;
 
@@ -156,77 +152,6 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
     },
     handler: async (request: FastifyRequest<{ Params: { key: string } }>) =>
       toSettingsChangeListDto(await platformSettings.history(request.params.key)),
-  });
-
-  // -------------------------------------------------------------------------
-  // Poll Interval Configuration
-  // -------------------------------------------------------------------------
-
-  fastify.get('/poll-intervals', {
-    schema: {
-      tags: ['Platform'],
-      summary: 'Get poll interval configuration',
-      description:
-        'Returns the platform poll interval configuration that governs recommended client refresh timing.',
-      operationId: 'getPollIntervals',
-      response: {
-        200: schemaRef('PollIntervalConfig'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    handler: async () => {
-      return pollConfig.getConfig();
-    },
-  });
-
-  fastify.put('/poll-intervals', {
-    schema: {
-      tags: ['Platform'],
-      summary: 'Update poll interval configuration',
-      description:
-        'Updates the platform poll interval configuration used by client polling guidance.',
-      operationId: 'updatePollIntervals',
-      response: {
-        200: schemaRef('PollIntervalConfig'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-      body: schemaRef('PollIntervalConfigPatch'),
-    },
-    handler: async (
-      request: FastifyRequest<{
-        Body: {
-          standings?: number;
-          draft?: number;
-          contestStatus?: number;
-          notifications?: number;
-          default?: number;
-        };
-      }>,
-    ) => {
-      const rootAdminUserId = requireAuthUser(request).userId;
-      return pollConfig.updateConfig(request.body, rootAdminUserId);
-    },
-  });
-
-  fastify.post('/poll-intervals/reset', {
-    schema: {
-      tags: ['Platform'],
-      summary: 'Reset poll intervals to defaults',
-      description:
-        'Resets poll interval configuration back to the platform defaults.',
-      operationId: 'resetPollIntervals',
-      response: {
-        200: schemaRef('PollIntervalConfig'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    handler: async (request: FastifyRequest) => {
-      const rootAdminUserId = requireAuthUser(request).userId;
-      return pollConfig.resetDefaults(rootAdminUserId);
-    },
   });
 
   // -------------------------------------------------------------------------

@@ -100,7 +100,7 @@ describe('plans/147 GolfTourCalendarCard', () => {
 
   it('offers no "set as current" for a year without tournaments, and shows the service refusal if it comes', async () => {
     updateSportLeagueMock.mockResolvedValue({
-      error: { code: 'EVENT_YEAR_HAS_NO_EVENTS', message: 'no events' },
+      error: { error: { code: 'EVENT_YEAR_HAS_NO_EVENTS', message: 'no events' } },
       response: { status: 422 },
     });
     renderCard(sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: null }));
@@ -139,7 +139,7 @@ describe('plans/147 GolfTourCalendarCard', () => {
 
   it('surfaces an EVENT_YEAR_NOT_EMPTY clone conflict with specific copy', async () => {
     cloneEventYearMock.mockResolvedValue({
-      error: { code: 'EVENT_YEAR_NOT_EMPTY', message: 'not empty' },
+      error: { error: { code: 'EVENT_YEAR_NOT_EMPTY', message: 'not empty' } },
       response: { status: 409 },
     });
     renderCard();
@@ -188,7 +188,7 @@ describe('plans/147 GolfTourCalendarCard', () => {
 
   it('tells the admin to set the tour\'s match keyword when the import is refused for having none', async () => {
     importEventYearFromProviderMock.mockResolvedValue({
-      error: { code: 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD', message: 'no keyword' },
+      error: { error: { code: 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD', message: 'no keyword' } },
       response: { status: 422 },
     });
     renderCard();

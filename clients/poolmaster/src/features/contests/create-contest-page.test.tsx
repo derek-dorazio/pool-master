@@ -543,7 +543,10 @@ describe('CreateContestPage', () => {
     primeCommonMocks();
     createContestMock.mockResolvedValue({
       error: {
-        message: 'Contest name is already in use.',
+        error: {
+          code: 'CONTEST_NAME_IN_USE',
+          message: 'Contest name is already in use.',
+        },
       },
     });
 
@@ -735,7 +738,7 @@ describe('CreateContestPage', () => {
   it('shows the error state when the managed contest fails to load', async () => {
     primeCommonMocks();
     getContestConfigurationMock.mockResolvedValue({
-      error: { message: 'Managed contest lookup failed.' },
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Managed contest lookup failed.' } },
     });
 
     renderContestPage('/league/BIGDAWGS/contests/contest-err/manage');

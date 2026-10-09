@@ -6,31 +6,10 @@ import { Button } from '@/features/shared/ui';
 import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { throwApiError } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 
 type OwnerRole = 'COMMISSIONER' | 'MEMBER' | undefined;
 type ActiveAction = 'promote' | 'demote' | 'remove' | null;
-
-function extractOwnerActionError(error: unknown, fallback: string) {
-  if (!error || typeof error !== 'object') {
-    return fallback;
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return fallback;
-}
 
 function OwnerActionDialog({
   open,
@@ -172,10 +151,10 @@ export function TeamOwnerActionMenu({
   }
 
   const roleError = changeRoleMutation.error
-    ? extractOwnerActionError(changeRoleMutation.error, 'We could not update that league role.')
+    ? extractErrorMessage(changeRoleMutation.error, { fallback: 'We could not update that league role.' })
     : null;
   const removeError = removeOwnerMutation.error
-    ? extractOwnerActionError(removeOwnerMutation.error, 'We could not remove that owner right now.')
+    ? extractErrorMessage(removeOwnerMutation.error, { fallback: 'We could not remove that owner right now.' })
     : null;
   const teamHomePath = buildLeagueTeamHomePath(leagueCode, teamId);
   const actionIsPending = changeRoleMutation.isPending || removeOwnerMutation.isPending;

@@ -65,7 +65,8 @@ export function inMemoryRuntimeConfigs(): InMemoryRuntimeConfigs {
       }
       const saved = write(input.configKey, input.configJson, input.changedById);
       history.push({
-        id: `change-${history.length + 1}`,
+        // UUID-shaped, as the table's ids are, so a change maps through the published DTO.
+        id: `00000000-0000-4000-8000-${String(history.length + 1).padStart(12, '0')}`,
         configKey: input.configKey,
         previousJson: current ? structuredClone(current.configJson) : null,
         newJson: structuredClone(input.configJson),

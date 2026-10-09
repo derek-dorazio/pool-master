@@ -16,7 +16,7 @@ import {
   AppSettingsService,
   SettingsConflictError,
 } from '../../../packages/core-api/src/modules/platform/app-settings-service';
-import { POLL_INTERVAL_SETTINGS } from '../../../packages/core-api/src/modules/platform/poll-config-service';
+import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email/email-settings';
 import {
   INGESTION_SCHEDULE_SETTINGS,
   IngestionConfigService,
@@ -68,27 +68,27 @@ describe('settings registry on Postgres', () => {
 
     await task.load();
 
-    expect(task.get(POLL_INTERVAL_SETTINGS).standings).toBe(10000);
+    expect(task.get(EMAIL_SETTINGS).replyTo).toBeNull();
     expect(await getPrisma().platformRuntimeConfig.count()).toBe(0);
     expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(0);
   });
 
-  it('a poll interval saved through the API on one task reaches a second task at its next refresh', async () => {
+  it('a value saved through the API on one task reaches a second task at its next refresh', async () => {
     const rootAdmin = await createTestUser({ displayName: 'Settings Root Admin', isRootAdmin: true });
     const secondTask = coreApiTask();
     await secondTask.load();
 
     const saved = await getApp().inject({
       method: 'PUT',
-      url: '/api/v1/platform/poll-intervals',
+      url: '/api/v1/platform/settings/EMAIL_CONFIG',
       headers: rootAdmin.headers,
-      payload: { standings: 15000 },
+      payload: { key: 'EMAIL_CONFIG', value: { ...secondTask.get(EMAIL_SETTINGS), replyTo: 'help@example.test' }, expectedUpdatedAt: null },
     });
 
     expect(saved.statusCode).toBe(200);
-    expect(secondTask.get(POLL_INTERVAL_SETTINGS).standings).toBe(10000);
+    expect(secondTask.get(EMAIL_SETTINGS).replyTo).toBeNull();
     await secondTask.refresh();
-    expect(secondTask.get(POLL_INTERVAL_SETTINGS).standings).toBe(15000);
+    expect(secondTask.get(EMAIL_SETTINGS).replyTo).toBe('help@example.test');
   });
 
   it('a sport override saved on one task survives a global schedule update made on a second task before its refresh', async () => {
@@ -112,22 +112,22 @@ describe('settings registry on Postgres', () => {
     const admin = await createTestUser({ displayName: 'Settings History Admin', isRootAdmin: true });
     const task = coreApiTask();
     await task.load();
-    const defaults = task.get(POLL_INTERVAL_SETTINGS);
+    const defaults = task.get(EMAIL_SETTINGS);
 
-    await task.save(POLL_INTERVAL_SETTINGS, { ...defaults, draft: 12000 }, { changedById: admin.user.id });
-    await task.save(POLL_INTERVAL_SETTINGS, { ...defaults, draft: 14000 }, { changedById: admin.user.id });
+    await task.save(EMAIL_SETTINGS, { ...defaults, replyTo: 'first@example.test' }, { changedById: admin.user.id });
+    await task.save(EMAIL_SETTINGS, { ...defaults, replyTo: 'second@example.test' }, { changedById: admin.user.id });
 
     const history = await getPrisma().platformRuntimeConfigHistory.findMany({
-      where: { configKey: POLL_INTERVAL_SETTINGS.key },
+      where: { configKey: EMAIL_SETTINGS.key },
       orderBy: { changedAt: 'asc' },
     });
     expect(history.map((change) => [
-      (change.previousJson as { draft?: number } | null)?.draft ?? null,
-      (change.newJson as { draft: number }).draft,
+      (change.previousJson as { replyTo?: string } | null)?.replyTo ?? null,
+      (change.newJson as { replyTo: string }).replyTo,
       change.changedById,
     ])).toEqual([
-      [null, 12000, admin.user.id],
-      [12000, 14000, admin.user.id],
+      [null, 'first@example.test', admin.user.id],
+      ['first@example.test', 'second@example.test', admin.user.id],
     ]);
   });
 
@@ -137,17 +137,17 @@ describe('settings registry on Postgres', () => {
     const second = coreApiTask();
     await first.load();
     await second.load();
-    const defaults = first.get(POLL_INTERVAL_SETTINGS);
-    const seenBySecond = second.getState(POLL_INTERVAL_SETTINGS).updatedAt;
+    const defaults = first.get(EMAIL_SETTINGS);
+    const seenBySecond = second.getState(EMAIL_SETTINGS).updatedAt;
 
-    await first.save(POLL_INTERVAL_SETTINGS, { ...defaults, draft: 12000 }, { changedById: admin.user.id, expectedUpdatedAt: null });
+    await first.save(EMAIL_SETTINGS, { ...defaults, replyTo: 'first@example.test' }, { changedById: admin.user.id, expectedUpdatedAt: null });
 
-    await expect(second.save(POLL_INTERVAL_SETTINGS, { ...defaults, draft: 20000 }, {
+    await expect(second.save(EMAIL_SETTINGS, { ...defaults, replyTo: 'second@example.test' }, {
       changedById: admin.user.id,
       expectedUpdatedAt: seenBySecond,
     })).rejects.toBeInstanceOf(SettingsConflictError);
-    const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: POLL_INTERVAL_SETTINGS.key } });
-    expect((stored?.configJson as { draft: number }).draft).toBe(12000);
+    const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: EMAIL_SETTINGS.key } });
+    expect((stored?.configJson as { replyTo: string }).replyTo).toBe('first@example.test');
     expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(1);
   });
 
@@ -162,7 +162,7 @@ describe('settings registry on Postgres', () => {
     const insertDone = new Promise<void>((resolve) => { inserted = resolve; });
     const winner = getPrisma().$transaction(async (tx) => {
       await tx.platformRuntimeConfig.create({
-        data: { configKey: POLL_INTERVAL_SETTINGS.key, configJson: { draft: 12000 }, updatedById: admin.user.id },
+        data: { configKey: EMAIL_SETTINGS.key, configJson: { replyTo: 'first@example.test' }, updatedById: admin.user.id },
       });
       inserted();
       await held;
@@ -170,8 +170,8 @@ describe('settings registry on Postgres', () => {
     await insertDone;
 
     const losing = repository.save({
-      configKey: POLL_INTERVAL_SETTINGS.key,
-      configJson: { draft: 14000 },
+      configKey: EMAIL_SETTINGS.key,
+      configJson: { replyTo: 'second@example.test' },
       changedById: admin.user.id,
       expectedUpdatedAt: null,
     });
@@ -183,21 +183,21 @@ describe('settings registry on Postgres', () => {
     const result = await losing;
 
     expect(result.status).toBe('conflict');
-    expect(result.status === 'conflict' && result.current?.configJson).toEqual({ draft: 12000 });
+    expect(result.status === 'conflict' && result.current?.configJson).toEqual({ replyTo: 'first@example.test' });
     expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(0);
   });
 
   it('an invalid stored value is served as the defaults and the row is left exactly as it was', async () => {
     await getPrisma().platformRuntimeConfig.create({
-      data: { configKey: POLL_INTERVAL_SETTINGS.key, configJson: { standings: 'fast' } },
+      data: { configKey: EMAIL_SETTINGS.key, configJson: { enabled: 'yes' } },
     });
     const task = coreApiTask();
 
     await task.load();
 
-    expect(task.get(POLL_INTERVAL_SETTINGS).standings).toBe(10000);
-    const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: POLL_INTERVAL_SETTINGS.key } });
-    expect(stored?.configJson).toEqual({ standings: 'fast' });
+    expect(task.get(EMAIL_SETTINGS).replyTo).toBeNull();
+    const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: EMAIL_SETTINGS.key } });
+    expect(stored?.configJson).toEqual({ enabled: 'yes' });
   });
 });
 
@@ -212,7 +212,7 @@ describe('settings routes (contract verification)', () => {
     expect(list.statusCode).toBe(200);
     expect(SettingsGroupListSchema.safeParse(list.json()).success).toBe(true);
     expect(list.json<{ groups: SettingsGroup[] }>().groups.map((group) => group.key))
-      .toEqual(['POLL_INTERVAL_CONFIG', 'INGESTION_SCHEDULE_CONFIG', 'EMAIL_CONFIG']);
+      .toEqual(['INGESTION_SCHEDULE_CONFIG', 'EMAIL_CONFIG']);
     expect(refused.statusCode).toBe(403);
   });
 
@@ -221,19 +221,19 @@ describe('settings routes (contract verification)', () => {
       displayName: 'Settings Save Admin', firstName: 'Sam', lastName: 'Saver', isRootAdmin: true,
     });
     const before = (await getApp().inject({
-      method: 'GET', url: '/api/v1/platform/settings/POLL_INTERVAL_CONFIG', headers: rootAdmin.headers,
+      method: 'GET', url: '/api/v1/platform/settings/EMAIL_CONFIG', headers: rootAdmin.headers,
     })).json<SettingsGroup>();
-    const save = (draft: number) => getApp().inject({
+    const save = (replyTo: string) => getApp().inject({
       method: 'PUT',
-      url: '/api/v1/platform/settings/POLL_INTERVAL_CONFIG',
+      url: '/api/v1/platform/settings/EMAIL_CONFIG',
       headers: rootAdmin.headers,
-      payload: { key: 'POLL_INTERVAL_CONFIG', value: { ...before.value, draft }, expectedUpdatedAt: before.updatedAt },
+      payload: { key: 'EMAIL_CONFIG', value: { ...before.value, replyTo }, expectedUpdatedAt: before.updatedAt },
     });
 
-    const saved = await save(12000);
-    const stale = await save(14000);
+    const saved = await save('first@example.test');
+    const stale = await save('second@example.test');
     const history = await getApp().inject({
-      method: 'GET', url: '/api/v1/platform/settings/POLL_INTERVAL_CONFIG/history', headers: rootAdmin.headers,
+      method: 'GET', url: '/api/v1/platform/settings/EMAIL_CONFIG/history', headers: rootAdmin.headers,
     });
 
     expect(saved.statusCode).toBe(200);
@@ -241,14 +241,14 @@ describe('settings routes (contract verification)', () => {
     const savedGroup = saved.json<SettingsGroup>();
     expect(savedGroup.source).toBe('stored');
     expect(savedGroup.updatedBy).toEqual({ id: rootAdmin.user.id, name: 'Sam Saver' });
-    expect(savedGroup.value).toEqual({ ...before.value, draft: 12000 });
+    expect(savedGroup.value).toEqual({ ...before.value, replyTo: 'first@example.test' });
     expect(stale.statusCode).toBe(409);
     expect(ErrorEnvelopeSchema.safeParse(stale.json()).success).toBe(true);
     expect(stale.json<{ error: { code: string } }>().error.code).toBe('SETTINGS_CONFLICT');
     expect(history.statusCode).toBe(200);
     expect(SettingsChangeListSchema.safeParse(history.json()).success).toBe(true);
-    expect(history.json<{ changes: Array<{ newValue: { draft: number } }> }>().changes.map((change) => change.newValue.draft))
-      .toEqual([12000]);
+    expect(history.json<{ changes: Array<{ newValue: { replyTo: string | null } }> }>().changes.map((change) => change.newValue.replyTo))
+      .toEqual(['first@example.test']);
   });
 
   it('refuses an invalid value with 400 and an unknown key with 404, storing nothing', async () => {
@@ -256,11 +256,15 @@ describe('settings routes (contract verification)', () => {
 
     const invalid = await getApp().inject({
       method: 'PUT',
-      url: '/api/v1/platform/settings/POLL_INTERVAL_CONFIG',
+      url: '/api/v1/platform/settings/EMAIL_CONFIG',
       headers: rootAdmin.headers,
       payload: {
-        key: 'POLL_INTERVAL_CONFIG',
-        value: { standings: 1, draft: 10000, contestStatus: 30000, notifications: 30000, default: 30000 },
+        key: 'EMAIL_CONFIG',
+        value: {
+          enabled: true,
+          replyTo: 'not an address',
+          templates: { LEAGUE_MEMBER_INVITE: true, LEAGUE_JOIN_SUCCESS: true, CONTEST_ENTRY_COMPLETED: true, CONTEST_STARTED_SUMMARY: true },
+        },
         expectedUpdatedAt: null,
       },
     });

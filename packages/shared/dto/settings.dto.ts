@@ -3,17 +3,16 @@
  * /api/v1/platform/settings.
  *
  * Each group's payload is typed by its own schema through a union discriminated on `key`, so
- * the generated SDK knows that a `POLL_INTERVAL_CONFIG` group carries a `PollIntervalConfig`.
- * A group added to core-api's settings registry is added to `SettingsGroupKeySchema` and to
- * both unions here; a unit test fails until it is.
+ * the generated SDK knows that an `EMAIL_CONFIG` group carries an `EmailConfig`. A group added
+ * to core-api's settings registry is added to `SettingsGroupKeySchema` and to the three unions
+ * here; a unit test fails until it is.
  */
 import { z } from 'zod';
-import { DateTimeSchema, JsonObjectSchema } from './common.dto';
-import { EmailConfigSchema, IngestionScheduleConfigSchema, PollIntervalConfigSchema } from './config.dto';
+import { DateTimeSchema } from './common.dto';
+import { EmailConfigSchema, IngestionScheduleConfigSchema } from './config.dto';
 import { registerSchema } from './schema-registry';
 
 export const SettingsGroupKeySchema = z.enum([
-  'POLL_INTERVAL_CONFIG',
   'INGESTION_SCHEDULE_CONFIG',
   'EMAIL_CONFIG',
 ]).describe('The stored key of a settings group.');
@@ -38,12 +37,6 @@ const groupFields = {
 };
 
 export const SettingsGroupSchema = z.discriminatedUnion('key', [
-  z.object({
-    key: z.literal('POLL_INTERVAL_CONFIG'),
-    ...groupFields,
-    value: PollIntervalConfigSchema.describe('The value in use.'),
-    defaults: PollIntervalConfigSchema.describe('The value a reset would store.'),
-  }),
   z.object({
     key: z.literal('INGESTION_SCHEDULE_CONFIG'),
     ...groupFields,
@@ -81,11 +74,6 @@ const expectedUpdatedAt = DateTimeSchema.nullable().describe(
 
 export const SettingsGroupUpdateRequestSchema = z.discriminatedUnion('key', [
   z.object({
-    key: z.literal('POLL_INTERVAL_CONFIG'),
-    value: PollIntervalConfigSchema.describe('The whole new value.'),
-    expectedUpdatedAt,
-  }),
-  z.object({
     key: z.literal('INGESTION_SCHEDULE_CONFIG'),
     value: IngestionScheduleConfigValueSchema.describe('The whole new value.'),
     expectedUpdatedAt,
@@ -98,16 +86,28 @@ export const SettingsGroupUpdateRequestSchema = z.discriminatedUnion('key', [
 ]).describe('A whole new value for one settings group. `key` must match the path.');
 export type SettingsGroupUpdateRequest = z.infer<typeof SettingsGroupUpdateRequestSchema>;
 
-export const SettingsChangeSchema = z.object({
+const changeFields = {
   id: z.string().uuid(),
-  key: SettingsGroupKeySchema,
-  previousValue: JsonObjectSchema.nullable().describe(
-    'The stored value before the save, as it was stored; null when the save created the first stored value.',
-  ),
-  newValue: JsonObjectSchema.describe('The value the save stored.'),
   changedAt: DateTimeSchema,
   changedBy: SettingsActorSchema.nullable().describe('Who saved it, when known.'),
-}).describe('One saved change to a settings group.');
+};
+const previousValueNote = 'The stored value before the save; null when the save created the first stored value.';
+const newValueNote = 'The value the save stored.';
+
+export const SettingsChangeSchema = z.discriminatedUnion('key', [
+  z.object({
+    key: z.literal('INGESTION_SCHEDULE_CONFIG'),
+    ...changeFields,
+    previousValue: IngestionScheduleConfigSchema.nullable().describe(previousValueNote),
+    newValue: IngestionScheduleConfigSchema.describe(newValueNote),
+  }),
+  z.object({
+    key: z.literal('EMAIL_CONFIG'),
+    ...changeFields,
+    previousValue: EmailConfigSchema.nullable().describe(previousValueNote),
+    newValue: EmailConfigSchema.describe(newValueNote),
+  }),
+]).describe('One saved change to a settings group, each value typed by the group\'s own schema.');
 export type SettingsChange = z.infer<typeof SettingsChangeSchema>;
 
 export const SETTINGS_HISTORY_LIMIT = 20;

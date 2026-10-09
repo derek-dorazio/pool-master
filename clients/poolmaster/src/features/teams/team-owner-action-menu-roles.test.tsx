@@ -101,8 +101,10 @@ describe('TeamOwnerActionMenu by viewer role', () => {
   it('keeps the demote confirmation open with the server reason when the last commissioner cannot step down', async () => {
     mockApi.changeMemberRole.mockResolvedValue({
       error: {
-        code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
-        message: 'Appoint another active commissioner before removing or demoting the last commissioner.',
+        error: {
+          code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
+          message: 'Appoint another active commissioner before removing or demoting the last commissioner.',
+        },
       },
     });
     renderMenu({ ownerRole: 'COMMISSIONER' });
@@ -119,7 +121,7 @@ describe('TeamOwnerActionMenu by viewer role', () => {
 
   it('clears a previous failure when the confirmation is closed and opened again', async () => {
     mockApi.changeMemberRole.mockResolvedValue({
-      error: { code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED', message: 'Cannot demote the last commissioner.' },
+      error: { error: { code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED', message: 'Cannot demote the last commissioner.' } },
     });
     renderMenu({ ownerRole: 'COMMISSIONER' });
 
@@ -154,7 +156,7 @@ describe('TeamOwnerActionMenu by viewer role', () => {
 
   it('shows the server reason and keeps the dialog open when removing an owner fails', async () => {
     mockApi.removeSquadOwner.mockResolvedValue({
-      error: { code: 'SQUAD_OWNER_REMOVE_FAILED', message: 'That owner could not be removed.' },
+      error: { error: { code: 'SQUAD_OWNER_REMOVE_FAILED', message: 'That owner could not be removed.' } },
     });
     renderMenu({ activeOwnerCount: 3 });
 

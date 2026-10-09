@@ -2,7 +2,7 @@
  * Prisma adapter for ParticipantRepository port.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type { ParticipantMatchQuery, ParticipantRepository, ParticipantSearchFilters } from '@poolmaster/shared/db';
 import type { Participant, InjuryStatus, ParticipantType, ParticipantStatus } from '@poolmaster/shared/domain';
 
@@ -15,23 +15,10 @@ export class PrismaParticipantRepository implements ParticipantRepository {
   }
 
   async search(query: string, filters: ParticipantSearchFilters): Promise<Participant[]> {
-    const where: Record<string, unknown> = {};
-
-    if (filters.sportId) {
-      where.sportId = filters.sportId;
-    }
-    if (filters.status && filters.status.length > 0) {
-      where.status = { in: filters.status };
-    }
-    if (filters.role && filters.role.length > 0) {
-      where.role = { in: filters.role };
-    }
-    if (filters.teamAffiliation && filters.teamAffiliation.length > 0) {
-      where.teamAffiliation = { in: filters.teamAffiliation };
-    }
-    if (filters.nationality && filters.nationality.length > 0) {
-      where.nationality = { in: filters.nationality };
-    }
+    const where: Prisma.ParticipantWhereInput = {
+      ...(filters.sportId && { sportId: filters.sportId }),
+      ...(filters.status && { status: filters.status }),
+    };
 
     // Full-text search on name fields
     if (query.trim()) {

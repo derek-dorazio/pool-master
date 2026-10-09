@@ -15,14 +15,13 @@ import { ALL_SYNC_SPORT_OPTIONS, type SyncSport } from './root-admin-sync-utils'
 import {
   buildSportOverrideDraft,
   cloneIngestionConfig,
-  extractAdminErrorMessage,
   INGESTION_POLICY_FIELDS,
   type IngestionPolicyKey,
   type IngestionScheduleConfig,
 } from './root-admin-sync-config-utils';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { throwApiError } from '@/lib/errors';
+import { throwApiError, extractErrorMessage } from '@/lib/errors';
 
 export function RootAdminSportOverridesPage() {
   const [overrideSport, setOverrideSport] = useState<SyncSport>('GOLF');
@@ -160,10 +159,7 @@ export function RootAdminSportOverridesPage() {
         ) : ingestionConfigQuery.isError ? (
           <div className="mt-4">
             <ErrorState
-              body={extractAdminErrorMessage(
-                ingestionConfigQuery.error,
-                'We could not load ingestion schedule configuration right now.',
-              )}
+              body={extractErrorMessage(ingestionConfigQuery.error, { fallback: 'We could not load ingestion schedule configuration right now.' })}
               testId="root-admin-sport-overrides-error"
               title="Sport overrides unavailable"
             />

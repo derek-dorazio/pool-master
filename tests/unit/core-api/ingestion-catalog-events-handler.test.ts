@@ -83,7 +83,6 @@ describe('pool-master-753 — listProviderCatalogEvents handler', () => {
         rounds: null,
         participantCount: null,
         fieldLocked: false,
-        metadata: {},
       }],
     });
   });

@@ -174,7 +174,7 @@ describe('pool-master-r11 GolfRoundScoreCorrectionsCard', () => {
 
   it('shows the server\'s reason when a correction is refused, and keeps the typed value', async () => {
     updateEventParticipantGolfRoundScoreMock.mockResolvedValue({
-      error: { code: 'ROUND_BEYOND_SCHEDULE', message: 'Round 2 is beyond the event\'s 1 scheduled rounds.' },
+      error: { error: { code: 'ROUND_BEYOND_SCHEDULE', message: 'Round 2 is beyond the event\'s 1 scheduled rounds.' } },
     });
     renderCard();
 

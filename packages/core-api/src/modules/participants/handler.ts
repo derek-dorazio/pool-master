@@ -6,7 +6,6 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ParticipantService } from './service';
 import { ParticipantNotFoundError } from './service';
 import type { ParticipantSearchFilters } from '@poolmaster/shared/db';
-import type { ParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   BindParticipantProviderMappingRequest,
   ParticipantListQuery,
@@ -34,15 +33,10 @@ export function createParticipantHandlers(
     request: FastifyRequest<{ Querystring: ParticipantListQuery }>,
     _reply: FastifyReply,
   ): Promise<ParticipantListResponse> {
-    const qs = request.query;
-    const filters: ParticipantSearchFilters = {};
-    if (qs.sportId) filters.sportId = qs.sportId;
-    if (qs.status) filters.status = qs.status.split(',') as ParticipantStatus[];
-    if (qs.role) filters.role = qs.role.split(',');
-    if (qs.team) filters.teamAffiliation = qs.team.split(',');
-    if (qs.nationality) filters.nationality = qs.nationality.split(',');
+    const { q, sportId, status } = request.query;
+    const filters: ParticipantSearchFilters = { sportId, status };
 
-    const participants = await participantService.search({ query: qs.q, filters });
+    const participants = await participantService.search({ query: q, filters });
     return { participants: participants.map(mapParticipantToDto) };
   }
 

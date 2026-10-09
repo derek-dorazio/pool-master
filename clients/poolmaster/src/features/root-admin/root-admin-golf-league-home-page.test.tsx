@@ -163,7 +163,7 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
 
   it('pool-master-qqs surfaces the tour load error', async () => {
     listSportLeaguesMock.mockResolvedValue({
-      error: { code: 'INTERNAL', message: 'Tour index offline' },
+      error: { error: { code: 'INTERNAL', message: 'Tour index offline' } },
       response: { status: 500 },
     });
     listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: {

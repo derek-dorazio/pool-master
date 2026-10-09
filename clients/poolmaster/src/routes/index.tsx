@@ -33,7 +33,6 @@ import { RootAdminManageHubPage } from '@/features/root-admin/root-admin-manage-
 import { RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-manage-leagues-page';
 import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
-import { RootAdminPollIntervalsPage } from '@/features/root-admin/root-admin-poll-intervals-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
 import { RootAdminSportOverridesPage } from '@/features/root-admin/root-admin-sport-overrides-page';
 import { RootAdminSyncConfigPage } from '@/features/root-admin/root-admin-sync-config-page';
@@ -164,115 +163,118 @@ export const router = createBrowserRouter([
         element: <Navigate replace to="/welcome" />,
       },
       {
-        element: <RootAdminRouteGuard />,
+        // Signed-out and still-loading visitors are the member guard's; the root-admin guard
+        // adds only its own check.
+        element: <MemberRouteGuard />,
         children: [
           {
-            path: 'manage',
-            element: <RootAdminManageLayout />,
+            element: <RootAdminRouteGuard />,
             children: [
               {
-                index: true,
-                element: <RootAdminManageHubPage />,
-              },
-              {
-                path: 'legacy',
-                element: <Navigate replace to="/manage" />,
-              },
-              {
-                path: 'content-configuration',
-                element: <RootAdminContentConfigurationListPage />,
-              },
-              {
-                path: 'content-configuration/:templateKey',
-                element: <RootAdminContentConfigurationDetailPage />,
-              },
-              {
-                path: 'events',
-                element: <RootAdminEventsPage />,
-              },
-              {
-                path: 'golf',
-                element: <RootAdminGolfHubPage />,
-              },
-              {
-                path: 'golf/leagues',
-                element: <RootAdminGolfLeagueListPage />,
-              },
-              {
-                path: 'golf/leagues/:leagueId',
-                element: <RootAdminGolfLeagueHomePage />,
-              },
-              {
-                path: 'golf/tournaments',
-                element: <RootAdminGolfTournamentListPage />,
-              },
-              {
-                path: 'golf/tournaments/new',
-                element: <RootAdminGolfTournamentCreatePage />,
-              },
-              {
-                path: 'golf/tournaments/:eventId',
-                element: <RootAdminGolfTournamentHomePage />,
-              },
-              {
-                path: 'golf/tournaments/:eventId/field',
-                element: <RootAdminGolfTournamentFieldPage />,
-              },
-              {
-                path: 'golf/tournaments/:eventId/tiers',
-                element: <RootAdminGolfTournamentTiersPage />,
-              },
-              {
-                path: 'golf/tournaments/:eventId/scores',
-                element: <RootAdminGolfTournamentScoresPage />,
-              },
-              {
-                path: 'golf/players',
-                element: <RootAdminGolfPlayerListPage />,
-              },
-              {
-                path: 'golf/players/:participantId',
-                element: <RootAdminGolfPlayerHomePage />,
-              },
-              {
-                path: 'leagues',
-                element: <RootAdminManageLeaguesPage />,
-              },
-              {
-                path: 'users',
-                element: <RootAdminManageUsersPage />,
-              },
-              {
-                path: 'sync',
-                element: <RootAdminSyncDashboardPage />,
-              },
-              {
-                path: 'sync/run-event-sync',
-                element: <RootAdminRunEventSyncPage />,
-              },
-              {
-                path: 'sync/unmapped-participants',
-                element: <RootAdminUnmappedParticipantsPage />,
-              },
-              {
-                path: 'settings',
-                element: <RootAdminSettingsPage />,
-              },
-              {
-                path: 'sync-config',
-                element: <RootAdminSyncConfigPage />,
-              },
-              {
-                path: 'sync-config/poll-intervals',
-                element: <RootAdminPollIntervalsPage />,
-              },
-              {
-                path: 'sync-config/ingestion-schedule',
-                element: <RootAdminIngestionSchedulePage />,
-              },
-              {
-                path: 'sync-config/sport-overrides',
-                element: <RootAdminSportOverridesPage />,
+                path: 'manage',
+                element: <RootAdminManageLayout />,
+                children: [
+                  {
+                    index: true,
+                    element: <RootAdminManageHubPage />,
+                  },
+                  {
+                    path: 'legacy',
+                    element: <Navigate replace to="/manage" />,
+                  },
+                  {
+                    path: 'content-configuration',
+                    element: <RootAdminContentConfigurationListPage />,
+                  },
+                  {
+                    path: 'content-configuration/:templateKey',
+                    element: <RootAdminContentConfigurationDetailPage />,
+                  },
+                  {
+                    path: 'events',
+                    element: <RootAdminEventsPage />,
+                  },
+                  {
+                    path: 'golf',
+                    element: <RootAdminGolfHubPage />,
+                  },
+                  {
+                    path: 'golf/leagues',
+                    element: <RootAdminGolfLeagueListPage />,
+                  },
+                  {
+                    path: 'golf/leagues/:leagueId',
+                    element: <RootAdminGolfLeagueHomePage />,
+                  },
+                  {
+                    path: 'golf/tournaments',
+                    element: <RootAdminGolfTournamentListPage />,
+                  },
+                  {
+                    path: 'golf/tournaments/new',
+                    element: <RootAdminGolfTournamentCreatePage />,
+                  },
+                  {
+                    path: 'golf/tournaments/:eventId',
+                    element: <RootAdminGolfTournamentHomePage />,
+                  },
+                  {
+                    path: 'golf/tournaments/:eventId/field',
+                    element: <RootAdminGolfTournamentFieldPage />,
+                  },
+                  {
+                    path: 'golf/tournaments/:eventId/tiers',
+                    element: <RootAdminGolfTournamentTiersPage />,
+                  },
+                  {
+                    path: 'golf/tournaments/:eventId/scores',
+                    element: <RootAdminGolfTournamentScoresPage />,
+                  },
+                  {
+                    path: 'golf/players',
+                    element: <RootAdminGolfPlayerListPage />,
+                  },
+                  {
+                    path: 'golf/players/:participantId',
+                    element: <RootAdminGolfPlayerHomePage />,
+                  },
+                  {
+                    path: 'leagues',
+                    element: <RootAdminManageLeaguesPage />,
+                  },
+                  {
+                    path: 'users',
+                    element: <RootAdminManageUsersPage />,
+                  },
+                  {
+                    path: 'sync',
+                    element: <RootAdminSyncDashboardPage />,
+                  },
+                  {
+                    path: 'sync/run-event-sync',
+                    element: <RootAdminRunEventSyncPage />,
+                  },
+                  {
+                    path: 'sync/unmapped-participants',
+                    element: <RootAdminUnmappedParticipantsPage />,
+                  },
+                  {
+                    path: 'settings',
+                    element: <RootAdminSettingsPage />,
+                  },
+                  {
+                    path: 'sync-config',
+                    element: <RootAdminSyncConfigPage />,
+                  },
+                  {
+                    path: 'sync-config/ingestion-schedule',
+                    element: <RootAdminIngestionSchedulePage />,
+                  },
+                  {
+                    path: 'sync-config/sport-overrides',
+                    element: <RootAdminSportOverridesPage />,
+                  },
+                ],
               },
             ],
           },

@@ -89,7 +89,6 @@ export interface EventSyncRequest {
   eventId: string;
   feeds: EventSyncFeed[];
   mockEventState?: MockEventState;
-  workflowContext?: Record<string, unknown>;
 }
 
 export interface IngestionCallbacks {

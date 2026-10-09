@@ -49,10 +49,12 @@ function renderRootAdminGuard(initialEntries = ['/manage']) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
-        <Route element={<RootAdminRouteGuard />}>
-          <Route element={<div data-testid="root-admin-guard-allowed">Allowed</div>} path="/manage" />
+        <Route element={<MemberRouteGuard />}>
+          <Route element={<RootAdminRouteGuard />}>
+            <Route element={<div data-testid="root-admin-guard-allowed">Allowed</div>} path="/manage" />
+          </Route>
         </Route>
-        <Route element={<div data-testid="redirect-target">Welcome</div>} path="/welcome" />
+        <Route element={<div data-testid="welcome-target">Welcome</div>} path="/welcome" />
         <Route element={<div data-testid="sign-in-target">Sign in</div>} path="/" />
       </Routes>
     </MemoryRouter>,
@@ -100,13 +102,51 @@ describe('route guards', () => {
     );
   });
 
+  it('creates the member guard logger once rather than on every render', () => {
+    authState.isAuthenticated = true;
+    authState.user = { id: 'user-1' };
+
+    const { rerender } = renderMemberGuard(['/league/LEAGUE1']);
+    rerender(
+      <MemoryRouter initialEntries={['/league/LEAGUE1']}>
+        <Routes>
+          <Route element={<MemberRouteGuard />}>
+            <Route element={<div data-testid="member-guard-allowed">Allowed</div>} path="/league/:leagueCode" />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(mockLogger.child).toHaveBeenCalledTimes(1);
+    expect(mockLogger.info).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends a signed-out visitor on /manage to sign-in before the root-admin check runs', async () => {
+    renderRootAdminGuard();
+
+    expect(await screen.findByTestId('sign-in-target')).toBeVisible();
+    expect(screen.queryByTestId('root-admin-guard-allowed')).not.toBeInTheDocument();
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'memberRoute.redirectUnauthenticated',
+      }),
+      expect.any(String),
+    );
+    expect(mockLogger.warn).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'rootAdminRoute.redirectUnauthorized',
+      }),
+      expect.any(String),
+    );
+  });
+
   it('redirects non-root-admin users away from the manage route and logs the warning branch', async () => {
     authState.isAuthenticated = true;
     authState.user = { id: 'user-1' };
 
     renderRootAdminGuard();
 
-    expect(await screen.findByTestId('redirect-target')).toBeVisible();
+    expect(await screen.findByTestId('welcome-target')).toBeVisible();
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'rootAdminRoute.redirectUnauthorized',

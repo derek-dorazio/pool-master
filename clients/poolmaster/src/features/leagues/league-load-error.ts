@@ -1,35 +1,17 @@
-type LeagueLoadErrorCandidate = {
-  code?: unknown;
-  message?: unknown;
-  error?: {
-    code?: unknown;
-    message?: unknown;
-  };
-};
+import { ApiError } from '@/lib/errors';
 
-function getErrorCode(error: unknown) {
-  if (!error || typeof error !== 'object') {
-    return null;
-  }
+const LEAGUE_ACCESS_ERROR_CODES: ReadonlySet<string> = new Set([
+  'LEAGUE_MEMBERSHIP_REQUIRED',
+  'LEAGUE_MEMBERSHIP_INACTIVE',
+]);
 
-  const candidate = error as LeagueLoadErrorCandidate;
-  if (typeof candidate.error?.code === 'string') {
-    return candidate.error.code;
-  }
-
-  if (typeof candidate.code === 'string') {
-    return candidate.code;
-  }
-
-  return null;
+export function isLeagueAccessError(error: Error | null | undefined) {
+  return error instanceof ApiError
+    && error.code !== undefined
+    && LEAGUE_ACCESS_ERROR_CODES.has(error.code);
 }
 
-export function isLeagueAccessError(error: unknown) {
-  const code = getErrorCode(error);
-  return code === 'LEAGUE_MEMBERSHIP_REQUIRED' || code === 'LEAGUE_MEMBERSHIP_INACTIVE';
-}
-
-export function getLeagueLoadErrorCopy(error: unknown) {
+export function getLeagueLoadErrorCopy(error: Error | null | undefined) {
   if (isLeagueAccessError(error)) {
     return {
       title: 'You do not have access to this league.',

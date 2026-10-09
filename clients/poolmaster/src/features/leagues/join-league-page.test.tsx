@@ -190,7 +190,10 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
     )));
     acceptInvitationMock.mockResolvedValue({
       error: {
-        message: 'This invitation has already been accepted.',
+        error: {
+          code: 'INVITATION_ALREADY_ACCEPTED',
+          message: 'This invitation has already been accepted.',
+        },
       },
     });
 
@@ -236,8 +239,8 @@ describe('Joining a league from an invite link', () => {
   }
 
   it('asks a signed-out visitor to sign in or create an account, returning them to this invite, with no join button', async () => {
-    getCurrentUserMock.mockResolvedValue({ error: { code: 'AUTH_SESSION_REQUIRED', message: 'Sign in.' } });
-    refreshTokenMock.mockResolvedValue({ error: { code: 'AUTH_SESSION_REQUIRED', message: 'Sign in.' } });
+    getCurrentUserMock.mockResolvedValue({ error: { error: { code: 'AUTH_SESSION_REQUIRED', message: 'Sign in.' } } });
+    refreshTokenMock.mockResolvedValue({ error: { error: { code: 'AUTH_SESSION_REQUIRED', message: 'Sign in.' } } });
     getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
 
     renderJoinLeaguePage();
@@ -250,7 +253,7 @@ describe('Joining a league from an invite link', () => {
 
   it('says the invitation could not be loaded and offers no join button when the preview fails', async () => {
     signIn();
-    getInvitationPreviewMock.mockResolvedValue({ error: { code: 'INVITATION_NOT_FOUND', message: 'Not found.' }, status: 404 });
+    getInvitationPreviewMock.mockResolvedValue({ error: { error: { code: 'INVITATION_NOT_FOUND', message: 'Not found.' } }, status: 404 });
 
     renderJoinLeaguePage();
 
@@ -306,7 +309,7 @@ describe('Joining a league from an invite link', () => {
     acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
     listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([viewersNewTeam()])));
     updateLeagueSquadMock.mockResolvedValue({
-      error: { code: 'SQUAD_NAME_TAKEN', message: 'That team name is already taken in this league.' },
+      error: { error: { code: 'SQUAD_NAME_TAKEN', message: 'That team name is already taken in this league.' } },
     });
 
     renderJoinLeaguePage();

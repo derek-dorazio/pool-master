@@ -140,8 +140,10 @@ describe('My Team lifecycle', () => {
   it('shows the server\'s refusal to inactivate, keeps the dialog open, and clears the refusal on cancel', async () => {
     inactivateLeagueSquadMock.mockResolvedValue({
       error: {
-        code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
-        message: 'Appoint another active commissioner before removing or demoting the last commissioner.',
+        error: {
+          code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
+          message: 'Appoint another active commissioner before removing or demoting the last commissioner.',
+        },
       },
     });
     renderLifecycle({ team: buildTeam() });
@@ -172,7 +174,7 @@ describe('My Team lifecycle', () => {
 
   it('shows the server\'s refusal to delete and stays on the team page', async () => {
     deleteLeagueSquadMock.mockResolvedValue({
-      error: { code: 'SQUAD_DELETE_REQUIRES_INACTIVE', message: 'Team must already be inactive before it can be permanently deleted.' },
+      error: { error: { code: 'SQUAD_DELETE_REQUIRES_INACTIVE', message: 'Team must already be inactive before it can be permanently deleted.' } },
     });
     renderLifecycle({ team: buildTeam({ isActive: false }), canDelete: true });
 
@@ -185,7 +187,7 @@ describe('My Team lifecycle', () => {
 
   it('closes the delete dialog on Escape and forgets an earlier refusal', async () => {
     deleteLeagueSquadMock.mockResolvedValue({
-      error: { code: 'SQUAD_DELETE_REQUIRES_INACTIVE', message: 'Team must already be inactive before it can be permanently deleted.' },
+      error: { error: { code: 'SQUAD_DELETE_REQUIRES_INACTIVE', message: 'Team must already be inactive before it can be permanently deleted.' } },
     });
     renderLifecycle({ team: buildTeam({ isActive: false }), canDelete: true });
 

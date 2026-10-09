@@ -99,7 +99,7 @@ describe('SquadActions by viewer role', () => {
 
   it('explains that a league member cannot become a co-owner when the invite hits that conflict', async () => {
     mockApi.createSquadOwnerInvitation.mockResolvedValue({
-      error: { code: 'SQUAD_OWNER_INVITATION_LEAGUE_MEMBER_CONFLICT', message: 'conflict' },
+      error: { error: { code: 'SQUAD_OWNER_INVITATION_LEAGUE_MEMBER_CONFLICT', message: 'conflict' } },
     });
     renderSquadActions();
 
@@ -112,7 +112,7 @@ describe('SquadActions by viewer role', () => {
 
   it('revokes a pending owner invite, and shows the reason when revoking fails', async () => {
     mockApi.revokeSquadOwnerInvitation.mockResolvedValue({
-      error: { code: 'SQUAD_OWNER_INVITATION_NOT_PENDING', message: 'That invite was already accepted.' },
+      error: { error: { code: 'SQUAD_OWNER_INVITATION_NOT_PENDING', message: 'That invite was already accepted.' } },
     });
     renderSquadActions({ pendingInvitations: [pendingInvite] });
 
@@ -142,7 +142,7 @@ describe('SquadActions by viewer role', () => {
 
   it('shows the reason and keeps the confirmation open when inactivating the team fails', async () => {
     mockApi.inactivateLeagueSquad.mockResolvedValue({
-      error: { code: 'SQUAD_INACTIVATE_FAILED', message: 'The team could not be inactivated.' },
+      error: { error: { code: 'SQUAD_INACTIVATE_FAILED', message: 'The team could not be inactivated.' } },
     });
     renderSquadActions();
 

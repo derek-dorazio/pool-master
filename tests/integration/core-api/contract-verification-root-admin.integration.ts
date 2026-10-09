@@ -10,7 +10,6 @@ import {
   ProviderCatalogEventListResponseSchema,
   LeagueListResponseSchema,
   LeagueResponseSchema,
-  PollIntervalConfigSchema,
   ProviderListResponseSchema,
   ProviderManualSyncSubmissionResponseSchema,
   ProviderSyncRunListResponseSchema,
@@ -41,7 +40,6 @@ import type {
   LeagueResponse,
   ParticipantListResponse,
   ParticipantProviderMappingResponse,
-  PollIntervalConfig,
   ProviderCatalogEventListResponse,
   ProviderListResponse,
   ProviderManualSyncSubmissionResponse,
@@ -518,26 +516,6 @@ describe('Contract verification (root admin)', () => {
       displayName: 'Root Admin Config Contract User',
       isRootAdmin: true,
     });
-
-    const pollReadRes = await getApp().inject({
-      method: 'GET',
-      url: '/api/v1/platform/poll-intervals',
-      headers: rootAdmin.headers,
-    });
-    expect(pollReadRes.statusCode).toBe(200);
-    expect(PollIntervalConfigSchema.safeParse(pollReadRes.json()).success).toBe(true);
-
-    const pollUpdateRes = await getApp().inject({
-      method: 'PUT',
-      url: '/api/v1/platform/poll-intervals',
-      headers: rootAdmin.headers,
-      payload: {
-        standings: 15000,
-      },
-    });
-    expect(pollUpdateRes.statusCode).toBe(200);
-    expect(PollIntervalConfigSchema.safeParse(pollUpdateRes.json()).success).toBe(true);
-    expect(pollUpdateRes.json<PollIntervalConfig>().standings).toBe(15000);
 
     const ingestionReadRes = await getApp().inject({
       method: 'GET',

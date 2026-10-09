@@ -193,7 +193,6 @@ export const QueryKeys = {
     ingestionConfig: ['poolmaster', 'root-admin', 'ingestion-config'] as const,
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
     manageUsers: ['poolmaster', 'root-admin', 'manage-users'] as const,
-    pollConfig: ['poolmaster', 'root-admin', 'poll-config'] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,
     // Every settings group (#450). History sits under the same prefix, so invalidating
     // `settings` after any save refreshes each group's recent changes too.

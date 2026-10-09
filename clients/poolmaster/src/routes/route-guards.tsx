@@ -1,14 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
 
+/**
+ * Waits for auth state, sends a signed-out visitor to sign-in, and otherwise renders the
+ * child routes. Every guard that needs a signed-in user nests under this one rather than
+ * repeating these checks.
+ */
 export function MemberRouteGuard() {
   const auth = useAuth();
   const location = useLocation();
-  const logger = getLogger().child({
+  // Memoised: `child()` returns a new logger on every call, and the effect depends on it.
+  const logger = useMemo(() => getLogger().child({
     feature: 'member-route-guard',
-  });
+  }), []);
 
   useEffect(() => {
     if (auth.isLoading) {
@@ -64,40 +70,18 @@ export function MemberRouteGuard() {
   return <Outlet />;
 }
 
+/**
+ * Admits root admins only. It must be nested under `MemberRouteGuard`, which owns the loading
+ * state and the signed-out redirect, so this guard only ever sees a signed-in user.
+ */
 export function RootAdminRouteGuard() {
   const auth = useAuth();
   const location = useLocation();
-  const logger = getLogger().child({
+  const logger = useMemo(() => getLogger().child({
     feature: 'root-admin-route-guard',
-  });
+  }), []);
 
   useEffect(() => {
-    if (auth.isLoading) {
-      logger.debug(
-        {
-          action: 'rootAdminRoute.loading',
-          data: {
-            from: `${location.pathname}${location.search}`,
-          },
-        },
-        'Root-admin route guard is waiting for auth state',
-      );
-      return;
-    }
-
-    if (!auth.isAuthenticated) {
-      logger.warn(
-        {
-          action: 'rootAdminRoute.redirectUnauthenticated',
-          data: {
-            from: `${location.pathname}${location.search}`,
-          },
-        },
-        'Redirected unauthenticated root-admin request',
-      );
-      return;
-    }
-
     if (!auth.isRootAdmin) {
       logger.warn(
         {
@@ -122,27 +106,7 @@ export function RootAdminRouteGuard() {
       },
       'Allowed root-admin route request',
     );
-  }, [
-    auth.isAuthenticated,
-    auth.isLoading,
-    auth.isRootAdmin,
-    auth.user?.id,
-    location.pathname,
-    location.search,
-    logger,
-  ]);
-
-  if (auth.isLoading) {
-    return (
-      <div className="rounded-[2rem] border border-border bg-card p-8 text-sm text-muted-foreground">
-        Loading your Prime Time Commissioner session...
-      </div>
-    );
-  }
-
-  if (!auth.isAuthenticated) {
-    return <Navigate replace state={{ from: `${location.pathname}${location.search}` }} to="/" />;
-  }
+  }, [auth.isRootAdmin, auth.user?.id, location.pathname, location.search, logger]);
 
   if (!auth.isRootAdmin) {
     return <Navigate replace to="/welcome" />;

@@ -784,8 +784,7 @@ went with it.
 
 ### PlatformRuntimeConfig — `platform`
 
-Runtime-tunable settings groups, one JSON document each: the client poll intervals, the
-ingestion schedule, and email (`EMAIL_CONFIG`: whether system email is sent, per-email switches,
+Runtime-tunable settings groups, one JSON document each: the ingestion schedule and email (`EMAIL_CONFIG`: whether system email is sent, per-email switches,
 Reply-To; see `docs/EMAIL-DELIVERY.md`). Every group is owned by `AppSettingsService` (#450): each core-api task
 refreshes them from the database every 30 seconds, and every save is recorded in
 `platform_runtime_config_history`. Which settings belong here and which stay in env is
@@ -795,9 +794,8 @@ refreshes them from the database every 30 seconds, and every save is recorded in
 |---|---|---|
 | List, read settings groups | `rootAdmin` | `listSettingsGroups`, `getSettingsGroup` — value in use, defaults, `stored` or `defaults`, who last saved it. The `/manage/settings` page |
 | Save, reset a settings group | `rootAdmin` | `updateSettingsGroup` (the whole value plus `expectedUpdatedAt`; 409 `SETTINGS_CONFLICT` if someone saved in between), `resetSettingsGroup` |
-| Read a group's recent changes | `rootAdmin` | `listSettingsGroupHistory` — newest first, at most 20; the limit is the bound on an append-only history |
+| Read a group's recent changes | `rootAdmin` | `listSettingsGroupHistory` — newest first, at most 20; the limit is the bound on an append-only history. Each value is typed by its group's schema; a change whose stored values no longer validate is logged and left out |
 | Switch email, or one email, off | `rootAdmin` | `updateSettingsGroup` on `EMAIL_CONFIG`, from the Email card of `/manage/settings`. A skipped email still counts as sent |
-| Read, update, reset poll intervals | `rootAdmin` | `getPollIntervals`, `updatePollIntervals` (a partial patch), `resetPollIntervals` |
 | Read, update, reset the ingestion schedule | `rootAdmin` | `getIngestionSchedule`, `updateIngestionSchedule`, `resetIngestionSchedule` |
 | Set, reset one sport's override | `rootAdmin` | `setSportIngestionOverride`, `resetSportIngestionOverride` |
 

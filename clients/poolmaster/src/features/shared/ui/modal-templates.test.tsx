@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { ApiError } from "@/lib/errors";
 import {
   ActionModal,
   ConfirmationModal,
@@ -48,10 +49,10 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
   });
 
-  it("pool-master-pjr.3: renders server errors through the form modal template", () => {
+  it("shows the backend's error message in an alert when the form modal is given an API error", () => {
     render(
       <FormModal
-        error={{ error: { message: "Username is already taken." } }}
+        error={new ApiError({ error: { code: "USERNAME_TAKEN", message: "Username is already taken." } })}
         onCancel={vi.fn()}
         onOpenChange={vi.fn()}
         onSave={vi.fn()}

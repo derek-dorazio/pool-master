@@ -2,13 +2,6 @@ import { LinkButton, ListCard } from '@/features/shared/ui';
 
 const SYNC_CONFIG_DESTINATIONS = [
   {
-    key: 'poll-intervals',
-    title: 'Poll Intervals',
-    description:
-      'How often the app refreshes standings, drafts, notifications, and contests.',
-    to: '/manage/sync-config/poll-intervals',
-  },
-  {
     key: 'ingestion-schedule',
     title: 'Global Ingestion Schedule',
     description:
@@ -27,7 +20,7 @@ const SYNC_CONFIG_DESTINATIONS = [
 export function RootAdminSyncConfigPage() {
   return (
     <section className="space-y-6" data-testid="root-admin-sync-config-page">
-      <section className="grid gap-4 xl:grid-cols-3">
+      <section className="grid gap-4 xl:grid-cols-2">
         {SYNC_CONFIG_DESTINATIONS.map((destination) => (
           <ListCard
             actions={(

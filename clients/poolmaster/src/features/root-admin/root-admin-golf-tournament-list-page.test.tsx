@@ -78,7 +78,7 @@ describe('pool-master-3dg RootAdminGolfTournamentListPage', () => {
 
   it('pool-master-3dg surfaces the load error state', async () => {
     listEventsMock.mockResolvedValue({
-      error: { code: 'INTERNAL', message: 'Golf tournament index is offline' },
+      error: { error: { code: 'INTERNAL', message: 'Golf tournament index is offline' } },
       response: { status: 500 },
     });
 

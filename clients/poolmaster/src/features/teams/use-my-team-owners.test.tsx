@@ -128,7 +128,7 @@ describe('useMyTeamOwners', () => {
 
   it('reports a refused revoke through the mutation\'s error, leaving the forms untouched', async () => {
     revokeSquadOwnerInvitationMock.mockResolvedValue({
-      error: { code: 'SQUAD_OWNER_INVITATION_ACCEPTED', message: 'Invitation is accepted' },
+      error: { error: { code: 'SQUAD_OWNER_INVITATION_ACCEPTED', message: 'Invitation is accepted' } },
     });
     const { result } = renderOwners();
 

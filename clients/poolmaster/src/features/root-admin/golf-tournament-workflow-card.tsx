@@ -37,7 +37,7 @@ export function GolfTournamentWorkflowCard({
 }: {
   eventId: string;
   rounds: readonly SportEventRoundDto[];
-  roundsError: unknown;
+  roundsError: Error | null;
   tournament: SportEventDto;
 }) {
   const logger = getLogger().child({

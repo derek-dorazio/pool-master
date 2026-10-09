@@ -315,7 +315,10 @@ describe('JoinTeamOwnerPage', () => {
     });
     acceptTeamOwnerInvitationMock.mockResolvedValue({
       error: {
-        message: 'This team invitation is no longer active.',
+        error: {
+          code: 'INVITATION_NOT_ACTIVE',
+          message: 'This team invitation is no longer active.',
+        },
       },
     });
 
@@ -399,7 +402,7 @@ describe('JoinTeamOwnerPage', () => {
     it('shows a signed-out visitor no registration form when the invitation cannot be loaded, only the way to sign in', async () => {
       signedOut();
       getTeamOwnerInvitationPreviewMock.mockResolvedValue({
-        error: { code: 'SQUAD_OWNER_INVITATION_NOT_FOUND', message: 'Team-owner invitation not found' },
+        error: { error: { code: 'SQUAD_OWNER_INVITATION_NOT_FOUND', message: 'Team-owner invitation not found' } },
       });
 
       renderJoinTeamOwnerPage();
@@ -413,7 +416,7 @@ describe('JoinTeamOwnerPage', () => {
       signedOut();
       getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview);
       registerWithTeamOwnerInvitationMock.mockResolvedValue({
-        error: { code: 'SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS', message: 'Account exists' },
+        error: { error: { code: 'SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS', message: 'Account exists' } },
       });
 
       renderJoinTeamOwnerPage();
@@ -442,7 +445,7 @@ describe('JoinTeamOwnerPage', () => {
     it('tells a signed-in visitor the invitation could not be loaded and offers no join button', async () => {
       signedIn();
       getTeamOwnerInvitationPreviewMock.mockResolvedValue({
-        error: { code: 'SQUAD_OWNER_INVITATION_NOT_FOUND', message: 'Team-owner invitation not found' },
+        error: { error: { code: 'SQUAD_OWNER_INVITATION_NOT_FOUND', message: 'Team-owner invitation not found' } },
       });
 
       renderJoinTeamOwnerPage();
@@ -524,7 +527,7 @@ describe('Joining a team as a co-owner from an invite link', () => {
 
   it('says the team invitation could not be loaded and offers no join button when the preview fails', async () => {
     signIn();
-    getTeamOwnerInvitationPreviewMock.mockResolvedValue({ error: { code: 'NOT_FOUND', message: 'Not found.' }, status: 404 });
+    getTeamOwnerInvitationPreviewMock.mockResolvedValue({ error: { error: { code: 'NOT_FOUND', message: 'Not found.' } }, status: 404 });
 
     renderJoinTeamOwnerPage();
 
@@ -549,7 +552,7 @@ describe('Joining a team as a co-owner from an invite link', () => {
     signOut();
     getTeamOwnerInvitationPreviewMock.mockResolvedValue(preview());
     registerWithTeamOwnerInvitationMock.mockResolvedValue({
-      error: { code: 'SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS', message: 'exists' },
+      error: { error: { code: 'SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS', message: 'exists' } },
     });
 
     renderJoinTeamOwnerPage();

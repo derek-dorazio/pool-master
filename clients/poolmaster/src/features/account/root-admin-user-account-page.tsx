@@ -20,7 +20,7 @@ import { getLogger } from '@/lib/logger';
 import { formatUserName } from './user-name';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { throwApiError } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 
 // #202 step 3.4 — the canonical named component, not an index into the response map.
 type RootAdminViewedUser = UserDto;
@@ -55,29 +55,11 @@ function normalizeEmailConfirmation(value: string) {
   return value.trim().toLowerCase();
 }
 
-function extractAdminError(error: unknown, fallback: string) {
-  if (!error || typeof error !== 'object') {
-    return fallback;
+function extractAdminError(error: Error | null, fallback: string) {
+  if (error instanceof ApiError && error.code !== undefined) {
+    return `${error.code}: ${error.message}`;
   }
-
-  const candidate = error as {
-    error?: { code?: unknown; message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.code === 'string' && typeof candidate.error?.message === 'string') {
-    return `${candidate.error.code}: ${candidate.error.message}`;
-  }
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return fallback;
+  return extractErrorMessage(error, { fallback });
 }
 
 

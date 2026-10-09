@@ -39,12 +39,12 @@ describe('RootAdminManageLayout', () => {
 
   it('pool-master-dxd.35 renders friendly breadcrumb labels for sync configuration sub-pages', () => {
     render(
-      <MemoryRouter initialEntries={['/manage/sync-config/poll-intervals']}>
+      <MemoryRouter initialEntries={['/manage/sync-config/ingestion-schedule']}>
         <Routes>
           <Route element={<RootAdminManageLayout />} path="/manage">
             <Route
               element={<div>Sync config body</div>}
-              path="sync-config/poll-intervals"
+              path="sync-config/ingestion-schedule"
             />
           </Route>
         </Routes>
@@ -56,13 +56,13 @@ describe('RootAdminManageLayout', () => {
       '/manage',
     );
     expect(
-      screen.getByRole('heading', { name: 'Poll Intervals', level: 1 }),
+      screen.getByRole('heading', { name: 'Global Ingestion Schedule', level: 1 }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'Sync Configuration' }),
     ).toHaveAttribute('href', '/manage/sync-config');
     expect(
-      within(screen.getByLabelText('Manage breadcrumbs')).getByText('Poll Intervals'),
+      within(screen.getByLabelText('Manage breadcrumbs')).getByText('Global Ingestion Schedule'),
     ).toHaveAttribute('aria-current', 'page');
     expect(screen.getByText('Sync config body')).toBeInTheDocument();
   });

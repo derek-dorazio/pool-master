@@ -82,6 +82,5 @@ export function toProviderEventDto(event: ProviderEvent): ProviderEventDto {
     rounds: event.rounds ?? null,
     participantCount: event.participantCount ?? null,
     fieldLocked: event.fieldLocked,
-    metadata: event.metadata,
   };
 }

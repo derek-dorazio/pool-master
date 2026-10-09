@@ -262,8 +262,10 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     mockCurrentUser();
     getLeagueByCodeMock.mockResolvedValue({
       error: {
-        code: 'LEAGUE_MEMBERSHIP_REQUIRED',
-        message: 'League membership is required.',
+        error: {
+          code: 'LEAGUE_MEMBERSHIP_REQUIRED',
+          message: 'League membership is required.',
+        },
       },
     });
 
@@ -1582,7 +1584,7 @@ describe('Team Home use cases', () => {
   it('shows the reason and keeps the team active when inactivating it fails', async () => {
     primeTeamHome({ role: 'COMMISSIONER' });
     inactivateLeagueSquadMock.mockResolvedValue({
-      error: { code: 'SQUAD_INACTIVATE_FAILED', message: 'The team could not be inactivated.' },
+      error: { error: { code: 'SQUAD_INACTIVATE_FAILED', message: 'The team could not be inactivated.' } },
     });
 
     renderMyTeamPage();
@@ -1612,7 +1614,7 @@ describe('Team Home use cases', () => {
       squads: [buildTeamSummary({ isActive: false, members: [], memberCount: 0 })],
     });
     deleteLeagueSquadMock.mockResolvedValue({
-      error: { code: 'SQUAD_DELETE_FAILED', message: 'The team could not be deleted.' },
+      error: { error: { code: 'SQUAD_DELETE_FAILED', message: 'The team could not be deleted.' } },
     });
 
     renderMyTeamPage('/league/BIGDAWGS/team?teamId=team-1');
@@ -1670,7 +1672,7 @@ describe('Team Home use cases', () => {
   it('shows an error instead of the create-team form when the team list fails to load', async () => {
     primeTeamHome();
     listLeagueSquadsMock.mockResolvedValue({
-      error: { code: 'INTERNAL_ERROR', message: 'Teams are unavailable right now.' },
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Teams are unavailable right now.' } },
       status: 500,
     });
 
@@ -1701,7 +1703,7 @@ describe('Team Home use cases', () => {
   it('shows the reason and keeps the email when a co-owner invite is rejected', async () => {
     primeTeamHome();
     createSquadOwnerInvitationMock.mockResolvedValue({
-      error: { code: 'SQUAD_OWNER_INVITATION_MEMBER_EXISTS', message: 'That person already belongs to this league.' },
+      error: { error: { code: 'SQUAD_OWNER_INVITATION_MEMBER_EXISTS', message: 'That person already belongs to this league.' } },
     });
 
     renderMyTeamPage();
@@ -1736,7 +1738,7 @@ describe('Team Home use cases', () => {
   it('shows the reason and keeps the replace form open when replacing an owner fails', async () => {
     primeTeamHome({ squads: [buildTeamSummary({ members: [buildTeamSummary().members[0], coOwner], memberCount: 2 })] });
     replaceSquadOwnerMock.mockResolvedValue({
-      error: { code: 'SQUAD_OWNER_INVITATION_EMAIL_INVALID', message: 'That email cannot be invited.' },
+      error: { error: { code: 'SQUAD_OWNER_INVITATION_EMAIL_INVALID', message: 'That email cannot be invited.' } },
     });
 
     renderMyTeamPage();
@@ -1753,7 +1755,7 @@ describe('Team Home use cases', () => {
     primeTeamHome();
     listSquadOwnerInvitationsMock.mockResolvedValue({ data: { invitations: [pendingOwnerInvite] } });
     revokeSquadOwnerInvitationMock.mockResolvedValue({
-      error: { code: 'SQUAD_OWNER_INVITATION_NOT_PENDING', message: 'That invite was already accepted.' },
+      error: { error: { code: 'SQUAD_OWNER_INVITATION_NOT_PENDING', message: 'That invite was already accepted.' } },
     });
 
     renderMyTeamPage();
@@ -1770,7 +1772,7 @@ describe('Team Home use cases', () => {
   it('shows the load-error copy with a way back to welcome when the league cannot be loaded', async () => {
     primeTeamHome();
     getLeagueByCodeMock.mockResolvedValue({
-      error: { code: 'LEAGUE_NOT_FOUND', message: 'League not found.' },
+      error: { error: { code: 'LEAGUE_NOT_FOUND', message: 'League not found.' } },
       status: 404,
     });
 

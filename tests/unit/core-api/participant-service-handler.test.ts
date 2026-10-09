@@ -74,7 +74,7 @@ describe('participant service and handler', () => {
     );
   });
 
-  it('splits comma-separated participant filters into lists for the search', async () => {
+  it('passes the text, the sport and the one status asked for to the participant search', async () => {
     const participantService = {
       search: jest.fn().mockResolvedValue([buildParticipant()]),
     } as unknown as ParticipantService;
@@ -86,10 +86,7 @@ describe('participant service and handler', () => {
         query: {
           q: 'scheffler',
           sportId: 'sport-1',
-          status: 'ACTIVE,RETIRED',
-          role: 'GOLFER',
-          team: 'USA',
-          nationality: 'US',
+          status: 'RETIRED',
         },
         contextLogger: { debug: jest.fn(), info: jest.fn(), error: jest.fn() },
         log: { debug: jest.fn(), info: jest.fn(), error: jest.fn() },
@@ -101,10 +98,7 @@ describe('participant service and handler', () => {
       query: 'scheffler',
       filters: {
         sportId: 'sport-1',
-        status: ['ACTIVE', 'RETIRED'],
-        role: ['GOLFER'],
-        teamAffiliation: ['USA'],
-        nationality: ['US'],
+        status: 'RETIRED',
       },
     });
     expect(response.participants).toHaveLength(1);

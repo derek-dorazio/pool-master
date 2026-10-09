@@ -12,7 +12,7 @@ import { getLeagueLoadErrorCopy } from "./league-load-error";
  */
 type LeagueContextQuery<TData> = {
   data?: TData | null;
-  error: unknown;
+  error: Error | null;
   isError: boolean;
   isLoading: boolean;
 };

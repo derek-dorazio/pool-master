@@ -8,8 +8,7 @@ import { updateSettingsGroup, type EmailConfig, type SettingsGroup } from '@/lib
 import { Alert, Button, Checkbox, FormField, Input } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { ApiError, throwApiError } from '@/lib/errors';
-import { extractAdminErrorMessage } from './root-admin-sync-config-utils';
+import { ApiError, throwApiError, extractErrorMessage } from '@/lib/errors';
 import { EMAIL_TEMPLATE_LABELS } from './root-admin-settings-utils';
 
 type EmailSettingsGroup = Extract<SettingsGroup, { key: 'EMAIL_CONFIG' }>;
@@ -120,7 +119,7 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
           data-testid="root-admin-email-settings-error"
           tone="danger"
         >
-          {extractAdminErrorMessage(saveMutation.error, 'We could not save the email settings.')}
+          {extractErrorMessage(saveMutation.error, { fallback: 'We could not save the email settings.' })}
         </Alert>
       ) : null}
       <Button data-testid="root-admin-email-settings-save" disabled={saveMutation.isPending} type="submit">

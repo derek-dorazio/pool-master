@@ -302,8 +302,10 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
     primeCommonMocks();
     leaveLeagueMock.mockResolvedValue({
       error: {
-        code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
-        message: 'Appoint another active commissioner before removing or demoting the last commissioner.',
+        error: {
+          code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
+          message: 'Appoint another active commissioner before removing or demoting the last commissioner.',
+        },
       },
     });
 
@@ -605,7 +607,7 @@ describe('League Home use cases', () => {
   it('keeps the details modal open with the reason when saving fails, and blocks saving a blank name', async () => {
     primeCommonMocks();
     updateLeagueDetailsMock.mockResolvedValue({
-      error: { code: 'VALIDATION_ERROR', message: 'League name is already taken.' },
+      error: { error: { code: 'VALIDATION_ERROR', message: 'League name is already taken.' } },
     });
 
     renderLeagueDetailPage();
@@ -645,7 +647,7 @@ describe('League Home use cases', () => {
   it('shows the reason and stays on League Home when deleting the league fails', async () => {
     primeCommonMocks({ isActive: false });
     deleteLeagueMock.mockResolvedValue({
-      error: { code: 'LEAGUE_DELETE_FAILED', message: 'The league could not be deleted.' },
+      error: { error: { code: 'LEAGUE_DELETE_FAILED', message: 'The league could not be deleted.' } },
     });
 
     renderLeagueDetailPage();
@@ -663,7 +665,7 @@ describe('League Home use cases', () => {
   it('shows the reason when reactivating an inactive league fails, leaving it inactive', async () => {
     primeCommonMocks({ isActive: false });
     activateLeagueMock.mockResolvedValue({
-      error: { code: 'LEAGUE_ACTIVATE_FAILED', message: 'The league could not be activated.' },
+      error: { error: { code: 'LEAGUE_ACTIVATE_FAILED', message: 'The league could not be activated.' } },
     });
 
     renderLeagueDetailPage();
@@ -678,7 +680,7 @@ describe('League Home use cases', () => {
   it('shows the reason inside the confirmation when inactivating the league fails, leaving it active', async () => {
     primeCommonMocks();
     inactivateLeagueMock.mockResolvedValue({
-      error: { code: 'LEAGUE_INACTIVATE_FAILED', message: 'The league could not be inactivated.' },
+      error: { error: { code: 'LEAGUE_INACTIVATE_FAILED', message: 'The league could not be inactivated.' } },
     });
 
     renderLeagueDetailPage();
@@ -695,7 +697,7 @@ describe('League Home use cases', () => {
   it('keeps the icon picker open with the reason when saving the icon fails, and leaves the current icon unchanged', async () => {
     primeCommonMocks();
     updateLeagueIconMock.mockResolvedValue({
-      error: { code: 'VALIDATION_ERROR', message: 'That icon is not available.' },
+      error: { error: { code: 'VALIDATION_ERROR', message: 'That icon is not available.' } },
     });
 
     renderLeagueDetailPage();
@@ -714,7 +716,7 @@ describe('League Home use cases', () => {
   it('shows the load-error copy with a way back to welcome when the league cannot be loaded', async () => {
     primeCommonMocks();
     getLeagueByCodeMock.mockResolvedValue({
-      error: { code: 'LEAGUE_NOT_FOUND', message: 'League not found.' },
+      error: { error: { code: 'LEAGUE_NOT_FOUND', message: 'League not found.' } },
       status: 404,
     });
 

@@ -54,7 +54,7 @@ export type {
   SortableListProps,
   SortableListRenderArgs,
 } from "./sortable-list";
-export { ServerErrorBar, ServerErrorPanel } from "./server-error";
+export { ServerErrorBar } from "./server-error";
 export type { ServerErrorDisplayProps } from "./server-error";
 export { PageSection, SectionActions, SectionHeader } from "./section";
 export { EmptyState, ErrorState, LoadingState } from "./state";

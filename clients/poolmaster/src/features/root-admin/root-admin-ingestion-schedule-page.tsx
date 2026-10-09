@@ -13,7 +13,6 @@ import {
 } from '@/features/shared/ui';
 import {
   cloneIngestionConfig,
-  extractAdminErrorMessage,
   INGESTION_POLICY_FIELDS,
   toPositiveNumber,
   type IngestionPolicyKey,
@@ -123,10 +122,7 @@ export function RootAdminIngestionSchedulePage() {
 
   return (
     <AdminConfigPage
-      errorBody={extractAdminErrorMessage(
-        ingestionConfigQuery.error,
-        'We could not load ingestion schedule configuration right now.',
-      )}
+      errorBody={extractErrorMessage(ingestionConfigQuery.error, { fallback: 'We could not load ingestion schedule configuration right now.' })}
       header={{
         actions: (
           <Button

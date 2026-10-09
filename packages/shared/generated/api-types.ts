@@ -2072,50 +2072,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/platform/poll-intervals": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get poll interval configuration
-         * @description Returns the platform poll interval configuration that governs recommended client refresh timing.
-         */
-        get: operations["getPollIntervals"];
-        /**
-         * Update poll interval configuration
-         * @description Updates the platform poll interval configuration used by client polling guidance.
-         */
-        put: operations["updatePollIntervals"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/platform/poll-intervals/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reset poll intervals to defaults
-         * @description Resets poll interval configuration back to the platform defaults.
-         */
-        post: operations["resetPollIntervals"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/platform/ingestion-schedule": {
         parameters: {
             query?: never;
@@ -2384,19 +2340,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
-        PollIntervalConfig: {
-            /** @description Recommended refresh interval for standings and leaderboard surfaces. */
-            standings: number;
-            /** @description Recommended refresh interval for draft state and pick-clock surfaces. */
-            draft: number;
-            /** @description Recommended refresh interval for contest status and lifecycle surfaces. */
-            contestStatus: number;
-            /** @description Recommended refresh interval for unread notifications and similar badge counts. */
-            notifications: number;
-            /** @description Fallback refresh interval for pollable surfaces without a more specific recommendation. */
-            default: number;
-        };
         /**
          * @description A system email template.
          * @enum {string}
@@ -2422,19 +2365,6 @@ export interface components {
                 /** @description Whether this email is sent. */
                 CONTEST_STARTED_SUMMARY: boolean;
             };
-        };
-        /** @description Partial poll-interval update payload used by root-admin configuration tools. */
-        PollIntervalConfigPatch: {
-            /** @description Recommended refresh interval for standings and leaderboard surfaces. */
-            standings?: number;
-            /** @description Recommended refresh interval for draft state and pick-clock surfaces. */
-            draft?: number;
-            /** @description Recommended refresh interval for contest status and lifecycle surfaces. */
-            contestStatus?: number;
-            /** @description Recommended refresh interval for unread notifications and similar badge counts. */
-            notifications?: number;
-            /** @description Fallback refresh interval for pollable surfaces without a more specific recommendation. */
-            default?: number;
         };
         /** @description Partial ingestion scheduling override used for global updates and per-sport overrides. */
         IngestionScheduleConfigOverride: {
@@ -2559,7 +2489,7 @@ export interface components {
          * @description The stored key of a settings group.
          * @enum {string}
          */
-        SettingsGroupKey: "POLL_INTERVAL_CONFIG" | "INGESTION_SCHEDULE_CONFIG" | "EMAIL_CONFIG";
+        SettingsGroupKey: "INGESTION_SCHEDULE_CONFIG" | "EMAIL_CONFIG";
         /** @description The root admin who saved a settings change. */
         SettingsActor: {
             /**
@@ -2572,59 +2502,6 @@ export interface components {
         };
         /** @description One settings group: its current value, its defaults, and who last changed it. */
         SettingsGroup: {
-            /** @enum {string} */
-            key: "POLL_INTERVAL_CONFIG";
-            /** @description Short display name of the group. */
-            title: string;
-            /** @description What the group controls. */
-            description: string;
-            /**
-             * @description `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
-             * @enum {string}
-             */
-            source: "stored" | "defaults";
-            /**
-             * Format: date-time
-             * @description When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
-             */
-            updatedAt: string | null;
-            /** @description Who last saved the stored value, when known. */
-            updatedBy: {
-                /**
-                 * Format: uuid
-                 * @description The user id of the root admin who made the change.
-                 */
-                id: string;
-                /** @description The admin's full name, for display. */
-                name: string;
-            } | null;
-            /** @description The value in use. */
-            value: {
-                /** @description Recommended refresh interval for standings and leaderboard surfaces. */
-                standings: number;
-                /** @description Recommended refresh interval for draft state and pick-clock surfaces. */
-                draft: number;
-                /** @description Recommended refresh interval for contest status and lifecycle surfaces. */
-                contestStatus: number;
-                /** @description Recommended refresh interval for unread notifications and similar badge counts. */
-                notifications: number;
-                /** @description Fallback refresh interval for pollable surfaces without a more specific recommendation. */
-                default: number;
-            };
-            /** @description The value a reset would store. */
-            defaults: {
-                /** @description Recommended refresh interval for standings and leaderboard surfaces. */
-                standings: number;
-                /** @description Recommended refresh interval for draft state and pick-clock surfaces. */
-                draft: number;
-                /** @description Recommended refresh interval for contest status and lifecycle surfaces. */
-                contestStatus: number;
-                /** @description Recommended refresh interval for unread notifications and similar badge counts. */
-                notifications: number;
-                /** @description Fallback refresh interval for pollable surfaces without a more specific recommendation. */
-                default: number;
-            };
-        } | {
             /** @enum {string} */
             key: "INGESTION_SCHEDULE_CONFIG";
             /** @description Short display name of the group. */
@@ -2890,59 +2767,6 @@ export interface components {
             /** @description Every settings group, in registry order. */
             groups: ({
                 /** @enum {string} */
-                key: "POLL_INTERVAL_CONFIG";
-                /** @description Short display name of the group. */
-                title: string;
-                /** @description What the group controls. */
-                description: string;
-                /**
-                 * @description `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
-                 * @enum {string}
-                 */
-                source: "stored" | "defaults";
-                /**
-                 * Format: date-time
-                 * @description When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
-                 */
-                updatedAt: string | null;
-                /** @description Who last saved the stored value, when known. */
-                updatedBy: {
-                    /**
-                     * Format: uuid
-                     * @description The user id of the root admin who made the change.
-                     */
-                    id: string;
-                    /** @description The admin's full name, for display. */
-                    name: string;
-                } | null;
-                /** @description The value in use. */
-                value: {
-                    /** @description Recommended refresh interval for standings and leaderboard surfaces. */
-                    standings: number;
-                    /** @description Recommended refresh interval for draft state and pick-clock surfaces. */
-                    draft: number;
-                    /** @description Recommended refresh interval for contest status and lifecycle surfaces. */
-                    contestStatus: number;
-                    /** @description Recommended refresh interval for unread notifications and similar badge counts. */
-                    notifications: number;
-                    /** @description Fallback refresh interval for pollable surfaces without a more specific recommendation. */
-                    default: number;
-                };
-                /** @description The value a reset would store. */
-                defaults: {
-                    /** @description Recommended refresh interval for standings and leaderboard surfaces. */
-                    standings: number;
-                    /** @description Recommended refresh interval for draft state and pick-clock surfaces. */
-                    draft: number;
-                    /** @description Recommended refresh interval for contest status and lifecycle surfaces. */
-                    contestStatus: number;
-                    /** @description Recommended refresh interval for unread notifications and similar badge counts. */
-                    notifications: number;
-                    /** @description Fallback refresh interval for pollable surfaces without a more specific recommendation. */
-                    default: number;
-                };
-            } | {
-                /** @enum {string} */
                 key: "INGESTION_SCHEDULE_CONFIG";
                 /** @description Short display name of the group. */
                 title: string;
@@ -3206,27 +3030,6 @@ export interface components {
         /** @description A whole new value for one settings group. `key` must match the path. */
         SettingsGroupUpdateRequest: {
             /** @enum {string} */
-            key: "POLL_INTERVAL_CONFIG";
-            /** @description The whole new value. */
-            value: {
-                /** @description Recommended refresh interval for standings and leaderboard surfaces. */
-                standings: number;
-                /** @description Recommended refresh interval for draft state and pick-clock surfaces. */
-                draft: number;
-                /** @description Recommended refresh interval for contest status and lifecycle surfaces. */
-                contestStatus: number;
-                /** @description Recommended refresh interval for unread notifications and similar badge counts. */
-                notifications: number;
-                /** @description Fallback refresh interval for pollable surfaces without a more specific recommendation. */
-                default: number;
-            };
-            /**
-             * Format: date-time
-             * @description The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
-             */
-            expectedUpdatedAt: string | null;
-        } | {
-            /** @enum {string} */
             key: "INGESTION_SCHEDULE_CONFIG";
             /** @description The whole new value. */
             value: {
@@ -3340,23 +3143,12 @@ export interface components {
              */
             expectedUpdatedAt: string | null;
         };
-        /** @description One saved change to a settings group. */
+        /** @description One saved change to a settings group, each value typed by the group's own schema. */
         SettingsChange: {
+            /** @enum {string} */
+            key: "INGESTION_SCHEDULE_CONFIG";
             /** Format: uuid */
             id: string;
-            /**
-             * @description The stored key of a settings group.
-             * @enum {string}
-             */
-            key: "POLL_INTERVAL_CONFIG" | "INGESTION_SCHEDULE_CONFIG" | "EMAIL_CONFIG";
-            /** @description The stored value before the save, as it was stored; null when the save created the first stored value. */
-            previousValue: {
-                [key: string]: unknown;
-            } | null;
-            /** @description The value the save stored. */
-            newValue: {
-                [key: string]: unknown;
-            };
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.
@@ -3372,26 +3164,241 @@ export interface components {
                 /** @description The admin's full name, for display. */
                 name: string;
             } | null;
+            /** @description The stored value before the save; null when the save created the first stored value. */
+            previousValue: {
+                /**
+                 * @description Sports that scheduled ingestion is allowed to run automatically.
+                 * @default [
+                 *       "GOLF"
+                 *     ]
+                 */
+                scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                /** @description Scheduling policy for provider health checks. */
+                healthCheck: {
+                    /** @description Whether the feed should be scheduled automatically. */
+                    enabled: boolean;
+                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                    intervalMinutes?: number;
+                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                    intervalSeconds?: number;
+                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                    lookaheadDays?: number;
+                };
+                /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
+                eventParticipants: {
+                    /** @description Whether the feed should be scheduled automatically. */
+                    enabled: boolean;
+                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                    intervalMinutes?: number;
+                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                    intervalSeconds?: number;
+                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                    lookaheadDays?: number;
+                };
+                /** @description Scheduling policy for live score polling. */
+                eventLiveScores: {
+                    /** @description Whether the feed should be scheduled automatically. */
+                    enabled: boolean;
+                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                    intervalMinutes?: number;
+                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                    intervalSeconds?: number;
+                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                    lookaheadDays?: number;
+                };
+                /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
+                perSportOverrides: {
+                    [key: string]: {
+                        scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                        /** @description Partial feed-scheduling override payload. */
+                        healthCheck?: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled?: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                            lookaheadDays?: number;
+                        };
+                        /** @description Partial feed-scheduling override payload. */
+                        eventParticipants?: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled?: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                            lookaheadDays?: number;
+                        };
+                        /** @description Partial feed-scheduling override payload. */
+                        eventLiveScores?: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled?: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                            lookaheadDays?: number;
+                        };
+                    };
+                };
+            } | null;
+            /** @description The value the save stored. */
+            newValue: {
+                /**
+                 * @description Sports that scheduled ingestion is allowed to run automatically.
+                 * @default [
+                 *       "GOLF"
+                 *     ]
+                 */
+                scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                /** @description Scheduling policy for provider health checks. */
+                healthCheck: {
+                    /** @description Whether the feed should be scheduled automatically. */
+                    enabled: boolean;
+                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                    intervalMinutes?: number;
+                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                    intervalSeconds?: number;
+                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                    lookaheadDays?: number;
+                };
+                /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
+                eventParticipants: {
+                    /** @description Whether the feed should be scheduled automatically. */
+                    enabled: boolean;
+                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                    intervalMinutes?: number;
+                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                    intervalSeconds?: number;
+                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                    lookaheadDays?: number;
+                };
+                /** @description Scheduling policy for live score polling. */
+                eventLiveScores: {
+                    /** @description Whether the feed should be scheduled automatically. */
+                    enabled: boolean;
+                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                    intervalMinutes?: number;
+                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                    intervalSeconds?: number;
+                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                    lookaheadDays?: number;
+                };
+                /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
+                perSportOverrides: {
+                    [key: string]: {
+                        scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                        /** @description Partial feed-scheduling override payload. */
+                        healthCheck?: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled?: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                            lookaheadDays?: number;
+                        };
+                        /** @description Partial feed-scheduling override payload. */
+                        eventParticipants?: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled?: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                            lookaheadDays?: number;
+                        };
+                        /** @description Partial feed-scheduling override payload. */
+                        eventLiveScores?: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled?: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                            lookaheadDays?: number;
+                        };
+                    };
+                };
+            };
+        } | {
+            /** @enum {string} */
+            key: "EMAIL_CONFIG";
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            changedAt: string;
+            /** @description Who saved it, when known. */
+            changedBy: {
+                /**
+                 * Format: uuid
+                 * @description The user id of the root admin who made the change.
+                 */
+                id: string;
+                /** @description The admin's full name, for display. */
+                name: string;
+            } | null;
+            /** @description The stored value before the save; null when the save created the first stored value. */
+            previousValue: {
+                /** @description Whether any system email is sent. Off: every email is skipped and logged. */
+                enabled: boolean;
+                /**
+                 * Format: email
+                 * @description Reply-To address for system email, or null to let replies go to the sender.
+                 */
+                replyTo: string | null;
+                /** @description Per-template switches. A template that is off is skipped even while email is on. */
+                templates: {
+                    /** @description Whether this email is sent. */
+                    LEAGUE_MEMBER_INVITE: boolean;
+                    /** @description Whether this email is sent. */
+                    LEAGUE_JOIN_SUCCESS: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_ENTRY_COMPLETED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_STARTED_SUMMARY: boolean;
+                };
+            } | null;
+            /** @description The value the save stored. */
+            newValue: {
+                /** @description Whether any system email is sent. Off: every email is skipped and logged. */
+                enabled: boolean;
+                /**
+                 * Format: email
+                 * @description Reply-To address for system email, or null to let replies go to the sender.
+                 */
+                replyTo: string | null;
+                /** @description Per-template switches. A template that is off is skipped even while email is on. */
+                templates: {
+                    /** @description Whether this email is sent. */
+                    LEAGUE_MEMBER_INVITE: boolean;
+                    /** @description Whether this email is sent. */
+                    LEAGUE_JOIN_SUCCESS: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_ENTRY_COMPLETED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_STARTED_SUMMARY: boolean;
+                };
+            };
         };
         /** @description Recent changes to one settings group. */
         SettingsChangeList: {
             /** @description The group's most recent changes, newest first, at most 20. */
-            changes: {
+            changes: ({
+                /** @enum {string} */
+                key: "INGESTION_SCHEDULE_CONFIG";
                 /** Format: uuid */
                 id: string;
-                /**
-                 * @description The stored key of a settings group.
-                 * @enum {string}
-                 */
-                key: "POLL_INTERVAL_CONFIG" | "INGESTION_SCHEDULE_CONFIG" | "EMAIL_CONFIG";
-                /** @description The stored value before the save, as it was stored; null when the save created the first stored value. */
-                previousValue: {
-                    [key: string]: unknown;
-                } | null;
-                /** @description The value the save stored. */
-                newValue: {
-                    [key: string]: unknown;
-                };
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -3407,7 +3414,233 @@ export interface components {
                     /** @description The admin's full name, for display. */
                     name: string;
                 } | null;
-            }[];
+                /** @description The stored value before the save; null when the save created the first stored value. */
+                previousValue: {
+                    /**
+                     * @description Sports that scheduled ingestion is allowed to run automatically.
+                     * @default [
+                     *       "GOLF"
+                     *     ]
+                     */
+                    scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                    /** @description Scheduling policy for provider health checks. */
+                    healthCheck: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                        lookaheadDays?: number;
+                    };
+                    /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
+                    eventParticipants: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                        lookaheadDays?: number;
+                    };
+                    /** @description Scheduling policy for live score polling. */
+                    eventLiveScores: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                        lookaheadDays?: number;
+                    };
+                    /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
+                    perSportOverrides: {
+                        [key: string]: {
+                            scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                            /** @description Partial feed-scheduling override payload. */
+                            healthCheck?: {
+                                /** @description Whether the feed should be scheduled automatically. */
+                                enabled?: boolean;
+                                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                intervalMinutes?: number;
+                                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                intervalSeconds?: number;
+                                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                                lookaheadDays?: number;
+                            };
+                            /** @description Partial feed-scheduling override payload. */
+                            eventParticipants?: {
+                                /** @description Whether the feed should be scheduled automatically. */
+                                enabled?: boolean;
+                                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                intervalMinutes?: number;
+                                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                intervalSeconds?: number;
+                                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                                lookaheadDays?: number;
+                            };
+                            /** @description Partial feed-scheduling override payload. */
+                            eventLiveScores?: {
+                                /** @description Whether the feed should be scheduled automatically. */
+                                enabled?: boolean;
+                                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                intervalMinutes?: number;
+                                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                intervalSeconds?: number;
+                                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                                lookaheadDays?: number;
+                            };
+                        };
+                    };
+                } | null;
+                /** @description The value the save stored. */
+                newValue: {
+                    /**
+                     * @description Sports that scheduled ingestion is allowed to run automatically.
+                     * @default [
+                     *       "GOLF"
+                     *     ]
+                     */
+                    scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                    /** @description Scheduling policy for provider health checks. */
+                    healthCheck: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                        lookaheadDays?: number;
+                    };
+                    /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
+                    eventParticipants: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                        lookaheadDays?: number;
+                    };
+                    /** @description Scheduling policy for live score polling. */
+                    eventLiveScores: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                        lookaheadDays?: number;
+                    };
+                    /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
+                    perSportOverrides: {
+                        [key: string]: {
+                            scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                            /** @description Partial feed-scheduling override payload. */
+                            healthCheck?: {
+                                /** @description Whether the feed should be scheduled automatically. */
+                                enabled?: boolean;
+                                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                intervalMinutes?: number;
+                                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                intervalSeconds?: number;
+                                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                                lookaheadDays?: number;
+                            };
+                            /** @description Partial feed-scheduling override payload. */
+                            eventParticipants?: {
+                                /** @description Whether the feed should be scheduled automatically. */
+                                enabled?: boolean;
+                                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                intervalMinutes?: number;
+                                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                intervalSeconds?: number;
+                                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                                lookaheadDays?: number;
+                            };
+                            /** @description Partial feed-scheduling override payload. */
+                            eventLiveScores?: {
+                                /** @description Whether the feed should be scheduled automatically. */
+                                enabled?: boolean;
+                                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                intervalMinutes?: number;
+                                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                intervalSeconds?: number;
+                                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                                lookaheadDays?: number;
+                            };
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                key: "EMAIL_CONFIG";
+                /** Format: uuid */
+                id: string;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                changedAt: string;
+                /** @description Who saved it, when known. */
+                changedBy: {
+                    /**
+                     * Format: uuid
+                     * @description The user id of the root admin who made the change.
+                     */
+                    id: string;
+                    /** @description The admin's full name, for display. */
+                    name: string;
+                } | null;
+                /** @description The stored value before the save; null when the save created the first stored value. */
+                previousValue: {
+                    /** @description Whether any system email is sent. Off: every email is skipped and logged. */
+                    enabled: boolean;
+                    /**
+                     * Format: email
+                     * @description Reply-To address for system email, or null to let replies go to the sender.
+                     */
+                    replyTo: string | null;
+                    /** @description Per-template switches. A template that is off is skipped even while email is on. */
+                    templates: {
+                        /** @description Whether this email is sent. */
+                        LEAGUE_MEMBER_INVITE: boolean;
+                        /** @description Whether this email is sent. */
+                        LEAGUE_JOIN_SUCCESS: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_ENTRY_COMPLETED: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_STARTED_SUMMARY: boolean;
+                    };
+                } | null;
+                /** @description The value the save stored. */
+                newValue: {
+                    /** @description Whether any system email is sent. Off: every email is skipped and logged. */
+                    enabled: boolean;
+                    /**
+                     * Format: email
+                     * @description Reply-To address for system email, or null to let replies go to the sender.
+                     */
+                    replyTo: string | null;
+                    /** @description Per-template switches. A template that is off is skipped even while email is on. */
+                    templates: {
+                        /** @description Whether this email is sent. */
+                        LEAGUE_MEMBER_INVITE: boolean;
+                        /** @description Whether this email is sent. */
+                        LEAGUE_JOIN_SUCCESS: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_ENTRY_COMPLETED: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_STARTED_SUMMARY: boolean;
+                    };
+                };
+            })[];
         };
         /** @description A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row. */
         UserDto: {
@@ -5535,14 +5768,11 @@ export interface components {
             q?: string;
             /** @description Only participants of this sport. */
             sportId?: string;
-            /** @description Comma-separated participant statuses to include. */
-            status?: string;
-            /** @description Comma-separated playing roles to include. */
-            role?: string;
-            /** @description Comma-separated team affiliations to include. */
-            team?: string;
-            /** @description Comma-separated nationalities to include. */
-            nationality?: string;
+            /**
+             * @description Only participants in this status. Omitted: every status.
+             * @enum {string}
+             */
+            status?: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
         };
         /** @description Participant-list response. */
         ParticipantListResponse: {
@@ -6424,10 +6654,6 @@ export interface components {
             contestCount: number;
             /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
             allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
-            /** @description Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.) */
-            metadata: {
-                [key: string]: unknown;
-            };
             /**
              * Format: date-time
              * @description When the event row was created.
@@ -6544,10 +6770,6 @@ export interface components {
                 contestCount: number;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
                 allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
-                /** @description Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.) */
-                metadata: {
-                    [key: string]: unknown;
-                };
                 /**
                  * Format: date-time
                  * @description When the event row was created.
@@ -6643,10 +6865,6 @@ export interface components {
                 contestCount: number;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
                 allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
-                /** @description Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.) */
-                metadata: {
-                    [key: string]: unknown;
-                };
                 /**
                  * Format: date-time
                  * @description When the event row was created.
@@ -6811,10 +7029,6 @@ export interface components {
                 contestCount: number;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
                 allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
-                /** @description Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.) */
-                metadata: {
-                    [key: string]: unknown;
-                };
                 /**
                  * Format: date-time
                  * @description When the event row was created.
@@ -8945,9 +9159,41 @@ export interface components {
                  * @enum {string}
                  */
                 requestedFeed?: "EVENTPARTICIPANTS" | "EVENTLIVESCORES";
-                /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                /** @description The request that submitted the sync run. */
                 requestPayload?: {
-                    [key: string]: unknown;
+                    /** @enum {string} */
+                    sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                    /** @description Provider event identifier the sync was asked for. */
+                    eventId: string;
+                    /**
+                     * @description Whether the scheduler or a root admin asked for the sync.
+                     * @enum {string}
+                     */
+                    source: "SCHEDULED" | "MANUAL";
+                    /** @description Who asked for a sync. */
+                    actor: {
+                        /** @enum {string} */
+                        type: "SYSTEM";
+                        /** @enum {string} */
+                        name: "scheduler";
+                    } | {
+                        /** @enum {string} */
+                        type: "ROOT_ADMIN";
+                        /** @description The root admin who asked for the sync. */
+                        userId: string;
+                        /** @description Their email at the time, for the audit trail. */
+                        email: string;
+                    };
+                    /**
+                     * @description The mock feed state a manual QA sync asked for; null otherwise.
+                     * @enum {string|null}
+                     */
+                    mockEventState: "open" | "locked" | "live" | "completed" | "golf-pre-live" | "golf-r1-in-progress" | "golf-r1-complete" | "golf-r2-complete" | "golf-correction" | "golf-r4-complete-pending-final" | "golf-playoff" | "golf-completed" | "golf-late-correction" | null;
+                    /**
+                     * Format: date-time
+                     * @description When the request was validated and normalized.
+                     */
+                    normalizedAt: string;
                 };
                 /** @description Raw/debug provider payload captured for this run. */
                 providerPayload?: {
@@ -9035,11 +9281,11 @@ export interface components {
                         internalId?: string;
                         /** @description Display name for the row, when known. */
                         name?: string;
-                        /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                        /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
                         before?: {
                             [key: string]: unknown;
                         };
-                        /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                        /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
                         after?: {
                             [key: string]: unknown;
                         };
@@ -9133,9 +9379,41 @@ export interface components {
                      * @enum {string}
                      */
                     requestedFeed?: "EVENTPARTICIPANTS" | "EVENTLIVESCORES";
-                    /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                    /** @description The request that submitted the sync run. */
                     requestPayload?: {
-                        [key: string]: unknown;
+                        /** @enum {string} */
+                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                        /** @description Provider event identifier the sync was asked for. */
+                        eventId: string;
+                        /**
+                         * @description Whether the scheduler or a root admin asked for the sync.
+                         * @enum {string}
+                         */
+                        source: "SCHEDULED" | "MANUAL";
+                        /** @description Who asked for a sync. */
+                        actor: {
+                            /** @enum {string} */
+                            type: "SYSTEM";
+                            /** @enum {string} */
+                            name: "scheduler";
+                        } | {
+                            /** @enum {string} */
+                            type: "ROOT_ADMIN";
+                            /** @description The root admin who asked for the sync. */
+                            userId: string;
+                            /** @description Their email at the time, for the audit trail. */
+                            email: string;
+                        };
+                        /**
+                         * @description The mock feed state a manual QA sync asked for; null otherwise.
+                         * @enum {string|null}
+                         */
+                        mockEventState: "open" | "locked" | "live" | "completed" | "golf-pre-live" | "golf-r1-in-progress" | "golf-r1-complete" | "golf-r2-complete" | "golf-correction" | "golf-r4-complete-pending-final" | "golf-playoff" | "golf-completed" | "golf-late-correction" | null;
+                        /**
+                         * Format: date-time
+                         * @description When the request was validated and normalized.
+                         */
+                        normalizedAt: string;
                     };
                     /** @description Raw/debug provider payload captured for this run. */
                     providerPayload?: {
@@ -9223,11 +9501,11 @@ export interface components {
                             internalId?: string;
                             /** @description Display name for the row, when known. */
                             name?: string;
-                            /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                            /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
                             before?: {
                                 [key: string]: unknown;
                             };
-                            /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                            /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
                             after?: {
                                 [key: string]: unknown;
                             };
@@ -9314,9 +9592,41 @@ export interface components {
                      * @enum {string}
                      */
                     requestedFeed?: "EVENTPARTICIPANTS" | "EVENTLIVESCORES";
-                    /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                    /** @description The request that submitted the sync run. */
                     requestPayload?: {
-                        [key: string]: unknown;
+                        /** @enum {string} */
+                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                        /** @description Provider event identifier the sync was asked for. */
+                        eventId: string;
+                        /**
+                         * @description Whether the scheduler or a root admin asked for the sync.
+                         * @enum {string}
+                         */
+                        source: "SCHEDULED" | "MANUAL";
+                        /** @description Who asked for a sync. */
+                        actor: {
+                            /** @enum {string} */
+                            type: "SYSTEM";
+                            /** @enum {string} */
+                            name: "scheduler";
+                        } | {
+                            /** @enum {string} */
+                            type: "ROOT_ADMIN";
+                            /** @description The root admin who asked for the sync. */
+                            userId: string;
+                            /** @description Their email at the time, for the audit trail. */
+                            email: string;
+                        };
+                        /**
+                         * @description The mock feed state a manual QA sync asked for; null otherwise.
+                         * @enum {string|null}
+                         */
+                        mockEventState: "open" | "locked" | "live" | "completed" | "golf-pre-live" | "golf-r1-in-progress" | "golf-r1-complete" | "golf-r2-complete" | "golf-correction" | "golf-r4-complete-pending-final" | "golf-playoff" | "golf-completed" | "golf-late-correction" | null;
+                        /**
+                         * Format: date-time
+                         * @description When the request was validated and normalized.
+                         */
+                        normalizedAt: string;
                     };
                     /** @description Raw/debug provider payload captured for this run. */
                     providerPayload?: {
@@ -9404,11 +9714,11 @@ export interface components {
                             internalId?: string;
                             /** @description Display name for the row, when known. */
                             name?: string;
-                            /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                            /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
                             before?: {
                                 [key: string]: unknown;
                             };
-                            /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                            /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
                             after?: {
                                 [key: string]: unknown;
                             };
@@ -9499,10 +9809,6 @@ export interface components {
             participantCount: number | null;
             /** @description Whether the provider has locked the field. */
             fieldLocked: boolean;
-            /** @description Provider-emitted event metadata, unnormalized. */
-            metadata: {
-                [key: string]: unknown;
-            };
         };
         /** @description Filters over a provider's live catalog. */
         ProviderCatalogEventListQuery: {
@@ -9550,10 +9856,6 @@ export interface components {
                 participantCount: number | null;
                 /** @description Whether the provider has locked the field. */
                 fieldLocked: boolean;
-                /** @description Provider-emitted event metadata, unnormalized. */
-                metadata: {
-                    [key: string]: unknown;
-                };
             }[];
         };
         /** @enum {string} */
@@ -20118,14 +20420,8 @@ export interface operations {
                 q?: string;
                 /** @description Only participants of this sport. */
                 sportId?: string;
-                /** @description Comma-separated participant statuses to include. */
-                status?: string;
-                /** @description Comma-separated playing roles to include. */
-                role?: string;
-                /** @description Comma-separated team affiliations to include. */
-                team?: string;
-                /** @description Comma-separated nationalities to include. */
-                nationality?: string;
+                /** @description Only participants in this status. Omitted: every status. */
+                status?: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
             };
             header?: never;
             path?: never;
@@ -20492,7 +20788,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The settings group key, e.g. POLL_INTERVAL_CONFIG. */
+                /** @description The settings group key, e.g. EMAIL_CONFIG. */
                 key: string;
             };
             cookie?: never;
@@ -20572,7 +20868,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The settings group key, e.g. POLL_INTERVAL_CONFIG. */
+                /** @description The settings group key, e.g. EMAIL_CONFIG. */
                 key: string;
             };
             cookie?: never;
@@ -20694,7 +20990,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The settings group key, e.g. POLL_INTERVAL_CONFIG. */
+                /** @description The settings group key, e.g. EMAIL_CONFIG. */
                 key: string;
             };
             cookie?: never;
@@ -20774,7 +21070,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The settings group key, e.g. POLL_INTERVAL_CONFIG. */
+                /** @description The settings group key, e.g. EMAIL_CONFIG. */
                 key: string;
             };
             cookie?: never;
@@ -20830,184 +21126,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getPollIntervals: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PollIntervalConfig"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    updatePollIntervals: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PollIntervalConfigPatch"];
-            };
-        };
-        responses: {
-            /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PollIntervalConfig"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    resetPollIntervals: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PollIntervalConfig"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -41,7 +41,6 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     tierCount: 6,
     contestCount: 0,
     allowedTransitions: ['CANCELLED'],
-    metadata: {},
     createdAt: '2026-04-01T10:00:00.000Z',
     updatedAt: '2026-04-01T11:00:00.000Z',
     ...overrides,

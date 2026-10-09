@@ -6,7 +6,7 @@ import { cn } from "./class-names";
 import { DataGrid } from "./data-grid";
 import { DetailsActionsLayout } from "./details-actions-layout";
 import { PageHeader } from "./page-header";
-import { ServerErrorPanel } from "./server-error";
+import { ServerErrorBar } from "./server-error";
 import { EmptyState, ErrorState, LoadingState } from "./state";
 import { StatusBadge } from "./status-badge";
 import { Tile } from "./tile";
@@ -38,7 +38,7 @@ type AsyncPageStateProps = {
   emptyBody?: ReactNode;
   emptyTitle?: ReactNode;
   errorBody?: ReactNode;
-  error?: unknown;
+  error?: Error | null;
   errorAction?: ReactNode;
   errorTitle?: ReactNode;
   loadingBody?: ReactNode;
@@ -71,7 +71,7 @@ function renderAsyncState({
   if (state === "error") {
     if (error) {
       return (
-        <ServerErrorPanel
+        <ServerErrorBar
           action={errorAction}
           error={error}
           fallback={

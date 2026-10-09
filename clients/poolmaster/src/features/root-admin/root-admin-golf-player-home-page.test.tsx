@@ -110,7 +110,7 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
 
   it('pool-master-rfy shows a not-found empty state and an error state', async () => {
     getParticipantMock.mockResolvedValue({
-      error: { code: 'NOT_FOUND', message: 'No such player' },
+      error: { error: { code: 'NOT_FOUND', message: 'No such player' } },
       response: { status: 404 },
     });
     renderPage();

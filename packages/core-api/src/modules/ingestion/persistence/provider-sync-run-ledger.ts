@@ -2,6 +2,7 @@ import { type Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
 import { IngestionJobStatus, ProviderSyncRunStatus, type ProviderSyncRun } from '@poolmaster/shared/domain';
+import type { ProviderSyncRequestPayloadDto } from '@poolmaster/shared/dto';
 import type { IngestionFeedType, EventSyncRequest, IngestionJobRecord } from '../core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../core/sync-orchestrator';
 
@@ -36,7 +37,7 @@ export class ProviderSyncRunLedger {
             sport,
             eventId,
             ...requestContext,
-          },
+          } satisfies ProviderSyncRequestPayloadDto,
           providerPayload: {
             operation: feed,
             rawCaptured: false,
@@ -315,11 +316,13 @@ function buildSyncRunDetail(
   return `Completed ${feed} sync for ${target} (${job.recordsProcessed} records).`;
 }
 
-export function buildNormalizedSyncRequestContext(normalized: NormalizedSyncRequest): Record<string, unknown> {
+/** The published request payload, less the scope fields the caller adds alongside. */
+function buildNormalizedSyncRequestContext(
+  normalized: NormalizedSyncRequest,
+): Omit<ProviderSyncRequestPayloadDto, 'sport' | 'eventId'> {
   return {
     source: normalized.source,
     actor: normalized.actor,
-    workflowContext: normalized.workflowContext,
     mockEventState: normalized.scope.mockEventState ?? null,
     normalizedAt: normalized.normalizedAt.toISOString(),
   };

@@ -1,9 +1,9 @@
-import type { IngestionScheduleConfig, PollIntervalConfig } from '@/lib/api';
+import type { IngestionScheduleConfig } from '@/lib/api';
 import type { SyncSport } from './root-admin-sync-utils';
 
-// Re-exported so the three root-admin config pages keep importing these from one place;
+// Re-exported so the root-admin config pages keep importing these from one place;
 // the shapes themselves are the generated named components (see plans/143).
-export type { IngestionScheduleConfig, PollIntervalConfig };
+export type { IngestionScheduleConfig };
 
 export const INGESTION_POLICY_FIELDS = [
   {
@@ -30,34 +30,6 @@ export const INGESTION_POLICY_FIELDS = [
 
 export type IngestionPolicyField = (typeof INGESTION_POLICY_FIELDS)[number];
 export type IngestionPolicyKey = IngestionPolicyField['key'];
-
-export function extractAdminErrorMessage(
-  error: unknown,
-  fallback = 'We could not load this admin data right now.',
-) {
-  if (!error || typeof error !== 'object') {
-    return fallback;
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return fallback;
-}
-
-export function clonePollConfig(config: PollIntervalConfig): PollIntervalConfig {
-  return { ...config };
-}
 
 export function cloneIngestionConfig(
   config: IngestionScheduleConfig,

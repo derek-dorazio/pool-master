@@ -18,45 +18,6 @@
       }
     },
     "schemas": {
-      "PollIntervalConfig": {
-        "type": "object",
-        "properties": {
-          "standings": {
-            "type": "integer",
-            "minimum": 1000,
-            "description": "Recommended refresh interval for standings and leaderboard surfaces."
-          },
-          "draft": {
-            "type": "integer",
-            "minimum": 1000,
-            "description": "Recommended refresh interval for draft state and pick-clock surfaces."
-          },
-          "contestStatus": {
-            "type": "integer",
-            "minimum": 1000,
-            "description": "Recommended refresh interval for contest status and lifecycle surfaces."
-          },
-          "notifications": {
-            "type": "integer",
-            "minimum": 1000,
-            "description": "Recommended refresh interval for unread notifications and similar badge counts."
-          },
-          "default": {
-            "type": "integer",
-            "minimum": 1000,
-            "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
-          }
-        },
-        "required": [
-          "standings",
-          "draft",
-          "contestStatus",
-          "notifications",
-          "default"
-        ],
-        "additionalProperties": false,
-        "description": "Poll-interval configuration payload exposed to clients and root-admin tools."
-      },
       "EmailTemplateKey": {
         "type": "string",
         "enum": [
@@ -119,38 +80,6 @@
         ],
         "additionalProperties": false,
         "description": "Whether and how system email is sent."
-      },
-      "PollIntervalConfigPatch": {
-        "type": "object",
-        "properties": {
-          "standings": {
-            "type": "integer",
-            "minimum": 1000,
-            "description": "Recommended refresh interval for standings and leaderboard surfaces."
-          },
-          "draft": {
-            "type": "integer",
-            "minimum": 1000,
-            "description": "Recommended refresh interval for draft state and pick-clock surfaces."
-          },
-          "contestStatus": {
-            "type": "integer",
-            "minimum": 1000,
-            "description": "Recommended refresh interval for contest status and lifecycle surfaces."
-          },
-          "notifications": {
-            "type": "integer",
-            "minimum": 1000,
-            "description": "Recommended refresh interval for unread notifications and similar badge counts."
-          },
-          "default": {
-            "type": "integer",
-            "minimum": 1000,
-            "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
-          }
-        },
-        "additionalProperties": false,
-        "description": "Partial poll-interval update payload used by root-admin configuration tools."
       },
       "IngestionScheduleConfigOverride": {
         "type": "object",
@@ -502,7 +431,6 @@
       "SettingsGroupKey": {
         "type": "string",
         "enum": [
-          "POLL_INTERVAL_CONFIG",
           "INGESTION_SCHEDULE_CONFIG",
           "EMAIL_CONFIG"
         ],
@@ -530,153 +458,6 @@
       },
       "SettingsGroup": {
         "anyOf": [
-          {
-            "type": "object",
-            "properties": {
-              "key": {
-                "type": "string",
-                "enum": [
-                  "POLL_INTERVAL_CONFIG"
-                ]
-              },
-              "title": {
-                "type": "string",
-                "description": "Short display name of the group."
-              },
-              "description": {
-                "type": "string",
-                "description": "What the group controls."
-              },
-              "source": {
-                "type": "string",
-                "enum": [
-                  "stored",
-                  "defaults"
-                ],
-                "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
-              },
-              "updatedAt": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "date-time",
-                "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save."
-              },
-              "updatedBy": {
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "The user id of the root admin who made the change."
-                  },
-                  "name": {
-                    "type": "string",
-                    "description": "The admin's full name, for display."
-                  }
-                },
-                "required": [
-                  "id",
-                  "name"
-                ],
-                "additionalProperties": false,
-                "description": "Who last saved the stored value, when known."
-              },
-              "value": {
-                "type": "object",
-                "properties": {
-                  "standings": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for standings and leaderboard surfaces."
-                  },
-                  "draft": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for draft state and pick-clock surfaces."
-                  },
-                  "contestStatus": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for contest status and lifecycle surfaces."
-                  },
-                  "notifications": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for unread notifications and similar badge counts."
-                  },
-                  "default": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
-                  }
-                },
-                "required": [
-                  "standings",
-                  "draft",
-                  "contestStatus",
-                  "notifications",
-                  "default"
-                ],
-                "additionalProperties": false,
-                "description": "The value in use."
-              },
-              "defaults": {
-                "type": "object",
-                "properties": {
-                  "standings": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for standings and leaderboard surfaces."
-                  },
-                  "draft": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for draft state and pick-clock surfaces."
-                  },
-                  "contestStatus": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for contest status and lifecycle surfaces."
-                  },
-                  "notifications": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for unread notifications and similar badge counts."
-                  },
-                  "default": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
-                  }
-                },
-                "required": [
-                  "standings",
-                  "draft",
-                  "contestStatus",
-                  "notifications",
-                  "default"
-                ],
-                "additionalProperties": false,
-                "description": "The value a reset would store."
-              }
-            },
-            "required": [
-              "key",
-              "title",
-              "description",
-              "source",
-              "updatedAt",
-              "updatedBy",
-              "value",
-              "defaults"
-            ],
-            "additionalProperties": false
-          },
           {
             "type": "object",
             "properties": {
@@ -1409,153 +1190,6 @@
             "type": "array",
             "items": {
               "anyOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "key": {
-                      "type": "string",
-                      "enum": [
-                        "POLL_INTERVAL_CONFIG"
-                      ]
-                    },
-                    "title": {
-                      "type": "string",
-                      "description": "Short display name of the group."
-                    },
-                    "description": {
-                      "type": "string",
-                      "description": "What the group controls."
-                    },
-                    "source": {
-                      "type": "string",
-                      "enum": [
-                        "stored",
-                        "defaults"
-                      ],
-                      "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
-                    },
-                    "updatedAt": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "format": "date-time",
-                      "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save."
-                    },
-                    "updatedBy": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "description": "The user id of the root admin who made the change."
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "The admin's full name, for display."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "name"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Who last saved the stored value, when known."
-                    },
-                    "value": {
-                      "type": "object",
-                      "properties": {
-                        "standings": {
-                          "type": "integer",
-                          "minimum": 1000,
-                          "description": "Recommended refresh interval for standings and leaderboard surfaces."
-                        },
-                        "draft": {
-                          "type": "integer",
-                          "minimum": 1000,
-                          "description": "Recommended refresh interval for draft state and pick-clock surfaces."
-                        },
-                        "contestStatus": {
-                          "type": "integer",
-                          "minimum": 1000,
-                          "description": "Recommended refresh interval for contest status and lifecycle surfaces."
-                        },
-                        "notifications": {
-                          "type": "integer",
-                          "minimum": 1000,
-                          "description": "Recommended refresh interval for unread notifications and similar badge counts."
-                        },
-                        "default": {
-                          "type": "integer",
-                          "minimum": 1000,
-                          "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
-                        }
-                      },
-                      "required": [
-                        "standings",
-                        "draft",
-                        "contestStatus",
-                        "notifications",
-                        "default"
-                      ],
-                      "additionalProperties": false,
-                      "description": "The value in use."
-                    },
-                    "defaults": {
-                      "type": "object",
-                      "properties": {
-                        "standings": {
-                          "type": "integer",
-                          "minimum": 1000,
-                          "description": "Recommended refresh interval for standings and leaderboard surfaces."
-                        },
-                        "draft": {
-                          "type": "integer",
-                          "minimum": 1000,
-                          "description": "Recommended refresh interval for draft state and pick-clock surfaces."
-                        },
-                        "contestStatus": {
-                          "type": "integer",
-                          "minimum": 1000,
-                          "description": "Recommended refresh interval for contest status and lifecycle surfaces."
-                        },
-                        "notifications": {
-                          "type": "integer",
-                          "minimum": 1000,
-                          "description": "Recommended refresh interval for unread notifications and similar badge counts."
-                        },
-                        "default": {
-                          "type": "integer",
-                          "minimum": 1000,
-                          "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
-                        }
-                      },
-                      "required": [
-                        "standings",
-                        "draft",
-                        "contestStatus",
-                        "notifications",
-                        "default"
-                      ],
-                      "additionalProperties": false,
-                      "description": "The value a reset would store."
-                    }
-                  },
-                  "required": [
-                    "key",
-                    "title",
-                    "description",
-                    "source",
-                    "updatedAt",
-                    "updatedBy",
-                    "value",
-                    "defaults"
-                  ],
-                  "additionalProperties": false
-                },
                 {
                   "type": "object",
                   "properties": {
@@ -2298,70 +1932,6 @@
               "key": {
                 "type": "string",
                 "enum": [
-                  "POLL_INTERVAL_CONFIG"
-                ]
-              },
-              "value": {
-                "type": "object",
-                "properties": {
-                  "standings": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for standings and leaderboard surfaces."
-                  },
-                  "draft": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for draft state and pick-clock surfaces."
-                  },
-                  "contestStatus": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for contest status and lifecycle surfaces."
-                  },
-                  "notifications": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for unread notifications and similar badge counts."
-                  },
-                  "default": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
-                  }
-                },
-                "required": [
-                  "standings",
-                  "draft",
-                  "contestStatus",
-                  "notifications",
-                  "default"
-                ],
-                "additionalProperties": false,
-                "description": "The whole new value."
-              },
-              "expectedUpdatedAt": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "date-time",
-                "description": "The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT."
-              }
-            },
-            "required": [
-              "key",
-              "value",
-              "expectedUpdatedAt"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "key": {
-                "type": "string",
-                "enum": [
                   "INGESTION_SCHEDULE_CONFIG"
                 ]
               },
@@ -2700,73 +2270,703 @@
         "description": "A whole new value for one settings group. `key` must match the path."
       },
       "SettingsChange": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "key": {
-            "type": "string",
-            "enum": [
-              "POLL_INTERVAL_CONFIG",
-              "INGESTION_SCHEDULE_CONFIG",
-              "EMAIL_CONFIG"
-            ],
-            "description": "The stored key of a settings group."
-          },
-          "previousValue": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "additionalProperties": {},
-            "description": "The stored value before the save, as it was stored; null when the save created the first stored value."
-          },
-          "newValue": {
+        "anyOf": [
+          {
             "type": "object",
-            "additionalProperties": {},
-            "description": "The value the save stored."
-          },
-          "changedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "changedBy": {
-            "type": [
-              "object",
-              "null"
-            ],
             "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "INGESTION_SCHEDULE_CONFIG"
+                ]
+              },
               "id": {
                 "type": "string",
-                "format": "uuid",
-                "description": "The user id of the root admin who made the change."
+                "format": "uuid"
               },
-              "name": {
+              "changedAt": {
                 "type": "string",
-                "description": "The admin's full name, for display."
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              },
+              "changedBy": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The user id of the root admin who made the change."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The admin's full name, for display."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Who saved it, when known."
+              },
+              "previousValue": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "scheduledSports": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "GOLF",
+                        "NFL",
+                        "NBA",
+                        "F1",
+                        "NASCAR",
+                        "NCAA_BASKETBALL",
+                        "NCAA_HOCKEY",
+                        "NCAA_FOOTBALL",
+                        "TENNIS",
+                        "HORSE_RACING",
+                        "SOCCER",
+                        "NHL",
+                        "MLB",
+                        "UFC"
+                      ]
+                    },
+                    "minItems": 1,
+                    "default": [
+                      "GOLF"
+                    ],
+                    "description": "Sports that scheduled ingestion is allowed to run automatically."
+                  },
+                  "healthCheck": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
+                      },
+                      "intervalMinutes": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                      },
+                      "intervalSeconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                      },
+                      "lookaheadDays": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Scheduling policy for provider health checks."
+                  },
+                  "eventParticipants": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
+                      },
+                      "intervalMinutes": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                      },
+                      "intervalSeconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                      },
+                      "lookaheadDays": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
+                  },
+                  "eventLiveScores": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
+                      },
+                      "intervalMinutes": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                      },
+                      "intervalSeconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                      },
+                      "lookaheadDays": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Scheduling policy for live score polling."
+                  },
+                  "perSportOverrides": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "scheduledSports": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ]
+                          },
+                          "minItems": 1
+                        },
+                        "healthCheck": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                            },
+                            "intervalSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                            },
+                            "lookaheadDays": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                            }
+                          },
+                          "additionalProperties": false,
+                          "description": "Partial feed-scheduling override payload."
+                        },
+                        "eventParticipants": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                            },
+                            "intervalSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                            },
+                            "lookaheadDays": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                            }
+                          },
+                          "additionalProperties": false,
+                          "description": "Partial feed-scheduling override payload."
+                        },
+                        "eventLiveScores": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                            },
+                            "intervalSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                            },
+                            "lookaheadDays": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                            }
+                          },
+                          "additionalProperties": false,
+                          "description": "Partial feed-scheduling override payload."
+                        }
+                      },
+                      "additionalProperties": false,
+                      "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
+                    },
+                    "description": "Per-sport scheduling overrides applied on top of the global feed policies."
+                  }
+                },
+                "required": [
+                  "healthCheck",
+                  "eventParticipants",
+                  "eventLiveScores",
+                  "perSportOverrides"
+                ],
+                "additionalProperties": false,
+                "description": "The stored value before the save; null when the save created the first stored value."
+              },
+              "newValue": {
+                "type": "object",
+                "properties": {
+                  "scheduledSports": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "GOLF",
+                        "NFL",
+                        "NBA",
+                        "F1",
+                        "NASCAR",
+                        "NCAA_BASKETBALL",
+                        "NCAA_HOCKEY",
+                        "NCAA_FOOTBALL",
+                        "TENNIS",
+                        "HORSE_RACING",
+                        "SOCCER",
+                        "NHL",
+                        "MLB",
+                        "UFC"
+                      ]
+                    },
+                    "minItems": 1,
+                    "default": [
+                      "GOLF"
+                    ],
+                    "description": "Sports that scheduled ingestion is allowed to run automatically."
+                  },
+                  "healthCheck": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
+                      },
+                      "intervalMinutes": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                      },
+                      "intervalSeconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                      },
+                      "lookaheadDays": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Scheduling policy for provider health checks."
+                  },
+                  "eventParticipants": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
+                      },
+                      "intervalMinutes": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                      },
+                      "intervalSeconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                      },
+                      "lookaheadDays": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
+                  },
+                  "eventLiveScores": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
+                      },
+                      "intervalMinutes": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                      },
+                      "intervalSeconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                      },
+                      "lookaheadDays": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Scheduling policy for live score polling."
+                  },
+                  "perSportOverrides": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "scheduledSports": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ]
+                          },
+                          "minItems": 1
+                        },
+                        "healthCheck": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                            },
+                            "intervalSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                            },
+                            "lookaheadDays": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                            }
+                          },
+                          "additionalProperties": false,
+                          "description": "Partial feed-scheduling override payload."
+                        },
+                        "eventParticipants": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                            },
+                            "intervalSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                            },
+                            "lookaheadDays": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                            }
+                          },
+                          "additionalProperties": false,
+                          "description": "Partial feed-scheduling override payload."
+                        },
+                        "eventLiveScores": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                            },
+                            "intervalSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                            },
+                            "lookaheadDays": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                            }
+                          },
+                          "additionalProperties": false,
+                          "description": "Partial feed-scheduling override payload."
+                        }
+                      },
+                      "additionalProperties": false,
+                      "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
+                    },
+                    "description": "Per-sport scheduling overrides applied on top of the global feed policies."
+                  }
+                },
+                "required": [
+                  "healthCheck",
+                  "eventParticipants",
+                  "eventLiveScores",
+                  "perSportOverrides"
+                ],
+                "additionalProperties": false,
+                "description": "The value the save stored."
               }
             },
             "required": [
+              "key",
               "id",
-              "name"
+              "changedAt",
+              "changedBy",
+              "previousValue",
+              "newValue"
             ],
-            "additionalProperties": false,
-            "description": "Who saved it, when known."
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "EMAIL_CONFIG"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "changedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              },
+              "changedBy": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The user id of the root admin who made the change."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The admin's full name, for display."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Who saved it, when known."
+              },
+              "previousValue": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Whether any system email is sent. Off: every email is skipped and logged."
+                  },
+                  "replyTo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "email",
+                    "description": "Reply-To address for system email, or null to let replies go to the sender."
+                  },
+                  "templates": {
+                    "type": "object",
+                    "properties": {
+                      "LEAGUE_MEMBER_INVITE": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "LEAGUE_JOIN_SUCCESS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_ENTRY_COMPLETED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_STARTED_SUMMARY": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      }
+                    },
+                    "required": [
+                      "LEAGUE_MEMBER_INVITE",
+                      "LEAGUE_JOIN_SUCCESS",
+                      "CONTEST_ENTRY_COMPLETED",
+                      "CONTEST_STARTED_SUMMARY"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Per-template switches. A template that is off is skipped even while email is on."
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "replyTo",
+                  "templates"
+                ],
+                "additionalProperties": false,
+                "description": "The stored value before the save; null when the save created the first stored value."
+              },
+              "newValue": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Whether any system email is sent. Off: every email is skipped and logged."
+                  },
+                  "replyTo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "email",
+                    "description": "Reply-To address for system email, or null to let replies go to the sender."
+                  },
+                  "templates": {
+                    "type": "object",
+                    "properties": {
+                      "LEAGUE_MEMBER_INVITE": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "LEAGUE_JOIN_SUCCESS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_ENTRY_COMPLETED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_STARTED_SUMMARY": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      }
+                    },
+                    "required": [
+                      "LEAGUE_MEMBER_INVITE",
+                      "LEAGUE_JOIN_SUCCESS",
+                      "CONTEST_ENTRY_COMPLETED",
+                      "CONTEST_STARTED_SUMMARY"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Per-template switches. A template that is off is skipped even while email is on."
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "replyTo",
+                  "templates"
+                ],
+                "additionalProperties": false,
+                "description": "The value the save stored."
+              }
+            },
+            "required": [
+              "key",
+              "id",
+              "changedAt",
+              "changedBy",
+              "previousValue",
+              "newValue"
+            ],
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "id",
-          "key",
-          "previousValue",
-          "newValue",
-          "changedAt",
-          "changedBy"
         ],
-        "additionalProperties": false,
-        "description": "One saved change to a settings group."
+        "description": "One saved change to a settings group, each value typed by the group's own schema."
       },
       "SettingsChangeList": {
         "type": "object",
@@ -2774,73 +2974,703 @@
           "changes": {
             "type": "array",
             "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "key": {
-                  "type": "string",
-                  "enum": [
-                    "POLL_INTERVAL_CONFIG",
-                    "INGESTION_SCHEDULE_CONFIG",
-                    "EMAIL_CONFIG"
-                  ],
-                  "description": "The stored key of a settings group."
-                },
-                "previousValue": {
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "additionalProperties": {},
-                  "description": "The stored value before the save, as it was stored; null when the save created the first stored value."
-                },
-                "newValue": {
+              "anyOf": [
+                {
                   "type": "object",
-                  "additionalProperties": {},
-                  "description": "The value the save stored."
-                },
-                "changedAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "ISO 8601 datetime string."
-                },
-                "changedBy": {
-                  "type": [
-                    "object",
-                    "null"
-                  ],
                   "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "INGESTION_SCHEDULE_CONFIG"
+                      ]
+                    },
                     "id": {
                       "type": "string",
-                      "format": "uuid",
-                      "description": "The user id of the root admin who made the change."
+                      "format": "uuid"
                     },
-                    "name": {
+                    "changedAt": {
                       "type": "string",
-                      "description": "The admin's full name, for display."
+                      "format": "date-time",
+                      "description": "ISO 8601 datetime string."
+                    },
+                    "changedBy": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The user id of the root admin who made the change."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The admin's full name, for display."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Who saved it, when known."
+                    },
+                    "previousValue": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "scheduledSports": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ]
+                          },
+                          "minItems": 1,
+                          "default": [
+                            "GOLF"
+                          ],
+                          "description": "Sports that scheduled ingestion is allowed to run automatically."
+                        },
+                        "healthCheck": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                            },
+                            "intervalSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                            },
+                            "lookaheadDays": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Scheduling policy for provider health checks."
+                        },
+                        "eventParticipants": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                            },
+                            "intervalSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                            },
+                            "lookaheadDays": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
+                        },
+                        "eventLiveScores": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                            },
+                            "intervalSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                            },
+                            "lookaheadDays": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Scheduling policy for live score polling."
+                        },
+                        "perSportOverrides": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "scheduledSports": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GOLF",
+                                    "NFL",
+                                    "NBA",
+                                    "F1",
+                                    "NASCAR",
+                                    "NCAA_BASKETBALL",
+                                    "NCAA_HOCKEY",
+                                    "NCAA_FOOTBALL",
+                                    "TENNIS",
+                                    "HORSE_RACING",
+                                    "SOCCER",
+                                    "NHL",
+                                    "MLB",
+                                    "UFC"
+                                  ]
+                                },
+                                "minItems": 1
+                              },
+                              "healthCheck": {
+                                "type": "object",
+                                "properties": {
+                                  "enabled": {
+                                    "type": "boolean",
+                                    "description": "Whether the feed should be scheduled automatically."
+                                  },
+                                  "intervalMinutes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                                  },
+                                  "intervalSeconds": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                                  },
+                                  "lookaheadDays": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                                  }
+                                },
+                                "additionalProperties": false,
+                                "description": "Partial feed-scheduling override payload."
+                              },
+                              "eventParticipants": {
+                                "type": "object",
+                                "properties": {
+                                  "enabled": {
+                                    "type": "boolean",
+                                    "description": "Whether the feed should be scheduled automatically."
+                                  },
+                                  "intervalMinutes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                                  },
+                                  "intervalSeconds": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                                  },
+                                  "lookaheadDays": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                                  }
+                                },
+                                "additionalProperties": false,
+                                "description": "Partial feed-scheduling override payload."
+                              },
+                              "eventLiveScores": {
+                                "type": "object",
+                                "properties": {
+                                  "enabled": {
+                                    "type": "boolean",
+                                    "description": "Whether the feed should be scheduled automatically."
+                                  },
+                                  "intervalMinutes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                                  },
+                                  "intervalSeconds": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                                  },
+                                  "lookaheadDays": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                                  }
+                                },
+                                "additionalProperties": false,
+                                "description": "Partial feed-scheduling override payload."
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
+                          },
+                          "description": "Per-sport scheduling overrides applied on top of the global feed policies."
+                        }
+                      },
+                      "required": [
+                        "healthCheck",
+                        "eventParticipants",
+                        "eventLiveScores",
+                        "perSportOverrides"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The stored value before the save; null when the save created the first stored value."
+                    },
+                    "newValue": {
+                      "type": "object",
+                      "properties": {
+                        "scheduledSports": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ]
+                          },
+                          "minItems": 1,
+                          "default": [
+                            "GOLF"
+                          ],
+                          "description": "Sports that scheduled ingestion is allowed to run automatically."
+                        },
+                        "healthCheck": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                            },
+                            "intervalSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                            },
+                            "lookaheadDays": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Scheduling policy for provider health checks."
+                        },
+                        "eventParticipants": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                            },
+                            "intervalSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                            },
+                            "lookaheadDays": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
+                        },
+                        "eventLiveScores": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
+                            },
+                            "intervalMinutes": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                            },
+                            "intervalSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                            },
+                            "lookaheadDays": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Scheduling policy for live score polling."
+                        },
+                        "perSportOverrides": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "scheduledSports": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GOLF",
+                                    "NFL",
+                                    "NBA",
+                                    "F1",
+                                    "NASCAR",
+                                    "NCAA_BASKETBALL",
+                                    "NCAA_HOCKEY",
+                                    "NCAA_FOOTBALL",
+                                    "TENNIS",
+                                    "HORSE_RACING",
+                                    "SOCCER",
+                                    "NHL",
+                                    "MLB",
+                                    "UFC"
+                                  ]
+                                },
+                                "minItems": 1
+                              },
+                              "healthCheck": {
+                                "type": "object",
+                                "properties": {
+                                  "enabled": {
+                                    "type": "boolean",
+                                    "description": "Whether the feed should be scheduled automatically."
+                                  },
+                                  "intervalMinutes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                                  },
+                                  "intervalSeconds": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                                  },
+                                  "lookaheadDays": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                                  }
+                                },
+                                "additionalProperties": false,
+                                "description": "Partial feed-scheduling override payload."
+                              },
+                              "eventParticipants": {
+                                "type": "object",
+                                "properties": {
+                                  "enabled": {
+                                    "type": "boolean",
+                                    "description": "Whether the feed should be scheduled automatically."
+                                  },
+                                  "intervalMinutes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                                  },
+                                  "intervalSeconds": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                                  },
+                                  "lookaheadDays": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                                  }
+                                },
+                                "additionalProperties": false,
+                                "description": "Partial feed-scheduling override payload."
+                              },
+                              "eventLiveScores": {
+                                "type": "object",
+                                "properties": {
+                                  "enabled": {
+                                    "type": "boolean",
+                                    "description": "Whether the feed should be scheduled automatically."
+                                  },
+                                  "intervalMinutes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                                  },
+                                  "intervalSeconds": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                                  },
+                                  "lookaheadDays": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                                  }
+                                },
+                                "additionalProperties": false,
+                                "description": "Partial feed-scheduling override payload."
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
+                          },
+                          "description": "Per-sport scheduling overrides applied on top of the global feed policies."
+                        }
+                      },
+                      "required": [
+                        "healthCheck",
+                        "eventParticipants",
+                        "eventLiveScores",
+                        "perSportOverrides"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value the save stored."
                     }
                   },
                   "required": [
+                    "key",
                     "id",
-                    "name"
+                    "changedAt",
+                    "changedBy",
+                    "previousValue",
+                    "newValue"
                   ],
-                  "additionalProperties": false,
-                  "description": "Who saved it, when known."
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "EMAIL_CONFIG"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "changedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601 datetime string."
+                    },
+                    "changedBy": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The user id of the root admin who made the change."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The admin's full name, for display."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Who saved it, when known."
+                    },
+                    "previousValue": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "description": "Whether any system email is sent. Off: every email is skipped and logged."
+                        },
+                        "replyTo": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "email",
+                          "description": "Reply-To address for system email, or null to let replies go to the sender."
+                        },
+                        "templates": {
+                          "type": "object",
+                          "properties": {
+                            "LEAGUE_MEMBER_INVITE": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "LEAGUE_JOIN_SUCCESS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "CONTEST_ENTRY_COMPLETED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "CONTEST_STARTED_SUMMARY": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            }
+                          },
+                          "required": [
+                            "LEAGUE_MEMBER_INVITE",
+                            "LEAGUE_JOIN_SUCCESS",
+                            "CONTEST_ENTRY_COMPLETED",
+                            "CONTEST_STARTED_SUMMARY"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Per-template switches. A template that is off is skipped even while email is on."
+                        }
+                      },
+                      "required": [
+                        "enabled",
+                        "replyTo",
+                        "templates"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The stored value before the save; null when the save created the first stored value."
+                    },
+                    "newValue": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "description": "Whether any system email is sent. Off: every email is skipped and logged."
+                        },
+                        "replyTo": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "email",
+                          "description": "Reply-To address for system email, or null to let replies go to the sender."
+                        },
+                        "templates": {
+                          "type": "object",
+                          "properties": {
+                            "LEAGUE_MEMBER_INVITE": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "LEAGUE_JOIN_SUCCESS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "CONTEST_ENTRY_COMPLETED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "CONTEST_STARTED_SUMMARY": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            }
+                          },
+                          "required": [
+                            "LEAGUE_MEMBER_INVITE",
+                            "LEAGUE_JOIN_SUCCESS",
+                            "CONTEST_ENTRY_COMPLETED",
+                            "CONTEST_STARTED_SUMMARY"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Per-template switches. A template that is off is skipped even while email is on."
+                        }
+                      },
+                      "required": [
+                        "enabled",
+                        "replyTo",
+                        "templates"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value the save stored."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "id",
+                    "changedAt",
+                    "changedBy",
+                    "previousValue",
+                    "newValue"
+                  ],
+                  "additionalProperties": false
                 }
-              },
-              "required": [
-                "id",
-                "key",
-                "previousValue",
-                "newValue",
-                "changedAt",
-                "changedBy"
               ],
-              "additionalProperties": false,
-              "description": "One saved change to a settings group."
+              "description": "One saved change to a settings group, each value typed by the group's own schema."
             },
             "description": "The group's most recent changes, newest first, at most 20."
           }
@@ -8618,19 +9448,13 @@
           },
           "status": {
             "type": "string",
-            "description": "Comma-separated participant statuses to include."
-          },
-          "role": {
-            "type": "string",
-            "description": "Comma-separated playing roles to include."
-          },
-          "team": {
-            "type": "string",
-            "description": "Comma-separated team affiliations to include."
-          },
-          "nationality": {
-            "type": "string",
-            "description": "Comma-separated nationalities to include."
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "RETIRED",
+              "SUSPENDED"
+            ],
+            "description": "Only participants in this status. Omitted: every status."
           }
         },
         "additionalProperties": false,
@@ -10583,11 +11407,6 @@
             },
             "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
           },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {},
-            "description": "Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)"
-          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -10626,7 +11445,6 @@
           "tierCount",
           "contestCount",
           "allowedTransitions",
-          "metadata",
           "createdAt",
           "updatedAt"
         ],
@@ -10873,11 +11691,6 @@
                   },
                   "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
                 },
-                "metadata": {
-                  "type": "object",
-                  "additionalProperties": {},
-                  "description": "Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)"
-                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time",
@@ -10916,7 +11729,6 @@
                 "tierCount",
                 "contestCount",
                 "allowedTransitions",
-                "metadata",
                 "createdAt",
                 "updatedAt"
               ],
@@ -11118,11 +11930,6 @@
                 },
                 "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
               },
-              "metadata": {
-                "type": "object",
-                "additionalProperties": {},
-                "description": "Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)"
-              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
@@ -11161,7 +11968,6 @@
               "tierCount",
               "contestCount",
               "allowedTransitions",
-              "metadata",
               "createdAt",
               "updatedAt"
             ],
@@ -11508,11 +12314,6 @@
                   },
                   "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
                 },
-                "metadata": {
-                  "type": "object",
-                  "additionalProperties": {},
-                  "description": "Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)"
-                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time",
@@ -11551,7 +12352,6 @@
                 "tierCount",
                 "contestCount",
                 "allowedTransitions",
-                "metadata",
                 "createdAt",
                 "updatedAt"
               ],
@@ -17815,8 +18615,131 @@
               },
               "requestPayload": {
                 "type": "object",
-                "additionalProperties": {},
-                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
+                "properties": {
+                  "sport": {
+                    "type": "string",
+                    "enum": [
+                      "GOLF",
+                      "NFL",
+                      "NBA",
+                      "F1",
+                      "NASCAR",
+                      "NCAA_BASKETBALL",
+                      "NCAA_HOCKEY",
+                      "NCAA_FOOTBALL",
+                      "TENNIS",
+                      "HORSE_RACING",
+                      "SOCCER",
+                      "NHL",
+                      "MLB",
+                      "UFC"
+                    ]
+                  },
+                  "eventId": {
+                    "type": "string",
+                    "description": "Provider event identifier the sync was asked for."
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "SCHEDULED",
+                      "MANUAL"
+                    ],
+                    "description": "Whether the scheduler or a root admin asked for the sync."
+                  },
+                  "actor": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "SYSTEM"
+                            ]
+                          },
+                          "name": {
+                            "type": "string",
+                            "enum": [
+                              "scheduler"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "name"
+                        ],
+                        "additionalProperties": false,
+                        "description": "The scheduler, for a SCHEDULED sync."
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "ROOT_ADMIN"
+                            ]
+                          },
+                          "userId": {
+                            "type": "string",
+                            "description": "The root admin who asked for the sync."
+                          },
+                          "email": {
+                            "type": "string",
+                            "description": "Their email at the time, for the audit trail."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "userId",
+                          "email"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A root admin, for a MANUAL sync."
+                      }
+                    ],
+                    "description": "Who asked for a sync."
+                  },
+                  "mockEventState": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "open",
+                      "locked",
+                      "live",
+                      "completed",
+                      "golf-pre-live",
+                      "golf-r1-in-progress",
+                      "golf-r1-complete",
+                      "golf-r2-complete",
+                      "golf-correction",
+                      "golf-r4-complete-pending-final",
+                      "golf-playoff",
+                      "golf-completed",
+                      "golf-late-correction",
+                      null
+                    ],
+                    "description": "The mock feed state a manual QA sync asked for; null otherwise."
+                  },
+                  "normalizedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the request was validated and normalized."
+                  }
+                },
+                "required": [
+                  "sport",
+                  "eventId",
+                  "source",
+                  "actor",
+                  "mockEventState",
+                  "normalizedAt"
+                ],
+                "additionalProperties": false,
+                "description": "The request that submitted the sync run."
               },
               "providerPayload": {
                 "type": "object",
@@ -18033,12 +18956,12 @@
                         "before": {
                           "type": "object",
                           "additionalProperties": {},
-                          "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
+                          "description": "Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff."
                         },
                         "after": {
                           "type": "object",
                           "additionalProperties": {},
-                          "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
+                          "description": "Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff."
                         }
                       },
                       "required": [
@@ -18299,8 +19222,131 @@
                     },
                     "requestPayload": {
                       "type": "object",
-                      "additionalProperties": {},
-                      "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
+                      "properties": {
+                        "sport": {
+                          "type": "string",
+                          "enum": [
+                            "GOLF",
+                            "NFL",
+                            "NBA",
+                            "F1",
+                            "NASCAR",
+                            "NCAA_BASKETBALL",
+                            "NCAA_HOCKEY",
+                            "NCAA_FOOTBALL",
+                            "TENNIS",
+                            "HORSE_RACING",
+                            "SOCCER",
+                            "NHL",
+                            "MLB",
+                            "UFC"
+                          ]
+                        },
+                        "eventId": {
+                          "type": "string",
+                          "description": "Provider event identifier the sync was asked for."
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "SCHEDULED",
+                            "MANUAL"
+                          ],
+                          "description": "Whether the scheduler or a root admin asked for the sync."
+                        },
+                        "actor": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "SYSTEM"
+                                  ]
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "enum": [
+                                    "scheduler"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "name"
+                              ],
+                              "additionalProperties": false,
+                              "description": "The scheduler, for a SCHEDULED sync."
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ROOT_ADMIN"
+                                  ]
+                                },
+                                "userId": {
+                                  "type": "string",
+                                  "description": "The root admin who asked for the sync."
+                                },
+                                "email": {
+                                  "type": "string",
+                                  "description": "Their email at the time, for the audit trail."
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "userId",
+                                "email"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A root admin, for a MANUAL sync."
+                            }
+                          ],
+                          "description": "Who asked for a sync."
+                        },
+                        "mockEventState": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "open",
+                            "locked",
+                            "live",
+                            "completed",
+                            "golf-pre-live",
+                            "golf-r1-in-progress",
+                            "golf-r1-complete",
+                            "golf-r2-complete",
+                            "golf-correction",
+                            "golf-r4-complete-pending-final",
+                            "golf-playoff",
+                            "golf-completed",
+                            "golf-late-correction",
+                            null
+                          ],
+                          "description": "The mock feed state a manual QA sync asked for; null otherwise."
+                        },
+                        "normalizedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When the request was validated and normalized."
+                        }
+                      },
+                      "required": [
+                        "sport",
+                        "eventId",
+                        "source",
+                        "actor",
+                        "mockEventState",
+                        "normalizedAt"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The request that submitted the sync run."
                     },
                     "providerPayload": {
                       "type": "object",
@@ -18517,12 +19563,12 @@
                               "before": {
                                 "type": "object",
                                 "additionalProperties": {},
-                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
+                                "description": "Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff."
                               },
                               "after": {
                                 "type": "object",
                                 "additionalProperties": {},
-                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
+                                "description": "Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff."
                               }
                             },
                             "required": [
@@ -18781,8 +19827,131 @@
                     },
                     "requestPayload": {
                       "type": "object",
-                      "additionalProperties": {},
-                      "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
+                      "properties": {
+                        "sport": {
+                          "type": "string",
+                          "enum": [
+                            "GOLF",
+                            "NFL",
+                            "NBA",
+                            "F1",
+                            "NASCAR",
+                            "NCAA_BASKETBALL",
+                            "NCAA_HOCKEY",
+                            "NCAA_FOOTBALL",
+                            "TENNIS",
+                            "HORSE_RACING",
+                            "SOCCER",
+                            "NHL",
+                            "MLB",
+                            "UFC"
+                          ]
+                        },
+                        "eventId": {
+                          "type": "string",
+                          "description": "Provider event identifier the sync was asked for."
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "SCHEDULED",
+                            "MANUAL"
+                          ],
+                          "description": "Whether the scheduler or a root admin asked for the sync."
+                        },
+                        "actor": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "SYSTEM"
+                                  ]
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "enum": [
+                                    "scheduler"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "name"
+                              ],
+                              "additionalProperties": false,
+                              "description": "The scheduler, for a SCHEDULED sync."
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ROOT_ADMIN"
+                                  ]
+                                },
+                                "userId": {
+                                  "type": "string",
+                                  "description": "The root admin who asked for the sync."
+                                },
+                                "email": {
+                                  "type": "string",
+                                  "description": "Their email at the time, for the audit trail."
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "userId",
+                                "email"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A root admin, for a MANUAL sync."
+                            }
+                          ],
+                          "description": "Who asked for a sync."
+                        },
+                        "mockEventState": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "open",
+                            "locked",
+                            "live",
+                            "completed",
+                            "golf-pre-live",
+                            "golf-r1-in-progress",
+                            "golf-r1-complete",
+                            "golf-r2-complete",
+                            "golf-correction",
+                            "golf-r4-complete-pending-final",
+                            "golf-playoff",
+                            "golf-completed",
+                            "golf-late-correction",
+                            null
+                          ],
+                          "description": "The mock feed state a manual QA sync asked for; null otherwise."
+                        },
+                        "normalizedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When the request was validated and normalized."
+                        }
+                      },
+                      "required": [
+                        "sport",
+                        "eventId",
+                        "source",
+                        "actor",
+                        "mockEventState",
+                        "normalizedAt"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The request that submitted the sync run."
                     },
                     "providerPayload": {
                       "type": "object",
@@ -18999,12 +20168,12 @@
                               "before": {
                                 "type": "object",
                                 "additionalProperties": {},
-                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
+                                "description": "Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff."
                               },
                               "after": {
                                 "type": "object",
                                 "additionalProperties": {},
-                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
+                                "description": "Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff."
                               }
                             },
                             "required": [
@@ -19319,11 +20488,6 @@
           "fieldLocked": {
             "type": "boolean",
             "description": "Whether the provider has locked the field."
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {},
-            "description": "Provider-emitted event metadata, unnormalized."
           }
         },
         "required": [
@@ -19338,8 +20502,7 @@
           "status",
           "rounds",
           "participantCount",
-          "fieldLocked",
-          "metadata"
+          "fieldLocked"
         ],
         "additionalProperties": false,
         "description": "An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it."
@@ -19479,11 +20642,6 @@
                 "fieldLocked": {
                   "type": "boolean",
                   "description": "Whether the provider has locked the field."
-                },
-                "metadata": {
-                  "type": "object",
-                  "additionalProperties": {},
-                  "description": "Provider-emitted event metadata, unnormalized."
                 }
               },
               "required": [
@@ -19498,8 +20656,7 @@
                 "status",
                 "rounds",
                 "participantCount",
-                "fieldLocked",
-                "metadata"
+                "fieldLocked"
               ],
               "additionalProperties": false,
               "description": "An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it."
@@ -40360,39 +41517,18 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "RETIRED",
+                "SUSPENDED"
+              ]
             },
             "in": "query",
             "name": "status",
             "required": false,
-            "description": "Comma-separated participant statuses to include."
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "role",
-            "required": false,
-            "description": "Comma-separated playing roles to include."
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "team",
-            "required": false,
-            "description": "Comma-separated team affiliations to include."
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "nationality",
-            "required": false,
-            "description": "Comma-separated nationalities to include."
+            "description": "Only participants in this status. Omitted: every status."
           }
         ],
         "responses": {
@@ -41064,7 +42200,7 @@
             "in": "path",
             "name": "key",
             "required": true,
-            "description": "The settings group key, e.g. POLL_INTERVAL_CONFIG."
+            "description": "The settings group key, e.g. EMAIL_CONFIG."
           }
         ],
         "responses": {
@@ -41222,7 +42358,7 @@
             "in": "path",
             "name": "key",
             "required": true,
-            "description": "The settings group key, e.g. POLL_INTERVAL_CONFIG."
+            "description": "The settings group key, e.g. EMAIL_CONFIG."
           }
         ],
         "responses": {
@@ -41450,7 +42586,7 @@
             "in": "path",
             "name": "key",
             "required": true,
-            "description": "The settings group key, e.g. POLL_INTERVAL_CONFIG."
+            "description": "The settings group key, e.g. EMAIL_CONFIG."
           }
         ],
         "responses": {
@@ -41600,7 +42736,7 @@
             "in": "path",
             "name": "key",
             "required": true,
-            "description": "The settings group key, e.g. POLL_INTERVAL_CONFIG."
+            "description": "The settings group key, e.g. EMAIL_CONFIG."
           }
         ],
         "responses": {
@@ -41693,314 +42829,6 @@
             }
           },
           "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/platform/poll-intervals": {
-      "get": {
-        "operationId": "getPollIntervals",
-        "summary": "Get poll interval configuration",
-        "tags": [
-          "Platform"
-        ],
-        "description": "Returns the platform poll interval configuration that governs recommended client refresh timing.",
-        "responses": {
-          "200": {
-            "description": "Poll-interval configuration payload exposed to clients and root-admin tools.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PollIntervalConfig"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "operationId": "updatePollIntervals",
-        "summary": "Update poll interval configuration",
-        "tags": [
-          "Platform"
-        ],
-        "description": "Updates the platform poll interval configuration used by client polling guidance.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PollIntervalConfigPatch"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Poll-interval configuration payload exposed to clients and root-admin tools.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PollIntervalConfig"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/platform/poll-intervals/reset": {
-      "post": {
-        "operationId": "resetPollIntervals",
-        "summary": "Reset poll intervals to defaults",
-        "tags": [
-          "Platform"
-        ],
-        "description": "Resets poll interval configuration back to the platform defaults.",
-        "responses": {
-          "200": {
-            "description": "Poll-interval configuration payload exposed to clients and root-admin tools.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PollIntervalConfig"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "403": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
