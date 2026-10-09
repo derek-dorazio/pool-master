@@ -25,8 +25,9 @@ import { registerFreshUser } from './helpers/user-session';
  *
  * Where each action lives, as found by running it:
  * - rename, icon and co-owner invitation: the owner's My Team page;
- * - inactivate: the commissioner's squad list (`/league/:code/teams`). Only a commissioner or
- *   root admin may inactivate (#219);
+ * - invitations: Commissioner tools › Invites (`/league/:code/admin/invites`);
+ * - inactivate: Commissioner tools › Teams › Manage team (`/league/:code/admin/teams/:id`).
+ *   Only a commissioner or root admin may inactivate (#219);
  * - delete: root admin only, and only once the squad is inactive. The server answers a
  *   commissioner with 403, so the root admin deletes it from the squad's Team Home.
  */
@@ -131,8 +132,8 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
       leagueId = created.league.id;
       await expect(commissioner.getByTestId('league-home')).toBeVisible();
 
-      // #221 — inviting members lives on Teams and Owners, with the roster.
-      await commissioner.goto(`/league/${run.leagueCode}/teams`);
+      // Inviting members lives in Commissioner tools › Invites.
+      await commissioner.goto(`/league/${run.leagueCode}/admin/invites`);
       await commissioner.getByTestId('league-open-invite-members').click();
       const invitation = await submitAndRead<{ invitation: { inviteCode: string } }>(
         commissioner,
@@ -243,15 +244,19 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
       await expect(coOwner.getByTestId('my-team-current-icon-label')).toHaveText(RENAMED_ICON.label);
     });
 
-    await test.step('the commissioner inactivates the squad from the squad list', async () => {
-      await commissioner.goto(`/league/${run.leagueCode}/teams`);
-      await commissioner.getByTestId(`squad-actions-open-inactivate-${squadId}`).click();
+    await test.step('the commissioner inactivates the squad from Commissioner tools', async () => {
+      await commissioner.goto(`/league/${run.leagueCode}/admin/teams`);
+      await commissioner.getByTestId(`admin-team-manage-${squadId}`).click();
+      await commissioner.getByTestId('manage-team-inactivate').click();
       await submitAndRead(
         commissioner,
-        `squad-actions-confirm-inactivate-${squadId}`,
+        'my-team-confirm-inactivate',
         'POST',
         `/api/v1/leagues/${leagueId}/squads/${squadId}/inactivate`,
       );
+      await expect(commissioner.getByTestId('manage-team-inactive')).toBeVisible();
+
+      await commissioner.goto(`/league/${run.leagueCode}/teams`);
       await expect(commissioner.getByTestId(`league-team-${squadId}`)).toContainText('Inactive');
 
       await commissioner.getByTestId(`league-team-home-link-${squadId}`).click();
@@ -276,12 +281,8 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
       await expect(rootAdmin.getByTestId('league-home')).toBeVisible();
       await rootAdmin.goto(`/league/${run.leagueCode}/teams`);
       // A positive anchor first, so the absence is never read off a list that has not loaded:
-      // the list has settled once it shows either some team or its empty state.
-      await expect(
-        rootAdmin.getByTestId('teams-page-teams-empty')
-          .or(rootAdmin.locator('[data-testid^="league-team-home-link-"]'))
-          .first(),
-      ).toBeVisible();
+      // the directory has settled once its table shows.
+      await expect(rootAdmin.getByTestId('teams-table')).toBeVisible();
       await expect(rootAdmin.getByTestId(`league-team-home-link-${squadId}`)).toHaveCount(0);
 
       const reread = await rootAdmin.request.get(`/api/v1/leagues/${leagueId}/squads/${squadId}`);

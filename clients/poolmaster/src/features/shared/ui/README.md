@@ -18,6 +18,11 @@ Use page templates when a page matches an existing workflow shape:
 - `AdminConfigPage` for root-admin configuration screens with shared page
   chrome, loading, and error states.
 - `ManagementListPage` for admin list screens backed by `DataGrid`.
+
+`DataGrid` takes an optional `search` (one box matching every text column),
+`pageSize` (rows per page, with a Previous/Next pager once there is more than
+one page) and `showColumnFilters` (on by default). A list that can grow to
+hundreds of rows uses `search` and `pageSize` (`rules/ux-rules.md` §12).
 - `DetailWithActionsPage` for profile/entity details with summary tiles on the
   left and less frequent actions on the right.
 - `FormEditorSection` for repeated editable configuration sections with

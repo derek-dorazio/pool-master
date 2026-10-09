@@ -13,7 +13,7 @@ import {
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { LeagueDangerZone } from './league-danger-zone';
 import { LeagueIcon } from './league-icon';
-import { buildLeagueAdminEditPath, buildLeagueTeamsPath } from './league-routing';
+import { buildLeagueAdminEditPath, buildLeagueAdminTeamsPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
 import { useLeagueMembersQuery } from './use-league-members-query';
 
@@ -100,7 +100,7 @@ export function LeagueSettingsPage() {
         <SettingsRow label="Created" value={formatDateDisplay(league.createdAt, 'Unknown')} />
         <SettingsRow
           action={(
-            <LinkButton size="sm" to={buildLeagueTeamsPath(league.leagueCode)} variant="ghost">
+            <LinkButton size="sm" to={buildLeagueAdminTeamsPath(league.leagueCode)} variant="ghost">
               Change
             </LinkButton>
           )}

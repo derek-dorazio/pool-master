@@ -20,7 +20,6 @@ function renderMenu(overrides: Partial<MenuProps> = {}) {
     ownerName: 'Jordan Rivers',
     ownerRole: 'MEMBER',
     ownerUserId: 'user-2',
-    surface: 'teams',
     teamId: 'team-1',
     ...overrides,
   };
@@ -168,7 +167,7 @@ describe('TeamOwnerActionMenu by viewer role', () => {
   });
 
   it('does not remove a team\'s only owner directly, and points to Team Home to inactivate the team instead', async () => {
-    renderMenu({ activeOwnerCount: 1, surface: 'teams' });
+    renderMenu({ activeOwnerCount: 1 });
 
     await chooseAction('Remove owner');
     const dialog = within(screen.getByRole('dialog', { name: 'Remove owner' }));

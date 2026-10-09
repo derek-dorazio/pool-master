@@ -74,7 +74,6 @@ export function TeamOwnerActionMenu({
   ownerName,
   ownerRole,
   ownerUserId,
-  surface,
   teamId,
 }: {
   activeOwnerCount: number;
@@ -85,7 +84,6 @@ export function TeamOwnerActionMenu({
   ownerName: string;
   ownerRole: OwnerRole;
   ownerUserId: string;
-  surface: 'teams' | 'team-home';
   teamId: string;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -95,7 +93,7 @@ export function TeamOwnerActionMenu({
   const canDemote = canManageLeagueRole && ownerRole === 'COMMISSIONER';
   const canOpenMenu = canPromote || canDemote || canRemoveOwner;
   const removeRequiresInactivation = activeOwnerCount <= 1;
-  const testPrefix = `${surface}-owner-actions`;
+  const testPrefix = 'team-home-owner-actions';
 
   // The league context carries the viewer's own role and the league's member count, and both
   // change here: a commissioner may demote themselves, and removing an owner ends their membership.

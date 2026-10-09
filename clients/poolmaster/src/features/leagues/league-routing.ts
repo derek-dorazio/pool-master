@@ -69,6 +69,22 @@ export function buildLeagueAdminContestPath(leagueCode: string, contestId: strin
   return `/league/${leagueCode}/admin/contests/${contestId}`;
 }
 
+export function buildLeagueAdminTeamsPath(leagueCode: string) {
+  return `/league/${leagueCode}/admin/teams`;
+}
+
+export function buildLeagueAdminTeamPath(leagueCode: string, teamId: string) {
+  return `/league/${leagueCode}/admin/teams/${teamId}`;
+}
+
+export function buildLeagueAdminTeamEditPath(leagueCode: string, teamId: string) {
+  return `/league/${leagueCode}/admin/teams/${teamId}/edit`;
+}
+
+export function buildLeagueAdminInvitesPath(leagueCode: string) {
+  return `/league/${leagueCode}/admin/invites`;
+}
+
 export function buildLeagueAdminEditPath(leagueCode: string) {
   return `/league/${leagueCode}/admin/edit`;
 }

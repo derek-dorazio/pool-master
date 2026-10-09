@@ -141,7 +141,6 @@ export function MyTeamOwnersPanel({
                   ownerName={formatUserName(member.user.firstName, member.user.lastName)}
                   ownerRole={leagueMembersByUserId.get(member.userId)?.role}
                   ownerUserId={member.userId}
-                  surface="team-home"
                   teamId={selectedTeam.id}
                 />
                 {member.userId !== viewerUserId ? (

@@ -441,9 +441,9 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('league-home-description')).toHaveText(description);
     });
 
-    await test.step('generate the join URL on Teams and Owners, and see it pending', async () => {
-      // #221 — inviting members lives with the roster, beside the invites still pending.
-      await page.goto(`/league/${run.leagueCode}/teams`);
+    await test.step('generate the join URL in Commissioner tools › Invites, and see it pending', async () => {
+      // Inviting members lives in Commissioner tools, beside the invites still pending.
+      await page.goto(`/league/${run.leagueCode}/admin/invites`);
       await page.getByTestId('league-open-invite-members').click();
       const created = await submitAndRead<{ invitation: { id: string; inviteCode: string } }>(
         page,

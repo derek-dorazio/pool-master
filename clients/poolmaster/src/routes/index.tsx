@@ -47,6 +47,10 @@ import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamHistoryPage } from '@/features/teams/my-team-history-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
 import { TeamsPage } from '@/features/teams/teams-page';
+import { AdminEditTeamPage } from '@/features/teams/admin-edit-team-page';
+import { InvitesPage } from '@/features/teams/invites-page';
+import { ManageTeamPage } from '@/features/teams/manage-team-page';
+import { ManageTeamsPage } from '@/features/teams/manage-teams-page';
 import {
   LegacyContestCreateRedirect,
   LegacyContestManageRedirect,
@@ -118,6 +122,22 @@ export const router = createBrowserRouter([
                   {
                     path: 'edit',
                     element: <EditLeaguePage />,
+                  },
+                  {
+                    path: 'teams',
+                    element: <ManageTeamsPage />,
+                  },
+                  {
+                    path: 'teams/:teamId',
+                    element: <ManageTeamPage />,
+                  },
+                  {
+                    path: 'teams/:teamId/edit',
+                    element: <AdminEditTeamPage />,
+                  },
+                  {
+                    path: 'invites',
+                    element: <InvitesPage />,
                   },
                   {
                     path: 'contests',

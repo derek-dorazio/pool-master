@@ -17,12 +17,15 @@ export function useMyTeamLifecycle({
   selectedTeam,
   setActiveDialog,
   resetOwnerForms,
+  afterDeletePath = buildLeaguePath(leagueCode),
 }: {
   leagueId: string;
   leagueCode: string;
   selectedTeam: SquadDto | null;
   setActiveDialog: (dialog: ActiveTeamDialog) => void;
   resetOwnerForms: () => void;
+  /** Where a deleted team's page goes; the league by default. */
+  afterDeletePath?: string;
 }) {
   const navigate = useNavigate();
   const [teamInactivationNotice, setTeamInactivationNotice] = useState<string | null>(null);
@@ -90,9 +93,7 @@ export function useMyTeamLifecycle({
       setTeamDeletionNotice(`${teamNameDeleted} was deleted.`);
       setTeamInactivationNotice(null);
       resetOwnerForms();
-      // #202 step 3.4 — the root-admin cross-league teams console is gone (A8: one league
-      // at a time). Deleting your own squad returns you to the league it was in.
-      navigate(buildLeaguePath(leagueCode));
+      navigate(afterDeletePath);
     },
     invalidates: [
       QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
