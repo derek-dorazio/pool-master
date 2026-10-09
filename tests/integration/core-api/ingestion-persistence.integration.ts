@@ -369,7 +369,7 @@ describe('IngestionPersistence', () => {
       expect(row).toMatchObject({
         name: 'Admin Open',
         startDate,
-        rounds: 4,
+        rounds: created.rounds,
         status: created.status,
         syncScope,
         participantCount: 80,

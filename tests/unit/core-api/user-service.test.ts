@@ -56,7 +56,7 @@ function createPrismaMock(passwordHash: string | null = null) {
     $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<void>) => callback(tx)),
   };
 
-  return { prisma };
+  return { prisma, tx };
 }
 
 function serviceFor(user: User | null, extra: Parameters<typeof fakeUserRepo>[0] = {}) {
@@ -69,8 +69,8 @@ function serviceFor(user: User | null, extra: Parameters<typeof fakeUserRepo>[0]
     })),
     ...extra,
   });
-  const { prisma } = createPrismaMock();
-  return { users, prisma, service: new UserService(users, asPrismaClient(prisma), undefined) };
+  const { prisma, tx } = createPrismaMock();
+  return { users, prisma, tx, service: new UserService(users, asPrismaClient(prisma), undefined) };
 }
 
 beforeEach(() => {
@@ -267,6 +267,26 @@ describe('passwords', () => {
 
     await expect(service.resetPassword(self, 'user-1'))
       .rejects.toMatchObject({ code: 'ROOT_ADMIN_ACCESS_REQUIRED', statusCode: 403 });
+  });
+});
+
+// Atomicity is the one property of these writes with no observable end state: the flag (or
+// hash, or role) and the session revoke used to be two statements, so a failure between them
+// left a disabled, reset or demoted user with live refresh tokens. Only a call shape can say
+// both writes went through the one transaction client (rules/testing-rules.md §1A).
+describe('writes that must land together go through one transaction', () => {
+  it.each([
+    ['disable', (service: UserService) => service.disableUser(rootAdmin, 'user-1'), buildUser()],
+    ['password reset', (service: UserService) => service.resetPassword(rootAdmin, 'user-1'), buildUser()],
+    ['root-admin demotion', (service: UserService) => service.setRootAdmin(rootAdmin, 'user-1', false), buildUser({ isRootAdmin: true })],
+  ] as const)('writes the %s change and the session revoke in the same transaction', async (_name, operation, user) => {
+    const { prisma, tx, service } = serviceFor(user, { countActiveRootAdmins: jest.fn().mockResolvedValue(2) });
+
+    await operation(service);
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(tx.user.update).toHaveBeenCalledTimes(1);
+    expect(tx.refreshToken.updateMany).toHaveBeenCalledTimes(1);
   });
 });
 
