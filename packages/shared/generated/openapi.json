@@ -5548,15 +5548,6 @@
             "type": "number",
             "description": "Number of currently active contests associated with the league."
           },
-          "joinPolicy": {
-            "type": "string",
-            "enum": [
-              "COMMISSIONER_ONLY",
-              "LINK_INVITE",
-              "OPEN"
-            ],
-            "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
-          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -5570,8 +5561,7 @@
           "isActive",
           "iconKey",
           "memberCount",
-          "activeContestCount",
-          "joinPolicy"
+          "activeContestCount"
         ],
         "additionalProperties": false,
         "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -5944,15 +5934,6 @@
                 "type": "number",
                 "description": "Number of currently active contests associated with the league."
               },
-              "joinPolicy": {
-                "type": "string",
-                "enum": [
-                  "COMMISSIONER_ONLY",
-                  "LINK_INVITE",
-                  "OPEN"
-                ],
-                "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
-              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
@@ -5966,8 +5947,7 @@
               "isActive",
               "iconKey",
               "memberCount",
-              "activeContestCount",
-              "joinPolicy"
+              "activeContestCount"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -6042,15 +6022,6 @@
                 "type": "number",
                 "description": "Number of currently active contests associated with the league."
               },
-              "joinPolicy": {
-                "type": "string",
-                "enum": [
-                  "COMMISSIONER_ONLY",
-                  "LINK_INVITE",
-                  "OPEN"
-                ],
-                "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
-              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
@@ -6064,8 +6035,7 @@
               "isActive",
               "iconKey",
               "memberCount",
-              "activeContestCount",
-              "joinPolicy"
+              "activeContestCount"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -6434,15 +6404,6 @@
                   "type": "number",
                   "description": "Number of currently active contests associated with the league."
                 },
-                "joinPolicy": {
-                  "type": "string",
-                  "enum": [
-                    "COMMISSIONER_ONLY",
-                    "LINK_INVITE",
-                    "OPEN"
-                  ],
-                  "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
-                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time",
@@ -6456,8 +6417,7 @@
                 "isActive",
                 "iconKey",
                 "memberCount",
-                "activeContestCount",
-                "joinPolicy"
+                "activeContestCount"
               ],
               "additionalProperties": false,
               "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -8536,11 +8496,8 @@
             "enum": [
               "DRAFT",
               "OPEN",
-              "DRAFTING",
-              "LOCKED",
               "ACTIVE",
-              "COMPLETED",
-              "CANCELLED"
+              "COMPLETED"
             ]
           },
           "configuration": {
@@ -8850,11 +8807,8 @@
                 "enum": [
                   "DRAFT",
                   "OPEN",
-                  "DRAFTING",
-                  "LOCKED",
                   "ACTIVE",
-                  "COMPLETED",
-                  "CANCELLED"
+                  "COMPLETED"
                 ]
               },
               "configuration": {
@@ -15786,11 +15740,8 @@
             "enum": [
               "DRAFT",
               "OPEN",
-              "DRAFTING",
-              "LOCKED",
               "ACTIVE",
-              "COMPLETED",
-              "CANCELLED"
+              "COMPLETED"
             ]
           },
           "contestFormat": {
@@ -15911,8 +15862,7 @@
             "type": "string",
             "enum": [
               "DRAFT",
-              "SUBMITTED",
-              "INACTIVE"
+              "SUBMITTED"
             ],
             "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
           },
@@ -15921,9 +15871,6 @@
               "integer",
               "null"
             ]
-          },
-          "isEliminated": {
-            "type": "boolean"
           },
           "picksCount": {
             "type": "integer",
@@ -16003,7 +15950,6 @@
           "entryNumber",
           "name",
           "status",
-          "isEliminated",
           "picksCount",
           "createdAt",
           "updatedAt"
@@ -16316,8 +16262,7 @@
             "type": "string",
             "enum": [
               "DRAFT",
-              "SUBMITTED",
-              "INACTIVE"
+              "SUBMITTED"
             ],
             "description": "Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked."
           },
@@ -17030,8 +16975,7 @@
                   "type": "string",
                   "enum": [
                     "DRAFT",
-                    "SUBMITTED",
-                    "INACTIVE"
+                    "SUBMITTED"
                   ],
                   "description": "Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked."
                 },
@@ -17362,11 +17306,8 @@
                 "enum": [
                   "DRAFT",
                   "OPEN",
-                  "DRAFTING",
-                  "LOCKED",
                   "ACTIVE",
-                  "COMPLETED",
-                  "CANCELLED"
+                  "COMPLETED"
                 ]
               },
               "contestFormat": {
@@ -17638,11 +17579,8 @@
                   "enum": [
                     "DRAFT",
                     "OPEN",
-                    "DRAFTING",
-                    "LOCKED",
                     "ACTIVE",
-                    "COMPLETED",
-                    "CANCELLED"
+                    "COMPLETED"
                   ]
                 },
                 "contestFormat": {
@@ -17778,8 +17716,7 @@
                 "type": "string",
                 "enum": [
                   "DRAFT",
-                  "SUBMITTED",
-                  "INACTIVE"
+                  "SUBMITTED"
                 ],
                 "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
               },
@@ -17788,9 +17725,6 @@
                   "integer",
                   "null"
                 ]
-              },
-              "isEliminated": {
-                "type": "boolean"
               },
               "picksCount": {
                 "type": "integer",
@@ -17870,7 +17804,6 @@
               "entryNumber",
               "name",
               "status",
-              "isEliminated",
               "picksCount",
               "createdAt",
               "updatedAt"
@@ -17923,8 +17856,7 @@
                 "type": "string",
                 "enum": [
                   "DRAFT",
-                  "SUBMITTED",
-                  "INACTIVE"
+                  "SUBMITTED"
                 ],
                 "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
               },
@@ -17933,9 +17865,6 @@
                   "integer",
                   "null"
                 ]
-              },
-              "isEliminated": {
-                "type": "boolean"
               },
               "picksCount": {
                 "type": "integer",
@@ -18015,7 +17944,6 @@
               "entryNumber",
               "name",
               "status",
-              "isEliminated",
               "picksCount",
               "createdAt",
               "updatedAt"
@@ -18093,8 +18021,7 @@
                   "type": "string",
                   "enum": [
                     "DRAFT",
-                    "SUBMITTED",
-                    "INACTIVE"
+                    "SUBMITTED"
                   ],
                   "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
                 },
@@ -18103,9 +18030,6 @@
                     "integer",
                     "null"
                   ]
-                },
-                "isEliminated": {
-                  "type": "boolean"
                 },
                 "picksCount": {
                   "type": "integer",
@@ -18185,7 +18109,6 @@
                 "entryNumber",
                 "name",
                 "status",
-                "isEliminated",
                 "picksCount",
                 "createdAt",
                 "updatedAt"
@@ -18243,8 +18166,7 @@
                 "type": "string",
                 "enum": [
                   "DRAFT",
-                  "SUBMITTED",
-                  "INACTIVE"
+                  "SUBMITTED"
                 ],
                 "description": "DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481)."
               },
@@ -18253,9 +18175,6 @@
                   "integer",
                   "null"
                 ]
-              },
-              "isEliminated": {
-                "type": "boolean"
               },
               "picksCount": {
                 "type": "integer",
@@ -18335,7 +18254,6 @@
               "entryNumber",
               "name",
               "status",
-              "isEliminated",
               "picksCount",
               "createdAt",
               "updatedAt"
@@ -18581,8 +18499,7 @@
                   "type": "string",
                   "enum": [
                     "DRAFT",
-                    "SUBMITTED",
-                    "INACTIVE"
+                    "SUBMITTED"
                   ],
                   "description": "DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481)."
                 }
@@ -19216,8 +19133,7 @@
                   "type": "string",
                   "enum": [
                     "DRAFT",
-                    "SUBMITTED",
-                    "INACTIVE"
+                    "SUBMITTED"
                   ],
                   "description": "DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481)."
                 }
@@ -31994,7 +31910,7 @@
         "tags": [
           "Drafts"
         ],
-        "description": "Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (LOCKED onwards); otherwise it falls back to the caller's own.",
+        "description": "Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (ACTIVE onwards); otherwise it falls back to the caller's own.",
         "parameters": [
           {
             "schema": {

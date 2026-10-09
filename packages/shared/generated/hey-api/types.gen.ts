@@ -2954,10 +2954,6 @@ export type LeagueDto = {
      */
     activeContestCount: number;
     /**
-     * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-     */
-    joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
-    /**
      * League creation timestamp in ISO 8601 format.
      */
     createdAt?: string;
@@ -3197,10 +3193,6 @@ export type LeagueResponse = {
          */
         activeContestCount: number;
         /**
-         * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-         */
-        joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
-        /**
          * League creation timestamp in ISO 8601 format.
          */
         createdAt?: string;
@@ -3247,10 +3239,6 @@ export type LeagueContextResponse = {
          * Number of currently active contests associated with the league.
          */
         activeContestCount: number;
-        /**
-         * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-         */
-        joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
         /**
          * League creation timestamp in ISO 8601 format.
          */
@@ -3471,10 +3459,6 @@ export type LeagueListResponse = {
          * Number of currently active contests associated with the league.
          */
         activeContestCount: number;
-        /**
-         * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-         */
-        joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
         /**
          * League creation timestamp in ISO 8601 format.
          */
@@ -4352,7 +4336,7 @@ export type ContestManagementDetailDto = {
      * Contest display name.
      */
     name: string;
-    status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+    status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
     /**
      * Current commissioner-managed contest configuration.
      */
@@ -4529,7 +4513,7 @@ export type ContestManagementResponse = {
          * Contest display name.
          */
         name: string;
-        status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+        status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
         /**
          * Current commissioner-managed contest configuration.
          */
@@ -8081,7 +8065,7 @@ export type UpdateContestEntryRequest = {
 export type ContestDto = {
     id: string;
     name: string;
-    status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+    status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
     contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
     selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
     scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
@@ -8115,9 +8099,8 @@ export type ContestEntryDto = {
     /**
      * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
      */
-    status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+    status: 'DRAFT' | 'SUBMITTED';
     tiebreakerValue?: number | null;
-    isEliminated: boolean;
     /**
      * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
      */
@@ -8323,7 +8306,7 @@ export type ContestEntryStandingDto = {
     /**
      * Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.
      */
-    status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+    status: 'DRAFT' | 'SUBMITTED';
     /**
      * The entry's rank in the contest, direction-free: 1 is best in every sport. Null while unscored.
      */
@@ -8678,7 +8661,7 @@ export type ContestLeaderboardResponse = {
         /**
          * Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.
          */
-        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+        status: 'DRAFT' | 'SUBMITTED';
         /**
          * The entry's rank in the contest, direction-free: 1 is best in every sport. Null while unscored.
          */
@@ -8836,7 +8819,7 @@ export type ContestResponse = {
     contest: {
         id: string;
         name: string;
-        status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+        status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
         contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
         selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
         scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
@@ -8937,7 +8920,7 @@ export type ContestListResponse = {
     contests: Array<{
         id: string;
         name: string;
-        status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+        status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
         contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
         selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
         scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
@@ -8980,9 +8963,8 @@ export type ContestEntryResponse = {
         /**
          * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
          */
-        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+        status: 'DRAFT' | 'SUBMITTED';
         tiebreakerValue?: number | null;
-        isEliminated: boolean;
         /**
          * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
          */
@@ -9042,9 +9024,8 @@ export type ContestEntryDetailResponse = {
         /**
          * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
          */
-        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+        status: 'DRAFT' | 'SUBMITTED';
         tiebreakerValue?: number | null;
-        isEliminated: boolean;
         /**
          * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
          */
@@ -9120,9 +9101,8 @@ export type ContestEntryListResponse = {
         /**
          * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
          */
-        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+        status: 'DRAFT' | 'SUBMITTED';
         tiebreakerValue?: number | null;
-        isEliminated: boolean;
         /**
          * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
          */
@@ -9178,9 +9158,8 @@ export type MyContestEntryResponse = {
         /**
          * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
          */
-        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+        status: 'DRAFT' | 'SUBMITTED';
         tiebreakerValue?: number | null;
-        isEliminated: boolean;
         /**
          * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
          */
@@ -9317,7 +9296,7 @@ export type DraftStateResponse = {
         /**
          * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
          */
-        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+        status: 'DRAFT' | 'SUBMITTED';
     }>;
     draftPickHistories: Array<{
         pickNumber: number;
@@ -9489,7 +9468,7 @@ export type DraftPickResponse = {
         /**
          * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
          */
-        status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+        status: 'DRAFT' | 'SUBMITTED';
     }>;
     draftPickHistories: Array<{
         pickNumber: number;

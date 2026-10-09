@@ -16,7 +16,7 @@ import type {
   League,
   LeagueMembership,
 } from '@poolmaster/shared/domain';
-import { ContestStatus, JoinPolicy, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import { ContestStatus, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 
 export interface CreateLeagueInput {
@@ -62,12 +62,8 @@ export type LeagueListScope = 'mine' | 'all';
  */
 const ACTIVE_LEAGUE_CONTEST_STATUSES = [
   ContestStatus.OPEN,
-  ContestStatus.DRAFTING,
-  ContestStatus.LOCKED,
   ContestStatus.ACTIVE,
 ] as const;
-
-const DEFAULT_JOIN_POLICY = JoinPolicy.COMMISSIONER_ONLY;
 
 /**
  * Everything LeagueService reads and writes (#211). It replaced a six-parameter positional
@@ -121,7 +117,6 @@ export class LeagueService {
       description: input.description?.trim() || undefined,
       isActive: true,
       iconKey: LeagueIconKey.TROPHY,
-      joinPolicy: DEFAULT_JOIN_POLICY,
     });
     const membership = await this.deps.memberships.create({
       leagueId: league.id,

@@ -64,7 +64,7 @@ export const draftErrors = {
   /**
    * Picks change only while the contest is OPEN, the same window and the same code as
    * creating, editing or leaving the entry itself (`ContestService`, #117): a DRAFT is the
-   * commissioner's alone, and from LOCKED on every entry's picks are public.
+   * commissioner's alone, and from ACTIVE on every entry's picks are public.
    */
   selectionLocked: (contestId: string, status: string) =>
     new DraftError(
@@ -174,8 +174,4 @@ export const draftErrors = {
       'ENTRY_LINEUP_INCOMPLETE',
       409,
     ),
-
-  /** An inactive entry counts nowhere and is not brought back by submitting it. */
-  entryInactive: (entryId: string) =>
-    new DraftError(`Entry ${entryId} is inactive and cannot be submitted`, 'ENTRY_INACTIVE', 409),
 } as const;

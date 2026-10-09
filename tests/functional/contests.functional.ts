@@ -801,7 +801,6 @@ describe('SDK Functional: Contests and Entries', () => {
         entryNumber: 2,
         name: 'Rename Functional League Entry 2',
         status: 'SUBMITTED',
-        isEliminated: false,
       },
     });
 
@@ -1154,7 +1153,7 @@ describe('SDK Functional: Contests and Entries', () => {
         id: lockedContestId,
       },
       data: {
-        status: ContestStatus.LOCKED,
+        status: ContestStatus.ACTIVE,
       },
     });
 
@@ -1462,7 +1461,7 @@ describe('SDK Functional: Contests and Entries', () => {
     // 3) Move contest past OPEN, then non-owner viewing must see picks.
     await prisma.contest.update({
       where: { id: contestId },
-      data: { status: ContestStatus.LOCKED },
+      data: { status: ContestStatus.ACTIVE },
     });
     const postEventNonOwnerResponse = await getContestEntry({
       client: commissioner.client,
@@ -1641,7 +1640,7 @@ describe('SDK Functional: Contests and Entries', () => {
     // Move contest past OPEN. Now member's perspective sees both squads' picks.
     await prisma.contest.update({
       where: { id: contestId },
-      data: { status: ContestStatus.LOCKED },
+      data: { status: ContestStatus.ACTIVE },
     });
     const postEventListResponse = await listContestEntriesOp({
       client: member.client,

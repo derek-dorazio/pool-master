@@ -16,22 +16,16 @@ export const CONTEST_POLL_INTERVAL_MS = 30_000;
 export const CONTEST_STATUS_LABELS: Record<ContestStatus, string> = {
   DRAFT: 'Draft',
   OPEN: 'Open for entries',
-  DRAFTING: 'Drafting',
-  LOCKED: 'Locked',
   ACTIVE: 'Live',
   COMPLETED: 'Final',
-  CANCELLED: 'Cancelled',
 };
 
 /** The badge colour for each contest status; Live and Final get their own. */
 export const CONTEST_STATUS_TONES: Record<ContestStatus, NonNullable<StatusBadgeProps['tone']>> = {
   DRAFT: 'neutral',
   OPEN: 'active',
-  DRAFTING: 'info',
-  LOCKED: 'locked',
   ACTIVE: 'live',
   COMPLETED: 'final',
-  CANCELLED: 'inactive',
 };
 
 /**
@@ -41,13 +35,11 @@ export const CONTEST_STATUS_TONES: Record<ContestStatus, NonNullable<StatusBadge
 export const CONTEST_ENTRY_STATUS_LABELS: Record<ContestEntryStatus, string> = {
   DRAFT: 'Not submitted',
   SUBMITTED: 'Submitted',
-  INACTIVE: 'Inactive',
 };
 
 export const CONTEST_ENTRY_STATUS_TONES: Record<ContestEntryStatus, NonNullable<StatusBadgeProps['tone']>> = {
   DRAFT: 'warning',
   SUBMITTED: 'success',
-  INACTIVE: 'inactive',
 };
 
 export function contestStatusLabel(status: ContestStatus) {
@@ -55,7 +47,7 @@ export function contestStatusLabel(status: ContestStatus) {
 }
 
 export function isHistoricalContest(status: ContestStatus) {
-  return status === 'COMPLETED' || status === 'CANCELLED';
+  return status === 'COMPLETED';
 }
 
 /**

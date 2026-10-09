@@ -55,7 +55,6 @@ interface ContestEntryRow {
   name: string;
   status: ContestEntry['status'];
   tiebreakerValue?: number | null;
-  isEliminated: boolean;
   picksCount: number;
   createdAt: Date;
   updatedAt: Date;
@@ -216,7 +215,6 @@ export function toContestEntryDto(
     name: entry.name,
     status: entry.status,
     tiebreakerValue: entry.tiebreakerValue ?? null,
-    isEliminated: entry.isEliminated,
     picksCount: entry.picksCount,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),

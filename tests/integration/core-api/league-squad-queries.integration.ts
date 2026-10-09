@@ -68,7 +68,7 @@ function ownerInvitationService() {
 }
 
 describe('LeagueService.countLeagueActivity', () => {
-  it('counts active members and only OPEN, DRAFTING, LOCKED and ACTIVE contests per league', async () => {
+  it('counts active members and only OPEN and ACTIVE contests per league', async () => {
     const prisma = getPrisma();
     const busy = await createLeague('Busy');
     const quiet = await createLeague('Quiet');
@@ -83,11 +83,8 @@ describe('LeagueService.countLeagueActivity', () => {
     const statuses = [
       ContestStatus.DRAFT,
       ContestStatus.OPEN,
-      ContestStatus.DRAFTING,
-      ContestStatus.LOCKED,
       ContestStatus.ACTIVE,
       ContestStatus.COMPLETED,
-      ContestStatus.CANCELLED,
     ];
     await prisma.contest.createMany({
       data: statuses.map((status) => ({
@@ -104,7 +101,7 @@ describe('LeagueService.countLeagueActivity', () => {
 
     expect(memberCounts).toEqual(new Map([[busy.league.id, 2], [quiet.league.id, 1]]));
     // A league with no active contest is absent, not zero; the caller defaults it.
-    expect(activeContestCounts).toEqual(new Map([[busy.league.id, 4]]));
+    expect(activeContestCounts).toEqual(new Map([[busy.league.id, 2]]));
   });
 
   it('answers empty maps for no leagues without querying', async () => {

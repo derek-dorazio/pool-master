@@ -214,10 +214,10 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     expect(standing.score).toBe(-1);
   });
 
-  it('reports an INACTIVE entry as INACTIVE and a SUBMITTED entry as SUBMITTED', () => {
+  it('reports a DRAFT entry as DRAFT and a SUBMITTED entry as SUBMITTED', () => {
     const map = scores([]);
     const rule = { type: 'BEST_N_GOLFERS' as const, count: 1 };
-    expect(buildContestEntryStanding(entry([], { status: 'INACTIVE' }), map, rule, 'LOWER_IS_BETTER').status).toBe('INACTIVE');
+    expect(buildContestEntryStanding(entry([], { status: 'DRAFT' }), map, rule, 'LOWER_IS_BETTER').status).toBe('DRAFT');
     expect(buildContestEntryStanding(entry([], { status: 'SUBMITTED' }), map, rule, 'LOWER_IS_BETTER').status).toBe('SUBMITTED');
   });
 

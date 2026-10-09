@@ -143,7 +143,6 @@ function buildEntry(overrides: Partial<{
     name: overrides.name ?? 'Birdie Hunters Entry 1',
     status: overrides.status ?? 'SUBMITTED',
     tiebreakerValue: null,
-    isEliminated: false,
     picksCount: overrides.picksCount ?? 0,
     createdAt: '2026-04-15T00:00:00.000Z',
     updatedAt: '2026-04-15T00:00:00.000Z',
@@ -152,7 +151,7 @@ function buildEntry(overrides: Partial<{
 }
 
 function primeMocks(opts?: {
-  contestStatus?: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  contestStatus?: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
   picksRevealed?: boolean;
   entries?: ReturnType<typeof buildEntry>[];
   myTeamId?: string;
@@ -208,7 +207,6 @@ function primeMocks(opts?: {
         iconKey: 'TROPHY',
         memberCount: 3,
         activeContestCount: 1,
-        joinPolicy: 'COMMISSIONER_ONLY',
         createdAt: '2026-04-15T00:00:00.000Z',
       },
       membership: {
@@ -446,7 +444,7 @@ describe('ContestDetailPage (Contest Board)', () => {
   // pool-master-dxd.13 — post-event-start: picks are revealed for every row.
   it('reveals participant picks on every row once contest status moves past OPEN', async () => {
     primeMocks({
-      contestStatus: 'LOCKED',
+      contestStatus: 'ACTIVE',
       picksRevealed: true,
       entries: [
         buildEntry({
@@ -622,7 +620,7 @@ describe('ContestDetailPage (Contest Board)', () => {
 
   it('hides the create-entry button when the contest is not OPEN', async () => {
     primeMocks({
-      contestStatus: 'LOCKED',
+      contestStatus: 'ACTIVE',
       picksRevealed: true,
       entries: [],
     });
@@ -633,7 +631,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
   });
 
-  it('starts polling entries without a reload when a locked contest goes live', async () => {
+  it('starts polling entries without a reload when an open contest goes live', async () => {
     // #362 — the contest read refreshes while the contest is not terminal, so the board
     // notices the event start and the entry poll keyed on ACTIVE begins on its own.
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -644,7 +642,7 @@ describe('ContestDetailPage (Contest Board)', () => {
           contest: {
             id: 'contest-1',
             name: 'Masters Pick 6',
-            status: 'LOCKED',
+            status: 'OPEN',
             contestType: 'ROSTER',
             selectionType: 'TIERED',
             scoringEngine: 'STROKE_PLAY',
@@ -656,11 +654,11 @@ describe('ContestDetailPage (Contest Board)', () => {
       });
       renderContestBoard();
       await screen.findByText(/Total Entries/);
-      const entryCallsWhileLocked = listContestEntriesMock.mock.calls.length;
+      const entryCallsWhileOpen = listContestEntriesMock.mock.calls.length;
 
       // The contest read that sees ACTIVE reads the entries straight away, not one interval on.
       await vi.advanceTimersByTimeAsync(30_000);
-      expect(listContestEntriesMock.mock.calls.length).toBeGreaterThan(entryCallsWhileLocked);
+      expect(listContestEntriesMock.mock.calls.length).toBeGreaterThan(entryCallsWhileOpen);
     } finally {
       vi.useRealTimers();
     }

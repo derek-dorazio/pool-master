@@ -96,8 +96,8 @@ interface ContestStartedSummary {
   recipients: User[];
 }
 
-/** A contest starts from OPEN or LOCKED; any other status is left where it is. */
-const STARTABLE: readonly ContestStatus[] = [ContestStatus.OPEN, ContestStatus.LOCKED];
+/** A contest starts from OPEN; any other status is left where it is. */
+const STARTABLE: readonly ContestStatus[] = [ContestStatus.OPEN];
 
 export class EventLifecycleService {
   constructor(

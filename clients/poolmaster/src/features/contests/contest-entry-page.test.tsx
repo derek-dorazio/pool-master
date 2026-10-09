@@ -141,7 +141,7 @@ function renderContestEntryPage() {
 }
 
 function primeCommonMocks(overrides?: {
-  contestStatus?: 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED';
+  contestStatus?: 'OPEN' | 'ACTIVE' | 'COMPLETED';
   sportEventId?: string;
 }) {
   getContestMock.mockResolvedValue({
@@ -171,7 +171,6 @@ function primeCommonMocks(overrides?: {
         iconKey: 'TROPHY',
         memberCount: 2,
         activeContestCount: 1,
-        joinPolicy: 'COMMISSIONER_ONLY',
         createdAt: '2026-04-15T00:00:00.000Z',
       },
       membership: null,
@@ -196,7 +195,6 @@ function primeCommonMocks(overrides?: {
           name: 'Birdie Hunters Entry 1',
           status: 'DRAFT',
           tiebreakerValue: 271,
-          isEliminated: false,
           createdAt: '2026-04-15T00:00:00.000Z',
           updatedAt: '2026-04-16T00:00:00.000Z',
         },
@@ -406,7 +404,6 @@ describe('ContestEntryPage', () => {
           name: 'Sunday Charge',
           status: 'DRAFT',
           tiebreakerValue: -12,
-          isEliminated: false,
           createdAt: '2026-04-15T00:00:00.000Z',
           updatedAt: '2026-04-16T00:00:00.000Z',
         },
@@ -548,8 +545,8 @@ describe('ContestEntryPage', () => {
   it.each([
     [-12, '-12'],
     [0, 'E'],
-  ])('shows read-only entry detail once the contest is locked, with a %i tiebreaker rendered as "%s"', async (tiebreakerValue, expectedText) => {
-    primeCommonMocks({ contestStatus: 'LOCKED' });
+  ])('shows read-only entry detail once the contest is live, with a %i tiebreaker rendered as "%s"', async (tiebreakerValue, expectedText) => {
+    primeCommonMocks({ contestStatus: 'ACTIVE' });
     getDraftStateMock.mockResolvedValue({
       data: {
         contestId: 'contest-1',
@@ -620,20 +617,16 @@ describe('ContestEntryPage', () => {
     expect(screen.queryByTestId('contest-entry-participant-sep-1')).not.toBeInTheDocument();
   });
 
-  it.each([
-    // The entry's own status row shows ACTIVE for the entry, so the live case checks the old
-    // page-only wording is gone instead.
-    ['DRAFTING', 'Drafting', 'DRAFTING'],
-    ['ACTIVE', 'Live', 'Scoring live'],
-  ] as const)('labels a %s contest "%s" in the badge and Contest phase row, as on every contest page', async (contestStatus, label, replaced) => {
-    primeCommonMocks({ contestStatus });
+  // The old page-only wording for a live contest was "Scoring live"; it must be gone.
+  it('labels an ACTIVE contest "Live" in the badge and Contest phase row, as on every contest page', async () => {
+    primeCommonMocks({ contestStatus: 'ACTIVE' });
     getDraftStateMock.mockResolvedValue({ data: buildDraftState([]) });
 
     renderContestEntryPage();
 
     await screen.findByTestId('contest-entry-heading');
-    expect(await screen.findAllByText(label)).toHaveLength(2);
-    expect(screen.queryByText(replaced)).not.toBeInTheDocument();
+    expect(await screen.findAllByText('Live')).toHaveLength(2);
+    expect(screen.queryByText('Scoring live')).not.toBeInTheDocument();
   });
 
   // The server refuses picks once the event's scheduled start passes, even while the contest
@@ -989,7 +982,6 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
             name: 'Other Team Entry 1',
             status: 'ACTIVE',
             tiebreakerValue: null,
-            isEliminated: false,
             createdAt: '2026-04-15T00:00:00.000Z',
             updatedAt: '2026-04-16T00:00:00.000Z',
           },
@@ -1081,8 +1073,8 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     expect(await screen.findByTestId('contest-entry-builder-heading')).toHaveTextContent('Build your lineup');
   });
 
-  it('shows a locked contest\'s lineup read-only, with the saved tiebreaker', async () => {
-    primeCommonMocks({ contestStatus: 'LOCKED' });
+  it('shows a live contest\'s lineup read-only, with the saved tiebreaker', async () => {
+    primeCommonMocks({ contestStatus: 'ACTIVE' });
     getDraftStateMock.mockResolvedValue({
       data: { ...buildDraftState([twoPickTier(['sep-1', 'sep-2'])]), tiebreakerValue: -6 },
     });
@@ -1169,7 +1161,6 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
             name: 'Birdie Hunters Entry 1',
             status: 'DRAFT',
             tiebreakerValue: -12,
-            isEliminated: false,
             createdAt: '2026-04-15T00:00:00.000Z',
             updatedAt: '2026-04-16T00:00:00.000Z',
           },

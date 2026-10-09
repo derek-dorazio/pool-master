@@ -326,11 +326,8 @@ export function formatParticipantStatusLabel(status: string, sport?: string | nu
 export const ContestStatus = {
   DRAFT: 'DRAFT',
   OPEN: 'OPEN',
-  DRAFTING: 'DRAFTING',
-  LOCKED: 'LOCKED',
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED',
 } as const;
 export type ContestStatus = (typeof ContestStatus)[keyof typeof ContestStatus];
 
@@ -338,12 +335,11 @@ export type ContestStatus = (typeof ContestStatus)[keyof typeof ContestStatus];
  * Where an entry stands in its contest (#481). An entry is born DRAFT and its owner submits it
  * once its lineup is complete. Only SUBMITTED entries count: the leaderboard, standings,
  * settlement and member-visible entry counts all read them alone. A pick change that leaves a
- * submitted lineup short sends it back to DRAFT. INACTIVE entries are kept but count nowhere.
+ * submitted lineup short sends it back to DRAFT.
  */
 export const ContestEntryStatus = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
-  INACTIVE: 'INACTIVE',
 } as const;
 export type ContestEntryStatus = (typeof ContestEntryStatus)[keyof typeof ContestEntryStatus];
 
@@ -565,13 +561,6 @@ export type SquadOwnerInvitationStatus =
   (typeof SquadOwnerInvitationStatus)[keyof typeof SquadOwnerInvitationStatus];
 
 // --- League Invitation ---
-
-export const JoinPolicy = {
-  COMMISSIONER_ONLY: 'COMMISSIONER_ONLY',
-  LINK_INVITE: 'LINK_INVITE',
-  OPEN: 'OPEN',
-} as const;
-export type JoinPolicy = (typeof JoinPolicy)[keyof typeof JoinPolicy];
 
 export const InviteType = {
   EMAIL: 'EMAIL',

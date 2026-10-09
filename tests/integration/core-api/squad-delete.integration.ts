@@ -43,7 +43,6 @@ async function seedLeagueWithContestHistory() {
       leagueCode: `DEL${suffix.toUpperCase()}`,
       name: `Delete Team League ${suffix}`,
       iconKey: 'TROPHY',
-      joinPolicy: 'COMMISSIONER_ONLY',
     },
   });
   const seedMember = async (userId: string, role: 'COMMISSIONER' | 'MEMBER', teamName: string) => {

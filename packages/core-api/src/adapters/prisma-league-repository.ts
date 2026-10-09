@@ -4,7 +4,7 @@
 
 import type { League as PrismaLeague, Prisma, PrismaClient } from '@prisma/client';
 import type { LeagueRepository, LeagueSearchFilters } from '@poolmaster/shared/db';
-import type { JoinPolicy, League, LeagueIconKey } from '@poolmaster/shared/domain';
+import type { League, LeagueIconKey } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus as MembershipStatus } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueRepository implements LeagueRepository {
@@ -60,7 +60,6 @@ export class PrismaLeagueRepository implements LeagueRepository {
         description: league.description,
         isActive: league.isActive,
         iconKey: league.iconKey,
-        joinPolicy: league.joinPolicy,
       },
     });
     return mapToLeague(row);
@@ -75,7 +74,6 @@ export class PrismaLeagueRepository implements LeagueRepository {
         ...(updates.description !== undefined && { description: updates.description }),
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),
         ...(updates.iconKey !== undefined && { iconKey: updates.iconKey }),
-        ...(updates.joinPolicy !== undefined && { joinPolicy: updates.joinPolicy }),
       },
     });
     return mapToLeague(row);
@@ -91,7 +89,6 @@ function mapToLeague(row: PrismaLeague): League {
     description: row.description ?? undefined,
     isActive: row.isActive,
     iconKey: row.iconKey as LeagueIconKey,
-    joinPolicy: row.joinPolicy as JoinPolicy,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

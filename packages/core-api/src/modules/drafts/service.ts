@@ -346,8 +346,6 @@ export class DraftService {
         : draftErrors.submitLocked(contestId, context.contest.status);
     }
 
-    if (entry.status === ContestEntryStatus.INACTIVE) throw draftErrors.entryInactive(entryId);
-
     const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers: context.tiers });
     if (rosterSize <= 0) throw draftErrors.selectionConfigInvalid(contestId);
 

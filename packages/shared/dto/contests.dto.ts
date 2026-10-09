@@ -98,11 +98,8 @@ export const ContestDtoSchema = z.object({
   status: z.enum([
     ContestStatus.DRAFT,
     ContestStatus.OPEN,
-    ContestStatus.DRAFTING,
-    ContestStatus.LOCKED,
     ContestStatus.ACTIVE,
     ContestStatus.COMPLETED,
-    ContestStatus.CANCELLED,
   ]),
   contestFormat: z.enum(Object.values(ContestFormat) as [string, ...string[]]),
   selectionType: z.enum([
@@ -193,7 +190,6 @@ export const ContestEntryDtoSchema = z.object({
   name: z.string(),
   status: z.nativeEnum(ContestEntryStatus).describe('DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).'),
   tiebreakerValue: z.number().int().nullable().optional(),
-  isEliminated: z.boolean(),
   picksCount: z.number().int().min(0).describe('Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.'),
   createdAt: z.string().datetime().describe('When the contest entry was created.'),
   updatedAt: z.string().datetime().describe('When the contest entry was last updated.'),

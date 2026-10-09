@@ -402,7 +402,7 @@ ruleTester.run('no-parallel-api-types', noParallelApiTypes, {
   ],
 });
 
-// Reads schema.prisma, so the fixtures below name real columns. `joinPolicy` is an enum on
+// Reads schema.prisma, so the fixtures below name real columns. `inviteType` is an enum on
 // every model that declares it; `status` is an enum on some and String on others, which
 // is exactly the case the rule must NOT flag. `role` became that case too in #246:
 // LeagueMembership.role is an enum, Participant.role (a playing role) is a String.
@@ -430,8 +430,8 @@ ruleTester.run('no-widened-enum-fields', noWidenedEnumFields, {
       errors: [{ messageId: 'widenedEnum', data: { name: 'contestFormat', enums: 'PrismaContestFormat' } }],
     },
     {
-      code: 'interface R { joinPolicy: string }',
-      errors: [{ messageId: 'widenedEnum', data: { name: 'joinPolicy', enums: 'PrismaLeagueJoinPolicy' } }],
+      code: 'interface R { inviteType: string }',
+      errors: [{ messageId: 'widenedEnum', data: { name: 'inviteType', enums: 'PrismaLeagueInviteType' } }],
     },
     {
       code: 'interface R { participantType: string }',
@@ -443,7 +443,7 @@ ruleTester.run('no-widened-enum-fields', noWidenedEnumFields, {
     },
     {
       // Nested inline object literals count — that is where row shapes hide.
-      code: 'function f(x: { league: { joinPolicy: string } }) { return x; }',
+      code: 'function f(x: { invitation: { inviteType: string } }) { return x; }',
       errors: [{ messageId: 'widenedEnum' }],
     },
   ],
@@ -476,7 +476,7 @@ ruleTester.run('no-bare-enum-literals', noBareEnumLiterals, {
     },
     {
       // Reversed operands — the literal can sit on either side.
-      code: "const a = 'LINK_INVITE' === x.joinPolicy;",
+      code: "const a = 'LINK' === x.inviteType;",
       errors: [{ messageId: 'bareLiteral' }],
     },
   ],

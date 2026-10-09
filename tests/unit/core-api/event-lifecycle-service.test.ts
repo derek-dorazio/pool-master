@@ -70,7 +70,6 @@ function contestDeps(options: { startedContest?: boolean; transitioned?: boolean
         entryNumber: 1,
         name: 'Entry 1',
         status: 'ACTIVE',
-        isEliminated: false,
         createdAt: new Date('2026-05-01'),
         updatedAt: new Date('2026-05-01'),
         squadName: 'Derek Team',
@@ -359,10 +358,10 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     });
 
     expect(contests.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', {
-      statuses: [ContestStatus.OPEN, ContestStatus.LOCKED],
+      statuses: [ContestStatus.OPEN],
     });
     expect(contests.contests.transitionStatus).toHaveBeenCalledWith('contest-1', {
-      from: [ContestStatus.OPEN, ContestStatus.LOCKED],
+      from: [ContestStatus.OPEN],
       to: ContestStatus.ACTIVE,
       startsAt: STARTED_EVENT_START,
     });

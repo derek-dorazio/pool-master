@@ -118,11 +118,8 @@ describe('ContestStatus enum', () => {
   it('has full lifecycle', () => {
     expect(ContestStatus.DRAFT).toBe('DRAFT');
     expect(ContestStatus.OPEN).toBe('OPEN');
-    expect(ContestStatus.DRAFTING).toBe('DRAFTING');
-    expect(ContestStatus.LOCKED).toBe('LOCKED');
     expect(ContestStatus.ACTIVE).toBe('ACTIVE');
     expect(ContestStatus.COMPLETED).toBe('COMPLETED');
-    expect(ContestStatus.CANCELLED).toBe('CANCELLED');
   });
 });
 

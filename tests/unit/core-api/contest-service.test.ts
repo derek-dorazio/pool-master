@@ -93,7 +93,6 @@ const DEFAULT_ENTRY_WITH_SQUAD = {
   name: "Derek's Squad Entry 1",
   status: 'SUBMITTED' as const,
   tiebreakerValue: undefined,
-  isEliminated: false,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
   squadName: "Derek's Squad",
@@ -116,7 +115,6 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
       entryNumber: 1,
       name: 'Ace Squad Entry 1',
       status: 'SUBMITTED',
-      isEliminated: false,
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
       ...updates,
@@ -231,7 +229,6 @@ const UNSUBMITTED_ENTRY = {
   name: "Derek's Squad Entry 1",
   status: 'SUBMITTED' as const,
   tiebreakerValue: undefined,
-  isEliminated: false,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
 };
@@ -678,7 +675,6 @@ describe('ContestService', () => {
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
             status: 'SUBMITTED',
-            isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },
@@ -781,7 +777,6 @@ describe('ContestService', () => {
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
             status: 'SUBMITTED',
-            isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },
@@ -1013,7 +1008,6 @@ describe('ContestService', () => {
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
             status: 'SUBMITTED',
-            isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },
@@ -1067,7 +1061,6 @@ describe('ContestService', () => {
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
             status: 'SUBMITTED',
-            isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },
@@ -1078,7 +1071,6 @@ describe('ContestService', () => {
             entryNumber: 2,
             name: "Derek's Squad Entry 2",
             status: 'SUBMITTED',
-            isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },
@@ -1090,7 +1082,6 @@ describe('ContestService', () => {
           entryNumber: id === 'entry-1' ? 1 : 2,
           name: updates.name ?? "Derek's Squad Entry 1",
           status: 'SUBMITTED',
-          isEliminated: false,
           createdAt: new Date('2026-01-01'),
           updatedAt: new Date('2026-01-02'),
         })),
@@ -1147,7 +1138,6 @@ describe('ContestService', () => {
             name: "Derek's Squad Entry 1",
             status: 'SUBMITTED',
             tiebreakerValue: null,
-            isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },
@@ -1159,7 +1149,6 @@ describe('ContestService', () => {
             name: 'Second Bullet',
             status: 'SUBMITTED',
             tiebreakerValue: null,
-            isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },
@@ -1193,8 +1182,8 @@ describe('ContestService', () => {
       expect(entryRepo.update).not.toHaveBeenCalled();
     });
 
-    it('rejects renaming a contest entry after the contest locks', async () => {
-      const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.LOCKED });
+    it('rejects renaming a contest entry once the contest is live', async () => {
+      const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.ACTIVE });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
       const contestRepo = createMockContestRepo({
         findById: jest.fn().mockResolvedValue(contest),
@@ -1248,7 +1237,6 @@ describe('ContestService', () => {
             name: "Derek's Squad Entry 1",
             status: 'SUBMITTED',
             tiebreakerValue: null,
-            isEliminated: false,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },

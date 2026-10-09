@@ -64,11 +64,8 @@ describe('ContestService entries — entering a contest', () => {
 
   it.each([
     ContestStatus.DRAFT,
-    ContestStatus.DRAFTING,
-    ContestStatus.LOCKED,
     ContestStatus.ACTIVE,
     ContestStatus.COMPLETED,
-    ContestStatus.CANCELLED,
   ])('refuses a new entry with CONTEST_ENTRY_LOCKED and stores nothing while the contest is %s', async (status) => {
     const { world, owner, squad, contest, service } = setup();
     world.contests.set(contest.id, { ...contest, status });
@@ -330,7 +327,7 @@ describe('ContestService entries — renaming and tiebreakers', () => {
   it('refuses changes with CONTEST_ENTRY_LOCKED once the contest is underway', async () => {
     const { world, owner, contest, service } = setup();
     const created = await service.createEntry(contest.id, owner.id);
-    world.contests.set(contest.id, { ...contest, status: ContestStatus.LOCKED });
+    world.contests.set(contest.id, { ...contest, status: ContestStatus.ACTIVE });
 
     await expect(service.updateEntry(contest.id, created.id, owner.id, { tiebreakerValue: -3 }))
       .rejects.toBeInstanceOf(ContestEntryOperationError);

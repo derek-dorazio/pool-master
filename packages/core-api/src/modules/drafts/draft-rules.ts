@@ -40,7 +40,7 @@ export function mapContestStatusToDraftStatus(
   isComplete: boolean,
 ): DraftStatus {
   if (isComplete || contestStatus === 'COMPLETED') return DraftStatus.COMPLETE;
-  if (contestStatus === 'DRAFTING' || contestStatus === 'OPEN' || contestStatus === 'ACTIVE') {
+  if (contestStatus === 'OPEN' || contestStatus === 'ACTIVE') {
     return DraftStatus.LIVE;
   }
   return DraftStatus.PENDING;

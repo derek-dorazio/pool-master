@@ -22,7 +22,6 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import {
   DateFormat,
-  JoinPolicy,
   LeagueIconKey,
   LeagueRole,
   LeagueMembershipStatus,
@@ -53,7 +52,6 @@ async function createLeague(prisma: ReturnType<typeof getPrisma>, code: string, 
       name,
       isActive,
       iconKey: LeagueIconKey.TROPHY,
-      joinPolicy: JoinPolicy.COMMISSIONER_ONLY,
     },
   });
 }
