@@ -337,7 +337,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     );
 
     // --- 3a. Load the field from the provider. EVENTPARTICIPANTS is allowed
-    // for a SCORES_ONLY event (plans/125 §3.2), so an admin refresh works and
+    // for a SCORES_ONLY event, so an admin refresh works and
     // creates the provider-mapped participant identities the score sync needs.
     const refresh = await refreshEventParticipants({ client: admin, path: { eventId } });
     expect(refresh.response?.status).toBe(202);

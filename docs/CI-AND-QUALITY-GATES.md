@@ -78,7 +78,7 @@ with a ten-minute floor:
 |---|---|---|
 | `changes`, `all-contract-gates`, `service-lint-typecheck`, `service-unit-tests`, `schema-migration-drift`, `service-build`, `service-mock-provider-build`, health-issue jobs | under 2 min | 10 |
 | `poolmaster-unit-tests` | 2 min | 15 |
-| `service-integration-tests`, `service-functional-api-tests` | 4 min | 20 |
+| `service-integration-tests (1/2)`, `(2/2)` shards, `service-functional-api-tests` | 2.5–4 min | 20 |
 | `poolmaster-browser-e2e-local` | 4–9 min | 25 |
 | `poolmaster-build` | 1–12 min | 30 |
 | `deploy-publish-images` | 4–5 min | 20 |
@@ -523,7 +523,7 @@ gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 | # | Gate | Command | Mode | Baseline | What it catches | Source |
 |---|---|---|---|---|---|---|
 | 1 | ~~No mocked API boundary~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | `vi.mock` / `jest.mock` of `@/lib/api` or `@/lib/api-client`. Widened past the scanner, which matched `vi` only. | `eslint-rules/no-mocked-api.mjs` |
-| 2 | Route discipline | `rules:check:route-discipline` | warn-only | 59 | The `service-rules.md §10` grep set: `prisma.*` calls in routes/handlers, inline `.map((`, `additionalProperties: true`, `SuccessSchema` on domain endpoints, inline JSON schemas | `scripts/check-route-discipline.mjs` |
+| 2 | Route discipline | `rules:check:route-discipline` | warn-only | 59 | The `service-rules.md §10` grep set: `prisma.*` calls in routes/handlers, inline `.map((`, `additionalProperties: true`, `SuccessResponse` on domain endpoints, inline JSON schemas | `scripts/check-route-discipline.mjs` |
 | 3 | ~~Test-disable discipline~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` / `pending()`, plus `*.skip.test.ts` files and `skipped/` dirs. The `SKIP: #NN` escape comment was **removed** — see below. | `eslint-rules/no-disabled-tests.mjs` |
 | 4 | ~~Shared UI controls~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | Bare `<button>`, `<input>`, `<textarea>` in `features/**` outside `features/shared/ui/`. More precise than the scanner, which also flagged controls inside comments. | `eslint-rules/no-bare-ui-controls.mjs` |
 | 2a | Route authorization | `rules:check:route-authorization` | **blocking** | clean | A route whose full path has a parameter, under any mount (by-id like `/api/v1/contests` or nested like `/api/v1/leagues/:id/squads`), that declares no `preHandler`/`onRequest` hook and is not on `scripts/route-authorization-opt-outs.mjs` with a reason. Also fails a stale or reasonless opt-out. Added by #193; nested mounts since #292. | `scripts/check-route-authorization.mjs` |
@@ -665,17 +665,16 @@ Local service tests run against the disposable `poolmaster_test` database. When 
 interrupted run leaves residue, recreate it rather than hand-editing rows:
 
 ```bash
-# Drop, re-migrate, and reseed the disposable test database (human shell only).
+# Empty the disposable test database and re-apply every migration (no seed).
 npm run db:test:reset
 
-# Or recreate it as part of the run (human shell only).
+# Or recreate it as part of the run.
 npm run test:service:functional-api:fresh
 npm run test:service:integration:fresh
-
-# In an agent session: Prisma refuses `migrate reset` non-interactively,
-# so apply pending migrations instead.
-npm run db:test:migrate
 ```
+
+Both work from a human shell and an agent session alike: the reset does not call
+`prisma migrate reset`, which Prisma refuses for an AI agent.
 
 Some scanners accept a `--warn-only` flag for local debugging when you want to
 see findings without a non-zero exit. Whether a scanner is warn-only in CI is
@@ -850,10 +849,11 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:service:integration` — run the suite (requires `DATABASE_URL` and a fresh DB)
   - `npm run test:service:integration:fresh` — reset DB then run
   - `npm run test:coverage:service:integration` — coverage variant
-- **CI job:** `service-integration-tests` (its own Postgres service container). Runs `npm run test:service:integration` with no coverage (#302).
+- **CI job:** two shards, `service-integration-tests (1/2)` and `(2/2)`, each with its own Postgres service container, run `npm run test:integration -- --shard=k/2` with no coverage (#302, #295). Jest shards by file, so every integration file must pass whichever other files share its shard (§9A isolation). A small `service-integration-tests` job turns the two shard results into the one verdict branch protection and `deploy-publish-images` depend on; it skips when the shards skip.
+- **Reproduce one shard locally:** `npm run test:integration -- --shard=1/2` (not the `test:service:integration` alias, which drops the flag: npm reads it as its own config).
 - **Required pre-push gate:** `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:integration`.
 - **Coverage policy:** **No threshold** in `tests/integration/jest.config.js`, and no coverage in CI. Integration coverage is collected only for the merged report in `coverage.yml`.
-- **Database setup:** `npm run db:test:reset` recreates the test DB; `npm run db:test:migrate` applies migrations. `db:test:recreate` is the canonical pre-run reset.
+- **Database setup:** `npm run db:test:reset` recreates the test DB (empty schema, every migration applied); `npm run db:test:migrate` applies pending migrations only.
 
 ### 3. Backend functional API / FAPI (`tests/functional/**/*.functional.ts`)
 

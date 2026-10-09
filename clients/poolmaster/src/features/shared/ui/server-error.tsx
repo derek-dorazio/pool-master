@@ -3,7 +3,9 @@ import { extractErrorMessage, type ExtractErrorMessageOptions } from "@/lib/erro
 import { Alert } from "./alert";
 import { Button } from "./button";
 
-type ErrorEnvelope = {
+// Not the API's ErrorEnvelope: whatever was thrown (an ApiError, a fetch failure, an
+// unknown value) probed loosely for the fields this display can show.
+type ThrownErrorFields = {
   code?: unknown;
   detail?: unknown;
   error?: {
@@ -28,30 +30,30 @@ export type ServerErrorDisplayProps = ExtractErrorMessageOptions & {
   title?: string;
 };
 
-function readErrorEnvelope(error: unknown): ErrorEnvelope | null {
-  return error && typeof error === "object" ? (error as ErrorEnvelope) : null;
+function readThrownErrorFields(error: unknown): ThrownErrorFields | null {
+  return error && typeof error === "object" ? (error as ThrownErrorFields) : null;
 }
 
 function readErrorCode(error: unknown) {
-  const envelope = readErrorEnvelope(error);
-  const code = envelope?.error?.code ?? envelope?.code;
+  const fields = readThrownErrorFields(error);
+  const code = fields?.error?.code ?? fields?.code;
   return typeof code === "string" ? code : null;
 }
 
 function readRequestId(error: unknown) {
-  const envelope = readErrorEnvelope(error);
-  const requestId = envelope?.error?.requestId ?? envelope?.requestId;
+  const fields = readThrownErrorFields(error);
+  const requestId = fields?.error?.requestId ?? fields?.requestId;
   return typeof requestId === "string" ? requestId : null;
 }
 
 function readStatus(error: unknown) {
-  const envelope = readErrorEnvelope(error);
-  return typeof envelope?.status === "number" ? envelope.status : null;
+  const fields = readThrownErrorFields(error);
+  return typeof fields?.status === "number" ? fields.status : null;
 }
 
 function readDetail(error: unknown) {
-  const envelope = readErrorEnvelope(error);
-  const detail = envelope?.error?.detail ?? envelope?.detail;
+  const fields = readThrownErrorFields(error);
+  const detail = fields?.error?.detail ?? fields?.detail;
   return typeof detail === "string" ? detail : null;
 }
 
