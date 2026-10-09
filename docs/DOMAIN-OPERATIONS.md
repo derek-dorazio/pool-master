@@ -743,8 +743,10 @@ copies the contest's format onto the pick inside its transaction so the per-form
 indexes hold (plans/117 §7.1, deleted with its epic; retrieve via
 `git show c0191969^:plans/117-league-contest-substrate-redesign.md`). Its port, `ContestEntryPickRepository`, is read-only by
 design (#247), so no adapter or fake can become a second way in. The selection operations
-themselves — including the tiered replace-on-full and toggle-off rules — are the draft room's,
-and move to #198's `SelectionEngine`.
+themselves are the draft room's: `DraftService` is the shared handler (auth, the pick window,
+availability, exclusivity, persistence), and what varies by selection type, including the tiered
+replace-on-full and toggle-off rules, is a `SelectionEngine` looked up by `SelectionType`
+(`drafts/selection-engines/`, #198). A type with no engine answers 501 `DRAFT_MODE_UNSUPPORTED`.
 
 **Entries and picks change in one window**, `areContestEntriesOpen` (contests/entry-window): the
 contest is `OPEN` and its event has not reached its scheduled start time, the cutoff opening a

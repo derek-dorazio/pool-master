@@ -15,9 +15,14 @@
  * the first attempt's `validatePick` returned `{ valid, reason }`, a boolean cannot express
  * replace or toggle-off, so the live behaviour could never live behind it; the engines built
  * on it enforced three rules to the route's ten and, on a full tier, rejected the pick where
- * the route replaces it. They were dead code that disagreed with production. So
- * `submitSelection` is not `validate() → boolean` followed by an insert, and
- * `resolveTieredPlacement` returns which of the three happened rather than whether it may.
+ * the route replaces it. They were dead code that disagreed with production.
+ *
+ * **This is the shared handler; the per-type rules are engines (#198).** Auth, the pick
+ * window, participant-in-event, availability, exclusivity and persistence are the same for
+ * every selection type and live here. What differs (roster size, what a selection does to the
+ * entry, lineup completeness, a pick's round) is a `SelectionEngine`, looked up by the
+ * contest's `SelectionType`; a type with no engine answers 501. An engine's `evaluate` returns
+ * which outcome applies, and this service performs it.
  *
  * Dependencies arrive as an **options object**. `docs/LAYERS.md` §5 records why: the services
  * with twelve, nine and seven positional constructor parameters could not be safely
@@ -30,7 +35,6 @@ import {
   ContestStatus,
   DraftStatus,
   LeagueMembershipStatus,
-  SelectionType,
   type ContestEntry,
   type Participant,
 } from '@poolmaster/shared/domain';
@@ -50,21 +54,24 @@ import type { ContestEntryPickService } from '../contest-entry-picks';
 import { contestPicksRevealed, type ContestService } from '../contests/service';
 import { areContestEntriesOpen } from '../contests/entry-window';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
-import { draftErrors } from './draft-errors';
+import { draftErrors, type DraftError } from './draft-errors';
 import {
   buildDraftTiers,
   buildEntryUserIdMap,
   buildSelectionParticipants,
   buildTierByParticipantId,
   buildValuationLookup,
-  findLineupShortfall,
-  findTierByLabel,
-  getRosterSize,
   isCommissionerRole,
-  isRosterSelectionType,
   mapContestStatusToDraftStatus,
-  resolveTieredPlacement,
 } from './draft-rules';
+import { findSelectionEngine } from './selection-engines/registry';
+import {
+  SelectionOutcomeKind,
+  SelectionRejectCode,
+  type EntryPick,
+  type SelectionEngine,
+  type SelectionRejection,
+} from './selection-engines/selection-engine';
 import type {
   DraftContext,
   DraftRoomEntry,
@@ -152,12 +159,12 @@ export class DraftService {
       throw draftErrors.contestNotFound(input.contestId);
     }
 
-    if (!isRosterSelectionType(context.contest.selectionType)) {
-      throw draftErrors.draftModeUnsupportedForRead(context.contest.selectionType);
-    }
+    const engine = findSelectionEngine(context.contest.selectionType);
+    if (!engine) throw draftErrors.draftModeUnsupportedForRead(context.contest.selectionType);
 
     return this.buildRoomView({
       context,
+      engine,
       selectedEntryId: input.selectedEntryId,
       actorUserId: input.actorUserId,
     });
@@ -185,9 +192,8 @@ export class DraftService {
     );
     if (!ownsRequestedEntry) throw draftErrors.entryAccessDenied();
 
-    if (!isRosterSelectionType(context.contest.selectionType)) {
-      throw draftErrors.draftModeUnsupportedForSubmission(context.contest.selectionType);
-    }
+    const engine = findSelectionEngine(context.contest.selectionType);
+    if (!engine) throw draftErrors.draftModeUnsupportedForSubmission(context.contest.selectionType);
 
     // Placing, swapping and unselecting alike: once the contest leaves OPEN its picks are
     // revealed to the league, so a change after that would be made with the others in view;
@@ -202,9 +208,8 @@ export class DraftService {
         : draftErrors.selectionLocked(contestId, context.contest.status);
     }
 
-    const isTiered = context.contest.selectionType === SelectionType.TIERED;
     const { tiers } = context;
-    const rosterSize = getRosterSize(context.contest.selectionType, context.configuration, tiers);
+    const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers });
     if (rosterSize <= 0) throw draftErrors.selectionConfigInvalid(contestId);
 
     const fieldRow = await this.deps.field.findById(participantId);
@@ -224,28 +229,31 @@ export class DraftService {
     }
 
     const existingPicks = await this.deps.picks.findByEntriesWithParticipant([entryId]);
-    const existingParticipantPick = existingPicks.find(
-      (pick) => pick.sportEventParticipantId === participantId,
-    );
+    const heldPick = existingPicks.find((pick) => pick.sportEventParticipantId === participantId);
+    const outcome = engine.evaluate({
+      participant: selectionParticipant,
+      heldPick: heldPick ? toEntryPick(heldPick) : null,
+      existingPicks: existingPicks.map(toEntryPick),
+      tiers,
+      rosterSize,
+    });
 
-    // Outcome one: toggle off. Re-submitting a participant a tiered entry already holds
-    // unselects it — the pick is deleted and nothing is inserted. A budget-pick entry has no
-    // such gesture, so there the same submission is a duplicate. It runs before the
-    // availability check: a golfer who withdrew after being picked can no longer be chosen,
-    // but must still be removable, or the entry is stuck holding them.
-    if (existingParticipantPick && isTiered) {
-      await this.deps.pickWrites.deletePick(existingParticipantPick.id);
+    // A toggle-off is acted on before the availability check: a golfer who withdrew after
+    // being picked can no longer be chosen, but must still be removable, or the entry is stuck
+    // holding them.
+    if (outcome.kind === SelectionOutcomeKind.TOGGLE_OFF) {
+      await this.deps.pickWrites.deletePick(outcome.pickId);
       this.deps.logger?.info(
         {
           action: 'draft.submitSelection.toggledOff',
-          data: { contestId, entryId, participantId, pickId: existingParticipantPick.id },
+          data: { contestId, entryId, participantId, pickId: outcome.pickId },
         },
         'Unselected a participant already on the entry',
       );
-      const toggledContext = await this.returnToDraftIfShort(context, requestedEntry, rosterSize);
+      const toggledContext = await this.returnToDraftIfShort(context, engine, requestedEntry, rosterSize);
       return {
         outcome: 'toggled-off',
-        view: await this.buildRoomView({ context: toggledContext, selectedEntryId: entryId, actorUserId }),
+        view: await this.buildRoomView({ context: toggledContext, engine, selectedEntryId: entryId, actorUserId }),
       };
     }
     if (!selectionParticipant.isAvailable) {
@@ -254,7 +262,6 @@ export class DraftService {
         selectionParticipant.unavailableReason,
       );
     }
-    if (existingParticipantPick) throw draftErrors.duplicatePick(participantId);
 
     if (context.configuration?.isExclusive) {
       const contestPicks = await this.deps.picks.findByContestAndParticipant(
@@ -266,37 +273,14 @@ export class DraftService {
       }
     }
 
-    // Outcome two and three: place, or replace. A tiered selection into a tier the entry has
-    // already filled displaces that tier's last pick and takes its round; a full entry with
-    // nothing to displace is ENTRY_COMPLETE.
-    let draftRound = existingPicks.length + 1;
-    let replacedPickId: string | null = null;
-
-    if (isTiered) {
-      const tierLabel = selectionParticipant.tier;
-      if (!tierLabel) throw draftErrors.tierMissing(participantId);
-
-      const tier = findTierByLabel(tiers, tierLabel);
-      if (!tier) throw draftErrors.tierNotFound(tierLabel, contestId);
-
-      const placement = resolveTieredPlacement({
-        tier,
-        tiers,
-        existingPicks: existingPicks.map(toPlacementPick),
-        rosterSize,
-      });
-      if (placement.kind === 'entry-complete') {
-        throw draftErrors.entryComplete(entryId, rosterSize);
-      }
-
-      draftRound = placement.draftRound;
-      if (placement.kind === 'replace') {
-        replacedPickId = placement.replacedPickId;
-        await this.deps.pickWrites.deletePick(replacedPickId);
-      }
-    } else if (existingPicks.length >= rosterSize) {
-      throw draftErrors.entryComplete(entryId, rosterSize);
+    if (outcome.kind === SelectionOutcomeKind.REJECT) {
+      throw rejectionError(outcome, { contestId, entryId, participantId, rosterSize });
     }
+
+    // Accept, or replace: a replacement first displaces the pick it takes the place of.
+    const { draftRound } = outcome;
+    const replacedPickId = outcome.kind === SelectionOutcomeKind.REPLACE ? outcome.replacedPickId : null;
+    if (replacedPickId) await this.deps.pickWrites.deletePick(replacedPickId);
 
     const contestPickCount = await this.deps.picks.countByContest(contestId);
 
@@ -319,10 +303,10 @@ export class DraftService {
       replacedPickId ? 'Replaced a pick in a full tier' : 'Placed a selection',
     );
 
-    const placedContext = await this.returnToDraftIfShort(context, requestedEntry, rosterSize);
+    const placedContext = await this.returnToDraftIfShort(context, engine, requestedEntry, rosterSize);
     return {
       outcome: 'placed',
-      view: await this.buildRoomView({ context: placedContext, selectedEntryId: entryId, actorUserId }),
+      view: await this.buildRoomView({ context: placedContext, engine, selectedEntryId: entryId, actorUserId }),
     };
   }
 
@@ -349,9 +333,8 @@ export class DraftService {
     );
     if (!ownsEntry) throw draftErrors.entryAccessDenied();
 
-    if (!isRosterSelectionType(context.contest.selectionType)) {
-      throw draftErrors.draftModeUnsupportedForSubmission(context.contest.selectionType);
-    }
+    const engine = findSelectionEngine(context.contest.selectionType);
+    if (!engine) throw draftErrors.draftModeUnsupportedForSubmission(context.contest.selectionType);
 
     if (!context.acceptsPicks) {
       this.deps.logger?.warn(
@@ -365,10 +348,10 @@ export class DraftService {
 
     if (entry.status === ContestEntryStatus.INACTIVE) throw draftErrors.entryInactive(entryId);
 
-    const rosterSize = getRosterSize(context.contest.selectionType, context.configuration, context.tiers);
+    const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers: context.tiers });
     if (rosterSize <= 0) throw draftErrors.selectionConfigInvalid(contestId);
 
-    const shortfall = await this.findEntryShortfall(context, entryId, rosterSize);
+    const shortfall = await this.findEntryShortfall(context, engine, entryId, rosterSize);
     if (shortfall) {
       this.deps.logger?.warn(
         { action: 'draft.submitEntry.incomplete', data: { contestId, entryId, ...shortfall } },
@@ -388,18 +371,18 @@ export class DraftService {
       await this.deps.entryReceipts?.sendEntrySubmittedEmail(contestId, entryId, actorUserId);
     }
 
-    return this.buildRoomView({ context: submittedContext, selectedEntryId: entryId, actorUserId });
+    return this.buildRoomView({ context: submittedContext, engine, selectedEntryId: entryId, actorUserId });
   }
 
   /** The entry's lineup shortfall as of now, read fresh so it sees the latest pick write. */
   private async findEntryShortfall(
     context: DraftContext,
+    engine: SelectionEngine,
     entryId: string,
     rosterSize: number,
   ): Promise<LineupShortfall | null> {
     const picks = await this.deps.picks.findByEntriesWithParticipant([entryId]);
-    return findLineupShortfall({
-      selectionType: context.contest.selectionType,
+    return engine.findShortfall({
       rosterSize,
       tiers: context.tiers,
       picks: picks.map((pick) => ({ participantId: pick.participant.participantId })),
@@ -413,11 +396,12 @@ export class DraftService {
    */
   private async returnToDraftIfShort(
     context: DraftContext,
+    engine: SelectionEngine,
     entry: ContestEntry,
     rosterSize: number,
   ): Promise<DraftContext> {
     if (entry.status !== ContestEntryStatus.SUBMITTED) return context;
-    const shortfall = await this.findEntryShortfall(context, entry.id, rosterSize);
+    const shortfall = await this.findEntryShortfall(context, engine, entry.id, rosterSize);
     if (!shortfall) return context;
 
     const reverted = await this.deps.entries.update(entry.id, { status: ContestEntryStatus.DRAFT });
@@ -496,10 +480,11 @@ export class DraftService {
    */
   private async buildRoomView(input: {
     context: DraftContext;
+    engine: SelectionEngine;
     selectedEntryId?: string;
     actorUserId?: string;
   }): Promise<DraftRoomView> {
-    const { context, actorUserId } = input;
+    const { context, engine, actorUserId } = input;
     const { contest, configuration, tiers, entries: contestEntries } = context;
     const entryIds = contestEntries.map((entry) => entry.id);
 
@@ -510,7 +495,7 @@ export class DraftService {
         : Promise.resolve(null),
     ]);
 
-    const rosterSize = getRosterSize(contest.selectionType, configuration, tiers);
+    const rosterSize = engine.rosterSize({ configuration, tiers });
     const entryUserIdMap = buildEntryUserIdMap(contestEntries, context.squadMemberships);
     const contestEntryById = new Map(contestEntries.map((entry) => [entry.id, entry]));
     const tierByParticipantId = buildTierByParticipantId(tiers);
@@ -599,7 +584,7 @@ export class DraftService {
         contestEntryById,
         tierByParticipantId,
         priceBySportEventParticipantId,
-        isTiered: contest.selectionType === SelectionType.TIERED,
+        engine,
       }),
       selectionGroups: this.buildSelectionGroups(context, selectedSportEventParticipantIds),
       availableSportEventParticipantIds: this.buildAvailableParticipantIds(context, picks),
@@ -625,15 +610,16 @@ export class DraftService {
    *
    * A pick carries the round it was stored with, and these counters are the fallback for one
    * that does not: the running index within its entry, and within its entry's picks from the
-   * same tier. In a tiered room a pick's round *is* its tier number, which is why a tiered
-   * history is grouped by tier rather than by when the picks were made.
+   * same tier. The round it shows in is the engine's: in a tiered room it *is* the tier
+   * number, which is why a tiered history is grouped by tier rather than by when the picks
+   * were made.
    */
   private buildPickHistory(input: {
     picks: readonly ContestEntryPickWithParticipant[];
     contestEntryById: ReadonlyMap<string, ContestEntry>;
     tierByParticipantId: ReadonlyMap<string, { tierId: string; tierName: string; tierNumber: number }>;
     priceBySportEventParticipantId: ReadonlyMap<string, number | undefined>;
-    isTiered: boolean;
+    engine: SelectionEngine;
   }): DraftRoomPick[] {
     const pickIndexByEntry = new Map<string, number>();
     const pickIndexByEntryTier = new Map<string, number>();
@@ -651,7 +637,7 @@ export class DraftService {
 
       return {
         pickNumber: pick.draftPickNumber ?? index + 1,
-        round: input.isTiered ? tier?.tierNumber ?? entryPickIndex : entryPickIndex,
+        round: input.engine.historyRound({ tierNumber: tier?.tierNumber, entryPickIndex }),
         pickInRound: pick.draftRound ?? tierPickIndex,
         entryId: pick.entryId,
         // A pick whose entry or participant has gone missing falls back to the id, so the
@@ -716,12 +702,26 @@ export class DraftService {
   }
 }
 
-/** The shape `resolveTieredPlacement` reasons over: a pick's id and whom it points at. */
-function toPlacementPick(pick: ContestEntryPickWithParticipant): {
-  id: string;
-  participantId: string;
-} {
+/** The shape an engine reasons over: a pick's id and whom it points at. */
+function toEntryPick(pick: ContestEntryPickWithParticipant): EntryPick {
   return { id: pick.id, participantId: pick.participant.participantId };
+}
+
+/** The contract error an engine's rejection answers with; one case per reject code. */
+function rejectionError(
+  rejection: SelectionRejection,
+  request: { contestId: string; entryId: string; participantId: string; rosterSize: number },
+): DraftError {
+  switch (rejection.code) {
+    case SelectionRejectCode.DUPLICATE_PICK:
+      return draftErrors.duplicatePick(request.participantId);
+    case SelectionRejectCode.ENTRY_COMPLETE:
+      return draftErrors.entryComplete(request.entryId, request.rosterSize);
+    case SelectionRejectCode.TIER_MISSING:
+      return draftErrors.tierMissing(request.participantId);
+    case SelectionRejectCode.TIER_NOT_FOUND:
+      return draftErrors.tierNotFound(rejection.tierLabel, request.contestId);
+  }
 }
 
 /** The context with one entry replaced by its freshly written row. */

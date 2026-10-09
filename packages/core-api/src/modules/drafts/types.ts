@@ -151,20 +151,6 @@ export interface DraftRoomView {
 }
 
 /**
- * Where a tiered selection lands, as a value rather than a boolean.
- *
- * `plans/144` records why this is a union: the first draft-abstraction attempt gave
- * `validatePick` a `{ valid, reason }` return, and a boolean cannot express *replace* or
- * *toggle off*. The route's real behaviour could therefore never live behind that interface,
- * the engines that did drifted into disagreeing with production, and #323 deleted them. The
- * three outcomes below are the behaviour; keeping them distinct is the point.
- */
-export type TieredPlacement =
-  | { kind: 'place'; draftRound: number }
-  | { kind: 'replace'; draftRound: number; replacedPickId: string }
-  | { kind: 'entry-complete' };
-
-/**
  * Why a lineup cannot be submitted yet (#481): how many picks it holds against the roster, and
  * which tiers are short of their picks (empty for a budget-pick roster, which has no tiers).
  */
