@@ -19,6 +19,9 @@ type MutationActionInvalidate<TData, TVariables> =
   | readonly QueryKey[]
   | ((data: TData, variables: TVariables) => readonly QueryKey[] | Promise<readonly QueryKey[]>);
 
+// `void` is TanStack Query's own marker for a mutation that takes no variables
+// (`useMutation<TData, TError, void>`), so it is the type this has to test for.
+// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 type MutationActionRun<TVariables, TData> = [TVariables] extends [void]
   ? () => Promise<TData>
   : (variables: TVariables) => Promise<TData>;

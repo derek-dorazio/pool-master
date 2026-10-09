@@ -482,12 +482,18 @@ The parser is wired with `projectService: true` and
 Active LTS line, since #138) and the Dockerfiles pin the same version, which
 satisfies that requirement.
 
-On top of `typescript-eslint`'s `recommendedTypeChecked`, #345 Phase 0 adopted
-the eleven type-aware rules outside that preset which measure 0 findings at
-**default** options. Default options are load-bearing: `strictTypeChecked`'s
-options take `restrict-template-expressions` from 2 findings to 151, so that
-preset's options must not be inherited wholesale if it is ever adopted
-(#345 Phase 4).
+The base preset is `typescript-eslint`'s `strictTypeChecked` (#525). At its
+own options it measured 1,254 findings; `eslint.config.js` records, rule by
+rule, the overrides that made it adoptable. Two option changes removed most of
+them: arrow shorthand is allowed to return a void call, and numbers are allowed
+in template literals. Four rules are off. `return-await` is off because Fastify's
+reply is thenable, and `no-dynamic-delete` is off because every finding is a real
+dictionary. `no-non-null-assertion` (#549) and `no-unnecessary-condition` (#550)
+are deferred to their own tickets. The comment beside each says why. Lint time is
+unchanged (117 s against 116 s on `recommendedTypeChecked`).
+
+Five more type-aware rules sit outside every preset and are listed individually,
+from #345 Phase 0's survey of rules at 0 findings on default options.
 
 ### tsconfig strictness
 

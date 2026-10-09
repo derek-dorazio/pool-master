@@ -53,8 +53,9 @@ describe('ErrorBoundary', () => {
 
     Object.defineProperty(window, 'location', {
       configurable: true,
+      // The logger reads `pathname`; the boundary calls `reload`.
       value: {
-        ...window.location,
+        pathname: window.location.pathname,
         reload: reloadSpy,
       },
     });

@@ -1120,9 +1120,7 @@ describe('mock contest feed provider event-first verification', () => {
 
     const persistence = new IngestionPersistence(prisma);
     const scheduler = new IngestionScheduler(registry, {
-      onEventDetail: async (detail) => {
-        await persistence.persistEventDetailWithDiagnostics(detail);
-      },
+      onEventDetail: async (detail) => (await persistence.persistEventDetailWithDiagnostics(detail)).writeDiagnostics,
       onLiveScores: async () => emptyLiveScorePersistenceResult(),
     });
 

@@ -161,7 +161,7 @@ export function TeamsPage() {
   const canManageLeague = viewer.isCommissioner || viewer.isRootAdmin;
   // An inactive league is read-only on Team Home; the roster follows suit rather than offering
   // buttons that surface on one screen and not the other.
-  const leagueIsActive = league.isActive !== false;
+  const leagueIsActive = league.isActive;
 
 
 
@@ -252,7 +252,7 @@ export function TeamsPage() {
                         >
                           {team.name}
                         </Link>
-                        {team.isActive === false ? (
+                        {!team.isActive ? (
                           <Chip>
                             Inactive
                           </Chip>
@@ -336,7 +336,7 @@ export function TeamsPage() {
                     leagueId={leagueId}
                     pendingInvitations={pendingInvitations}
                     squadId={team.id}
-                    squadIsActive={team.isActive !== false}
+                    squadIsActive={team.isActive}
                     squadName={team.name}
                   />
                 </div>

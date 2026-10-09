@@ -89,7 +89,7 @@ function asErrors(rules) {
  */
 export default tseslint.config(
   js.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
+  ...tseslint.configs.strictTypeChecked,
   {
     ignores: [
       '**/dist/**',
@@ -116,35 +116,49 @@ export default tseslint.config(
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-require-imports': 'off',
 
-      // #345 Phase 0 (from #160's survey of all 61 type-aware rules) — the eleven
-      // type-aware rules that are outside `recommendedTypeChecked` and measured at
-      // 0 findings over this lint scope at DEFAULT options.
+      // #525 — `strictTypeChecked` (spread above) measured 1,254 findings over this lint
+      // scope at its own options. These overrides are what made it adoptable; each says
+      // why. Re-measure them when typescript-eslint is upgraded, since the preset can grow.
       //
-      // #160 named twenty-one such rules; ten of them turned out to be inside
-      // `recommendedTypeChecked`, which this config already spreads, so they have
-      // been enforced since #308 and are not restated here. Verified with
-      // `--print-config`, not inferred: `await-thenable`, `no-array-delete`,
-      // `no-duplicate-type-constituents`, `no-for-in-array`, `no-implied-eval`,
-      // `no-unsafe-enum-comparison`, `no-unsafe-unary-minus`,
-      // `prefer-promise-reject-errors`, `restrict-plus-operands` and
-      // `no-misused-promises` are already on.
-      //
-      // Default options are load-bearing on two of these. Do NOT inherit
-      // `strictTypeChecked`'s options wholesale if that preset is ever adopted
-      // (#345 Phase 4): #160 measured `restrict-template-expressions` at 2 findings
-      // on defaults and 151 under strict's options. These eleven are listed
-      // individually rather than spread from a preset so a typescript-eslint
-      // upgrade cannot add a rule here unreviewed.
-      '@typescript-eslint/no-mixed-enums': 'error',
+      // Options, not rules: strict's options account for most of the count.
+      // `ignoreArrowShorthand` clears 479 of no-confusing-void-expression's 481 findings;
+      // those were `onClick={() => setOpen(true)}`-style arrows, where returning the void
+      // call is the idiom, not a confusion. The other 2 (`void navigate(...)`) were fixed.
+      '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
+      // Strict's options forbid numbers in templates: all 291 findings were numbers
+      // (`${count} entries`). Everything else strict rejects (nullish, boolean, any,
+      // objects) stays rejected.
+      '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+      // The legacy single-entry read is deprecated and still called by the web app and
+      // its own functional tests. Its retirement is #548; until then it is the one
+      // deprecated API allowed.
+      '@typescript-eslint/no-deprecated': [
+        'error',
+        { allow: [{ from: 'file', name: 'getMyContestEntry', path: 'packages/shared/generated/hey-api/sdk.gen.ts' }] },
+      ],
+      // Off, not deferred: all 57 findings are `return reply.send(...)` (or `sendError`,
+      // which returns the reply) inside a Fastify handler's `try`. FastifyReply is
+      // thenable, so the rule asks for `return await reply`, which would route a send
+      // failure into the handler's own `catch` and send a second response.
+      '@typescript-eslint/return-await': 'off',
+      // Off: all 6 findings delete a key from a real dictionary where deleting is the
+      // operation — `process.env`, an OpenAPI schema node rewritten in place, and
+      // `Record`-typed React state. The rule's alternative, a `Map`, fits none of them.
+      '@typescript-eslint/no-dynamic-delete': 'off',
+      // Deferred to their own tickets, too large for this slice: 219 non-null assertions
+      // (206 in tests) are #549, 167 unnecessary conditions are #550.
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+
+      // #345 Phase 0 (from #160's survey of all 61 type-aware rules) — type-aware rules
+      // outside every preset this config spreads, measured at 0 findings at default
+      // options. Six more from that survey are now inside `strictTypeChecked` and were
+      // dropped from this list when it was adopted (#525). Listed individually so a
+      // typescript-eslint upgrade cannot add one here unreviewed.
       '@typescript-eslint/no-unnecessary-qualifier': 'error',
-      '@typescript-eslint/no-unnecessary-template-expression': 'error',
-      '@typescript-eslint/no-useless-default-assignment': 'error',
       '@typescript-eslint/prefer-find': 'error',
       '@typescript-eslint/prefer-includes': 'error',
-      '@typescript-eslint/prefer-reduce-type-parameter': 'error',
-      '@typescript-eslint/prefer-return-this-type': 'error',
       '@typescript-eslint/prefer-string-starts-ends-with': 'error',
-      '@typescript-eslint/related-getter-setter-pairs': 'error',
       '@typescript-eslint/require-array-sort-compare': 'error',
 
       // #162 — a type-only import that is not marked `import type` is emitted as a real

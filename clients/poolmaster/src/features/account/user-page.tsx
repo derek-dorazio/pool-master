@@ -182,7 +182,7 @@ export function UserPage() {
           requestedUserId: userId || null,
           selfUserId: user.id,
           isSelf,
-          isActive: user.isActive !== false,
+          isActive: user.isActive,
           isRootAdmin: user.isRootAdmin,
         },
       },
@@ -385,7 +385,7 @@ export function UserPage() {
   }
 
   const activeUser = user;
-  const isInactive = activeUser.isActive === false;
+  const isInactive = !activeUser.isActive;
   const memberSince = formatMemberSince(activeUser.createdAt, activeUser.dateFormat);
   // #202 — NOT gated on `isInactive`. An inactive account is filtered out of views but can
   // still sign in; its own details stay editable, which is the precondition for fixing them
