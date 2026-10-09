@@ -102,7 +102,7 @@ logs the template, league, contest, and entry identifiers for follow-up.
 
 Contest started summary emails are sent when a sport event moves to
 `IN_PROGRESS` (a root admin's transition, or the lifecycle scheduler) and first
-moves its contests from `OPEN` or `LOCKED` to `ACTIVE`. They go to the league's
+moves its contests from `OPEN` to `ACTIVE`. They go to the league's
 commissioners and the team members of each submitted entry, once each. An already-active
 contest is not told again. Delivery is best effort; the transition still
 succeeds if the provider rejects the email,

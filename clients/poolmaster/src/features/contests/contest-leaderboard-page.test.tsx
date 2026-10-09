@@ -132,7 +132,7 @@ function participant(overrides: {
   };
 }
 
-type ContestStatusFixture = 'OPEN' | 'ACTIVE' | 'COMPLETED' | 'LOCKED';
+type ContestStatusFixture = 'OPEN' | 'ACTIVE' | 'COMPLETED';
 
 function contestResponse(status: ContestStatusFixture) {
   return {
@@ -626,21 +626,21 @@ describe('ContestLeaderboardPage', () => {
     }
   });
 
-  it('starts polling the leaderboard without a reload when a locked contest goes live', async () => {
+  it('starts polling the leaderboard without a reload when an open contest goes live', async () => {
     // #362 — the contest read itself refreshes while the contest is not terminal, so a page
     // opened before play notices the event start and begins the live poll on its own.
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       primeMocks({ contestStatus: 'ACTIVE' });
-      getContestMock.mockResolvedValueOnce(contestResponse('LOCKED'));
+      getContestMock.mockResolvedValueOnce(contestResponse('OPEN'));
       renderLeaderboard();
       await screen.findByText('Birdie Hunters Entry 1');
-      const callsWhileLocked = getGolfContestLeaderboardMock.mock.calls.length;
+      const callsWhileOpen = getGolfContestLeaderboardMock.mock.calls.length;
 
       // The contest read that sees ACTIVE reads the leaderboard straight away, not one interval on.
       await vi.advanceTimersByTimeAsync(30_000);
       const callsOnceLive = getGolfContestLeaderboardMock.mock.calls.length;
-      expect(callsOnceLive).toBeGreaterThan(callsWhileLocked);
+      expect(callsOnceLive).toBeGreaterThan(callsWhileOpen);
 
       await vi.advanceTimersByTimeAsync(30_000);
       expect(getGolfContestLeaderboardMock.mock.calls.length).toBeGreaterThan(callsOnceLive);

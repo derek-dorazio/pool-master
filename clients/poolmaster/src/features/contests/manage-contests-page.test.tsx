@@ -89,7 +89,6 @@ function primeCommonMocks({
         iconKey: 'TROPHY',
         memberCount: 12,
         activeContestCount: 2,
-        joinPolicy: 'COMMISSIONER_ONLY',
         createdAt: '2026-04-15T00:00:00.000Z',
       },
       // #202 (A8) — the viewer's own membership, delivered once with the league context. It was
@@ -226,14 +225,14 @@ describe('ManageContestsPage', () => {
     expect(screen.queryByRole('link', { name: 'Create first contest' })).not.toBeInTheDocument();
   });
 
-  it('says there are no active contests when the league\'s only contest is cancelled, and counts its missing entries as 0', async () => {
+  it('says there are no active contests when the league\'s only contest is completed, and counts its missing entries as 0', async () => {
     primeCommonMocks({ isRootAdmin: true, leagueRole: 'MEMBER' });
     listContestsMock.mockResolvedValue({
       data: {
         contests: [{
           id: 'contest-2',
           name: 'Players Championship',
-          status: 'CANCELLED',
+          status: 'COMPLETED',
           contestType: 'ROSTER',
           selectionType: 'TIERED',
           scoringEngine: 'STROKE_PLAY',

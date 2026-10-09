@@ -96,8 +96,8 @@ A UI Label, Not A Domain Term*.
 - **League**: the office pool is `League`; a real-world tour is `SportLeague`.
 - **Draft**: three unrelated things. `DRAFT` is the first status of a `SportEvent`, a
   `Contest` and a `ContestEntry` (not yet released, opened, or submitted). The **draft room**
-  is the screen where an entry's picks are made. `SNAKE_DRAFT` and the contest status
-  `DRAFTING` are an unbuilt selection mode; only `TIERED` exists.
+  is the screen where an entry's picks are made. `SNAKE_DRAFT` is an unbuilt selection
+  mode; only `TIERED` exists.
 - **Round**: an event's scheduled round (`SportEventRound`), one golfer's round
   (`SportEventParticipantRound`), and a snake-draft round (`draftRound`, unused).
 - **Member**: a league member (`LeagueMembership`) or a squad member, which is the same as a
@@ -164,7 +164,6 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 
 - **Money changes hands outside PoolMaster.** Prize definitions describe the payout; nothing
   pays it.
-- **Contest statuses `DRAFTING`, `LOCKED` and `CANCELLED`, and entry status `INACTIVE`,
-  exist in the enums but nothing sets them.** Do not build on them as if they had meaning.
-- **`League.joinPolicy` is stored and editable, but no join path reads it.** Every join is
-  through an invitation.
+- **A contest cannot be cancelled, and an entry cannot be made inactive.** A contest is
+  `DRAFT`, `OPEN`, `ACTIVE` or `COMPLETED`; an entry is `DRAFT` or `SUBMITTED`.
+- **A league has no join policy.** Every join is through an invitation.

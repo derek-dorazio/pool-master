@@ -141,7 +141,6 @@ function primeCommonMocks() {
         iconKey: 'TROPHY',
         memberCount: 2,
         activeContestCount: 0,
-        joinPolicy: 'COMMISSIONER_ONLY',
         createdAt: '2026-04-15T00:00:00.000Z',
       },
       // #202 (A8) — the viewer's own membership, delivered once with the league context. It was

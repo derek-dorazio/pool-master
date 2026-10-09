@@ -107,7 +107,7 @@ Polls configured sports data providers, upserts normalized event data, and store
 |---------|--------|
 | **Sports** | GOLF, NFL, NBA, F1, NASCAR, NCAA_BASKETBALL, NCAA_HOCKEY, NCAA_FOOTBALL, TENNIS, HORSE_RACING, SOCCER, NHL, MLB, UFC |
 | **Selection Types** | SNAKE_DRAFT, TIERED, BUDGET_PICK, OPEN_SELECTION, PICK_EM, BRACKET_PICK_EM |
-| **Contest Lifecycle** | DRAFT → OPEN → DRAFTING → LOCKED → ACTIVE → COMPLETED / CANCELLED |
+| **Contest Lifecycle** | DRAFT → OPEN → ACTIVE → COMPLETED |
 
 ---
 

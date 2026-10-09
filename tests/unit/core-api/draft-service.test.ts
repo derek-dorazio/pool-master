@@ -123,7 +123,6 @@ function entry(
     name,
     status,
     tiebreakerValue: null,
-    isEliminated: false,
     ...TIMESTAMPS,
   };
 }
@@ -354,7 +353,7 @@ describe('#324 DraftService.getDraftState', () => {
     expect(view.isCommissioner).toBe(false);
   });
 
-  // Once picks are revealed (LOCKED onwards). While the contest is OPEN another team's entry
+  // Once picks are revealed (ACTIVE onwards). While the contest is OPEN another team's entry
   // is not honoured: draft-selection-use-cases.test.ts covers that half.
   it('honours an explicitly selected entry once picks are revealed, and falls back to the actor\'s own for an unknown one', async () => {
     const entries = [entry(ENTRY_ID, SQUAD_ID), entry(OTHER_ENTRY_ID, 'squad-2', 'Challenger')];
@@ -363,7 +362,7 @@ describe('#324 DraftService.getDraftState', () => {
       squadMembership('squad-2', 'user-challenger'),
     ];
 
-    const revealed = { status: ContestStatus.LOCKED };
+    const revealed = { status: ContestStatus.ACTIVE };
     const selected = await setup({ contest: revealed, entries, squadMemberships }).service.getDraftState({
       contestId: CONTEST_ID,
       selectedEntryId: OTHER_ENTRY_ID,
@@ -843,7 +842,7 @@ describe('DraftService — rooms with missing or partial data', () => {
 
   it('places a pick of a golfer outside every tier in the history by its position in the entry, using its stored round when it has one', async () => {
     const { service } = setup({
-      contest: { status: ContestStatus.LOCKED },
+      contest: { status: ContestStatus.ACTIVE },
       picks: [
         pick('pick-x', 'p-untiered', 'sep-x', { draftRound: null as unknown as number, draftPickNumber: null as unknown as number }),
         pick('pick-a', 'p-a', 'sep-a', { draftRound: 1 }),
@@ -861,7 +860,7 @@ describe('DraftService — rooms with missing or partial data', () => {
 
   it('numbers a budget-pick history by each entry\'s own pick order, not by tier', async () => {
     const { service } = setup({
-      contest: { selectionType: SelectionType.BUDGET_PICK, status: ContestStatus.LOCKED },
+      contest: { selectionType: SelectionType.BUDGET_PICK, status: ContestStatus.ACTIVE },
       configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3 },
       picks: [pick('pick-d', 'p-d', 'sep-d'), pick('pick-a', 'p-a', 'sep-a')],
     });
@@ -951,12 +950,12 @@ describe('DraftService.submitEntry — an entry counts only once its owner submi
   });
 
   it('refuses 409 CONTEST_ENTRY_LOCKED once the contest has left OPEN', async () => {
-    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, contest: { status: ContestStatus.LOCKED } });
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, contest: { status: ContestStatus.ACTIVE } });
 
     await expect(service.submitEntry(submitEntryInput())).rejects.toMatchObject({
       code: 'CONTEST_ENTRY_LOCKED',
       statusCode: 409,
-      message: `Contest ${CONTEST_ID} is LOCKED; entries can only be submitted while it is open`,
+      message: `Contest ${CONTEST_ID} is ACTIVE; entries can only be submitted while it is open`,
     });
     expect(deps.entries.update).not.toHaveBeenCalled();
   });
@@ -986,16 +985,6 @@ describe('DraftService.submitEntry — an entry counts only once its owner submi
       .rejects.toMatchObject({ code: 'AUTH_SESSION_REQUIRED', statusCode: 401 });
     await expect(service.submitEntry(submitEntryInput({ actorUserId: 'someone-else' })))
       .rejects.toMatchObject({ code: 'DRAFT_ENTRY_ACCESS_DENIED', statusCode: 403 });
-  });
-
-  it('refuses 409 ENTRY_INACTIVE rather than bringing an inactive entry back into play', async () => {
-    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'INACTIVE')] });
-
-    await expect(service.submitEntry(submitEntryInput())).rejects.toMatchObject({
-      code: 'ENTRY_INACTIVE',
-      statusCode: 409,
-    });
-    expect(deps.entries.update).not.toHaveBeenCalled();
   });
 });
 

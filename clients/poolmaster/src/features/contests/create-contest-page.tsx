@@ -1031,7 +1031,7 @@ export function CreateContestPage() {
               <li>A new contest is a draft: only commissioners see it, and nobody can enter yet.</li>
               <li>Open it to the league when it is ready. Its settings lock for good at that point.</li>
               <li>Entries close when the event starts.</li>
-              <li>Locked, in-progress, and completed states should follow event timing and feed updates automatically.</li>
+              <li>The contest goes live when the event starts and is final when the event completes.</li>
             </ul>
           </Tile>
 

@@ -60,7 +60,6 @@ async function seedContestFixture(contestFormat: string): Promise<FixtureContext
       leagueCode: `PUL${suffix.toUpperCase()}`,
       name: `Partial Uniques League ${suffix}`,
       iconKey: 'TROPHY',
-      joinPolicy: 'COMMISSIONER_ONLY',
     },
   });
   await prisma.leagueMembership.create({

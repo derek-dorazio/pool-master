@@ -198,7 +198,6 @@ export function TeamsPage() {
       {canManageLeague ? (
         <LeagueInvitations
           isInactiveLeague={!leagueIsActive}
-          joinPolicy={league.joinPolicy}
           leagueId={leagueId}
           leagueName={league.name}
           membersByUserId={leagueMembersByUserId}

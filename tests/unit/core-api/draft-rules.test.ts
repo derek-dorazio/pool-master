@@ -67,7 +67,6 @@ function entry(id: string, squadId: string): ContestEntry {
     entryNumber: 1,
     name: `Entry ${id}`,
     status: 'DRAFT',
-    isEliminated: false,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
   };
@@ -164,16 +163,13 @@ describe('#324 draft rules — mapContestStatusToDraftStatus', () => {
     expect(mapContestStatusToDraftStatus('COMPLETED', false)).toBe(DraftStatus.COMPLETE);
   });
 
-  it('is LIVE while the contest is open, drafting or active', () => {
+  it('is LIVE while the contest is open or active', () => {
     expect(mapContestStatusToDraftStatus('OPEN', false)).toBe(DraftStatus.LIVE);
-    expect(mapContestStatusToDraftStatus('DRAFTING', false)).toBe(DraftStatus.LIVE);
     expect(mapContestStatusToDraftStatus('ACTIVE', false)).toBe(DraftStatus.LIVE);
   });
 
-  it('is PENDING for every other contest status', () => {
+  it('is PENDING for a DRAFT contest', () => {
     expect(mapContestStatusToDraftStatus('DRAFT', false)).toBe(DraftStatus.PENDING);
-    expect(mapContestStatusToDraftStatus('LOCKED', false)).toBe(DraftStatus.PENDING);
-    expect(mapContestStatusToDraftStatus('CANCELLED', false)).toBe(DraftStatus.PENDING);
   });
 });
 

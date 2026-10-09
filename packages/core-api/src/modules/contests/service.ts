@@ -533,7 +533,6 @@ export class ContestService {
       name: buildDefaultEntryName(squad.name, nextEntryNumber),
       // Born a draft; the owner submits it once its lineup is complete (#481).
       status: ContestEntryStatus.DRAFT,
-      isEliminated: false,
     });
     const dto = await this.loadEntryDtoById(created.id);
     this.logger.info({
@@ -904,7 +903,7 @@ export class ContestService {
     const entries = await this.deps.entries.findBySquad(squadId);
     return entries
       // Drafts and submitted entries alike: both hold one of the squad's entry places.
-      .filter((entry) => entry.contestId === contestId && entry.status !== ContestEntryStatus.INACTIVE)
+      .filter((entry) => entry.contestId === contestId)
       .sort((left, right) => left.entryNumber - right.entryNumber);
   }
 
@@ -1245,8 +1244,8 @@ function buildEntryUrl(
  * Whether participant picks on a contest are visible to non-owning squad members.
  *
  * pool-master-dxd.13 — picks are hidden from non-owners until the contest moves past
- * taking entries (DRAFT or OPEN). Once it progresses (DRAFTING, LOCKED, ACTIVE, COMPLETED,
- * CANCELLED), picks are public to every league member.
+ * taking entries (DRAFT or OPEN). Once it progresses (ACTIVE, COMPLETED), picks are public to
+ * every league member.
  */
 export function contestPicksRevealed(status: ContestStatus): boolean {
   return status !== ContestStatus.DRAFT && status !== ContestStatus.OPEN;

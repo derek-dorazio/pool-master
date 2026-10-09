@@ -121,15 +121,15 @@ describe('ContestRepository', () => {
     const { league, event } = await createLeagueAndEvent();
     const active = await createContest(league.id, event.id, 'Active');
     const completed = await createContest(league.id, event.id, 'Completed', ContestStatus.COMPLETED);
-    const cancelled = await createContest(league.id, event.id, 'Cancelled', ContestStatus.CANCELLED);
+    const draft = await createContest(league.id, event.id, 'Draft', ContestStatus.DRAFT);
     const open = await createContest(league.id, event.id, 'Open', ContestStatus.OPEN);
 
     const all = await repos().contests.findBySportEvent(event.id);
     const unsettled = await repos().contests.findBySportEvent(event.id, {
-      excludeStatuses: [ContestStatus.CANCELLED, ContestStatus.COMPLETED],
+      excludeStatuses: [ContestStatus.DRAFT, ContestStatus.COMPLETED],
     });
 
-    expect(all.map((contest) => contest.id)).toEqual([active.id, completed.id, cancelled.id, open.id]);
+    expect(all.map((contest) => contest.id)).toEqual([active.id, completed.id, draft.id, open.id]);
     expect(unsettled.map((contest) => contest.id)).toEqual([active.id, open.id]);
   });
 
@@ -137,20 +137,20 @@ describe('ContestRepository', () => {
     const { league, event } = await createLeagueAndEvent();
     await createContest(league.id, event.id, 'Draft', ContestStatus.DRAFT);
     const open = await createContest(league.id, event.id, 'Open', ContestStatus.OPEN);
-    const locked = await createContest(league.id, event.id, 'Locked', ContestStatus.LOCKED);
+    const live = await createContest(league.id, event.id, 'Live', ContestStatus.ACTIVE);
 
     const pending = await repos().contests.findBySportEvent(event.id, {
-      statuses: [ContestStatus.OPEN, ContestStatus.LOCKED],
+      statuses: [ContestStatus.OPEN, ContestStatus.ACTIVE],
     });
 
-    expect(pending.map((contest) => contest.id)).toEqual([open.id, locked.id]);
+    expect(pending.map((contest) => contest.id)).toEqual([open.id, live.id]);
   });
 
   it('transitions a contest only from the given statuses: the second run changes nothing and says so', async () => {
     const { league, event } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'To Start', ContestStatus.OPEN);
     const startsAt = new Date('2026-06-04T12:00:00.000Z');
-    const start = { from: [ContestStatus.OPEN, ContestStatus.LOCKED], to: ContestStatus.ACTIVE, startsAt };
+    const start = { from: [ContestStatus.OPEN], to: ContestStatus.ACTIVE, startsAt };
 
     await expect(repos().contests.transitionStatus(contest.id, start)).resolves.toBe(true);
     await expect(repos().contests.transitionStatus(contest.id, start)).resolves.toBe(false);
@@ -302,12 +302,9 @@ describe('ContestEntryRepository', () => {
     const first = await prisma.contestEntry.create({
       data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'First', status: 'SUBMITTED' },
     });
-    const inactive = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 3, name: 'Inactive', status: 'INACTIVE' },
-    });
     // Stored without a status: the column defaults to DRAFT (#481), which counts nowhere.
     const draft = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squads[1].id, entryNumber: 4, name: 'Draft' },
+      data: { contestId: contest.id, squadId: squads[1].id, entryNumber: 3, name: 'Draft' },
     });
 
     const all = await repos().entries.findByContestWithSquad(contest.id);
@@ -317,7 +314,6 @@ describe('ContestEntryRepository', () => {
     expect(all.map((entry) => [entry.id, entry.squadName])).toEqual([
       [first.id, `Alpha ${suffix}`],
       [second.id, `Bravo ${suffix}`],
-      [inactive.id, `Alpha ${suffix}`],
       [draft.id, `Bravo ${suffix}`],
     ]);
     expect(draft.status).toBe('DRAFT');
@@ -341,7 +337,6 @@ describe('ContestEntryRepository', () => {
       name: 'Renamed',
       status: 'SUBMITTED',
       tiebreakerValue: 270,
-      isEliminated: false,
     }));
   });
 

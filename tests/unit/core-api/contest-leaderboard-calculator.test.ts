@@ -257,10 +257,10 @@ describe('an entry\'s standing from its picks', () => {
     expect(standing).toMatchObject({ score: null, scoredPickCount: 0, picks: [], countingPickLimit: 4 });
   });
 
-  it('carries the entry\'s own status, active or inactive, onto its standing', () => {
+  it('carries the entry\'s own status, draft or submitted, onto its standing', () => {
     const field = scores([]);
-    expect(buildContestEntryStanding({ ...entry([]), status: ContestEntryStatus.INACTIVE }, field, best(1), 'LOWER_IS_BETTER').status)
-      .toBe(ContestEntryStatus.INACTIVE);
+    expect(buildContestEntryStanding({ ...entry([]), status: ContestEntryStatus.DRAFT }, field, best(1), 'LOWER_IS_BETTER').status)
+      .toBe(ContestEntryStatus.DRAFT);
     expect(buildContestEntryStanding({ ...entry([]), status: ContestEntryStatus.SUBMITTED }, field, best(1), 'LOWER_IS_BETTER').status)
       .toBe(ContestEntryStatus.SUBMITTED);
   });

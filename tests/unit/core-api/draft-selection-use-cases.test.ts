@@ -110,7 +110,6 @@ function entry(id: string, squadId: string, tiebreakerValue: number | null = nul
     name: `Entry ${id}`,
     status: 'DRAFT',
     tiebreakerValue,
-    isEliminated: false,
     ...TIMESTAMPS,
   };
 }
@@ -460,10 +459,8 @@ describe('Tiered selection — exclusive contests', () => {
 describe('Tiered selection — picks change only while the contest is open', () => {
   const closedStatuses = [
     ContestStatus.DRAFT,
-    ContestStatus.LOCKED,
     ContestStatus.ACTIVE,
     ContestStatus.COMPLETED,
-    ContestStatus.CANCELLED,
   ];
 
   it.each(closedStatuses)('refuses a new pick with 409 CONTEST_ENTRY_LOCKED on a %s contest', async (status) => {
@@ -576,8 +573,8 @@ describe('Draft room — what a member may see', () => {
     expect(selected).toEqual(['p-a']);
   });
 
-  it('shows every entry\'s picks, and another team\'s entry on request, once the contest has locked', async () => {
-    const world = await bothEntriesPicked(ContestStatus.LOCKED);
+  it('shows every entry\'s picks, and another team\'s entry on request, once the contest is live', async () => {
+    const world = await bothEntriesPicked(ContestStatus.ACTIVE);
 
     const room = await world.service.getDraftState({
       contestId: CONTEST_ID,

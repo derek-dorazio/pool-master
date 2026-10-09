@@ -345,8 +345,6 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
 
     await screen.findByTestId('league-home');
 
-    expect(screen.getByTestId('league-details-tile')).toHaveTextContent('Join policy');
-    expect(screen.getByTestId('league-join-policy')).toHaveTextContent('COMMISSIONER_ONLY');
 
     expect(screen.getByTestId('league-actions-tile')).toHaveTextContent('Inactivate league');
     expect(screen.getByTestId('league-lifecycle-status')).toHaveTextContent('Active');

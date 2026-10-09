@@ -5,7 +5,7 @@ import type {
   SquadMembershipRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
-import { JoinPolicy, LeagueIconKey, LeagueRole, SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
+import { LeagueIconKey, LeagueRole, SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
 import { buildLeague, buildMembership, buildUser } from '../../factories';
 import {
   fakeLeagueMembershipRepo,
@@ -178,7 +178,7 @@ describe('LeagueService', () => {
       });
       expect(leagueRepo.create).toHaveBeenNthCalledWith(
         1,
-        expect.objectContaining({ isActive: true, joinPolicy: JoinPolicy.COMMISSIONER_ONLY }),
+        expect.objectContaining({ isActive: true }),
       );
     });
 

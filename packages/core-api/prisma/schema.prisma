@@ -24,12 +24,6 @@ enum UserDateFormat {
   YMD
 }
 
-enum PrismaLeagueJoinPolicy {
-  COMMISSIONER_ONLY
-  LINK_INVITE
-  OPEN
-}
-
 enum PrismaLeagueIconKey {
   GOLF_FLAG
   GOLF_BALL
@@ -311,11 +305,8 @@ enum PrismaContestFormat {
 enum PrismaContestStatus {
   DRAFT
   OPEN
-  DRAFTING
-  LOCKED
   ACTIVE
   COMPLETED
-  CANCELLED
 }
 
 enum PrismaSelectionType {
@@ -352,7 +343,6 @@ enum PrismaPrizePayoutType {
 enum PrismaContestEntryStatus {
   DRAFT
   SUBMITTED
-  INACTIVE
 }
 
 enum PrismaParticipantRoundStatus {
@@ -443,15 +433,14 @@ model RefreshToken {
 // =============================================================================
 
 model League {
-  id          String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  leagueCode  String                 @unique @map("league_code") @db.VarChar(16)
+  id          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueCode  String              @unique @map("league_code") @db.VarChar(16)
   name        String
   description String?
-  isActive    Boolean                @default(true) @map("is_active")
-  iconKey     PrismaLeagueIconKey    @default(TROPHY) @map("icon_key")
-  joinPolicy  PrismaLeagueJoinPolicy @default(COMMISSIONER_ONLY) @map("join_policy")
-  createdAt   DateTime               @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime               @updatedAt @map("updated_at") @db.Timestamptz
+  isActive    Boolean             @default(true) @map("is_active")
+  iconKey     PrismaLeagueIconKey @default(TROPHY) @map("icon_key")
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
   memberships           LeagueMembership[]
   squads                Squad[]
@@ -854,7 +843,6 @@ model ContestEntry {
   name            String
   status          PrismaContestEntryStatus @default(DRAFT)
   tiebreakerValue Int?                     @map("tiebreaker_value")
-  isEliminated    Boolean                  @default(false) @map("is_eliminated")
   createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
