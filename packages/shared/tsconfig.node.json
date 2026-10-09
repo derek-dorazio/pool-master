@@ -1,0 +1,15 @@
+{
+  // #524 — the hey-api codegen config is build tooling, not package source, so it stays
+  // out of `tsconfig.json` (and out of `dist`). This program exists so it is still
+  // typechecked and linted.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    // hey-api loads this file as ESM; the base's Node16 resolution would read it as
+    // CommonJS (neither package is `"type": "module"`) and reject the ESM-only import.
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
+  },
+  "include": ["openapi-ts.config.ts"]
+}

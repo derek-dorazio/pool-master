@@ -1,0 +1,28 @@
+{
+  // #524 — the build-tool configs run in Node, not the browser, so they sit outside
+  // `tsconfig.json` (which includes only `src`). Without this file nothing typechecked
+  // them and ESLint's type-aware parser could not lint them. `playwright.config.ts` is
+  // already in `tsconfig.e2e.json` with the specs it configures.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    // This tsconfig does not extend `tsconfig.base.json`, so the #345 Phase 0
+    // strictness flags are repeated, as in the other two webapp tsconfigs.
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["vite.config.ts", "vitest.config.ts", "tailwind.config.ts"]
+}
