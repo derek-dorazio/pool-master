@@ -188,10 +188,11 @@ jobs:
         && (github.event_name != 'pull_request' || needs.changes.outputs.service == 'true') }}
     env:
       # Required at bootstrap with no fallback (#134, core/config.ts). The test
-      # helpers set these too, but CI is explicit so a suite that bootstraps
-      # outside a helper still starts.
+      # helpers set it too, but CI is explicit so a suite that bootstraps outside
+      # a helper still starts. The jest global setup writes version-info.json
+      # from POOLMASTER_SERVICE_VERSION (#180).
       POOLMASTER_ENVIRONMENT: ci
-      RELEASE_VERSION: ${{ github.sha }}
+      POOLMASTER_SERVICE_VERSION: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -249,10 +250,11 @@ jobs:
     env:
       DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_test
       # Required at bootstrap with no fallback (#134, core/config.ts). The test
-      # helpers set these too, but CI is explicit so a suite that bootstraps
-      # outside a helper still starts.
+      # helpers set it too, but CI is explicit so a suite that bootstraps outside
+      # a helper still starts. The jest global setup writes version-info.json
+      # from POOLMASTER_SERVICE_VERSION (#180).
       POOLMASTER_ENVIRONMENT: ci
-      RELEASE_VERSION: ${{ github.sha }}
+      POOLMASTER_SERVICE_VERSION: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -370,10 +372,11 @@ jobs:
     env:
       DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_test
       # Required at bootstrap with no fallback (#134, core/config.ts). The test
-      # helpers set these too, but CI is explicit so a suite that bootstraps
-      # outside a helper still starts.
+      # helpers set it too, but CI is explicit so a suite that bootstraps outside
+      # a helper still starts. The jest global setup writes version-info.json
+      # from POOLMASTER_SERVICE_VERSION (#180).
       POOLMASTER_ENVIRONMENT: ci
-      RELEASE_VERSION: ${{ github.sha }}
+      POOLMASTER_SERVICE_VERSION: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -486,7 +489,45 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
+      # core-api's build writes version-info.json and fails without a version (#180).
       - run: npm run build:service
+        env:
+          POOLMASTER_SERVICE_VERSION: ${{ github.sha }}
+          POOLMASTER_SERVICE_GIT_SHA: ${{ github.sha }}
+
+  service-image-smoke:
+    # #180 — the only check that the image starts from `node dist/index.js` and that
+    # version-info.json travels with it: build, migrate, run, curl /health and /version.
+    name: service-image-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: service-lint-typecheck
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: poolmaster
+          POSTGRES_PASSWORD: poolmaster
+          POSTGRES_DB: poolmaster_smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build, run and probe the core-api image
+        shell: bash
+        run: scripts/smoke-core-api-image.sh "${{ github.sha }}" postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_smoke 2>&1
+      - name: Upload core-api container log
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: core-api-smoke-log
+          path: core-api-smoke.log
+          if-no-files-found: ignore
 
   service-mock-provider-build:
     name: service-mock-provider-build
@@ -573,10 +614,10 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_e2e
-      # core/config.ts requires JWT_SECRET, POOLMASTER_ENVIRONMENT and
-      # POOLMASTER_SERVICE_VERSION, and throws when any is unset (#134). The
-      # version read also accepts RELEASE_VERSION / APP_VERSION / GIT_SHA /
-      # npm_package_version — alias names, not a default. JWT_SECRET is absent
+      # core-api requires JWT_SECRET and POOLMASTER_ENVIRONMENT, and throws when
+      # either is unset (#134). Its version comes from version-info.json, which
+      # the "Start core-api" step writes from POOLMASTER_SERVICE_VERSION (#180).
+      # JWT_SECRET is absent
       # here on purpose: the "Generate this run's JWT secret and admin password"
       # step below writes a per-run value to $GITHUB_ENV. Nothing here sets
       # core-api's port — it reads PORT and defaults to the 3000 this job expects.
@@ -621,6 +662,7 @@ jobs:
       - name: Start core-api
         run: |
           cd packages/core-api
+          node scripts/write-version-info.mjs
           nohup npx tsx src/index.ts > "$RUNNER_TEMP/core-api.log" 2>&1 &
           # /health is unauthenticated; /api/v1/health answers 401.
           for ATTEMPT in $(seq 1 30); do
@@ -703,7 +745,7 @@ jobs:
     # The three service suite jobs; coverage reporting gates nothing and is not here (#294, #302).
     # service-lint-typecheck is also reached through service-build; it is listed so the lint
     # gate stays visible now that the test jobs no longer wait on it.
-    needs: [service-unit-tests, service-integration-tests, service-functional-api-tests, service-lint-typecheck, poolmaster-unit-tests, service-build, service-mock-provider-build, poolmaster-build]
+    needs: [service-unit-tests, service-integration-tests, service-functional-api-tests, service-lint-typecheck, poolmaster-unit-tests, service-build, service-image-smoke, service-mock-provider-build, poolmaster-build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
@@ -804,6 +846,12 @@ jobs:
         with:
           context: .
           file: infrastructure/docker/Dockerfile.core-api
+          # Baked into the image's version-info.json, which /version serves (#180).
+          build-args: |
+            SERVICE_VERSION=${{ steps.tags.outputs.full_sha }}
+            SERVICE_GIT_SHA=${{ steps.tags.outputs.full_sha }}
+            BUILD_NUMBER=${{ github.run_number }}
+            GIT_REF=${{ github.ref_name }}
           push: true
           tags: |
             ${{ steps.tags.outputs.prefix }}/core-api:${{ steps.tags.outputs.sha_tag }}
@@ -851,11 +899,8 @@ jobs:
           MIGRATE_FAMILY="poolmaster-qa-migrate"
           CORE_API_LOG_LEVEL="debug"
           MOCK_PROVIDER_LOG_LEVEL="debug"
-          SERVICE_BUILD_NUMBER="${{ github.run_number }}"
-          SERVICE_BUILD_TIME_UTC="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-          SERVICE_GIT_REF="${GITHUB_REF_NAME}"
-          SERVICE_GIT_SHA="${{ steps.tags.outputs.full_sha }}"
-          SERVICE_VERSION="${{ steps.tags.outputs.full_sha }}"
+          # #180: build identity is baked into the image's version-info.json, so the
+          # patch below only removes the POOLMASTER_* build variables earlier deploys set.
           # core/config.ts readAppEnv() requires this and throws when unset, so the
           # service will not start without it. "qa" matches the value the webapp
           # build already uses and the Terraform var.environment for this cluster.
@@ -881,11 +926,6 @@ jobs:
               | jq \
                   --arg IMAGE "$CORE_API_IMAGE" \
                   --arg LOG_LEVEL "$CORE_API_LOG_LEVEL" \
-                  --arg BUILD_NUMBER "$SERVICE_BUILD_NUMBER" \
-                  --arg BUILD_TIME_UTC "$SERVICE_BUILD_TIME_UTC" \
-                  --arg GIT_REF "$SERVICE_GIT_REF" \
-                  --arg SERVICE_GIT_SHA "$SERVICE_GIT_SHA" \
-                  --arg SERVICE_VERSION "$SERVICE_VERSION" \
                   --arg SERVICE_ENVIRONMENT "$SERVICE_ENVIRONMENT" '
                   del(
                     .taskDefinitionArn,
@@ -915,11 +955,6 @@ jobs:
                           + [
                             { name: "NODE_ENV", value: "production" },
                             { name: "LOG_LEVEL", value: $LOG_LEVEL },
-                            { name: "POOLMASTER_BUILD_NUMBER", value: $BUILD_NUMBER },
-                            { name: "POOLMASTER_BUILD_TIME_UTC", value: $BUILD_TIME_UTC },
-                            { name: "POOLMASTER_GIT_REF", value: $GIT_REF },
-                            { name: "POOLMASTER_SERVICE_GIT_SHA", value: $SERVICE_GIT_SHA },
-                            { name: "POOLMASTER_SERVICE_VERSION", value: $SERVICE_VERSION },
                             { name: "POOLMASTER_ENVIRONMENT", value: $SERVICE_ENVIRONMENT }
                           ])
                       else . end
@@ -1677,6 +1712,7 @@ jobs:
       - service-functional-api-tests
       - schema-migration-drift
       - service-build
+      - service-image-smoke
       - service-mock-provider-build
       - poolmaster-unit-tests
       - poolmaster-build
@@ -1696,5 +1732,5 @@ jobs:
         run: |
           node scripts/ci-failure-report.mjs \
             --title "CI is failing on main" \
-            --jobs "changes,all-contract-gates,service-lint-typecheck,service-unit-tests,service-integration-tests (1/2),service-integration-tests (2/2),service-integration-tests,service-functional-api-tests,service-build,service-mock-provider-build,poolmaster-unit-tests,poolmaster-build,poolmaster-browser-e2e-local" \
+            --jobs "changes,all-contract-gates,service-lint-typecheck,service-unit-tests,service-integration-tests (1/2),service-integration-tests (2/2),service-integration-tests,service-functional-api-tests,service-build,service-image-smoke,service-mock-provider-build,poolmaster-unit-tests,poolmaster-build,poolmaster-browser-e2e-local" \
             --managed-note "This issue is managed by the \`main-ci-health-issue\` CI job: it is commented on, with log excerpts, for every further failed build on main and closed automatically by the next green one."

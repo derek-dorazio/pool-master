@@ -41,7 +41,7 @@ jobs:
       DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_test
       # Required at bootstrap with no fallback (#134, core/config.ts).
       POOLMASTER_ENVIRONMENT: ci
-      RELEASE_VERSION: ${{ github.sha }}
+      POOLMASTER_SERVICE_VERSION: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6

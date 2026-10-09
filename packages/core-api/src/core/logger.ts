@@ -3,7 +3,8 @@ import type {
   FastifyRequest,
   FastifyServerOptions,
 } from 'fastify';
-import { readAppEnv, readServiceVersion } from './config';
+import { readAppEnv } from './config';
+import { readVersionInfo } from './version-info';
 
 const REDACT_PATHS = [
   'req.headers.authorization',
@@ -60,7 +61,7 @@ export function createFastifyLoggerOptions(
     base: {
       service: serviceName,
       env: readAppEnv(),
-      version: readServiceVersion(),
+      version: readVersionInfo().service.version,
     },
     redact: {
       paths: REDACT_PATHS,

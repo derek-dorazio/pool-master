@@ -8,6 +8,8 @@ import { VersionService } from './service';
 
 export interface VersionModuleOptions {
   readonly operationId?: string;
+  /** Defaults to one reading this build's version-info.json, which throws at registration if it is missing. */
+  readonly versionService?: VersionService;
 }
 
 export function versionModule(
@@ -16,7 +18,7 @@ export function versionModule(
 ): void {
   void fastify.register(schemaComponentsPlugin);
 
-  const versionService = new VersionService();
+  const versionService = options.versionService ?? new VersionService();
   const handler = createVersionHandlers(versionService);
 
   fastify.get('/', {

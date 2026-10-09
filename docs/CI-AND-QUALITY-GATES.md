@@ -78,6 +78,7 @@ with a ten-minute floor:
 |---|---|---|
 | `changes`, `all-contract-gates`, `service-lint-typecheck`, `service-unit-tests`, `schema-migration-drift`, `service-build`, `service-mock-provider-build`, health-issue jobs | under 2 min | 10 |
 | `poolmaster-unit-tests` | 2 min | 15 |
+| `service-image-smoke` | not yet measured | 15 |
 | `service-integration-tests (1/2)`, `(2/2)` shards, `service-functional-api-tests` | 2.5–4 min | 20 |
 | `poolmaster-browser-e2e-local` | 4–9 min | 25 |
 | `poolmaster-build` | 1–12 min | 30 |
@@ -239,6 +240,7 @@ flowchart TD
   CG --> EL[poolmaster-browser-e2e-local]
   LT --> SB[service-build]
   LT --> MB[service-mock-provider-build]
+  LT --> IS[service-image-smoke]
 
   SU --> PI[deploy-publish-images]
   SI --> PI
@@ -246,6 +248,7 @@ flowchart TD
   LT --> PI
   PU --> PI
   SB --> PI
+  IS --> PI
   MB --> PI
   PB --> PI
 
