@@ -141,9 +141,9 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 
 | Phrase | What happens in the model |
 |---|---|
-| **create a league** | Writes the `League`, a `COMMISSIONER` `LeagueMembership` for the creator, and the creator's first `Squad` — one operation. The commissioner membership is the only record of who runs the league |
+| **create a league** | Writes the `League`, a `COMMISSIONER` `LeagueMembership` for the creator, and the creator's first `Squad`, in one request. The commissioner membership is the only record of who runs the league |
 | **join a league** | Accept a `LeagueInvitation` (email or link). Creates the `LeagueMembership` and the user's `Squad` with them as owner, or restores the squad they had before |
-| **invite a co-owner** | A `SquadOwnerInvitation` to one squad, sent to one email address. Accepting makes the invitee a league member and an owner of that squad, reactivating the squad if it was inactive; it is refused to someone already in the league |
+| **invite a co-owner** | A `SquadOwnerInvitation` to one active squad, sent to one email address. An existing account is added as an owner (and league member) straight away; a new address joins on sign-up. Refused to someone already in the league |
 | **release an event** | Root admin moves a `SportEvent` from `DRAFT` to `SCHEDULED`. Until then commissioners cannot see it. Needs a loaded field with every active golfer tiered; locks tiers and prices for good |
 | **create a contest** | Commissioner creates a `Contest` on a released event that has not started. It is born `DRAFT`, seen only by commissioners, and its settings stay editable |
 | **open a contest** | Commissioner moves it `DRAFT` → `OPEN`. Members can now see and enter it; its name and settings are locked with no undo |
@@ -155,8 +155,8 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 | **score a round**, **scores come in** | A `SportEventParticipantRound` and its golf row are written, by the provider sync for a linked event or by an admin's correction, and the event standings are recomputed. Scoring stops at the event's scheduled round count; playoff holes are not a round |
 | **unplayed round** | In contest scoring only, a round a golfer did not play (cut, withdrawn, disqualified, or the event ended) scores 80 strokes, counted against that round's par. The event's own standing keeps the golfer's real score |
 | **correct a score** | Root admin enters the round's values directly; the server does not derive to-par |
-| **sync**, **link an event** | Events are always created and owned by an admin. Linking one to a provider event (`syncScope` `SCORES_ONLY`) lets the provider send **scores** for it; a sync never creates an event or overwrites what the admin set |
-| **refresh / seed the field** | Seed adds golfers from the tour's affiliations; refresh queues a provider sync that updates their rankings. Both act on `SportEventParticipant` rows |
+| **sync**, **link an event** | Events are always created and owned by an admin. Linking one to a provider event (`syncScope` `SCORES_ONLY`) lets the provider send its live scores, and lets an admin load or refresh its field from the provider. A sync never creates an event or changes its details or status |
+| **seed / load / refresh the field** | Seed adds golfers from the tour's affiliations. Load/refresh queues a provider field sync that adds golfers and replaces the ranking, odds, seed and withdrawal of every golfer the provider reports, admin-set values included. All act on `SportEventParticipant` rows |
 | **settle** | When the event completes, each contest's submitted entries get a frozen `ContestEntryStanding` and the contest becomes `COMPLETED`. A later score correction does not change a settled result. Entries can tie |
 | **inactivate / delete a team** | §3 above |
 

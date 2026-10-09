@@ -470,7 +470,7 @@ Never a sports team. Unique on `(leagueId, name)`.
 | List for a league | `member`, `commissioner` | **A4** · takes a league |
 | Update name, icon | `member:own`, `commissioner` | **A5 + A7** |
 | Inactivate *(soft)* | `commissioner` | `inactivateSquad` · `isActive`. The normal path. Ends every owner's league membership, so it is league administration, not an owner's button (#219). Undone by inviting an owner back |
-| Delete permanently *(hard)* | `rootAdmin` | `deleteInactiveSquad` (#292) — **gated: throws unless already inactive**, then cascades to `contestEntry` and `contestEntryPick`. QA-residue cleanup. See the note below |
+| Delete permanently *(hard)* | `rootAdmin` | `deleteInactiveSquad` (#292) — **gated: throws unless already inactive**, then cascades to its entries, picks, owner invitations and memberships. QA-residue cleanup. See the note below |
 
 ### SquadMembership — the User↔Squad edge, and ownership
 
@@ -851,8 +851,8 @@ Easy to misremember as "soft delete only":
 
 - **Inactivate** sets `isActive = false`. This is the normal path.
 - **Delete permanently** is a real row removal, and it **throws unless the record is already
-  inactive**. For a squad it cascades to contest entries, picks and draft history; for a
-  league it also requires typing the `leagueCode` back. Permanently deleting a league is
+  inactive**. For a squad it cascades to its entries, picks, owner invitations and
+  memberships; for a league it also requires typing the `leagueCode` back. Permanently deleting a league is
   `commissioner`; permanently deleting a squad is `rootAdmin` only, and inactivating one is
   `commissioner`, because it ends its owners' league memberships.
 
