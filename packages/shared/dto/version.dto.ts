@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import { DateTimeSchema } from './common.dto';
 
 export const VersionComponentSchema = z.object({
@@ -20,3 +21,5 @@ export const ServiceVersionResponseSchema = z.object({
   }).describe('Non-secret runtime metadata useful during operational debugging.'),
 }).describe('Public service version metadata for deployment and stale-release diagnostics.');
 export type ServiceVersionResponse = z.infer<typeof ServiceVersionResponseSchema>;
+
+registerSchema('ServiceVersionResponse', ServiceVersionResponseSchema);

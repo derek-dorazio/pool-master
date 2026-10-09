@@ -1,7 +1,7 @@
 import type {
   SportEventDto,
-  GetContestConfigurationResponses,
-  ListContestConfigTemplatesResponses,
+  ContestConfigTemplateDto,
+  GolfEffectiveTierDto,
 } from "@/lib/api";
 import {
   Alert,
@@ -13,10 +13,8 @@ import {
   Tile,
 } from "@/features/shared/ui";
 
-type ContestConfigTemplate =
-  ListContestConfigTemplatesResponses[200]["templates"][number];
-type InheritedTier =
-  GetContestConfigurationResponses[200]["contest"]["effectiveTiers"][number];
+type ContestConfigTemplate = ContestConfigTemplateDto;
+type InheritedTier = GolfEffectiveTierDto;
 
 type ContestTemplatePickerProps = {
   isEditMode: boolean;
