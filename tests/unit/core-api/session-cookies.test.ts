@@ -55,13 +55,14 @@ describe('#182: session cookie Secure attribute', () => {
   });
 
   it('rule: sets Secure in prod even though NODE_ENV is "production", the value Terraform sets', () => {
+    const originalNodeEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'production';
     try {
       for (const header of headersFor('prod')) {
         expect(header).toContain('Secure');
       }
     } finally {
-      process.env.NODE_ENV = 'test';
+      process.env.NODE_ENV = originalNodeEnv;
     }
   });
 
