@@ -53,11 +53,11 @@ async function login(identifier: string, password = PASSWORD) {
 }
 
 /** The session cookies core-api sets; any one may be absent from a given response. */
-interface SessionCookies {
+type SessionCookies = {
   poolmaster_access?: string;
   poolmaster_refresh?: string;
   poolmaster_csrf?: string;
-}
+};
 
 /** `name=value` pairs from the response's Set-Cookie headers, as a browser would send them back. */
 function cookiesFrom(response: LightMyRequestResponse): SessionCookies {
@@ -65,7 +65,9 @@ function cookiesFrom(response: LightMyRequestResponse): SessionCookies {
 }
 
 function cookieHeader(cookies: SessionCookies): string {
-  return Object.entries(cookies).map(([name, value]) => `${name}=${encodeURIComponent(value)}`).join('; ');
+  return Object.entries(cookies)
+    .flatMap(([name, value]) => (value === undefined ? [] : [`${name}=${encodeURIComponent(value)}`]))
+    .join('; ');
 }
 
 /** Signs in and returns everything a browser would hold afterwards. */
