@@ -66,8 +66,8 @@ export interface TourSeedScenario {
 const dayMs = 24 * 60 * 60 * 1000;
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
-function readJson<T>(filePath: string): T {
-  return JSON.parse(readFileSync(filePath, 'utf8')) as T;
+function readJson(filePath: string): unknown {
+  return JSON.parse(readFileSync(filePath, 'utf8'));
 }
 
 function atUtc(day: string, hour: number): Date {
@@ -141,14 +141,14 @@ export function loadTourSeedScenarios(scenarioDir: string): readonly TourSeedSce
   const files = readdirSync(tourDir).filter((name) => name.endsWith('.json')).sort();
   const pools = new Map<string, readonly GolfPoolPlayerRecord[]>();
   for (const name of files.filter((file) => file.endsWith('-players.json'))) {
-    const file = readJson<TourPlayersFile>(join(tourDir, name));
+    const file = readJson(join(tourDir, name)) as TourPlayersFile;
     pools.set(file.tourId, toPool(file, name));
   }
 
   return files
     .filter((name) => !name.endsWith('-players.json'))
     .map((name) => {
-      const file = readJson<TourSeasonFile>(join(tourDir, name));
+      const file = readJson(join(tourDir, name)) as TourSeasonFile;
       const pool = pools.get(file.tourId);
       if (!pool) {
         throw new Error(`${name}: no ${file.tourId}-players.json for tour ${file.tourId}`);
