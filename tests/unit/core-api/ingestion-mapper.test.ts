@@ -9,6 +9,7 @@ import {
 } from '../../../packages/core-api/src/mappers/ingestion.mapper';
 import type { ProviderManualSyncSubmissionResult } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderSyncRunStatus, Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
+import { fakeLogger } from '../../support/fake-logger';
 
 function buildRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
   return {
@@ -50,6 +51,39 @@ describe('toProviderSyncRunDto', () => {
 
     expect(dto.startedAt).toBe('2026-01-01T00:01:00.000Z');
     expect(dto.completedAt).toBe('2026-01-01T00:02:00.000Z');
+  });
+});
+
+describe('toProviderSyncRunDto request payload', () => {
+  const requestPayload = {
+    sport: Sport.GOLF,
+    eventId: 'event-1',
+    source: 'MANUAL',
+    actor: { type: 'ROOT_ADMIN', userId: 'admin-1', email: 'admin@example.test' },
+    mockEventState: null,
+    normalizedAt: '2026-01-01T00:00:00.000Z',
+  };
+
+  it('publishes a stored request payload of the current shape, dropping keys the contract no longer has', () => {
+    const logger = fakeLogger();
+
+    const dto = toProviderSyncRunDto(buildRun({ payload: { requestPayload: { ...requestPayload, workflowContext: {} } } }), logger);
+
+    expect(dto.payload.requestPayload).toEqual(requestPayload);
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it('leaves out and logs a stored request payload an older release wrote, so one old run cannot fail the whole list', () => {
+    const logger = fakeLogger();
+    const legacy = { sport: Sport.GOLF, eventId: 'event-1', source: 'MANUAL', actor: { type: 'ROOT_ADMIN', userId: 'admin-1' } };
+
+    const dto = toProviderSyncRunDto(buildRun({ payload: { requestPayload: legacy, recordsProcessed: 3 } }), logger);
+
+    expect(dto.payload).toEqual({ recordsProcessed: 3 });
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'ingestion.syncRun.requestPayloadSkipped' }),
+      expect.any(String),
+    );
   });
 });
 
