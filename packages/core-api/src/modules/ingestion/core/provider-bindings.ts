@@ -2,6 +2,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { SportDataProvider } from './provider-interface';
 import type { ProviderRegistry } from './provider-registry';
 import { MockContestFeedAdapter } from '../adapters';
+import { AppEnvironment, isDeployedEnvironment, readAppEnv } from '../../../core/config';
 
 export interface ProviderBinding {
   readonly baseUrl?: string;
@@ -27,25 +28,17 @@ const providerFactories: Readonly<Record<string, ProviderFactory>> = {
   },
 };
 
-function getRuntimeEnvironment(env: NodeJS.ProcessEnv): string {
-  return (env.ENVIRONMENT ?? env.NODE_ENV ?? '').trim().toLowerCase();
-}
-
-function isDeployedRuntimeEnvironment(env: NodeJS.ProcessEnv): boolean {
-  const runtime = getRuntimeEnvironment(env);
-  return runtime === 'qa' || runtime === 'staging' || runtime === 'prod' || runtime === 'production';
-}
-
+/** Staging and prod refuse the mock provider unless an override says why. */
 function isMockRestrictedRuntimeEnvironment(env: NodeJS.ProcessEnv): boolean {
-  const runtime = getRuntimeEnvironment(env);
-  return runtime === 'staging' || runtime === 'prod' || runtime === 'production';
+  const environment = readAppEnv(env);
+  return environment === AppEnvironment.STAGING || environment === AppEnvironment.PROD;
 }
 
 function requireDefaultProviderConfigured(
   env: NodeJS.ProcessEnv,
   logger?: FastifyBaseLogger,
 ): void {
-  if (!isDeployedRuntimeEnvironment(env)) {
+  if (!isDeployedEnvironment(readAppEnv(env))) {
     return;
   }
 
@@ -53,7 +46,7 @@ function requireDefaultProviderConfigured(
   logger?.error(
     {
       action: 'ingestion.providers.unconfigured',
-      environment: env.ENVIRONMENT ?? env.NODE_ENV,
+      environment: readAppEnv(env),
       strictRuntime: true,
     },
     message,
@@ -88,7 +81,7 @@ function requireMockProviderAllowed(
     logger?.error(
       {
         action: 'ingestion.providers.mockProviderOverride',
-        environment: env.ENVIRONMENT ?? env.NODE_ENV,
+        environment: readAppEnv(env),
         providerId,
         reason,
       },
@@ -101,7 +94,7 @@ function requireMockProviderAllowed(
   logger?.error(
     {
       action: 'ingestion.providers.mockProviderRejected',
-      environment: env.ENVIRONMENT ?? env.NODE_ENV,
+      environment: readAppEnv(env),
       providerId,
     },
     message,

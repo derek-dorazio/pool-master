@@ -583,8 +583,11 @@ resource "aws_cloudwatch_log_group" "services" {
 locals {
   db_url = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.postgres.endpoint}/${var.db_name}"
 
+  # #184: NODE_ENV is the Node ecosystem's variable and is always "production" when deployed.
+  # Which environment this is (qa, staging, prod) is POOLMASTER_ENVIRONMENT, and only that.
   common_env = [
-    { name = "NODE_ENV", value = var.environment },
+    { name = "NODE_ENV", value = "production" },
+    { name = "POOLMASTER_ENVIRONMENT", value = var.environment },
     { name = "LOG_LEVEL", value = var.core_api_log_level },
     { name = "DATABASE_URL", value = local.db_url },
     { name = "SPORT_DATA_DEFAULT_PROVIDER", value = local.resolved_sport_data_default_provider },
@@ -619,7 +622,6 @@ resource "aws_ecs_task_definition" "core_api" {
       { name = "APP_BASE_URL", value = local.app_url },
       { name = "AWS_REGION", value = var.region },
       { name = "SES_FROM_EMAIL", value = local.ses_from_email },
-      { name = "ENVIRONMENT", value = var.environment },
       { name = "AUTO_START_SCHEDULER", value = "true" },
     ])
     # pool-master-rop.76.1 — JWT_SECRET injected from Secrets Manager.
@@ -686,7 +688,8 @@ resource "aws_ecs_task_definition" "mock_contest_feed_provider" {
     essential    = true
     portMappings = [{ containerPort = 3105, protocol = "tcp" }]
     environment = [
-      { name = "NODE_ENV", value = var.environment },
+      { name = "NODE_ENV", value = "production" },
+      { name = "POOLMASTER_ENVIRONMENT", value = var.environment },
       { name = "LOG_LEVEL", value = var.mock_contest_feed_provider_log_level },
       { name = "PORT", value = "3105" },
       { name = "PROVIDER_ID", value = "mock-contest-feed" },

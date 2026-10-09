@@ -71,34 +71,63 @@ export class RequiredEnvMissingError extends Error {
 }
 
 /**
- * Resolve the deployment environment name and throw if unset.
+ * Which environment this process runs in (#184). `POOLMASTER_ENVIRONMENT` is the one
+ * variable that says so, and every environment-gated behaviour in our code reads it
+ * through `readAppEnv()`.
  *
- * This used to be `process.env.APP_ENV ?? process.env.NODE_ENV ?? 'development'`
- * in `core/logger.ts`. The scanner that bans env fallbacks never caught it,
- * because the chain spanned three lines and the scanner matched one line at a
- * time — so every log line from a misconfigured production box claimed
- * `env: "development"`, which is both wrong and the exact signal an operator
- * would use to tell those apart.
- *
- * The variable is `POOLMASTER_ENVIRONMENT` rather than a new name, deliberately.
- * The codebase already carries FOUR names for "which environment is this":
- * `POOLMASTER_ENVIRONMENT` (this, the webapp build, `VersionService`),
- * `ENVIRONMENT` (ingestion provider selection, `provider-bindings.ts`),
- * `NODE_ENV` (the secure-cookie flag, default log level), and briefly `APP_ENV`,
- * which this reader introduced and which is now gone. Consolidating the
- * remaining three is #180; adding a fourth was not worth the blast radius.
- *
- * Note this value drives NO behaviour. Its only consumer is the `env:` field on
- * log lines. Anything that branches reads `NODE_ENV` or `ENVIRONMENT` instead,
- * so changing this cannot silently flip a code path.
+ * `NODE_ENV` is not ours: it belongs to Node and third-party libraries, holds only
+ * `development` | `test` | `production`, and Terraform sets it to `production` in every
+ * deployment. Our code never reads it; `poolmaster/no-node-env-reads` enforces that.
+ * The deployed names here are Terraform's `var.environment` values, so `prod`, never
+ * `production`. `ci` is what the CI workflows set.
  */
-export function readAppEnv(): string {
-  const value = process.env.POOLMASTER_ENVIRONMENT;
-  if (!value || value.trim().length === 0) {
+export const AppEnvironment = {
+  DEVELOPMENT: 'development',
+  TEST: 'test',
+  CI: 'ci',
+  QA: 'qa',
+  STAGING: 'staging',
+  PROD: 'prod',
+} as const;
+export type AppEnvironment = (typeof AppEnvironment)[keyof typeof AppEnvironment];
+
+const APP_ENVIRONMENTS: ReadonlySet<string> = new Set(Object.values(AppEnvironment));
+
+function isAppEnvironment(value: string): value is AppEnvironment {
+  return APP_ENVIRONMENTS.has(value);
+}
+
+/** The deployed environments: the ones Terraform's `var.environment` can name. */
+export function isDeployedEnvironment(environment: AppEnvironment): boolean {
+  return environment === AppEnvironment.QA
+    || environment === AppEnvironment.STAGING
+    || environment === AppEnvironment.PROD;
+}
+
+/**
+ * Resolve `POOLMASTER_ENVIRONMENT` and throw if it is unset or not an `AppEnvironment`.
+ *
+ * There is no fallback to `NODE_ENV` or to a literal. Before #184 three variables answered
+ * this question, and a check against the wrong one shipped session cookies without
+ * `Secure` (#182). An unknown name throws instead of being treated as some environment,
+ * so a typo fails at startup rather than switching a behaviour on or off.
+ */
+export function readAppEnv(
+  env: { readonly POOLMASTER_ENVIRONMENT?: string } = process.env,
+): AppEnvironment {
+  const raw = env.POOLMASTER_ENVIRONMENT;
+  if (!raw || raw.trim().length === 0) {
     throw new RequiredEnvMissingError(
       'POOLMASTER_ENVIRONMENT',
-      'log lines are labelled with it, so an operator can tell environments apart',
-      'Set it to the deployment environment name (development, test, qa, staging, production).',
+      'environment-gated behaviour (secure cookies, provider selection, email defaults) and log lines read it',
+      `Set it to one of: ${[...APP_ENVIRONMENTS].join(', ')}.`,
+    );
+  }
+  const value = raw.trim().toLowerCase();
+  if (!isAppEnvironment(value)) {
+    throw new Error(
+      `POOLMASTER_ENVIRONMENT "${raw}" is not a known environment. `
+      + `Use one of: ${[...APP_ENVIRONMENTS].join(', ')}.`,
     );
   }
   return value;

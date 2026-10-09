@@ -1,5 +1,6 @@
+import { readAppEnv } from '../../core/config';
+
 export interface VersionEnvironment {
-  readonly NODE_ENV?: string;
   readonly POOLMASTER_ENVIRONMENT?: string;
   readonly POOLMASTER_SERVICE_VERSION?: string;
   readonly POOLMASTER_SERVICE_GIT_SHA?: string;
@@ -41,7 +42,7 @@ export class VersionService {
       ?? '0.1.0';
 
     return {
-      environment: this.env.POOLMASTER_ENVIRONMENT ?? this.env.NODE_ENV ?? 'development',
+      environment: readAppEnv(this.env),
       buildTimeUtc: this.env.POOLMASTER_BUILD_TIME_UTC ?? null,
       gitRef: this.env.POOLMASTER_GIT_REF ?? this.env.GITHUB_REF_NAME ?? null,
       service: {

@@ -16,7 +16,7 @@ export default defineConfig(() => {
   ) as { devDependencies?: Record<string, string> };
   const versionInfoFallback = {
     schemaVersion: 1,
-    environment: process.env.POOLMASTER_ENVIRONMENT ?? process.env.NODE_ENV ?? 'development',
+    environment: process.env.POOLMASTER_ENVIRONMENT ?? 'development',
     buildTimeUtc: process.env.POOLMASTER_BUILD_TIME_UTC ?? 'unknown',
     releasePrefix: process.env.POOLMASTER_RELEASE_PREFIX ?? null,
     assetBase,
