@@ -69,6 +69,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import { emptySyncWriteDiagnostics } from '../../../packages/core-api/src/modules/ingestion/core/sync-write-diagnostics';
 import {
   cleanupTestData,
   createTestUser,
@@ -303,7 +304,7 @@ async function buildIngestionApp(provider: SportDataProvider): Promise<FastifyIn
   const registry = new ProviderRegistry();
   registry.register('GOLF', provider, 'PRIMARY');
   const scheduler = new IngestionScheduler(registry, {
-    onEventDetail: async () => undefined,
+    onEventDetail: async () => emptySyncWriteDiagnostics(),
     onLiveScores: async () => emptyLiveScorePersistenceResult(),
   }, undefined, {
     now: () => new Date('2026-04-05T12:00:00.000Z'),

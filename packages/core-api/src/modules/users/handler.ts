@@ -53,7 +53,7 @@ export function createUserHandlers(userService: UserService, authService: AuthSe
     }
     return {
       userId: authUser.userId,
-      isRootAdmin: authUser.isRootAdmin === true,
+      isRootAdmin: authUser.isRootAdmin,
     };
   }
 

@@ -54,7 +54,7 @@ export function createLeagueHandlers(
       };
     }>,
     reply: FastifyReply,
-  ): Promise<LeagueListResponse | void> {
+  ): Promise<LeagueListResponse | FastifyReply> {
     const logger = request.contextLogger ?? request.log;
     const scope = request.query.scope ?? 'mine';
     logger.debug({

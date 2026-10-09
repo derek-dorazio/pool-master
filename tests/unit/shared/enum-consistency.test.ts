@@ -15,7 +15,7 @@ import {
 
 // --- Helpers ---
 
-function enumValues<T extends Record<string, string>>(obj: T): string[] {
+function enumValues(obj: Record<string, string>): string[] {
   return Object.values(obj);
 }
 

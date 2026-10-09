@@ -287,7 +287,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     );
   }
 
-  const isInactive = viewedUser.isActive === false;
+  const isInactive = !viewedUser.isActive;
   const memberSince = formatMemberSince(viewedUser.createdAt, viewedUser.dateFormat);
   const deleteConfirmationMatches = normalizeEmailConfirmation(deleteEmailConfirmation) === viewedUser.email.toLowerCase();
 

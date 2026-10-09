@@ -220,7 +220,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch(async (error) => {
+main().catch(async (error: unknown) => {
   process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
   await mockContestFeedProvider?.close().catch(() => undefined);
   await mailInbox?.close().catch(() => undefined);

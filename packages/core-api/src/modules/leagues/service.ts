@@ -281,7 +281,7 @@ export class LeagueService {
       throw new LeagueNotFoundError(leagueId);
     }
 
-    if (league.isActive === false) {
+    if (!league.isActive) {
       this.logger?.warn({
         action: 'league.inactivate.alreadyInactive',
         data: { leagueId },
@@ -350,7 +350,7 @@ export class LeagueService {
       throw new LeagueNotFoundError(leagueId);
     }
 
-    if (league.isActive === false) {
+    if (!league.isActive) {
       this.logger?.warn({
         action: 'league.updateDetails.readOnlyInactive',
         data: { leagueId },
@@ -391,7 +391,7 @@ export class LeagueService {
       throw new LeagueNotFoundError(leagueId);
     }
 
-    if (league.isActive === false) {
+    if (!league.isActive) {
       this.logger?.warn({
         action: 'league.updateIcon.readOnlyInactive',
         data: { leagueId },

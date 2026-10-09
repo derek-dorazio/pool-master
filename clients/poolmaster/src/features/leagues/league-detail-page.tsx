@@ -71,7 +71,7 @@ export function LeagueDetailPage() {
   const teamSetupFailed = teamSetupFailedLeagueCode === leagueCode;
   useEffect(() => {
     if (parseRouteState(location.state).teamSetupFailed) {
-      void navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+      navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
     }
   }, [location.pathname, location.search, location.state, navigate]);
   const queryClient = useQueryClient();
@@ -260,7 +260,7 @@ export function LeagueDetailPage() {
       queryClient.setQueryData<LeagueListCache>(QueryKeys.leagues.list, (current) =>
         removeLeague(current, league?.id ?? ''),
       );
-      void navigate(auth.isRootAdmin ? '/manage/leagues' : '/welcome');
+      navigate(auth.isRootAdmin ? '/manage/leagues' : '/welcome');
     },
     invalidates: [QueryKeys.rootAdmin.manageLeagues],
   });

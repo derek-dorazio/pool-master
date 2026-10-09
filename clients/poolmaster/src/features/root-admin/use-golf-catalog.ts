@@ -77,7 +77,7 @@ export function useGolfPlayersQuery(params: {
   return useQuery({
     queryKey: params.queryKey,
     queryFn: async (): Promise<ParticipantDto[]> => {
-      const golf = await queryClient.fetchQuery(golfSportQueryOptions);
+      const golf = await queryClient.query(golfSportQueryOptions);
       const response = await listParticipants({
         query: {
           sportId: golf.id,

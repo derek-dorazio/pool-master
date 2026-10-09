@@ -92,7 +92,7 @@ export interface EventSyncRequest {
 }
 
 export interface IngestionCallbacks {
-  onEventDetail(detail: SportEventDetail): Promise<SyncWriteDiagnostics | void>;
+  onEventDetail(detail: SportEventDetail): Promise<SyncWriteDiagnostics>;
   onLiveScores(result: LiveScoreResult, providerId: string): Promise<LiveScorePersistenceResult>;
 }
 
@@ -525,9 +525,9 @@ export class IngestionScheduler {
           providerRecordsReturned: detail.participants.length,
           eventsHydrated: 1,
           participantsReturned: detail.participants.length,
-          ...syncWriteStats(writeDiagnostics ?? undefined),
+          ...syncWriteStats(writeDiagnostics),
         },
-        writeDiagnostics: writeDiagnostics ?? undefined,
+        writeDiagnostics,
         warnings: detail.participants.length === 0
           ? [{
               code: 'NO_PROVIDER_PARTICIPANTS',

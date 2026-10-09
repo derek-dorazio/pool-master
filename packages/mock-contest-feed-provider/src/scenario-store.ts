@@ -85,11 +85,11 @@ function toOptionalNumber(value: unknown, field: string): number | undefined {
   return toNumberValue(value, field);
 }
 
-function toReadonlyArray<T>(value: unknown, field: string): readonly T[] {
+function toReadonlyArray(value: unknown, field: string): readonly unknown[] {
   if (!Array.isArray(value)) {
     throw new Error(`Invalid or missing ${field}`);
   }
-  return value as readonly T[];
+  return value;
 }
 
 function ensureEnumValue<T extends readonly string[]>(value: string, allowed: T, field: string): T[number] {
@@ -208,7 +208,7 @@ function parseMetadata(record: unknown, field: string): EventMetadataRecord | un
   const notes =
     notesValue === undefined
       ? undefined
-      : toReadonlyArray<string>(notesValue, `${field}.notes`).map((note, index) =>
+      : toReadonlyArray(notesValue, `${field}.notes`).map((note, index) =>
           toStringValue(note, `${field}.notes[${index}]`),
         );
 
@@ -290,7 +290,7 @@ function parseFieldSnapshot(record: unknown, field: string): FieldSnapshotRecord
     ['provisional', 'announced', 'locked', 'final'] as const,
     `${field}.status`,
   );
-  const contestants = toReadonlyArray<unknown>(record.contestants, `${field}.contestants`).map((contestant, index) =>
+  const contestants = toReadonlyArray(record.contestants, `${field}.contestants`).map((contestant, index) =>
     parseContestantRecord(contestant, `${field}.contestants[${index}]`),
   );
 
@@ -313,7 +313,7 @@ function parseFeedSnapshot(record: unknown, field: string): FeedSnapshotRecord {
   }
 
   const asOf = ensureIsoDateTime(toStringValue(record.asOf, `${field}.asOf`), `${field}.asOf`);
-  const contestants = toReadonlyArray<unknown>(record.contestants, `${field}.contestants`).map((contestant, index) =>
+  const contestants = toReadonlyArray(record.contestants, `${field}.contestants`).map((contestant, index) =>
     parseContestantDeltaRecord(contestant, `${field}.contestants[${index}]`),
   );
 
@@ -345,7 +345,7 @@ function parseUpdates(record: unknown, field: string): readonly FeedUpdateRecord
     return undefined;
   }
 
-  const updates = toReadonlyArray<unknown>(record, field).map((item, index) => {
+  const updates = toReadonlyArray(record, field).map((item, index) => {
     if (!isRecord<FeedUpdateRecord>(item)) {
       throw new Error(`Invalid ${field}[${index}]`);
     }
@@ -365,7 +365,7 @@ function parseUpdates(record: unknown, field: string): readonly FeedUpdateRecord
       ['refresh', 'correction', 'live', 'final'] as const,
       `${field}[${index}].updateType`,
     );
-    const contestants = toReadonlyArray<unknown>(item.contestants, `${field}[${index}].contestants`).map(
+    const contestants = toReadonlyArray(item.contestants, `${field}[${index}].contestants`).map(
       (contestant, contestantIndex) =>
         parseContestantDeltaRecord(
           contestant,
@@ -472,7 +472,7 @@ export function validateScenario(record: unknown): ContestFeedScenarioRecord {
   const provider = toStringValue(record.provider, 'provider');
   const description = typeof record.description === 'string' ? record.description : undefined;
   const season = parseSeason(record.season, 'season');
-  const events = toReadonlyArray<unknown>(record.events, 'events').map((event, index) =>
+  const events = toReadonlyArray(record.events, 'events').map((event, index) =>
     parseEvent(event, `events[${index}]`),
   );
 
