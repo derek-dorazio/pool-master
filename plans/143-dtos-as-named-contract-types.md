@@ -274,8 +274,8 @@ hey-api derives them. It also asserts the mirror: at least one *unconverted* ope
 map must still be indexed, so a rewrite that matched a converted name as a substring of an
 unconverted one reads as failure rather than progress.
 
-**`scripts/check-dto-conversion-complete.mjs`** (in `rules:check`) covers four ways the
-conversion fails without any type error, failing test, or implausible-looking document:
+**`scripts/check-dto-conversion-complete.mjs`** (in `rules:check`) covered five ways the
+conversion fails (four since #521) without any type error, failing test, or implausible-looking document:
 
 1. **A route inlines a schema that is published as a named component.** Half-converted
    modules publish one shape inline and `$ref` it everywhere else, so the frontend gets a
@@ -296,6 +296,9 @@ conversion fails without any type error, failing test, or implausible-looking do
    seven exported schemas and no registrations while `squads/routes.ts` — marked converted
    — inlined five of them, and every guard passed. A file may opt out with a
    `#192-mixed:` comment naming why; opted-out files are printed on success.
+   Retired in #521: once every route was converted, `scripts/check-openapi-named-schemas.mjs`
+   (in `api:validate`) refuses any inline body or response in the exported document, which
+   covers it, and no file carried the marker.
 
 Each was verified by planting the failure and confirming it fires, not by observing a green
 run. Check 1 found six real half-conversions on its first execution; check 5 found the
