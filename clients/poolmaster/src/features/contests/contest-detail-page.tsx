@@ -3,7 +3,7 @@ import { ContestEntryStatus, ContestStatus, formatParticipantStatusLabel } from 
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { enterContest, getContest, listContestEntries, updateContestEntry, type ContestDto, type ContestEntryDto, type ContestEntryListResponse } from '@/lib/api';
+import { enterContest, getContest, updateContestEntry, type ContestDto, type ContestEntryDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
   buildContestEntryPath,
@@ -45,6 +45,7 @@ import {
 import { useContestSchedule } from './use-contest-schedule';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { fetchContestEntries } from './use-contest-entries';
 
 type ContestEntryParticipant = NonNullable<ContestEntryDto['participants']>[number];
 
@@ -156,15 +157,7 @@ export function ContestDetailPage() {
 
   const contestEntriesQuery = useQuery({
     queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: async (): Promise<ContestEntryListResponse> => {
-      const response = await listContestEntries({ path: { contestId } });
-
-      if (!response.data) {
-        throwApiError(response.error, 'Contest entries response is missing data.');
-      }
-
-      return response.data;
-    },
+    queryFn: () => fetchContestEntries(contestId),
     enabled: Boolean(contestId),
     retry: false,
     refetchInterval: shouldPollContestEntries(contestQuery.data?.status) ? CONTEST_POLL_INTERVAL_MS : false,

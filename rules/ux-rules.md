@@ -83,8 +83,9 @@ Use those conventions as the starting point, but bias toward a consumer app:
   - list tiles
   - settings/manage pages
   - full league detail/home panels
-- Prefer card/list/tile layouts for consumer league browsing and management
-  before reaching for enterprise-style tables.
+- Prefer card/list/tile layouts for consumer league browsing before reaching
+  for tables. A list that can run to hundreds of rows (teams, owners, standings)
+  is the exception: §12 rule 7.
 
 ## 4. Active And Inactive State Rules
 
@@ -165,12 +166,10 @@ Use those conventions as the starting point, but bias toward a consumer app:
 - If commissioner-visible inactive leagues need special treatment in the
   compact selector, start with subtle row styling rather than another status
   icon.
-- Richer per-league status (active/inactive indicator, commissioner actions,
-  read-only property display) belongs on **League Home**
-  (`/league/:leagueCode`), the single canonical page per league — not on a
-  separate leagues grid/list surface. See
-  `requirements/product-requirements/navigation-and-entry-points.md` for the
-  full League Home / MY-vs-LEAGUE navigation model.
+- Richer per-league status (active/inactive indicator, counts) belongs on
+  **League Home** (`/league/:leagueCode`), the league's landing page; the
+  league's settings and lifecycle actions belong in Commissioner tools. See §12
+  and `requirements/product-requirements/navigation-and-entry-points.md`.
 - Member inactive-league experience should emphasize, on League Home itself:
   - same league home
   - read-only state
@@ -206,3 +205,37 @@ defaults in first drafts:
 - multiple competing primary actions in one panel
 - status communicated only through tiny badges with no surrounding explanation
 - hiding useful read-only information just because editing is unavailable
+
+## 12. League Pages and Commissioner Tools
+
+Every league-scoped page follows these rules, and so does any later
+administration area (root admin included), reusing the same shared components.
+
+1. **Two areas.** The member area is what everyone in a league uses.
+   Commissioner tools is a separate area that only commissioners, and root
+   admins looking at the league, can open. No commissioner-only control appears
+   in the member area: a commissioner acts as a member most of the time.
+2. **One league menu.** Member pages share one menu under the app bar (Home,
+   Contests, My team, Teams; `LeagueMenu`). Commissioners also see a
+   Commissioner tools button at its right end. The league selector stays in the
+   app bar. An administration area has its own header with a way back and a side
+   menu (`AdminAreaLayout`) instead of the league menu.
+3. **Compact identity, once.** An entity's icon, name and shareable code appear
+   once, as a compact heading (`IdentityHeading`) on its landing page. No page
+   repeats them as an editable detail panel.
+4. **Full pages, not dialogs.** Editing and managing are full pages with their
+   own route, so Back and links work (`FormPage`). Dialogs are only for
+   confirming a destructive or irreversible action: inactivate, delete, leave,
+   remove.
+5. **One edit for all properties.** An entity's editable properties are edited
+   together on one form page with one Save, never a dialog per property.
+6. **Danger zone.** Destructive actions sit in their own marked section at the
+   bottom of the settings page (`DangerZone`), each with a confirm step, never
+   beside everyday actions. Settings themselves are shown as labelled rows
+   (`SettingsSection`, `SettingsRow`) with one Edit for the group.
+7. **Lists scale.** Team, owner and leaderboard lists are compact tables with
+   search and paging, assuming hundreds of rows. Summary cards show a few rows
+   and link to the full page.
+8. **Summary first.** A landing page leads with what needs the member now (the
+   next contest to enter, with its cutoff), then live standings, then their own
+   team.

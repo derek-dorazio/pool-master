@@ -1,7 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { useEffect } from 'react';
-import { listContests, type ContestDto } from '@/lib/api';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   buildLeagueContestCreatePath,
@@ -25,9 +23,8 @@ import {
   Tile,
 } from '@/features/shared/ui';
 import { contestStatusLabel, isHistoricalContest } from './contest-status';
-import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { throwApiError } from '@/lib/errors';
+import { useLeagueContestsQuery } from './use-league-contests-query';
 
 
 export function ManageContestsPage() {
@@ -58,20 +55,7 @@ export function ManageContestsPage() {
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   const leagueId = league?.id ?? '';
-  const contestsQuery = useQuery({
-    queryKey: QueryKeys.contests.list({ leagueId }),
-    queryFn: async (): Promise<ContestDto[]> => {
-      const response = await listContests({ path: { id: leagueId } });
-
-      if (!response.data?.contests) {
-        throwApiError(response.error, 'Contest list response is missing data.');
-      }
-
-      return response.data.contests;
-    },
-    enabled: Boolean(leagueId),
-    retry: false,
-  });
+  const contestsQuery = useLeagueContestsQuery(leagueId);
 
   if (leagueQuery.isLoading) {
     return <LoadingState body="Loading contest management..." />;

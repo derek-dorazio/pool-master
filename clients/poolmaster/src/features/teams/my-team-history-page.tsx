@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { throwApiError } from '@/lib/errors';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import { listContestEntries, listContests, listLeagueSquads, type SquadDto, type ContestEntryDto, type ContestEntryListResponse, type ContestDto } from '@/lib/api';
+import { listContestEntries, type ContestEntryDto, type ContestEntryListResponse } from '@/lib/api';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   buildLeagueContestEntryPath,
@@ -20,6 +20,8 @@ import {
   LoadingState,
   Tile,
 } from '@/features/shared/ui';
+import { useLeagueSquadsQuery } from './use-league-squads-query';
+import { useLeagueContestsQuery } from '@/features/contests/use-league-contests-query';
 
 
 export function MyTeamHistoryPage() {
@@ -51,35 +53,9 @@ export function MyTeamHistoryPage() {
 
   const leagueId = league?.id ?? '';
 
-  const teamsQuery = useQuery({
-    queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
-    queryFn: async (): Promise<SquadDto[]> => {
-      const response = await listLeagueSquads({ path: { id: leagueId } });
+  const teamsQuery = useLeagueSquadsQuery(leagueId);
 
-      if (!response.data?.squads) {
-        throwApiError(response.error, 'Team list response is missing data.');
-      }
-
-      return response.data.squads;
-    },
-    enabled: Boolean(leagueId),
-    retry: false,
-  });
-
-  const contestsQuery = useQuery({
-    queryKey: QueryKeys.contests.list({ leagueId }),
-    queryFn: async (): Promise<ContestDto[]> => {
-      const response = await listContests({ path: { id: leagueId } });
-
-      if (!response.data?.contests) {
-        throwApiError(response.error, 'Contest list response is missing data.');
-      }
-
-      return response.data.contests;
-    },
-    enabled: Boolean(leagueId),
-    retry: false,
-  });
+  const contestsQuery = useLeagueContestsQuery(leagueId);
 
   // #202 (A8) — the viewer's own squad is named by their squad membership, which the league
   // context delivers once. This used to scan every squad in the league and every squad's member

@@ -1,9 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import { listContests, type ContestDto } from '@/lib/api';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
-import { buildLeagueContestsPath, buildLeaguePath } from '@/features/leagues/league-routing';
 import {
   Chip,
   EmptyState,
@@ -17,9 +14,9 @@ import {
 import { getLogger } from '@/lib/logger';
 import { isHistoricalContest } from './contest-status';
 import { ContestListCard } from './contest-list-card';
-import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { throwApiError } from '@/lib/errors';
+import { ContestsViewSwitch } from './contests-view-switch';
+import { useLeagueContestsQuery } from './use-league-contests-query';
 
 
 export function LeagueContestHistoryPage() {
@@ -50,20 +47,7 @@ export function LeagueContestHistoryPage() {
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   const leagueId = league?.id ?? '';
-  const contestsQuery = useQuery({
-    queryKey: QueryKeys.contests.list({ leagueId }),
-    queryFn: async (): Promise<ContestDto[]> => {
-      const response = await listContests({ path: { id: leagueId } });
-
-      if (!response.data?.contests) {
-        throwApiError(response.error, 'Contest list response is missing data.');
-      }
-
-      return response.data.contests;
-    },
-    enabled: Boolean(leagueId),
-    retry: false,
-  });
+  const contestsQuery = useLeagueContestsQuery(leagueId);
 
   const historicalContests = useMemo(
     () => (contestsQuery.data ?? []).filter((contest) => isHistoricalContest(contest.status)),
@@ -94,17 +78,9 @@ export function LeagueContestHistoryPage() {
   return (
     <section className="space-y-6" data-testid="league-contest-history-page">
       <PageHeader
-        actions={(
-          <LinkButton to={buildLeaguePath(league.leagueCode)} variant="secondary">
-            League Details
-          </LinkButton>
-        )}
-        breadcrumbs={[
-          { href: buildLeagueContestsPath(league.leagueCode), label: 'Active Contests' },
-          { label: 'Contest History' },
-        ]}
-        description="Review completed contests, final standings, and revealed picks."
-        title="Contest History"
+        actions={<ContestsViewSwitch leagueCode={league.leagueCode} value="history" />}
+        description="Completed contests, with final standings and revealed picks."
+        title="Contests"
       />
 
       {contestsQuery.isLoading ? (

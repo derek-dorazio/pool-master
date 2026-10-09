@@ -106,6 +106,13 @@ vi.mock('@/features/app-shell/league-selector', () => ({
   ),
 }));
 
+// The league menu has its own tests; here it only matters where the shell shows it.
+vi.mock('@/features/leagues/league-menu-bar', () => ({
+  LeagueMenuBar: ({ leagueCode }: { leagueCode: string }) => (
+    <nav data-testid="mock-league-menu">{leagueCode}</nav>
+  ),
+}));
+
 vi.mock('@/features/leagues/create-league-modal', () => ({
   CreateLeagueModal: ({
     isOpen,
@@ -138,7 +145,7 @@ function renderAppShell(initialEntries = ['/league/LEAGUE1']) {
       <MemoryRouter initialEntries={initialEntries}>
         <Routes>
           <Route element={<AppShell />} path="/">
-            <Route element={<div data-testid="mock-outlet">Outlet</div>} path="league/:leagueCode" />
+            <Route element={<div data-testid="mock-outlet">Outlet</div>} path="league/:leagueCode/*" />
             <Route element={<div data-testid="mock-outlet">Outlet</div>} path="*" />
           </Route>
         </Routes>
@@ -207,43 +214,7 @@ describe('AppShell', () => {
     // #260 — the disabled notifications button is gone with the feature it stood in for.
     expect(screen.queryByTestId('app-shell-notifications')).not.toBeInTheDocument();
 
-    fireEvent.pointerDown(screen.getByTestId('app-menu-my-team-trigger'));
-    expect(screen.getByTestId('app-menu-my-team-details')).toHaveAttribute(
-      'href',
-      '/league/LEAGUE1/team',
-    );
-    expect(screen.getByTestId('app-menu-my-contests')).toHaveAttribute(
-      'href',
-      '/league/LEAGUE1/contests?filter=my-entries',
-    );
-    expect(screen.getByTestId('app-menu-my-history')).toHaveAttribute(
-      'href',
-      '/league/LEAGUE1/history',
-    );
-
-    fireEvent.pointerDown(screen.getByTestId('app-menu-league-trigger'));
-    expect(screen.getByTestId('app-menu-league-details')).toHaveAttribute(
-      'href',
-      '/league/LEAGUE1',
-    );
-    expect(screen.getByTestId('app-menu-league-teams')).toHaveAttribute(
-      'href',
-      '/league/LEAGUE1/teams',
-    );
-    expect(screen.getByTestId('app-menu-active-contests')).toHaveAttribute(
-      'href',
-      '/league/LEAGUE1/contests',
-    );
-    expect(screen.getByTestId('app-menu-contest-history')).toHaveAttribute(
-      'href',
-      '/league/LEAGUE1/contests/history',
-    );
-    await waitFor(() =>
-      expect(screen.getByTestId('app-menu-create-contest')).toHaveAttribute(
-        'href',
-        '/league/LEAGUE1/contests/new',
-      ),
-    );
+    expect(screen.getByTestId('mock-league-menu')).toHaveTextContent('LEAGUE1');
     await waitFor(() =>
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -306,19 +277,36 @@ describe('AppShell', () => {
 
     await screen.findByTestId('mock-outlet');
     expect(await screen.findByTestId('mock-account-menu-is-root-admin')).toHaveTextContent('false');
-    fireEvent.pointerDown(screen.getByTestId('app-menu-league-trigger'));
-    expect(screen.queryByTestId('app-menu-create-contest')).not.toBeInTheDocument();
   });
 
-  it('disables header menus when no active league is selected', async () => {
+  it('shows no league menu outside a league', async () => {
     clearSessionMock.mockResolvedValue(undefined);
     listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
 
     renderAppShell(['/welcome']);
 
     await screen.findByTestId('mock-outlet');
-    expect(screen.getByTestId('app-menu-my-team-trigger')).toBeDisabled();
-    expect(screen.getByTestId('app-menu-league-trigger')).toBeDisabled();
+    expect(screen.queryByTestId('mock-league-menu')).not.toBeInTheDocument();
+  });
+
+  it('hides the league menu inside Commissioner tools, which has its own area header', async () => {
+    clearSessionMock.mockResolvedValue(undefined);
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
+
+    renderAppShell(['/league/LEAGUE1/admin/edit']);
+
+    await screen.findByTestId('mock-outlet');
+    expect(screen.queryByTestId('mock-league-menu')).not.toBeInTheDocument();
+  });
+
+  it('shows root admins the league menu when they look at a league', async () => {
+    clearSessionMock.mockResolvedValue(undefined);
+    authState.isRootAdmin = true;
+
+    renderAppShell(['/league/LEAGUE1/teams']);
+
+    expect(await screen.findByTestId('mock-league-menu')).toHaveTextContent('LEAGUE1');
+    expect(listLeaguesMock).not.toHaveBeenCalled();
   });
 
   it('pool-master-dxd.29 does not load or render league navigation on root-admin manage routes', async () => {
@@ -330,8 +318,7 @@ describe('AppShell', () => {
     await screen.findByTestId('mock-outlet');
     expect(listLeaguesMock).not.toHaveBeenCalled();
     expect(screen.queryByTestId('mock-league-selector-create')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('app-menu-my-team-trigger')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('app-menu-league-trigger')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mock-league-menu')).not.toBeInTheDocument();
   });
 
   it('pool-master-dxd.33 does not load member league shell while a root admin login redirects from root', async () => {
@@ -343,8 +330,7 @@ describe('AppShell', () => {
     expect(await screen.findByTestId('mock-account-menu-is-root-admin')).toHaveTextContent('true');
     expect(listLeaguesMock).not.toHaveBeenCalled();
     expect(screen.queryByTestId('mock-league-selector-create')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('app-menu-my-team-trigger')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('app-menu-league-trigger')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mock-league-menu')).not.toBeInTheDocument();
   });
 
   it('pool-master-fo5.5 does not render debug route copy for signed-out users', () => {

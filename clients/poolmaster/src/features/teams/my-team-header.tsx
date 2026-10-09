@@ -1,7 +1,7 @@
 import type { TeamIconKey } from '@poolmaster/shared/domain';
 import type { SquadDto } from '@/lib/api';
 import { Chip, IconAvatar, LinkButton, Tile } from '@/features/shared/ui';
-import { buildLeaguePath } from '@/features/leagues/league-routing';
+import { buildLeagueHistoryPath } from '@/features/leagues/league-routing';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
 
@@ -43,8 +43,8 @@ export function MyTeamHeader({
             </p>
           </div>
         </div>
-        <LinkButton to={buildLeaguePath(leagueCode)} variant="secondary">
-          Back to league
+        <LinkButton data-testid="my-team-history-link" to={buildLeagueHistoryPath(leagueCode)} variant="secondary">
+          Contest history
         </LinkButton>
       </div>
     </Tile>

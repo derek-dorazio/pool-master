@@ -348,7 +348,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       expect(created.league.leagueCode).toBe(run.leagueCode);
       state.leagueId = created.league.id;
       await expect(page.getByTestId('league-home')).toBeVisible();
-      await expect(page.getByTestId('league-summary-name')).toHaveText(run.leagueName);
+      await expect(page.getByTestId('league-home-identity-name')).toHaveText(run.leagueName);
     });
 
     await test.step('create a contest on act 1\'s tournament: one pick per tier on six tiers, counted 4, one entry per team', async () => {
@@ -420,17 +420,21 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 
     await test.step('edit the league description', async () => {
       const description = `Edited by the commissioner, run ${run.runId}`;
+      // Commissioner tools, reached from the league menu, holds the league's settings.
       await page.goto(`/league/${run.leagueCode}`);
-      await page.getByTestId('league-open-details').click();
-      await page.getByTestId('league-details-description').fill(description);
+      await page.getByTestId('league-menu-commissioner-tools').click();
+      await page.getByTestId('league-settings-edit').click();
+      await page.getByTestId('edit-league-description').fill(description);
       const saved = await submitAndRead<{ league: { description: string | null } }>(
         page,
-        'league-save-details',
+        'edit-league-save',
         'PUT',
         `/api/v1/leagues/${state.leagueId}/details`,
       );
       expect(saved.league.description).toBe(description);
-      await expect(page.getByTestId('league-summary-description')).toHaveText(description);
+      await expect(page.getByTestId('league-settings-page')).toBeVisible();
+      await page.goto(`/league/${run.leagueCode}`);
+      await expect(page.getByTestId('league-home-description')).toHaveText(description);
     });
 
     await test.step('generate the join URL on Teams and Owners, and see it pending', async () => {
@@ -475,7 +479,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await page.getByTestId('join-league-team-icon-CAPTAIN_SMILE_OCEAN').click();
       await page.getByTestId('invite-accept').click();
       await expect(page.getByTestId('league-home')).toBeVisible();
-      await expect(page.getByTestId('league-summary-name')).toHaveText(run.leagueName);
+      await expect(page.getByTestId('league-home-identity-name')).toHaveText(run.leagueName);
       // The squad the acceptance created and renamed, read back as the member sees it.
       const squads = await page.request.get(`/api/v1/leagues/${state.leagueId}/squads/`);
       expect(squads.ok(), `GET the league's squads answered ${squads.status()}`).toBe(true);

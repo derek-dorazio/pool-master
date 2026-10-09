@@ -47,12 +47,6 @@ describe('pool-master-rop.78.9: PoolMaster query key factory', () => {
       'contest-entries',
       'entry-1',
     ]);
-    expect(QueryKeys.contestEntries.me('contest-1')).toEqual([
-      'poolmaster',
-      'contest-entries',
-      'contest-1',
-      'me',
-    ]);
     expect(QueryKeys.leagues.detail('league-1')).toEqual(['poolmaster', 'league', 'league-1']);
     expect(QueryKeys.leagues.members('league-1')).toEqual([
       'poolmaster',

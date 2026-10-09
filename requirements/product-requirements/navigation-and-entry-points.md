@@ -17,22 +17,19 @@ zero-league fallback page, not on a normal main-journey destination.
 The account area is the canonical **User page** (`/users/:myId`),
 account-scope only — see `domain-concepts.md`.
 
-## League Context — MY vs LEAGUE
+## League Context — the league menu
 
-Inside a league, the top nav expresses two distinct scopes:
+Inside a league, one menu under the app bar serves every member: **Home**,
+**Contests**, **My team** and **Teams**. Home is the landing page. My team is
+scoped to the signed-in user (their team, their entries, their history);
+Home, Contests and Teams are scoped to the whole league and are read-only for
+members.
 
-- **My Team** — scoped to the signed-in user in this league: their team,
-  their entries, their history. Editable by default. Landing page is Team
-  Home, resolved to the signed-in user's own team.
-- **League** — scoped to the whole league: teams, contests, league identity.
-  Read-only for members by default; commissioners get inline edit
-  affordances on the same pages via an authority hook rather than a separate
-  admin page. Landing page is League Home.
-
-Do not mix MY and LEAGUE data on the same page or tile. The edit-authority
-boundary ("I can edit my team; I cannot edit others'") is also the scope
-boundary — conflating them makes the save/commit model and permissions
-harder to reason about.
+Do not mix MY and LEAGUE data in the same section. The edit-authority boundary
+("I can edit my team; I cannot edit others'") is also the scope boundary —
+conflating them makes the save/commit model and permissions harder to reason
+about. League Home is a summary page and may show a card for each, linking to
+the page that owns it.
 
 ## Team Context
 
@@ -55,29 +52,22 @@ League history is contest-centric: browse completed contests by sport and
 contest type. A user's own entry history for a league lives under My Team;
 the league-wide completed-contest archive lives under League.
 
-## Daily-Use Surfaces vs. Commissioner Admin
+## Member Pages vs. Commissioner Tools
 
-Two kinds of surfaces exist inside a league:
+A commissioner acts as a member most of the time, so the two are kept apart:
 
-- **Daily-use surfaces** — used by members and commissioners alike,
-  frequently. Commissioner privilege is expressed inline via an authority
-  hook on the same page (Team Home, Contest Home, the league's team list,
-  League Home), never by routing to a separate admin page.
-- **Commissioner-only admin surfaces** — dedicated pages for tasks that
-  would clutter daily-use surfaces: creating a contest, editing a contest's
-  mutable configuration. These are visible only to commissioners but live
-  inline in the League menu, not in a separate admin sub-cluster, while the
-  number of such items stays small (roughly ≤4-5 today). If that grows, a
-  dedicated commissioner sub-cluster becomes worth revisiting.
+- **Member pages** — the league menu above. No commissioner-only control
+  appears on them; a commissioner sees exactly what a member sees there.
+- **Commissioner tools** — a separate area, opened from a button at the end of
+  the league menu that only commissioners (and root admins looking at the
+  league) see. It has its own header, a way back to the league, and a side menu
+  of tools: league settings (identity, description, lifecycle), and over time
+  teams and owners, invites, and contest setup.
 
-Deciding which bucket a new commissioner-only feature belongs in: a simple
-per-entity edit (rename a team, invite a co-owner) is inline-authority-gated
-on the existing daily-use page. Complex configuration, a creation flow, or
-multi-step setup gets its own dedicated page.
-
-League-level admin content (identity, join code, activate/inactivate, email
-invites) lives on League Home itself, authority-gated — there is no separate
-"League Settings" page.
+Every function in either area is a full page with its own address, so Back and
+links work. Dialogs are only for confirming a destructive or irreversible
+action. The layout rules behind this are `rules/ux-rules.md` §12 *League Pages
+and Commissioner Tools*.
 
 ## Role Behavior
 

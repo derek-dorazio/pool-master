@@ -1,6 +1,9 @@
 import { useEffect, useMemo } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-context';
+import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
+import { buildLeaguePath } from '@/features/leagues/league-routing';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 
 /**
@@ -110,6 +113,50 @@ export function RootAdminRouteGuard() {
 
   if (!auth.isRootAdmin) {
     return <Navigate replace to="/welcome" />;
+  }
+
+  return <Outlet />;
+}
+
+/**
+ * Admits a league's commissioners, and root admins, who hold commissioner powers in every
+ * league, to that league's Commissioner tools. A member is sent to League Home instead. One
+ * guard for the whole `/league/:leagueCode/admin` subtree, so no page checks this itself.
+ * Nested under `MemberRouteGuard`, which owns the signed-out redirect.
+ */
+export function CommissionerRouteGuard() {
+  const { leagueCode = '' } = useParams<{ leagueCode: string }>();
+  const location = useLocation();
+  const { query, viewer } = useLeagueContext(leagueCode);
+  const leagueContext = useLeagueContextGuard(query, { loadingBody: 'Loading Commissioner tools...' });
+  const isReady = leagueContext.state === 'ready';
+  const isAllowed = viewer.isCommissioner || viewer.isRootAdmin;
+  const logger = useMemo(() => getLogger().child({
+    feature: 'commissioner-route-guard',
+  }), []);
+
+  useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
+    if (!isAllowed) {
+      logger.warn(
+        {
+          action: 'commissionerRoute.redirectUnauthorized',
+          data: { leagueCode, from: location.pathname },
+        },
+        'Redirected a member away from Commissioner tools',
+      );
+    }
+  }, [isAllowed, isReady, leagueCode, location.pathname, logger]);
+
+  if (leagueContext.state === 'blocked') {
+    return leagueContext.element;
+  }
+
+  if (!isAllowed) {
+    return <Navigate replace to={buildLeaguePath(leagueCode)} />;
   }
 
   return <Outlet />;
