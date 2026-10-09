@@ -15,7 +15,7 @@ export function resolvePostAuthDestination(
 ): string {
   // An inactive account signs in only to reactivate or delete itself (DOMAIN-OPERATIONS A9),
   // and is hidden from every league, so any other destination would show it nothing.
-  if (user.isActive === false) {
+  if (!user.isActive) {
     return "/my-account";
   }
   if (routeState.from) {

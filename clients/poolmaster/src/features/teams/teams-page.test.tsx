@@ -162,6 +162,7 @@ function buildTeamSummary(overrides: Record<string, unknown> = {}) {
     name: 'Beer Bellies',
     iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
     status: 'ACTIVE',
+    isActive: true,
     memberCount: 1,
     createdAt: '2026-04-16T00:00:00.000Z',
     updatedAt: '2026-04-16T00:00:00.000Z',

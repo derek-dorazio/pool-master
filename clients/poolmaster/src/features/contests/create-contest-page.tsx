@@ -202,7 +202,7 @@ export function CreateContestPage() {
 
       return sortEventsForPicker(response.data.events);
     },
-    enabled: Boolean(auth.isAuthenticated),
+    enabled: auth.isAuthenticated,
     retry: false,
   });
 

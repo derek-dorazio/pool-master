@@ -142,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           'Recovered authenticated session from refresh',
         );
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         if (!cancelled) {
           logger.warn(
             {
@@ -182,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         'Clearing authenticated session',
       );
 
-      const logoutResponse = await logoutUser().catch((error) => {
+      const logoutResponse = await logoutUser().catch((error: unknown) => {
         logger.warn(
           {
             action: 'auth.logout.failed',
