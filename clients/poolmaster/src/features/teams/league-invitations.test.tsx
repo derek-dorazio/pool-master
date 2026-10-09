@@ -336,7 +336,7 @@ describe('Inviting members from Teams and Owners', () => {
 
   it('shows the server reason when an invitation cannot be sent and keeps the typed email', async () => {
     sendLeagueInvitationsMock.mockResolvedValue({
-      error: { code: 'LEAGUE_INACTIVE', message: 'This league is inactive and cannot send invitations.' },
+      error: { error: { code: 'LEAGUE_INACTIVE', message: 'This league is inactive and cannot send invitations.' } },
     });
 
     await sendInviteTo('friend@example.com');
@@ -347,7 +347,7 @@ describe('Inviting members from Teams and Owners', () => {
 
   it('shows the server reason when a join URL cannot be created and leaves the field empty', async () => {
     generateInviteLinkMock.mockResolvedValue({
-      error: { code: 'LEAGUE_INACTIVE', message: 'This league is inactive and cannot create invite links.' },
+      error: { error: { code: 'LEAGUE_INACTIVE', message: 'This league is inactive and cannot create invite links.' } },
     });
 
     await openInviteMembers();

@@ -1,6 +1,5 @@
 /**
- * Config DTOs — request/response schemas for client poll guidance and related
- * runtime configuration endpoints.
+ * Config DTOs — request/response schemas for the runtime configuration endpoints.
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
@@ -22,36 +21,6 @@ const SportSchema = z.enum([
   Sport.MLB,
   Sport.UFC,
 ]);
-
-const PollIntervalMsSchema = z.number().int().min(1000).describe(
-  'Recommended poll interval in milliseconds.',
-);
-
-export const PollIntervalConfigSchema = z.object({
-  standings: PollIntervalMsSchema.describe(
-    'Recommended refresh interval for standings and leaderboard surfaces.',
-  ),
-  draft: PollIntervalMsSchema.describe(
-    'Recommended refresh interval for draft state and pick-clock surfaces.',
-  ),
-  contestStatus: PollIntervalMsSchema.describe(
-    'Recommended refresh interval for contest status and lifecycle surfaces.',
-  ),
-  notifications: PollIntervalMsSchema.describe(
-    'Recommended refresh interval for unread notifications and similar badge counts.',
-  ),
-  default: PollIntervalMsSchema.describe(
-    'Fallback refresh interval for pollable surfaces without a more specific recommendation.',
-  ),
-}).describe('Poll-interval configuration payload exposed to clients and root-admin tools.');
-export type PollIntervalConfig = z.infer<typeof PollIntervalConfigSchema>;
-
-export const PollIntervalConfigPatchSchema = PollIntervalConfigSchema.partial()
-  .refine((value) => Object.keys(value).length > 0, {
-    message: 'At least one poll interval must be provided.',
-  })
-  .describe('Partial poll-interval update payload used by root-admin configuration tools.');
-export type PollIntervalConfigPatch = z.infer<typeof PollIntervalConfigPatchSchema>;
 
 export const IngestionFeedSchedulePolicySchema = z.object({
   enabled: z.boolean().describe('Whether the feed should be scheduled automatically.'),
@@ -141,9 +110,7 @@ export const EmailConfigSchema = z.object({
 }).describe('Whether and how system email is sent.');
 export type EmailConfig = z.infer<typeof EmailConfigSchema>;
 
-registerSchema('PollIntervalConfig', PollIntervalConfigSchema);
 registerSchema('EmailTemplateKey', EmailTemplateKeySchema);
 registerSchema('EmailConfig', EmailConfigSchema);
-registerSchema('PollIntervalConfigPatch', PollIntervalConfigPatchSchema);
 registerSchema('IngestionScheduleConfigOverride', IngestionScheduleConfigOverrideSchema);
 registerSchema('IngestionScheduleConfig', IngestionScheduleConfigSchema);

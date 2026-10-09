@@ -1,5 +1,5 @@
 import {
-  SettingsGroupKeySchema,
+  SettingsChangeSchema,
   SettingsGroupSchema,
   type SettingsChange,
   type SettingsChangeList,
@@ -33,15 +33,16 @@ export function toSettingsGroupListDto(views: SettingsGroupView[]): SettingsGrou
   return { groups: views.map(toSettingsGroupDto) };
 }
 
+/** Parsed against the published union for the same reason: each value is typed by its key. */
 export function toSettingsChangeDto(view: SettingsChangeView): SettingsChange {
-  return {
+  return SettingsChangeSchema.parse({
     id: view.change.id,
-    key: SettingsGroupKeySchema.parse(view.change.configKey),
-    previousValue: view.change.previousJson === null ? null : view.change.previousJson as Record<string, unknown>,
-    newValue: view.change.newJson as Record<string, unknown>,
+    key: view.change.configKey,
+    previousValue: view.change.previousJson,
+    newValue: view.change.newJson,
     changedAt: view.change.changedAt.toISOString(),
     changedBy: view.changedBy,
-  };
+  });
 }
 
 export function toSettingsChangeListDto(views: SettingsChangeView[]): SettingsChangeList {

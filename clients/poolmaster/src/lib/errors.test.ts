@@ -1,91 +1,100 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError, extractErrorMessage, throwApiError } from './errors';
+import { ApiError, extractErrorMessage, isErrorEnvelope, throwApiError } from './errors';
 
-describe('rule: ApiError wraps SDK error envelopes as real Errors', () => {
-  it('extracts the envelope message and code', () => {
-    const err = new ApiError({ error: { code: 'NOT_FOUND', message: 'League not found.' } });
-    expect(err).toBeInstanceOf(Error);
-    expect(err.message).toBe('League not found.');
-    expect(err.code).toBe('NOT_FOUND');
+function caught(run: () => never): Error {
+  try {
+    run();
+  } catch (err) {
+    if (err instanceof Error) {
+      return err;
+    }
+    throw new Error(`expected an Error to be thrown, got ${String(err)}`);
+  }
+}
+
+describe('isErrorEnvelope', () => {
+  it('accepts the backend envelope with code, message and optional details', () => {
+    expect(isErrorEnvelope({ error: { code: 'NOT_FOUND', message: 'League not found.' } })).toBe(true);
+    expect(isErrorEnvelope({ error: { code: 'X', message: 'm', details: { field: 'name' } } })).toBe(true);
   });
 
-  it('falls back to the provided fallback message when the envelope has none', () => {
-    const err = new ApiError({}, 'League detail response is missing data.');
-    expect(err.message).toBe('League detail response is missing data.');
-    expect(err.code).toBeUndefined();
-  });
-
-  it('falls back to the default message when neither the envelope nor a fallback has text', () => {
-    const err = new ApiError(undefined);
-    expect(err.message).toBe('Something went wrong. Please try again.');
-  });
-
-  it('carries details through from the envelope', () => {
-    const err = new ApiError({ error: { code: 'X', message: 'm', details: { field: 'name' } } });
-    expect(err.details).toEqual({ field: 'name' });
+  it('rejects payloads missing the nested error, its code, or its message', () => {
+    expect(isErrorEnvelope(null)).toBe(false);
+    expect(isErrorEnvelope('<html>Bad gateway</html>')).toBe(false);
+    expect(isErrorEnvelope({ code: 'INTERNAL', message: 'top-level fields are not the envelope' })).toBe(false);
+    expect(isErrorEnvelope({ error: { code: 'INTERNAL' } })).toBe(false);
+    expect(isErrorEnvelope({ error: { message: 'no code' } })).toBe(false);
   });
 });
 
-describe('rule: throwApiError normalizes SDK response.error into a real Error', () => {
-  it('throws an ApiError built from a plain envelope object', () => {
-    expect(() => throwApiError({ error: { code: 'X', message: 'boom' } })).toThrow(ApiError);
-    try {
-      throwApiError({ error: { code: 'X', message: 'boom' } });
-    } catch (err) {
-      expect(err).toBeInstanceOf(Error);
-      expect(extractErrorMessage(err)).toBe('boom');
-    }
+describe('ApiError', () => {
+  it('takes message, code and details from a backend error envelope and marks the message as the backend\'s own', () => {
+    const err = new ApiError({ error: { code: 'NOT_FOUND', message: 'League not found.', details: { field: 'name' } } });
+    expect(err).toBeInstanceOf(Error);
+    expect(err.message).toBe('League not found.');
+    expect(err.code).toBe('NOT_FOUND');
+    expect(err.details).toEqual({ field: 'name' });
+    expect(err.hasOwnMessage).toBe(true);
+  });
+
+  it('leaves code unset and uses the throw site fallback as a non-own message when the payload is not an envelope', () => {
+    const err = new ApiError({ code: 'INTERNAL' }, 'League detail response is missing data.');
+    expect(err.message).toBe('League detail response is missing data.');
+    expect(err.code).toBeUndefined();
+    expect(err.hasOwnMessage).toBe(false);
+  });
+
+  it('uses the generic default message when neither an envelope nor a fallback is given', () => {
+    expect(new ApiError(undefined).message).toBe('Something went wrong. Please try again.');
+  });
+});
+
+describe('extractErrorMessage', () => {
+  it('returns the codeMessages copy for an ApiError whose code is mapped', () => {
+    const err = new ApiError({ error: { code: 'EVENT_YEAR_NOT_EMPTY', message: 'Year has events.' } });
+    expect(
+      extractErrorMessage(err, {
+        codeMessages: { EVENT_YEAR_NOT_EMPTY: 'This tour already has tournaments in 2027.' },
+      }),
+    ).toBe('This tour already has tournaments in 2027.');
+  });
+
+  it('returns the backend message for an ApiError whose code is not mapped', () => {
+    const err = new ApiError({ error: { code: 'OTHER', message: 'Backend says no.' } });
+    expect(extractErrorMessage(err, { codeMessages: { EVENT_YEAR_NOT_EMPTY: 'x' } })).toBe('Backend says no.');
+  });
+
+  it('returns the caller fallback, not the throw site diagnostic, for an ApiError built from a non-envelope payload', () => {
+    const err = new ApiError({ code: 'INTERNAL' }, 'Clone year response is missing data.');
+    expect(extractErrorMessage(err, { fallback: 'We could not clone this year.' })).toBe('We could not clone this year.');
+  });
+
+  it('returns a plain Error\'s message, or the fallback when that message is empty', () => {
+    expect(extractErrorMessage(new TypeError('Failed to fetch'))).toBe('Failed to fetch');
+    expect(extractErrorMessage(new Error(''), { fallback: 'Try later.' })).toBe('Try later.');
+  });
+
+  it('returns the fallback, or the generic default, for null and undefined', () => {
+    expect(extractErrorMessage(null, { fallback: 'Try later.' })).toBe('Try later.');
+    expect(extractErrorMessage(undefined)).toBe('Something went wrong. Please try again.');
+  });
+});
+
+describe('throwApiError', () => {
+  it('throws an ApiError carrying the backend message for an error envelope', () => {
+    const err = caught(() => throwApiError({ error: { code: 'X', message: 'boom' } }));
+    expect(err).toBeInstanceOf(ApiError);
+    expect(extractErrorMessage(err)).toBe('boom');
   });
 
   it('re-throws an already-real Error unchanged instead of double-wrapping it', () => {
     const original = new TypeError('Failed to fetch');
-    try {
-      throwApiError(original);
-      throw new Error('unreachable');
-    } catch (err) {
-      expect(err).toBe(original);
-    }
+    expect(caught(() => throwApiError(original))).toBe(original);
   });
 
-  it('uses the fallback message when the payload has no usable message', () => {
-    try {
-      throwApiError(null, 'Contest list response is missing data.');
-      throw new Error('unreachable');
-    } catch (err) {
-      expect(extractErrorMessage(err)).toBe('Contest list response is missing data.');
-    }
-  });
-
-  it('does not let the throw site\'s diagnostic fallback shadow the catch site\'s own fallback for an unmapped error code', () => {
-    // Regression: an envelope with a code but no message used to surface the
-    // throw site's "<X> response is missing data" text instead of the
-    // catch site's generic copy, because that text got baked into the
-    // thrown Error's `.message` and extractErrorMessage's plain-object
-    // duck-typing treats any `.message` string as the real thing.
-    try {
-      throwApiError({ code: 'INTERNAL' }, 'Clone year response is missing data.');
-      throw new Error('unreachable');
-    } catch (err) {
-      expect(
-        extractErrorMessage(err, { fallback: 'We could not clone this year.' }),
-      ).toBe('We could not clone this year.');
-    }
-  });
-
-  it('still resolves a codeMessages mapping for a payload with a code but no message', () => {
-    try {
-      throwApiError(
-        { code: 'EVENT_YEAR_NOT_EMPTY' },
-        'Clone year response is missing data.',
-      );
-      throw new Error('unreachable');
-    } catch (err) {
-      expect(
-        extractErrorMessage(err, {
-          codeMessages: { EVENT_YEAR_NOT_EMPTY: 'This tour already has tournaments in 2027.' },
-          fallback: 'We could not clone this year.',
-        }),
-      ).toBe('This tour already has tournaments in 2027.');
-    }
+  it('throws a plain Error with the fallback message when there is no payload', () => {
+    const err = caught(() => throwApiError(null, 'Contest list response is missing data.'));
+    expect(err).not.toBeInstanceOf(ApiError);
+    expect(extractErrorMessage(err)).toBe('Contest list response is missing data.');
   });
 });

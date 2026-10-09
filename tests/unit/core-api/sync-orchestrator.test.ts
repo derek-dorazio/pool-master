@@ -36,12 +36,10 @@ describe('SyncOrchestrator request model', () => {
         feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTPARTICIPANTS'],
         mockEventState: 'live',
       },
-      workflowContext: { requestId: 'manual-123' },
     }, { now: () => new Date('2026-05-30T12:00:00.000Z') });
 
     expect(normalized.source).toBe('MANUAL');
     expect(normalized.actor).toEqual(rootAdminActor);
-    expect(normalized.workflowContext).toEqual({ requestId: 'manual-123' });
     expect(normalized.normalizedAt).toEqual(new Date('2026-05-30T12:00:00.000Z'));
     expect(normalized.scope).toEqual({
       type: 'EVENT',
@@ -79,7 +77,6 @@ describe('SyncOrchestrator request model', () => {
         mockEventState: undefined,
         providerOptions: undefined,
       },
-      workflowContext: {},
       normalizedAt: now,
     });
   });

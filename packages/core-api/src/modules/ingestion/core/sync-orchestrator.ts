@@ -1,5 +1,5 @@
 import type { Sport } from '@poolmaster/shared/domain';
-import type { IngestionFeedType, MockEventState } from '@poolmaster/shared/dto';
+import type { IngestionFeedType, MockEventState, SyncRequestSource } from '@poolmaster/shared/dto';
 import type { ProviderEventSyncOptions } from './provider-interface';
 
 /**
@@ -18,7 +18,7 @@ export const EVENT_SYNC_FEEDS = [
   'EVENTLIVESCORES',
 ] as const satisfies readonly IngestionFeedType[];
 
-export type SyncRequestSource = 'SCHEDULED' | 'MANUAL';
+export type { SyncRequestSource } from '@poolmaster/shared/dto';
 export type EventSyncFeed = typeof EVENT_SYNC_FEEDS[number];
 
 export interface SystemSyncActor {
@@ -48,7 +48,6 @@ export interface SyncOrchestratorRequest {
   source: SyncRequestSource;
   actor: SyncActorContext;
   scope: SyncScopeInput;
-  workflowContext?: Record<string, unknown>;
 }
 
 export interface NormalizedEventSyncScope {
@@ -66,7 +65,6 @@ export interface NormalizedSyncRequest {
   source: SyncRequestSource;
   actor: SyncActorContext;
   scope: NormalizedSyncScope;
-  workflowContext: Record<string, unknown>;
   normalizedAt: Date;
 }
 
@@ -111,7 +109,6 @@ export function normalizeSyncRequest(
     source: request.source,
     actor: request.actor,
     scope: normalizeScope(request),
-    workflowContext: request.workflowContext ?? {},
     normalizedAt,
   };
 }

@@ -22,7 +22,7 @@ export type FormModalProps = BaseModalTemplateProps & {
   canSave?: boolean;
   cancelLabel?: string;
   children: ReactNode;
-  error?: unknown;
+  error?: Error | null;
   errorFallback?: string;
   errorMessage?: ReactNode;
   errorTitle?: string;

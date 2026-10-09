@@ -66,7 +66,7 @@ export function createIngestionHandlers(
       to: to ? new Date(to) : undefined,
     });
     logger.info({ count: syncRuns.length }, 'Listed provider sync runs');
-    return reply.send({ syncRuns: syncRuns.map(toProviderSyncRunDto) });
+    return reply.send({ syncRuns: syncRuns.map((run) => toProviderSyncRunDto(run, logger)) });
   }
 
   async function submitEventSync(

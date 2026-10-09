@@ -1,6 +1,7 @@
 import { http, HttpResponse, type HttpHandler } from 'msw';
 import { setupServer } from 'msw/node';
 import { beforeEach, vi, type Mock } from 'vitest';
+import type { ErrorEnvelope } from '@poolmaster/shared/dto';
 import type { operations } from '@poolmaster/shared/generated';
 // A relative path, not the `@poolmaster/shared/generated` alias: that alias resolves to
 // api-types.ts itself and so cannot serve a sibling file.
@@ -15,7 +16,8 @@ interface OperationDefinition {
 
 interface ApiMockResult {
   data?: unknown;
-  error?: unknown;
+  /** The response body of a failed call: the backend's error envelope. */
+  error?: ErrorEnvelope;
   response?: {
     status?: number;
   };
@@ -143,14 +145,8 @@ function statusFor(result: ApiMockResult) {
     return result.response.status;
   }
   if (result.error) {
-    const code = typeof result.error === 'object'
-      && result.error
-      && 'code' in result.error
-      && typeof result.error.code === 'string'
-      ? result.error.code
-      : null;
-
-    return code?.startsWith('AUTH_') || code?.startsWith('ROOT_ADMIN_') ? 401 : 400;
+    const { code } = result.error.error;
+    return code.startsWith('AUTH_') || code.startsWith('ROOT_ADMIN_') ? 401 : 400;
   }
   return 200;
 }
@@ -182,12 +178,18 @@ function createHandler(operationName: ApiOperationName, definition: OperationDef
         return undefined;
       }
 
-      return {
+      // A mock that rejects stands for a call the backend refused; answer with the same
+      // error envelope the backend sends, carrying the rejection's message.
+      const failure: ApiMockResult = {
         error: {
-          message: error instanceof Error ? error.message : 'Request failed',
+          error: {
+            code: 'TEST_REQUEST_REJECTED',
+            message: error instanceof Error ? error.message : 'Request failed',
+          },
         },
         response: { status: 400 },
       };
+      return failure;
     });
 
     if (!result) {

@@ -29,7 +29,6 @@ import { participantsModule } from './modules/participants/routes';
 import { usersModule } from './modules/users/routes';
 import { platformModule } from './modules/platform/routes';
 import { IngestionConfigService } from './modules/platform/ingestion-config-service';
-import { PollConfigService } from './modules/platform/poll-config-service';
 import { AppSettingsService } from './modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from './modules/platform/settings-groups';
 import { PlatformSettingsService } from './modules/platform/platform-settings-service';
@@ -105,7 +104,6 @@ export function buildApp() {
     eventLifecycleService,
     app.log,
   );
-  const pollConfigService = new PollConfigService(appSettings, app.log);
   const ingestionConfigService = new IngestionConfigService(appSettings, app.log);
   const platformSettingsService = new PlatformSettingsService({
     settings: appSettings,
@@ -199,7 +197,7 @@ export function buildApp() {
   app.register(sportsModule, { prefix: '/api/v1/sports' });
   app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
-  app.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService, platformSettingsService });
+  app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService });
   app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
 

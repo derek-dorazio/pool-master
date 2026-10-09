@@ -214,7 +214,7 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
 
   it('pool-master-za4 surfaces the tournament load error', async () => {
     getEventMock.mockResolvedValue({
-      error: { code: 'NOT_FOUND', message: 'No such tournament' },
+      error: { error: { code: 'NOT_FOUND', message: 'No such tournament' } },
       response: { status: 404 },
     });
     listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });

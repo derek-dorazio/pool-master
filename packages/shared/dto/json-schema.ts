@@ -87,7 +87,22 @@ function resolveLocalRefs(node: unknown, root: Record<string, unknown>): unknown
   for (const [key, value] of Object.entries(obj)) {
     resolved[key] = resolveLocalRefs(value, root);
   }
-  return resolved;
+  return collapseSingleAllOf(resolved);
+}
+
+/**
+ * A reused sub-schema made nullable converts to `{ allOf: [<ref>], nullable: true }`. Once the
+ * ref is inlined, that `allOf` of one says nothing its member does not, but it leaves `nullable`
+ * on a node with no `type`, which Ajv refuses when Fastify's serializer validates an `anyOf`
+ * branch against the response schema. Folding the one member into its parent keeps the meaning
+ * and gives `nullable` its `type` back.
+ */
+function collapseSingleAllOf(node: Record<string, unknown>): Record<string, unknown> {
+  const { allOf, ...rest } = node;
+  if (!Array.isArray(allOf) || allOf.length !== 1) return node;
+  const [member] = allOf as unknown[];
+  if (member === null || typeof member !== 'object' || Array.isArray(member)) return node;
+  return { ...(member as Record<string, unknown>), ...rest };
 }
 
 export function zodToJsonSchema(schema: ZodType<unknown>): Record<string, unknown> {

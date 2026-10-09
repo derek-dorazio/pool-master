@@ -11,6 +11,9 @@ import {
 } from '../domain/enums';
 import { DateTimeSchema, StringRecordSchema } from './common.dto';
 
+/** An admin-managed roster state: RETIRED and SUSPENDED are set by hand on the player page. */
+const ParticipantStatusDtoSchema = z.nativeEnum(ParticipantStatus);
+
 // --- Response Sub-schemas ---
 
 export const ParticipantInjuryStatusDtoSchema = z.object({
@@ -46,14 +49,7 @@ export const ParticipantDtoSchema = z.object({
   nationality: z.string().optional().describe('Participant nationality or country code when known.'),
   role: z.string().nullable().optional().describe('Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.'),
   teamAffiliation: z.string().nullable().optional().describe('Current team affiliation when the participant is not itself a team.'),
-  status: z
-    .enum([
-      ParticipantStatus.ACTIVE,
-      ParticipantStatus.INACTIVE,
-      ParticipantStatus.RETIRED,
-      ParticipantStatus.SUSPENDED,
-    ])
-    .describe('Current participant lifecycle or availability status.'),
+  status: ParticipantStatusDtoSchema.describe('Current participant lifecycle or availability status.'),
   injuryStatus: ParticipantInjuryStatusDtoSchema,
   photoUrl: z.string().nullable().optional().describe('Optional participant image URL.'),
   photoLastUpdated: DateTimeSchema.optional().describe('When the participant image metadata was last refreshed.'),
@@ -65,14 +61,11 @@ export type ParticipantDto = z.infer<typeof ParticipantDtoSchema>;
 
 // --- Responses ---
 
-/** Filters narrow the list; nothing pages it (§16). Multi-valued filters are comma-separated. */
+/** Filters narrow the list; nothing pages it (§16). */
 export const ParticipantListQuerySchema = z.object({
   q: z.string().optional().describe('Case-insensitive text matched against name, first, last and short name, and team.'),
   sportId: z.string().optional().describe('Only participants of this sport.'),
-  status: z.string().optional().describe('Comma-separated participant statuses to include.'),
-  role: z.string().optional().describe('Comma-separated playing roles to include.'),
-  team: z.string().optional().describe('Comma-separated team affiliations to include.'),
-  nationality: z.string().optional().describe('Comma-separated nationalities to include.'),
+  status: ParticipantStatusDtoSchema.optional().describe('Only participants in this status. Omitted: every status.'),
 }).describe('Filters for the participant catalog.');
 export type ParticipantListQuery = z.infer<typeof ParticipantListQuerySchema>;
 
@@ -112,15 +105,7 @@ export const UpdateParticipantRequestSchema = z.object({
   nationality: z.string().max(10).optional().describe('Participant nationality or country code.'),
   role: z.string().max(50).optional().describe('Playing role ("GOLFER", "QB").'),
   teamAffiliation: z.string().max(255).optional().describe('Current team affiliation.'),
-  status: z
-    .enum([
-      ParticipantStatus.ACTIVE,
-      ParticipantStatus.INACTIVE,
-      ParticipantStatus.RETIRED,
-      ParticipantStatus.SUSPENDED,
-    ])
-    .optional()
-    .describe('Participant lifecycle or availability status.'),
+  status: ParticipantStatusDtoSchema.optional().describe('Participant lifecycle or availability status.'),
   injuryStatus: ParticipantInjuryStatusDtoSchema.optional(),
   photoUrl: z.string().optional().describe('Participant image URL.'),
   externalId: z.string().optional().describe('Primary provider identifier.'),

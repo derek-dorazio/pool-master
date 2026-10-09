@@ -5,7 +5,6 @@ import {
   disableUser,
   enableUser,
   getIngestionSchedule,
-  getPollIntervals,
   submitEventSync,
   setUserRootAdmin,
   listContestConfigTemplates,
@@ -17,7 +16,6 @@ import {
   listUsers,
   updateContestConfigTemplate,
   updateIngestionSchedule,
-  updatePollIntervals,
   deleteLeague,
   inactivateLeague,
   listLeagues,
@@ -389,19 +387,6 @@ describe('SDK Functional: Root Admin', () => {
       displayName: 'Root Admin Config User',
     });
     await promoteToRootAdmin(user);
-
-    const pollResponse = await updatePollIntervals({
-      client: user.client,
-      body: {
-        standings: 15000,
-      },
-    });
-    expect(pollResponse.data?.standings).toBe(15000);
-
-    const pollRead = await getPollIntervals({
-      client: user.client,
-    });
-    expect(pollRead.data?.standings).toBe(15000);
 
     const ingestionUpdate = await updateIngestionSchedule({
       client: user.client,

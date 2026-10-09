@@ -41,7 +41,6 @@ import { eventsModule } from '../../packages/core-api/src/modules/events/routes'
 import { sportsModule } from '../../packages/core-api/src/modules/sports/routes';
 import { sportLeaguesModule } from '../../packages/core-api/src/modules/sport-leagues/routes';
 import { platformModule } from '../../packages/core-api/src/modules/platform/routes';
-import { PollConfigService } from '../../packages/core-api/src/modules/platform/poll-config-service';
 import { IngestionConfigService } from '../../packages/core-api/src/modules/platform/ingestion-config-service';
 import { AppSettingsService } from '../../packages/core-api/src/modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from '../../packages/core-api/src/modules/platform/settings-groups';
@@ -150,7 +149,6 @@ async function buildTestApp(): Promise<FastifyInstance> {
     createMailDeliveryProvider(readMailDeliveryConfig(process.env)),
     () => settings.get(EMAIL_SETTINGS),
   );
-  const pollConfigService = new PollConfigService(settings);
   const ingestionConfigService = new IngestionConfigService(settings);
   const platformSettingsService = new PlatformSettingsService({
     settings,
@@ -183,7 +181,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts', mailDelivery });
-  testApp.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService, platformSettingsService });
+  testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService });
   testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
 
   await testApp.ready();

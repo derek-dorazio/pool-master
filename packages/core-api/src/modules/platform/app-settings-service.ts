@@ -1,7 +1,7 @@
 /**
  * AppSettingsService — the one owner of every settings group (#450).
  *
- * Reads are synchronous and come from memory, so hot paths (poll headers, a mail send, a
+ * Reads are synchronous and come from memory, so hot paths (a mail send, a
  * scheduler tick) never wait on the database. The cache is loaded once before the server reports
  * ready and then refreshed from one query every 30 seconds, which is how a save on one core-api
  * task reaches the others. Reads never write: a missing row means the group's defaults, and a

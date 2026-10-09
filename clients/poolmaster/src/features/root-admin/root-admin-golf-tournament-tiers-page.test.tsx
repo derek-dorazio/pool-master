@@ -424,7 +424,7 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     getEventMock.mockResolvedValue({ data: { event: tournament() } });
     listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     listEventTiersMock.mockResolvedValue({
-      error: { code: 'INTERNAL', message: 'Tiers index offline' },
+      error: { error: { code: 'INTERNAL', message: 'Tiers index offline' } },
       response: { status: 500 },
     });
     renderPage();

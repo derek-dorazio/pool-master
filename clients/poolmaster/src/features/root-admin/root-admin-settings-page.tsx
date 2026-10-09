@@ -12,14 +12,12 @@ import {
   Tile,
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
-import { throwApiError } from '@/lib/errors';
-import { extractAdminErrorMessage } from './root-admin-sync-config-utils';
+import { throwApiError, extractErrorMessage } from '@/lib/errors';
 import { EmailSettingsForm } from './root-admin-email-settings-form';
 import {
   changedFields,
   summarizeEmail,
   summarizeIngestionSchedule,
-  summarizePollIntervals,
   type SettingsSummaryItem,
 } from './root-admin-settings-utils';
 
@@ -45,7 +43,7 @@ export function RootAdminSettingsPage() {
 
   return (
     <AdminConfigPage
-      errorBody={extractAdminErrorMessage(settingsQuery.error, 'We could not load settings right now.')}
+      errorBody={extractErrorMessage(settingsQuery.error, { fallback: 'We could not load settings right now.' })}
       header={{
         description: 'How the app behaves, changeable without a deploy. A saved change reaches every server within 30 seconds.',
         title: 'Settings',
@@ -103,15 +101,6 @@ function SettingsGroupCard({ group }: { group: SettingsGroup }) {
 
 function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; actions: ReactNode } {
   switch (group.key) {
-    case 'POLL_INTERVAL_CONFIG':
-      return {
-        summary: summarizePollIntervals(group.value),
-        actions: (
-          <LinkButton data-testid="root-admin-settings-edit-POLL_INTERVAL_CONFIG" to="/manage/sync-config/poll-intervals">
-            Edit poll intervals
-          </LinkButton>
-        ),
-      };
     case 'INGESTION_SCHEDULE_CONFIG':
       return {
         summary: summarizeIngestionSchedule(group.value),
@@ -151,7 +140,7 @@ function SettingsHistory({ groupKey }: { groupKey: SettingsGroup['key'] }) {
   if (historyQuery.isError) {
     return (
       <p className="text-sm text-muted-foreground">
-        {extractAdminErrorMessage(historyQuery.error, 'We could not load recent changes right now.')}
+        {extractErrorMessage(historyQuery.error, { fallback: 'We could not load recent changes right now.' })}
       </p>
     );
   }

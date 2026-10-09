@@ -9,14 +9,14 @@ function GuardHarness({
   isLoading = false,
 }: {
   data?: { name: string } | null;
-  error?: unknown;
+  error?: Error | null;
   isError?: boolean;
   isLoading?: boolean;
 }) {
   const guard = useLeagueContextGuard(
     {
       data,
-      error,
+      error: error ?? null,
       isError,
       isLoading,
     },

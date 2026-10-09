@@ -344,7 +344,7 @@ describe('pool-master-r11 RootAdminGolfTournamentScoresPage', () => {
   it('pool-master-r11 surfaces a round-schedule load error without blocking the tools', async () => {
     seed();
     listEventRoundsMock.mockResolvedValue({
-      error: { code: 'INTERNAL', message: 'Round schedule offline' },
+      error: { error: { code: 'INTERNAL', message: 'Round schedule offline' } },
       response: { status: 500 },
     });
     renderPage();
@@ -356,7 +356,7 @@ describe('pool-master-r11 RootAdminGolfTournamentScoresPage', () => {
 
   it('pool-master-r11 surfaces the tournament load error', async () => {
     getEventMock.mockResolvedValue({
-      error: { code: 'NOT_FOUND', message: 'No such tournament' },
+      error: { error: { code: 'NOT_FOUND', message: 'No such tournament' } },
       response: { status: 404 },
     });
     listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });

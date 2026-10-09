@@ -16,7 +16,7 @@ import type {
   Squad,
   SquadMembership,
   SquadOwnerInvitation,
-  User, DateFormat, ParticipantStatus, Sport, TimeFormat
+  User, DateFormat, ParticipantStatus, TimeFormat
 } from '../domain';
 
 import type { ParticipantMatchQuery } from './sport-catalog-ports';
@@ -247,12 +247,8 @@ export interface LeagueInvitationRepository {
 // --- Sport & Participant ---
 
 export interface ParticipantSearchFilters {
-  sport?: Sport;
   sportId?: string;
-  status?: ParticipantStatus[];
-  role?: string[];
-  teamAffiliation?: string[];
-  nationality?: string[];
+  status?: ParticipantStatus;
 }
 
 export interface ParticipantRepository {

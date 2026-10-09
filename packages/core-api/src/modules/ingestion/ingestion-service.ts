@@ -327,7 +327,6 @@ export class IngestionService {
         feeds: request.feeds,
         mockEventState: request.mockEventState,
       },
-      workflowContext: request.workflowContext,
     });
     const normalizedScope = normalizedRequest.scope;
     await this.assertFeedsAllowedForSyncScope(

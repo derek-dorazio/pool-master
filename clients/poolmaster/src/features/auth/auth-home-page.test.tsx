@@ -275,7 +275,10 @@ describe('AuthHomePage', () => {
   it('shows a server error when registration is rejected with an expected auth failure', async () => {
     registerUserMock.mockResolvedValue({
       error: {
-        message: 'Email is already in use.',
+        error: {
+          code: 'AUTH_EMAIL_IN_USE',
+          message: 'Email is already in use.',
+        },
       },
     });
 

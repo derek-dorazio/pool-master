@@ -287,8 +287,10 @@ describe('AuthProvider', () => {
     });
     logoutUserMock.mockResolvedValue({
       error: {
-        code: 'AUTH_LOGOUT_FAILED',
-        message: 'Logout failed',
+        error: {
+          code: 'AUTH_LOGOUT_FAILED',
+          message: 'Logout failed',
+        },
       },
     });
 
@@ -303,11 +305,12 @@ describe('AuthProvider', () => {
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.logout.failed',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
-        err: expect.objectContaining({
-          code: 'AUTH_LOGOUT_FAILED',
-          message: 'Logout failed',
-        }),
+        err: {
+          error: {
+            code: 'AUTH_LOGOUT_FAILED',
+            message: 'Logout failed',
+          },
+        },
       }),
       expect.any(String),
     );

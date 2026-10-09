@@ -219,7 +219,7 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
         data: { event: tournament({ status: 'DRAFT', allowedTransitions: ['CANCELLED'] }) },
       });
       releaseEventMock.mockResolvedValue({
-        error: { code: 'SPORT_EVENT_ALREADY_STARTED', message: 'Sport event has already started.' },
+        error: { error: { code: 'SPORT_EVENT_ALREADY_STARTED', message: 'Sport event has already started.' } },
       });
       renderPage();
 

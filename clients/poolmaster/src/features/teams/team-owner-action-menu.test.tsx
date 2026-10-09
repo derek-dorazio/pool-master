@@ -91,7 +91,7 @@ describe('TeamOwnerActionMenu', () => {
 
   it('shows the server\'s refusal in the promote dialog and lets the viewer try again', async () => {
     changeMemberRoleMock.mockResolvedValue({
-      error: { code: 'LEAGUE_PERMISSION_DENIED', message: 'Only a commissioner can change roles.' },
+      error: { error: { code: 'LEAGUE_PERMISSION_DENIED', message: 'Only a commissioner can change roles.' } },
     });
     renderMenu();
 
@@ -105,8 +105,10 @@ describe('TeamOwnerActionMenu', () => {
   it('shows the last-commissioner refusal in the demote dialog instead of closing it', async () => {
     changeMemberRoleMock.mockResolvedValue({
       error: {
-        code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
-        message: 'Appoint another active commissioner before removing or demoting the last commissioner.',
+        error: {
+          code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
+          message: 'Appoint another active commissioner before removing or demoting the last commissioner.',
+        },
       },
     });
     renderMenu({ ownerRole: 'COMMISSIONER' });
@@ -196,7 +198,7 @@ describe('TeamOwnerActionMenu', () => {
 
   it('shows the server\'s refusal to remove an owner, and clears it when the dialog is closed', async () => {
     removeSquadOwnerMock.mockResolvedValue({
-      error: { code: 'SQUAD_OWNER_REQUIRED', message: 'You must be an active team owner to perform this action' },
+      error: { error: { code: 'SQUAD_OWNER_REQUIRED', message: 'You must be an active team owner to perform this action' } },
     });
     renderMenu();
 

@@ -13,7 +13,7 @@ type MutationActionToastFactory<TData, TVariables> =
 
 type MutationActionErrorToastFactory<TVariables> =
   | MutationActionToast
-  | ((error: unknown, variables: TVariables) => MutationActionToast | null | undefined);
+  | ((error: Error, variables: TVariables) => MutationActionToast | null | undefined);
 
 type MutationActionInvalidate<TData, TVariables> =
   | readonly QueryKey[]
@@ -30,7 +30,7 @@ export type MutationActionWorkflowOptions<TData, TVariables = void> = {
   invalidateQueries?: MutationActionInvalidate<TData, TVariables>;
   navigate?: (data: TData, variables: TVariables) => void | Promise<void>;
   onClose?: () => void;
-  onError?: (error: unknown, variables: TVariables) => void | Promise<void>;
+  onError?: (error: Error, variables: TVariables) => void | Promise<void>;
   onSuccess?: (data: TData, variables: TVariables) => void | Promise<void>;
   successToast?: MutationActionToastFactory<TData, TVariables>;
 };
@@ -38,7 +38,7 @@ export type MutationActionWorkflowOptions<TData, TVariables = void> = {
 export type MutationActionWorkflowResult<TData, TVariables = void> = {
   data: TData | null;
   dismissToast: () => void;
-  error: unknown;
+  error: Error | null;
   isError: boolean;
   isPending: boolean;
   reset: () => void;
@@ -64,7 +64,7 @@ function resolveSuccessToast<TData, TVariables>(
 
 function resolveErrorToast<TVariables>(
   factory: MutationActionErrorToastFactory<TVariables> | undefined,
-  error: unknown,
+  error: Error,
   variables: TVariables,
 ) {
   if (!factory) {
@@ -91,7 +91,7 @@ export function useMutationActionWorkflow<TData, TVariables = void>({
 }: MutationActionWorkflowOptions<TData, TVariables>): MutationActionWorkflowResult<TData, TVariables> {
   const queryClient = useQueryClient();
   const [data, setData] = useState<TData | null>(null);
-  const [error, setError] = useState<unknown>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [toast, setToast] = useState<MutationActionToast | null>(null);
 
@@ -134,9 +134,13 @@ export function useMutationActionWorkflow<TData, TVariables = void>({
 
         return result;
       } catch (caughtError) {
-        setError(caughtError);
-        setToast(resolveErrorToast(errorToast, caughtError, actionVariables));
-        await onError?.(caughtError, actionVariables);
+        // Actions throw real Errors (SDK failures go through throwApiError);
+        // anything else thrown is still a failure, so it is wrapped rather
+        // than dropped, keeping `isError` true.
+        const failure = caughtError instanceof Error ? caughtError : new Error(String(caughtError));
+        setError(failure);
+        setToast(resolveErrorToast(errorToast, failure, actionVariables));
+        await onError?.(failure, actionVariables);
         throw caughtError;
       } finally {
         setIsPending(false);
@@ -160,7 +164,7 @@ export function useMutationActionWorkflow<TData, TVariables = void>({
     data,
     dismissToast,
     error,
-    isError: Boolean(error),
+    isError: error !== null,
     isPending,
     reset,
     run: run as MutationActionRun<TVariables, TData>,

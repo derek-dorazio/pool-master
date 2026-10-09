@@ -4,7 +4,7 @@ import { SettingsGroupKeySchema } from '@poolmaster/shared/dto/settings.dto';
 import { AppSettingsService } from '../../../packages/core-api/src/modules/platform/app-settings-service';
 import { PlatformSettingsService } from '../../../packages/core-api/src/modules/platform/platform-settings-service';
 import { SETTINGS_GROUPS } from '../../../packages/core-api/src/modules/platform/settings-groups';
-import { toSettingsGroupDto } from '../../../packages/core-api/src/mappers/platform-settings.mapper';
+import { toSettingsChangeDto, toSettingsGroupDto } from '../../../packages/core-api/src/mappers/platform-settings.mapper';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryRuntimeConfigs } from '../../support/in-memory-runtime-configs';
 import { fakeUserRepo } from '../../support/repo-fakes';
@@ -22,6 +22,7 @@ const ADMIN: User = {
 
 async function buildService() {
   const runtimeConfigs = inMemoryRuntimeConfigs();
+  const logger = fakeLogger();
   const settings = new AppSettingsService({
     repository: runtimeConfigs,
     groups: SETTINGS_GROUPS,
@@ -32,7 +33,7 @@ async function buildService() {
   const users = fakeUserRepo({
     findById: async (id) => (id === ADMIN.id ? ADMIN : null),
   });
-  return { runtimeConfigs, service: new PlatformSettingsService({ settings, runtimeConfigs, users, logger: fakeLogger() }) };
+  return { logger, runtimeConfigs, service: new PlatformSettingsService({ settings, runtimeConfigs, users, logger }) };
 }
 
 describe('PlatformSettingsService', () => {
@@ -41,7 +42,7 @@ describe('PlatformSettingsService', () => {
 
     const groups = await service.list();
 
-    expect(groups.map((view) => view.group.key)).toEqual(['POLL_INTERVAL_CONFIG', 'INGESTION_SCHEDULE_CONFIG', 'EMAIL_CONFIG']);
+    expect(groups.map((view) => view.group.key)).toEqual(['INGESTION_SCHEDULE_CONFIG', 'EMAIL_CONFIG']);
     expect(groups[0]).toEqual(expect.objectContaining({
       state: expect.objectContaining({ source: 'defaults', updatedAt: null }),
       updatedBy: null,
@@ -50,11 +51,11 @@ describe('PlatformSettingsService', () => {
 
   it('names the admin who saved a group, by full name', async () => {
     const { service } = await buildService();
-    const current = await service.get('POLL_INTERVAL_CONFIG');
+    const current = await service.get('EMAIL_CONFIG');
 
-    const saved = await service.save('POLL_INTERVAL_CONFIG', {
-      key: 'POLL_INTERVAL_CONFIG',
-      value: { ...(current.state.value as object), draft: 12000 },
+    const saved = await service.save('EMAIL_CONFIG', {
+      key: 'EMAIL_CONFIG',
+      value: { ...(current.state.value as object), replyTo: 'help@example.test' },
       expectedUpdatedAt: null,
     }, ADMIN.id);
 
@@ -74,7 +75,7 @@ describe('PlatformSettingsService', () => {
     const { runtimeConfigs, service } = await buildService();
 
     await expect(service.save('INGESTION_SCHEDULE_CONFIG', {
-      key: 'POLL_INTERVAL_CONFIG',
+      key: 'EMAIL_CONFIG',
       value: {},
       expectedUpdatedAt: null,
     }, ADMIN.id)).rejects.toMatchObject({ statusCode: 400, code: 'SETTINGS_KEY_MISMATCH' });
@@ -83,16 +84,68 @@ describe('PlatformSettingsService', () => {
 
   it('returns a group\'s changes newest first, each with its author, and an unknown author as null', async () => {
     const { service } = await buildService();
-    const defaults = (await service.get('POLL_INTERVAL_CONFIG')).state.defaults as object;
-    await service.save('POLL_INTERVAL_CONFIG', {
-      key: 'POLL_INTERVAL_CONFIG', value: { ...defaults, draft: 12000 }, expectedUpdatedAt: null,
+    const defaults = (await service.get('EMAIL_CONFIG')).state.defaults as object;
+    await service.save('EMAIL_CONFIG', {
+      key: 'EMAIL_CONFIG', value: { ...defaults, replyTo: 'help@example.test' }, expectedUpdatedAt: null,
     }, ADMIN.id);
-    await service.reset('POLL_INTERVAL_CONFIG', '9a1f3c0e-0000-4000-8000-000000000000');
+    await service.reset('EMAIL_CONFIG', '9a1f3c0e-0000-4000-8000-000000000000');
 
-    const history = await service.history('POLL_INTERVAL_CONFIG');
+    const history = await service.history('EMAIL_CONFIG');
 
-    expect(history.map((view) => [(view.change.newJson as { draft: number }).draft, view.changedBy?.name ?? null]))
-      .toEqual([[10000, null], [12000, 'Ada Admin']]);
+    expect(history.map((view) => [(view.change.newJson as { replyTo: string | null }).replyTo, view.changedBy?.name ?? null]))
+      .toEqual([[null, null], ['help@example.test', 'Ada Admin']]);
+  });
+
+  it('publishes each change with its values typed by the group\'s schema, the first save\'s previous value as null', async () => {
+    const { service } = await buildService();
+    const defaults = (await service.get('EMAIL_CONFIG')).state.defaults as object;
+    await service.save('EMAIL_CONFIG', {
+      key: 'EMAIL_CONFIG', value: { ...defaults, replyTo: 'help@example.test' }, expectedUpdatedAt: null,
+    }, ADMIN.id);
+
+    const [change] = (await service.history('EMAIL_CONFIG')).map(toSettingsChangeDto);
+
+    expect(change.key).toBe('EMAIL_CONFIG');
+    expect(change.previousValue).toBeNull();
+    expect(change.newValue).toEqual(expect.objectContaining({ replyTo: 'help@example.test' }));
+  });
+
+  it('leaves a change whose stored value no longer validates out of the history and logs it, keeping the valid ones', async () => {
+    const { logger, runtimeConfigs, service } = await buildService();
+    const defaults = (await service.get('EMAIL_CONFIG')).state.defaults as object;
+    await service.save('EMAIL_CONFIG', {
+      key: 'EMAIL_CONFIG', value: { ...defaults, replyTo: 'help@example.test' }, expectedUpdatedAt: null,
+    }, ADMIN.id);
+    runtimeConfigs.history.push({
+      id: 'change-old-release',
+      configKey: 'EMAIL_CONFIG',
+      previousJson: null,
+      newJson: { enabled: true },
+      changedById: null,
+      changedAt: new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    const history = await service.history('EMAIL_CONFIG');
+
+    expect(history.map((view) => view.change.id)).toEqual(['00000000-0000-4000-8000-000000000001']);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'adminSettings.history.changeSkipped' }),
+      expect.any(String),
+    );
+  });
+
+  it('refuses to publish a stored change whose value does not match its group\'s schema, rather than passing it through untyped', () => {
+    expect(() => toSettingsChangeDto({
+      change: {
+        id: '6f7c1c55-58a4-4bd4-8a2a-0b8e3f1f4a02',
+        configKey: 'EMAIL_CONFIG',
+        previousJson: null,
+        newJson: { enabled: 'yes' },
+        changedById: null,
+        changedAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+      changedBy: null,
+    })).toThrow();
   });
 });
 

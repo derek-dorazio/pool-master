@@ -210,7 +210,10 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
   it('pool-master-rop.23: shows a rejection message when league creation is rejected with a validation payload', async () => {
     createLeagueMock.mockResolvedValue({
       error: {
-        message: 'League code is already taken.',
+        error: {
+          code: 'LEAGUE_CODE_IN_USE',
+          message: 'League code is already taken.',
+        },
       },
     });
 

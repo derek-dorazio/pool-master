@@ -264,7 +264,7 @@ export function AuthHomePage() {
       } else {
         logger.warn(logPayload, "Login request was rejected");
       }
-      setServerError(extractErrorMessage(error));
+      setServerError(extractErrorMessage(error instanceof Error ? error : null));
     }
   }
 
@@ -329,7 +329,7 @@ export function AuthHomePage() {
       } else {
         logger.warn(logPayload, "Registration request was rejected");
       }
-      setServerError(extractErrorMessage(error));
+      setServerError(extractErrorMessage(error instanceof Error ? error : null));
     }
   }
 

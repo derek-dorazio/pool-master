@@ -29,29 +29,8 @@ import { getTeamIconOption, TEAM_ICON_OPTIONS } from '@/features/teams/team-icon
 import { TeamIcon } from '@/features/teams/team-icon';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { ApiError, throwApiError } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import type { ParsedRouteState } from '@/routes/route-state';
-
-function getErrorMessage(error: unknown) {
-  if (!error || typeof error !== 'object') {
-    return 'We could not accept this invitation. Please try again.';
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return 'We could not accept this invitation. Please try again.';
-}
 
 export function JoinLeaguePage() {
   const logger = getLogger().child({
@@ -329,7 +308,7 @@ export function JoinLeaguePage() {
           ) : null}
           {unusableInvitationMessage ? <p className="mt-4">{unusableInvitationMessage}</p> : null}
           {acceptMutation.isPending ? <p className="mt-4">Accepting invitation...</p> : null}
-          {acceptMutation.isError ? <p className="mt-4">{getErrorMessage(acceptMutation.error)}</p> : null}
+          {acceptMutation.isError ? <p className="mt-4">{extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this invitation. Please try again.' })}</p> : null}
           {acceptMutation.isSuccess ? <p className="mt-4">Invitation accepted. Redirecting you to the league...</p> : null}
         </div>
 

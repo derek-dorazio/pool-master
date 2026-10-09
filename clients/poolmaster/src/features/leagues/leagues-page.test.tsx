@@ -178,8 +178,10 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
   it('pool-master-dxd.15/pool-master-rop.63: uses the shared no-retry leagues query policy and shared error state', async () => {
     mockApi.listLeagues.mockResolvedValue({
       error: {
-        code: 'LEAGUES_UNAVAILABLE',
-        message: 'League list unavailable',
+        error: {
+          code: 'LEAGUES_UNAVAILABLE',
+          message: 'League list unavailable',
+        },
       },
       response: { status: 500 },
     });

@@ -125,7 +125,7 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
 
   it('pool-master-rfy surfaces the load error', async () => {
     listParticipantsMock.mockResolvedValue({
-      error: { code: 'INTERNAL', message: 'Player index offline' },
+      error: { error: { code: 'INTERNAL', message: 'Player index offline' } },
       response: { status: 500 },
     });
     renderPage();
@@ -216,7 +216,7 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
   it('explains in the Add player modal, with save disabled, when the golf sport fails to load', async () => {
     listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     listSportsMock.mockResolvedValue({
-      error: { code: 'INTERNAL', message: 'Sport catalog offline' },
+      error: { error: { code: 'INTERNAL', message: 'Sport catalog offline' } },
       response: { status: 500 },
     });
     renderPage({ sportsLoaded: false });

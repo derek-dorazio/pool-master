@@ -1,26 +1,10 @@
-import type { EmailConfig, IngestionScheduleConfig, PollIntervalConfig, SettingsChange } from '@/lib/api';
+import type { EmailConfig, IngestionScheduleConfig, SettingsChange } from '@/lib/api';
 
 export type SettingsSummaryItem = {
   id: string;
   label: string;
   value: string;
 };
-
-const POLL_INTERVAL_LABELS: ReadonlyArray<readonly [keyof PollIntervalConfig, string]> = [
-  ['standings', 'Standings'],
-  ['draft', 'Draft'],
-  ['contestStatus', 'Contest status'],
-  ['notifications', 'Notifications'],
-  ['default', 'Everything else'],
-];
-
-function seconds(ms: number): string {
-  return `Every ${ms / 1000} s`;
-}
-
-export function summarizePollIntervals(config: PollIntervalConfig): SettingsSummaryItem[] {
-  return POLL_INTERVAL_LABELS.map(([key, label]) => ({ id: key, label, value: seconds(config[key]) }));
-}
 
 function feedSummary(policy: { enabled: boolean; intervalMinutes?: number; intervalSeconds?: number }): string {
   if (!policy.enabled) {
@@ -68,7 +52,9 @@ export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
 
 /** The top-level fields a change touched, in the order the new value lists them. */
 export function changedFields(change: SettingsChange): string[] {
-  const previous = change.previousValue ?? {};
-  const keys = [...new Set([...Object.keys(change.newValue), ...Object.keys(previous)])];
-  return keys.filter((key) => JSON.stringify(previous[key]) !== JSON.stringify(change.newValue[key]));
+  // Each group's value is its own object type; the comparison only needs its top-level entries.
+  const previous = new Map(Object.entries(change.previousValue ?? {}));
+  const next = new Map(Object.entries(change.newValue));
+  const keys = [...new Set([...next.keys(), ...previous.keys()])];
+  return keys.filter((key) => JSON.stringify(previous.get(key)) !== JSON.stringify(next.get(key)));
 }

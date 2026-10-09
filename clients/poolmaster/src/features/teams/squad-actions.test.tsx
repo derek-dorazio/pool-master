@@ -93,7 +93,7 @@ describe('SquadActions', () => {
 
   it('explains in plain words why a current league member cannot be invited as a co-owner', async () => {
     createSquadOwnerInvitationMock.mockResolvedValue({
-      error: { code: 'SQUAD_OWNER_INVITATION_LEAGUE_MEMBER_CONFLICT', message: 'That user already belongs to this league' },
+      error: { error: { code: 'SQUAD_OWNER_INVITATION_LEAGUE_MEMBER_CONFLICT', message: 'That user already belongs to this league' } },
     });
     renderActions();
 
@@ -112,7 +112,7 @@ describe('SquadActions', () => {
 
   it('shows the server\'s refusal to revoke an invitation', async () => {
     revokeSquadOwnerInvitationMock.mockResolvedValue({
-      error: { code: 'SQUAD_OWNER_INVITATION_ACCEPTED', message: 'Invitation is accepted' },
+      error: { error: { code: 'SQUAD_OWNER_INVITATION_ACCEPTED', message: 'Invitation is accepted' } },
     });
     renderActions({ pendingInvitations: [pendingInvitation()] });
 
@@ -124,8 +124,10 @@ describe('SquadActions', () => {
   it('shows the server\'s refusal to inactivate and keeps the confirm panel open', async () => {
     inactivateLeagueSquadMock.mockResolvedValue({
       error: {
-        code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
-        message: 'Appoint another active commissioner before removing or demoting the last commissioner.',
+        error: {
+          code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
+          message: 'Appoint another active commissioner before removing or demoting the last commissioner.',
+        },
       },
     });
     renderActions();

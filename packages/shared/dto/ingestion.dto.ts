@@ -130,8 +130,11 @@ export const ProviderSyncWriteDetailRowDtoSchema = z.object({
   participantExternalId: z.string().optional().describe('Provider participant id associated with this row, when applicable.'),
   internalId: z.string().optional().describe('PoolMaster internal id associated with this row, when known.'),
   name: z.string().optional().describe('Display name for the row, when known.'),
-  before: JsonObjectSchema.optional().describe('Normalized before-state JSON for UPDATED or DELETED rows.'),
-  after: JsonObjectSchema.optional().describe('Normalized after-state JSON for CREATED or UPDATED rows.'),
+  // Open JSON on purpose: a row is a snapshot of whichever entity `entityType` names (an event,
+  // a field row, a standing, a round), and each carries the provider's own open-ended metadata.
+  // The diagnostics page only diffs and prints them; nothing reads a field out of one.
+  before: JsonObjectSchema.optional().describe('Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff.'),
+  after: JsonObjectSchema.optional().describe('Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff.'),
 }).describe('Single normalized write diagnostic row for a provider sync run.');
 export type ProviderSyncWriteDetailRowDto = z.infer<typeof ProviderSyncWriteDetailRowDtoSchema>;
 
@@ -150,11 +153,37 @@ export const ProviderSyncWriteDiagnosticsDtoSchema = z.object({
 }).describe('Normalized write-effect diagnostics for a provider sync run. Field syncs intentionally retain one row per normalized event participant so an 80-player Golf field can be reviewed without diffing raw JSON; raw provider payload JSON remains a separate debug payload.');
 export type ProviderSyncWriteDiagnosticsDto = z.infer<typeof ProviderSyncWriteDiagnosticsDtoSchema>;
 
+export const SyncRequestSourceSchema = z.enum(['SCHEDULED', 'MANUAL']).describe('Whether the scheduler or a root admin asked for the sync.');
+export type SyncRequestSource = z.infer<typeof SyncRequestSourceSchema>;
+
+export const SyncRequestActorDtoSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('SYSTEM'),
+    name: z.literal('scheduler'),
+  }).describe('The scheduler, for a SCHEDULED sync.'),
+  z.object({
+    type: z.literal('ROOT_ADMIN'),
+    userId: z.string().describe('The root admin who asked for the sync.'),
+    email: z.string().describe('Their email at the time, for the audit trail.'),
+  }).describe('A root admin, for a MANUAL sync.'),
+]).describe('Who asked for a sync.');
+export type SyncRequestActorDto = z.infer<typeof SyncRequestActorDtoSchema>;
+
+export const ProviderSyncRequestPayloadDtoSchema = z.object({
+  sport: SportDtoSchema,
+  eventId: z.string().describe('Provider event identifier the sync was asked for.'),
+  source: SyncRequestSourceSchema,
+  actor: SyncRequestActorDtoSchema,
+  mockEventState: MockEventStateSchema.nullable().describe('The mock feed state a manual QA sync asked for; null otherwise.'),
+  normalizedAt: DateTimeSchema.describe('When the request was validated and normalized.'),
+}).describe('The request that submitted a sync run: what was asked for, by whom, and when.');
+export type ProviderSyncRequestPayloadDto = z.infer<typeof ProviderSyncRequestPayloadDtoSchema>;
+
 export const ProviderSyncRunPayloadDtoSchema = z.object({
   runType: z.string().optional().describe('Sync run source: a manual or scheduled event sync.'),
   requestedFeeds: z.array(IngestionFeedTypeSchema).optional().describe('Feeds represented by the originating manual or scheduled sync request.'),
   requestedFeed: IngestionFeedTypeSchema.optional().describe('Single feed represented by this sync run row.'),
-  requestPayload: JsonObjectSchema.optional().describe('Normalized request context that submitted the sync run, including source and actor diagnostics.'),
+  requestPayload: ProviderSyncRequestPayloadDtoSchema.optional().describe('The request that submitted the sync run.'),
   providerPayload: ProviderSyncProviderPayloadDtoSchema.optional().describe('Raw/debug provider payload captured for this run.'),
   jobPayload: ProviderSyncJobPayloadDtoSchema.optional().describe('Serialized ingestion job details after an ingestion job is available.'),
   writeDiagnostics: ProviderSyncWriteDiagnosticsDtoSchema.optional().describe('Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.'),
@@ -237,7 +266,6 @@ export const ProviderEventDtoSchema = z.object({
   rounds: z.number().int().nullable(),
   participantCount: z.number().int().nullable().describe('Field size the provider reports, when it reports one.'),
   fieldLocked: z.boolean().describe('Whether the provider has locked the field.'),
-  metadata: JsonObjectSchema.describe('Provider-emitted event metadata, unnormalized.'),
 }).describe('An event as a provider\'s live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it.');
 export type ProviderEventDto = z.infer<typeof ProviderEventDtoSchema>;
 

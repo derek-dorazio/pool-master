@@ -6,10 +6,8 @@
 import type { SettingsGroup } from './settings-group';
 import { EMAIL_SETTINGS } from '../email/email-settings';
 import { INGESTION_SCHEDULE_SETTINGS } from './ingestion-config-service';
-import { POLL_INTERVAL_SETTINGS } from './poll-config-service';
 
 export const SETTINGS_GROUPS: readonly SettingsGroup<unknown>[] = [
-  POLL_INTERVAL_SETTINGS,
   INGESTION_SCHEDULE_SETTINGS,
   EMAIL_SETTINGS,
 ];

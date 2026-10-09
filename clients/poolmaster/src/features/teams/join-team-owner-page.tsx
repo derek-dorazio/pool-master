@@ -46,27 +46,6 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 const RegisterFormSchema = RegisterWithTeamOwnerInvitationRequestSchema.omit({ inviteCode: true });
 type RegisterFormValues = z.infer<typeof RegisterFormSchema>;
 
-function getErrorMessage(error: unknown) {
-  if (!error || typeof error !== 'object') {
-    return 'We could not accept this team invitation. Please try again.';
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return 'We could not accept this team invitation. Please try again.';
-}
-
 export function JoinTeamOwnerPage() {
   // Memoised: `child()` returns a new logger on every call, and the effects below depend on it,
   // so a logger built during render re-ran them — re-logging the invitation — on every render.
@@ -435,7 +414,7 @@ export function JoinTeamOwnerPage() {
         ) : null}
         {unusableInvitationMessage ? <p className="mt-4">{unusableInvitationMessage}</p> : null}
         {acceptMutation.isPending ? <p>Accepting invitation...</p> : null}
-        {acceptMutation.isError ? <p>{getErrorMessage(acceptMutation.error)}</p> : null}
+        {acceptMutation.isError ? <p>{extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this team invitation. Please try again.' })}</p> : null}
         {acceptMutation.isSuccess ? <p>Invitation accepted. Redirecting you to your team...</p> : null}
       </div>
 

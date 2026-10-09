@@ -11,6 +11,7 @@ import {
   LifecycleActionSet,
   PublicInviteJoinPage,
 } from "./page-templates";
+import { ApiError } from "@/lib/errors";
 
 type TestRow = {
   id: string;
@@ -35,10 +36,10 @@ describe("pool-master-3ew: shared page templates", () => {
     render(
       <AdminConfigPage
         header={{
-          title: "Poll Intervals",
-          description: "Configure polling.",
+          title: "Ingestion Schedule",
+          description: "Configure ingestion.",
         }}
-        loadingBody="Loading poll configuration..."
+        loadingBody="Loading ingestion configuration..."
         state="loading"
       >
         <p>Loaded settings</p>
@@ -46,9 +47,9 @@ describe("pool-master-3ew: shared page templates", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Poll Intervals" }),
+      screen.getByRole("heading", { name: "Ingestion Schedule" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Loading poll configuration...")).toBeInTheDocument();
+    expect(screen.getByText("Loading ingestion configuration...")).toBeInTheDocument();
     expect(screen.queryByText("Loaded settings")).not.toBeInTheDocument();
   });
 
@@ -104,7 +105,7 @@ describe("pool-master-3ew: shared page templates", () => {
 
     rerender(
       <AsyncPage
-        error={{ error: { message: "Provider health unavailable." } }}
+        error={new ApiError({ error: { code: "PROVIDER_HEALTH_UNAVAILABLE", message: "Provider health unavailable." } })}
         state="error"
       >
         <p>Loaded</p>

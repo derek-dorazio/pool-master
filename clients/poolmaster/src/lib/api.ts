@@ -3,6 +3,7 @@ import type { ClientOptions } from '@poolmaster/shared/generated/hey-api';
 import { client } from '@poolmaster/shared/generated/hey-api/client.gen';
 import { poolMasterConfig } from './config';
 import { readCookie } from './cookies';
+import { isErrorEnvelope } from './errors';
 import { getOrCreateClientTraceId } from './logger';
 
 const AUTH_REFRESHABLE_ERROR_CODES = new Set([
@@ -51,18 +52,7 @@ async function readErrorCode(response: Response): Promise<string | null> {
   }
 
   const body: unknown = await response.clone().json().catch(() => null);
-  if (!body || typeof body !== 'object') {
-    return null;
-  }
-
-  const envelope = body as { error?: { code?: unknown }; code?: unknown };
-  if (typeof envelope.error?.code === 'string') {
-    return envelope.error.code;
-  }
-  if (typeof envelope.code === 'string') {
-    return envelope.code;
-  }
-  return null;
+  return isErrorEnvelope(body) ? body.error.code : null;
 }
 
 function withRetryHeaders(request: Request) {

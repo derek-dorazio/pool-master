@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { RootAdminSyncConfigPage } from './root-admin-sync-config-page';
 
 describe('RootAdminSyncConfigPage', () => {
-  it('renders the sync configuration destinations', () => {
+  it('links to the ingestion schedule and sport override pages', () => {
     render(
       <MemoryRouter>
         <RootAdminSyncConfigPage />
@@ -12,10 +12,6 @@ describe('RootAdminSyncConfigPage', () => {
     );
 
     expect(screen.getByTestId('root-admin-sync-config-page')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-sync-config-link-poll-intervals')).toHaveAttribute(
-      'href',
-      '/manage/sync-config/poll-intervals',
-    );
     expect(
       screen.getByTestId('root-admin-sync-config-link-ingestion-schedule'),
     ).toHaveAttribute('href', '/manage/sync-config/ingestion-schedule');

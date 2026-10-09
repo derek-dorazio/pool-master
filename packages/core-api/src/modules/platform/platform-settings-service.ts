@@ -114,9 +114,25 @@ export class PlatformSettingsService {
     return this.view(group, state);
   }
 
+  /**
+   * A change whose stored values no longer pass the group's schema (saved by an older release,
+   * before a field was added) is logged and left out, the way a stale stored value is: the
+   * published history types each value by its group, and one old row must not fail the rest.
+   */
   async history(key: string): Promise<SettingsChangeView[]> {
     const group = this.group(key);
-    const changes = await this.deps.runtimeConfigs.findRecentChanges(group.key, SETTINGS_HISTORY_LIMIT);
+    const stored = await this.deps.runtimeConfigs.findRecentChanges(group.key, SETTINGS_HISTORY_LIMIT);
+    const changes = stored.filter((change) => {
+      const valid = group.schema.safeParse(change.newJson).success
+        && (change.previousJson === null || group.schema.safeParse(change.previousJson).success);
+      if (!valid) {
+        this.deps.logger?.warn({
+          action: 'adminSettings.history.changeSkipped',
+          data: { key, changeId: change.id },
+        }, 'Left a settings change out of the history: its stored values no longer validate');
+      }
+      return valid;
+    });
     const actors = await this.actors(changes.map((change) => change.changedById));
     return changes.map((change) => ({ change, changedBy: actorFor(actors, change.changedById) }));
   }

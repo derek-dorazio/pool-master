@@ -105,7 +105,7 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
 
   it('plans/147: shows a second edition of a series in one year as its own refusal, not a generic failure', async () => {
     createEventMock.mockResolvedValue({
-      error: { code: 'EVENT_EDITION_ALREADY_EXISTS', message: 'exists' },
+      error: { error: { code: 'EVENT_EDITION_ALREADY_EXISTS', message: 'exists' } },
       response: { status: 409 },
     });
     renderPage();

@@ -73,7 +73,6 @@ export function mapSportEventToDto({
     tierCount,
     contestCount,
     allowedTransitions: genericTransitionsFrom(event.status),
-    metadata: event.metadata,
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
   };

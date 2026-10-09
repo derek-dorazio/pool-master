@@ -180,7 +180,7 @@ describe('RootAdminManageLeaguesPage', () => {
   it('renders the error state when the admin list call fails', async () => {
     listLeaguesMock.mockResolvedValue({
       data: null,
-      error: { message: 'Boom' },
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } },
     });
 
     renderPage();
