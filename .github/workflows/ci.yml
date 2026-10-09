@@ -208,10 +208,19 @@ jobs:
         if: ${{ !cancelled() }}
         run: node scripts/write-coverage-summary.mjs "Service Unit Coverage" "Unit=coverage/service-unit/coverage-summary.json"
 
-  service-integration-tests:
-    name: service-integration-tests
+  # #295 -- the integration suite was the one job holding deploy-publish-images (about 5 min,
+  # serial against one database), so it runs as two shards, each with its own Postgres.
+  # `jest --shard` splits by test file; every file must pass alone in either shard, which is
+  # the isolation rules/testing-rules.md §9A already requires. `service-integration-tests`
+  # below is the single verdict for branch protection and the deploy chain.
+  service-integration-test-shards:
+    name: service-integration-tests (${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     needs: [all-contract-gates, changes]
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
@@ -257,7 +266,23 @@ jobs:
         run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
 
       - name: Run service integration tests
-        run: npm run test:service:integration
+        run: npm run test:integration -- --shard=${{ matrix.shard }}/2
+
+  # The required check and deploy-publish-images' dependency keep this name, so sharding
+  # changed neither. It skips whenever the shards skip, which branch protection counts as
+  # passing, exactly as the unsharded job did: on a PR with no service change, and when
+  # all-contract-gates fails (that required check is already red, so nothing slips through).
+  service-integration-tests:
+    name: service-integration-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [service-integration-test-shards]
+    if: ${{ !cancelled() && needs.service-integration-test-shards.result != 'skipped' }}
+    steps:
+      - name: Require every shard to pass
+        run: |
+          echo "Shards: ${{ needs.service-integration-test-shards.result }}"
+          test "${{ needs.service-integration-test-shards.result }}" = success
 
   # #340 -- schema.prisma must describe what the committed migrations actually build.
   #
@@ -1637,6 +1662,7 @@ jobs:
       - all-contract-gates
       - service-lint-typecheck
       - service-unit-tests
+      - service-integration-test-shards
       - service-integration-tests
       - service-functional-api-tests
       - schema-migration-drift
@@ -1660,5 +1686,5 @@ jobs:
         run: |
           node scripts/ci-failure-report.mjs \
             --title "CI is failing on main" \
-            --jobs "changes,all-contract-gates,service-lint-typecheck,service-unit-tests,service-integration-tests,service-functional-api-tests,service-build,service-mock-provider-build,poolmaster-unit-tests,poolmaster-build,poolmaster-browser-e2e-local" \
+            --jobs "changes,all-contract-gates,service-lint-typecheck,service-unit-tests,service-integration-tests (1/2),service-integration-tests (2/2),service-integration-tests,service-functional-api-tests,service-build,service-mock-provider-build,poolmaster-unit-tests,poolmaster-build,poolmaster-browser-e2e-local" \
             --managed-note "This issue is managed by the \`main-ci-health-issue\` CI job: it is commented on, with log excerpts, for every further failed build on main and closed automatically by the next green one."
