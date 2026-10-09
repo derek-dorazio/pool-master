@@ -18,6 +18,21 @@ test('a URL naming no database, or no URL at all, is refused for reset', () => {
   assert.throws(() => assertTestDatabaseUrl('not a url'), /an unnamed database/);
 });
 
+test('a _test database on a remote host is refused for reset', () => {
+  assert.throws(
+    () => assertTestDatabaseUrl('postgresql://u:p@db.example.com:5432/poolmaster_test'),
+    /only a local database can be reset/,
+  );
+});
+
+test('a URL selecting a schema other than public is refused, since only public is emptied', () => {
+  assert.throws(
+    () => assertTestDatabaseUrl('postgresql://u:p@localhost:5432/poolmaster_test?schema=other'),
+    /only public is emptied/,
+  );
+  assert.doesNotThrow(() => assertTestDatabaseUrl('postgresql://u:p@localhost:5432/poolmaster_test?schema=public'));
+});
+
 test('the database name is read from the URL path, ignoring query parameters', () => {
-  assert.equal(databaseName('postgresql://u:p@host:5432/poolmaster_test?schema=public'), 'poolmaster_test');
+  assert.equal(databaseName('postgresql://u:p@localhost:5432/poolmaster_test?schema=public'), 'poolmaster_test');
 });

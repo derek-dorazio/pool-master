@@ -10,7 +10,8 @@
  * `public` schema through `prisma db execute`, then `prisma migrate deploy`. The outcome is
  * unchanged: an empty schema, every migration applied, no seed.
  *
- * Because this destroys every row, it refuses any database whose name does not end in `_test`.
+ * Because this destroys every row, it refuses any database that is not local, whose name does not
+ * end in `_test`, or whose URL selects a schema other than `public` (the only one it empties).
  *
  * Usage:
  *   node scripts/reset-test-database.mjs
@@ -40,7 +41,9 @@ export function databaseName(databaseUrl) {
   }
 }
 
-/** Throws unless the URL names a test database, the only kind this script may empty. */
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+/** Throws unless the URL names a local test database's public schema, the only thing this script may empty. */
 export function assertTestDatabaseUrl(databaseUrl) {
   const name = databaseName(databaseUrl);
   if (name === null || !name.endsWith('_test')) {
@@ -48,10 +51,18 @@ export function assertTestDatabaseUrl(databaseUrl) {
       `Refusing to reset ${name ?? 'an unnamed database'}: only a database whose name ends in _test can be reset.`,
     );
   }
+  const url = new URL(databaseUrl);
+  if (!LOCAL_HOSTS.has(url.hostname)) {
+    throw new Error(`Refusing to reset ${name} on ${url.hostname}: only a local database can be reset.`);
+  }
+  const schema = url.searchParams.get('schema');
+  if (schema !== null && schema !== 'public') {
+    throw new Error(`Refusing to reset ${name}: the URL selects schema ${schema}, and only public is emptied.`);
+  }
 }
 
-/** How many migrations the repository carries, which is how many a reset must leave applied. */
-export function migrationCount(dir = join(CORE_API_DIR, 'prisma', 'migrations')) {
+/** How many migrations the repository carries, for the log line. */
+function migrationCount(dir = join(CORE_API_DIR, 'prisma', 'migrations')) {
   return readdirSync(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).length;
 }
 
