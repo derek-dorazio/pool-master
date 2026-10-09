@@ -6,7 +6,7 @@
 // says the code knows its name, not that a deployment sets it.
 //
 // Loaded into every program through `files` in tsconfig.base.json, and listed in
-// clients/poolmaster/tsconfig.e2e.json, which does not extend the base.
+// clients/poolmaster/tsconfig.e2e.json and tsconfig.node.json, which do not extend the base.
 
 declare global {
   namespace NodeJS {
@@ -54,6 +54,18 @@ declare global {
 
       // mock-contest-feed-provider
       SCENARIO_DIR?: string;
+
+      // web app build (clients/poolmaster/vite.config.ts)
+      APP_ASSET_BASE?: string;
+      GITHUB_RUN_NUMBER?: string;
+      GITHUB_SHA?: string;
+      POOLMASTER_BUILD_NUMBER?: string;
+      POOLMASTER_BUILD_TIME_UTC?: string;
+      POOLMASTER_GIT_REF?: string;
+      POOLMASTER_RELEASE_PREFIX?: string;
+      POOLMASTER_SERVICE_GIT_SHA?: string;
+      POOLMASTER_WEBAPP_GIT_SHA?: string;
+      POOLMASTER_WEBAPP_VERSION?: string;
 
       // test harnesses
       CI?: string;
