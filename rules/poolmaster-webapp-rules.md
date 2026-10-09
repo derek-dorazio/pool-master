@@ -23,9 +23,9 @@ The reason the domain layer avoids "team" is that the word is overloaded in this
 a league member's entrant vehicle is called a team in the UI, and an event *participant* may
 itself be a team (an NBA team) rather than an individual. Squad disambiguates the first.
 
-The entity relationships behind this — and the vocabulary for the rest of the domain — belong
-in [domain-model-conventions-rules.md](domain-model-conventions-rules.md), not here. This
-file states only the UI-label rule.
+The entity relationships behind this — and the vocabulary for the rest of the domain — are
+[domain-model-concepts.md](domain-model-concepts.md). This file states only the UI-label
+rule.
 
 ## 2. Role Scopes
 
@@ -45,15 +45,16 @@ buttons.
 
 ### The account / league boundary is hard
 
-[ADR-0004](../docs/adr/0004-team-centric-league-account-scope-boundary.md) draws a line this
-file will not restate in full, but which governs every permission decision here:
+This line governs every permission decision here:
 
 - **Commissioners never touch a user's account.** Not inactivate, not delete, not password
   reset, not root-admin toggle. Those are the user's own actions or a root admin's.
 - **League-role actions live on league surfaces**, not on the user page. Promote, demote and
-  remove-owner are team-scoped operations.
+  remove-owner sit on Teams and Owners and on Team Home; the user page carries only the
+  account actions of the user themselves and of a root admin.
 - **League membership *is* team ownership in that league.** There is no separate
-  "remove from league" operation — removing a user's last team removes their membership.
+  "remove from league" operation — `domain-model-concepts.md` §3 *League Membership Is Team
+  Ownership*.
 
 ---
 
