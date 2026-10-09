@@ -11,7 +11,8 @@ All plan documents and implementation work must conform to these rules. This is 
 - **[Android Rules](android-rules.md)** — Android Kotlin + Jetpack Compose rules
 - **[Testing Rules](testing-rules.md)** — unit, integration, contract, smoke, and browser E2E rules
 - **[Workflow Rules](workflow-rules.md)** — action-plan tracking and rule/documentation update requirements
-- **[Domain Model Conventions Rules](domain-model-conventions-rules.md)** — lifecycle, enums, one canonical DTO per entity, schema design, league/squad vocabulary, and operation access roles
+- **[Domain Model Concepts](domain-model-concepts.md)** — what the domain is: the entity chain, per-entity vocabulary and on-screen names, and what common phrases mean in the model
+- **[Domain Model Conventions Rules](domain-model-conventions-rules.md)** — lifecycle, enums, one canonical DTO per entity, schema design, league/squad invariants, and operation access roles
 
 ---
 

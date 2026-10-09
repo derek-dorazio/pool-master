@@ -231,8 +231,8 @@ export class SquadService {
       await this.squadRepo.update(squadId, { isActive: false });
     }
 
-    // Accepting a co-owner invitation reactivates its team, so an invitation left pending
-    // would let anyone holding it undo the inactivation.
+    // An inactive team's invitations can no longer be accepted, so close them rather than leave
+    // them listed as pending.
     const pendingInvitations = (await this.ownerInvitationRepo.findByLeague(leagueId)).filter(
       (invitation) =>
         invitation.squadId === squadId && invitation.status === SquadOwnerInvitationStatus.PENDING,

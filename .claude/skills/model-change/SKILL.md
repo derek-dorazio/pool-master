@@ -32,6 +32,8 @@ migration is not.
 
 `rules/domain-model-conventions-rules.md` is the model language of this repo — lifecycle
 naming, `status` vs `isActive`, and the rest. Read it before proposing a change, not after.
+What the entity you are changing *means* — its place in the chain, its on-screen name, what
+it is easily confused with — is `rules/domain-model-concepts.md` §2 *Vocabulary*.
 
 When you present the change, say:
 
