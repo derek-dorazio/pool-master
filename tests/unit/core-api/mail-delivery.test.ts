@@ -156,16 +156,16 @@ function recordingTransport(): MailDeliveryProvider & { sent: MailDeliveryMessag
 }
 
 function emailConfig(overrides: Partial<EmailConfig> = {}): EmailConfig {
-  return { ...EMAIL_SETTINGS.defaults({ ENVIRONMENT: 'production' }), ...overrides };
+  return { ...EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }), ...overrides };
 }
 
 describe('EMAIL_CONFIG defaults', () => {
   it('sends nothing on QA until real delivery is set up', () => {
-    expect(EMAIL_SETTINGS.defaults({ ENVIRONMENT: 'qa' }).enabled).toBe(false);
+    expect(EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'qa' }).enabled).toBe(false);
   });
 
   it('sends every email, with no Reply-To, everywhere else', () => {
-    expect(EMAIL_SETTINGS.defaults({ ENVIRONMENT: 'production' })).toEqual({
+    expect(EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' })).toEqual({
       enabled: true,
       replyTo: null,
       templates: {
@@ -175,7 +175,10 @@ describe('EMAIL_CONFIG defaults', () => {
         CONTEST_STARTED_SUMMARY: true,
       },
     });
-    expect(EMAIL_SETTINGS.defaults({}).enabled).toBe(true);
+  });
+
+  it('refuses to pick a default when POOLMASTER_ENVIRONMENT is unset, instead of guessing email should be on', () => {
+    expect(() => EMAIL_SETTINGS.defaults({ ENVIRONMENT: 'qa' })).toThrow(/POOLMASTER_ENVIRONMENT/);
   });
 });
 
