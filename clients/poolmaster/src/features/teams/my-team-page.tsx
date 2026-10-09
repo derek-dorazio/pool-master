@@ -1,7 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { type TeamOwnerInvitationDto, listSquadOwnerInvitations } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import {
   ActionList,
@@ -13,11 +11,10 @@ import {
   LinkButton,
   Tile,
 } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { extractErrorMessage } from '@/lib/errors';
 import { formatUserName } from '@/features/account/user-name';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import { getLogger } from '@/lib/logger';
-import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
 import { LeaveLeagueSection } from '@/features/leagues/leave-league-section';
@@ -31,6 +28,7 @@ import { useMyTeamLifecycle } from './use-my-team-lifecycle';
 import { useMyTeamOwners } from './use-my-team-owners';
 import { SquadMembershipStatus } from '@poolmaster/shared/domain';
 import { useLeagueSquadsQuery } from './use-league-squads-query';
+import { useTeamOwnerInvitationsQuery } from './use-team-owner-invitations-query';
 
 /**
  * Team Home. Owns the league and squad queries, decides which squad is selected and what the
@@ -76,19 +74,7 @@ export function MyTeamPage() {
 
   const teamsQuery = useLeagueSquadsQuery(leagueId);
 
-  const ownerInvitationsQuery = useQuery({
-    queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
-    queryFn: async (): Promise<TeamOwnerInvitationDto[]> => {
-      const response = await listSquadOwnerInvitations({ path: { id: leagueId } });
-      if (!response.data?.invitations) {
-        throwApiError(response.error, 'Owner invitation list response is missing data.');
-      }
-
-      return response.data.invitations;
-    },
-    enabled: Boolean(leagueId),
-    retry: false,
-  });
+  const ownerInvitationsQuery = useTeamOwnerInvitationsQuery(leagueId);
 
 
   // #202 (A8) — the viewer's own squad is named by their squad membership, delivered once with

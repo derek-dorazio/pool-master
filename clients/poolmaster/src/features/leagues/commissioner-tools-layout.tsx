@@ -4,10 +4,17 @@ import { AdminAreaLayout } from '@/features/shared/ui';
 import {
   buildLeagueAdminContestsPath,
   buildLeagueAdminEditPath,
+  buildLeagueAdminInvitesPath,
   buildLeagueAdminPath,
+  buildLeagueAdminTeamsPath,
   buildLeaguePath,
 } from './league-routing';
+
 import { useLeagueContext } from './use-league-context';
+
+function isAtOrUnder(pathname: string, path: string) {
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
 
 /**
  * The Commissioner tools area for one league: its own header with the way back to the league,
@@ -19,6 +26,8 @@ export function CommissionerToolsLayout() {
   const { pathname } = useLocation();
   const { league } = useLeagueContext(leagueCode);
   const settingsPath = buildLeagueAdminPath(leagueCode);
+  const teamsPath = buildLeagueAdminTeamsPath(leagueCode);
+  const invitesPath = buildLeagueAdminInvitesPath(leagueCode);
   const contestsPath = buildLeagueAdminContestsPath(leagueCode);
 
   return (
@@ -34,7 +43,19 @@ export function CommissionerToolsLayout() {
           to: settingsPath,
         },
         {
-          isActive: pathname === contestsPath || pathname.startsWith(`${contestsPath}/`),
+          isActive: isAtOrUnder(pathname, teamsPath),
+          label: 'Teams',
+          testId: 'commissioner-tools-menu-teams',
+          to: teamsPath,
+        },
+        {
+          isActive: isAtOrUnder(pathname, invitesPath),
+          label: 'Invites',
+          testId: 'commissioner-tools-menu-invites',
+          to: invitesPath,
+        },
+        {
+          isActive: isAtOrUnder(pathname, contestsPath),
           label: 'Contests',
           testId: 'commissioner-tools-menu-contests',
           to: contestsPath,

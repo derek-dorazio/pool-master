@@ -86,7 +86,7 @@ If provider submission fails, the API returns
 `LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED` and logs provider, template, league,
 and invitation identifiers without logging email body content.
 
-Resend Invite (Teams and Owners, commissioner only) follows the same rule. It
+Resend Invite (Commissioner tools › Invites, commissioner only) follows the same rule. It
 gives the invitation a new invite code and a fresh seven-day expiry before
 sending, so the old link stops working even when the provider then rejects the
 email; the commissioner sees `LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED` and can

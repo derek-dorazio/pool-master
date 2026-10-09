@@ -66,7 +66,6 @@ function renderCommissionerTools(path = '/league/BIGDAWGS/admin') {
               </Route>
             </Route>
             <Route element={<div data-testid="league-home-destination" />} path="/league/:leagueCode" />
-            <Route element={<div data-testid="league-teams-destination" />} path="/league/:leagueCode/teams" />
             <Route element={<div data-testid="manage-leagues-page" />} path="/manage/leagues" />
             <Route element={<div data-testid="welcome-page" />} path="/welcome" />
           </Routes>

@@ -50,8 +50,8 @@ This line governs every permission decision here:
 - **Commissioners never touch a user's account.** Not inactivate, not delete, not password
   reset, not root-admin toggle. Those are the user's own actions or a root admin's.
 - **League-role actions live on league surfaces**, not on the user page. Promote, demote and
-  remove-owner sit on Teams and Owners and on Team Home; the user page carries only the
-  account actions of the user themselves and of a root admin.
+  remove-owner sit on Commissioner tools › Teams (Manage team) and on Team Home; the user
+  page carries only the account actions of the user themselves and of a root admin.
 - **League membership *is* team ownership in that league.** There is no separate
   "remove from league" operation — `domain-model-concepts.md` §3 *League Membership Is Team
   Ownership*.
