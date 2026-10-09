@@ -12,5 +12,5 @@
 const eslint = 'eslint --max-warnings 0 --no-warn-ignored';
 
 export default {
-  '{packages/**/*.ts,tests/**/*.{ts,tsx},clients/poolmaster/src/**/*.{ts,tsx},clients/poolmaster/*.config.ts}': eslint,
+  '{packages/**/*.ts,scripts/**/*.ts,tests/**/*.{ts,tsx},clients/poolmaster/src/**/*.{ts,tsx},clients/poolmaster/*.config.ts}': eslint,
 };
