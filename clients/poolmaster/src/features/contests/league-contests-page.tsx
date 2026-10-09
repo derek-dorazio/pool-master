@@ -2,15 +2,12 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo } from "react";
 import { useLeagueContextGuard } from "@/features/leagues/league-context-guard";
 import {
-  buildLeagueContestCreatePath,
-  buildLeagueContestsManagePath,
 } from "@/features/leagues/league-routing";
 import { getLogger } from "@/lib/logger";
 import {
   Chip,
   EmptyState,
   ErrorState,
-  LinkButton,
   ListStack,
   LoadingState,
   PageHeader,
@@ -104,29 +101,9 @@ export function LeagueContestsPage() {
   }
 
 
-  const canManageContests =
-    viewer.isCommissioner || viewer.isRootAdmin;
-
   return (
     <section className="space-y-6" data-testid="league-contests-page">
       <PageHeader
-        actions={
-          <>
-            {canManageContests ? (
-              <LinkButton
-                to={buildLeagueContestsManagePath(league.leagueCode)}
-                variant="secondary"
-              >
-                Manage Contests
-              </LinkButton>
-            ) : null}
-            {canManageContests && league.isActive ? (
-              <LinkButton to={buildLeagueContestCreatePath(league.leagueCode)}>
-                Create Contest
-              </LinkButton>
-            ) : null}
-          </>
-        }
         description={
           isMyEntriesFilter
             ? "Active contests where your team has an entry."

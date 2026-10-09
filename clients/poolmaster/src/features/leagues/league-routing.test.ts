@@ -3,7 +3,7 @@ import type { LeagueDto, LeagueMembershipDto } from '@/lib/api';
 import {
   buildLeagueContestPath,
   buildLeagueContestEntryPath,
-  buildLeagueContestsManagePath,
+  buildLeagueAdminContestsPath,
   buildLeagueContestsPath,
   buildLeagueHistoryPath,
   buildLeagueTeamHomePath,
@@ -92,8 +92,8 @@ describe('pool-master-rop.23: league routing generated DTO fixtures', () => {
     );
     expect(buildLeagueHistoryPath('BIGDOGS')).toBe('/league/BIGDOGS/history');
     expect(buildLeagueContestsPath('BIGDOGS')).toBe('/league/BIGDOGS/contests');
-    expect(buildLeagueContestsManagePath('BIGDOGS')).toBe(
-      '/league/BIGDOGS/contests/manage',
+    expect(buildLeagueAdminContestsPath('BIGDOGS')).toBe(
+      '/league/BIGDOGS/admin/contests',
     );
     expect(buildLeagueContestPath('BIGDOGS', 'contest-9')).toBe(
       '/league/BIGDOGS/contests/contest-9',

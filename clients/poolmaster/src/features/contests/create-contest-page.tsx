@@ -25,10 +25,9 @@ import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
-  buildLeagueContestManagePath,
+  buildLeagueAdminContestPath,
+  buildLeagueAdminContestsPath,
   buildLeagueContestPath,
-  buildLeaguePath,
-  buildLeagueTeamPath,
 } from '@/features/leagues/league-routing';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { OpenContestAction } from './open-contest-action';
@@ -42,9 +41,9 @@ import {
   Input,
   LinkButton,
   LoadingState,
+  PageHeader,
   Select,
   SplitContentLayout,
-  StatusBadge,
   Tile,
 } from '@/features/shared/ui';
 import {
@@ -185,7 +184,7 @@ export function CreateContestPage() {
   }, [contestForm]);
 
   // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
-  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
+  const { query: leagueQuery, league } = useLeagueContext(leagueCode);
 
   const eventsQuery = useQuery({
     queryKey: QueryKeys.sportEvents.list({ sport: Sport.GOLF }),
@@ -631,7 +630,7 @@ export function CreateContestPage() {
       navigate(
         isEditMode
           ? buildLeagueContestPath(leagueCode, savedContestId)
-          : buildLeagueContestManagePath(leagueCode, savedContestId),
+          : buildLeagueAdminContestPath(leagueCode, savedContestId),
         { state: { leagueCode } },
       );
     },
@@ -706,7 +705,7 @@ export function CreateContestPage() {
         },
         'Deleted contest successfully',
       );
-      navigate(buildLeaguePath(leagueCode));
+      navigate(buildLeagueAdminContestsPath(leagueCode));
     },
     invalidates: [QueryKeys.contests.list({ leagueId: league?.id })],
     onError: (error) => {
@@ -732,8 +731,6 @@ export function CreateContestPage() {
     },
   });
 
-  const isCommissioner =
-    viewer.isCommissioner || viewer.isRootAdmin;
   const isDraftEditable = !isEditMode || managedContestQuery.data?.status === 'DRAFT';
 
   const isManagedContestHydrating =
@@ -770,59 +767,17 @@ export function CreateContestPage() {
     );
   }
 
-  if (!isCommissioner) {
-    return (
-      <ErrorState
-        action={(
-          <LinkButton to={buildLeaguePath(league.leagueCode)} variant="secondary">
-            Back to league home
-          </LinkButton>
-        )}
-        body="Only commissioners can set up contests."
-        testId="create-contest-page-unauthorized"
-        title="Commissioner access required"
-      />
-    );
-  }
-
   return (
     <section
       className="space-y-6"
       data-testid={isEditMode ? 'manage-contest-page' : 'create-contest-page'}
     >
-      <Tile padding="lg">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-3">
-            <StatusBadge tone="info">
-              Commissioner contest setup
-            </StatusBadge>
-            <div>
-              <h2 className="text-3xl font-semibold tracking-tight">
-                {isEditMode ? 'Manage golf contest' : 'Create a golf contest'}
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-                {isEditMode
-                  ? 'Review and update this contest’s settings.'
-                  : 'Set up a tiered golf contest for your league.'}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <LinkButton
-              to={buildLeaguePath(league.leagueCode)}
-              variant="secondary"
-            >
-              Back to league
-            </LinkButton>
-            <LinkButton
-              to={buildLeagueTeamPath(league.leagueCode)}
-              variant="secondary"
-            >
-              My Team
-            </LinkButton>
-          </div>
-        </div>
-      </Tile>
+      <PageHeader
+        description={isEditMode
+          ? 'Review and update this contest’s settings.'
+          : 'Set up a tiered golf contest for your league.'}
+        title={isEditMode ? 'Manage golf contest' : 'Create a golf contest'}
+      />
 
       <SplitContentLayout
         main={(
@@ -997,7 +952,7 @@ export function CreateContestPage() {
                 </Button>
               ) : null}
               <LinkButton
-                to={buildLeaguePath(league.leagueCode)}
+                to={buildLeagueAdminContestsPath(league.leagueCode)}
                 variant="secondary"
               >
                 Cancel

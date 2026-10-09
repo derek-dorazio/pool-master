@@ -1,13 +1,9 @@
 import { useParams } from 'react-router-dom';
-import { useEffect } from 'react';
-import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
-  buildLeagueContestCreatePath,
-  buildLeagueContestManagePath,
+  buildLeagueAdminContestCreatePath,
+  buildLeagueAdminContestPath,
   buildLeagueContestPath,
-  buildLeaguePath,
 } from '@/features/leagues/league-routing';
-import { getLogger } from '@/lib/logger';
 import {
   Chip,
   EmptyState,
@@ -17,8 +13,6 @@ import {
   ListEmptyRow,
   ListStack,
   LoadingState,
-  MetricGrid,
-  MetricTile,
   PageHeader,
   Tile,
 } from '@/features/shared/ui';
@@ -26,86 +20,15 @@ import { contestStatusLabel, isHistoricalContest } from './contest-status';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useLeagueContestsQuery } from './use-league-contests-query';
 
-
+/** Commissioner tools › Contests: every contest in the league, with Create contest. */
 export function ManageContestsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
-  const logger = getLogger().child({
-    feature: 'manage-contests-page',
-  });
+  // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
+  const { league } = useLeagueContext(leagueCode);
+  const contestsQuery = useLeagueContestsQuery(league?.id ?? '');
 
-  // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
-  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
-
-
-  useEffect(() => {
-    if (!leagueQuery.isError) {
-      return;
-    }
-
-    logger.warn(
-      {
-        action: 'manageContests.league.failed',
-        data: {
-          leagueCode,
-        },
-        err: leagueQuery.error,
-      },
-      'Manage Contests page failed to load league context',
-    );
-  }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
-
-  const leagueId = league?.id ?? '';
-  const contestsQuery = useLeagueContestsQuery(leagueId);
-
-  if (leagueQuery.isLoading) {
-    return <LoadingState body="Loading contest management..." />;
-  }
-
-  if (leagueQuery.isError || !league) {
-    const copy = getLeagueLoadErrorCopy(leagueQuery.error);
-
-    return (
-      <ErrorState
-        action={(
-          <LinkButton to="/welcome" variant="secondary">
-            Back to welcome
-          </LinkButton>
-        )}
-        body={copy.body}
-        title={copy.title}
-      />
-    );
-  }
-
-  const canManageContests = viewer.isCommissioner || viewer.isRootAdmin;
-
-  if (!canManageContests) {
-    return (
-      <section className="space-y-6" data-testid="manage-contests-page">
-        <PageHeader
-          breadcrumbs={[
-            { href: buildLeaguePath(league.leagueCode), label: 'League Home' },
-            { label: 'Manage Contests' },
-          ]}
-          description={(
-            <>
-            Only commissioners can manage contests.
-            </>
-          )}
-          title="Manage Contests"
-        />
-
-        <EmptyState
-          action={(
-            <LinkButton to={buildLeaguePath(league.leagueCode)} variant="secondary">
-              Open League Home
-            </LinkButton>
-          )}
-          body="Ask a commissioner if a contest needs changing."
-          testId="manage-contests-access-denied"
-        />
-      </section>
-    );
+  if (!league) {
+    return null;
   }
 
   const contests = contestsQuery.data ?? [];
@@ -119,27 +42,17 @@ export function ManageContestsPage() {
           league.isActive ? (
             <LinkButton
               data-testid="manage-contests-create-link"
-              to={buildLeagueContestCreatePath(league.leagueCode)}
+              to={buildLeagueAdminContestCreatePath(league.leagueCode)}
             >
-              Create Contest
+              Create contest
             </LinkButton>
           ) : (
             <Chip tone="inactive">League inactive</Chip>
           )
         }
-        breadcrumbs={[
-          { href: buildLeaguePath(league.leagueCode), label: 'League Home' },
-          { label: 'Manage Contests' },
-        ]}
-        description="Open, manage, or create contests for this league."
-        title="Manage Contests"
+        description="Set up new contests and manage the ones already running."
+        title="Contests"
       />
-
-      <MetricGrid>
-        <MetricTile label="League" value={league.name} />
-        <MetricTile label="Active" value={activeContests.length} />
-        <MetricTile label="Historical" value={historicalContests.length} />
-      </MetricGrid>
 
       {contestsQuery.isLoading ? (
         <LoadingState body="Loading contests..." />
@@ -149,7 +62,7 @@ export function ManageContestsPage() {
         <EmptyState
           action={
             league.isActive ? (
-              <LinkButton to={buildLeagueContestCreatePath(league.leagueCode)} variant="secondary">
+              <LinkButton to={buildLeagueAdminContestCreatePath(league.leagueCode)} variant="secondary">
                 Create first contest
               </LinkButton>
             ) : null
@@ -186,7 +99,7 @@ export function ManageContestsPage() {
                         </LinkButton>
                         <LinkButton
                           data-testid={`manage-contests-manage-${contest.id}`}
-                          to={buildLeagueContestManagePath(league.leagueCode, contest.id)}
+                          to={buildLeagueAdminContestPath(league.leagueCode, contest.id)}
                         >
                           Manage contest
                         </LinkButton>
@@ -236,7 +149,7 @@ export function ManageContestsPage() {
                         </LinkButton>
                         <LinkButton
                           data-testid={`manage-contests-manage-${contest.id}`}
-                          to={buildLeagueContestManagePath(league.leagueCode, contest.id)}
+                          to={buildLeagueAdminContestPath(league.leagueCode, contest.id)}
                           variant="secondary"
                         >
                           Manage contest

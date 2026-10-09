@@ -1,7 +1,12 @@
 import { Settings } from 'lucide-react';
 import { Outlet, useLocation, useParams } from 'react-router-dom';
 import { AdminAreaLayout } from '@/features/shared/ui';
-import { buildLeagueAdminEditPath, buildLeagueAdminPath, buildLeaguePath } from './league-routing';
+import {
+  buildLeagueAdminContestsPath,
+  buildLeagueAdminEditPath,
+  buildLeagueAdminPath,
+  buildLeaguePath,
+} from './league-routing';
 import { useLeagueContext } from './use-league-context';
 
 /**
@@ -14,6 +19,7 @@ export function CommissionerToolsLayout() {
   const { pathname } = useLocation();
   const { league } = useLeagueContext(leagueCode);
   const settingsPath = buildLeagueAdminPath(leagueCode);
+  const contestsPath = buildLeagueAdminContestsPath(leagueCode);
 
   return (
     <AdminAreaLayout
@@ -26,6 +32,12 @@ export function CommissionerToolsLayout() {
           label: 'League settings',
           testId: 'commissioner-tools-menu-settings',
           to: settingsPath,
+        },
+        {
+          isActive: pathname === contestsPath || pathname.startsWith(`${contestsPath}/`),
+          label: 'Contests',
+          testId: 'commissioner-tools-menu-contests',
+          to: contestsPath,
         },
       ]}
       menuLabel="Commissioner tools"

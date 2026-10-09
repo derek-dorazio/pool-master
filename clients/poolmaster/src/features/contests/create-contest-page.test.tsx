@@ -80,7 +80,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 function renderCreateContestPage() {
-  return renderContestPage('/league/BIGDAWGS/contests/new');
+  return renderContestPage('/league/BIGDAWGS/admin/contests/new');
 }
 
 function renderContestPage(initialEntry: string) {
@@ -96,11 +96,15 @@ function renderContestPage(initialEntry: string) {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
-          <Route element={<CreateContestPage />} path="/league/:leagueCode/contests/new" />
-          <Route element={<CreateContestPage />} path="/league/:leagueCode/contests/:contestId/manage" />
+          <Route element={<CreateContestPage />} path="/league/:leagueCode/admin/contests/new" />
+          <Route element={<CreateContestPage />} path="/league/:leagueCode/admin/contests/:contestId" />
           <Route
             element={<div data-testid="contest-detail-page" />}
             path="/league/:leagueCode/contests/:contestId"
+          />
+          <Route
+            element={<div data-testid="admin-contests-destination" />}
+            path="/league/:leagueCode/admin/contests"
           />
         </Routes>
       </MemoryRouter>
@@ -566,7 +570,7 @@ describe('CreateContestPage', () => {
     );
   });
 
-  it('deletes a draft contest from the manage page', async () => {
+  it('deletes a draft contest from the manage page and returns to the Commissioner tools contest list', async () => {
     primeCommonMocks();
     getContestConfigurationMock.mockResolvedValue({
       data: {
@@ -591,7 +595,7 @@ describe('CreateContestPage', () => {
     });
     deleteContestMock.mockResolvedValue({ data: undefined });
 
-    renderContestPage('/league/BIGDAWGS/contests/contest-78/manage');
+    renderContestPage('/league/BIGDAWGS/admin/contests/contest-78');
 
     expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('contest-delete'));
@@ -601,6 +605,7 @@ describe('CreateContestPage', () => {
         path: { contestId: 'contest-78' },
       }),
     );
+    expect(await screen.findByTestId('admin-contests-destination')).toBeInTheDocument();
   });
 
   it('shows a no-events-available message when no golf event is contest-ready', async () => {
@@ -673,7 +678,7 @@ describe('CreateContestPage', () => {
       },
     });
 
-    renderContestPage('/league/BIGDAWGS/contests/contest-77/manage');
+    renderContestPage('/league/BIGDAWGS/admin/contests/contest-77');
 
     expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
     expect(screen.getByTestId('contest-name')).toHaveValue('Masters Pick 6');
@@ -740,7 +745,7 @@ describe('CreateContestPage', () => {
       error: { error: { code: 'INTERNAL_ERROR', message: 'Managed contest lookup failed.' } },
     });
 
-    renderContestPage('/league/BIGDAWGS/contests/contest-err/manage');
+    renderContestPage('/league/BIGDAWGS/admin/contests/contest-err');
 
     expect(await screen.findByTestId('create-contest-page-error')).toBeInTheDocument();
     expect(screen.queryByTestId('inherited-tiers-panel')).not.toBeInTheDocument();
@@ -770,7 +775,7 @@ describe('CreateContestPage', () => {
       .mockResolvedValue({ data: { contest: buildManagedContest('OPEN') } });
     openContestMock.mockResolvedValue({ data: { contest: buildManagedContest('OPEN') } });
 
-    renderContestPage('/league/BIGDAWGS/contests/contest-90/manage');
+    renderContestPage('/league/BIGDAWGS/admin/contests/contest-90');
 
     fireEvent.click(await screen.findByTestId('contest-open-to-league'));
     expect(await screen.findByTestId('contest-open-dialog')).toHaveTextContent(
@@ -800,7 +805,7 @@ describe('CreateContestPage', () => {
       error: { error: { code: 'CONTEST_EVENT_ALREADY_STARTED', message: 'server sentence' } },
     });
 
-    renderContestPage('/league/BIGDAWGS/contests/contest-90/manage');
+    renderContestPage('/league/BIGDAWGS/admin/contests/contest-90');
 
     fireEvent.click(await screen.findByTestId('contest-open-to-league'));
     fireEvent.click(await screen.findByTestId('contest-open-confirm'));
@@ -846,7 +851,7 @@ describe('CreateContestPage', () => {
       data: { contest: { ...buildManagedContest('DRAFT'), sportEventId: 'event-3' } },
     });
 
-    renderContestPage('/league/BIGDAWGS/contests/contest-90/manage');
+    renderContestPage('/league/BIGDAWGS/admin/contests/contest-90');
 
     expect(await screen.findByTestId('contest-sport-event')).toHaveValue('event-3');
     expect(screen.getByTestId('contest-sport-event')).toBeDisabled();
@@ -886,7 +891,7 @@ describe('CreateContestPage', () => {
       data: { contest: { ...buildManagedContest('DRAFT'), sportEventId: 'event-2' } },
     });
 
-    renderContestPage('/league/BIGDAWGS/contests/contest-90/manage');
+    renderContestPage('/league/BIGDAWGS/admin/contests/contest-90');
 
     expect(await screen.findByTestId('contest-sport-event')).toHaveValue('event-2');
     expect(screen.getByText('Already started')).toBeInTheDocument();
@@ -897,7 +902,7 @@ describe('CreateContestPage', () => {
     getContestConfigurationMock.mockResolvedValue({ data: { contest: buildManagedContest('DRAFT') } });
     updateContestMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR' } }, status: 500 });
 
-    renderContestPage('/league/BIGDAWGS/contests/contest-90/manage');
+    renderContestPage('/league/BIGDAWGS/admin/contests/contest-90');
 
     fireEvent.click(await screen.findByTestId('create-contest-submit'));
 
@@ -912,7 +917,7 @@ describe('CreateContestPage', () => {
     getContestConfigurationMock.mockResolvedValue({ data: { contest: buildManagedContest('DRAFT') } });
     deleteContestMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR' } }, status: 500 });
 
-    renderContestPage('/league/BIGDAWGS/contests/contest-90/manage');
+    renderContestPage('/league/BIGDAWGS/admin/contests/contest-90');
 
     fireEvent.click(await screen.findByTestId('contest-delete'));
 

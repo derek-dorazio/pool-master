@@ -122,7 +122,8 @@ golfer added after release stays untiered and can't be picked (#431).
 
 As a commissioner of a test league (root admin is not needed):
 
-1. *Create Contest* (`/league/:leagueCode/contests/new`) and pick the tournament. Creation
+1. In *Commissioner tools* › *Contests*, press *Create contest*
+   (`/league/:leagueCode/admin/contests/new`) and pick the tournament. Creation
    is refused while the tournament is a draft or once it has started. The contest is saved
    as a draft; press *Open to league* on its setup page to let members enter.
 2. Submit entries from one or more test accounts while the contest is open.

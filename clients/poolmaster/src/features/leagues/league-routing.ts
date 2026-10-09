@@ -37,10 +37,6 @@ export function buildLeagueContestHistoryPath(leagueCode: string) {
   return `/league/${leagueCode}/contests/history`;
 }
 
-export function buildLeagueContestCreatePath(leagueCode: string) {
-  return `/league/${leagueCode}/contests/new`;
-}
-
 export function buildLeagueContestPath(leagueCode: string, contestId: string) {
   return `/league/${leagueCode}/contests/${contestId}`;
 }
@@ -57,16 +53,20 @@ export function buildContestEntryPath(contestId: string, entryId: string) {
   return `/contests/${contestId}/entries/${entryId}`;
 }
 
-export function buildLeagueContestsManagePath(leagueCode: string) {
-  return `/league/${leagueCode}/contests/manage`;
-}
-
-export function buildLeagueContestManagePath(leagueCode: string, contestId: string) {
-  return `/league/${leagueCode}/contests/${contestId}/manage`;
-}
-
 export function buildLeagueAdminPath(leagueCode: string) {
   return `/league/${leagueCode}/admin`;
+}
+
+export function buildLeagueAdminContestsPath(leagueCode: string) {
+  return `/league/${leagueCode}/admin/contests`;
+}
+
+export function buildLeagueAdminContestCreatePath(leagueCode: string) {
+  return `/league/${leagueCode}/admin/contests/new`;
+}
+
+export function buildLeagueAdminContestPath(leagueCode: string, contestId: string) {
+  return `/league/${leagueCode}/admin/contests/${contestId}`;
 }
 
 export function buildLeagueAdminEditPath(leagueCode: string) {

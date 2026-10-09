@@ -48,8 +48,11 @@ import { MyTeamHistoryPage } from '@/features/teams/my-team-history-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
 import { TeamsPage } from '@/features/teams/teams-page';
 import {
+  LegacyContestCreateRedirect,
+  LegacyContestManageRedirect,
   LegacyJoinInviteRedirect,
   LegacyLeagueEntriesRedirect,
+  LegacyManageContestsRedirect,
 } from './legacy-redirects';
 import { CommissionerRouteGuard, MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
 
@@ -116,17 +119,29 @@ export const router = createBrowserRouter([
                     path: 'edit',
                     element: <EditLeaguePage />,
                   },
+                  {
+                    path: 'contests',
+                    element: <ManageContestsPage />,
+                  },
+                  {
+                    path: 'contests/new',
+                    element: <CreateContestPage />,
+                  },
+                  {
+                    path: 'contests/:contestId',
+                    element: <CreateContestPage />,
+                  },
                 ],
               },
             ],
           },
           {
             path: 'league/:leagueCode/contests/new',
-            element: <CreateContestPage />,
+            element: <LegacyContestCreateRedirect />,
           },
           {
             path: 'league/:leagueCode/contests/:contestId/manage',
-            element: <CreateContestPage />,
+            element: <LegacyContestManageRedirect />,
           },
           {
             path: 'league/:leagueCode/team',
@@ -156,7 +171,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'league/:leagueCode/contests/manage',
-            element: <ManageContestsPage />,
+            element: <LegacyManageContestsRedirect />,
           },
           {
             path: 'league/:leagueCode/contests/history',
