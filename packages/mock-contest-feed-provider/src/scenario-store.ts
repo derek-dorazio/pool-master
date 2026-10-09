@@ -1,5 +1,4 @@
 import type { FastifyBaseLogger } from 'fastify';
-import type { Unvalidated } from '@poolmaster/shared/domain';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -45,6 +44,14 @@ import {
   type GolfLiveTimeline,
 } from './golf-live-simulation';
 import { loadTourSeedScenarios } from './tour-seeds';
+
+/**
+ * A parsed JSON object carrying the keys of the record `T` it should become, every
+ * value still unvalidated: the same contract as `Unvalidated<T>` in
+ * `@poolmaster/shared/domain`. This package keeps its own copy because it builds and
+ * typechecks without `@poolmaster/shared` (CI's mock-provider job never builds shared).
+ */
+type Unvalidated<T> = { readonly [K in keyof T]?: unknown };
 
 function isRecord<T>(value: unknown): value is Unvalidated<T> {
   return typeof value === 'object' && value !== null;
