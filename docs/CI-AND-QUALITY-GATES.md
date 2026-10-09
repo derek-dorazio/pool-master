@@ -78,7 +78,7 @@ with a ten-minute floor:
 |---|---|---|
 | `changes`, `all-contract-gates`, `service-lint-typecheck`, `service-unit-tests`, `schema-migration-drift`, `service-build`, `service-mock-provider-build`, health-issue jobs | under 2 min | 10 |
 | `poolmaster-unit-tests` | 2 min | 15 |
-| `service-integration-tests`, `service-functional-api-tests` | 4 min | 20 |
+| `service-integration-tests (1/2)`, `(2/2)` shards, `service-functional-api-tests` | 2.5–4 min | 20 |
 | `poolmaster-browser-e2e-local` | 4–9 min | 25 |
 | `poolmaster-build` | 1–12 min | 30 |
 | `deploy-publish-images` | 4–5 min | 20 |
@@ -850,7 +850,8 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:service:integration` — run the suite (requires `DATABASE_URL` and a fresh DB)
   - `npm run test:service:integration:fresh` — reset DB then run
   - `npm run test:coverage:service:integration` — coverage variant
-- **CI job:** `service-integration-tests` (its own Postgres service container). Runs `npm run test:service:integration` with no coverage (#302).
+- **CI job:** two shards, `service-integration-tests (1/2)` and `(2/2)`, each with its own Postgres service container, run `npm run test:integration -- --shard=k/2` with no coverage (#302, #295). Jest shards by file, so every integration file must pass whichever other files share its shard (§9A isolation). A small `service-integration-tests` job turns the two shard results into the one verdict branch protection and `deploy-publish-images` depend on; it skips when the shards skip.
+- **Reproduce one shard locally:** `npm run test:integration -- --shard=1/2` (not the `test:service:integration` alias, which drops the flag: npm reads it as its own config).
 - **Required pre-push gate:** `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:integration`.
 - **Coverage policy:** **No threshold** in `tests/integration/jest.config.js`, and no coverage in CI. Integration coverage is collected only for the merged report in `coverage.yml`.
 - **Database setup:** `npm run db:test:reset` recreates the test DB; `npm run db:test:migrate` applies migrations. `db:test:recreate` is the canonical pre-run reset.
