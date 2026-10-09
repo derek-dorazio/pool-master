@@ -7,10 +7,15 @@
  * one element out silently.
  *
  * The scanner was a line-based regex pass over the source with comments blanked out. This
- * rule applies the same two patterns to the same text, but reads it from the AST: string
- * literals, template-literal chunks and JSX text. So a comment such as "see #206" is never
- * a colour -- the false positive that cost #192 and #206 a lint round each -- without a
- * hand-rolled comment stripper.
+ * rule applies the same two patterns, but only to string literals, template-literal chunks
+ * and JSX text, read from the AST. So a comment such as "see #206" is never a colour -- the
+ * false positive that cost #192 and #206 a lint round each -- without a hand-rolled comment
+ * stripper. That is narrower than the scanner, deliberately: regex literals and code
+ * outside strings are no longer scanned, because neither can carry a class or a colour.
+ *
+ * KNOWN LIMITATION, kept from the scanner: a hex-looking URL fragment in a string, such as
+ * 'https://example.com/theme#abc123', is still reported. A string is checked whole, so the
+ * rule cannot tell a URL constant from a class string.
  *
  * CSS. The scanner also walked `.css` files under features/. There are none, and ESLint
  * cannot read CSS without `@eslint/css`, which is not installed. Theme CSS lives in the
