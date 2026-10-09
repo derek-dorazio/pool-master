@@ -74,7 +74,8 @@
     "typecheck:service": "turbo typecheck --filter=!@poolmaster/poolmaster",
     "typecheck:webapp": "turbo typecheck --filter=@poolmaster/poolmaster",
     "typecheck:tests": "tsc --noEmit --project tests/tsconfig.json",
-    "typecheck:e2e": "tsc --noEmit --project clients/poolmaster/tsconfig.e2e.json"
+    "typecheck:e2e": "tsc --noEmit --project clients/poolmaster/tsconfig.e2e.json",
+    "prepare": "node -e \"import('husky').then((h) => console.log(h.default()), (e) => { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e; })\""
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -95,8 +96,10 @@
     "eslint-plugin-react-refresh": "^0.5.7",
     "eslint-plugin-testing-library": "^7.16.2",
     "eslint-plugin-vitest": "^0.5.4",
+    "husky": "^9.1.7",
     "jest": "^30.5.2",
     "jest-util": "^30.5.1",
+    "lint-staged": "^16.4.0",
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.0.0",
     "ts-jest": "^29.4.14",

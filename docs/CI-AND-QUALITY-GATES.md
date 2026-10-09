@@ -644,6 +644,35 @@ direct pushes to `main` (e.g., admin-bypass cleanup work) do not trip it.
 This is intentional: the marker is meaningful only in the PR review flow
 that branch protection enforces.
 
+## Pre-commit hook (#526)
+
+`git commit` runs ESLint on the **staged** files that fall inside `npm run lint`'s
+scope, at `--max-warnings 0`. A commit with a lint error is refused before it
+reaches CI. A one-file commit takes about 11 s, which is the cost of building
+type information for the files it touches. The full type-aware run takes about
+two minutes, which is why the hook lints staged files only.
+
+Three things it deliberately does not do:
+
+- **No typecheck.** A type error in a file you didn't touch can't be found from
+  staged files alone, and a whole-repo typecheck is too slow for every commit.
+  CI's `lint-typecheck` job is where typecheck is enforced.
+- **No Prettier.** The formatting sweep has not been taken (see *Prettier is
+  configured but is not a gate* above), so formatting staged files would rewrite
+  whole files you only touched in one line.
+- **No substitute for the push gates.** It catches lint early; the pre-push list
+  in `rules/workflow-rules.md` §3 is still the bar before a push. That section also
+  covers what to do when the hook fails.
+
+How it is wired: husky points git's `core.hooksPath` at `.husky/`, and
+`.husky/pre-commit` runs `lint-staged --quiet`, which prints errors only and so keeps
+agent transcripts short. The globs are in `lint-staged.config.mjs` and must match the `lint` script's scope. `npm install` and `npm ci` install the
+hook through the root `prepare` script. That script skips quietly where husky is
+not installed (the `--omit=dev` image stage) and where there is no `.git` (a
+Docker build). Cloud agent sessions run `npm ci` at start, so their commits run
+the hook too. `lint-staged` is pinned to 16.x because 17 needs Node 22.22.1, which
+is newer than the cloud image's Node.
+
 ## Local equivalents
 
 Every CI gate runs locally with the same command CI uses. The common loops:
