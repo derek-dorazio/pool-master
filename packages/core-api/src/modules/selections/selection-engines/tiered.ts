@@ -2,15 +2,15 @@
  * The tiered selection engine (#198): pick a set number of participants from each of the
  * event's tiers.
  *
- * Its rules are the live room's, specified by `tests/functional/drafts.functional.ts`:
+ * Its rules are the live room's, specified by `tests/functional/selections.functional.ts`:
  * re-selecting a participant the entry holds **toggles it off**, and selecting into a tier the
  * entry has already filled **replaces** that tier's newest pick rather than rejecting. Both are
  * deliberate; the engines #323 deleted rejected on a full tier and disagreed with production.
  */
 
 import { SelectionType } from '@poolmaster/shared/domain';
-import { findTierByLabel } from '../draft-rules';
-import type { DraftTierConfig } from '../types';
+import { findTierByLabel } from '../selection-rules';
+import type { SelectionTierConfig } from '../types';
 import {
   lineupShortfall,
   SelectionOutcomeKind,
@@ -34,8 +34,8 @@ import {
  * complete and an unfull one simply places.
  */
 export function resolveTieredPlacement(input: {
-  tier: DraftTierConfig;
-  tiers: readonly DraftTierConfig[];
+  tier: SelectionTierConfig;
+  tiers: readonly SelectionTierConfig[];
   /** The entry's picks, oldest first. */
   existingPicks: readonly EntryPick[];
   rosterSize: number;
@@ -59,11 +59,11 @@ export function resolveTieredPlacement(input: {
   const roundsBeforeTier = tiers
     .filter((item) => item.tierNumber < tier.tierNumber)
     .reduce((sum, item) => sum + item.picksFromTier, 0);
-  const draftRound = roundsBeforeTier + effectivePicksInTierCount + 1;
+  const lineupSlot = roundsBeforeTier + effectivePicksInTierCount + 1;
 
   return replacedPickId
-    ? { kind: SelectionOutcomeKind.REPLACE, draftRound, replacedPickId }
-    : { kind: SelectionOutcomeKind.ACCEPT, draftRound };
+    ? { kind: SelectionOutcomeKind.REPLACE, lineupSlot, replacedPickId }
+    : { kind: SelectionOutcomeKind.ACCEPT, lineupSlot };
 }
 
 export const tieredSelectionEngine: SelectionEngine = {

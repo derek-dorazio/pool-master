@@ -23,7 +23,7 @@ export const swaggerPlugin = fp(async (fastify) => {
       openapi: '3.1.0', // @fastify/swagger uses 3.1.0; compatible with 3.2 patterns
       info: {
         title: 'PoolMaster API',
-        description: 'Contest pool management platform — leagues, contests, drafts, scoring, and admin tools.',
+        description: 'Contest pool management platform — leagues, contests, selections, scoring, and admin tools.',
         version: '1.0.0',
         contact: {
           name: 'PoolMaster Team',
@@ -47,7 +47,7 @@ export const swaggerPlugin = fp(async (fastify) => {
         { name: 'Auth', description: 'Authentication, registration, and user profile' },
         { name: 'Leagues', description: 'League CRUD, membership, and lifecycle management' },
         { name: 'Contests', description: 'Contest creation, lifecycle, and scoring' },
-        { name: 'Drafts', description: 'Roster selection — tiered and budget pick' },
+        { name: 'Selections', description: 'Roster selection — tiered and budget pick' },
         { name: 'Standings', description: 'Contest standings and leaderboards' },
         { name: 'Participants', description: 'Participant profiles and contest pools' },
         { name: 'Invitations', description: 'League invitations and invite links' },

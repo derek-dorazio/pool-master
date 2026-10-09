@@ -491,7 +491,7 @@ UI surfaces that participate in automation must expose stable machine-oriented s
   - `league-create-submit`
   - `contest-create-hero`
   - `auth-register-email`
-  - `draft-room-available-panel`
+  - `selection-room-available-panel`
 - New web/admin UI code should add these stable selectors as part of implementation, not later as test-only cleanup.
 - If a DOM element may need to be addressed from browser automation or app-side JavaScript, give it a stable selector when the component is created.
 

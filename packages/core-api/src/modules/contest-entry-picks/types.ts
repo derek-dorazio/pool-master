@@ -19,9 +19,9 @@ export interface ContestEntryPickInsertInput {
   /** Budget cost (budget ROSTER). */
   cost?: number | null;
   /** Selection round (tiered: position across tier quotas; budget: pick ordinal). */
-  draftRound?: number | null;
+  lineupSlot?: number | null;
   /** Contest-wide pick order at insert time. */
-  draftPickNumber?: number | null;
+  pickSequence?: number | null;
   /** Whether the pick was auto-assigned (e.g. a missed-week loss). */
   isAutoPicked?: boolean;
   /** Override the default `pickedAt` (now). Used by integration fixtures. */

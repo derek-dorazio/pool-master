@@ -1,27 +1,27 @@
 import { SelectionType } from '@poolmaster/shared/domain';
 import type { ContestConfiguration } from '@poolmaster/shared/domain';
-import { budgetPickSelectionEngine } from '../../../packages/core-api/src/modules/drafts/selection-engines/budget-pick';
-import { findSelectionEngine } from '../../../packages/core-api/src/modules/drafts/selection-engines/registry';
+import { budgetPickSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/budget-pick';
+import { findSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
 import {
   SelectionOutcomeKind,
   SelectionRejectCode,
   type EntryPick,
   type SelectionRequest,
-} from '../../../packages/core-api/src/modules/drafts/selection-engines/selection-engine';
+} from '../../../packages/core-api/src/modules/selections/selection-engines/selection-engine';
 import {
   resolveTieredPlacement,
   tieredSelectionEngine,
-} from '../../../packages/core-api/src/modules/drafts/selection-engines/tiered';
+} from '../../../packages/core-api/src/modules/selections/selection-engines/tiered';
 import type {
-  DraftTierConfig,
+  SelectionTierConfig,
   SelectionParticipant,
-} from '../../../packages/core-api/src/modules/drafts/types';
+} from '../../../packages/core-api/src/modules/selections/types';
 
 // The selection engines (#198), called directly. Each is pure: these tests hand it a request
 // and read back the outcome, with no service, port or database. Exclusivity is not here
-// because it is not an engine's rule; draft-service.test.ts runs it against both engines.
+// because it is not an engine's rule; selection-service.test.ts runs it against both engines.
 
-function tier(overrides: Partial<DraftTierConfig> = {}): DraftTierConfig {
+function tier(overrides: Partial<SelectionTierConfig> = {}): SelectionTierConfig {
   return {
     tierId: 'tier-1',
     tierName: 'Tier 1',
@@ -125,12 +125,12 @@ describe('tiered selection engine — evaluate', () => {
 
   it('finds the participant\'s tier by its id as well as its display name', () => {
     expect(tieredSelectionEngine.evaluate(request({ participant: participant('d', 'tier-2') })))
-      .toEqual({ kind: SelectionOutcomeKind.ACCEPT, draftRound: 3 });
+      .toEqual({ kind: SelectionOutcomeKind.ACCEPT, lineupSlot: 3 });
   });
 
   it('replaces the newest pick in a full tier rather than rejecting', () => {
     expect(tieredSelectionEngine.evaluate(request({ participant: participant('c', 'Tier 1'), existingPicks: picks('a', 'b') })))
-      .toEqual({ kind: SelectionOutcomeKind.REPLACE, draftRound: 2, replacedPickId: 'pick-b' });
+      .toEqual({ kind: SelectionOutcomeKind.REPLACE, lineupSlot: 2, replacedPickId: 'pick-b' });
   });
 });
 
@@ -138,19 +138,19 @@ describe('tiered selection engine — resolveTieredPlacement', () => {
   it('places a first pick in tier 1 at round 1', () => {
     expect(
       resolveTieredPlacement({ tier: TIERS[0], tiers: TIERS, existingPicks: [], rosterSize: ROSTER_SIZE }),
-    ).toEqual({ kind: SelectionOutcomeKind.ACCEPT, draftRound: 1 });
+    ).toEqual({ kind: SelectionOutcomeKind.ACCEPT, lineupSlot: 1 });
   });
 
   it('places a second pick in tier 1 at round 2', () => {
     expect(
       resolveTieredPlacement({ tier: TIERS[0], tiers: TIERS, existingPicks: picks('a'), rosterSize: ROSTER_SIZE }),
-    ).toEqual({ kind: SelectionOutcomeKind.ACCEPT, draftRound: 2 });
+    ).toEqual({ kind: SelectionOutcomeKind.ACCEPT, lineupSlot: 2 });
   });
 
   it('counts the rounds the earlier tiers take before placing in a later one', () => {
     expect(
       resolveTieredPlacement({ tier: TIERS[1], tiers: TIERS, existingPicks: picks('a', 'b'), rosterSize: ROSTER_SIZE }),
-    ).toEqual({ kind: SelectionOutcomeKind.ACCEPT, draftRound: 3 });
+    ).toEqual({ kind: SelectionOutcomeKind.ACCEPT, lineupSlot: 3 });
   });
 
   // The central rule, and the one the deleted engines had backwards: given a full tier, they
@@ -158,13 +158,13 @@ describe('tiered selection engine — resolveTieredPlacement', () => {
   it('replaces the tier\'s last pick when the tier is already full, rather than rejecting', () => {
     expect(
       resolveTieredPlacement({ tier: TIERS[0], tiers: TIERS, existingPicks: picks('a', 'b'), rosterSize: ROSTER_SIZE }),
-    ).toEqual({ kind: SelectionOutcomeKind.REPLACE, draftRound: 2, replacedPickId: 'pick-b' });
+    ).toEqual({ kind: SelectionOutcomeKind.REPLACE, lineupSlot: 2, replacedPickId: 'pick-b' });
   });
 
   it('replaces within a full tier even when the whole entry is full', () => {
     expect(
       resolveTieredPlacement({ tier: TIERS[1], tiers: TIERS, existingPicks: picks('a', 'b', 'd'), rosterSize: ROSTER_SIZE }),
-    ).toEqual({ kind: SelectionOutcomeKind.REPLACE, draftRound: 3, replacedPickId: 'pick-d' });
+    ).toEqual({ kind: SelectionOutcomeKind.REPLACE, lineupSlot: 3, replacedPickId: 'pick-d' });
   });
 
   it('rejects ENTRY_COMPLETE only for a full entry with no pick in this tier to displace', () => {
@@ -178,7 +178,7 @@ describe('tiered selection engine — resolveTieredPlacement', () => {
 
     expect(
       resolveTieredPlacement({ tier: zeroPickTier, tiers: [zeroPickTier, TIERS[1]], existingPicks: [], rosterSize: 1 }),
-    ).toEqual({ kind: SelectionOutcomeKind.ACCEPT, draftRound: 0 });
+    ).toEqual({ kind: SelectionOutcomeKind.ACCEPT, lineupSlot: 0 });
   });
 
   it('rejects ENTRY_COMPLETE for a zero-pick tier once the entry is full, having nothing to displace', () => {
@@ -237,7 +237,7 @@ describe('budget-pick selection engine', () => {
 
   it('accepts a pick into the next round while the roster has room, whatever tier the golfer sits in', () => {
     expect(budgetPickSelectionEngine.evaluate(budgetRequest({ existingPicks: picks('z') })))
-      .toEqual({ kind: SelectionOutcomeKind.ACCEPT, draftRound: 2 });
+      .toEqual({ kind: SelectionOutcomeKind.ACCEPT, lineupSlot: 2 });
   });
 
   it('rejects re-selecting a participant the entry holds as DUPLICATE_PICK, never toggling it off', () => {

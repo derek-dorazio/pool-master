@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { getContest, getDraftState, listContestEntries, submitContestEntry, submitContestSelection, updateContestEntry, type DraftStateResponse, type ContestDto, type ContestEntryListResponse } from '@/lib/api';
+import { getContest, getSelectionState, listContestEntries, submitContestEntry, submitContestSelection, updateContestEntry, type SelectionStateResponse, type ContestDto, type ContestEntryListResponse } from '@/lib/api';
 import {
   buildLeagueContestPath,
   buildLeaguePath,
@@ -42,7 +42,7 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type DraftState = DraftStateResponse;
+type SelectionState = SelectionStateResponse;
 
 const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
 
@@ -89,9 +89,9 @@ function getNextIncompleteGroupId(selectionGroups: SelectionGroup[]) {
  * displaces the tier's most recently picked golfer on the server, and the tier's list is in tier
  * order, not pick order, so the optimistic swap needs this to drop the same one.
  */
-function buildPickedAtById(draftState: DraftState, entryId: string): Map<string, string> {
+function buildPickedAtById(selectionState: SelectionState, entryId: string): Map<string, string> {
   return new Map(
-    (draftState.draftPickHistories ?? [])
+    (selectionState.pickHistories ?? [])
       .flatMap((pick) => (pick.entryId === entryId && pick.participantId
         ? [[pick.participantId, pick.pickedAt] as const]
         : [])),
@@ -117,9 +117,9 @@ function getNextSelectedParticipantIds(
   return Array.from(new Set([...group.selectedParticipantIds, participantId]));
 }
 
-function applyOptimisticSelection(draftState: DraftState, participantId: string, entryId: string): DraftState {
-  const selectionGroups = draftState.selectionGroups ?? [];
-  const pickedAtById = buildPickedAtById(draftState, entryId);
+function applyOptimisticSelection(selectionState: SelectionState, participantId: string, entryId: string): SelectionState {
+  const selectionGroups = selectionState.selectionGroups ?? [];
+  const pickedAtById = buildPickedAtById(selectionState, entryId);
   const nextSelectionGroups = selectionGroups.map((group) => {
     if (!group.participants.some((participant) => participant.sportEventParticipantId === participantId)) {
       return group;
@@ -147,7 +147,7 @@ function applyOptimisticSelection(draftState: DraftState, participantId: string,
   );
 
   return {
-    ...draftState,
+    ...selectionState,
     selectionGroups: nextSelectionGroups,
     isComplete: requiredSelections > 0 && totalSelections >= requiredSelections,
   };
@@ -166,7 +166,7 @@ export function ContestEntryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
-  const draftStateQueryKey = QueryKeys.draftStates.detail(contestId, entryId);
+  const selectionStateQueryKey = QueryKeys.selectionStates.detail(contestId, entryId);
   const groupToggleRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const [entryNameDraft, setEntryNameDraft] = useState('');
@@ -200,15 +200,15 @@ export function ContestEntryPage() {
     retry: false,
   });
 
-  const draftStateQuery = useQuery({
-    queryKey: draftStateQueryKey,
-    queryFn: async (): Promise<DraftState> => {
-      const response = await getDraftState({
+  const selectionStateQuery = useQuery({
+    queryKey: selectionStateQueryKey,
+    queryFn: async (): Promise<SelectionState> => {
+      const response = await getSelectionState({
         path: { contestId },
         query: { entryId },
       });
       if (!response.data) {
-        throwApiError(response.error, 'Draft state response is missing data.');
+        throwApiError(response.error, 'Selection state response is missing data.');
       }
       return response.data;
     },
@@ -230,21 +230,21 @@ export function ContestEntryPage() {
   // move to in progress, which can lag the start, and the server refuses picks from the start on.
   const schedule = useContestSchedule(contestQuery.data);
   const detailsSeedSource = useMemo(() => {
-    if (!draftStateQuery.data) {
+    if (!selectionStateQuery.data) {
       return null;
     }
 
     return {
-      name: draftStateQuery.data.selectedEntryName ?? '',
-      tiebreakerValue: draftStateQuery.data.tiebreakerValue,
+      name: selectionStateQuery.data.selectedEntryName ?? '',
+      tiebreakerValue: selectionStateQuery.data.tiebreakerValue,
     };
     // Keyed on selectedEntryName and tiebreakerValue on purpose: a refetch must not rebuild the draft
     // (rules/react-ui-rules.md §5 Server Data Form-State Hazard).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftStateQuery.data?.selectedEntryName, draftStateQuery.data?.tiebreakerValue]);
+  }, [selectionStateQuery.data?.selectedEntryName, selectionStateQuery.data?.tiebreakerValue]);
   const selectableGroups = useMemo(
-    () => draftStateQuery.data?.selectionGroups ?? [],
-    [draftStateQuery.data?.selectionGroups],
+    () => selectionStateQuery.data?.selectionGroups ?? [],
+    [selectionStateQuery.data?.selectionGroups],
   );
 
   useEffect(() => {
@@ -308,7 +308,7 @@ export function ContestEntryPage() {
   useEffect(() => {
     if (
       !contestQuery.isError
-      && !draftStateQuery.isError
+      && !selectionStateQuery.isError
       && !contestEntriesQuery.isError
     ) {
       return;
@@ -321,7 +321,7 @@ export function ContestEntryPage() {
           contestId,
           entryId,
         },
-        err: contestQuery.error ?? draftStateQuery.error ?? contestEntriesQuery.error,
+        err: contestQuery.error ?? selectionStateQuery.error ?? contestEntriesQuery.error,
       },
       'Contest entry page failed to load required data',
     );
@@ -331,14 +331,14 @@ export function ContestEntryPage() {
     contestId,
     contestQuery.error,
     contestQuery.isError,
-    draftStateQuery.error,
-    draftStateQuery.isError,
+    selectionStateQuery.error,
+    selectionStateQuery.isError,
     entryId,
     logger,
   ]);
 
   useEffect(() => {
-    if (!contestQuery.data || !draftStateQuery.data || !contestEntriesQuery.data) {
+    if (!contestQuery.data || !selectionStateQuery.data || !contestEntriesQuery.data) {
       return;
     }
 
@@ -349,12 +349,12 @@ export function ContestEntryPage() {
           contestId,
           entryId,
           status: contestQuery.data.status,
-          selectionGroupCount: draftStateQuery.data.selectionGroups?.length ?? 0,
+          selectionGroupCount: selectionStateQuery.data.selectionGroups?.length ?? 0,
         },
       },
       'Contest entry page loaded',
     );
-  }, [contestEntriesQuery.data, contestId, contestQuery.data, draftStateQuery.data, entryId, logger]);
+  }, [contestEntriesQuery.data, contestId, contestQuery.data, selectionStateQuery.data, entryId, logger]);
 
   const saveEntryDetailsMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -364,12 +364,12 @@ export function ContestEntryPage() {
 
       if (
         trimmedName
-        && trimmedName !== (draftStateQuery.data?.selectedEntryName ?? '')
+        && trimmedName !== (selectionStateQuery.data?.selectedEntryName ?? '')
       ) {
         body.name = trimmedName;
       }
 
-      const currentTiebreakerValue = draftStateQuery.data?.tiebreakerValue ?? null;
+      const currentTiebreakerValue = selectionStateQuery.data?.tiebreakerValue ?? null;
       const nextTiebreakerValue =
         normalizedTiebreaker.length === 0 ? null : Number.parseInt(normalizedTiebreaker, 10);
 
@@ -424,7 +424,7 @@ export function ContestEntryPage() {
     invalidates: [
       QueryKeys.contests.detail(contestId),
       QueryKeys.contestEntries.byContest(contestId),
-      draftStateQueryKey,
+      selectionStateQueryKey,
     ],
     onError: (error) => {
       const payload = {
@@ -472,19 +472,19 @@ export function ContestEntryPage() {
         },
         'Starting contest selection submission',
       );
-      await queryClient.cancelQueries({ queryKey: draftStateQueryKey });
-      const previousDraftState = queryClient.getQueryData<DraftState>(draftStateQueryKey);
+      await queryClient.cancelQueries({ queryKey: selectionStateQueryKey });
+      const previousSelectionState = queryClient.getQueryData<SelectionState>(selectionStateQueryKey);
 
-      if (previousDraftState) {
-        queryClient.setQueryData<DraftState>(
-          draftStateQueryKey,
-          applyOptimisticSelection(previousDraftState, participantId, entryId),
+      if (previousSelectionState) {
+        queryClient.setQueryData<SelectionState>(
+          selectionStateQueryKey,
+          applyOptimisticSelection(previousSelectionState, participantId, entryId),
         );
       }
 
-      return { previousDraftState };
+      return { previousSelectionState };
     },
-    onSuccess: (draftState) => {
+    onSuccess: (selectionState) => {
       logger.info(
         {
           action: 'contestEntry.selection.succeeded',
@@ -495,15 +495,15 @@ export function ContestEntryPage() {
         },
         'Submitted contest selection successfully',
       );
-      queryClient.setQueryData<DraftState>(draftStateQueryKey, draftState);
+      queryClient.setQueryData<SelectionState>(selectionStateQueryKey, selectionState);
     },
     invalidates: [
       QueryKeys.contests.detail(contestId),
       QueryKeys.contestEntries.byContest(contestId),
     ],
     onError: (error, participantId, context) => {
-      if (context?.previousDraftState) {
-        queryClient.setQueryData<DraftState>(draftStateQueryKey, context.previousDraftState);
+      if (context?.previousSelectionState) {
+        queryClient.setQueryData<SelectionState>(selectionStateQueryKey, context.previousSelectionState);
       }
       const payload = {
         action: 'contestEntry.selection.failed',
@@ -532,7 +532,7 @@ export function ContestEntryPage() {
       }
       return response.data;
     },
-    onSuccess: (draftState) => {
+    onSuccess: (selectionState) => {
       logger.info(
         {
           action: 'contestEntry.submit.succeeded',
@@ -540,7 +540,7 @@ export function ContestEntryPage() {
         },
         'Submitted contest entry',
       );
-      queryClient.setQueryData<DraftState>(draftStateQueryKey, draftState);
+      queryClient.setQueryData<SelectionState>(selectionStateQueryKey, selectionState);
     },
     invalidates: [
       QueryKeys.contests.detail(contestId),
@@ -561,15 +561,15 @@ export function ContestEntryPage() {
     },
   });
 
-  if (contestQuery.isLoading || draftStateQuery.isLoading || contestEntriesQuery.isLoading) {
+  if (contestQuery.isLoading || selectionStateQuery.isLoading || contestEntriesQuery.isLoading) {
     return <LoadingState body="Loading contest entry..." />;
   }
 
   if (
     contestQuery.isError
     || !contestQuery.data
-    || draftStateQuery.isError
-    || !draftStateQuery.data
+    || selectionStateQuery.isError
+    || !selectionStateQuery.data
     || contestEntriesQuery.isError
   ) {
     return (
@@ -581,7 +581,7 @@ export function ContestEntryPage() {
   }
 
   const contest = contestQuery.data;
-  const draftState = draftStateQuery.data;
+  const selectionState = selectionStateQuery.data;
   const backLeagueCode = hintedLeagueCode ?? contestLeague?.leagueCode ?? null;
   const backToContestPath = backLeagueCode
     ? buildLeagueContestPath(backLeagueCode, contestId)
@@ -593,19 +593,19 @@ export function ContestEntryPage() {
   const isEditable = areContestEntriesOpen(contest.status, schedule?.startsAt);
   // Before the contest locks, the server answers the viewer's own entry when another team's is
   // asked for, so a different selected entry means this one's picks are not ours to see yet.
-  const picksHidden = draftState.selectedEntryId !== entryId;
-  const selectedEntry = draftState.entries.find((entry) => entry.id === entryId) ?? null;
+  const picksHidden = selectionState.selectedEntryId !== entryId;
+  const selectedEntry = selectionState.entries.find((entry) => entry.id === entryId) ?? null;
   // The room's copy is the fresher one: a pick change answers with it, and a change that leaves
   // a submitted lineup short sends the entry back to DRAFT there.
   const entryStatus = selectedEntry?.status ?? entrySummary?.status ?? ContestEntryStatus.DRAFT;
   const isSubmitted = entryStatus === ContestEntryStatus.SUBMITTED;
-  const selectionGroups = picksHidden ? [] : draftState.selectionGroups ?? [];
+  const selectionGroups = picksHidden ? [] : selectionState.selectionGroups ?? [];
   const completionStats = getCompletionStats(selectionGroups);
   const nextIncompleteGroupId = getNextIncompleteGroupId(selectionGroups);
   const lineupComplete =
     completionStats.requiredSelections > 0
     && completionStats.totalSelections >= completionStats.requiredSelections;
-  const savedTiebreaker = picksHidden ? null : draftState.tiebreakerValue ?? null;
+  const savedTiebreaker = picksHidden ? null : selectionState.tiebreakerValue ?? null;
   const hasSavedTiebreaker = savedTiebreaker !== null;
   const selectedTiebreakerValue =
     tiebreakerDraft.trim().length > 0
@@ -782,9 +782,9 @@ export function ContestEntryPage() {
                   <div
                     data-testid="contest-entry-readonly-tiebreaker"
                   >
-                    {draftState.tiebreakerValue === null || draftState.tiebreakerValue === undefined
+                    {selectionState.tiebreakerValue === null || selectionState.tiebreakerValue === undefined
                       ? 'No tiebreaker prediction was saved.'
-                      : `Winning score relative to par: ${formatTiebreaker(draftState.tiebreakerValue)}`}
+                      : `Winning score relative to par: ${formatTiebreaker(selectionState.tiebreakerValue)}`}
                   </div>
                 </Alert>
               )
@@ -836,7 +836,7 @@ export function ContestEntryPage() {
                           const nextSelectedIds = getNextSelectedParticipantIds(
                             group,
                             nextParticipant.sportEventParticipantId,
-                            buildPickedAtById(draftState, entryId),
+                            buildPickedAtById(selectionState, entryId),
                           );
                           if (nextSelectedIds.length < group.picksFromGroup) {
                             return group.groupId;

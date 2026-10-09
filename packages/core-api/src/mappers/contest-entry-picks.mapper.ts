@@ -30,8 +30,8 @@ export interface ContestEntryPickRow {
   tier: string | null;
   cost: { toNumber(): number } | number | null;
   isAutoPicked: boolean;
-  draftRound: number | null;
-  draftPickNumber: number | null;
+  lineupSlot: number | null;
+  pickSequence: number | null;
   pickedAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -54,8 +54,8 @@ export function mapContestEntryPickToDto(row: ContestEntryPickRow): ContestEntry
     tier: row.tier,
     cost: decimalToNumber(row.cost),
     isAutoPicked: row.isAutoPicked,
-    draftRound: row.draftRound,
-    draftPickNumber: row.draftPickNumber,
+    lineupSlot: row.lineupSlot,
+    pickSequence: row.pickSequence,
     pickedAt: row.pickedAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -74,8 +74,8 @@ export function mapContestEntryPickRowToDomain(row: ContestEntryPickRow): Contes
     tier: row.tier ?? undefined,
     cost: decimalToNumber(row.cost) ?? undefined,
     isAutoPicked: row.isAutoPicked,
-    draftRound: row.draftRound ?? undefined,
-    draftPickNumber: row.draftPickNumber ?? undefined,
+    lineupSlot: row.lineupSlot ?? undefined,
+    pickSequence: row.pickSequence ?? undefined,
     pickedAt: row.pickedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

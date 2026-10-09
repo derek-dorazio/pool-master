@@ -2276,7 +2276,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/drafts/{contestId}": {
+    "/api/v1/selections/{contestId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2284,10 +2284,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get current draft state for a contest
-         * @description Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (ACTIVE onwards); otherwise it falls back to the caller's own.
+         * Get current selection state for a contest
+         * @description Returns the current selection-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (ACTIVE onwards); otherwise it falls back to the caller's own.
          */
-        get: operations["getDraftState"];
+        get: operations["getSelectionState"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2296,7 +2296,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/drafts/{contestId}/pick": {
+    "/api/v1/selections/{contestId}/pick": {
         parameters: {
             query?: never;
             header?: never;
@@ -2306,8 +2306,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Submit a draft pick
-         * @description Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. A change that leaves a SUBMITTED entry's lineup short sends the entry back to DRAFT; it must be submitted again to count.
+         * Submit a pick
+         * @description Submits a pick for the current turn and returns the refreshed selection state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. A change that leaves a SUBMITTED entry's lineup short sends the entry back to DRAFT; it must be submitted again to count.
          */
         post: operations["submitContestSelection"];
         delete?: never;
@@ -2316,7 +2316,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/drafts/{contestId}/entries/{entryId}/submit": {
+    "/api/v1/selections/{contestId}/entries/{entryId}/submit": {
         parameters: {
             query?: never;
             header?: never;
@@ -2327,7 +2327,7 @@ export interface paths {
         put?: never;
         /**
          * Submit a contest entry
-         * @description Submits the caller's entry once its lineup is complete, and returns the refreshed draft state. An entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. Submitting an already submitted entry changes nothing. A later pick change that leaves the lineup short sends the entry back to DRAFT. Entries are submitted only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. Only a member of the entry's team may submit it: 403 DRAFT_ENTRY_ACCESS_DENIED otherwise.
+         * @description Submits the caller's entry once its lineup is complete, and returns the refreshed selection state. An entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. Submitting an already submitted entry changes nothing. A later pick change that leaves the lineup short sends the entry back to DRAFT. Entries are submitted only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. Only a member of the entry's team may submit it: 403 ENTRY_ACCESS_DENIED otherwise.
          */
         post: operations["submitContestEntry"];
         delete?: never;
@@ -7297,9 +7297,9 @@ export interface components {
             /** @description Whether this pick was auto-assigned rather than submitted by the entry. Always false for tiered and budget selection, which have no auto-pick. */
             isAutoPicked: boolean;
             /** @description Position of this pick within its entry's roster. Tiered: counted across tier quotas in tier order; budget: the entry's pick ordinal. Null when the pick was not recorded through contest selection. */
-            draftRound: number | null;
+            lineupSlot: number | null;
             /** @description Contest-wide order in which this pick was recorded, across all entries. Null when the pick was not recorded through contest selection. */
-            draftPickNumber: number | null;
+            pickSequence: number | null;
             /**
              * Format: date-time
              * @description When the pick was made (or auto-picked).
@@ -8067,20 +8067,20 @@ export interface components {
              */
             deleted: true;
         };
-        /** @description Optional query parameters for loading draft or selection state. */
-        DraftStateQuery: {
+        /** @description Optional query parameters for loading selection state. */
+        SelectionStateQuery: {
             /** @description Specific contest entry to view within roster-based selection flows. */
             entryId?: string;
         };
-        /** @description Request payload for submitting a draft pick. */
+        /** @description Request payload for submitting a pick. */
         SubmitPickRequest: {
             /** @description Entry making the pick. */
             entryId: string;
             /** @description Participant being selected. */
             participantId: string;
         };
-        /** @description Draft-state response. */
-        DraftStateResponse: {
+        /** @description Selection-state response. */
+        SelectionStateResponse: {
             contestId: string;
             contestName: string;
             /** @enum {string} */
@@ -8088,7 +8088,7 @@ export interface components {
             isTurnBased: boolean;
             isCommissioner?: boolean;
             rosterSize: number;
-            /** @description Contest-configuration subset required by draft-room clients. */
+            /** @description Contest-configuration subset required by selection-room clients. */
             contestConfiguration?: {
                 isExclusive: boolean;
                 rounds?: number;
@@ -8135,7 +8135,7 @@ export interface components {
                  */
                 status: "DRAFT" | "SUBMITTED";
             }[];
-            draftPickHistories: {
+            pickHistories: {
                 pickNumber: number;
                 round: number;
                 pickInRound: number;
@@ -8204,20 +8204,20 @@ export interface components {
                 /** @description Optional label used for compact pick-em presentation. */
                 label: string | null;
             }[];
-            /** @description Bracket pick data when relevant to the draft. */
+            /** @description Bracket pick data when relevant to the selection. */
             bracketMatchups?: {
                 id: string;
                 roundNumber: number;
                 matchNumber: number;
                 label: string | null;
                 isLocked: boolean;
-                /** @description Minimal team identity used in bracket pick-em draft payloads. */
+                /** @description Minimal team identity used in bracket pick-em selection payloads. */
                 topTeam: {
                     id: string;
                     name: string;
                     seed: number | null;
                 } | null;
-                /** @description Minimal team identity used in bracket pick-em draft payloads. */
+                /** @description Minimal team identity used in bracket pick-em selection payloads. */
                 bottomTeam: {
                     id: string;
                     name: string;
@@ -8227,8 +8227,8 @@ export interface components {
                 winnerId: string | null;
             }[];
         };
-        /** @description Draft response returned immediately after a pick mutation. */
-        DraftPickResponse: {
+        /** @description Selection response returned immediately after a pick mutation. */
+        SelectionPickResponse: {
             contestId: string;
             contestName: string;
             /** @enum {string} */
@@ -8236,7 +8236,7 @@ export interface components {
             isTurnBased: boolean;
             isCommissioner?: boolean;
             rosterSize: number;
-            /** @description Contest-configuration subset required by draft-room clients. */
+            /** @description Contest-configuration subset required by selection-room clients. */
             contestConfiguration?: {
                 isExclusive: boolean;
                 rounds?: number;
@@ -8283,7 +8283,7 @@ export interface components {
                  */
                 status: "DRAFT" | "SUBMITTED";
             }[];
-            draftPickHistories: {
+            pickHistories: {
                 pickNumber: number;
                 round: number;
                 pickInRound: number;
@@ -8352,20 +8352,20 @@ export interface components {
                 /** @description Optional label used for compact pick-em presentation. */
                 label: string | null;
             }[];
-            /** @description Bracket pick data when relevant to the draft. */
+            /** @description Bracket pick data when relevant to the selection. */
             bracketMatchups?: {
                 id: string;
                 roundNumber: number;
                 matchNumber: number;
                 label: string | null;
                 isLocked: boolean;
-                /** @description Minimal team identity used in bracket pick-em draft payloads. */
+                /** @description Minimal team identity used in bracket pick-em selection payloads. */
                 topTeam: {
                     id: string;
                     name: string;
                     seed: number | null;
                 } | null;
-                /** @description Minimal team identity used in bracket pick-em draft payloads. */
+                /** @description Minimal team identity used in bracket pick-em selection payloads. */
                 bottomTeam: {
                     id: string;
                     name: string;
@@ -17828,7 +17828,7 @@ export interface operations {
             };
         };
     };
-    getDraftState: {
+    getSelectionState: {
         parameters: {
             query?: {
                 /** @description Specific contest entry to view within roster-based selection flows. */
@@ -17842,13 +17842,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Draft-state response. */
+            /** @description Selection-state response. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DraftStateResponse"];
+                    "application/json": components["schemas"]["SelectionStateResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -17904,13 +17904,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Draft response returned immediately after a pick mutation. */
+            /** @description Selection response returned immediately after a pick mutation. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DraftPickResponse"];
+                    "application/json": components["schemas"]["SelectionPickResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -17981,13 +17981,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Draft-state response. */
+            /** @description Selection-state response. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DraftStateResponse"];
+                    "application/json": components["schemas"]["SelectionStateResponse"];
                 };
             };
             /** @description Standard API error envelope. */

@@ -6,7 +6,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { ContestEntryPage } from './contest-entry-page';
 import { QueryKeys } from '@/lib/query-keys';
 
-type DraftSelectionGroup = {
+type SelectionGroup = {
   groupId: string;
   groupName: string;
   groupNumber: number;
@@ -30,7 +30,7 @@ type DraftSelectionGroup = {
 
 const {
   getContestMock,
-  getDraftStateMock,
+  getSelectionStateMock,
   getEventMock,
   getLeagueMock,
   listContestEntriesMock,
@@ -52,7 +52,7 @@ const {
 
   return {
     getContestMock: vi.fn(),
-    getDraftStateMock: vi.fn(),
+    getSelectionStateMock: vi.fn(),
     getEventMock: vi.fn(),
     getLeagueMock: vi.fn(),
     listContestEntriesMock: vi.fn(),
@@ -65,7 +65,7 @@ const {
 
 bindApiMocks({
   getContest: getContestMock,
-  getDraftState: getDraftStateMock,
+  getSelectionState: getSelectionStateMock,
   getEvent: getEventMock,
   getLeague: getLeagueMock,
   listContestEntries: listContestEntriesMock,
@@ -203,7 +203,7 @@ function primeCommonMocks(overrides?: {
   });
 }
 
-function buildDraftState(selectionGroups: DraftSelectionGroup[]) {
+function buildSelectionState(selectionGroups: SelectionGroup[]) {
   const totalPicks = selectionGroups.reduce((sum, group) => sum + group.picksFromGroup, 0);
   const selectedPicks = selectionGroups.reduce(
     (sum, group) => sum + group.selectedParticipantIds.length,
@@ -245,7 +245,7 @@ function buildDraftState(selectionGroups: DraftSelectionGroup[]) {
     selectedEntryName: 'Birdie Hunters Entry 1',
     tiebreakerValue: null,
     selectionGroups,
-    draftPickHistories: [],
+    pickHistories: [],
     availableParticipantIds: selectionGroups.flatMap((group) =>
       group.participants.map((participant) => participant.sportEventParticipantId),
     ),
@@ -284,7 +284,7 @@ function createDeferred<T>() {
 describe('ContestEntryPage', () => {
   afterEach(() => {
     getContestMock.mockReset();
-    getDraftStateMock.mockReset();
+    getSelectionStateMock.mockReset();
     getEventMock.mockReset();
     getLeagueMock.mockReset();
     listContestEntriesMock.mockReset();
@@ -306,7 +306,7 @@ describe('ContestEntryPage', () => {
     ]);
     const scrollIntoViewMock = vi.fn();
     Element.prototype.scrollIntoView = scrollIntoViewMock;
-    getDraftStateMock.mockImplementation(() => Promise.resolve({
+    getSelectionStateMock.mockImplementation(() => Promise.resolve({
       data: {
         contestId: 'contest-1',
         contestName: 'Bohler Masters Tiered',
@@ -387,7 +387,7 @@ describe('ContestEntryPage', () => {
             ],
           },
         ],
-        draftPickHistories: [],
+        pickHistories: [],
         availableParticipantIds: ['sep-1', 'sep-2'],
         isComplete: Array.from(selectedParticipantIdsByTier.values()).every((ids) => ids.length > 0),
       },
@@ -416,11 +416,11 @@ describe('ContestEntryPage', () => {
       if (body.participantId === 'sep-2') {
         selectedParticipantIdsByTier.set('tier-2', ['sep-2']);
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- getDraftStateMock is an untyped vi.fn() (bindApiMocks expects a loose mock shape); this just forwards its mocked resolution.
-      return getDraftStateMock();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- getSelectionStateMock is an untyped vi.fn() (bindApiMocks expects a loose mock shape); this just forwards its mocked resolution.
+      return getSelectionStateMock();
     });
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- as above: forwards the untyped draft-state mock's resolution.
-    submitContestEntryMock.mockImplementation(() => getDraftStateMock());
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- as above: forwards the untyped selection-state mock's resolution.
+    submitContestEntryMock.mockImplementation(() => getSelectionStateMock());
 
     renderContestEntryPage();
 
@@ -489,7 +489,7 @@ describe('ContestEntryPage', () => {
     );
   });
 
-  it('pool-master-rop.20 preserves unsaved entry details across draft-state query refetches', async () => {
+  it('pool-master-rop.20 preserves unsaved entry details across selection-state query refetches', async () => {
     primeCommonMocks();
     const selectionGroups = [
       {
@@ -503,9 +503,9 @@ describe('ContestEntryPage', () => {
         ],
       },
     ];
-    getDraftStateMock.mockResolvedValue({
+    getSelectionStateMock.mockResolvedValue({
       data: {
-        ...buildDraftState(selectionGroups),
+        ...buildSelectionState(selectionGroups),
         tiebreakerValue: -8,
       },
     });
@@ -519,20 +519,20 @@ describe('ContestEntryPage', () => {
     fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-select'), {
       target: { value: '-12' },
     });
-    getDraftStateMock.mockResolvedValueOnce({
+    getSelectionStateMock.mockResolvedValueOnce({
       data: {
-        ...buildDraftState(selectionGroups),
+        ...buildSelectionState(selectionGroups),
         selectedEntryName: 'Server Snapshot Entry',
         tiebreakerValue: -3,
       },
     });
 
     await act(async () => {
-      await queryClient.refetchQueries({ queryKey: QueryKeys.draftStates.detail('contest-1', 'entry-1') });
+      await queryClient.refetchQueries({ queryKey: QueryKeys.selectionStates.detail('contest-1', 'entry-1') });
     });
 
     await waitFor(() =>
-      expect(queryClient.getQueryData(QueryKeys.draftStates.detail('contest-1', 'entry-1'))).toMatchObject({
+      expect(queryClient.getQueryData(QueryKeys.selectionStates.detail('contest-1', 'entry-1'))).toMatchObject({
         selectedEntryName: 'Server Snapshot Entry',
         tiebreakerValue: -3,
       }),
@@ -547,7 +547,7 @@ describe('ContestEntryPage', () => {
     [0, 'E'],
   ])('shows read-only entry detail once the contest is live, with a %i tiebreaker rendered as "%s"', async (tiebreakerValue, expectedText) => {
     primeCommonMocks({ contestStatus: 'ACTIVE' });
-    getDraftStateMock.mockResolvedValue({
+    getSelectionStateMock.mockResolvedValue({
       data: {
         contestId: 'contest-1',
         contestName: 'Bohler Masters Tiered',
@@ -598,7 +598,7 @@ describe('ContestEntryPage', () => {
             ],
           },
         ],
-        draftPickHistories: [],
+        pickHistories: [],
         availableParticipantIds: [],
         isComplete: true,
       },
@@ -620,7 +620,7 @@ describe('ContestEntryPage', () => {
   // The old page-only wording for a live contest was "Scoring live"; it must be gone.
   it('labels an ACTIVE contest "Live" in the badge and Contest phase row, as on every contest page', async () => {
     primeCommonMocks({ contestStatus: 'ACTIVE' });
-    getDraftStateMock.mockResolvedValue({ data: buildDraftState([]) });
+    getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([]) });
 
     renderContestEntryPage();
 
@@ -642,8 +642,8 @@ describe('ContestEntryPage', () => {
         },
       },
     });
-    getDraftStateMock.mockResolvedValue({
-      data: buildDraftState([
+    getSelectionStateMock.mockResolvedValue({
+      data: buildSelectionState([
         {
           groupId: 'tier-1',
           groupName: 'Tier 1',
@@ -665,9 +665,9 @@ describe('ContestEntryPage', () => {
     expect(screen.queryByText('Editable until the event starts')).not.toBeInTheDocument();
   });
 
-  it('shows the entry load failure state when the draft-state query fails', async () => {
+  it('shows the entry load failure state when the selection-state query fails', async () => {
     primeCommonMocks();
-    getDraftStateMock.mockRejectedValue(new Error('Draft state unavailable'));
+    getSelectionStateMock.mockRejectedValue(new Error('Selection state unavailable'));
 
     renderContestEntryPage();
 
@@ -699,8 +699,8 @@ describe('ContestEntryPage', () => {
       },
     ];
 
-    getDraftStateMock.mockImplementation(() =>
-      Promise.resolve({ data: buildDraftState(buildSelectionGroups()) }),
+    getSelectionStateMock.mockImplementation(() =>
+      Promise.resolve({ data: buildSelectionState(buildSelectionGroups()) }),
     );
     submitContestSelectionMock.mockImplementation(({ body }: { body: { participantId: string } }) => {
       if (selectedParticipantIds.includes(body.participantId)) {
@@ -711,7 +711,7 @@ describe('ContestEntryPage', () => {
         selectedParticipantIds = [...selectedParticipantIds, body.participantId];
       }
 
-      return Promise.resolve({ data: buildDraftState(buildSelectionGroups()) });
+      return Promise.resolve({ data: buildSelectionState(buildSelectionGroups()) });
     });
 
     renderContestEntryPage();
@@ -773,10 +773,10 @@ describe('ContestEntryPage', () => {
         ],
       },
     ];
-    const deferredSelection = createDeferred<{ data: ReturnType<typeof buildDraftState> }>();
+    const deferredSelection = createDeferred<{ data: ReturnType<typeof buildSelectionState> }>();
 
-    getDraftStateMock.mockImplementation(() =>
-      Promise.resolve({ data: buildDraftState(buildSelectionGroups()) }),
+    getSelectionStateMock.mockImplementation(() =>
+      Promise.resolve({ data: buildSelectionState(buildSelectionGroups()) }),
     );
     submitContestSelectionMock.mockImplementation(() => deferredSelection.promise);
 
@@ -791,13 +791,13 @@ describe('ContestEntryPage', () => {
     });
 
     selectedParticipantIds = ['sep-1'];
-    deferredSelection.resolve({ data: buildDraftState(buildSelectionGroups()) });
+    deferredSelection.resolve({ data: buildSelectionState(buildSelectionGroups()) });
   });
 
   it('keeps the member on the entry page with the refusal shown when saving the finished entry is refused', async () => {
     primeCommonMocks();
-    getDraftStateMock.mockResolvedValue({
-      data: buildDraftState([
+    getSelectionStateMock.mockResolvedValue({
+      data: buildSelectionState([
         {
           groupId: 'tier-1',
           groupName: 'Tier 1',
@@ -831,8 +831,8 @@ describe('ContestEntryPage', () => {
 
   it('puts a refused pick back and shows the refusal, logged as a rejection rather than a crash', async () => {
     primeCommonMocks();
-    getDraftStateMock.mockResolvedValue({
-      data: buildDraftState([
+    getSelectionStateMock.mockResolvedValue({
+      data: buildSelectionState([
         {
           groupId: 'tier-1',
           groupName: 'Tier 1',
@@ -866,7 +866,7 @@ describe('ContestEntryPage', () => {
 describe('ContestEntryPage — selection rules the server enforces', () => {
   afterEach(() => {
     getContestMock.mockReset();
-    getDraftStateMock.mockReset();
+    getSelectionStateMock.mockReset();
     getEventMock.mockReset();
     getLeagueMock.mockReset();
     listContestEntriesMock.mockReset();
@@ -907,15 +907,15 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
   it('while a swap in a full tier is saving, drops the golfer picked most recently, as the server will', async () => {
     primeCommonMocks();
     // Listed in tier order Scottie then Rory, but Rory was picked first and Scottie second.
-    const draftState = {
-      ...buildDraftState([twoPickTier(['sep-1', 'sep-2'])]),
-      draftPickHistories: [
+    const selectionState = {
+      ...buildSelectionState([twoPickTier(['sep-1', 'sep-2'])]),
+      pickHistories: [
         historyRow('sep-2', 'Rory McIlroy', '2026-04-15T10:00:00.000Z'),
         historyRow('sep-1', 'Scottie Scheffler', '2026-04-15T11:00:00.000Z'),
       ],
     };
-    getDraftStateMock.mockResolvedValue({ data: draftState });
-    const deferred = createDeferred<{ data: ReturnType<typeof buildDraftState> }>();
+    getSelectionStateMock.mockResolvedValue({ data: selectionState });
+    const deferred = createDeferred<{ data: ReturnType<typeof buildSelectionState> }>();
     submitContestSelectionMock.mockImplementation(() => deferred.promise);
 
     renderContestEntryPage();
@@ -929,12 +929,12 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     expect(screen.getByTestId('contest-entry-participant-sep-2')).toHaveTextContent('Selected');
     expect(screen.getByTestId('contest-entry-participant-sep-1')).not.toHaveTextContent('Selected');
 
-    deferred.resolve({ data: buildDraftState([twoPickTier(['sep-2', 'sep-3'])]) });
+    deferred.resolve({ data: buildSelectionState([twoPickTier(['sep-2', 'sep-3'])]) });
   });
 
   it('puts the selection back and says why when the server refuses a pick', async () => {
     primeCommonMocks();
-    getDraftStateMock.mockResolvedValue({ data: buildDraftState([twoPickTier(['sep-1'])]) });
+    getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([twoPickTier(['sep-1'])]) });
     submitContestSelectionMock.mockResolvedValue({
       error: { error: { code: 'CONTEST_ENTRY_LOCKED', message: 'Picks can no longer be changed.' } },
       response: { status: 409 },
@@ -953,9 +953,9 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
   function primeHiddenOtherTeamEntry() {
     primeCommonMocks();
     // The server answers the viewer's own entry when another team's is asked for before lock.
-    getDraftStateMock.mockResolvedValue({
+    getSelectionStateMock.mockResolvedValue({
       data: {
-        ...buildDraftState([twoPickTier(['sep-1'])]),
+        ...buildSelectionState([twoPickTier(['sep-1'])]),
         entries: [
           { id: 'entry-1', userId: 'user-other', name: 'Other Team Entry 1', isOnClock: false, status: 'DRAFT' },
           { id: 'entry-mine', userId: 'user-1', name: 'My Own Entry', isOnClock: false, status: 'DRAFT' },
@@ -1036,7 +1036,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     getEventMock.mockResolvedValue({
       data: { event: { id: 'event-1', startDate: '2020-04-10T12:00:00.000Z', endDate: null } },
     });
-    getDraftStateMock.mockResolvedValue({ data: buildDraftState([twoPickTier(['sep-1'])]) });
+    getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([twoPickTier(['sep-1'])]) });
 
     renderContestEntryPage();
 
@@ -1066,7 +1066,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     getEventMock.mockResolvedValue({
       data: { event: { id: 'event-1', startDate: '2099-04-10T12:00:00.000Z', endDate: null } },
     });
-    getDraftStateMock.mockResolvedValue({ data: buildDraftState([twoPickTier(['sep-1'])]) });
+    getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([twoPickTier(['sep-1'])]) });
 
     renderContestEntryPage();
 
@@ -1075,8 +1075,8 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
   it('shows a live contest\'s lineup read-only, with the saved tiebreaker', async () => {
     primeCommonMocks({ contestStatus: 'ACTIVE' });
-    getDraftStateMock.mockResolvedValue({
-      data: { ...buildDraftState([twoPickTier(['sep-1', 'sep-2'])]), tiebreakerValue: -6 },
+    getSelectionStateMock.mockResolvedValue({
+      data: { ...buildSelectionState([twoPickTier(['sep-1', 'sep-2'])]), tiebreakerValue: -6 },
     });
 
     renderContestEntryPage();
@@ -1097,16 +1097,16 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
       },
     ];
 
-    function draftStateWithStatus(status: 'DRAFT' | 'SUBMITTED', groups = completeGroups()) {
+    function selectionStateWithStatus(status: 'DRAFT' | 'SUBMITTED', groups = completeGroups()) {
       return {
-        ...buildDraftState(groups),
+        ...buildSelectionState(groups),
         entries: [{ id: 'entry-1', userId: 'user-1', name: 'Birdie Hunters Entry 1', isOnClock: false, status }],
       };
     }
 
     it('marks a complete but unsubmitted entry Not submitted and says it only counts once submitted', async () => {
       primeCommonMocks();
-      getDraftStateMock.mockResolvedValue({ data: draftStateWithStatus('DRAFT') });
+      getSelectionStateMock.mockResolvedValue({ data: selectionStateWithStatus('DRAFT') });
 
       renderContestEntryPage();
 
@@ -1117,7 +1117,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
     it('marks a submitted entry Submitted, with no warning and a Save entry action', async () => {
       primeCommonMocks();
-      getDraftStateMock.mockResolvedValue({ data: draftStateWithStatus('SUBMITTED') });
+      getSelectionStateMock.mockResolvedValue({ data: selectionStateWithStatus('SUBMITTED') });
 
       renderContestEntryPage();
 
@@ -1128,9 +1128,9 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
     it('shows the entry back as Not submitted when unselecting a golfer leaves a submitted lineup short', async () => {
       primeCommonMocks();
-      getDraftStateMock.mockResolvedValue({ data: draftStateWithStatus('SUBMITTED') });
+      getSelectionStateMock.mockResolvedValue({ data: selectionStateWithStatus('SUBMITTED') });
       submitContestSelectionMock.mockResolvedValue({
-        data: draftStateWithStatus('DRAFT', [
+        data: selectionStateWithStatus('DRAFT', [
           { ...completeGroups()[0], selectedParticipantIds: [], participants: [buildGolfParticipant('sep-1', 'Scottie Scheffler', 1, false)] },
         ]),
       });
@@ -1148,7 +1148,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
     it('stays on the page and shows the server\'s reason when a submit is refused, logged as a rejection', async () => {
       primeCommonMocks();
-      getDraftStateMock.mockResolvedValue({ data: draftStateWithStatus('DRAFT') });
+      getSelectionStateMock.mockResolvedValue({ data: selectionStateWithStatus('DRAFT') });
       updateContestEntryMock.mockResolvedValue({
         data: {
           contestId: 'contest-1',

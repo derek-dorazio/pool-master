@@ -36,7 +36,7 @@ import { contestManagementModule } from '../../packages/core-api/src/modules/con
 import { contestConfigTemplatesModule } from '../../packages/core-api/src/modules/contest-config-templates/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { usersModule } from '../../packages/core-api/src/modules/users/routes';
-import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
+import { selectionsModule } from '../../packages/core-api/src/modules/selections/routes';
 import { eventsModule } from '../../packages/core-api/src/modules/events/routes';
 import { sportsModule } from '../../packages/core-api/src/modules/sports/routes';
 import { sportLeaguesModule } from '../../packages/core-api/src/modules/sport-leagues/routes';
@@ -180,7 +180,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
-  testApp.register(draftsModule, { prefix: '/api/v1/drafts', mailDelivery });
+  testApp.register(selectionsModule, { prefix: '/api/v1/selections', mailDelivery });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService });
   testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
 

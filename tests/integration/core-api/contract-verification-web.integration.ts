@@ -16,7 +16,7 @@ import {
   ContestConfigTemplateListResponseSchema,
   ContestManagementResponseSchema,
   ContestResponseSchema,
-  DraftStateResponseSchema,
+  SelectionStateResponseSchema,
   ErrorEnvelopeSchema,
   SportEventListResponseSchema,
   GenerateInviteLinkResponseSchema,
@@ -705,7 +705,7 @@ describe('Contract verification (web)', () => {
     expect(SuccessResponseSchema.safeParse(deleteRes.json()).success).toBe(true);
   });
 
-  it('draft room routes match DraftStateResponseSchema', async () => {
+  it('selection room routes match SelectionStateResponseSchema', async () => {
     const owner = await createTestUser({ displayName: 'Contract Draft Owner' });
 
     const leagueRes = await getApp().inject({
@@ -716,7 +716,7 @@ describe('Contract verification (web)', () => {
     });
     const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
-    // #245 retired the event-less legacy create this contract once went through; the draft-state
+    // #245 retired the event-less legacy create this contract once went through; the selection-state
     // contract does not depend on how the contest was made, so the row is a fixture.
     const contest = await getPrisma().contest.create({
       data: {
@@ -745,12 +745,12 @@ describe('Contract verification (web)', () => {
 
     const stateRes = await getApp().inject({
       method: 'GET',
-      url: API_ROUTES.drafts.state(contestId),
+      url: API_ROUTES.selections.state(contestId),
       headers: owner.headers,
     });
 
     expect(stateRes.statusCode).toBe(200);
-    expect(DraftStateResponseSchema.safeParse(stateRes.json()).success).toBe(true);
+    expect(SelectionStateResponseSchema.safeParse(stateRes.json()).success).toBe(true);
   });
 
   it('active negative routes match ErrorEnvelopeSchema', async () => {

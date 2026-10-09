@@ -141,8 +141,8 @@ describe('RosterPick CRUD integration', () => {
       data: {
         entryId,
         sportEventParticipantId,
-        draftRound: 1,
-        draftPickNumber: 1,
+        lineupSlot: 1,
+        pickSequence: 1,
         pickedAt: new Date('2026-04-10T12:05:00.000Z'),
         contestFormat: 'ROSTER',
         isAutoPicked: false,
@@ -162,14 +162,14 @@ describe('RosterPick CRUD integration', () => {
     const updatedPick = await prisma.contestEntryPick.update({
       where: { id: createdPick.id },
       data: {
-        draftRound: 2,
-        draftPickNumber: 3,
+        lineupSlot: 2,
+        pickSequence: 3,
         isAutoPicked: true,
       },
     });
 
-    expect(updatedPick.draftRound).toBe(2);
-    expect(updatedPick.draftPickNumber).toBe(3);
+    expect(updatedPick.lineupSlot).toBe(2);
+    expect(updatedPick.pickSequence).toBe(3);
     expect(updatedPick.isAutoPicked).toBe(true);
 
     await expect(
@@ -177,8 +177,8 @@ describe('RosterPick CRUD integration', () => {
         data: {
           entryId,
           sportEventParticipantId,
-          draftRound: 3,
-          draftPickNumber: 4,
+          lineupSlot: 3,
+          pickSequence: 4,
           pickedAt: new Date('2026-04-10T12:06:00.000Z'),
           contestFormat: 'ROSTER',
         isAutoPicked: false,

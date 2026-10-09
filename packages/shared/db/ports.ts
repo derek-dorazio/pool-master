@@ -209,7 +209,7 @@ export interface SquadMembershipRepository {
   findBySquad(squadId: string, includeInactive?: boolean): Promise<SquadMembership[]>;
   /**
    * The memberships of several squads at once, join order then id. One grouped query instead of
-   * one per squad — added in #324 so a draft room can resolve every entry's owner without a
+   * one per squad — added in #324 so a selection room can resolve every entry's owner without a
    * query per entry, the same reason `countActiveByLeagues` exists above.
    */
   findBySquads(squadIds: readonly string[], includeInactive?: boolean): Promise<SquadMembership[]>;
@@ -292,7 +292,7 @@ export interface ContestRepository {
    * runs of the same event transition (a provider re-sending it) cannot both apply it.
    */
   transitionStatus(id: string, transition: ContestStatusTransition): Promise<boolean>;
-  /** Deletes a contest with its entries, picks, draft state, configuration and rules. */
+  /** Deletes a contest with its entries, picks, selection state, configuration and rules. */
   delete(id: string): Promise<void>;
 }
 

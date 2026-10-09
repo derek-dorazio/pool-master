@@ -30,7 +30,7 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
   }
 
   async findByContest(contestId: string): Promise<ContestEntry[]> {
-    // Creation order, then id — the order a draft room lists entries in (#324). Previously
+    // Creation order, then id — the order a selection room lists entries in (#324). Previously
     // unordered, so no caller could have depended on anything else.
     const rows = await this.prisma.contestEntry.findMany({
       where: { contestId },

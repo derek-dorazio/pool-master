@@ -115,10 +115,10 @@ export const API_ROUTES = {
       `/api/v1/leagues/${id}/contest-management/contests/${contestId}/configuration`,
   },
 
-  // Drafts
-  drafts: {
-    state: (contestId: string) => `/api/v1/drafts/${contestId}`,
-    pick: (contestId: string) => `/api/v1/drafts/${contestId}/pick`,
+  // Selections
+  selections: {
+    state: (contestId: string) => `/api/v1/selections/${contestId}`,
+    pick: (contestId: string) => `/api/v1/selections/${contestId}/pick`,
   },
 
   observability: {

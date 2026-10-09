@@ -1,8 +1,8 @@
 /**
- * Draft room → DTO (#324).
+ * Selection room → DTO (#324).
  *
- * `DraftService` answers with a `DraftRoomView` in domain terms; the projection onto the
- * published `DraftStateResponse` / `DraftPickResponse` shape is here. Both responses have
+ * `SelectionService` answers with a `SelectionView` in domain terms; the projection onto the
+ * published `SelectionStateResponse` / `SelectionPickResponse` shape is here. Both responses have
  * always carried the same fields, so there is one projection, not two.
  *
  * This file is where the module's DTO shaping lives because `rules:check:route-discipline`
@@ -12,33 +12,33 @@
  */
 
 import type {
-  DraftContestConfigurationDto,
-  DraftEntryDto,
-  DraftPickHistoryDto,
-  DraftSelectionGroupDto,
-  DraftSelectionParticipantDto,
-  DraftStateResponse,
+  SelectionContestConfigurationDto,
+  SelectionEntryDto,
+  PickHistoryDto,
+  SelectionGroupDto,
+  SelectionParticipantDto,
+  SelectionStateResponse,
 } from '@poolmaster/shared/dto';
 import type { ContestConfiguration } from '@poolmaster/shared/domain';
 import type {
-  DraftRoomEntry,
-  DraftRoomPick,
-  DraftRoomView,
-  DraftSelectionGroup,
-  DraftTierConfig,
-} from '../modules/drafts/types';
+  SelectionEntry,
+  PickHistoryRow,
+  SelectionView,
+  SelectionGroup,
+  SelectionTierConfig,
+} from '../modules/selections/types';
 
 /**
- * The configuration subset a draft-room client needs. `rosterSize` prefers the room's computed
+ * The configuration subset a selection-room client needs. `rosterSize` prefers the room's computed
  * size and falls back through the configuration's own roster size, pick count and round count —
  * a chain of `||` rather than `??`, so a stored zero falls through to the next candidate the
  * same way a null does.
  */
-export function toDraftContestConfigurationDto(
+export function toSelectionContestConfigurationDto(
   configuration: ContestConfiguration | null,
-  tiers: readonly DraftTierConfig[],
+  tiers: readonly SelectionTierConfig[],
   rosterSize: number,
-): DraftContestConfigurationDto | null {
+): SelectionContestConfigurationDto | null {
   if (!configuration) return null;
   return {
     isExclusive: configuration.isExclusive ?? false,
@@ -55,11 +55,11 @@ export function toDraftContestConfigurationDto(
     picksPerPeriod: configuration.picksPerPeriod ?? undefined,
     roundValues: configuration.roundValues ?? undefined,
     startRound: configuration.startRound ?? undefined,
-    tierConfig: tiers.length > 0 ? tiers.map(toDraftTierConfigDto) : undefined,
+    tierConfig: tiers.length > 0 ? tiers.map(toSelectionTierConfigDto) : undefined,
   };
 }
 
-function toDraftTierConfigDto(tier: DraftTierConfig) {
+function toSelectionTierConfigDto(tier: SelectionTierConfig) {
   return {
     tierId: tier.tierId,
     tierName: tier.tierName,
@@ -68,9 +68,9 @@ function toDraftTierConfigDto(tier: DraftTierConfig) {
   };
 }
 
-function toDraftSelectionParticipantDto(
-  participant: DraftSelectionGroup['participants'][number],
-): DraftSelectionParticipantDto {
+function toSelectionParticipantDto(
+  participant: SelectionGroup['participants'][number],
+): SelectionParticipantDto {
   return {
     sportEventParticipantId: participant.sportEventParticipantId,
     participantId: participant.participantId,
@@ -87,8 +87,8 @@ function toDraftSelectionParticipantDto(
   };
 }
 
-export function toDraftSelectionGroupDto(group: DraftSelectionGroup): DraftSelectionGroupDto {
-  const participants = group.participants.map(toDraftSelectionParticipantDto);
+export function toSelectionGroupDto(group: SelectionGroup): SelectionGroupDto {
+  const participants = group.participants.map(toSelectionParticipantDto);
   return {
     groupId: group.groupId,
     groupName: group.groupName,
@@ -106,7 +106,7 @@ export function toDraftSelectionGroupDto(group: DraftSelectionGroup): DraftSelec
  * (`sportEventParticipantId`), not the canonical participant's — that is what the published
  * contract has always carried, since it is the id a client sends back to pick or unpick.
  */
-export function toDraftPickHistoryDto(pick: DraftRoomPick): DraftPickHistoryDto {
+export function toPickHistoryDto(pick: PickHistoryRow): PickHistoryDto {
   return {
     pickNumber: pick.pickNumber,
     round: pick.round,
@@ -125,7 +125,7 @@ export function toDraftPickHistoryDto(pick: DraftRoomPick): DraftPickHistoryDto 
   };
 }
 
-function toDraftEntryDto(entry: DraftRoomEntry): DraftEntryDto {
+function toSelectionEntryDto(entry: SelectionEntry): SelectionEntryDto {
   return {
     id: entry.id,
     userId: entry.userId,
@@ -136,10 +136,10 @@ function toDraftEntryDto(entry: DraftRoomEntry): DraftEntryDto {
 }
 
 /**
- * The whole room. Used for both published draft responses: reading the state, and the
+ * The whole room. Used for both published selection responses: reading the state, and the
  * refreshed state a submission answers with.
  */
-export function toDraftStateResponse(view: DraftRoomView): DraftStateResponse {
+export function toSelectionStateResponse(view: SelectionView): SelectionStateResponse {
   return {
     contestId: view.contest.id,
     contestName: view.contest.name,
@@ -147,7 +147,7 @@ export function toDraftStateResponse(view: DraftRoomView): DraftStateResponse {
     isTurnBased: false,
     isCommissioner: view.isCommissioner,
     rosterSize: view.rosterSize,
-    contestConfiguration: toDraftContestConfigurationDto(
+    contestConfiguration: toSelectionContestConfigurationDto(
       view.configuration,
       view.tiers,
       view.rosterSize,
@@ -163,12 +163,12 @@ export function toDraftStateResponse(view: DraftRoomView): DraftStateResponse {
     isMyPick: view.canCurrentUserSubmit,
     currentTurnStartedAt: null,
     timePerPickSeconds: 0,
-    entries: view.entries.map(toDraftEntryDto),
+    entries: view.entries.map(toSelectionEntryDto),
     selectedEntryId: view.selectedEntryId,
     selectedEntryName: view.selectedEntryName,
     tiebreakerValue: view.tiebreakerValue,
-    selectionGroups: view.selectionGroups.map(toDraftSelectionGroupDto),
-    draftPickHistories: view.picks.map(toDraftPickHistoryDto),
+    selectionGroups: view.selectionGroups.map(toSelectionGroupDto),
+    pickHistories: view.picks.map(toPickHistoryDto),
     availableParticipantIds: view.availableSportEventParticipantIds,
     isComplete: view.isComplete,
   };

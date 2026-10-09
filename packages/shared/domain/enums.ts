@@ -177,21 +177,15 @@ export const SurvivorStyle = {
 } as const;
 export type SurvivorStyle = (typeof SurvivorStyle)[keyof typeof SurvivorStyle];
 
-// --- Draft Session ---
+// --- Selection ---
 
-export const DraftMode = {
-  LIVE: 'LIVE',
-  ASYNC: 'ASYNC',
-} as const;
-export type DraftMode = (typeof DraftMode)[keyof typeof DraftMode];
-
-export const DraftStatus = {
+export const SelectionStatus = {
   PENDING: 'PENDING',
   LIVE: 'LIVE',
   PAUSED: 'PAUSED',
   COMPLETE: 'COMPLETE',
 } as const;
-export type DraftStatus = (typeof DraftStatus)[keyof typeof DraftStatus];
+export type SelectionStatus = (typeof SelectionStatus)[keyof typeof SelectionStatus];
 
 // --- Sport Event Lifecycle ---
 
@@ -291,7 +285,7 @@ export type LegacyParticipantStatus = 'ACTIVE' | 'INACTIVE' | ParticipantInactiv
  * Derives the pre-`isActive`/`inactiveReason` legacy participant-status string
  * (`'ACTIVE'` / `'INACTIVE'` / a `ParticipantInactiveReason`) some response
  * shapes still expose on the wire (`ContestEntryParticipantDetailDto`,
- * the draft-room selection-participant status).
+ * the selection-room selection-participant status).
  * New endpoints should read `isActive`/`inactiveReason` directly instead of this
  * string — see plans/124 §4.1. Single source of truth so every call site derives
  * the same value the same way rather than re-implementing the ternary.

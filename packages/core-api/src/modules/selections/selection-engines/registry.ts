@@ -1,9 +1,9 @@
 /**
- * Which engine serves which selection type (#198). Adding a selection type to the draft room
+ * Which engine serves which selection type (#198). Adding a selection type to the selection room
  * is adding an engine here; the shared handler does not change.
  *
  * A type with no entry (`SNAKE_DRAFT`, rebuilt under #199, and the deferred catalog types) has
- * no engine, and the room answers it with 501 `DRAFT_MODE_UNSUPPORTED`.
+ * no engine, and the room answers it with 501 `SELECTION_TYPE_UNSUPPORTED`.
  */
 
 import { SelectionType } from '@poolmaster/shared/domain';
@@ -20,7 +20,7 @@ const ENGINE_BY_SELECTION_TYPE: Readonly<Partial<Record<SelectionType, Selection
   [SelectionType.BUDGET_PICK]: budgetPickSelectionEngine,
 };
 
-/** The engine for a selection type, or undefined when the draft room does not serve it. */
+/** The engine for a selection type, or undefined when the selection room does not serve it. */
 export function findSelectionEngine(selectionType: SelectionType): SelectionEngine | undefined {
   return ENGINE_BY_SELECTION_TYPE[selectionType];
 }

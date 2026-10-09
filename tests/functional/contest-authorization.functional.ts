@@ -16,7 +16,7 @@ import {
   generateInviteLink,
   getContest,
   getContestEntry,
-  getDraftState,
+  getSelectionState,
   getGolfContestLeaderboard,
   getMyContestEntry,
   leaveContest,
@@ -169,7 +169,7 @@ describe('SDK Functional: contest reads and entry access (#291)', () => {
       listContestEntries: await listContestEntries({ client: outsider.client, path: { contestId } }),
       getContestEntry: await getContestEntry({ client: outsider.client, path: { contestId, entryId } }),
       getGolfContestLeaderboard: await getGolfContestLeaderboard({ client: outsider.client, path: { contestId } }),
-      getDraftState: await getDraftState({ client: outsider.client, path: { contestId } }),
+      getSelectionState: await getSelectionState({ client: outsider.client, path: { contestId } }),
       listContests: await listContests({ client: outsider.client, path: { id: league.id } }),
     };
     // All five at once, so a failure names every read that let the outsider through.
@@ -178,7 +178,7 @@ describe('SDK Functional: contest reads and entry access (#291)', () => {
         listContestEntries: 403,
         getContestEntry: 403,
         getGolfContestLeaderboard: 403,
-        getDraftState: 403,
+        getSelectionState: 403,
         listContests: 403,
       });
     for (const response of Object.values(reads)) {

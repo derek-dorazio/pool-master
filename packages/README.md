@@ -50,9 +50,9 @@ Where to look instead, in order of authority:
 
 `core-api` has no package README, deliberately: #140 closed without adding one.
 
-### Draft Module (`modules/drafts/`)
+### Draft Module (`modules/selections/`)
 
-It publishes three operations, `getDraftState`, `submitContestSelection` and
+It publishes three operations, `getSelectionState`, `submitContestSelection` and
 `submitContestEntry` (#481: an entry counts only once its owner submits a complete lineup). It was the last
 module holding route plumbing, actor resolution, direct `prisma.` calls, the selection rules
 and response mapping in a single `routes.ts`; #346 extracted the service layer, so the
@@ -67,7 +67,7 @@ checked, return typed error codes rather than free-text reasons, and need no pre
 in-memory snapshot of every tier, entry and pick. Do not reintroduce that shape — pure rule
 functions belong as helpers inside the service #324 creates.
 
-Which selection types the draft room serves is decided in `routes.ts` itself: `TIERED` and
+Which selection types the selection room serves is decided in `routes.ts` itself: `TIERED` and
 `BUDGET_PICK` reach the roster-selection path; everything else falls through to the
 unsupported branch below. `BUDGET_PICK` reaches it with no budget enforced — the spend is
 never computed and submission is never gated, so the format is live and ignores its own
@@ -75,7 +75,7 @@ defining rule. See #93.
 
 Turn-based selection (snake draft) has no implementation: it was removed in #200 and its
 rebuild is deferred to #199. `SelectionType.SNAKE_DRAFT` remains a valid enum value, and a
-contest configured with it gets `501 DRAFT_MODE_UNSUPPORTED` from the draft-room endpoints.
+contest configured with it gets `501 SELECTION_TYPE_UNSUPPORTED` from the selection-room endpoints.
 
 The active backend-first pass centers on current PoolMaster web flows and uses sport-specific read models for sport-specific leaderboards. Golf event scoring is stored on event participant round and standing tables; contest entries keep pick pointers and Golf leaderboard rows are computed from those event-side standings.
 

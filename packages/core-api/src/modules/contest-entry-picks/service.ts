@@ -47,7 +47,7 @@ export class ContestEntryPickService {
    * Insert a ContestEntryPick. Resolves `contestFormat` from the parent
    * contest in the same transaction so the denormalized column is always
    * consistent. Callers pass per-format optional metadata (period / slot /
-   * tier / cost / draftRound / draftPickNumber / isAutoPicked); the service
+   * tier / cost / lineupSlot / pickSequence / isAutoPicked); the service
    * is format-agnostic — the partial unique indexes from plans/117 §7.1
    * enforce the per-format combination rules at the database layer.
    */
@@ -90,8 +90,8 @@ export class ContestEntryPickService {
           tier: input.tier ?? null,
           cost: input.cost ?? null,
           isAutoPicked: input.isAutoPicked ?? false,
-          draftRound: input.draftRound ?? null,
-          draftPickNumber: input.draftPickNumber ?? null,
+          lineupSlot: input.lineupSlot ?? null,
+          pickSequence: input.pickSequence ?? null,
           ...(input.pickedAt !== undefined ? { pickedAt: input.pickedAt } : {}),
         },
       });

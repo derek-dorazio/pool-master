@@ -6497,11 +6497,11 @@ export type ContestEntryPickDto = {
     /**
      * Position of this pick within its entry's roster. Tiered: counted across tier quotas in tier order; budget: the entry's pick ordinal. Null when the pick was not recorded through contest selection.
      */
-    draftRound: number | null;
+    lineupSlot: number | null;
     /**
      * Contest-wide order in which this pick was recorded, across all entries. Null when the pick was not recorded through contest selection.
      */
-    draftPickNumber: number | null;
+    pickSequence: number | null;
     /**
      * When the pick was made (or auto-picked).
      */
@@ -7529,9 +7529,9 @@ export type ContestEntryDeletionResponse = {
 };
 
 /**
- * Optional query parameters for loading draft or selection state.
+ * Optional query parameters for loading selection state.
  */
-export type DraftStateQuery = {
+export type SelectionStateQuery = {
     /**
      * Specific contest entry to view within roster-based selection flows.
      */
@@ -7539,7 +7539,7 @@ export type DraftStateQuery = {
 };
 
 /**
- * Request payload for submitting a draft pick.
+ * Request payload for submitting a pick.
  */
 export type SubmitPickRequest = {
     /**
@@ -7553,9 +7553,9 @@ export type SubmitPickRequest = {
 };
 
 /**
- * Draft-state response.
+ * Selection-state response.
  */
-export type DraftStateResponse = {
+export type SelectionStateResponse = {
     contestId: string;
     contestName: string;
     selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
@@ -7563,7 +7563,7 @@ export type DraftStateResponse = {
     isCommissioner?: boolean;
     rosterSize: number;
     /**
-     * Contest-configuration subset required by draft-room clients.
+     * Contest-configuration subset required by selection-room clients.
      */
     contestConfiguration?: {
         isExclusive: boolean;
@@ -7618,7 +7618,7 @@ export type DraftStateResponse = {
          */
         status: 'DRAFT' | 'SUBMITTED';
     }>;
-    draftPickHistories: Array<{
+    pickHistories: Array<{
         pickNumber: number;
         round: number;
         pickInRound: number;
@@ -7693,7 +7693,7 @@ export type DraftStateResponse = {
         label: string | null;
     }>;
     /**
-     * Bracket pick data when relevant to the draft.
+     * Bracket pick data when relevant to the selection.
      */
     bracketMatchups?: Array<{
         id: string;
@@ -7702,7 +7702,7 @@ export type DraftStateResponse = {
         label: string | null;
         isLocked: boolean;
         /**
-         * Minimal team identity used in bracket pick-em draft payloads.
+         * Minimal team identity used in bracket pick-em selection payloads.
          */
         topTeam: {
             id: string;
@@ -7710,7 +7710,7 @@ export type DraftStateResponse = {
             seed: number | null;
         } | null;
         /**
-         * Minimal team identity used in bracket pick-em draft payloads.
+         * Minimal team identity used in bracket pick-em selection payloads.
          */
         bottomTeam: {
             id: string;
@@ -7725,9 +7725,9 @@ export type DraftStateResponse = {
 };
 
 /**
- * Draft response returned immediately after a pick mutation.
+ * Selection response returned immediately after a pick mutation.
  */
-export type DraftPickResponse = {
+export type SelectionPickResponse = {
     contestId: string;
     contestName: string;
     selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
@@ -7735,7 +7735,7 @@ export type DraftPickResponse = {
     isCommissioner?: boolean;
     rosterSize: number;
     /**
-     * Contest-configuration subset required by draft-room clients.
+     * Contest-configuration subset required by selection-room clients.
      */
     contestConfiguration?: {
         isExclusive: boolean;
@@ -7790,7 +7790,7 @@ export type DraftPickResponse = {
          */
         status: 'DRAFT' | 'SUBMITTED';
     }>;
-    draftPickHistories: Array<{
+    pickHistories: Array<{
         pickNumber: number;
         round: number;
         pickInRound: number;
@@ -7865,7 +7865,7 @@ export type DraftPickResponse = {
         label: string | null;
     }>;
     /**
-     * Bracket pick data when relevant to the draft.
+     * Bracket pick data when relevant to the selection.
      */
     bracketMatchups?: Array<{
         id: string;
@@ -7874,7 +7874,7 @@ export type DraftPickResponse = {
         label: string | null;
         isLocked: boolean;
         /**
-         * Minimal team identity used in bracket pick-em draft payloads.
+         * Minimal team identity used in bracket pick-em selection payloads.
          */
         topTeam: {
             id: string;
@@ -7882,7 +7882,7 @@ export type DraftPickResponse = {
             seed: number | null;
         } | null;
         /**
-         * Minimal team identity used in bracket pick-em draft payloads.
+         * Minimal team identity used in bracket pick-em selection payloads.
          */
         bottomTeam: {
             id: string;
@@ -16208,7 +16208,7 @@ export type IngestClientLogsResponses = {
 
 export type IngestClientLogsResponse = IngestClientLogsResponses[keyof IngestClientLogsResponses];
 
-export type GetDraftStateData = {
+export type GetSelectionStateData = {
     body?: never;
     path: {
         contestId: string;
@@ -16219,10 +16219,10 @@ export type GetDraftStateData = {
          */
         entryId?: string;
     };
-    url: '/api/v1/drafts/{contestId}';
+    url: '/api/v1/selections/{contestId}';
 };
 
-export type GetDraftStateErrors = {
+export type GetSelectionStateErrors = {
     /**
      * Standard API error envelope.
      */
@@ -16241,16 +16241,16 @@ export type GetDraftStateErrors = {
     501: ErrorEnvelope;
 };
 
-export type GetDraftStateError = GetDraftStateErrors[keyof GetDraftStateErrors];
+export type GetSelectionStateError = GetSelectionStateErrors[keyof GetSelectionStateErrors];
 
-export type GetDraftStateResponses = {
+export type GetSelectionStateResponses = {
     /**
-     * Draft-state response.
+     * Selection-state response.
      */
-    200: DraftStateResponse;
+    200: SelectionStateResponse;
 };
 
-export type GetDraftStateResponse = GetDraftStateResponses[keyof GetDraftStateResponses];
+export type GetSelectionStateResponse = GetSelectionStateResponses[keyof GetSelectionStateResponses];
 
 export type SubmitContestSelectionData = {
     body: SubmitPickRequest;
@@ -16258,7 +16258,7 @@ export type SubmitContestSelectionData = {
         contestId: string;
     };
     query?: never;
-    url: '/api/v1/drafts/{contestId}/pick';
+    url: '/api/v1/selections/{contestId}/pick';
 };
 
 export type SubmitContestSelectionErrors = {
@@ -16292,9 +16292,9 @@ export type SubmitContestSelectionError = SubmitContestSelectionErrors[keyof Sub
 
 export type SubmitContestSelectionResponses = {
     /**
-     * Draft response returned immediately after a pick mutation.
+     * Selection response returned immediately after a pick mutation.
      */
-    200: DraftPickResponse;
+    200: SelectionPickResponse;
 };
 
 export type SubmitContestSelectionResponse = SubmitContestSelectionResponses[keyof SubmitContestSelectionResponses];
@@ -16306,7 +16306,7 @@ export type SubmitContestEntryData = {
         entryId: string;
     };
     query?: never;
-    url: '/api/v1/drafts/{contestId}/entries/{entryId}/submit';
+    url: '/api/v1/selections/{contestId}/entries/{entryId}/submit';
 };
 
 export type SubmitContestEntryErrors = {
@@ -16340,9 +16340,9 @@ export type SubmitContestEntryError = SubmitContestEntryErrors[keyof SubmitConte
 
 export type SubmitContestEntryResponses = {
     /**
-     * Draft-state response.
+     * Selection-state response.
      */
-    200: DraftStateResponse;
+    200: SelectionStateResponse;
 };
 
 export type SubmitContestEntryResponse = SubmitContestEntryResponses[keyof SubmitContestEntryResponses];

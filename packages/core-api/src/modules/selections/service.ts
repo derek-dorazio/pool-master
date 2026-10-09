@@ -1,12 +1,12 @@
 /**
- * DraftService — the draft room's two operations, their rules, guards, ordering and side
+ * SelectionService — the selection room's two operations, their rules, guards, ordering and side
  * effects (#324, `docs/LAYERS.md` §2.4).
  *
  * Before this, all of it lived in `routes.ts`: fifteen module-private functions and thirteen
  * direct Prisma calls, with the submission path's ten validation rules interleaved with the
  * writes that depend on them. The rules were never wrong — they are more thorough than the
  * `engine/` classes #323 deleted — they were just unreachable from anywhere but an HTTP
- * request, so the only way to test a draft rule was to send one.
+ * request, so the only way to test a selection rule was to send one.
  *
  * **Submitting a selection has three outcomes, not two.** A selection can be placed, it can
  * *replace* the entry's last pick in a tier that is already full, or — in a tiered contest —
@@ -33,7 +33,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import {
   ContestEntryStatus,
   ContestStatus,
-  DraftStatus,
+  SelectionStatus,
   LeagueMembershipStatus,
   type ContestEntry,
   type Participant,
@@ -54,16 +54,16 @@ import type { ContestEntryPickService } from '../contest-entry-picks';
 import { contestPicksRevealed, type ContestService } from '../contests/service';
 import { areContestEntriesOpen } from '../contests/entry-window';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
-import { draftErrors, type DraftError } from './draft-errors';
+import { selectionErrors, type SelectionError } from './selection-errors';
 import {
-  buildDraftTiers,
+  buildSelectionTiers,
   buildEntryUserIdMap,
   buildSelectionParticipants,
   buildTierByParticipantId,
   buildValuationLookup,
   isCommissionerRole,
-  mapContestStatusToDraftStatus,
-} from './draft-rules';
+  mapContestStatusToSelectionStatus,
+} from './selection-rules';
 import { findSelectionEngine } from './selection-engines/registry';
 import {
   SelectionOutcomeKind,
@@ -73,16 +73,16 @@ import {
   type SelectionRejection,
 } from './selection-engines/selection-engine';
 import type {
-  DraftContext,
-  DraftRoomEntry,
-  DraftRoomPick,
-  DraftRoomView,
-  DraftSelectionGroup,
+  SelectionContext,
+  SelectionEntry,
+  PickHistoryRow,
+  SelectionView,
+  SelectionGroup,
   LineupShortfall,
   SubmitSelectionResult,
 } from './types';
 
-export interface DraftServiceDeps {
+export interface SelectionServiceDeps {
   contests: ContestRepository;
   configurations: ContestConfigurationRepository;
   entries: ContestEntryRepository;
@@ -111,7 +111,7 @@ export interface DraftServiceDeps {
   logger?: FastifyBaseLogger;
 }
 
-export interface GetDraftStateInput {
+export interface GetSelectionStateInput {
   contestId: string;
   /**
    * The entry whose selections to show; defaults to the actor's own entry. Another team's
@@ -137,15 +137,15 @@ export interface SubmitEntryInput {
   actorUserId?: string;
 }
 
-export class DraftService {
-  constructor(private readonly deps: DraftServiceDeps) {}
+export class SelectionService {
+  constructor(private readonly deps: SelectionServiceDeps) {}
 
   /**
-   * The draft room as the actor should see it. 404 for an unknown contest, and for a DRAFT
+   * The selection room as the actor should see it. 404 for an unknown contest, and for a DRAFT
    * one to anyone but its league's commissioners and root admins, the answer the contest read
    * gives (#117); 501 for a selection type this surface does not serve.
    */
-  async getDraftState(input: GetDraftStateInput): Promise<DraftRoomView> {
+  async getSelectionState(input: GetSelectionStateInput): Promise<SelectionView> {
     const context = await this.loadContext(input.contestId);
 
     if (
@@ -153,14 +153,14 @@ export class DraftService {
       && !(await this.canSeeDraftContest(context.contest.leagueId, input))
     ) {
       this.deps.logger?.warn(
-        { action: 'draft.getDraftState.draftHidden', data: { contestId: input.contestId } },
+        { action: 'selection.getSelectionState.draftHidden', data: { contestId: input.contestId } },
         'Hid a draft contest\'s room from a member',
       );
-      throw draftErrors.contestNotFound(input.contestId);
+      throw selectionErrors.contestNotFound(input.contestId);
     }
 
     const engine = findSelectionEngine(context.contest.selectionType);
-    if (!engine) throw draftErrors.draftModeUnsupportedForRead(context.contest.selectionType);
+    if (!engine) throw selectionErrors.selectionTypeUnsupportedForRead(context.contest.selectionType);
 
     return this.buildRoomView({
       context,
@@ -182,39 +182,39 @@ export class DraftService {
     const context = await this.loadContext(contestId);
 
     const requestedEntry = context.entries.find((entry) => entry.id === entryId);
-    if (!requestedEntry) throw draftErrors.entryNotFound(entryId, contestId);
+    if (!requestedEntry) throw selectionErrors.entryNotFound(entryId, contestId);
 
-    if (!actorUserId) throw draftErrors.authSessionRequired();
+    if (!actorUserId) throw selectionErrors.authSessionRequired();
 
     const ownsRequestedEntry = context.squadMemberships.some(
       (membership) =>
         membership.squadId === requestedEntry.squadId && membership.userId === actorUserId,
     );
-    if (!ownsRequestedEntry) throw draftErrors.entryAccessDenied();
+    if (!ownsRequestedEntry) throw selectionErrors.entryAccessDenied();
 
     const engine = findSelectionEngine(context.contest.selectionType);
-    if (!engine) throw draftErrors.draftModeUnsupportedForSubmission(context.contest.selectionType);
+    if (!engine) throw selectionErrors.selectionTypeUnsupportedForSubmission(context.contest.selectionType);
 
     // Placing, swapping and unselecting alike: once the contest leaves OPEN its picks are
     // revealed to the league, so a change after that would be made with the others in view;
     // and once the event's start time passes the golfers are playing.
     if (!context.acceptsPicks) {
       this.deps.logger?.warn(
-        { action: 'draft.submitSelection.locked', data: { contestId, entryId, status: context.contest.status } },
+        { action: 'selection.submitSelection.locked', data: { contestId, entryId, status: context.contest.status } },
         'Refused a pick change on a contest that no longer takes picks',
       );
       throw context.contest.status === ContestStatus.OPEN
-        ? draftErrors.selectionLockedByEventStart(contestId)
-        : draftErrors.selectionLocked(contestId, context.contest.status);
+        ? selectionErrors.selectionLockedByEventStart(contestId)
+        : selectionErrors.selectionLocked(contestId, context.contest.status);
     }
 
     const { tiers } = context;
     const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers });
-    if (rosterSize <= 0) throw draftErrors.selectionConfigInvalid(contestId);
+    if (rosterSize <= 0) throw selectionErrors.selectionConfigInvalid(contestId);
 
     const fieldRow = await this.deps.field.findById(participantId);
     if (!fieldRow || fieldRow.sportEventId !== context.contest.sportEventId) {
-      throw draftErrors.participantNotInEvent(participantId, contestId);
+      throw selectionErrors.participantNotInEvent(participantId, contestId);
     }
 
     // Accepts either id, because a client may send the field row's id or the canonical
@@ -225,7 +225,7 @@ export class DraftService {
         || participant.participantId === fieldRow.participantId,
     );
     if (!selectionParticipant) {
-      throw draftErrors.participantNotSelectable(participantId, contestId);
+      throw selectionErrors.participantNotSelectable(participantId, contestId);
     }
 
     const existingPicks = await this.deps.picks.findByEntriesWithParticipant([entryId]);
@@ -245,7 +245,7 @@ export class DraftService {
       await this.deps.pickWrites.deletePick(outcome.pickId);
       this.deps.logger?.info(
         {
-          action: 'draft.submitSelection.toggledOff',
+          action: 'selection.submitSelection.toggledOff',
           data: { contestId, entryId, participantId, pickId: outcome.pickId },
         },
         'Unselected a participant already on the entry',
@@ -257,7 +257,7 @@ export class DraftService {
       };
     }
     if (!selectionParticipant.isAvailable) {
-      throw draftErrors.participantUnavailable(
+      throw selectionErrors.participantUnavailable(
         participantId,
         selectionParticipant.unavailableReason,
       );
@@ -269,7 +269,7 @@ export class DraftService {
         participantId,
       );
       if (contestPicks.some((pick) => pick.entryId !== entryId)) {
-        throw draftErrors.participantAlreadyTaken(participantId);
+        throw selectionErrors.participantAlreadyTaken(participantId);
       }
     }
 
@@ -278,7 +278,7 @@ export class DraftService {
     }
 
     // Accept, or replace: a replacement first displaces the pick it takes the place of.
-    const { draftRound } = outcome;
+    const { lineupSlot } = outcome;
     const replacedPickId = outcome.kind === SelectionOutcomeKind.REPLACE ? outcome.replacedPickId : null;
     if (replacedPickId) await this.deps.pickWrites.deletePick(replacedPickId);
 
@@ -290,15 +290,15 @@ export class DraftService {
     await this.deps.pickWrites.createPick({
       entryId,
       sportEventParticipantId: participantId,
-      draftRound,
-      draftPickNumber: contestPickCount + 1,
+      lineupSlot,
+      pickSequence: contestPickCount + 1,
       isAutoPicked: false,
     });
 
     this.deps.logger?.info(
       {
-        action: 'draft.submitSelection.placed',
-        data: { contestId, entryId, participantId, draftRound, replacedPickId },
+        action: 'selection.submitSelection.placed',
+        data: { contestId, entryId, participantId, lineupSlot, replacedPickId },
       },
       replacedPickId ? 'Replaced a pick in a full tier' : 'Placed a selection',
     );
@@ -319,43 +319,43 @@ export class DraftService {
    * selection type, and the window picks change in. Submitting an entry that is already
    * submitted changes nothing and answers with the room.
    */
-  async submitEntry(input: SubmitEntryInput): Promise<DraftRoomView> {
+  async submitEntry(input: SubmitEntryInput): Promise<SelectionView> {
     const { contestId, entryId, actorUserId } = input;
     const context = await this.loadContext(contestId);
 
     const entry = context.entries.find((candidate) => candidate.id === entryId);
-    if (!entry) throw draftErrors.entryNotFound(entryId, contestId);
+    if (!entry) throw selectionErrors.entryNotFound(entryId, contestId);
 
-    if (!actorUserId) throw draftErrors.authSessionRequired();
+    if (!actorUserId) throw selectionErrors.authSessionRequired();
 
     const ownsEntry = context.squadMemberships.some(
       (membership) => membership.squadId === entry.squadId && membership.userId === actorUserId,
     );
-    if (!ownsEntry) throw draftErrors.entryAccessDenied();
+    if (!ownsEntry) throw selectionErrors.entryAccessDenied();
 
     const engine = findSelectionEngine(context.contest.selectionType);
-    if (!engine) throw draftErrors.draftModeUnsupportedForSubmission(context.contest.selectionType);
+    if (!engine) throw selectionErrors.selectionTypeUnsupportedForSubmission(context.contest.selectionType);
 
     if (!context.acceptsPicks) {
       this.deps.logger?.warn(
-        { action: 'draft.submitEntry.locked', data: { contestId, entryId, status: context.contest.status } },
+        { action: 'selection.submitEntry.locked', data: { contestId, entryId, status: context.contest.status } },
         'Refused to submit an entry on a contest that no longer takes picks',
       );
       throw context.contest.status === ContestStatus.OPEN
-        ? draftErrors.submitLockedByEventStart(contestId)
-        : draftErrors.submitLocked(contestId, context.contest.status);
+        ? selectionErrors.submitLockedByEventStart(contestId)
+        : selectionErrors.submitLocked(contestId, context.contest.status);
     }
 
     const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers: context.tiers });
-    if (rosterSize <= 0) throw draftErrors.selectionConfigInvalid(contestId);
+    if (rosterSize <= 0) throw selectionErrors.selectionConfigInvalid(contestId);
 
     const shortfall = await this.findEntryShortfall(context, engine, entryId, rosterSize);
     if (shortfall) {
       this.deps.logger?.warn(
-        { action: 'draft.submitEntry.incomplete', data: { contestId, entryId, ...shortfall } },
+        { action: 'selection.submitEntry.incomplete', data: { contestId, entryId, ...shortfall } },
         'Refused to submit an entry with an incomplete lineup',
       );
-      throw draftErrors.lineupIncomplete(entryId, shortfall);
+      throw selectionErrors.lineupIncomplete(entryId, shortfall);
     }
 
     let submittedContext = context;
@@ -363,7 +363,7 @@ export class DraftService {
       const submitted = await this.deps.entries.update(entryId, { status: ContestEntryStatus.SUBMITTED });
       submittedContext = withEntry(context, submitted);
       this.deps.logger?.info(
-        { action: 'draft.submitEntry.submitted', data: { contestId, entryId } },
+        { action: 'selection.submitEntry.submitted', data: { contestId, entryId } },
         'Submitted a contest entry',
       );
       await this.deps.entryReceipts?.sendEntrySubmittedEmail(contestId, entryId, actorUserId);
@@ -374,7 +374,7 @@ export class DraftService {
 
   /** The entry's lineup shortfall as of now, read fresh so it sees the latest pick write. */
   private async findEntryShortfall(
-    context: DraftContext,
+    context: SelectionContext,
     engine: SelectionEngine,
     entryId: string,
     rosterSize: number,
@@ -393,11 +393,11 @@ export class DraftService {
    * keeps the lineup complete and the entry submitted.
    */
   private async returnToDraftIfShort(
-    context: DraftContext,
+    context: SelectionContext,
     engine: SelectionEngine,
     entry: ContestEntry,
     rosterSize: number,
-  ): Promise<DraftContext> {
+  ): Promise<SelectionContext> {
     if (entry.status !== ContestEntryStatus.SUBMITTED) return context;
     const shortfall = await this.findEntryShortfall(context, engine, entry.id, rosterSize);
     if (!shortfall) return context;
@@ -405,7 +405,7 @@ export class DraftService {
     const reverted = await this.deps.entries.update(entry.id, { status: ContestEntryStatus.DRAFT });
     this.deps.logger?.info(
       {
-        action: 'draft.submitSelection.returnedToDraft',
+        action: 'selection.submitSelection.returnedToDraft',
         data: { contestId: context.contest.id, entryId: entry.id, ...shortfall },
       },
       'A pick change left a submitted lineup short; the entry is a draft again',
@@ -414,7 +414,7 @@ export class DraftService {
   }
 
   /** A DRAFT contest is its league's active commissioners' alone, and root admins' (#117). */
-  private async canSeeDraftContest(leagueId: string, input: GetDraftStateInput): Promise<boolean> {
+  private async canSeeDraftContest(leagueId: string, input: GetSelectionStateInput): Promise<boolean> {
     if (input.actorIsRootAdmin) return true;
     if (!input.actorUserId) return false;
     const membership = await this.deps.memberships.findByLeagueAndUser(leagueId, input.actorUserId);
@@ -425,9 +425,9 @@ export class DraftService {
    * Everything one operation reads about a contest, in six parallel reads plus the squad
    * memberships, which need the entries' squad ids first.
    */
-  private async loadContext(contestId: string): Promise<DraftContext> {
+  private async loadContext(contestId: string): Promise<SelectionContext> {
     const contest = await this.deps.contests.findById(contestId);
-    if (!contest) throw draftErrors.contestNotFound(contestId);
+    if (!contest) throw selectionErrors.contestNotFound(contestId);
 
     const sportEventId = contest.sportEventId;
     const [configuration, entries, field, tierGroups, valuations, sportEvent] = await Promise.all([
@@ -457,7 +457,7 @@ export class DraftService {
       squadMemberships,
       // A configuration without typed settings takes no picks per tier: its roster is 0, and the
       // room refuses picks with SELECTION_CONFIG_INVALID rather than guessing a number.
-      tiers: buildDraftTiers(tierGroups, configuration?.configJson?.picksPerTier ?? 0),
+      tiers: buildSelectionTiers(tierGroups, configuration?.configJson?.picksPerTier ?? 0),
       // One rule for every entry change: see contests/entry-window.
       acceptsPicks: areContestEntriesOpen(contest, sportEvent, now),
       selectionParticipants: buildSelectionParticipants({
@@ -477,11 +477,11 @@ export class DraftService {
    * submission validated against.
    */
   private async buildRoomView(input: {
-    context: DraftContext;
+    context: SelectionContext;
     engine: SelectionEngine;
     selectedEntryId?: string;
     actorUserId?: string;
-  }): Promise<DraftRoomView> {
+  }): Promise<SelectionView> {
     const { context, engine, actorUserId } = input;
     const { contest, configuration, tiers, entries: contestEntries } = context;
     const entryIds = contestEntries.map((entry) => entry.id);
@@ -528,7 +528,7 @@ export class DraftService {
       picksByEntry.set(pick.entryId, existing);
     }
 
-    const entries: DraftRoomEntry[] = contestEntries.map((entry) => ({
+    const entries: SelectionEntry[] = contestEntries.map((entry) => ({
       id: entry.id,
       userId: entryUserIdMap.get(entry.id) ?? '',
       name: entry.name,
@@ -558,7 +558,7 @@ export class DraftService {
       rosterSize > 0
         ? entries.every((entry) => entry.pickCount >= rosterSize)
         : false;
-    const status = mapContestStatusToDraftStatus(contest.status, isComplete);
+    const status = mapContestStatusToSelectionStatus(contest.status, isComplete);
     // Against whether the contest takes picks, not `isComplete`: `submitSelection` refuses
     // every contest that is not OPEN or whose event has started, so those close submission
     // even while some roster is still short.
@@ -567,7 +567,7 @@ export class DraftService {
       && rosterSize > 0
       && myEntryPickCount < rosterSize
       && context.acceptsPicks
-      && status !== DraftStatus.COMPLETE;
+      && status !== SelectionStatus.COMPLETE;
 
     return {
       contest,
@@ -618,7 +618,7 @@ export class DraftService {
     tierByParticipantId: ReadonlyMap<string, { tierId: string; tierName: string; tierNumber: number }>;
     priceBySportEventParticipantId: ReadonlyMap<string, number | undefined>;
     engine: SelectionEngine;
-  }): DraftRoomPick[] {
+  }): PickHistoryRow[] {
     const pickIndexByEntry = new Map<string, number>();
     const pickIndexByEntryTier = new Map<string, number>();
 
@@ -634,9 +634,9 @@ export class DraftService {
       if (tier) pickIndexByEntryTier.set(tierKey, tierPickIndex);
 
       return {
-        pickNumber: pick.draftPickNumber ?? index + 1,
+        pickNumber: pick.pickSequence ?? index + 1,
         round: input.engine.historyRound({ tierNumber: tier?.tierNumber, entryPickIndex }),
-        pickInRound: pick.draftRound ?? tierPickIndex,
+        pickInRound: pick.lineupSlot ?? tierPickIndex,
         entryId: pick.entryId,
         // A pick whose entry or participant has gone missing falls back to the id, so the
         // history stays renderable rather than showing a blank row.
@@ -656,9 +656,9 @@ export class DraftService {
 
   /** Each tier with its selectable field rows, and which of them the viewed entry holds. */
   private buildSelectionGroups(
-    context: DraftContext,
+    context: SelectionContext,
     selectedSportEventParticipantIds: ReadonlySet<string>,
-  ): DraftSelectionGroup[] {
+  ): SelectionGroup[] {
     const participantByParticipantId = new Map(
       context.selectionParticipants.map((participant) => [participant.participantId, participant]),
     );
@@ -685,7 +685,7 @@ export class DraftService {
    * gone for everyone; otherwise availability is just the field row's own.
    */
   private buildAvailableParticipantIds(
-    context: DraftContext,
+    context: SelectionContext,
     picks: readonly ContestEntryPickWithParticipant[],
   ): string[] {
     const takenSportEventParticipantIds = context.configuration?.isExclusive
@@ -709,27 +709,27 @@ function toEntryPick(pick: ContestEntryPickWithParticipant): EntryPick {
 function rejectionError(
   rejection: SelectionRejection,
   request: { contestId: string; entryId: string; participantId: string; rosterSize: number },
-): DraftError {
+): SelectionError {
   switch (rejection.code) {
     case SelectionRejectCode.DUPLICATE_PICK:
-      return draftErrors.duplicatePick(request.participantId);
+      return selectionErrors.duplicatePick(request.participantId);
     case SelectionRejectCode.ENTRY_COMPLETE:
-      return draftErrors.entryComplete(request.entryId, request.rosterSize);
+      return selectionErrors.entryComplete(request.entryId, request.rosterSize);
     case SelectionRejectCode.TIER_MISSING:
-      return draftErrors.tierMissing(request.participantId);
+      return selectionErrors.tierMissing(request.participantId);
     case SelectionRejectCode.TIER_NOT_FOUND:
-      return draftErrors.tierNotFound(rejection.tierLabel, request.contestId);
+      return selectionErrors.tierNotFound(rejection.tierLabel, request.contestId);
   }
 }
 
 /** The context with one entry replaced by its freshly written row. */
-function withEntry(context: DraftContext, updated: ContestEntry): DraftContext {
+function withEntry(context: SelectionContext, updated: ContestEntry): SelectionContext {
   return {
     ...context,
     entries: context.entries.map((entry) => (entry.id === updated.id ? updated : entry)),
   };
 }
 
-function entryNameById(entries: readonly DraftRoomEntry[], entryId: string | null): string | null {
+function entryNameById(entries: readonly SelectionEntry[], entryId: string | null): string | null {
   return entries.find((entry) => entry.id === entryId)?.name ?? null;
 }

@@ -1,6 +1,6 @@
 /**
  * When a contest's entries can change: the one rule behind entering, renaming, leaving and
- * picking (ContestService and DraftService both ask it).
+ * picking (ContestService and SelectionService both ask it).
  *
  * Entries change only while the contest is OPEN (#117), and only until its event's scheduled
  * start time, the same cutoff opening a contest uses. The contest moves on from OPEN when the

@@ -19,7 +19,7 @@ import type {
   ContestListResponse,
   ContestManagementResponse,
   ContestResponse,
-  DraftStateResponse,
+  SelectionStateResponse,
   ErrorEnvelope,
   LeagueContextResponse,
 } from '@poolmaster/shared/dto';
@@ -292,13 +292,13 @@ describe('Contest management integration', () => {
     expect([200, 201]).toContain(entryRes.statusCode);
     const entryId = entryRes.json<ContestEntryResponse>().entry.id;
 
-    const draftStateRes = await getApp().inject({
+    const selectionStateRes = await getApp().inject({
       method: 'GET',
-      url: `/api/v1/drafts/${contestId}?entryId=${entryId}`,
+      url: `/api/v1/selections/${contestId}?entryId=${entryId}`,
       headers: ownerHeaders,
     });
-    expect(draftStateRes.statusCode).toBe(200);
-    expect(draftStateRes.json<DraftStateResponse>().selectionGroups?.[0].participants).toEqual([
+    expect(selectionStateRes.statusCode).toBe(200);
+    expect(selectionStateRes.json<SelectionStateResponse>().selectionGroups?.[0].participants).toEqual([
       expect.objectContaining({
         participantId: topParticipantId,
         orderIndex: 1,

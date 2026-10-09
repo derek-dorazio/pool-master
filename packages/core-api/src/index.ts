@@ -46,7 +46,7 @@ import { clientLogsModule } from './modules/client-logs/routes';
 import { versionModule } from './modules/version/routes';
 
 // Draft module
-import { draftsModule } from './modules/drafts/routes';
+import { selectionsModule } from './modules/selections/routes';
 
 // Ingestion module
 import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './modules/ingestion/core';
@@ -204,7 +204,7 @@ export function buildApp() {
   // =========================================================================
   // Draft module
   // =========================================================================
-  app.register(draftsModule, { prefix: '/api/v1/drafts', mailDelivery });
+  app.register(selectionsModule, { prefix: '/api/v1/selections', mailDelivery });
 
   // =========================================================================
   // Lifecycle hooks

@@ -73,7 +73,7 @@ A UI Label, Not A Domain Term*.
 | `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA | `League`, the office pool |
 | `EventSeries` | (series) | A recurring named event, "The Masters", across all years | One year's edition, which is the `SportEvent` |
 | `SportEvent` | tournament, event | One edition of a series in one `eventYear`, with a start date, round count and status | `Contest`, which is the pool's game played on it |
-| `SportEventRound` | round | One scheduled round of an event (golf Round 1–4), with its own date | A participant's result in that round, `SportEventParticipantRound`; and a draft round (`ContestEntryPick.draftRound`) |
+| `SportEventRound` | round | One scheduled round of an event (golf Round 1–4), with its own date | A participant's result in that round, `SportEventParticipantRound`; and a pick's `lineupSlot`, its position in the entry's lineup |
 | `Participant` | golfer, player | A real competitor in a sport: a golfer, or a team such as an NBA team (`participantType` `INDIVIDUAL` or `TEAM`) | A league member (a person in the pool), and a `SportEventParticipant` |
 | `SportEventParticipant` | the field, a golfer in the field | A participant entered in one event, with that event's rank, odds, seed and active/withdrawn/cut state | The global `Participant` |
 | `SportEventTier`, `SportEventParticipantValuation` | tier, price | Tiers belong to the **event** and are shared by every contest on it; the valuation puts one field member in one tier, with a price | A contest-level setting: there is no per-contest tier override |
@@ -94,12 +94,15 @@ A UI Label, Not A Domain Term*.
 - **Team**: the on-screen name for a `Squad`; a `Participant` whose `participantType` is
   `TEAM`; and the plain English word. In code and contracts, say `Squad`.
 - **League**: the office pool is `League`; a real-world tour is `SportLeague`.
-- **Draft**: three unrelated things. `DRAFT` is the first status of a `SportEvent`, a
-  `Contest` and a `ContestEntry` (not yet released, opened, or submitted). The **draft room**
-  is the screen where an entry's picks are made. `SNAKE_DRAFT` is an unbuilt selection
-  mode; only `TIERED` exists.
-- **Round**: an event's scheduled round (`SportEventRound`), one golfer's round
-  (`SportEventParticipantRound`), and a snake-draft round (`draftRound`, unused).
+- **Selection, pick, draft** (#544): **selection** is the process and its configuration
+  (`SelectionType`, `SelectionStatus`, the `selections` module and `/api/v1/selections`
+  routes); the **selection room** is the screen where an entry's picks are made. A **pick** is
+  one participant chosen, the `ContestEntryPick` record. **Draft** is not a process name: it
+  survives only as the `SNAKE_DRAFT` selection type (unbuilt; `TIERED` and `BUDGET_PICK` have
+  engines), and as `DRAFT`, the first status of a `SportEvent`, a `Contest` and a
+  `ContestEntry` (not yet released, opened, or submitted).
+- **Round**: an event's scheduled round (`SportEventRound`) and one golfer's round
+  (`SportEventParticipantRound`). A pick's `lineupSlot` is its position in the lineup, not a round.
 - **Member**: a league member (`LeagueMembership`) or a squad member, which is the same as a
   squad owner (`SquadMembership`).
 - **Player / golfer**: a `Participant`, never a league member.
@@ -148,7 +151,7 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 | **create a contest** | Commissioner creates a `Contest` on a released event that has not started. It is born `DRAFT`, seen only by commissioners, and its settings stay editable |
 | **open a contest** | Commissioner moves it `DRAFT` → `OPEN`. Members can now see and enter it; its name and settings are locked with no undo |
 | **enter a contest**, **create an entry** | A squad owner creates a `ContestEntry`, status `DRAFT`, numbered after the squad's highest entry in that contest |
-| **draft**, **make picks**, **pick a golfer** | Add, swap or remove `ContestEntryPick`s on an entry in the draft room. Tiered selection only: the configuration says how many picks come from each event tier |
+| **make picks**, **pick a golfer** | Add, swap or remove `ContestEntryPick`s on an entry in the selection room. Tiered selection only: the configuration says how many picks come from each event tier |
 | **submit an entry** | `DRAFT` → `SUBMITTED`, refused unless the lineup is complete. Only submitted entries count on the leaderboard and in settlement. A later change that leaves the lineup short sends it back to `DRAFT`; a draft left at tee-off simply does not count |
 | **lock a contest**, **entries close** | There is no lock action. Entries and picks change only while the contest is `OPEN` **and** its event's scheduled start (tee-off) has not passed — `areContestEntriesOpen`. Settings locked earlier, when the contest opened |
 | **start**, **go live** | The event moves to `IN_PROGRESS` (by the lifecycle scheduler from the round schedule, or by an admin) and every `OPEN` contest on it becomes `ACTIVE`. **Picks are revealed** to the league from here; before it each team sees only its own |

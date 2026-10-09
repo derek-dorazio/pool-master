@@ -10,8 +10,8 @@ import type {
   SquadMembership,
 } from '@poolmaster/shared/domain';
 import type { ContestEntryPickWithParticipant } from '@poolmaster/shared/db';
-import { DraftService } from '../../../packages/core-api/src/modules/drafts/service';
-import type { DraftServiceDeps } from '../../../packages/core-api/src/modules/drafts/service';
+import { SelectionService } from '../../../packages/core-api/src/modules/selections/service';
+import type { SelectionServiceDeps } from '../../../packages/core-api/src/modules/selections/service';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import {
   fakeContestConfigurationRepo,
@@ -24,7 +24,7 @@ import {
   fakeSquadMembershipRepo,
 } from '../../support/repo-fakes';
 
-// #324 — DraftService over port fakes.
+// #324 — SelectionService over port fakes.
 //
 // This is the coverage the module could not have before: every one of the submission path's
 // ten error codes, and — the part that matters most — the two outcomes a boolean guard cannot
@@ -217,7 +217,7 @@ function setup(options: SetupOptions = {}) {
   const createPick = jest.fn().mockResolvedValue({ id: 'new-pick' });
   const deletePick = jest.fn().mockResolvedValue(undefined);
 
-  const deps: DraftServiceDeps = {
+  const deps: SelectionServiceDeps = {
     contests: fakeContestRepo({
       findById: jest.fn().mockResolvedValue(
         options.contest === undefined ? contest() : contest(options.contest),
@@ -269,10 +269,10 @@ function setup(options: SetupOptions = {}) {
     // An event that starts long after every test's clock, so only contest status gates picks.
     sportEvents: {
       findById: jest.fn().mockResolvedValue({ id: EVENT_ID, status: 'SCHEDULED', startDate: new Date('2099-01-01T00:00:00.000Z') }),
-    } as unknown as DraftServiceDeps['sportEvents'],
+    } as unknown as SelectionServiceDeps['sportEvents'],
   };
 
-  return { service: new DraftService(deps), deps, createPick, deletePick };
+  return { service: new SelectionService(deps), deps, createPick, deletePick };
 }
 
 function submit(overrides: { entryId?: string; participantId?: string; actorUserId?: string } = {}) {
@@ -284,32 +284,32 @@ function submit(overrides: { entryId?: string; participantId?: string; actorUser
   };
 }
 
-describe('#324 DraftService.getDraftState', () => {
+describe('#324 SelectionService.getSelectionState', () => {
   it('answers 404 CONTEST_NOT_FOUND for a contest that does not exist', async () => {
     const { service, deps } = setup();
     (deps.contests.findById as jest.Mock).mockResolvedValue(null);
 
-    await expect(service.getDraftState({ contestId: CONTEST_ID })).rejects.toMatchObject({
+    await expect(service.getSelectionState({ contestId: CONTEST_ID })).rejects.toMatchObject({
       code: 'CONTEST_NOT_FOUND',
       statusCode: 404,
       message: `Contest ${CONTEST_ID} was not found`,
     });
   });
 
-  it('answers 501 DRAFT_MODE_UNSUPPORTED for a selection type this surface does not serve', async () => {
+  it('answers 501 SELECTION_TYPE_UNSUPPORTED for a selection type this surface does not serve', async () => {
     const { service } = setup({ contest: { selectionType: SelectionType.SNAKE_DRAFT } });
 
-    await expect(service.getDraftState({ contestId: CONTEST_ID })).rejects.toMatchObject({
-      code: 'DRAFT_MODE_UNSUPPORTED',
+    await expect(service.getSelectionState({ contestId: CONTEST_ID })).rejects.toMatchObject({
+      code: 'SELECTION_TYPE_UNSUPPORTED',
       statusCode: 501,
-      message: 'SNAKE_DRAFT draft-room endpoints are not implemented yet',
+      message: 'SNAKE_DRAFT selection-room endpoints are not implemented yet',
     });
   });
 
   it('builds a tiered room: roster size is the event\'s tiers × the contest\'s picksPerTier, groups per tier, the actor\'s own entry selected', async () => {
     const { service } = setup();
 
-    const view = await service.getDraftState({
+    const view = await service.getSelectionState({
       contestId: CONTEST_ID,
       actorUserId: OWNER_USER_ID,
     });
@@ -330,7 +330,7 @@ describe('#324 DraftService.getDraftState', () => {
   });
 
   it('reports the actor as commissioner only when their league membership says so', async () => {
-    const asMember = await setup().service.getDraftState({
+    const asMember = await setup().service.getSelectionState({
       contestId: CONTEST_ID,
       actorUserId: OWNER_USER_ID,
     });
@@ -338,14 +338,14 @@ describe('#324 DraftService.getDraftState', () => {
 
     const asCommissioner = await setup({
       actorMembership: { role: 'COMMISSIONER' } as LeagueMembership,
-    }).service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    }).service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
     expect(asCommissioner.isCommissioner).toBe(true);
   });
 
   it('shows an anonymous reader the room with no entry of their own', async () => {
     const { service } = setup();
 
-    const view = await service.getDraftState({ contestId: CONTEST_ID });
+    const view = await service.getSelectionState({ contestId: CONTEST_ID });
 
     expect(view.myEntryId).toBeNull();
     expect(view.selectedEntryId).toBeNull();
@@ -354,7 +354,7 @@ describe('#324 DraftService.getDraftState', () => {
   });
 
   // Once picks are revealed (ACTIVE onwards). While the contest is OPEN another team's entry
-  // is not honoured: draft-selection-use-cases.test.ts covers that half.
+  // is not honoured: selection-use-cases.test.ts covers that half.
   it('honours an explicitly selected entry once picks are revealed, and falls back to the actor\'s own for an unknown one', async () => {
     const entries = [entry(ENTRY_ID, SQUAD_ID), entry(OTHER_ENTRY_ID, 'squad-2', 'Challenger')];
     const squadMemberships = [
@@ -363,7 +363,7 @@ describe('#324 DraftService.getDraftState', () => {
     ];
 
     const revealed = { status: ContestStatus.ACTIVE };
-    const selected = await setup({ contest: revealed, entries, squadMemberships }).service.getDraftState({
+    const selected = await setup({ contest: revealed, entries, squadMemberships }).service.getSelectionState({
       contestId: CONTEST_ID,
       selectedEntryId: OTHER_ENTRY_ID,
       actorUserId: OWNER_USER_ID,
@@ -372,7 +372,7 @@ describe('#324 DraftService.getDraftState', () => {
     expect(selected.selectedEntryName).toBe('Challenger');
     expect(selected.myEntryId).toBe(ENTRY_ID);
 
-    const unknown = await setup({ contest: revealed, entries, squadMemberships }).service.getDraftState({
+    const unknown = await setup({ contest: revealed, entries, squadMemberships }).service.getSelectionState({
       contestId: CONTEST_ID,
       selectedEntryId: 'entry-nope',
       actorUserId: OWNER_USER_ID,
@@ -390,7 +390,7 @@ describe('#324 DraftService.getDraftState', () => {
       ],
     });
 
-    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
     expect(view.isComplete).toBe(true);
     expect(view.status).toBe('COMPLETE');
@@ -401,7 +401,7 @@ describe('#324 DraftService.getDraftState', () => {
   it('closes submission for a COMPLETED contest even while the roster is short', async () => {
     const { service } = setup({ contest: { status: ContestStatus.COMPLETED } });
 
-    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
     expect(view.isComplete).toBe(false);
     expect(view.status).toBe('COMPLETE');
@@ -411,13 +411,13 @@ describe('#324 DraftService.getDraftState', () => {
   it('hides a participant another entry has taken only when the contest is exclusive', async () => {
     const taken = [pick('pick-a', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID })];
 
-    const shared = await setup({ picks: taken }).service.getDraftState({ contestId: CONTEST_ID });
+    const shared = await setup({ picks: taken }).service.getSelectionState({ contestId: CONTEST_ID });
     expect(shared.availableSportEventParticipantIds).toContain('sep-a');
 
     const exclusive = await setup({
       configuration: { isExclusive: true },
       picks: taken,
-    }).service.getDraftState({ contestId: CONTEST_ID });
+    }).service.getSelectionState({ contestId: CONTEST_ID });
     expect(exclusive.availableSportEventParticipantIds).not.toContain('sep-a');
   });
 
@@ -426,7 +426,7 @@ describe('#324 DraftService.getDraftState', () => {
       field: [fieldRow('sep-a', 'p-a', false), fieldRow('sep-b', 'p-b'), fieldRow('sep-c', 'p-c'), fieldRow('sep-d', 'p-d')],
     });
 
-    const view = await service.getDraftState({ contestId: CONTEST_ID });
+    const view = await service.getSelectionState({ contestId: CONTEST_ID });
 
     expect(view.availableSportEventParticipantIds).not.toContain('sep-a');
     expect(view.selectionGroups[0].participants.map((p) => p.sportEventParticipantId)).toContain('sep-a');
@@ -435,12 +435,12 @@ describe('#324 DraftService.getDraftState', () => {
   it('places each pick in the room\'s history in its tier\'s round', async () => {
     const { service } = setup({
       picks: [
-        pick('pick-a', 'p-a', 'sep-a', { draftRound: 1, draftPickNumber: 1 }),
-        pick('pick-d', 'p-d', 'sep-d', { draftRound: 3, draftPickNumber: 2 }),
+        pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1, pickSequence: 1 }),
+        pick('pick-d', 'p-d', 'sep-d', { lineupSlot: 3, pickSequence: 2 }),
       ],
     });
 
-    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
     expect(view.picks).toEqual([
       expect.objectContaining({ pickNumber: 1, round: 1, pickInRound: 1, tierId: 'tier-1', tierName: 'Tier 1', price: 100 }),
@@ -455,14 +455,14 @@ describe('#324 DraftService.getDraftState', () => {
       configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, budget: 500 },
     });
 
-    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
     expect(view.rosterSize).toBe(2);
     expect(view.canCurrentUserSubmit).toBe(true);
   });
 });
 
-describe('#324 DraftService.submitSelection — the guards, in order', () => {
+describe('#324 SelectionService.submitSelection — the guards, in order', () => {
   it('answers 404 CONTEST_NOT_FOUND before anything else', async () => {
     const { service, deps, createPick } = setup();
     (deps.contests.findById as jest.Mock).mockResolvedValue(null);
@@ -495,24 +495,24 @@ describe('#324 DraftService.submitSelection — the guards, in order', () => {
     expect(createPick).not.toHaveBeenCalled();
   });
 
-  it('answers 403 DRAFT_ENTRY_ACCESS_DENIED for someone else\'s entry', async () => {
+  it('answers 403 ENTRY_ACCESS_DENIED for someone else\'s entry', async () => {
     const { service, createPick } = setup();
 
     await expect(
       service.submitSelection(submit({ actorUserId: 'user-interloper' })),
     ).rejects.toMatchObject({
-      code: 'DRAFT_ENTRY_ACCESS_DENIED',
+      code: 'ENTRY_ACCESS_DENIED',
       statusCode: 403,
-      message: 'You can only submit draft picks for your own contest entry',
+      message: 'You can only submit picks for your own contest entry',
     });
     expect(createPick).not.toHaveBeenCalled();
   });
 
-  it('answers 501 DRAFT_MODE_UNSUPPORTED with the submission wording, not the read wording', async () => {
+  it('answers 501 SELECTION_TYPE_UNSUPPORTED with the submission wording, not the read wording', async () => {
     const { service } = setup({ contest: { selectionType: SelectionType.SNAKE_DRAFT } });
 
     await expect(service.submitSelection(submit())).rejects.toMatchObject({
-      code: 'DRAFT_MODE_UNSUPPORTED',
+      code: 'SELECTION_TYPE_UNSUPPORTED',
       statusCode: 501,
       message: 'SNAKE_DRAFT pick submission is not implemented yet',
     });
@@ -702,7 +702,7 @@ describe('#324 DraftService.submitSelection — the guards, in order', () => {
   });
 });
 
-describe('#324 DraftService.submitSelection — the three outcomes', () => {
+describe('#324 SelectionService.submitSelection — the three outcomes', () => {
   it('places a selection, writing it through the one enforced insert path', async () => {
     const { service, createPick, deletePick } = setup();
 
@@ -713,8 +713,8 @@ describe('#324 DraftService.submitSelection — the three outcomes', () => {
     expect(createPick).toHaveBeenCalledWith({
       entryId: ENTRY_ID,
       sportEventParticipantId: 'sep-a',
-      draftRound: 1,
-      draftPickNumber: 1,
+      lineupSlot: 1,
+      pickSequence: 1,
       isAutoPicked: false,
     });
   });
@@ -725,7 +725,7 @@ describe('#324 DraftService.submitSelection — the three outcomes', () => {
 
     await service.submitSelection(submit());
 
-    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ draftPickNumber: 8 }));
+    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ pickSequence: 8 }));
   });
 
   // The rule the deleted engines had backwards. Given a full tier the engine REJECTED the
@@ -741,7 +741,7 @@ describe('#324 DraftService.submitSelection — the three outcomes', () => {
     expect(result.outcome).toBe('placed');
     expect(deletePick).toHaveBeenCalledWith('pick-b');
     expect(createPick).toHaveBeenCalledWith(
-      expect.objectContaining({ sportEventParticipantId: 'sep-c', draftRound: 2 }),
+      expect.objectContaining({ sportEventParticipantId: 'sep-c', lineupSlot: 2 }),
     );
   });
 
@@ -779,7 +779,7 @@ describe('#324 DraftService.submitSelection — the three outcomes', () => {
 
     await service.submitSelection(submit({ participantId: 'sep-d' }));
 
-    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ draftRound: 3 }));
+    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ lineupSlot: 3 }));
   });
 
   it('accepts the canonical participant id as well as the field row id', async () => {
@@ -794,7 +794,7 @@ describe('#324 DraftService.submitSelection — the three outcomes', () => {
   });
 });
 
-describe('DraftService — rooms with missing or partial data', () => {
+describe('SelectionService — rooms with missing or partial data', () => {
   it('places a budget pick in the next round when the entry still has room', async () => {
     const { service, createPick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
@@ -805,18 +805,18 @@ describe('DraftService — rooms with missing or partial data', () => {
     const result = await service.submitSelection(submit({ participantId: 'sep-d' }));
 
     expect(result.outcome).toBe('placed');
-    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: 'sep-d', draftRound: 2 }));
+    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: 'sep-d', lineupSlot: 2 }));
   });
 
   it('answers 404 for a DRAFT contest\'s room to an anonymous reader and to a commissioner whose membership is inactive', async () => {
     const draft = { status: ContestStatus.DRAFT };
-    await expect(setup({ contest: draft }).service.getDraftState({ contestId: CONTEST_ID }))
+    await expect(setup({ contest: draft }).service.getSelectionState({ contestId: CONTEST_ID }))
       .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
 
     const inactiveCommissioner = {
       id: 'lm-1', leagueId: LEAGUE_ID, userId: OWNER_USER_ID, role: 'COMMISSIONER', status: 'INACTIVE',
     } as unknown as LeagueMembership;
-    await expect(setup({ contest: draft, actorMembership: inactiveCommissioner }).service.getDraftState({
+    await expect(setup({ contest: draft, actorMembership: inactiveCommissioner }).service.getSelectionState({
       contestId: CONTEST_ID,
       actorUserId: OWNER_USER_ID,
     })).rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
@@ -825,7 +825,7 @@ describe('DraftService — rooms with missing or partial data', () => {
   it('refuses every pick as unconfigured when the tiered configuration carries no picksPerTier, rather than guessing a roster', async () => {
     const { service, createPick } = setup({ configuration: { configJson: undefined } });
 
-    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
     expect(view.rosterSize).toBe(0);
 
     await expect(service.submitSelection(submit())).rejects.toMatchObject({ code: 'SELECTION_CONFIG_INVALID' });
@@ -835,7 +835,7 @@ describe('DraftService — rooms with missing or partial data', () => {
   it('shows a contest with no event as an empty room that refuses every pick as unconfigured', async () => {
     const { service } = setup({ contest: { sportEventId: undefined } });
 
-    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
     expect(view.rosterSize).toBe(0);
     expect(view.selectionGroups).toEqual([]);
     expect(view.canCurrentUserSubmit).toBe(false);
@@ -848,7 +848,7 @@ describe('DraftService — rooms with missing or partial data', () => {
       entries: [entry(ENTRY_ID, SQUAD_ID), entry(OTHER_ENTRY_ID, 'squad-orphan')],
     });
 
-    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
     expect(view.entries.map((row) => [row.id, row.userId])).toEqual([[ENTRY_ID, OWNER_USER_ID], [OTHER_ENTRY_ID, '']]);
   });
@@ -856,7 +856,7 @@ describe('DraftService — rooms with missing or partial data', () => {
   it('leaves a tier\'s golfer who is not on the field out of that tier\'s selection group', async () => {
     const { service } = setup({ field: FIELD.filter((row) => row.id !== 'sep-c') });
 
-    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
     expect(view.selectionGroups[0].participants.map((participant) => participant.participantId)).toEqual(['p-a', 'p-b']);
   });
@@ -865,12 +865,12 @@ describe('DraftService — rooms with missing or partial data', () => {
     const { service } = setup({
       contest: { status: ContestStatus.ACTIVE },
       picks: [
-        pick('pick-x', 'p-untiered', 'sep-x', { draftRound: null as unknown as number, draftPickNumber: null as unknown as number }),
-        pick('pick-a', 'p-a', 'sep-a', { draftRound: 1 }),
+        pick('pick-x', 'p-untiered', 'sep-x', { lineupSlot: null as unknown as number, pickSequence: null as unknown as number }),
+        pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 }),
       ],
     });
 
-    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
     expect(view.picks.map((row) => [row.sportEventParticipantId, row.pickNumber, row.round, row.pickInRound, row.tierId]))
       .toEqual([
@@ -886,7 +886,7 @@ describe('DraftService — rooms with missing or partial data', () => {
       picks: [pick('pick-d', 'p-d', 'sep-d'), pick('pick-a', 'p-a', 'sep-a')],
     });
 
-    const view = await service.getDraftState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
     expect(view.picks.map((row) => row.round)).toEqual([1, 2]);
   });
@@ -894,7 +894,7 @@ describe('DraftService — rooms with missing or partial data', () => {
 
 // #481 — an entry is a draft until its owner submits a complete lineup, and only submitted
 // entries count. These suites take one pick per tier, so a complete lineup is one from each.
-describe('DraftService.submitEntry — an entry counts only once its owner submits a complete lineup', () => {
+describe('SelectionService.submitEntry — an entry counts only once its owner submits a complete lineup', () => {
   const COMPLETE = [pick('pick-a', 'p-a', 'sep-a'), pick('pick-d', 'p-d', 'sep-d')];
   const ONE_PER_TIER = { configJson: { picksPerTier: 1, countedScores: 1 } };
 
@@ -907,7 +907,7 @@ describe('DraftService.submitEntry — an entry counts only once its owner submi
   }
 
   /** The adapter answers an update with the whole row; the generic fake echoes only the change. */
-  function withFullRowUpdates(deps: DraftServiceDeps, status: ContestEntry['status'] = 'DRAFT') {
+  function withFullRowUpdates(deps: SelectionServiceDeps, status: ContestEntry['status'] = 'DRAFT') {
     (deps.entries.update as jest.Mock).mockImplementation(async (id: string, updates: Partial<ContestEntry>) => ({
       ...entry(id, SQUAD_ID, `Entry ${id}`, status),
       ...updates,
@@ -997,7 +997,7 @@ describe('DraftService.submitEntry — an entry counts only once its owner submi
     expect(deps.entries.update).not.toHaveBeenCalled();
   });
 
-  it('refuses 404 ENTRY_NOT_FOUND, 401 AUTH_SESSION_REQUIRED and 403 DRAFT_ENTRY_ACCESS_DENIED in that order', async () => {
+  it('refuses 404 ENTRY_NOT_FOUND, 401 AUTH_SESSION_REQUIRED and 403 ENTRY_ACCESS_DENIED in that order', async () => {
     const { service } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
 
     await expect(service.submitEntry(submitEntryInput({ entryId: 'missing', actorUserId: undefined })))
@@ -1005,11 +1005,11 @@ describe('DraftService.submitEntry — an entry counts only once its owner submi
     await expect(service.submitEntry(submitEntryInput({ actorUserId: undefined })))
       .rejects.toMatchObject({ code: 'AUTH_SESSION_REQUIRED', statusCode: 401 });
     await expect(service.submitEntry(submitEntryInput({ actorUserId: 'someone-else' })))
-      .rejects.toMatchObject({ code: 'DRAFT_ENTRY_ACCESS_DENIED', statusCode: 403 });
+      .rejects.toMatchObject({ code: 'ENTRY_ACCESS_DENIED', statusCode: 403 });
   });
 });
 
-describe('DraftService.submitSelection — a pick change on a submitted entry (#481)', () => {
+describe('SelectionService.submitSelection — a pick change on a submitted entry (#481)', () => {
   const COMPLETE = [pick('pick-a', 'p-a', 'sep-a'), pick('pick-d', 'p-d', 'sep-d')];
   const ONE_PER_TIER = { configJson: { picksPerTier: 1, countedScores: 1 } };
 
@@ -1060,7 +1060,7 @@ describe('DraftService.submitSelection — a pick change on a submitted entry (#
 describe.each([
   { selectionType: SelectionType.TIERED, configuration: {} },
   { selectionType: SelectionType.BUDGET_PICK, configuration: { rosterSize: 2 } },
-])('DraftService exclusivity in a $selectionType room', ({ selectionType, configuration: typeConfiguration }) => {
+])('SelectionService exclusivity in a $selectionType room', ({ selectionType, configuration: typeConfiguration }) => {
   const takenByOtherEntry = [pick('pick-other', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID })];
   const roomWith = (isExclusive: boolean, extra: SetupOptions = {}) =>
     setup({
@@ -1091,8 +1091,8 @@ describe.each([
   });
 
   it('drops a golfer another entry holds from the available ids only when the contest is exclusive', async () => {
-    const exclusive = await roomWith(true, { picks: takenByOtherEntry }).service.getDraftState({ contestId: CONTEST_ID });
-    const shared = await roomWith(false, { picks: takenByOtherEntry }).service.getDraftState({ contestId: CONTEST_ID });
+    const exclusive = await roomWith(true, { picks: takenByOtherEntry }).service.getSelectionState({ contestId: CONTEST_ID });
+    const shared = await roomWith(false, { picks: takenByOtherEntry }).service.getSelectionState({ contestId: CONTEST_ID });
 
     expect(exclusive.availableSportEventParticipantIds).not.toContain('sep-a');
     expect(shared.availableSportEventParticipantIds).toContain('sep-a');

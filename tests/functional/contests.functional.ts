@@ -437,8 +437,8 @@ describe('SDK Functional: Contests and Entries', () => {
     });
 
     expect(selectionResponse.data?.contestId).toBe(contestId);
-    expect(selectionResponse.data?.draftPickHistories).toHaveLength(1);
-    expect(selectionResponse.data?.draftPickHistories[0]?.participantId).toBe(
+    expect(selectionResponse.data?.pickHistories).toHaveLength(1);
+    expect(selectionResponse.data?.pickHistories[0]?.participantId).toBe(
       selectedParticipant.sportEventParticipantId,
     );
     expect(selectionResponse.data?.isComplete).toBe(false);

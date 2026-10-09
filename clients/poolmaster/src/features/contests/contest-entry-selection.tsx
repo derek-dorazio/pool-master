@@ -1,5 +1,5 @@
 import { PARTICIPANT_SCORING_DEFINITIONS } from "@poolmaster/shared/domain";
-import type { DraftStateResponse } from "@/lib/api";
+import type { SelectionStateResponse } from "@/lib/api";
 import {
   Alert,
   Button,
@@ -13,8 +13,8 @@ import {
   cn,
 } from "@/features/shared/ui";
 
-type DraftState = DraftStateResponse;
-export type SelectionGroup = NonNullable<DraftState["selectionGroups"]>[number];
+type SelectionState = SelectionStateResponse;
+export type SelectionGroup = NonNullable<SelectionState["selectionGroups"]>[number];
 export type SelectionParticipant = SelectionGroup["participants"][number];
 
 function getSelectedParticipants(group: SelectionGroup) {
