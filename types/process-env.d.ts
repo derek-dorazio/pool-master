@@ -27,8 +27,9 @@ declare global {
       CLIENT_LOGS_RATE_LIMIT_PER_MIN?: string;
       OPENAPI_EXPORT?: string;
 
-      // core-api build version, read only by scripts/export-openapi.ts to write a
-      // version-info.json; the service itself reads that file (#180)
+      // core-api build version. Read by scripts/export-openapi.ts to write a
+      // version-info.json, and by the web app build (vite.config.ts) for the service
+      // version it reports. The running service reads only that file (#180).
       POOLMASTER_SERVICE_VERSION?: string;
 
       // core-api email delivery
