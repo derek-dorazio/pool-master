@@ -16,6 +16,7 @@
     "noImplicitOverride": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "noPropertyAccessFromIndexSignature": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -24,5 +25,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["e2e", "playwright.config.ts"]
+  "include": ["e2e", "playwright.config.ts", "../../types/process-env.d.ts"]
 }

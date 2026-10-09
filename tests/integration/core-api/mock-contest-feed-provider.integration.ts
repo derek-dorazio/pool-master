@@ -22,6 +22,7 @@ import {
 } from '../helpers';
 import { startMockContestFeedProvider } from '../mock-contest-feed-provider-helper';
 import { linkedProviderEvent } from '../../support/event-edition';
+import { readStoredSyncRunPayload } from '../../support/sync-run-payload';
 import {
   PrismaParticipantProviderMappingRepository,
   PrismaProviderSyncRunRepository,
@@ -217,7 +218,7 @@ async function waitForScheduledProviderSyncRuns(providerIdToFind: string, expect
       where: { providerId: providerIdToFind },
     });
     const scheduledRows = rows.filter((run) =>
-      toRecord(toRecord(run.payloadJson)?.requestPayload)?.source === 'SCHEDULED',
+      readStoredSyncRunPayload(run.payloadJson)?.requestPayload?.source === 'SCHEDULED',
     );
     const terminalRows = scheduledRows.filter((row) => row.status === 'COMPLETED' || row.status === 'FAILED');
     if (scheduledRows.length >= expectedRunCount && terminalRows.length >= expectedRunCount) {
@@ -236,19 +237,8 @@ async function waitForScheduledProviderSyncRuns(providerIdToFind: string, expect
 }
 
 function providerPayloadPaths(payloadJson: unknown): string[] {
-  const payload = toRecord(payloadJson);
-  const providerPayload = toRecord(payload?.providerPayload);
-  const rawItems = Array.isArray(providerPayload?.raw) ? providerPayload.raw : [];
-  return rawItems.flatMap((item) => {
-    const path = toRecord(item)?.path;
-    return typeof path === 'string' ? [path] : [];
-  });
-}
-
-function toRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : null;
+  const captures = readStoredSyncRunPayload(payloadJson)?.providerPayload?.raw ?? [];
+  return captures.flatMap((capture) => (capture.path === undefined ? [] : [capture.path]));
 }
 
 async function findEventParticipantByExternalIds(input: {
@@ -843,7 +833,7 @@ describe('mock contest feed provider event-first verification', () => {
     expect(scheduledScottieEventParticipant.ranking).toBe(1);
     expect(scheduledScottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
 
-    const scheduledRunPayloads = scheduledRuns.map((run) => toRecord(run.payloadJson));
+    const scheduledRunPayloads = scheduledRuns.map((run) => readStoredSyncRunPayload(run.payloadJson));
     expect(scheduledRuns.map((run) => run.eventId).filter((id): id is string => Boolean(id))).toEqual([
       'golf-genesis-scottish-open-2026',
     ]);

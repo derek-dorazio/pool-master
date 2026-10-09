@@ -208,10 +208,9 @@ describe('MemberService', () => {
         updatedAt: new Date(),
       }),
     });
-    const prisma = createPrisma();
     const service = new MemberService(
       membershipRepo,
-      asPrismaClient(prisma),
+      asPrismaClient(createPrisma()),
       squadRepo,
       squadMembershipRepo,
     );
@@ -229,8 +228,8 @@ describe('MemberService', () => {
     expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { isActive: false });
     // The league and squad memberships end; the account does not. A commissioner removing a
     // member must not be able to stop them signing in — that is the user's own call, or a root
-    // admin's. `findByUser` was the last-league check that gated the old cascade.
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    // admin's. `findByUser` was the last-league check that gated the old cascade. The account
+    // staying active is asserted against Postgres in league-squad-membership-invariant.integration.ts.
     expect(membershipRepo.findByUser).not.toHaveBeenCalled();
   });
 

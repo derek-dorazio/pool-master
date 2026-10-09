@@ -13,6 +13,11 @@ const rankedEventIds = [
   'integration-ranked-field',
   'integration-ranked-refresh',
   'integration-ranked-overwrite',
+  'integration-linked-sync',
+  'integration-unlinked-sync',
+  'integration-odds-field',
+  'integration-admin-header-SCORES_ONLY',
+  'integration-admin-header-NONE',
 ];
 
 beforeAll(() => setupIntegrationTests());
@@ -51,7 +56,15 @@ afterAll(async () => {
   await prisma.participant.deleteMany({
     where: {
       externalId: {
-        in: ['ingestion-player-1', 'ingestion-ranked-1', 'ingestion-ranked-2', 'ingestion-ranked-3', 'ingestion-ranked-4'],
+        in: [
+          'ingestion-player-1',
+          'ingestion-ranked-1',
+          'ingestion-ranked-2',
+          'ingestion-ranked-3',
+          'ingestion-ranked-4',
+          'ingestion-odds-1',
+          'ingestion-odds-2',
+        ],
       },
     },
   });
@@ -244,6 +257,126 @@ describe('IngestionPersistence', () => {
     expect(row.ranking).toBe(5);
   });
 
+  // plans/147 — sync never creates a SportEvent: a provider event names no series or sport
+  // league, so a created row would have to guess its tour.
+  it('updates the event linked to a provider event and writes no row for a provider event nothing is linked to', async () => {
+    const prisma = getPrisma();
+    const persistence = new IngestionPersistence(prisma);
+    const startDate = new Date('2026-06-04T12:00:00.000Z');
+    const linked = await linkedProviderEvent(prisma, {
+      providerId: 'TEST_PROVIDER',
+      externalId: 'integration-linked-sync',
+      name: 'Linked Sync Open',
+      startDate,
+    });
+    const providerEvent = (externalId: string) => ({
+      externalId,
+      providerId: 'TEST_PROVIDER',
+      sport: Sport.GOLF,
+      name: `Provider ${externalId}`,
+      startDate,
+      status: 'SCHEDULED' as const,
+      participantCount: 80,
+      fieldLocked: false,
+      metadata: {},
+    });
+
+    const result = await persistence.persistEventsWithDiagnostics([
+      providerEvent('integration-linked-sync'),
+      providerEvent('integration-unlinked-sync'),
+    ]);
+
+    expect(result.count).toBe(1);
+    expect((await prisma.sportEvent.findUniqueOrThrow({ where: { id: linked.id } })).participantCount).toBe(80);
+    await expect(prisma.sportEvent.count({
+      where: { providerId: 'TEST_PROVIDER', externalId: 'integration-unlinked-sync' },
+    })).resolves.toBe(0);
+  });
+
+  it('writes each golfer\'s seed, and the odds only when they were quoted for this event, onto the event participant', async () => {
+    const prisma = getPrisma();
+    const persistence = new IngestionPersistence(prisma);
+    const golfer = (externalId: string, oddsSourceEventId: string) => ({
+      externalId,
+      providerId: 'TEST_PROVIDER',
+      sport: Sport.GOLF,
+      name: `Golfer ${externalId}`,
+      active: true,
+      metadata: { seed: 3, odds: 8.5, oddsSourceEventId },
+    });
+    const detail = rankedFieldDetail('integration-odds-field', [
+      golfer('ingestion-odds-1', 'integration-odds-field'),
+      golfer('ingestion-odds-2', 'some-other-event'),
+    ]);
+    const event = await linkedProviderEvent(prisma, {
+      providerId: detail.providerId,
+      externalId: detail.externalId,
+      name: detail.name,
+      startDate: detail.startDate,
+    });
+
+    await persistence.persistEventDetailWithDiagnostics(detail);
+
+    const rows = await prisma.sportEventParticipant.findMany({
+      where: { sportEventId: event.id },
+      include: { participant: true },
+    });
+    const byGolfer: Record<string, { seedNumber: number | null; oddsToWin: number | null }> = {};
+    for (const row of rows) {
+      byGolfer[row.participant.externalId ?? row.participantId] = {
+        seedNumber: row.seedNumber,
+        oddsToWin: row.oddsToWin === null ? null : Number(row.oddsToWin),
+      };
+    }
+    // Odds quoted for a different event must not bleed onto this one.
+    expect(byGolfer).toEqual({
+      'ingestion-odds-1': { seedNumber: 3, oddsToWin: 8.5 },
+      'ingestion-odds-2': { seedNumber: 3, oddsToWin: null },
+    });
+  });
+
+  // #118, #435 — an admin owns the header, rounds and status of every event, linked for
+  // scores (SCORES_ONLY) or not (NONE). Sync may refresh the field size, and nothing else.
+  it.each(['SCORES_ONLY', 'NONE'] as const)(
+    'leaves a %s event\'s admin-owned name, start, rounds and status as they were, and refreshes only its field size',
+    async (syncScope) => {
+      const prisma = getPrisma();
+      const persistence = new IngestionPersistence(prisma);
+      const externalId = `integration-admin-header-${syncScope}`;
+      const startDate = new Date('2026-06-11T12:00:00.000Z');
+      const created = await linkedProviderEvent(prisma, {
+        providerId: 'TEST_PROVIDER',
+        externalId,
+        name: 'Admin Open',
+        startDate,
+      });
+      await prisma.sportEvent.update({ where: { id: created.id }, data: { syncScope, participantCount: 60 } });
+
+      await persistence.persistEventsWithDiagnostics([{
+        externalId,
+        providerId: 'TEST_PROVIDER',
+        sport: Sport.GOLF,
+        name: 'Provider Open',
+        startDate: new Date('2026-07-01T12:00:00.000Z'),
+        status: 'IN_PROGRESS',
+        rounds: 5,
+        participantCount: 80,
+        fieldLocked: true,
+        metadata: {},
+      }]);
+
+      const row = await prisma.sportEvent.findUniqueOrThrow({ where: { id: created.id } });
+      expect(row).toMatchObject({
+        name: 'Admin Open',
+        startDate,
+        rounds: created.rounds,
+        status: created.status,
+        syncScope,
+        participantCount: 80,
+      });
+    },
+  );
+
   it('#125: the participant_ranking_snapshots table no longer exists — the global ranking snapshot is retired, not demoted', async () => {
     const prisma = getPrisma();
 
@@ -252,7 +385,8 @@ describe('IngestionPersistence', () => {
     `;
 
     expect(table).toBeNull();
-    expect((prisma as unknown as Record<string, unknown>).participantRankingSnapshot).toBeUndefined();
+    // The model is gone, so the client type has no such key; ask the object itself.
+    expect(Reflect.get(prisma, 'participantRankingSnapshot')).toBeUndefined();
   });
 
   // #205 — the `pool-master-8yh` job-completion case went with `persistIngestionJob` and the

@@ -33,6 +33,10 @@ things deliberately *not* adopted. Those exist nowhere else.
 - **No Redis.** Caching and coordination use in-process state plus persistent services
   where needed. The active MVP runtime has no Redis dependency and should not acquire one
   incidentally.
+- **No `exactOptionalPropertyTypes`.** Declined in #523: it separates an omitted property
+  from one set to `undefined`, and this codebase hands `x | undefined` to optional
+  properties by design, in partial updates, form defaults, DTO mappers and the generated
+  client. A sample of its findings turned up no bug, only that pattern.
 
 ### One web application
 

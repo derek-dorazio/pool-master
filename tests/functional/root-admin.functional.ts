@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { Sport } from '@poolmaster/shared/domain';
 import {
   deleteUser,
   disableUser,
@@ -423,7 +424,7 @@ describe('SDK Functional: Root Admin', () => {
         sport: 'GOLF',
       },
     });
-    expect(resetSportOverride.data?.perSportOverrides.GOLF).toBeUndefined();
+    expect(resetSportOverride.data?.perSportOverrides[Sport.GOLF]).toBeUndefined();
   });
 
   it('allows a promoted root-admin user to search, inactivate, and delete leagues', async () => {

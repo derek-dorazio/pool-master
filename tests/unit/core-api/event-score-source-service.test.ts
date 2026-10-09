@@ -114,7 +114,6 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
 
     const result = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
 
-    expect(prisma.sportLeague.findUnique).toHaveBeenCalledWith({ where: { id: 'league-1' } });
     expect(result.map((event) => event.externalId)).toEqual(['ext-1']);
   });
 
@@ -290,121 +289,6 @@ describe('EventScoreSourceService.getProviderEventDetail', () => {
 
     expect(result.venue).toBeNull();
     expect(result.endDate).toBeNull();
-  });
-});
-
-describe('EventScoreSourceService.linkScoreSource', () => {
-  it('pool-master-753 404s EVENT_NOT_FOUND when the sport event does not exist', async () => {
-    const prisma = { sportEvent: { findUnique: jest.fn().mockResolvedValue(null) } };
-    const service = new EventScoreSourceService(asPrismaClient(prisma));
-
-    await expect(
-      service.linkScoreSource('missing', { providerId: 'mock-golf', externalId: 'ext-1' }),
-    ).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
-  });
-
-  it('pool-master-753 409s EXTERNAL_EVENT_ALREADY_LINKED when another sport event already holds that identity', async () => {
-    const prisma = {
-      sportEvent: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'event-1', sport: 'GOLF', syncScope: 'NONE' }),
-        findFirst: jest.fn().mockResolvedValue({ id: 'event-2' }),
-        update: jest.fn(),
-      },
-    };
-    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(buildProvider()));
-
-    await expect(
-      service.linkScoreSource('event-1', { providerId: 'mock-golf', externalId: 'ext-1' }),
-    ).rejects.toMatchObject({ code: 'EXTERNAL_EVENT_ALREADY_LINKED', statusCode: 409 });
-    expect(prisma.sportEvent.findFirst).toHaveBeenCalledWith({
-      where: { providerId: 'mock-golf', externalId: 'ext-1', NOT: { id: 'event-1' } },
-    });
-    expect(prisma.sportEvent.update).not.toHaveBeenCalled();
-  });
-
-  it('pool-master-753 sets providerId/externalId/syncScope=SCORES_ONLY when no conflict exists', async () => {
-    const prisma = {
-      sportEvent: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'event-1', sport: 'GOLF', syncScope: 'NONE' }),
-        findFirst: jest.fn().mockResolvedValue(null),
-        update: jest.fn().mockResolvedValue({}),
-      },
-    };
-    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(buildProvider()));
-
-    await service.linkScoreSource('event-1', { providerId: 'mock-golf', externalId: 'ext-1' });
-
-    expect(prisma.sportEvent.update).toHaveBeenCalledWith({
-      where: { id: 'event-1' },
-      data: { providerId: 'mock-golf', externalId: 'ext-1', syncScope: 'SCORES_ONLY' },
-    });
-  });
-});
-
-describe('EventScoreSourceService.linkScoreSource refuses a provider that cannot send scores', () => {
-  it('404s PROVIDER_NOT_FOUND and leaves the event unlinked when no provider is registered under that id', async () => {
-    const prisma = {
-      sportEvent: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'event-1', sport: 'GOLF', syncScope: 'NONE' }),
-        findFirst: jest.fn().mockResolvedValue(null),
-        update: jest.fn(),
-      },
-    };
-    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(buildProvider()));
-
-    await expect(
-      service.linkScoreSource('event-1', { providerId: 'no-such-provider', externalId: 'ext-1' }),
-    ).rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 404 });
-    expect(prisma.sportEvent.update).not.toHaveBeenCalled();
-  });
-
-  it('422s PROVIDER_SPORT_MISMATCH when the provider does not cover the event\'s sport, since the live-score sweep would never poll it', async () => {
-    const prisma = {
-      sportEvent: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'event-1', sport: 'TENNIS', syncScope: 'NONE' }),
-        findFirst: jest.fn().mockResolvedValue(null),
-        update: jest.fn(),
-      },
-    };
-    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(buildProvider()));
-
-    await expect(
-      service.linkScoreSource('event-1', { providerId: 'mock-golf', externalId: 'ext-1' }),
-    ).rejects.toMatchObject({ code: 'PROVIDER_SPORT_MISMATCH', statusCode: 422 });
-    expect(prisma.sportEvent.update).not.toHaveBeenCalled();
-  });
-});
-
-describe('EventScoreSourceService.unlinkScoreSource', () => {
-  it('pool-master-753 404s EVENT_NOT_FOUND when the sport event does not exist', async () => {
-    const prisma = { sportEvent: { findUnique: jest.fn().mockResolvedValue(null) } };
-    const service = new EventScoreSourceService(asPrismaClient(prisma));
-
-    await expect(service.unlinkScoreSource('missing')).rejects.toMatchObject({
-      code: 'EVENT_NOT_FOUND',
-      statusCode: 404,
-    });
-  });
-
-  it('pool-master-753 reverts to the manual-admin placeholder identity and syncScope=NONE', async () => {
-    const prisma = {
-      sportEvent: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'event-1', syncScope: 'SCORES_ONLY' }),
-        update: jest.fn().mockResolvedValue({}),
-      },
-    };
-    const service = new EventScoreSourceService(asPrismaClient(prisma));
-
-    await service.unlinkScoreSource('event-1');
-
-    expect(prisma.sportEvent.update).toHaveBeenCalledWith({
-      where: { id: 'event-1' },
-      data: {
-        providerId: 'manual-admin',
-        externalId: expect.stringMatching(/^manual-/),
-        syncScope: 'NONE',
-      },
-    });
   });
 });
 

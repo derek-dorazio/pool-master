@@ -6,6 +6,9 @@ import type {
 import { readAppEnv } from './config';
 import { readVersionInfo } from './version-info';
 
+/** The options-object form of Fastify's `logger` setting (Fastify does not export the pino type). */
+type FastifyLoggerSettings = Exclude<FastifyServerOptions['logger'], boolean | undefined>;
+
 const REDACT_PATHS = [
   'req.headers.authorization',
   'req.headers.cookie',
@@ -55,7 +58,7 @@ function resolveRoute(request: FastifyRequest): string {
 
 export function createFastifyLoggerOptions(
   serviceName: string,
-): FastifyServerOptions['logger'] {
+): FastifyLoggerSettings {
   return {
     level: resolveLogLevel(),
     base: {
