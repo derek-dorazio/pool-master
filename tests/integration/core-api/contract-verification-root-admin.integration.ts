@@ -16,7 +16,7 @@ import {
   ProviderSyncRunListResponseSchema,
   ParticipantProviderMappingResponseSchema,
   UnmappedProviderParticipantListResponseSchema,
-  SuccessSchema,
+  SuccessResponseSchema,
   UserResponseSchema,
   UserListResponseSchema,
   ParticipantListResponseSchema,
@@ -459,7 +459,7 @@ describe('Contract verification (root admin)', () => {
       },
     });
     expect(setRootAdminRes.statusCode).toBe(200);
-    expect(SuccessSchema.safeParse(setRootAdminRes.json()).success).toBe(true);
+    expect(SuccessResponseSchema.safeParse(setRootAdminRes.json()).success).toBe(true);
 
     const resetPasswordRes = await getApp().inject({
       method: 'POST',
@@ -488,7 +488,7 @@ describe('Contract verification (root admin)', () => {
       },
     });
     expect(deleteUserRes.statusCode).toBe(200);
-    expect(SuccessSchema.safeParse(deleteUserRes.json()).success).toBe(true);
+    expect(SuccessResponseSchema.safeParse(deleteUserRes.json()).success).toBe(true);
     expect(await getPrisma().user.findUnique({ where: { id: targetUser.user.id } })).toBeNull();
 
     const syncRunsRes = await getApp().inject({

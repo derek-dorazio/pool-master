@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { activateLeague, deleteLeague, inactivateLeague, leaveLeague, updateLeagueDetails, updateLeagueIcon, type LeaveLeagueResponses, type LeagueDto } from '@/lib/api';
+import { activateLeague, deleteLeague, inactivateLeague, leaveLeague, updateLeagueDetails, updateLeagueIcon, type LeagueDto, type SuccessResponse } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import {
   ActionList,
@@ -37,7 +37,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type LeaveLeagueResult = LeaveLeagueResponses[200];
+type LeaveLeagueResult = SuccessResponse;
 type ActiveLeagueDialog = 'details' | 'inactivate' | 'leave' | null;
 
 function formatRole(role: string | null | undefined) {

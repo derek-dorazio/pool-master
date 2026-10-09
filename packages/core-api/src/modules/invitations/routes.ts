@@ -11,7 +11,8 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components these routes $ref (#192). The DTOs live in
 // leagues.dto.ts -- DTO ownership does not follow route-module boundaries.
 import '@poolmaster/shared/dto/leagues.dto';
-import { ErrorEnvelopeSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
+// Registers ErrorEnvelope, which this module's error responses $ref (#192).
+import '@poolmaster/shared/dto/errors.dto';
 import {
   PrismaLeagueRepository,
   PrismaLeagueMembershipRepository,
@@ -61,8 +62,8 @@ export function invitationsModule(fastify: FastifyInstance, opts: MailModuleOpti
       operationId: 'getInvitationPreview',
       response: {
         200: schemaRef('InvitationPreviewResponse'),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        400: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handlers.getInvitationPreview,
@@ -78,9 +79,9 @@ export function invitationsModule(fastify: FastifyInstance, opts: MailModuleOpti
       body: schemaRef('AcceptInvitationRequest'),
       response: {
         201: schemaRef('LeagueMembershipResponse'),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handlers.acceptInvitation,

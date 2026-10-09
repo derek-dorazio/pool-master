@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { ErrorEnvelopeSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
+// Registers ErrorEnvelope, which this module's error responses $ref (#192).
+import '@poolmaster/shared/dto/errors.dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components this module's routes $ref (#192).
@@ -51,8 +52,8 @@ export function teamInvitationsModule(fastify: FastifyInstance): void {
       operationId: 'getTeamOwnerInvitationPreview',
       response: {
         200: schemaRef('TeamOwnerInvitationPreviewResponse'),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        400: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handlers.getInvitationPreview,
@@ -68,9 +69,9 @@ export function teamInvitationsModule(fastify: FastifyInstance): void {
       body: schemaRef('AcceptTeamOwnerInvitationRequest'),
       response: {
         201: schemaRef('TeamOwnerInvitationResponse'),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handlers.acceptInvitation,
@@ -86,9 +87,9 @@ export function teamInvitationsModule(fastify: FastifyInstance): void {
       body: schemaRef('RegisterWithTeamOwnerInvitationRequest'),
       response: {
         201: schemaRef('AuthResponse'),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
-        409: zodToJsonSchema(ErrorEnvelopeSchema),
+        400: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+        409: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handlers.registerAndAcceptInvitation,
