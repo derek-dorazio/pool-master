@@ -12,7 +12,7 @@ export function buildApp(options: MockContestFeedAppOptions = {}) {
       level: process.env.LOG_LEVEL ?? 'info',
       base: {
         service: 'mock-contest-feed-provider',
-        env: process.env.NODE_ENV ?? 'development',
+        env: process.env.POOLMASTER_ENVIRONMENT ?? 'development',
       },
       formatters: {
         level(label) {

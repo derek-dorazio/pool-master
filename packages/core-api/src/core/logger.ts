@@ -41,9 +41,9 @@ export type ServiceLogger = Pick<
   'debug' | 'info' | 'warn' | 'error' | 'fatal'
 >;
 
+/** Test suites quieten themselves by setting LOG_LEVEL; production code has no test branch. */
 function resolveLogLevel(): string {
-  return process.env.LOG_LEVEL
-    ?? (process.env.NODE_ENV === 'test' ? 'warn' : 'info');
+  return process.env.LOG_LEVEL ?? 'info';
 }
 
 function resolveRoute(request: FastifyRequest): string {

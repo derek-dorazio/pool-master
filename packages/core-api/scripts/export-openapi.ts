@@ -23,7 +23,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'openapi-export-placeholder-n
 // tool, not a deployment: it boots the app only to walk route schemas and never
 // serves a request, so it declares its own identity. `??=` keeps a real value when
 // one is already set, so running this inside CI or a configured shell is unchanged.
-process.env.POOLMASTER_ENVIRONMENT ??= 'openapi-export';
+process.env.POOLMASTER_ENVIRONMENT ??= 'development';
 process.env.POOLMASTER_SERVICE_VERSION ??= '0.0.0-openapi-export';
 
 import { mkdirSync, writeFileSync } from 'node:fs';

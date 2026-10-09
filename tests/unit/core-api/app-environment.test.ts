@@ -19,7 +19,8 @@ describe('readAppEnv', () => {
   });
 
   it('throws when POOLMASTER_ENVIRONMENT is unset, rather than borrowing NODE_ENV', () => {
-    expect(() => readAppEnv({ NODE_ENV: 'production' })).toThrow(/POOLMASTER_ENVIRONMENT/);
+    const deployedNodeEnvOnly: NodeJS.ProcessEnv = { NODE_ENV: 'production' };
+    expect(() => readAppEnv(deployedNodeEnvOnly)).toThrow(/POOLMASTER_ENVIRONMENT/);
   });
 
   it('throws on "production", the NODE_ENV spelling, so the deployed name stays "prod"', () => {
@@ -29,9 +30,8 @@ describe('readAppEnv', () => {
   });
 
   it('ignores the retired ENVIRONMENT variable entirely', () => {
-    expect(readAppEnv({ ENVIRONMENT: 'prod', POOLMASTER_ENVIRONMENT: 'development' })).toBe(
-      AppEnvironment.DEVELOPMENT,
-    );
+    const env: NodeJS.ProcessEnv = { ENVIRONMENT: 'prod', POOLMASTER_ENVIRONMENT: 'development' };
+    expect(readAppEnv(env)).toBe(AppEnvironment.DEVELOPMENT);
   });
 
   it('reads process.env when no environment object is passed', () => {

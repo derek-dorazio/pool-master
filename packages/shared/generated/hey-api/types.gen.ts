@@ -9679,7 +9679,7 @@ export type GetRootVersionResponses = {
          */
         schemaVersion: 1;
         /**
-         * Runtime environment name such as development, qa, staging, or production.
+         * Runtime environment name: development, test, ci, qa, staging, or prod.
          */
         environment: string;
         /**
@@ -11498,7 +11498,7 @@ export type GetVersionResponses = {
          */
         schemaVersion: 1;
         /**
-         * Runtime environment name such as development, qa, staging, or production.
+         * Runtime environment name: development, test, ci, qa, staging, or prod.
          */
         environment: string;
         /**

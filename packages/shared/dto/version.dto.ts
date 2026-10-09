@@ -11,7 +11,7 @@ export type VersionComponent = z.infer<typeof VersionComponentSchema>;
 
 export const ServiceVersionResponseSchema = z.object({
   schemaVersion: z.literal(1).describe('Version metadata response schema version.'),
-  environment: z.string().describe('Runtime environment name such as development, qa, staging, or production.'),
+  environment: z.string().describe('Runtime environment name: development, test, ci, qa, staging, or prod.'),
   buildTimeUtc: DateTimeSchema.nullable().describe('UTC build timestamp supplied by CI, when available.'),
   gitRef: z.string().nullable().describe('Git branch or ref name supplied by CI, when available.'),
   service: VersionComponentSchema.describe('Core API service version metadata.'),

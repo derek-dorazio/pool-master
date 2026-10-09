@@ -175,7 +175,10 @@ describe('EMAIL_CONFIG defaults', () => {
         CONTEST_STARTED_SUMMARY: true,
       },
     });
-    expect(EMAIL_SETTINGS.defaults({}).enabled).toBe(true);
+  });
+
+  it('refuses to pick a default when POOLMASTER_ENVIRONMENT is unset, instead of guessing email should be on', () => {
+    expect(() => EMAIL_SETTINGS.defaults({ ENVIRONMENT: 'qa' })).toThrow(/POOLMASTER_ENVIRONMENT/);
   });
 });
 

@@ -19693,7 +19693,7 @@
                     },
                     "environment": {
                       "type": "string",
-                      "description": "Runtime environment name such as development, qa, staging, or production."
+                      "description": "Runtime environment name: development, test, ci, qa, staging, or prod."
                     },
                     "buildTimeUtc": {
                       "type": [
@@ -22817,7 +22817,7 @@
                     },
                     "environment": {
                       "type": "string",
-                      "description": "Runtime environment name such as development, qa, staging, or production."
+                      "description": "Runtime environment name: development, test, ci, qa, staging, or prod."
                     },
                     "buildTimeUtc": {
                       "type": [
