@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
+import { parseRouteState } from '@/routes/route-state';
 import { JoinLeaguePage } from './join-league-page';
 import {
   acceptInvitationData,
@@ -70,8 +71,8 @@ bindApiMocks({
 
 /** Stands in for League Home and shows whether the join page asked it to report a failed team setup. */
 function LeagueDestination() {
-  const state = useLocation().state as { teamSetupFailed?: unknown } | null;
-  return <div data-team-setup-failed={String(state?.teamSetupFailed === true)} data-testid="league-destination" />;
+  const { teamSetupFailed = false } = parseRouteState(useLocation().state);
+  return <div data-team-setup-failed={String(teamSetupFailed)} data-testid="league-destination" />;
 }
 
 function renderJoinLeaguePage(initialEntry = '/invite/LEAGUE123') {
@@ -337,6 +338,35 @@ describe('Joining a league from an invite link', () => {
     renderJoinLeaguePage();
 
     fireEvent.change(await screen.findByRole('textbox', { name: 'Team name' }), { target: { value: 'Taken Name' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
+
+    expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
+  });
+
+  it('tells League Home the chosen team name and icon did not save when the new team cannot be looked up', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+    acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
+    listLeagueSquadsMock.mockResolvedValue({ error: { code: 'INTERNAL_ERROR', message: 'Try again.' }, status: 500 });
+
+    renderJoinLeaguePage();
+
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Team name' }), { target: { value: 'Fresh Name' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
+
+    expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
+    expect(updateLeagueSquadMock).not.toHaveBeenCalled();
+  });
+
+  it('tells League Home the chosen team name and icon did not save when the viewer\'s new team is not in the league list', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+    acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
+    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([])));
+
+    renderJoinLeaguePage();
+
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Team name' }), { target: { value: 'Fresh Name' } });
     fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
 
     expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
