@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -57,6 +57,11 @@ bindApiMocks({
   updateLeagueIcon: updateLeagueIconMock,
 });
 
+/** Shows the current history entry's state, so a test can see what Back or a reload would bring back. */
+function HistoryStateProbe() {
+  return <div data-testid="history-state">{JSON.stringify(useLocation().state ?? null)}</div>;
+}
+
 function LeagueRouteControls() {
   const navigate = useNavigate();
 
@@ -67,7 +72,7 @@ function LeagueRouteControls() {
   );
 }
 
-function renderLeagueDetailPage() {
+function renderLeagueDetailPage(initialEntry: string | { pathname: string; state: unknown } = '/league/BIGDAWGS') {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -79,12 +84,13 @@ function renderLeagueDetailPage() {
   const view = render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <MemoryRouter initialEntries={['/league/BIGDAWGS']}>
+        <MemoryRouter initialEntries={[initialEntry]}>
           <Routes>
             <Route
               element={(
                 <>
                   <LeagueRouteControls />
+                  <HistoryStateProbe />
                   <LeagueDetailPage />
                 </>
               )}
@@ -517,6 +523,45 @@ describe('League Home use cases', () => {
     expect(await screen.findByText('Root Admin')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Change league details/ })).toBeEnabled();
     expect(screen.queryByRole('button', { name: /^Leave league/ })).not.toBeInTheDocument();
+  });
+
+  it('tells a member who just joined that their team name and icon did not save, pointing them to Team Home', async () => {
+    primeCommonMocks({ leagueRole: 'MEMBER' });
+
+    renderLeagueDetailPage({ pathname: '/league/BIGDAWGS', state: { teamSetupFailed: true } });
+
+    const notice = await screen.findByTestId('league-team-setup-failed');
+    expect(notice).toHaveTextContent("We couldn't save your team name and icon.");
+    expect(within(notice).getByRole('link', { name: 'Team Home' })).toHaveAttribute('href', '/league/BIGDAWGS/team');
+  });
+
+  it('shows the team-setup notice once, clearing it from history so Back or a reload does not bring it back', async () => {
+    primeCommonMocks({ leagueRole: 'MEMBER' });
+
+    renderLeagueDetailPage({ pathname: '/league/BIGDAWGS', state: { teamSetupFailed: true } });
+
+    expect(await screen.findByTestId('league-team-setup-failed')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('history-state')).toHaveTextContent('null'));
+    expect(screen.getByTestId('league-team-setup-failed')).toBeInTheDocument();
+  });
+
+  it('does not carry the team-setup notice to another league', async () => {
+    primeCommonMocks({ leagueRole: 'MEMBER' });
+
+    renderLeagueDetailPage({ pathname: '/league/BIGDAWGS', state: { teamSetupFailed: true } });
+    await screen.findByTestId('league-team-setup-failed');
+    fireEvent.click(screen.getByTestId('go-next-league'));
+
+    await waitFor(() => expect(screen.queryByTestId('league-team-setup-failed')).not.toBeInTheDocument());
+  });
+
+  it('shows no team-setup notice on an ordinary visit to League Home', async () => {
+    primeCommonMocks({ leagueRole: 'MEMBER' });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    expect(screen.queryByTestId('league-team-setup-failed')).not.toBeInTheDocument();
   });
 
   it('makes an inactive league read-only: editing and leaving are disabled', async () => {
