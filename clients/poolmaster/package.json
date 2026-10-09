@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build && node ./scripts/write-version-info.mjs",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.node.json",
     "lint": "eslint src/",
     "test": "vitest run",
     "test:watch": "vitest",
