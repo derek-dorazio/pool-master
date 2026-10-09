@@ -1,8 +1,6 @@
 import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo } from "react";
 import { useLeagueContextGuard } from "@/features/leagues/league-context-guard";
-import {
-} from "@/features/leagues/league-routing";
 import { getLogger } from "@/lib/logger";
 import {
   Chip,

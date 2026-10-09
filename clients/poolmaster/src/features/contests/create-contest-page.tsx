@@ -23,7 +23,6 @@ import {
 import { createContest, deleteContest, getContestConfiguration, listContestConfigTemplates, listEvents, updateContest, updateContestConfiguration } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
-import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   buildLeagueAdminContestPath,
   buildLeagueAdminContestsPath,
@@ -184,7 +183,7 @@ export function CreateContestPage() {
   }, [contestForm]);
 
   // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
-  const { query: leagueQuery, league } = useLeagueContext(leagueCode);
+  const { league } = useLeagueContext(leagueCode);
 
   const eventsQuery = useQuery({
     queryKey: QueryKeys.sportEvents.list({ sport: Sport.GOLF }),
@@ -397,22 +396,6 @@ export function CreateContestPage() {
       selectTemplate(defaultTemplate.id);
     }
   }, [isEditMode, selectTemplate, selectedTemplateId, visibleTemplates]);
-
-  useEffect(() => {
-    if (leagueQuery.isError) {
-      logger.warn(
-        {
-          action: 'contestCreate.league.failed',
-          data: {
-            leagueCode,
-            isEditMode,
-          },
-          err: leagueQuery.error,
-        },
-        'Contest create page failed to load league detail',
-      );
-    }
-  }, [isEditMode, leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   useEffect(() => {
     if (eventsQuery.isError) {
@@ -736,9 +719,13 @@ export function CreateContestPage() {
   const isManagedContestHydrating =
     isEditMode && Boolean(managedContestQuery.data) && !isHydratedFromManagedContest;
 
+  // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
+  if (!league) {
+    return null;
+  }
+
   if (
-    leagueQuery.isLoading
-    || eventsQuery.isLoading
+    eventsQuery.isLoading
     || managedContestQuery.isLoading
     || templatesQuery.isLoading
     || isManagedContestHydrating
@@ -751,18 +738,12 @@ export function CreateContestPage() {
     );
   }
 
-  if (
-    leagueQuery.isError
-    || !league
-    || managedContestQuery.isError
-    || templatesQuery.isError
-  ) {
-    const copy = getLeagueLoadErrorCopy(leagueQuery.error);
+  if (managedContestQuery.isError || templatesQuery.isError) {
     return (
       <ErrorState
-        body={copy.body}
+        body="Try again in a moment."
         testId="create-contest-page-error"
-        title={copy.title}
+        title="We couldn't load this contest's setup."
       />
     );
   }
