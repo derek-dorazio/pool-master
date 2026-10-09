@@ -899,14 +899,12 @@ jobs:
           MIGRATE_FAMILY="poolmaster-qa-migrate"
           CORE_API_LOG_LEVEL="debug"
           MOCK_PROVIDER_LOG_LEVEL="debug"
-          # #180: build identity is baked into the image's version-info.json, so the
-          # patch below only removes the POOLMASTER_* build variables earlier deploys set.
+          # Build identity is baked into the image's version-info.json (#180), so the
+          # patch below sets no build variables.
           # core/config.ts readAppEnv() requires this and throws when unset, so the
           # service will not start without it. "qa" matches the value the webapp
           # build already uses and the Terraform var.environment for this cluster.
-          # #184: the patch below also pins NODE_ENV to "production" and drops the
-          # retired ENVIRONMENT, so a task definition registered before the Terraform
-          # change still ends up with the two-variable split.
+          # The patch below also pins NODE_ENV to "production" (#184).
           SERVICE_ENVIRONMENT="qa"
           QA_CORE_API_TASK_DEF=""
           QA_MIGRATE_TASK_DEF=""
@@ -941,17 +939,7 @@ jobs:
                       then
                         .image = $IMAGE
                         | .environment = ((.environment // [])
-                          | map(select(.name as $name | [
-                            "NODE_ENV",
-                            "ENVIRONMENT",
-                            "LOG_LEVEL",
-                            "POOLMASTER_BUILD_NUMBER",
-                            "POOLMASTER_BUILD_TIME_UTC",
-                            "POOLMASTER_GIT_REF",
-                            "POOLMASTER_SERVICE_GIT_SHA",
-                            "POOLMASTER_SERVICE_VERSION",
-                            "POOLMASTER_ENVIRONMENT"
-                          ] | index($name) | not))
+                          | map(select(.name as $name | ["NODE_ENV", "LOG_LEVEL", "POOLMASTER_ENVIRONMENT"] | index($name) | not))
                           + [
                             { name: "NODE_ENV", value: "production" },
                             { name: "LOG_LEVEL", value: $LOG_LEVEL },
