@@ -257,6 +257,34 @@ describe('League Home', () => {
     expect(await upNext.findByRole('link', { name: 'Finish your picks' })).toBeInTheDocument();
   });
 
+  it('does not offer to make picks while it is still checking whether the team has entered', async () => {
+    primeMocks({ contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN')] });
+    listContestEntriesMock.mockImplementation(() => new Promise(() => undefined));
+
+    renderLeagueHome();
+
+    const upNext = within(await screen.findByTestId('league-home-up-next'));
+    expect(await upNext.findByText('Checking your entry...')).toBeInTheDocument();
+    expect(upNext.getByRole('link', { name: 'View contest' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/open-1');
+    expect(upNext.queryByRole('link', { name: 'Make your picks' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('league-home-other-contests')).not.toHaveTextContent('Your team has not entered');
+  });
+
+  it('says it could not check the entry, rather than offering picks, when the entries cannot be loaded', async () => {
+    primeMocks({ contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN')] });
+    listContestEntriesMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Entries unavailable' } },
+    });
+
+    renderLeagueHome();
+
+    const upNext = within(await screen.findByTestId('league-home-up-next'));
+    expect(await upNext.findByText("We couldn't check your entry.")).toBeInTheDocument();
+    expect(upNext.getByRole('link', { name: 'View contest' })).toBeInTheDocument();
+    expect(upNext.queryByRole('link', { name: 'Make your picks' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('league-home-other-contests')).not.toHaveTextContent('Your team has not entered');
+  });
+
   it('puts nothing up next once a contest\'s cutoff has passed, even while it still reads open', async () => {
     primeMocks({
       contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')],

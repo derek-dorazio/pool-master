@@ -433,6 +433,16 @@ describe('Edit league', () => {
     expect(screen.getByLabelText(/League code/)).toHaveValue('BIGDAWGS');
   });
 
+  it('sends a commissioner who opens Edit league on an inactive league back to the read-only settings', async () => {
+    primeMocks({ isActive: false });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/edit');
+
+    expect(await screen.findByTestId('league-settings-page')).toBeInTheDocument();
+    expect(screen.getByTestId('league-inactive-banner')).toBeInTheDocument();
+    expect(screen.queryByTestId('edit-league-page')).not.toBeInTheDocument();
+  });
+
   it('Cancel goes back to League settings without saving', async () => {
     primeMocks();
 
