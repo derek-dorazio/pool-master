@@ -7,8 +7,8 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
-import { zodToJsonSchema } from '@poolmaster/shared/dto';
-import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+// Registers ErrorEnvelope, which this module's error responses $ref (#192).
+import '@poolmaster/shared/dto/errors.dto';
 import '@poolmaster/shared/dto/sport-catalog.dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
@@ -19,7 +19,7 @@ import { createSportLeagueHandlers } from './handler';
 const TAGS = ['Sport leagues'];
 
 function errors(...statuses: number[]) {
-  const envelope = zodToJsonSchema(ErrorEnvelopeSchema);
+  const envelope = schemaRef('ErrorEnvelope');
   return Object.fromEntries(statuses.map((status) => [status, envelope]));
 }
 

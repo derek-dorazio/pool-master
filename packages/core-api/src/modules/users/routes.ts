@@ -17,8 +17,8 @@ import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components these routes $ref (#192).
 import '@poolmaster/shared/dto/users.dto';
-import { SuccessSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
-import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+// Registers ErrorEnvelope and SuccessResponse, which this module's routes $ref (#192).
+import '@poolmaster/shared/dto';
 import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaUserRepository } from '../../adapters';
 import { createUserHandlers } from './handler';
@@ -47,7 +47,7 @@ function withUserErrorResponses(
   success: Record<number, unknown>,
   extra: number[] = [],
 ): Record<number, unknown> {
-  const envelope = zodToJsonSchema(ErrorEnvelopeSchema);
+  const envelope = schemaRef('ErrorEnvelope');
   return {
     ...success,
     400: envelope,
@@ -150,7 +150,7 @@ export function usersModule(fastify: FastifyInstance): void {
       operationId: 'changeUserPassword',
       params: USER_ID_PARAMS,
       body: schemaRef('UserPasswordChangeRequest'),
-      response: withUserErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 409]),
+      response: withUserErrorResponses({ 200: schemaRef('SuccessResponse') }, [400, 409]),
     },
     handler: handlers.changePassword,
   });
@@ -216,7 +216,7 @@ export function usersModule(fastify: FastifyInstance): void {
       operationId: 'deleteUser',
       params: USER_ID_PARAMS,
       body: schemaRef('UserDeleteRequest'),
-      response: withUserErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 409]),
+      response: withUserErrorResponses({ 200: schemaRef('SuccessResponse') }, [400, 409]),
     },
     handler: handlers.deleteUser,
   });
@@ -230,7 +230,7 @@ export function usersModule(fastify: FastifyInstance): void {
       operationId: 'setUserRootAdmin',
       params: USER_ID_PARAMS,
       body: schemaRef('SetUserRootAdminRequest'),
-      response: withUserErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [409]),
+      response: withUserErrorResponses({ 200: schemaRef('SuccessResponse') }, [409]),
     },
     handler: handlers.setRootAdmin,
   });

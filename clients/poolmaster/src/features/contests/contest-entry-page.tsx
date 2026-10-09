@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { getContest, getDraftState, listContestEntries, submitContestEntry, submitContestSelection, updateContestEntry, type GetDraftStateResponses, type ContestDto, type ContestEntryListResponse } from '@/lib/api';
+import { getContest, getDraftState, listContestEntries, submitContestEntry, submitContestSelection, updateContestEntry, type DraftStateResponse, type ContestDto, type ContestEntryListResponse } from '@/lib/api';
 import {
   buildLeagueContestPath,
   buildLeaguePath,
@@ -42,7 +42,7 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type DraftState = GetDraftStateResponses[200];
+type DraftState = DraftStateResponse;
 
 const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
 
