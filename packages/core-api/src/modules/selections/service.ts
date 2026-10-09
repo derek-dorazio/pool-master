@@ -11,7 +11,7 @@
  * **Submitting a selection has three outcomes, not two.** A selection can be placed, it can
  * *replace* the entry's last pick in a tier that is already full, or — in a tiered contest —
  * re-submitting a participant the entry already holds *toggles it off*, deleting the pick and
- * inserting nothing. `plans/144` records what happens to an abstraction that forgets this:
+ * inserting nothing. An abstraction that forgot this has already failed once:
  * the first attempt's `validatePick` returned `{ valid, reason }`, a boolean cannot express
  * replace or toggle-off, so the live behaviour could never live behind it; the engines built
  * on it enforced three rules to the route's ten and, on a full tier, rejected the pick where

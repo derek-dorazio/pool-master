@@ -29,7 +29,6 @@ export const TierDefinitionRequestSchema = z.object({
 }).describe('Tier definition used in contest create and update flows.');
 
 export const ContestCrudConfigurationRequestSchema = z.object({
-  draftMode: z.string().optional(),
   rounds: z.number().int().optional(),
   timePerPickSeconds: z.number().int().optional(),
   autoPickPolicy: z.nativeEnum(AutoPickPolicy).optional(),

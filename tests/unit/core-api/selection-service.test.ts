@@ -28,7 +28,7 @@ import {
 //
 // This is the coverage the module could not have before: every one of the submission path's
 // ten error codes, and — the part that matters most — the two outcomes a boolean guard cannot
-// express. `plans/144` records that the first abstraction's `validatePick` returned
+// express. The first abstraction's `validatePick` returned
 // `{ valid, reason }`, which is why the engines #323 deleted could enforce only three rules
 // and, given a full tier, rejected the pick where the live route replaces it. So the replace
 // and toggle-off assertions below are not incidental: they are the behaviour that the shape
@@ -729,7 +729,7 @@ describe('#324 SelectionService.submitSelection — the three outcomes', () => {
   });
 
   // The rule the deleted engines had backwards. Given a full tier the engine REJECTED the
-  // pick; the live route REPLACES it. plans/144 §the-root-cause: a `{ valid, reason }` return
+  // pick; the live route REPLACES it. The root cause: a `{ valid, reason }` return
   // cannot say "replace", which is why this behaviour could never live behind that interface.
   it('replaces the tier\'s last pick when the tier is already full, rather than rejecting', async () => {
     const { service, createPick, deletePick } = setup({

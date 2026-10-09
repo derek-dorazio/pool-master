@@ -14,8 +14,8 @@
  *
  * **`evaluate` returns an outcome, not a verdict.** The first attempt at this abstraction gave
  * `validatePick` a `{ valid, reason }` return; a boolean cannot say *replace* or *toggle off*,
- * so the live tiered rules could never sit behind it, and #323 deleted the engines built on it
- * (plans/144). The union below is the behaviour, and the handler acts on each kind.
+ * so the live tiered rules could never sit behind it, and #323 deleted the engines built on it.
+ * The union below is the behaviour, and the handler acts on each kind.
  */
 
 import type { ContestConfiguration, SelectionType } from '@poolmaster/shared/domain';

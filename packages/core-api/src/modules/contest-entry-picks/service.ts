@@ -7,7 +7,7 @@
  * indexes (which can only predicate on local columns) can enforce the
  * per-format pick uniqueness rules. This service is the single insert path
  * that guarantees the denormalized column always matches the parent contest;
- * routes / draft-engine code go through `createPick` instead of touching
+ * routes / selection-engine code go through `createPick` instead of touching
  * `prisma.contestEntryPick.create` directly.
  *
  * Per plans/117 §7.1: "pick-creation always reads Contest.contestFormat from

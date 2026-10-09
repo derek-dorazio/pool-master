@@ -13,7 +13,7 @@ Modular monolith — all backend modules run in a single Fastify process on port
               ├─────────────────────┤
               │ auth / leagues      │──→ PostgreSQL (Prisma)
               │ contests / events   │
-              │ drafts (engines)    │
+              │ selections (engines)│
               │ golf standings      │
               │ email               │──→ SMTP / SES
               │ ingestion           │──→ provider adapters
