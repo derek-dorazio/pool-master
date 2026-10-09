@@ -333,13 +333,11 @@ export class SquadOwnerInvitationService {
       );
     }
     await this.requireActiveLeague(invitation.leagueId);
-    const squad = await this.squadRepo.findById(invitation.squadId);
-    if (!squad?.isActive) {
-      throw new SquadOwnerInvitationOperationError(
-        'This team is no longer active, so its invitation cannot be accepted.',
-        'SQUAD_INACTIVE',
-      );
-    }
+    await this.requireActiveSquad(
+      invitation.leagueId,
+      invitation.squadId,
+      'This team is no longer active, so its invitation cannot be accepted.',
+    );
     return invitation;
   }
 
@@ -457,14 +455,18 @@ export class SquadOwnerInvitationService {
     }
   }
 
-  private async requireActiveSquad(leagueId: string, squadId: string) {
+  private async requireActiveSquad(
+    leagueId: string,
+    squadId: string,
+    inactiveMessage = 'Team-owner invites require an active team',
+  ) {
     const squad = await this.squadRepo.findById(squadId);
     if (!squad || squad.leagueId !== leagueId) {
       throw new SquadOwnerInvitationNotFoundError(`Team not found: ${squadId}`);
     }
     if (!squad.isActive) {
       throw new SquadOwnerInvitationOperationError(
-        'Team-owner invites require an active team',
+        inactiveMessage,
         'SQUAD_INACTIVE',
       );
     }
