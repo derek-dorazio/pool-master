@@ -704,6 +704,15 @@ Required local pre-push commands:
 `npm run api:refresh` is not on the list: it is the *fix* for a stale generated SDK, not a
 gate. Run it when `api:check` fails, then commit what it regenerates.
 
+**The pre-commit hook.** `git commit` runs ESLint on the staged files inside `npm run lint`'s
+scope (`docs/CI-AND-QUALITY-GATES.md` *Pre-commit hook*). A failing hook means fixing the lint
+error. Never bypass it with `git commit --no-verify`: the same error fails CI's lint job, so
+skipping the hook only moves the failure later. The hook needs the same setup as `npm run lint`
+(`npm ci`, then `npx prisma generate --schema packages/core-api/prisma/schema.prisma`). Without
+it, Prisma-derived types collapse to `any`, and the errors the hook reports are false ones, so
+fix the setup, not the code. The hook is a fast early check, not a replacement for the
+pre-push list above.
+
 Rules:
 
 - **Items 8-10 are unconditional, not "only if API contracts changed."** `api:check` boots

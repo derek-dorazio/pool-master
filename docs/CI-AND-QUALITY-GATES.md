@@ -659,11 +659,12 @@ Three things it deliberately does not do:
   configured but is not a gate* above), so formatting staged files would rewrite
   whole files you only touched in one line.
 - **No substitute for the push gates.** It catches lint early; the pre-push list
-  in `rules/workflow-rules.md` §3 is still the bar before a push.
+  in `rules/workflow-rules.md` §3 is still the bar before a push. That section also
+  covers what to do when the hook fails.
 
 How it is wired: husky points git's `core.hooksPath` at `.husky/`, and
-`.husky/pre-commit` runs `lint-staged`. The globs are in `lint-staged.config.mjs`
-and must match the `lint` script's scope. `npm install` and `npm ci` install the
+`.husky/pre-commit` runs `lint-staged --quiet`, which prints errors only and so keeps
+agent transcripts short. The globs are in `lint-staged.config.mjs` and must match the `lint` script's scope. `npm install` and `npm ci` install the
 hook through the root `prepare` script. That script skips quietly where husky is
 not installed (the `--omit=dev` image stage) and where there is no `.git` (a
 Docker build). Cloud agent sessions run `npm ci` at start, so their commits run

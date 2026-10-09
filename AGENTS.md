@@ -120,6 +120,9 @@ The gate list is `rules/workflow-rules.md` §3 *Required Local Validation Before
 every command on it before pushing. It is deliberately not copied here: five copies of it
 once drifted apart. Image and publish workflows are CI-only follow-up signals.
 
+Commits run a staged-files ESLint hook. When it fails, fix the error; never use `--no-verify`. See the
+same section, *The pre-commit hook*.
+
 ## Repo Map
 
 - `packages/`: backend services and shared packages
