@@ -35,7 +35,7 @@ async function main(): Promise<void> {
   process.exit(0);
 }
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   console.error('Failed to export OpenAPI spec:', error);
   process.exit(1);
 });

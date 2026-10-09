@@ -93,8 +93,8 @@ interface PlayersFile {
   players: Array<{ playerId: string; name: string; countryCode: string; ranking: number }>;
 }
 
-function readJson<T>(name: string): T {
-  return JSON.parse(readFileSync(join(toursDir, name), 'utf8')) as T;
+function readJson(name: string): unknown {
+  return JSON.parse(readFileSync(join(toursDir, name), 'utf8'));
 }
 
 /** mulberry32 over a string hash: the same name always gives the same sequence. */
@@ -217,8 +217,8 @@ function buildEvent(tour: GolfSeedTour, event: TourFile['events'][number]): Golf
 }
 
 function buildTour(scheduleFile: string, playersFile: string): GolfSeedTour {
-  const schedule = readJson<TourFile>(scheduleFile);
-  const ranked = readJson<PlayersFile>(playersFile).players;
+  const schedule = readJson(scheduleFile) as TourFile;
+  const ranked = (readJson(playersFile) as PlayersFile).players;
   const players: GolfSeedPlayer[] = ranked.map((player) => ({
     key: player.playerId,
     name: player.name,

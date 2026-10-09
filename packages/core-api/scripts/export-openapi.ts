@@ -127,7 +127,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error('Failed to export OpenAPI spec:', err);
   process.exit(1);
 });
