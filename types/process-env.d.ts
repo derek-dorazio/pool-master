@@ -11,10 +11,13 @@
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      // core-api runtime
-      NODE_ENV?: string;
-      ENVIRONMENT?: string;
+      // Which environment this is (#184): read only through readAppEnv().
       POOLMASTER_ENVIRONMENT?: string;
+      // Node's and third-party libraries' variable. Our code never reads it
+      // (poolmaster/no-node-env-reads); tests set it to prove that.
+      NODE_ENV?: string;
+
+      // core-api runtime
       PORT?: string;
       LOG_LEVEL?: string;
       JWT_SECRET?: string;
