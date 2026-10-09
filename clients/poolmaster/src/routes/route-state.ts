@@ -6,6 +6,8 @@ export type ParsedRouteState = {
   from?: string;
   authMode?: AuthRouteMode;
   leagueCode?: string;
+  /** Set by the invite join page when the member joined but their chosen team name and icon did not save. */
+  teamSetupFailed?: boolean;
 };
 
 export function parseRouteState(value: unknown): ParsedRouteState {
@@ -27,6 +29,10 @@ export function parseRouteState(value: unknown): ParsedRouteState {
 
   if (typeof candidate.leagueCode === 'string') {
     parsed.leagueCode = candidate.leagueCode;
+  }
+
+  if (candidate.teamSetupFailed === true) {
+    parsed.teamSetupFailed = true;
   }
 
   return parsed;
