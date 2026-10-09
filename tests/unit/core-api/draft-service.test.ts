@@ -1042,3 +1042,49 @@ describe('DraftService.submitSelection — a pick change on a submitted entry (#
     expect(deps.entries.update).not.toHaveBeenCalled();
   });
 });
+
+// Exclusivity is the shared handler's, not an engine's (#198): it is driven by the contest's
+// configuration and must hold the same way whichever engine serves the room. Each engine is
+// run at both settings so a later move of the rule into one engine, or out of the handler,
+// fails here for the engine it drops.
+describe.each([
+  { selectionType: SelectionType.TIERED, configuration: {} },
+  { selectionType: SelectionType.BUDGET_PICK, configuration: { rosterSize: 2 } },
+])('DraftService exclusivity in a $selectionType room', ({ selectionType, configuration: typeConfiguration }) => {
+  const takenByOtherEntry = [pick('pick-other', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID })];
+  const roomWith = (isExclusive: boolean, extra: SetupOptions = {}) =>
+    setup({
+      contest: { selectionType },
+      configuration: { selectionType, isExclusive, ...typeConfiguration },
+      ...extra,
+    });
+
+  it('refuses 400 PARTICIPANT_ALREADY_TAKEN for a golfer another entry holds when the contest is exclusive', async () => {
+    const { service, createPick } = roomWith(true, {
+      contestPicksForParticipant: takenByOtherEntry as unknown as ContestEntryPick[],
+    });
+
+    await expect(service.submitSelection(submit())).rejects.toMatchObject({
+      code: 'PARTICIPANT_ALREADY_TAKEN',
+      statusCode: 400,
+    });
+    expect(createPick).not.toHaveBeenCalled();
+  });
+
+  it('places a golfer another entry holds when the contest is not exclusive', async () => {
+    const { service, createPick } = roomWith(false, {
+      contestPicksForParticipant: takenByOtherEntry as unknown as ContestEntryPick[],
+    });
+
+    await expect(service.submitSelection(submit())).resolves.toMatchObject({ outcome: 'placed' });
+    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: 'sep-a' }));
+  });
+
+  it('drops a golfer another entry holds from the available ids only when the contest is exclusive', async () => {
+    const exclusive = await roomWith(true, { picks: takenByOtherEntry }).service.getDraftState({ contestId: CONTEST_ID });
+    const shared = await roomWith(false, { picks: takenByOtherEntry }).service.getDraftState({ contestId: CONTEST_ID });
+
+    expect(exclusive.availableSportEventParticipantIds).not.toContain('sep-a');
+    expect(shared.availableSportEventParticipantIds).toContain('sep-a');
+  });
+});
