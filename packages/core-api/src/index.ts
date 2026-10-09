@@ -8,7 +8,6 @@ import { healthPlugin } from './plugins/health';
 import { swaggerPlugin } from './plugins/swagger';
 import { authGuard } from './plugins/auth-guard';
 import { etagPlugin } from './plugins/etag-support';
-import { pollConfigPlugin } from './plugins/poll-config';
 import { requestLoggingContext } from './plugins/request-logging-context';
 import { FASTIFY_AJV_OPTIONS } from './plugins/string-transforms';
 import { globalErrorHandler } from './core/error-handler';
@@ -122,7 +121,6 @@ export function buildApp() {
   app.register(healthPlugin);
   app.register(versionModule, { prefix: '/version', operationId: 'getRootVersion' });
   app.register(etagPlugin);
-  app.register(pollConfigPlugin);
   app.register(authGuard);
   app.register(requestLoggingContext);
   app.setErrorHandler(globalErrorHandler);

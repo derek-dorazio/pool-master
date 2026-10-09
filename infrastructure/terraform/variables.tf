@@ -73,7 +73,7 @@ variable "db_username" {
 }
 
 variable "db_password" {
-  description = "PostgreSQL master password — set via TF_VAR_db_password or tfvars"
+  description = "PostgreSQL master password. Required — set via TF_VAR_db_password or an untracked tfvars file; the committed examples deliberately leave it unset"
   type        = string
   sensitive   = true
 }

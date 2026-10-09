@@ -119,15 +119,22 @@ someone else owns decides who may reach it, and says so where a reader will look
   league gates live in `modules/leagues/permissions.ts`:
   - `requireMemberOfLeague(membershipRepo, leagueOf)` — read-only access within a league. The
     resolver says where the league comes from: `leagueFromPath` for routes carrying it as `:id`,
-    `leagueOfContest(contestRepo)` for routes that reach a contest by `:contestId`.
+    `existingLeagueFromPath(leagueRepo)` for a route that reads the league itself (a missing
+    league is 404, not a membership 403), `leagueOfContest(contestRepo)` for routes that reach a
+    contest by `:contestId`.
   - `requireCommissioner` (`:id`) and `requireCommissionerForContest` (`:contestId`) — league
     administration.
   - `requireMemberOfSquad` — anything done on a squad's behalf, under
     `/leagues/:id/squads/:squadId`: an ACTIVE owner of the squad, or the league's commissioner
     acting for a member (access rule A7).
+  - `requireOwnSquad(membershipRepo, squadMembershipRepo, leagueOf)` — acting for the caller's
+    own squad where the path names none (`/contests/:contestId/entries/me`): an ACTIVE league
+    membership and an ACTIVE squad membership in the resolved league. No commissioner bypass.
 
   Root admins bypass all of them. Every rejection in a gate awaits `sendError`; a hook that sends
-  without awaiting lets Fastify run the handler behind the refusal.
+  without awaiting lets Fastify run the handler behind the refusal. `poolmaster/no-unawaited-send-error`
+  fails lint on a `sendError(...)` whose promise is discarded (`void sendError(...)` or a bare
+  statement) anywhere in `packages/core-api/src`.
 - **Authorizing in the handler or service is the declared exception**, taken only when the check
   needs what a hook cannot see — the request body, or which sub-resource is being acted on — or
   when the service already takes the actor and enforces the rule itself.

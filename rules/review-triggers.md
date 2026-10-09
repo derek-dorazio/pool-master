@@ -31,6 +31,7 @@ Already enforced mechanically, and therefore **not** triggers:
 | Fake/mock data in application code | `poolmaster/no-mocked-api` (ESLint) |
 | Skipped or disabled tests | `poolmaster/no-disabled-tests` (ESLint) |
 | Env-var fallbacks | `poolmaster/no-env-fallbacks` (ESLint) |
+| A gate sending its refusal without awaiting it | `poolmaster/no-unawaited-send-error` (ESLint) |
 | Direct `fetch`/`axios` in the webapp | `no-restricted-globals` / `no-restricted-imports` in `eslint.config.js` |
 | Frontend types duplicating generated ones | `poolmaster/no-parallel-api-types` (ESLint) |
 | Inline query keys, inline theme styles, bare controls | the corresponding `poolmaster/*` ESLint rules |
@@ -222,9 +223,9 @@ classes; this is what is specific to *this* codebase.
 
 - Is every new route that reaches league-owned data guarded by the right authority
   preHandler — `requireRootAdmin`, `requireCommissioner` / `requireCommissionerForContest`,
-  `requireMemberOfLeague` with the right league resolver, or `requireMemberOfSquad` for an action
-  on a squad's behalf? Reads count too: a read with no gate leaks a league's data to every
-  signed-in user.
+  `requireMemberOfLeague` with the right league resolver, `requireMemberOfSquad` for an action
+  on a squad's behalf, or `requireOwnSquad` for one on the caller's own squad? Reads count too:
+  a read with no gate leaks a league's data to every signed-in user.
 - Does the diff add an entry to `scripts/route-authorization-opt-outs.mjs`? Each one is a route
   authorizing somewhere other than a hook; check that the reason is true and names the function
   that does the work (`service-rules.md` §3 *Route Authorization*).

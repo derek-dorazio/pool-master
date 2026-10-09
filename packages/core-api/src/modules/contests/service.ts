@@ -560,10 +560,12 @@ export class ContestService {
       );
     }
     if (!context.squadMembership) {
-      this.logger.warn({ contestId, userId }, 'contest entry delete missing squad manager');
+      // The same code the route's requireOwnSquad gate answers, so the state reads one way
+      // whoever reaches it (a root admin passes the gate and lands here).
+      this.logger.warn({ contestId, userId }, 'contest entry delete missing squad');
       throw new ContestEntryAccessError(
-        'You do not manage a squad in this league',
-        'SQUAD_MANAGER_REQUIRED',
+        'You must have an active team in this league to perform this action',
+        'SQUAD_MEMBERSHIP_REQUIRED',
       );
     }
 
@@ -835,6 +837,8 @@ export class ContestService {
    *   member (403 `LEAGUE_MEMBERSHIP_REQUIRED` absent, `LEAGUE_MEMBERSHIP_INACTIVE` ended), and a
    *   squad membership that has ended is refused (`SQUAD_MEMBERSHIP_INACTIVE`). Having *no* squad
    *   membership is left to the caller: creating an entry and changing one name it differently.
+   *   Entering and leaving are also gated at the route by `requireOwnSquad` (#458); changing an
+   *   entry by id is not, so these checks are its only ones.
    */
   private async getEntryContext(
     contestId: string,
@@ -1067,6 +1071,9 @@ export class ContestService {
 }
 
 export class ContestNotFoundError extends Error {
+  readonly code = 'CONTEST_NOT_FOUND';
+  readonly statusCode = 404;
+
   constructor(contestId: string) {
     super(`Contest not found: ${contestId}`);
     this.name = 'ContestNotFoundError';
@@ -1108,6 +1115,9 @@ export class ContestEntryAccessError extends Error {
 }
 
 export class ContestEntryNotFoundError extends Error {
+  readonly code = 'CONTEST_ENTRY_NOT_FOUND';
+  readonly statusCode = 404;
+
   constructor(contestId: string, squadId: string) {
     super(`Contest entry not found for contest ${contestId} and squad ${squadId}`);
     this.name = 'ContestEntryNotFoundError';

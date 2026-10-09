@@ -22,7 +22,12 @@ import { InvitationService } from './invitation-service';
 import { MemberService } from './member-service';
 import { MemberDirectoryService } from './member-directory-service';
 import { BulkService } from './bulk-service';
-import { leagueFromPath, requireCommissioner, requireMemberOfLeague } from './permissions';
+import {
+  existingLeagueFromPath,
+  leagueFromPath,
+  requireCommissioner,
+  requireMemberOfLeague,
+} from './permissions';
 import { createLeagueHandlers } from './handler';
 import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
@@ -125,7 +130,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
       tags: ['Leagues'],
       summary: 'Get a league and the viewer\'s context in it, by ID',
       description:
-        'Returns a league by internal league ID together with the viewer\'s own membership edges in it — their LeagueMembership and their SquadMembership — for authenticated league members, league commissioners, or root admins using platform-level override access.\n\nThe same `LeagueContextResponse` as `getLeagueByCode`: two ways to find one league, one response shape. Use this route when you hold a league ID rather than a league code, as contest-rooted surfaces do (access rule A8).',
+        'Returns a league by internal league ID together with the viewer\'s own membership edges in it — their LeagueMembership and their SquadMembership — for authenticated league members, league commissioners, or root admins using platform-level override access.\n\nThe same `LeagueContextResponse` as `getLeagueByCode`: two ways to find one league, one response shape. Use this route when you hold a league ID rather than a league code, as contest-rooted surfaces do (access rule A8).\n\n404 LEAGUE_NOT_FOUND for a league that does not exist; otherwise active members only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE.',
       operationId: 'getLeague',
       response: {
         200: schemaRef('LeagueContextResponse'),
@@ -134,6 +139,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
         404: schemaRef('ErrorEnvelope'),
       },
     },
+    preHandler: requireMemberOfLeague(membershipRepo, existingLeagueFromPath(leagueRepo)),
     handler: league.getLeague,
   });
 

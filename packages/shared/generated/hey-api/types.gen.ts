@@ -13152,6 +13152,10 @@ export type LeaveContestErrors = {
     /**
      * Standard API error envelope.
      */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
     403: ErrorEnvelope;
     /**
      * Standard API error envelope.
@@ -13187,6 +13191,14 @@ export type GetMyContestEntryErrors = {
     /**
      * Standard API error envelope.
      */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
     404: ErrorEnvelope;
 };
 
@@ -13215,6 +13227,10 @@ export type EnterContestErrors = {
      * Standard API error envelope.
      */
     400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */

@@ -747,6 +747,9 @@ function buildLeagueUrl(appBaseUrl: string, leagueCode: string): string {
 }
 
 export class InvitationNotFoundError extends Error {
+  readonly code = 'LEAGUE_INVITATION_NOT_FOUND';
+  readonly statusCode = 404;
+
   constructor(code: string) {
     super(`Invitation not found: ${code}`);
     this.name = 'InvitationNotFoundError';

@@ -4,17 +4,20 @@ import {
   SquadMembershipStatus,
 } from '@poolmaster/shared/domain';
 import {
+  existingLeagueFromPath,
   requireCommissioner,
   requireCommissionerForContest,
   leagueFromPath,
   leagueOfContest,
   requireMemberOfLeague,
   requireMemberOfSquad,
+  requireOwnSquad,
 } from '../../../packages/core-api/src/modules/leagues/permissions';
-import { buildContest, buildMembership } from '../../factories';
+import { buildContest, buildLeague, buildMembership } from '../../factories';
 import {
   fakeContestRepo,
   fakeLeagueMembershipRepo,
+  fakeLeagueRepo,
   fakeSquadMembershipRepo,
   fakeSquadRepo,
 } from '../../support/repo-fakes';
@@ -470,5 +473,174 @@ describe('requireMemberOfSquad (#292)', () => {
     expect(reply.statusCode).toBe(401);
     expectReplyError(reply, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     expect(findById).not.toHaveBeenCalled();
+  });
+});
+
+describe('existingLeagueFromPath', () => {
+  async function runLeagueGate(options: { leagueExists: boolean; isRootAdmin?: boolean }) {
+    const findById = jest.fn().mockResolvedValue(options.leagueExists ? buildLeague({ id: 'league-1' }) : null);
+    const findByLeagueAndUser = jest.fn().mockResolvedValue(buildMembership({ role: LeagueRole.MEMBER }));
+    const hook = requireMemberOfLeague(
+      fakeLeagueMembershipRepo({ findByLeagueAndUser }),
+      existingLeagueFromPath(fakeLeagueRepo({ findById })),
+    );
+    const reply = createReply();
+    await hook.call(
+      {} as never,
+      {
+        authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: options.isRootAdmin ?? false, sessionId: null },
+        params: { id: 'league-1' },
+        log: fakeLogger(),
+      } as never,
+      reply as never,
+    );
+    return { reply, findById, findByLeagueAndUser };
+  }
+
+  it('lets a member through when the league exists', async () => {
+    const { reply, findById } = await runLeagueGate({ leagueExists: true });
+    expect(reply.statusCode).toBe(200);
+    expect(reply.payload).toBeUndefined();
+    expect(findById).toHaveBeenCalledWith('league-1');
+  });
+
+  it('answers 404 LEAGUE_NOT_FOUND for a missing league before reading any membership', async () => {
+    const { reply, findByLeagueAndUser } = await runLeagueGate({ leagueExists: false });
+    expect(reply.statusCode).toBe(404);
+    expectReplyError(reply, 'LEAGUE_NOT_FOUND', 'League not found');
+    expect(findByLeagueAndUser).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 to a root admin too, rather than letting the bypass skip the existence check', async () => {
+    const { reply } = await runLeagueGate({ leagueExists: false, isRootAdmin: true });
+    expect(reply.statusCode).toBe(404);
+  });
+});
+
+describe('requireOwnSquad', () => {
+  async function runOwnSquadGate(options: {
+    contestExists?: boolean;
+    leagueMembership?: ReturnType<typeof buildMembership> | null;
+    squadMembershipStatus?: SquadMembershipStatus | null;
+    authUser?: { userId: string; isRootAdmin: boolean } | null;
+  } = {}) {
+    const findContest = jest.fn().mockResolvedValue(
+      options.contestExists === false ? null : buildContest({ id: 'contest-1', leagueId: 'league-1' }),
+    );
+    const findByLeagueAndUser = jest.fn().mockResolvedValue(
+      options.leagueMembership === undefined
+        ? buildMembership({ role: LeagueRole.MEMBER })
+        : options.leagueMembership,
+    );
+    const findSquadMembership = jest.fn().mockResolvedValue(
+      options.squadMembershipStatus === null
+        ? null
+        : {
+          squadId: 'squad-1',
+          leagueId: 'league-1',
+          userId: 'user-1',
+          status: options.squadMembershipStatus ?? SquadMembershipStatus.ACTIVE,
+        },
+    );
+    const hook = requireOwnSquad(
+      fakeLeagueMembershipRepo({ findByLeagueAndUser }),
+      fakeSquadMembershipRepo({ findByLeagueAndUser: findSquadMembership }),
+      leagueOfContest(fakeContestRepo({ findById: findContest })),
+    );
+    const reply = createReply();
+    const authUser = options.authUser === undefined
+      ? { userId: 'user-1', isRootAdmin: false }
+      : options.authUser;
+    await hook.call(
+      {} as never,
+      {
+        authUser: authUser
+          ? { ...authUser, email: `${authUser.userId}@integration.test`, sessionId: null }
+          : undefined,
+        params: { contestId: 'contest-1' },
+        log: fakeLogger(),
+      } as never,
+      reply as never,
+    );
+    return { reply, findContest, findByLeagueAndUser, findSquadMembership };
+  }
+
+  it('admits an active league member acting for their own active squad, found from the contest\'s league', async () => {
+    const { reply, findSquadMembership } = await runOwnSquadGate();
+    expect(reply.statusCode).toBe(200);
+    expect(reply.payload).toBeUndefined();
+    expect(findSquadMembership).toHaveBeenCalledWith('league-1', 'user-1');
+  });
+
+  it('refuses an active league member with no team with 403 SQUAD_MEMBERSHIP_REQUIRED', async () => {
+    const { reply } = await runOwnSquadGate({ squadMembershipStatus: null });
+    expect(reply.statusCode).toBe(403);
+    expectReplyError(
+      reply,
+      'SQUAD_MEMBERSHIP_REQUIRED',
+      'You must have an active team in this league to perform this action',
+    );
+  });
+
+  it('refuses a member whose team membership has ended with 403 SQUAD_MEMBERSHIP_INACTIVE', async () => {
+    const { reply } = await runOwnSquadGate({ squadMembershipStatus: SquadMembershipStatus.INACTIVE });
+    expect(reply.statusCode).toBe(403);
+    expectReplyError(reply, 'SQUAD_MEMBERSHIP_INACTIVE', 'Your membership of this team has ended');
+  });
+
+  it('gives a commissioner with no team no bypass: the squad is the caller\'s own', async () => {
+    const { reply } = await runOwnSquadGate({
+      leagueMembership: buildMembership({ role: LeagueRole.COMMISSIONER }),
+      squadMembershipStatus: null,
+    });
+    expect(reply.statusCode).toBe(403);
+    expectReplyError(
+      reply,
+      'SQUAD_MEMBERSHIP_REQUIRED',
+      'You must have an active team in this league to perform this action',
+    );
+  });
+
+  it('refuses a caller outside the league with 403 LEAGUE_MEMBERSHIP_REQUIRED, before reading any squad membership', async () => {
+    const { reply, findSquadMembership } = await runOwnSquadGate({ leagueMembership: null });
+    expect(reply.statusCode).toBe(403);
+    expectReplyError(
+      reply,
+      'LEAGUE_MEMBERSHIP_REQUIRED',
+      'You must be an active member of this league to perform this action',
+    );
+    expect(findSquadMembership).not.toHaveBeenCalled();
+  });
+
+  it('refuses a caller whose league membership has ended with 403 LEAGUE_MEMBERSHIP_INACTIVE', async () => {
+    const { reply, findSquadMembership } = await runOwnSquadGate({
+      leagueMembership: buildMembership({ status: LeagueMembershipStatus.INACTIVE }),
+    });
+    expect(reply.statusCode).toBe(403);
+    expectReplyError(reply, 'LEAGUE_MEMBERSHIP_INACTIVE', 'Your membership in this league is inactive');
+    expect(findSquadMembership).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 CONTEST_NOT_FOUND for a contest that does not exist', async () => {
+    const { reply, findByLeagueAndUser } = await runOwnSquadGate({ contestExists: false });
+    expect(reply.statusCode).toBe(404);
+    expectReplyError(reply, 'CONTEST_NOT_FOUND', 'Contest not found');
+    expect(findByLeagueAndUser).not.toHaveBeenCalled();
+  });
+
+  it('passes a root admin through to the service without reading memberships (access rule A10)', async () => {
+    const { reply, findByLeagueAndUser, findSquadMembership } = await runOwnSquadGate({
+      authUser: { userId: 'admin-1', isRootAdmin: true },
+    });
+    expect(reply.statusCode).toBe(200);
+    expect(findByLeagueAndUser).not.toHaveBeenCalled();
+    expect(findSquadMembership).not.toHaveBeenCalled();
+  });
+
+  it('rejects a request without a session with 401, before reading the contest', async () => {
+    const { reply, findContest } = await runOwnSquadGate({ authUser: null });
+    expect(reply.statusCode).toBe(401);
+    expectReplyError(reply, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
+    expect(findContest).not.toHaveBeenCalled();
   });
 });

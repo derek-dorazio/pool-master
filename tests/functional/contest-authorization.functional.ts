@@ -236,9 +236,32 @@ describe('SDK Functional: contest reads and entry access (#291)', () => {
       await enterContest({ client: outsider.client, path: { contestId } }),
       { status: 403, code: 'LEAGUE_MEMBERSHIP_REQUIRED' },
     );
-    // getMyContestEntry stays a tolerant read: no league or team means no entry, not an error.
-    const mine = await getMyContestEntry({ client: outsider.client, path: { contestId } });
+  });
+
+  it('refuses a user outside the league a read of their own entry with 403, and a delete of it too', async () => {
+    const { outsider, contestId } = await buildContestWithMemberAndOutsider();
+
+    expectFunctionalError(
+      await getMyContestEntry({ client: outsider.client, path: { contestId } }),
+      { status: 403, code: 'LEAGUE_MEMBERSHIP_REQUIRED' },
+    );
+    expectFunctionalError(
+      await leaveContest({ client: outsider.client, path: { contestId } }),
+      { status: 403, code: 'LEAGUE_MEMBERSHIP_REQUIRED' },
+    );
+  });
+
+  it('serves a league member their own entry, and null once they have none', async () => {
+    const { member, contestId } = await buildContestWithMemberAndOutsider();
+
+    const before = await getMyContestEntry({ client: member.client, path: { contestId } });
+    expect(before.response.status).toBe(200);
+    expect(before.data?.entry ?? null).toBeNull();
+
+    const entered = await enterContest({ client: member.client, path: { contestId } });
+    expect(entered.response.status).toBe(201);
+    const mine = await getMyContestEntry({ client: member.client, path: { contestId } });
     expect(mine.response.status).toBe(200);
-    expect(mine.data?.entry ?? null).toBeNull();
+    expect(mine.data?.entry?.id).toBe(entered.data?.entry.id);
   });
 });

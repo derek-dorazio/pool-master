@@ -5,6 +5,7 @@ import {
   createFastifyLoggerOptions,
 } from '../../../packages/core-api/src/core/logger';
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
+import { LeagueNotFoundError } from '../../../packages/core-api/src/modules/leagues/service';
 
 describe('core-api logging foundation', () => {
   describe('createFastifyLoggerOptions', () => {
@@ -84,10 +85,8 @@ describe('core-api logging foundation', () => {
         status: jest.fn().mockReturnThis(),
         send: jest.fn(),
       } as unknown as FastifyReply;
-      // A domain error carries no `code`; the handler infers one from the error's name.
-      const missingLeagueError = Object.assign(new Error('League not found'), {
-        name: 'LeagueNotFoundError',
-      });
+      // A domain not-found error declares its own code and 404; the handler reads them as given.
+      const missingLeagueError = new LeagueNotFoundError('missing');
 
       globalErrorHandler(missingLeagueError, request, reply);
 

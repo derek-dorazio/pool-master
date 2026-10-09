@@ -3,10 +3,13 @@
  * league. The model is `rules/service-rules.md` §3 *Route Authorization*:
  *
  * - `requireMemberOfLeague(membershipRepo, leagueOf)` — read-only access within a league. The
- *   resolver says where the league comes from: `leagueFromPath` (`:id`) or
+ *   resolver says where the league comes from: `leagueFromPath` (`:id`),
+ *   `existingLeagueFromPath(leagueRepo)` (`:id`, 404 for a missing league) or
  *   `leagueOfContest(contestRepo)` (`:contestId`). One rule, one name (#292).
  * - `requireCommissioner` / `requireCommissionerForContest` — league administration.
  * - `requireMemberOfSquad` — anything done on a squad's behalf (#292).
+ * - `requireOwnSquad(…, leagueOf)` — acting for the caller's own squad in the resolved league,
+ *   where the path names no squad (#458).
  *
  * Root admins bypass all of them (access rule A10). Membership is read per request, never from
  * the access token (access rule A12).
@@ -21,6 +24,7 @@ import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'f
 import type {
   ContestRepository,
   LeagueMembershipRepository,
+  LeagueRepository,
   SquadMembershipRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
@@ -35,7 +39,8 @@ type Gate =
   | 'requireMemberOfLeague'
   | 'requireCommissioner'
   | 'requireCommissionerForContest'
-  | 'requireMemberOfSquad';
+  | 'requireMemberOfSquad'
+  | 'requireOwnSquad';
 
 function loggerOf(request: FastifyRequest) {
   return request.contextLogger ?? request.log;
@@ -68,6 +73,30 @@ export const leagueFromPath: LeagueResolver = async (request, reply) => {
   }
   return leagueId;
 };
+
+/**
+ * The league named by the route's `:id`, refused with 404 `LEAGUE_NOT_FOUND` when no such league
+ * exists — for a route that reads the league itself, so a deleted league answers 404 to everyone
+ * rather than a membership 403 to all but root admins.
+ */
+export function existingLeagueFromPath(leagueRepo: LeagueRepository): LeagueResolver {
+  return async (request, reply) => {
+    const leagueId = await leagueFromPath(request, reply);
+    if (!leagueId) {
+      return null;
+    }
+    const league = await leagueRepo.findById(leagueId);
+    if (!league) {
+      loggerOf(request).warn({
+        action: 'leaguePermission.existingLeagueFromPath.leagueNotFound',
+        data: { leagueId, userId: request.authUser?.userId ?? null },
+      }, 'Rejected league permission check for missing league');
+      await sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
+      return null;
+    }
+    return leagueId;
+  };
+}
 
 /** The league that owns the contest named by the route's `:contestId`. */
 export function leagueOfContest(contestRepo: ContestRepository): LeagueResolver {
@@ -334,5 +363,61 @@ export function requireMemberOfSquad(
       action: 'leaguePermission.requireMemberOfSquad.success',
       data: { leagueId: access.leagueId, squadId, userId: access.userId },
     }, 'Granted squad action to an active owner');
+  };
+}
+
+/**
+ * Own-squad gate (#458): acting for the caller's own squad in the league `leagueOf` resolves, on
+ * routes whose path names no squad — entering or leaving a contest as `/contests/:contestId/
+ * entries/me`. The squad is the caller's squad membership in that league, so there is no
+ * commissioner bypass: a commissioner acts here for their own team like anyone else.
+ *
+ * Root admins bypass (A10); what they may then do is the service's call. 401 unauthenticated, the
+ * resolver's 400/404, 403 not-a-member or inactive (`LEAGUE_MEMBERSHIP_*`), 403
+ * `SQUAD_MEMBERSHIP_REQUIRED` for a caller with no team in the league, 403
+ * `SQUAD_MEMBERSHIP_INACTIVE` for one whose team membership has ended.
+ */
+export function requireOwnSquad(
+  membershipRepo: LeagueMembershipRepository,
+  squadMembershipRepo: SquadMembershipRepository,
+  leagueOf: LeagueResolver,
+): preHandlerAsyncHookHandler {
+  return async function checkOwnSquad(request, reply): Promise<void> {
+    const logger = loggerOf(request);
+    const access = await resolveLeagueAccess('requireOwnSquad', membershipRepo, leagueOf, request, reply);
+    if (access === null || access === 'root-admin') {
+      return;
+    }
+    const squadMembership = await squadMembershipRepo.findByLeagueAndUser(access.leagueId, access.userId);
+    if (!squadMembership) {
+      logger.warn({
+        action: 'leaguePermission.requireOwnSquad.missingSquadMembership',
+        data: { leagueId: access.leagueId, userId: access.userId },
+      }, 'Rejected own-squad action for a caller with no team in the league');
+      await sendError(
+        reply,
+        403,
+        'SQUAD_MEMBERSHIP_REQUIRED',
+        'You must have an active team in this league to perform this action',
+      );
+      return;
+    }
+    if (squadMembership.status !== SquadMembershipStatus.ACTIVE) {
+      logger.warn({
+        action: 'leaguePermission.requireOwnSquad.inactiveSquadMembership',
+        data: {
+          leagueId: access.leagueId,
+          squadId: squadMembership.squadId,
+          userId: access.userId,
+          status: squadMembership.status,
+        },
+      }, 'Rejected own-squad action for a caller whose team membership has ended');
+      await sendError(reply, 403, 'SQUAD_MEMBERSHIP_INACTIVE', 'Your membership of this team has ended');
+      return;
+    }
+    logger.debug({
+      action: 'leaguePermission.requireOwnSquad.success',
+      data: { leagueId: access.leagueId, squadId: squadMembership.squadId, userId: access.userId },
+    }, 'Granted own-squad action to an active owner');
   };
 }

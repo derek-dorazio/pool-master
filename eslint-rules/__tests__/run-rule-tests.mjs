@@ -20,6 +20,7 @@ import noWidenedEnumFields from '../no-widened-enum-fields.mjs';
 import noBareEnumLiterals from '../no-bare-enum-literals.mjs';
 import noInlineThemeStyles from '../no-inline-theme-styles.mjs';
 import noMockedApi from '../no-mocked-api.mjs';
+import noUnawaitedSendError from '../no-unawaited-send-error.mjs';
 
 const ruleTester = new RuleTester({
   languageOptions: {
@@ -430,6 +431,43 @@ ruleTester.run('no-bare-enum-literals', noBareEnumLiterals, {
       // Reversed operands — the literal can sit on either side.
       code: "const a = 'LINK_INVITE' === x.joinPolicy;",
       errors: [{ messageId: 'bareLiteral' }],
+    },
+  ],
+});
+
+ruleTester.run('no-unawaited-send-error', noUnawaitedSendError, {
+  valid: [
+    'async function gate(reply) { await sendError(reply, 403, "X", "x"); return; }',
+    'function handler(reply) { return sendError(reply, 404, "X", "x"); }',
+    'const handler = (reply) => sendError(reply, 400, "X", "x");',
+    'async function gate(reply) { const sent = sendError(reply, 403, "X", "x"); await sent; }',
+    // A different function with a similar name is not this rule's concern.
+    'async function gate(reply) { void sendErrorLater(reply); }',
+    // The last operand of a sequence is its value.
+    'function handler(reply) { return (log(), sendError(reply, 400, "X", "x")); }',
+  ],
+  invalid: [
+    {
+      // The #193 shape: the hook resolves before the reply has finished.
+      code: 'async function gate(reply) { void sendError(reply, 403, "X", "x"); return; }',
+      errors: [{ messageId: 'unawaitedSendError' }],
+    },
+    {
+      code: 'async function gate(reply) { sendError(reply, 403, "X", "x"); }',
+      errors: [{ messageId: 'unawaitedSendError' }],
+    },
+    {
+      code: 'async function gate(reply) { void errors.sendError(reply, 403, "X", "x"); }',
+      errors: [{ messageId: 'unawaitedSendError' }],
+    },
+    {
+      // A cast does not change that the value is thrown away.
+      code: 'async function gate(reply) { void (sendError(reply, 403, "X", "x") as unknown); }',
+      errors: [{ messageId: 'unawaitedSendError' }],
+    },
+    {
+      code: 'async function gate(reply) { sendError(reply, 403, "X", "x"), log(); }',
+      errors: [{ messageId: 'unawaitedSendError' }],
     },
   ],
 });

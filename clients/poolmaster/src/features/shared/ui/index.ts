@@ -58,7 +58,6 @@ export { ServerErrorBar, ServerErrorPanel } from "./server-error";
 export type { ServerErrorDisplayProps } from "./server-error";
 export { PageSection, SectionActions, SectionHeader } from "./section";
 export { EmptyState, ErrorState, LoadingState } from "./state";
-export { Pagination, ResultsSummary } from "./pagination";
 export { ProgressIndicator, Skeleton } from "./progress";
 export {
   SegmentedControl,

@@ -300,6 +300,13 @@ export default tseslint.config(
     rules: { 'poolmaster/no-parallel-api-types': 'error' },
   },
   {
+    // Backend source: a gate that sends its rejection without awaiting lets Fastify run the
+    // handler behind it (#193, #458).
+    files: ['packages/core-api/src/**/*.ts'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-unawaited-send-error': 'error' },
+  },
+  {
     // Test files across every workspace, matching the scanner's walk roots
     // (tests/, packages/, clients/poolmaster/src/). The rule also fires on the
     // file path itself, so a parked `*.skip.test.ts` is caught by being linted
