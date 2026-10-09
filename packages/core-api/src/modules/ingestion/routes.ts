@@ -11,8 +11,8 @@
 
 import type { FastifyInstance } from 'fastify';
 import { Sport } from '@poolmaster/shared/domain';
-import { zodToJsonSchema } from '@poolmaster/shared/dto';
-import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+// Registers ErrorEnvelope, which this module's error responses $ref (#192).
+import '@poolmaster/shared/dto/errors.dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 // Registers the named components this module's routes $ref (#192).
 import '@poolmaster/shared/dto/ingestion.dto';
@@ -35,7 +35,7 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
   void fastify.register(schemaComponentsPlugin);
   fastify.addHook('onRequest', requireRootAdmin);
 
-  const envelope = zodToJsonSchema(ErrorEnvelopeSchema);
+  const envelope = schemaRef('ErrorEnvelope');
   const errors = (...statuses: number[]) =>
     Object.fromEntries([401, 403, ...statuses].map((status) => [status, envelope]));
 

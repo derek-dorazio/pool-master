@@ -1,5 +1,5 @@
 import { LeagueIconKey, LeagueRole, TeamIconKey } from '@poolmaster/shared/domain';
-import type { UserDto, DeleteLeagueResponses, GenerateInviteLinkResponse, InvitationPreviewResponse, LeagueContextResponse, LeagueDto, LeagueInvitationDto, LeagueListResponse, LeagueMembershipDto, LeagueMembershipResponse, LeagueResponse, SquadDto, SquadListResponse, SquadResponse } from '@/lib/api';
+import type { UserDto, GenerateInviteLinkResponse, InvitationPreviewResponse, LeagueContextResponse, LeagueDto, LeagueInvitationDto, LeagueListResponse, LeagueMembershipDto, LeagueMembershipResponse, LeagueResponse, SquadDto, SquadListResponse, SquadResponse, SuccessResponse } from '@/lib/api';
 
 export type CurrentUser = UserDto;
 export type LeagueSquadMember = NonNullable<SquadDto['members']>[number];
@@ -320,7 +320,7 @@ export function activateLeagueData(
   return { league };
 }
 
-export function deleteLeagueData(): DeleteLeagueResponses[200] {
+export function deleteLeagueData(): SuccessResponse {
   return { success: true };
 }
 

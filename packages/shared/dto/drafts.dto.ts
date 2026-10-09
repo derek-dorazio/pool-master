@@ -2,6 +2,7 @@
  * Draft DTOs — request/response schemas for draft endpoints.
  */
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import { ContestEntryStatus, DraftStatus, SelectionType } from '../domain/enums';
 
 // --- Requests ---
@@ -264,3 +265,8 @@ export const DraftPickResponseSchema = z.object({
   bracketMatchups: z.array(DraftBracketMatchupDtoSchema).optional().describe('Bracket pick data when relevant to the draft.'),
 }).describe('Draft response returned immediately after a pick mutation.');
 export type DraftPickResponse = z.infer<typeof DraftPickResponseSchema>;
+
+registerSchema('DraftStateQuery', DraftStateQuerySchema);
+registerSchema('SubmitPickRequest', SubmitPickRequestSchema);
+registerSchema('DraftStateResponse', DraftStateResponseSchema);
+registerSchema('DraftPickResponse', DraftPickResponseSchema);

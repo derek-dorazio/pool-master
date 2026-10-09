@@ -315,8 +315,8 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 - [ ] Handlers call mapper functions — no inline `.map()` transformations in route or handler files
 
 **Route Schemas:**
-- [ ] Every route uses `zodToJsonSchema()` for request and response schemas — no inline `{ type: 'object', properties: ... }` JSON objects
-- [ ] No route uses `SuccessSchema` or `passthroughResponseSchema` for endpoints returning domain data
+- [ ] Every request body and response is a named component via `schemaRef()` (`rules/service-rules.md` §4) — no inline schemas
+- [ ] No route uses `SuccessResponse` or `passthroughResponseSchema` for endpoints returning domain data
 - [ ] Every route has `operationId`, `summary`, and `tags`
 - [ ] Changed backend/shared contract work also satisfies the contract-documentation checklist from `rules/service-rules.md`
 

@@ -11,7 +11,6 @@ import type {
   ContestConfigurationRequest,
   CreateContestRequest,
   GolfEffectiveTierDto,
-  UpdateContestConfigurationRequest,
 } from '@poolmaster/shared/dto';
 import {
   CONTEST_CONFIGURATION_LOCKED,
@@ -233,7 +232,7 @@ export class ContestManagementService {
 
   async updateContestConfiguration(
     contestId: string,
-    input: UpdateContestConfigurationRequest,
+    input: ContestConfigurationRequest,
   ): Promise<ContestManagementDetailDto> {
     this.logger.debug({ contestId }, 'contest management update configuration start');
     const configuration = await this.contestConfigurationRepo.findByContest(

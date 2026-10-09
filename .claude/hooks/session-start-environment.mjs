@@ -30,11 +30,9 @@
  * regenerates. The migration check compares applied rows in _prisma_migrations
  * against migration directories, so a branch that adds a migration also deploys.
  *
- * Migrations go through `prisma migrate deploy`, NOT `npm run db:test:reset`.
- * `migrate reset` is refused by Prisma when it detects an AI agent unless
- * PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION carries the user's literal
- * consent, and `reset` is the wrong verb for a database that was just created
- * anyway. `deploy` is non-destructive and needs no consent.
+ * Migrations go through `prisma migrate deploy`: `reset` is the wrong verb for a
+ * database that was just created, and `deploy` is non-destructive. A dirty
+ * database is what `npm run db:test:reset` is for.
  *
  * Not built here: @poolmaster/shared. Its `types` point at source, so lint and
  * both unit suites never need dist/; the turbo typecheck task builds it through
@@ -340,8 +338,6 @@ function report() {
   } else {
     lines.push(`  Test database: ${TEST_DB_URL}`);
   }
-  lines.push('  Never use `npm run db:test:reset` or the `:fresh` scripts here: Prisma refuses `migrate reset`');
-  lines.push('  from an agent. Use `npm run db:test:migrate` (migrate deploy) instead.');
   const text = lines.join('\n');
   process.stdout.write(JSON.stringify({
     systemMessage: text,

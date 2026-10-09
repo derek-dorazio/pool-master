@@ -239,7 +239,8 @@ describe('check-plan-references scope: package and client READMEs (#334)', () =>
   it('binds packages/README.md the way the model citation binds docs/CI-AND-QUALITY-GATES.md', () => {
     // Read from the tree against the real plans/ directory, so deleting a plan this README
     // cites without adding the retrieval command turns this test red rather than printing a
-    // warning nobody reads. #330's `plans/142` and `plans/145` are latent today and pass.
+    // warning nobody reads. #330's `plans/142` and `plans/145` are both deleted now and pass
+    // only because each carries its `git show` retrieval command.
     //
     // ONE README, DELIBERATELY. #336 left "bind the other three newly scanned READMEs too" as
     // the owner's call; the answer is no, for two reasons. The other three

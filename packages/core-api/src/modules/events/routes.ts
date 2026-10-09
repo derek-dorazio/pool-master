@@ -9,9 +9,9 @@
  * annotated, not stripped (plans/145 rule 4).
  */
 import type { FastifyInstance } from 'fastify';
-import { zodToJsonSchema } from '@poolmaster/shared/dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
-import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+// Registers ErrorEnvelope, which this module's error responses $ref (#192).
+import '@poolmaster/shared/dto/errors.dto';
 // Registers the named components this module's routes $ref (#192). ingestion.dto holds the
 // provider sync submission the field refresh returns.
 import '@poolmaster/shared/dto/ingestion.dto';
@@ -36,7 +36,7 @@ export interface EventsModuleOptions {
 const TAGS = ['Events'];
 
 function errors(...statuses: number[]) {
-  const envelope = zodToJsonSchema(ErrorEnvelopeSchema);
+  const envelope = schemaRef('ErrorEnvelope');
   return Object.fromEntries(statuses.map((status) => [status, envelope]));
 }
 
@@ -195,8 +195,8 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       response: {
         200: schemaRef('SportEventResponse'),
         ...errors(401, 403, 404),
-        409: { ...zodToJsonSchema(ErrorEnvelopeSchema), description: 'SPORT_EVENT_NOT_DRAFT: the event has already been released. SPORT_EVENT_ALREADY_STARTED: its start time has passed.' },
-        422: { ...zodToJsonSchema(ErrorEnvelopeSchema), description: 'SPORT_EVENT_NOT_READY: the field is not loaded, or an active participant has no tier.' },
+        409: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_DRAFT: the event has already been released. SPORT_EVENT_ALREADY_STARTED: its start time has passed.' },
+        422: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_READY: the field is not loaded, or an active participant has no tier.' },
       },
     },
     handler: handler.releaseEvent,
