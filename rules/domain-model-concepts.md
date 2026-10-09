@@ -118,6 +118,11 @@ squad membership are one unit*. What follows is what it means for the product.
 
 - **There is no "remove from league" separate from the team.** Removing an owner from their
   team, removing a member from the league, and inactivating a team all end the same unit.
+- **A team left with no owner is inactive, and its pending co-owner invitations are revoked.**
+  However it happens (inactivating the team, or removing its last owner from the league), the
+  invitations close with it, so none can revive the team and none keeps its address from
+  being invited to another team. Replacing a sole owner is a hand-over, not an ending: the
+  team stays active and its invitations stay pending.
 - **Remove Owner needs another owner.** A team with one active owner refuses it
   (`SQUAD_OWNER_REMOVE_REQUIRES_MULTIPLE_OWNERS`); the answer is to inactivate the team.
 - **Inactivate Team is soft.** Commissioner or root admin only. It ends every owner's league

@@ -11,7 +11,6 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
-  SquadOwnerInvitationStatus,
   TeamIconKey,
 } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
@@ -23,6 +22,7 @@ import {
   LastCommissionerError,
   requireAnotherActiveCommissioner,
 } from '../leagues/member-lifecycle';
+import { revokePendingOwnerInvitations } from './owner-membership';
 
 /**
  * #202 step 3.4 — `SquadViewerContext` is gone. It threaded
@@ -231,16 +231,12 @@ export class SquadService {
       await this.squadRepo.update(squadId, { isActive: false });
     }
 
-    // An inactive team's invitations can no longer be accepted, so close them rather than leave
-    // them listed as pending.
-    const pendingInvitations = (await this.ownerInvitationRepo.findByLeague(leagueId)).filter(
-      (invitation) =>
-        invitation.squadId === squadId && invitation.status === SquadOwnerInvitationStatus.PENDING,
-    );
-    await Promise.all(
-      pendingInvitations.map(async (invitation) =>
-        this.ownerInvitationRepo.update(invitation.id, { status: SquadOwnerInvitationStatus.REVOKED })),
-    );
+    await revokePendingOwnerInvitations({
+      leagueId,
+      squadId,
+      ownerInvitationRepo: this.ownerInvitationRepo,
+      logger: this.logger,
+    });
 
     const squadDto = await this.loadSquadDto(squadId);
     this.logger?.info({

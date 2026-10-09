@@ -14,6 +14,7 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaLeagueInvitationRepository,
   PrismaSquadMembershipRepository,
+  PrismaSquadOwnerInvitationRepository,
   PrismaSquadRepository,
   PrismaUserRepository,
 } from '../../adapters';
@@ -72,9 +73,9 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
   });
   const memberService = new MemberService(
     membershipRepo,
-    prisma,
     squadRepo,
     squadMembershipRepo,
+    new PrismaSquadOwnerInvitationRepository(prisma),
     fastify.log,
   );
   const memberDirectoryService = new MemberDirectoryService(membershipRepo, userRepo);

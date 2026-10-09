@@ -30,10 +30,13 @@ interface InactivateLeagueMemberUnitInput {
  * Account state belongs to the user (self-service disable) and to a root admin. A commissioner
  * manages league and squad membership and has no business deciding whether someone can sign in.
  * A user with no leagues signs in fine and lands on the welcome page's empty state.
+ *
+ * Returns the team it inactivated because the user was its last owner, if any; that team's pending
+ * invitations are the caller's to revoke, since a hand-over to a new owner keeps the team.
  */
 export async function inactivateLeagueMemberUnit(
   input: InactivateLeagueMemberUnitInput,
-): Promise<void> {
+): Promise<{ inactivatedSquadId: string | null }> {
   input.logger?.debug({
     action: 'leagueMemberLifecycle.inactivate.enter',
     data: { leagueId: input.leagueId, userId: input.userId },
@@ -48,15 +51,16 @@ export async function inactivateLeagueMemberUnit(
         reason: membership ? `status:${membership.status}` : 'membership_missing',
       },
     }, 'Skipped league member inactivation');
-    return;
+    return { inactivatedSquadId: null };
   }
 
   await input.membershipRepo.update(membership.id, {
     status: LeagueMembershipStatus.INACTIVE,
   });
 
+  let inactivatedSquadId: string | null = null;
   if (input.squadRepo && input.squadMembershipRepo) {
-    await deactivateSquadMembershipForLeagueMember({
+    inactivatedSquadId = await deactivateSquadMembershipForLeagueMember({
       leagueId: input.leagueId,
       userId: input.userId,
       squadRepo: input.squadRepo,
@@ -69,6 +73,7 @@ export async function inactivateLeagueMemberUnit(
     action: 'leagueMemberLifecycle.inactivate.success',
     data: { leagueId: input.leagueId, userId: input.userId },
   }, 'Ended league and squad membership');
+  return { inactivatedSquadId };
 }
 
 /**

@@ -2,11 +2,11 @@
  * MemberService — role management and member lifecycle operations.
  */
 
-import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
+  SquadOwnerInvitationRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
 import type { LeagueMembership, LeagueRole as LeagueRoleType } from '@poolmaster/shared/domain';
@@ -16,6 +16,7 @@ import {
   LastCommissionerError,
   requireAnotherActiveCommissioner,
 } from './member-lifecycle';
+import { revokePendingOwnerInvitations } from '../squads/owner-membership';
 
 export interface ChangeRoleInput {
   leagueId: string;
@@ -26,11 +27,9 @@ export interface ChangeRoleInput {
 export class MemberService {
   constructor(
     private readonly membershipRepo: LeagueMembershipRepository,
-    // Never read; every query goes through the repositories. Modifier dropped,
-    // slot kept -- routes.ts:80 and six unit tests pass it positionally.
-    _prisma: PrismaClient,
-    private readonly squadRepo?: SquadRepository,
-    private readonly squadMembershipRepo?: SquadMembershipRepository,
+    private readonly squadRepo: SquadRepository,
+    private readonly squadMembershipRepo: SquadMembershipRepository,
+    private readonly ownerInvitationRepo: SquadOwnerInvitationRepository,
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
@@ -117,7 +116,7 @@ export class MemberService {
     if (membership.role === LeagueRole.COMMISSIONER) {
       await this.ensureAnotherActiveCommissioner(leagueId, membership.userId);
     }
-    await inactivateLeagueMemberUnit({
+    const { inactivatedSquadId } = await inactivateLeagueMemberUnit({
       leagueId,
       userId,
       membershipRepo: this.membershipRepo,
@@ -125,6 +124,14 @@ export class MemberService {
       squadMembershipRepo: this.squadMembershipRepo,
       logger: this.logger,
     });
+    if (inactivatedSquadId) {
+      await revokePendingOwnerInvitations({
+        leagueId,
+        squadId: inactivatedSquadId,
+        ownerInvitationRepo: this.ownerInvitationRepo,
+        logger: this.logger,
+      });
+    }
     this.logger?.info({
       action: 'leagueMember.remove.success',
       data: { leagueId, userId },

@@ -3,6 +3,9 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
+  SquadOwnerInvitationStatus,
+  type League,
+  type Squad,
 } from '@poolmaster/shared/domain';
 import { MemberDirectoryService } from '../../../packages/core-api/src/modules/leagues/member-directory-service';
 import {
@@ -11,7 +14,6 @@ import {
   MemberService,
 } from '../../../packages/core-api/src/modules/leagues/member-service';
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
-import { asPrismaClient } from '../../support/prisma-double';
 
 /**
  * League membership use cases — role changes, removal, and the member roster — against the
@@ -19,14 +21,25 @@ import { asPrismaClient } from '../../support/prisma-double';
  * membership, the squad membership, the squad, and the user's account.
  */
 
-function memberService(world: InMemoryLeagueWorld, options: { withSquads?: boolean } = {}) {
-  const withSquads = options.withSquads ?? true;
+function memberService(world: InMemoryLeagueWorld) {
   return new MemberService(
     world.memberships,
-    asPrismaClient({}),
-    withSquads ? world.squads : undefined,
-    withSquads ? world.squadMemberships : undefined,
+    world.squads,
+    world.squadMemberships,
+    world.ownerInvitations,
   );
+}
+
+function pendingInvitationFor(world: InMemoryLeagueWorld, league: League, squad: Squad, invitedBy: string) {
+  return world.tables.ownerInvitations.insert({
+    leagueId: league.id,
+    squadId: squad.id,
+    email: `invitee-${world.tables.ownerInvitations.rows.size + 1}@example.com`,
+    inviteCode: `owner${world.tables.ownerInvitations.rows.size + 1}`,
+    status: SquadOwnerInvitationStatus.PENDING,
+    invitedBy,
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+  });
 }
 
 function leagueWithCommissioner() {
@@ -146,6 +159,34 @@ describe('MemberService — removing a member', () => {
     expect(world.squadMembershipOf(league.id, owner.id)?.status).toBe(SquadMembershipStatus.ACTIVE);
   });
 
+  it('revokes the pending co-owner invitations of a team it inactivates, so the address is free to invite elsewhere, and leaves other teams\' pending', async () => {
+    const { world, league, commissioner } = leagueWithCommissioner();
+    const member = world.addUser();
+    const { squad } = world.addMember({ league, user: member });
+    const invitation = pendingInvitationFor(world, league, squad, member.id);
+    const commissionerSquad = world.tables.squads.get(world.squadMembershipOf(league.id, commissioner.id)!.squadId)!;
+    const otherTeamInvitation = pendingInvitationFor(world, league, commissionerSquad, commissioner.id);
+
+    await memberService(world).removeMember(league.id, member.id);
+
+    expect(world.tables.ownerInvitations.get(invitation.id)?.status).toBe(SquadOwnerInvitationStatus.REVOKED);
+    expect(await world.ownerInvitations.findPendingByLeagueAndEmail(league.id, invitation.email)).toBeNull();
+    expect(world.tables.ownerInvitations.get(otherTeamInvitation.id)?.status).toBe(SquadOwnerInvitationStatus.PENDING);
+  });
+
+  it('leaves the pending co-owner invitations of a co-owned team pending when the team stays active', async () => {
+    const { world, league } = leagueWithCommissioner();
+    const owner = world.addUser();
+    const coOwner = world.addUser();
+    const { squad } = world.addMember({ league, user: owner });
+    world.addMember({ league, user: coOwner, squadId: squad.id });
+    const invitation = pendingInvitationFor(world, league, squad, owner.id);
+
+    await memberService(world).removeMember(league.id, coOwner.id);
+
+    expect(world.tables.ownerInvitations.get(invitation.id)?.status).toBe(SquadOwnerInvitationStatus.PENDING);
+  });
+
   it('removes a commissioner when another active commissioner remains', async () => {
     const { world, league, commissioner } = leagueWithCommissioner();
     world.addMember({ league, user: world.addUser(), role: LeagueRole.COMMISSIONER });
@@ -178,17 +219,6 @@ describe('MemberService — removing a member', () => {
   it('refuses to remove someone who never joined with MemberNotFoundError', async () => {
     const { world, league } = leagueWithCommissioner();
     await expect(memberService(world).removeMember(league.id, 'stranger')).rejects.toBeInstanceOf(MemberNotFoundError);
-  });
-
-  it('ends only the league membership when squad repositories are not wired', async () => {
-    const { world, league } = leagueWithCommissioner();
-    const member = world.addUser();
-    world.addMember({ league, user: member });
-
-    await memberService(world, { withSquads: false }).removeMember(league.id, member.id);
-
-    expect(world.membershipOf(league.id, member.id)?.status).toBe(LeagueMembershipStatus.INACTIVE);
-    expect(world.squadMembershipOf(league.id, member.id)?.status).toBe(SquadMembershipStatus.ACTIVE);
   });
 
   it('ends the league membership of a member whose team membership is already gone', async () => {

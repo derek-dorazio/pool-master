@@ -143,7 +143,7 @@ describe('league member lifecycle helpers', () => {
     expect(squad.id).toBe('squad-1');
   });
 
-  it('deactivates a squad membership and inactivates the squad when the last owner leaves', async () => {
+  it('deactivates a squad membership, inactivates the squad when the last owner leaves, and returns its id', async () => {
     const squadRepo = createSquadRepo({
       update: jest.fn().mockResolvedValue(undefined),
     });
@@ -162,7 +162,7 @@ describe('league member lifecycle helpers', () => {
       update: jest.fn().mockResolvedValue(undefined),
     });
 
-    await deactivateSquadMembershipForLeagueMember({
+    const inactivatedSquadId = await deactivateSquadMembershipForLeagueMember({
       leagueId: 'league-1',
       userId: 'user-1',
       squadRepo,
@@ -174,6 +174,7 @@ describe('league member lifecycle helpers', () => {
       expect.objectContaining({ status: SquadMembershipStatus.INACTIVE }),
     );
     expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { isActive: false });
+    expect(inactivatedSquadId).toBe('squad-1');
   });
 
   /**
@@ -182,7 +183,7 @@ describe('league member lifecycle helpers', () => {
    * remain". Both asserted the cascade that is now gone: the unit no longer looks at whether this
    * was the user's last league, and no longer writes `user.isActive` or revokes refresh tokens.
    */
-  it('ends the league and squad membership and leaves the user account alone', async () => {
+  it('ends the league and squad membership, reports the team it inactivated, and leaves the user account alone', async () => {
     const membershipRepo = createMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(buildMembership({
         id: 'membership-1',
@@ -210,7 +211,7 @@ describe('league member lifecycle helpers', () => {
       update: jest.fn().mockResolvedValue(undefined),
     });
 
-    await inactivateLeagueMemberUnit({
+    const result = await inactivateLeagueMemberUnit({
       leagueId: 'league-1',
       userId: 'user-1',
       membershipRepo,
@@ -226,6 +227,7 @@ describe('league member lifecycle helpers', () => {
       'squad-membership-1',
       expect.objectContaining({ status: SquadMembershipStatus.INACTIVE }),
     );
+    expect(result).toEqual({ inactivatedSquadId: 'squad-1' });
     // The account guarantee is structural now, not conditional: the unit takes no Prisma client,
     // so it has no way to write `user.isActive` or revoke a token. That is the point — a
     // commissioner ending a membership cannot lock someone out of the product.
