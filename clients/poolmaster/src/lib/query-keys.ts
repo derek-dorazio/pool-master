@@ -73,10 +73,10 @@ export const QueryKeys = {
     detail: (entryId: QueryKeyId) => ['poolmaster', 'contest-entries', entryId] as const,
     me: (contestId: QueryKeyId) => ['poolmaster', 'contest-entries', contestId, 'me'] as const,
   },
-  draftStates: {
-    all: ['poolmaster', 'draft-state'] as const,
+  selectionStates: {
+    all: ['poolmaster', 'selection-state'] as const,
     detail: (contestId: QueryKeyId, entryId: QueryKeyId) =>
-      ['poolmaster', 'draft-state', contestId, entryId] as const,
+      ['poolmaster', 'selection-state', contestId, entryId] as const,
   },
   leagues: {
     all: ['poolmaster', 'leagues'] as const,

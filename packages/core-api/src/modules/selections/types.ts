@@ -1,7 +1,7 @@
 /**
- * The draft module's internal vocabulary (#324) — what `DraftService` reads, computes and
- * returns, in domain terms. These are not DTOs: `mappers/drafts.mapper.ts` projects the view
- * below onto the published `DraftStateResponse` shape.
+ * The selection module's internal vocabulary (#324) — what `SelectionService` reads, computes and
+ * returns, in domain terms. These are not DTOs: `mappers/selections.mapper.ts` projects the view
+ * below onto the published `SelectionStateResponse` shape.
  */
 
 import type {
@@ -9,15 +9,15 @@ import type {
   ContestConfiguration,
   ContestEntry,
   ContestEntryStatus,
-  DraftStatus,
+  SelectionStatus,
   SquadMembership,
 } from '@poolmaster/shared/domain';
 
 /**
- * A tier as the draft room uses it: the event owns tiers now (plans/124 §4.6/§4.6b), and
- * `buildDraftTiers` is the one place a resolved `SportEventTierGroup[]` becomes this shape.
+ * A tier as the selection room uses it: the event owns tiers now (plans/124 §4.6/§4.6b), and
+ * `buildSelectionTiers` is the one place a resolved `SportEventTierGroup[]` becomes this shape.
  */
-export interface DraftTierConfig {
+export interface SelectionTierConfig {
   tierId: string;
   tierName: string;
   tierNumber: number;
@@ -49,17 +49,17 @@ export interface ParticipantValuation {
 }
 
 /**
- * Everything one draft-room operation reads about a contest, assembled once per request.
+ * Everything one selection-room operation reads about a contest, assembled once per request.
  * `tiers` is resolved here so every group-by-tier call site reads it rather than re-deriving
  * it (plans/124 §4.6b).
  */
-export interface DraftContext {
+export interface SelectionContext {
   contest: Contest;
   configuration: ContestConfiguration | null;
   entries: ContestEntry[];
   squadMemberships: SquadMembership[];
   selectionParticipants: SelectionParticipant[];
-  tiers: DraftTierConfig[];
+  tiers: SelectionTierConfig[];
   /**
    * Whether the contest takes pick changes now: it is OPEN and its event has not reached its
    * start time. The start time counts even while the contest still says OPEN, because the
@@ -69,8 +69,8 @@ export interface DraftContext {
   acceptsPicks: boolean;
 }
 
-/** A pick as the draft room reads it: the row, plus the canonical participant it points at. */
-export interface DraftPick {
+/** A pick as the selection room reads it: the row, plus the canonical participant it points at. */
+export interface ResolvedPick {
   id: string;
   entryId: string;
   sportEventParticipantId: string;
@@ -78,14 +78,14 @@ export interface DraftPick {
   participantName: string | null;
   role: string | null;
   teamAffiliation: string | null;
-  draftRound?: number;
-  draftPickNumber?: number;
+  lineupSlot?: number;
+  pickSequence?: number;
   isAutoPicked: boolean;
   pickedAt: Date;
 }
 
 /** An entry in the room, with the user who owns it, how many picks it holds, and its status. */
-export interface DraftRoomEntry {
+export interface SelectionEntry {
   id: string;
   userId: string;
   name: string;
@@ -94,7 +94,7 @@ export interface DraftRoomEntry {
 }
 
 /** One pick as the room's history shows it, with its round placement resolved. */
-export interface DraftRoomPick {
+export interface PickHistoryRow {
   pickNumber: number;
   round: number;
   pickInRound: number;
@@ -112,7 +112,7 @@ export interface DraftRoomPick {
 }
 
 /** A tier with its selectable participants, and which of them the viewed entry holds. */
-export interface DraftSelectionGroup {
+export interface SelectionGroup {
   groupId: string;
   groupName: string;
   groupNumber: number;
@@ -121,20 +121,20 @@ export interface DraftSelectionGroup {
 }
 
 /**
- * The outcome of a draft-room operation: the whole room as the caller should now see it.
+ * The outcome of a selection-room operation: the whole room as the caller should now see it.
  * Both operations return this — reading the room, and submitting into it — which is why the
  * submission response and the state response have always been the same shape.
  */
-export interface DraftRoomView {
+export interface SelectionView {
   contest: Contest;
   configuration: ContestConfiguration | null;
-  tiers: DraftTierConfig[];
+  tiers: SelectionTierConfig[];
   rosterSize: number;
   isCommissioner: boolean;
-  status: DraftStatus;
-  entries: DraftRoomEntry[];
-  picks: DraftRoomPick[];
-  selectionGroups: DraftSelectionGroup[];
+  status: SelectionStatus;
+  entries: SelectionEntry[];
+  picks: PickHistoryRow[];
+  selectionGroups: SelectionGroup[];
   availableSportEventParticipantIds: string[];
   myEntryId: string | null;
   selectedEntryId: string | null;
@@ -168,5 +168,5 @@ export interface LineupShortfall {
  */
 export interface SubmitSelectionResult {
   outcome: 'placed' | 'toggled-off';
-  view: DraftRoomView;
+  view: SelectionView;
 }

@@ -1,6 +1,6 @@
 /**
  * Builds the event-core services from their Prisma adapters (#236). Route modules and the
- * contest-side modules that read an event's tiers (drafts, contests, contest management)
+ * contest-side modules that read an event's tiers (selections, contests, contest management)
  * take their services from here, so each service is assembled in one place.
  */
 

@@ -1,4 +1,4 @@
-import { DraftStatus, SelectionType } from '@poolmaster/shared/domain';
+import { SelectionStatus, SelectionType } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -8,34 +8,34 @@ import type {
   SquadMembership,
 } from '@poolmaster/shared/domain';
 import {
-  buildDraftTiers,
+  buildSelectionTiers,
   buildEntryUserIdMap,
   buildSelectionParticipants,
   buildTierByParticipantId,
   buildValuationLookup,
   findTierByLabel,
   isCommissionerRole,
-  mapContestStatusToDraftStatus,
-} from '../../../packages/core-api/src/modules/drafts/draft-rules';
-import { findSelectionEngine } from '../../../packages/core-api/src/modules/drafts/selection-engines/registry';
-import { tieredSelectionEngine } from '../../../packages/core-api/src/modules/drafts/selection-engines/tiered';
+  mapContestStatusToSelectionStatus,
+} from '../../../packages/core-api/src/modules/selections/selection-rules';
+import { findSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
+import { tieredSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/tiered';
 import type {
-  DraftTierConfig,
+  SelectionTierConfig,
   ParticipantValuation,
-} from '../../../packages/core-api/src/modules/drafts/types';
+} from '../../../packages/core-api/src/modules/selections/types';
 import type {
   ParticipantValuationView,
   SportEventTierGroup,
 } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 
-// #324 — the draft room's rules as functions, called directly.
+// #324 — the selection room's rules as functions, called directly.
 //
-// Until this extraction every one of these was module-private inside `drafts/routes.ts`, so
+// Until this extraction every one of these was module-private inside `selections/routes.ts`, so
 // the only way to exercise a draft rule was to send an HTTP request. That is also the half of
 // the `engine/` classes #323 deleted that was worth keeping: the arithmetic. It is kept here
 // as functions rather than as stateful classes, and each one is covered on both of its paths.
 
-function tier(overrides: Partial<DraftTierConfig> = {}): DraftTierConfig {
+function tier(overrides: Partial<SelectionTierConfig> = {}): SelectionTierConfig {
   return {
     tierId: 'tier-1',
     tierName: 'Tier 1',
@@ -119,23 +119,23 @@ describe('#324 draft rules — role predicate', () => {
   });
 });
 
-describe('#324 draft rules — mapContestStatusToDraftStatus', () => {
+describe('#324 draft rules — mapContestStatusToSelectionStatus', () => {
   it('is COMPLETE when every roster is full, whatever the contest status says', () => {
-    expect(mapContestStatusToDraftStatus('OPEN', true)).toBe(DraftStatus.COMPLETE);
-    expect(mapContestStatusToDraftStatus('DRAFT', true)).toBe(DraftStatus.COMPLETE);
+    expect(mapContestStatusToSelectionStatus('OPEN', true)).toBe(SelectionStatus.COMPLETE);
+    expect(mapContestStatusToSelectionStatus('DRAFT', true)).toBe(SelectionStatus.COMPLETE);
   });
 
   it('is COMPLETE for a COMPLETED contest even while a roster is still short', () => {
-    expect(mapContestStatusToDraftStatus('COMPLETED', false)).toBe(DraftStatus.COMPLETE);
+    expect(mapContestStatusToSelectionStatus('COMPLETED', false)).toBe(SelectionStatus.COMPLETE);
   });
 
   it('is LIVE while the contest is open or active', () => {
-    expect(mapContestStatusToDraftStatus('OPEN', false)).toBe(DraftStatus.LIVE);
-    expect(mapContestStatusToDraftStatus('ACTIVE', false)).toBe(DraftStatus.LIVE);
+    expect(mapContestStatusToSelectionStatus('OPEN', false)).toBe(SelectionStatus.LIVE);
+    expect(mapContestStatusToSelectionStatus('ACTIVE', false)).toBe(SelectionStatus.LIVE);
   });
 
   it('is PENDING for a DRAFT contest', () => {
-    expect(mapContestStatusToDraftStatus('DRAFT', false)).toBe(DraftStatus.PENDING);
+    expect(mapContestStatusToSelectionStatus('DRAFT', false)).toBe(SelectionStatus.PENDING);
   });
 });
 
@@ -162,7 +162,7 @@ describe('#324 draft rules — buildEntryUserIdMap', () => {
   });
 });
 
-describe('#324 draft rules — buildDraftTiers and buildValuationLookup', () => {
+describe('#324 draft rules — buildSelectionTiers and buildValuationLookup', () => {
   it('turns resolved event tier groups into the room\'s tier shape, each tier taking the contest\'s picksPerTier', () => {
     const groups = [
       {
@@ -180,7 +180,7 @@ describe('#324 draft rules — buildDraftTiers and buildValuationLookup', () => 
       },
     ] as unknown as SportEventTierGroup[];
 
-    expect(buildDraftTiers(groups, 2)).toEqual([
+    expect(buildSelectionTiers(groups, 2)).toEqual([
       {
         tierId: 'tier-1',
         tierName: 'Tier 1',
@@ -192,7 +192,7 @@ describe('#324 draft rules — buildDraftTiers and buildValuationLookup', () => 
   });
 
   it('builds no tiers from an event that has none', () => {
-    expect(buildDraftTiers([], 2)).toEqual([]);
+    expect(buildSelectionTiers([], 2)).toEqual([]);
   });
 
   it('gives every tier the contest\'s picksPerTier, so a 3-tier event at 2 picks per tier has a roster of 6', () => {
@@ -207,7 +207,7 @@ describe('#324 draft rules — buildDraftTiers and buildValuationLookup', () => 
       participants: [],
     })) as unknown as SportEventTierGroup[];
 
-    const tiers = buildDraftTiers(groups, 2);
+    const tiers = buildSelectionTiers(groups, 2);
 
     expect(tiers.map((draftTier) => draftTier.picksFromTier)).toEqual([2, 2, 2]);
     expect(tieredSelectionEngine.rosterSize({ configuration: configuration(), tiers })).toBe(6);
@@ -218,7 +218,7 @@ describe('#324 draft rules — buildDraftTiers and buildValuationLookup', () => 
       { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1, participants: [] },
     ] as unknown as SportEventTierGroup[];
 
-    const tiers = buildDraftTiers(groups, 0);
+    const tiers = buildSelectionTiers(groups, 0);
 
     expect(tiers[0].picksFromTier).toBe(0);
     expect(tieredSelectionEngine.rosterSize({ configuration: configuration(), tiers })).toBe(0);
@@ -388,6 +388,6 @@ describe('#324 draft rules — contest shape', () => {
     const contest = { selectionType: SelectionType.TIERED, status: 'OPEN' } as Contest;
 
     expect(findSelectionEngine(contest.selectionType)?.selectionType).toBe(SelectionType.TIERED);
-    expect(mapContestStatusToDraftStatus(contest.status, false)).toBe(DraftStatus.LIVE);
+    expect(mapContestStatusToSelectionStatus(contest.status, false)).toBe(SelectionStatus.LIVE);
   });
 });

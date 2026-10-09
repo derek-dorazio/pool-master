@@ -32,7 +32,7 @@ const PRIORITY_ROUTE_PREFIXES = [
   '/api/v1/auth/',
   '/api/v1/leagues/',
   '/api/v1/contests/',
-  '/api/v1/drafts/',
+  '/api/v1/selections/',
   '/api/v1/billing/',
   '/api/v1/notifications/',
   '/api/v1/standings/',

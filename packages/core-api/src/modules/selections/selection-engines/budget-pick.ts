@@ -25,7 +25,7 @@ export const budgetPickSelectionEngine: SelectionEngine = {
     if (existingPicks.length >= rosterSize) {
       return { kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.ENTRY_COMPLETE };
     }
-    return { kind: SelectionOutcomeKind.ACCEPT, draftRound: existingPicks.length + 1 };
+    return { kind: SelectionOutcomeKind.ACCEPT, lineupSlot: existingPicks.length + 1 };
   },
 
   /** Judged by the pick count alone: a budget-pick roster has no tiers to fill. */

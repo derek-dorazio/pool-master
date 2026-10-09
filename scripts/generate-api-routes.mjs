@@ -115,9 +115,9 @@ const MANIFEST = {
     detail: 'getContestConfiguration',
     configuration: 'updateContestConfiguration',
   },
-  drafts: {
-    $comment: 'Drafts',
-    state: 'getDraftState',
+  selections: {
+    $comment: 'Selections',
+    state: 'getSelectionState',
     pick: 'submitContestSelection',
   },
   observability: {

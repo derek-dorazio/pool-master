@@ -1,5 +1,5 @@
 /**
- * Builds `DraftService` from its Prisma adapters (#324) — the module's composition root, the
+ * Builds `SelectionService` from its Prisma adapters (#324) — the module's composition root, the
  * one place that knows both a port and its implementation.
  */
 
@@ -20,14 +20,14 @@ import { ContestEntryPickService } from '../contest-entry-picks';
 import { createContestService } from '../contests/wiring';
 import type { MailDeliveryProvider } from '../email';
 import { createSportEventTierService } from '../events/wiring';
-import { DraftService } from './service';
+import { SelectionService } from './service';
 
-export function createDraftService(
+export function createSelectionService(
   prisma: PrismaClient,
   logger: FastifyBaseLogger,
   options?: { mailDelivery?: MailDeliveryProvider; appBaseUrl?: string },
-): DraftService {
-  return new DraftService({
+): SelectionService {
+  return new SelectionService({
     contests: new PrismaContestRepository(prisma),
     configurations: new PrismaContestConfigurationRepository(prisma),
     entries: new PrismaContestEntryRepository(prisma),

@@ -10,9 +10,9 @@ import type {
   SquadMembership,
 } from '@poolmaster/shared/domain';
 import type { ContestEntryPickWithParticipant } from '@poolmaster/shared/db';
-import { DraftService } from '../../../packages/core-api/src/modules/drafts/service';
+import { SelectionService } from '../../../packages/core-api/src/modules/selections/service';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
-import { toDraftStateResponse } from '../../../packages/core-api/src/mappers/drafts.mapper';
+import { toSelectionStateResponse } from '../../../packages/core-api/src/mappers/selections.mapper';
 import {
   fakeContestConfigurationRepo,
   fakeContestEntryPickRepo,
@@ -24,9 +24,9 @@ import {
   fakeSquadMembershipRepo,
 } from '../../support/repo-fakes';
 
-// Selection use cases, played through DraftService against a small stateful world.
+// Selection use cases, played through SelectionService against a small stateful world.
 //
-// draft-service.test.ts pins each guard and outcome one submission at a time over canned
+// selection-service.test.ts pins each guard and outcome one submission at a time over canned
 // reads. These tests walk a member through a sequence — fill a roster, swap within a full
 // tier, unselect, compete for an exclusive golfer — with picks that the writes really add and
 // remove, and assert the room each step leaves behind rather than which port was called.
@@ -230,8 +230,8 @@ function buildWorld(options: WorldOptions = {}) {
       createPick: async (input: {
         entryId: string;
         sportEventParticipantId: string;
-        draftRound?: number;
-        draftPickNumber?: number;
+        lineupSlot?: number;
+        pickSequence?: number;
         isAutoPicked?: boolean;
       }) => {
         const row = fieldRowById.get(input.sportEventParticipantId) as SportEventParticipant;
@@ -242,8 +242,8 @@ function buildWorld(options: WorldOptions = {}) {
           entryId: input.entryId,
           sportEventParticipantId: input.sportEventParticipantId,
           contestFormat: 'ROSTER_SELECTION',
-          draftRound: input.draftRound ?? null,
-          draftPickNumber: input.draftPickNumber ?? null,
+          lineupSlot: input.lineupSlot ?? null,
+          pickSequence: input.pickSequence ?? null,
           isAutoPicked: input.isAutoPicked ?? false,
           pickedAt: new Date(clock),
           ...TIMESTAMPS,
@@ -269,7 +269,7 @@ function buildWorld(options: WorldOptions = {}) {
       getEffectiveValuationsForSportEvent: async () => valuations,
     } as unknown as SportEventTierService,
   };
-  const service = new DraftService(deps);
+  const service = new SelectionService(deps);
 
   return {
     service,
@@ -313,7 +313,7 @@ describe('Tiered selection — a member building an entry', () => {
     await world.pickFor(ENTRY_A, 'a');
     await world.pickFor(ENTRY_A, 'b');
 
-    expect(world.picks.map((pick) => [pick.sportEventParticipantId, pick.draftRound])).toEqual([
+    expect(world.picks.map((pick) => [pick.sportEventParticipantId, pick.lineupSlot])).toEqual([
       ['sep-d', 3],
       ['sep-a', 1],
       ['sep-b', 2],
@@ -330,7 +330,7 @@ describe('Tiered selection — a member building an entry', () => {
 
     expect(swapped.outcome).toBe('placed');
     expect(world.held(ENTRY_A)).toEqual(['a', 'd', 'c']);
-    expect(world.picks.find((pick) => pick.sportEventParticipantId === 'sep-c')?.draftRound).toBe(2);
+    expect(world.picks.find((pick) => pick.sportEventParticipantId === 'sep-c')?.lineupSlot).toBe(2);
   });
 
   it('swaps the newest pick in the last tier on a full roster rather than refusing the entry as complete', async () => {
@@ -393,7 +393,7 @@ describe('Tiered selection — a member building an entry', () => {
     });
 
     await expect(world.pickFor(ENTRY_A, 'a', ALICE)).rejects.toMatchObject({
-      code: 'DRAFT_ENTRY_ACCESS_DENIED',
+      code: 'ENTRY_ACCESS_DENIED',
       statusCode: 403,
     });
     expect(world.held(ENTRY_A)).toEqual([]);
@@ -435,7 +435,7 @@ describe('Tiered selection — exclusive contests', () => {
       code: 'PARTICIPANT_ALREADY_TAKEN',
       statusCode: 400,
     });
-    const roomForBob = await world.service.getDraftState({ contestId: CONTEST_ID, actorUserId: BOB });
+    const roomForBob = await world.service.getSelectionState({ contestId: CONTEST_ID, actorUserId: BOB });
     expect(roomForBob.availableSportEventParticipantIds).not.toContain('sep-a');
 
     await world.pickFor(ENTRY_A, 'a');
@@ -490,7 +490,7 @@ describe('Tiered selection — picks change only while the contest is open', () 
       leagueMemberships: [leagueMembership(ALICE, 'COMMISSIONER'), leagueMembership(BOB, 'MEMBER')],
     });
 
-    const room = await world.service.getDraftState({ contestId: CONTEST_ID, actorUserId: ALICE });
+    const room = await world.service.getSelectionState({ contestId: CONTEST_ID, actorUserId: ALICE });
 
     expect(room.canCurrentUserSubmit).toBe(false);
     expect(room.currentEntryId).toBeNull();
@@ -533,13 +533,13 @@ describe('Tiered selection — picks close when the event starts, whatever the c
   it('tells the room an OPEN contest whose event has started takes no picks', async () => {
     const world = buildWorld({ eventStartDate: started });
 
-    const room = await world.service.getDraftState({ contestId: CONTEST_ID, actorUserId: ALICE });
+    const room = await world.service.getSelectionState({ contestId: CONTEST_ID, actorUserId: ALICE });
 
     expect(room.canCurrentUserSubmit).toBe(false);
   });
 });
 
-describe('Draft room — what a member may see', () => {
+describe('Selection room — what a member may see', () => {
   async function bothEntriesPicked(status: Contest['status']) {
     const world = buildWorld();
     await world.pickFor(ENTRY_A, 'a');
@@ -552,7 +552,7 @@ describe('Draft room — what a member may see', () => {
   it('shows a member only their own entry\'s picks in the history while the contest is open', async () => {
     const world = await bothEntriesPicked(ContestStatus.OPEN);
 
-    const room = await world.service.getDraftState({ contestId: CONTEST_ID, actorUserId: ALICE });
+    const room = await world.service.getSelectionState({ contestId: CONTEST_ID, actorUserId: ALICE });
 
     expect(room.picks.map((pick) => pick.entryId)).toEqual([ENTRY_A]);
   });
@@ -560,7 +560,7 @@ describe('Draft room — what a member may see', () => {
   it('does not show a member another team\'s selections or tiebreaker while the contest is open, falling back to their own entry', async () => {
     const world = await bothEntriesPicked(ContestStatus.OPEN);
 
-    const room = await world.service.getDraftState({
+    const room = await world.service.getSelectionState({
       contestId: CONTEST_ID,
       selectedEntryId: ENTRY_B,
       actorUserId: ALICE,
@@ -576,7 +576,7 @@ describe('Draft room — what a member may see', () => {
   it('shows every entry\'s picks, and another team\'s entry on request, once the contest is live', async () => {
     const world = await bothEntriesPicked(ContestStatus.ACTIVE);
 
-    const room = await world.service.getDraftState({
+    const room = await world.service.getSelectionState({
       contestId: CONTEST_ID,
       selectedEntryId: ENTRY_B,
       actorUserId: ALICE,
@@ -590,7 +590,7 @@ describe('Draft room — what a member may see', () => {
   it('answers 404 for a DRAFT contest\'s room to a member who is not a commissioner', async () => {
     const world = buildWorld({ status: ContestStatus.DRAFT });
 
-    await expect(world.service.getDraftState({ contestId: CONTEST_ID, actorUserId: BOB })).rejects.toMatchObject({
+    await expect(world.service.getSelectionState({ contestId: CONTEST_ID, actorUserId: BOB })).rejects.toMatchObject({
       code: 'CONTEST_NOT_FOUND',
       statusCode: 404,
     });
@@ -602,7 +602,7 @@ describe('Draft room — what a member may see', () => {
       leagueMemberships: [leagueMembership(ALICE, 'COMMISSIONER'), leagueMembership(BOB, 'MEMBER')],
     });
 
-    const commissionerRoom = await world.service.getDraftState({ contestId: CONTEST_ID, actorUserId: ALICE });
+    const commissionerRoom = await world.service.getSelectionState({ contestId: CONTEST_ID, actorUserId: ALICE });
     expect(commissionerRoom.contest.id).toBe(CONTEST_ID);
     expect(commissionerRoom.isCommissioner).toBe(true);
 
@@ -611,26 +611,26 @@ describe('Draft room — what a member may see', () => {
       actorUserId: 'user-root',
       actorIsRootAdmin: true,
     };
-    const adminRoom = await world.service.getDraftState(rootAdminRead);
+    const adminRoom = await world.service.getSelectionState(rootAdminRead);
     expect(adminRoom.contest.id).toBe(CONTEST_ID);
   });
 });
 
-describe('Draft room response — the published shape', () => {
-  it('maps a room with picks into the draft-state response, with each tier\'s selected golfers and the history', async () => {
+describe('Selection room response — the published shape', () => {
+  it('maps a room with picks into the selection-state response, with each tier\'s selected golfers and the history', async () => {
     const world = buildWorld();
     await world.pickFor(ENTRY_A, 'a');
     await world.pickFor(ENTRY_A, 'd');
 
-    const room = await world.service.getDraftState({ contestId: CONTEST_ID, actorUserId: ALICE });
-    const response = toDraftStateResponse(room);
+    const room = await world.service.getSelectionState({ contestId: CONTEST_ID, actorUserId: ALICE });
+    const response = toSelectionStateResponse(room);
 
     expect(response.selectedEntryId).toBe(ENTRY_A);
     expect(response.selectionGroups?.map((group) => [group.groupId, group.selectedParticipantIds])).toEqual([
       ['tier-1', ['sep-a']],
       ['tier-2', ['sep-d']],
     ]);
-    expect(response.draftPickHistories?.map((pick) => pick.participantName)).toEqual(['Golfer A', 'Golfer D']);
+    expect(response.pickHistories?.map((pick) => pick.participantName)).toEqual(['Golfer A', 'Golfer D']);
     expect(response.contestConfiguration?.rosterSize).toBe(4);
   });
 });

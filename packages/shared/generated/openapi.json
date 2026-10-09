@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "PoolMaster API",
-    "description": "Contest pool management platform — leagues, contests, drafts, scoring, and admin tools.",
+    "description": "Contest pool management platform — leagues, contests, selections, scoring, and admin tools.",
     "version": "1.0.0",
     "contact": {
       "name": "PoolMaster Team"
@@ -12615,9 +12615,6 @@
       "ContestCrudConfigurationRequest": {
         "type": "object",
         "properties": {
-          "draftMode": {
-            "type": "string"
-          },
           "rounds": {
             "type": "integer"
           },
@@ -13152,14 +13149,14 @@
             "type": "boolean",
             "description": "Whether this pick was auto-assigned rather than submitted by the entry. Always false for tiered and budget selection, which have no auto-pick."
           },
-          "draftRound": {
+          "lineupSlot": {
             "type": [
               "integer",
               "null"
             ],
             "description": "Position of this pick within its entry's roster. Tiered: counted across tier quotas in tier order; budget: the entry's pick ordinal. Null when the pick was not recorded through contest selection."
           },
-          "draftPickNumber": {
+          "pickSequence": {
             "type": [
               "integer",
               "null"
@@ -13190,8 +13187,8 @@
           "tier",
           "cost",
           "isAutoPicked",
-          "draftRound",
-          "draftPickNumber",
+          "lineupSlot",
+          "pickSequence",
           "pickedAt",
           "createdAt",
           "updatedAt"
@@ -14281,9 +14278,6 @@
       "ContestConfigurationDetailDto": {
         "type": "object",
         "properties": {
-          "draftMode": {
-            "type": "string"
-          },
           "rounds": {
             "type": "integer"
           },
@@ -14545,9 +14539,6 @@
               "null"
             ],
             "properties": {
-              "draftMode": {
-                "type": "string"
-              },
               "rounds": {
                 "type": "integer"
               },
@@ -15428,7 +15419,7 @@
         "additionalProperties": false,
         "description": "Contest-entry deletion response."
       },
-      "DraftStateQuery": {
+      "SelectionStateQuery": {
         "type": "object",
         "properties": {
           "entryId": {
@@ -15437,7 +15428,7 @@
           }
         },
         "additionalProperties": false,
-        "description": "Optional query parameters for loading draft or selection state."
+        "description": "Optional query parameters for loading selection state."
       },
       "SubmitPickRequest": {
         "type": "object",
@@ -15456,9 +15447,9 @@
           "participantId"
         ],
         "additionalProperties": false,
-        "description": "Request payload for submitting a draft pick."
+        "description": "Request payload for submitting a pick."
       },
-      "DraftStateResponse": {
+      "SelectionStateResponse": {
         "type": "object",
         "properties": {
           "contestId": {
@@ -15548,7 +15539,7 @@
                     "picksFromTier"
                   ],
                   "additionalProperties": false,
-                  "description": "Tier definition displayed within a draft room."
+                  "description": "Tier definition displayed within a selection room."
                 },
                 "description": "Tier configuration when the contest uses tiered selection."
               }
@@ -15557,7 +15548,7 @@
               "isExclusive"
             ],
             "additionalProperties": false,
-            "description": "Contest-configuration subset required by draft-room clients."
+            "description": "Contest-configuration subset required by selection-room clients."
           },
           "status": {
             "type": "string",
@@ -15649,10 +15640,10 @@
                 "status"
               ],
               "additionalProperties": false,
-              "description": "Draft entry summary."
+              "description": "Entry summary shown in the selection room."
             }
           },
-          "draftPickHistories": {
+          "pickHistories": {
             "type": "array",
             "items": {
               "type": "object",
@@ -15723,7 +15714,7 @@
                 "pickedAt"
               ],
               "additionalProperties": false,
-              "description": "Historical draft pick row shown in draft-room history."
+              "description": "Historical pick row shown in selection-room history."
             }
           },
           "availableParticipantIds": {
@@ -15963,7 +15954,7 @@
                 "label"
               ],
               "additionalProperties": false,
-              "description": "Pick-em event row surfaced in draft-style pick flows."
+              "description": "Pick-em event row surfaced in selection flows."
             }
           },
           "bracketMatchups": {
@@ -16014,7 +16005,7 @@
                     "seed"
                   ],
                   "additionalProperties": false,
-                  "description": "Minimal team identity used in bracket pick-em draft payloads."
+                  "description": "Minimal team identity used in bracket pick-em selection payloads."
                 },
                 "bottomTeam": {
                   "type": [
@@ -16041,7 +16032,7 @@
                     "seed"
                   ],
                   "additionalProperties": false,
-                  "description": "Minimal team identity used in bracket pick-em draft payloads."
+                  "description": "Minimal team identity used in bracket pick-em selection payloads."
                 },
                 "winnerId": {
                   "type": [
@@ -16064,7 +16055,7 @@
               "additionalProperties": false,
               "description": "Bracket matchup returned to bracket-style pick clients."
             },
-            "description": "Bracket pick data when relevant to the draft."
+            "description": "Bracket pick data when relevant to the selection."
           }
         },
         "required": [
@@ -16085,14 +16076,14 @@
           "timePerPickSeconds",
           "currentTurnStartedAt",
           "entries",
-          "draftPickHistories",
+          "pickHistories",
           "availableParticipantIds",
           "isComplete"
         ],
         "additionalProperties": false,
-        "description": "Draft-state response."
+        "description": "Selection-state response."
       },
-      "DraftPickResponse": {
+      "SelectionPickResponse": {
         "type": "object",
         "properties": {
           "contestId": {
@@ -16182,7 +16173,7 @@
                     "picksFromTier"
                   ],
                   "additionalProperties": false,
-                  "description": "Tier definition displayed within a draft room."
+                  "description": "Tier definition displayed within a selection room."
                 },
                 "description": "Tier configuration when the contest uses tiered selection."
               }
@@ -16191,7 +16182,7 @@
               "isExclusive"
             ],
             "additionalProperties": false,
-            "description": "Contest-configuration subset required by draft-room clients."
+            "description": "Contest-configuration subset required by selection-room clients."
           },
           "status": {
             "type": "string",
@@ -16283,10 +16274,10 @@
                 "status"
               ],
               "additionalProperties": false,
-              "description": "Draft entry summary."
+              "description": "Entry summary shown in the selection room."
             }
           },
-          "draftPickHistories": {
+          "pickHistories": {
             "type": "array",
             "items": {
               "type": "object",
@@ -16357,7 +16348,7 @@
                 "pickedAt"
               ],
               "additionalProperties": false,
-              "description": "Historical draft pick row shown in draft-room history."
+              "description": "Historical pick row shown in selection-room history."
             }
           },
           "availableParticipantIds": {
@@ -16597,7 +16588,7 @@
                 "label"
               ],
               "additionalProperties": false,
-              "description": "Pick-em event row surfaced in draft-style pick flows."
+              "description": "Pick-em event row surfaced in selection flows."
             }
           },
           "bracketMatchups": {
@@ -16648,7 +16639,7 @@
                     "seed"
                   ],
                   "additionalProperties": false,
-                  "description": "Minimal team identity used in bracket pick-em draft payloads."
+                  "description": "Minimal team identity used in bracket pick-em selection payloads."
                 },
                 "bottomTeam": {
                   "type": [
@@ -16675,7 +16666,7 @@
                     "seed"
                   ],
                   "additionalProperties": false,
-                  "description": "Minimal team identity used in bracket pick-em draft payloads."
+                  "description": "Minimal team identity used in bracket pick-em selection payloads."
                 },
                 "winnerId": {
                   "type": [
@@ -16698,7 +16689,7 @@
               "additionalProperties": false,
               "description": "Bracket matchup returned to bracket-style pick clients."
             },
-            "description": "Bracket pick data when relevant to the draft."
+            "description": "Bracket pick data when relevant to the selection."
           }
         },
         "required": [
@@ -16719,12 +16710,12 @@
           "timePerPickSeconds",
           "currentTurnStartedAt",
           "entries",
-          "draftPickHistories",
+          "pickHistories",
           "availableParticipantIds",
           "isComplete"
         ],
         "additionalProperties": false,
-        "description": "Draft response returned immediately after a pick mutation."
+        "description": "Selection response returned immediately after a pick mutation."
       },
       "EmailTemplateKey": {
         "type": "string",
@@ -32905,14 +32896,14 @@
         }
       }
     },
-    "/api/v1/drafts/{contestId}": {
+    "/api/v1/selections/{contestId}": {
       "get": {
-        "operationId": "getDraftState",
-        "summary": "Get current draft state for a contest",
+        "operationId": "getSelectionState",
+        "summary": "Get current selection state for a contest",
         "tags": [
-          "Drafts"
+          "Selections"
         ],
-        "description": "Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (ACTIVE onwards); otherwise it falls back to the caller's own.",
+        "description": "Returns the current selection-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (ACTIVE onwards); otherwise it falls back to the caller's own.",
         "parameters": [
           {
             "schema": {
@@ -32935,11 +32926,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Draft-state response.",
+            "description": "Selection-state response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DraftStateResponse"
+                  "$ref": "#/components/schemas/SelectionStateResponse"
                 }
               }
             }
@@ -32987,14 +32978,14 @@
         }
       }
     },
-    "/api/v1/drafts/{contestId}/pick": {
+    "/api/v1/selections/{contestId}/pick": {
       "post": {
         "operationId": "submitContestSelection",
-        "summary": "Submit a draft pick",
+        "summary": "Submit a pick",
         "tags": [
-          "Drafts"
+          "Selections"
         ],
-        "description": "Submits a draft pick for the current turn and returns the refreshed draft state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. A change that leaves a SUBMITTED entry's lineup short sends the entry back to DRAFT; it must be submitted again to count.",
+        "description": "Submits a pick for the current turn and returns the refreshed selection state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. A change that leaves a SUBMITTED entry's lineup short sends the entry back to DRAFT; it must be submitted again to count.",
         "requestBody": {
           "required": true,
           "content": {
@@ -33018,11 +33009,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Draft response returned immediately after a pick mutation.",
+            "description": "Selection response returned immediately after a pick mutation.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DraftPickResponse"
+                  "$ref": "#/components/schemas/SelectionPickResponse"
                 }
               }
             }
@@ -33090,14 +33081,14 @@
         }
       }
     },
-    "/api/v1/drafts/{contestId}/entries/{entryId}/submit": {
+    "/api/v1/selections/{contestId}/entries/{entryId}/submit": {
       "post": {
         "operationId": "submitContestEntry",
         "summary": "Submit a contest entry",
         "tags": [
-          "Drafts"
+          "Selections"
         ],
-        "description": "Submits the caller's entry once its lineup is complete, and returns the refreshed draft state. An entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. Submitting an already submitted entry changes nothing. A later pick change that leaves the lineup short sends the entry back to DRAFT. Entries are submitted only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. Only a member of the entry's team may submit it: 403 DRAFT_ENTRY_ACCESS_DENIED otherwise.",
+        "description": "Submits the caller's entry once its lineup is complete, and returns the refreshed selection state. An entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. Submitting an already submitted entry changes nothing. A later pick change that leaves the lineup short sends the entry back to DRAFT. Entries are submitted only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. Only a member of the entry's team may submit it: 403 ENTRY_ACCESS_DENIED otherwise.",
         "parameters": [
           {
             "schema": {
@@ -33120,11 +33111,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Draft-state response.",
+            "description": "Selection-state response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DraftStateResponse"
+                  "$ref": "#/components/schemas/SelectionStateResponse"
                 }
               }
             }
@@ -33218,7 +33209,7 @@
       "description": "Contest creation, lifecycle, and scoring"
     },
     {
-      "name": "Drafts",
+      "name": "Selections",
       "description": "Roster selection — tiered and budget pick"
     },
     {

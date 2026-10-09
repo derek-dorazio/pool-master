@@ -1,7 +1,7 @@
 /**
  * The selection-engine seam (#198): what differs between selection types, and nothing else.
  *
- * `DraftService` is the one shared handler. It owns everything every selection type does the
+ * `SelectionService` is the one shared handler. It owns everything every selection type does the
  * same way: auth and entry ownership, the pick window, participant-in-event, availability,
  * exclusivity across entries, persistence through `ContestEntryPickService`, and the room it
  * answers with. An engine supplies only the rules that vary by type: how many picks a roster
@@ -14,18 +14,18 @@
  *
  * **`evaluate` returns an outcome, not a verdict.** The first attempt at this abstraction gave
  * `validatePick` a `{ valid, reason }` return; a boolean cannot say *replace* or *toggle off*,
- * so the live tiered rules could never sit behind it, and #323 deleted the engines built on it
- * (plans/144). The union below is the behaviour, and the handler acts on each kind.
+ * so the live tiered rules could never sit behind it, and #323 deleted the engines built on it.
+ * The union below is the behaviour, and the handler acts on each kind.
  */
 
 import type { ContestConfiguration, SelectionType } from '@poolmaster/shared/domain';
-import type { DraftTierConfig, LineupShortfall, SelectionParticipant } from '../types';
+import type { SelectionTierConfig, LineupShortfall, SelectionParticipant } from '../types';
 
 /** What a selection does to the entry. */
 export const SelectionOutcomeKind = {
-  /** Insert the pick at `draftRound`. */
+  /** Insert the pick at `lineupSlot`. */
   ACCEPT: 'accept',
-  /** Delete `replacedPickId`, then insert the pick at `draftRound`. */
+  /** Delete `replacedPickId`, then insert the pick at `lineupSlot`. */
   REPLACE: 'replace',
   /** Delete `pickId` and insert nothing: the participant is unselected. */
   TOGGLE_OFF: 'toggleOff',
@@ -61,8 +61,8 @@ export type SelectionRejection =
   };
 
 export type SelectionOutcome =
-  | { kind: typeof SelectionOutcomeKind.ACCEPT; draftRound: number }
-  | { kind: typeof SelectionOutcomeKind.REPLACE; draftRound: number; replacedPickId: string }
+  | { kind: typeof SelectionOutcomeKind.ACCEPT; lineupSlot: number }
+  | { kind: typeof SelectionOutcomeKind.REPLACE; lineupSlot: number; replacedPickId: string }
   | { kind: typeof SelectionOutcomeKind.TOGGLE_OFF; pickId: string }
   | SelectionRejection;
 
@@ -81,7 +81,7 @@ export interface SelectionRequest {
   heldPick: EntryPick | null;
   /** The entry's picks, oldest first. */
   existingPicks: readonly EntryPick[];
-  tiers: readonly DraftTierConfig[];
+  tiers: readonly SelectionTierConfig[];
   rosterSize: number;
 }
 
@@ -91,7 +91,7 @@ export interface SelectionEngine {
   /** How many picks a full roster holds. 0 means the contest cannot take picks. */
   rosterSize(input: {
     configuration: ContestConfiguration | null;
-    tiers: readonly DraftTierConfig[];
+    tiers: readonly SelectionTierConfig[];
   }): number;
 
   /**
@@ -105,7 +105,7 @@ export interface SelectionEngine {
   /** Why the lineup cannot be submitted yet, or null when it is complete (#481). */
   findShortfall(input: {
     rosterSize: number;
-    tiers: readonly DraftTierConfig[];
+    tiers: readonly SelectionTierConfig[];
     /** The entry's picks, each with the canonical participant it points at. */
     picks: readonly { participantId: string }[];
   }): LineupShortfall | null;

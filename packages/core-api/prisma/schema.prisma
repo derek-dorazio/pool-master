@@ -920,8 +920,8 @@ model ContestEntryPick {
   tier                    String?             @db.VarChar(50)
   cost                    Decimal?            @db.Decimal(12, 2)
   isAutoPicked            Boolean             @default(false) @map("is_auto_picked")
-  draftRound              Int?                @map("draft_round")
-  draftPickNumber         Int?                @map("draft_pick_number")
+  lineupSlot              Int?                @map("lineup_slot")
+  pickSequence            Int?                @map("pick_sequence")
   pickedAt                DateTime            @default(now()) @map("picked_at") @db.Timestamptz
   createdAt               DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime            @updatedAt @map("updated_at") @db.Timestamptz

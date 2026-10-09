@@ -6,7 +6,6 @@ import {
   SelectionType,
   ScoringEngine,
   SurvivorStyle,
-  DraftMode,
   VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT,
   ParticipantInactiveReason,
   deriveLegacyParticipantStatus,
@@ -123,15 +122,8 @@ describe('ContestStatus enum', () => {
   });
 });
 
-describe('DraftMode enum', () => {
-  it('has live and async', () => {
-    expect(DraftMode.LIVE).toBe('LIVE');
-    expect(DraftMode.ASYNC).toBe('ASYNC');
-  });
-});
-
 // pool-master-uvc — single source of truth consumed by admin-events.mapper.ts,
-// drafts/routes.ts, and contests/service.ts (x2); each call site's own test
+// selections/routes.ts, and contests/service.ts (x2); each call site's own test
 // asserts it's wired to this function (see mock spy assertions there) rather
 // than re-testing every branch redundantly.
 describe('deriveLegacyParticipantStatus', () => {

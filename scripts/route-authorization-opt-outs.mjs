@@ -22,14 +22,14 @@ export const ROUTE_AUTHORIZATION_OPT_OUTS = [
     reason: 'Needs the entry id: ContestService.getEntryContext(\'act\') requires ACTIVE league and squad memberships, then updateEntry scopes the lookup to that squad (findEntriesBySquad) before matching entryId.',
   },
 
-  // --- Drafts ---
+  // --- Selections ---
   {
-    route: 'POST /api/v1/drafts/:contestId/pick',
-    reason: 'Needs the body\'s entryId: DraftService.submitSelection requires an ACTIVE squad membership on the squad that owns that entry of this contest (DRAFT_ENTRY_ACCESS_DENIED).',
+    route: 'POST /api/v1/selections/:contestId/pick',
+    reason: 'Needs the body\'s entryId: SelectionService.submitSelection requires an ACTIVE squad membership on the squad that owns that entry of this contest (ENTRY_ACCESS_DENIED).',
   },
   {
-    route: 'POST /api/v1/drafts/:contestId/entries/:entryId/submit',
-    reason: 'Authorizes on the entry, as the pick route does: DraftService.submitEntry requires an ACTIVE squad membership on the squad that owns that entry of this contest (DRAFT_ENTRY_ACCESS_DENIED).',
+    route: 'POST /api/v1/selections/:contestId/entries/:entryId/submit',
+    reason: 'Authorizes on the entry, as the pick route does: SelectionService.submitEntry requires an ACTIVE squad membership on the squad that owns that entry of this contest (ENTRY_ACCESS_DENIED).',
   },
 
   // --- Leagues ---

@@ -5,7 +5,7 @@
  *
  * Tiers and prices are event-level only, never a per-contest override (plans/124 §4.6).
  * `getEffectiveTiersForSportEvent` / `getEffectiveValuationsForSportEvent` are the one
- * path every contest-side reader (drafts, contest configuration, the entry email) takes.
+ * path every contest-side reader (selections, contest configuration, the entry email) takes.
  * The valuation view reads valuations directly rather than through the tiers, because a
  * valuation can carry a price with no tier (a budget-format contest), and a query that
  * starts from the tiers would never see it.

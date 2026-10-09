@@ -284,8 +284,8 @@ export interface ContestEntryPick extends DomainEntity {
   tier?: string;
   cost?: number;
   isAutoPicked: boolean;
-  draftRound?: number;
-  draftPickNumber?: number;
+  lineupSlot?: number;
+  pickSequence?: number;
   pickedAt: Date;
 }
 

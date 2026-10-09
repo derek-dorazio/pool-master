@@ -510,7 +510,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
           page,
           `contest-entry-participant-${fieldEntryId}`,
           'POST',
-          `/api/v1/drafts/${state.contestId}/pick`,
+          `/api/v1/selections/${state.contestId}/pick`,
         );
         await expect(page.getByTestId(`contest-entry-selected-${fieldEntryId}`)).toBeVisible();
       }
@@ -522,7 +522,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         page,
         'contest-entry-submit',
         'POST',
-        `/api/v1/drafts/${state.contestId}/entries/${state.entryId}/submit`,
+        `/api/v1/selections/${state.contestId}/entries/${state.entryId}/submit`,
       );
     });
 

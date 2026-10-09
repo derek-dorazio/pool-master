@@ -662,8 +662,8 @@ export class ContestService {
   }
 
   /**
-   * The "Entry submitted" confirmation, sent by the draft room when an entry is submitted
-   * (#481). The draft room only calls it once the lineup has passed the submit check, so it
+   * The "Entry submitted" confirmation, sent by the selection room when an entry is submitted
+   * (#481). The selection room only calls it once the lineup has passed the submit check, so it
    * does not judge the lineup again.
    */
   async sendEntrySubmittedEmail(

@@ -3,7 +3,7 @@ import {
   createContest,
   enterContest,
   generateInviteLink,
-  getDraftState,
+  getSelectionState,
   openContest,
   submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
@@ -134,7 +134,7 @@ async function cleanupDraftArtifacts(): Promise<void> {
 /**
  * A contest configured with the retained SelectionType.SNAKE_DRAFT value (#200). No
  * turn-based implementation exists behind it, so no sport event is linked: the
- * draft-room endpoints must answer 501 before they would ever read participants.
+ * selection-room endpoints must answer 501 before they would ever read participants.
  */
 async function seedUnsupportedSelectionTypeFixture() {
   const { commissioner, league } = await buildLeagueWithCommissioner({
@@ -281,7 +281,7 @@ async function seedBudgetPickFixture(options: { isExclusive?: boolean } = {}) {
   const prisma = getFunctionalPrisma();
   const sport = await prisma.sport.create({
     data: {
-      name: `DraftBudgetSport-${randomUUID().slice(0, 8)}`,
+      name: `SelectionBudgetSport-${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
       tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
@@ -459,7 +459,7 @@ async function seedTieredDraftFixture(options: {
   const prisma = getFunctionalPrisma();
   const sport = await prisma.sport.create({
     data: {
-      name: `DraftTieredSport-${randomUUID().slice(0, 8)}`,
+      name: `SelectionTieredSport-${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
       tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
@@ -479,7 +479,7 @@ async function seedTieredDraftFixture(options: {
   });
   createdSportEventIds.push(event.id);
 
-  // Tiers are event-owned now (plans/124 §4.5/§4.6b) — the draft room
+  // Tiers are event-owned now (plans/124 §4.5/§4.6b) — the selection room
   // resolves selectionGroups through SportEventTierService, not the legacy
   // contestConfiguration.tierConfig JSON this fixture also sends, so a real
   // SportEventTier + valuation row is required per golfer.
@@ -574,7 +574,7 @@ async function seedMultiTierGolfEvent(options: { tierCount: number; golfersPerTi
   const prisma = getFunctionalPrisma();
   const sport = await prisma.sport.create({
     data: {
-      name: `DraftMultiTierSport-${randomUUID().slice(0, 8)}`,
+      name: `SelectionMultiTierSport-${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
       tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
@@ -646,11 +646,11 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-describe('SDK Functional: Drafts and Roster Selection', () => {
-  it('#200 answers 501 DRAFT_MODE_UNSUPPORTED for a contest configured with the retained SNAKE_DRAFT type', async () => {
+describe('SDK Functional: Roster Selection', () => {
+  it('#200 answers 501 SELECTION_TYPE_UNSUPPORTED for a contest configured with the retained SNAKE_DRAFT type', async () => {
     const fixture = await seedUnsupportedSelectionTypeFixture();
 
-    const stateResponse = await getDraftState({
+    const stateResponse = await getSelectionState({
       client: fixture.commissioner.client,
       path: {
         contestId: fixture.contestId,
@@ -659,7 +659,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
 
     expectFunctionalError(stateResponse, {
       status: 501,
-      code: 'DRAFT_MODE_UNSUPPORTED',
+      code: 'SELECTION_TYPE_UNSUPPORTED',
     });
 
     const pickResponse = await submitContestSelection({
@@ -675,11 +675,11 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
 
     expectFunctionalError(pickResponse, {
       status: 501,
-      code: 'DRAFT_MODE_UNSUPPORTED',
+      code: 'SELECTION_TYPE_UNSUPPORTED',
     });
   });
 
-  it('#200 rejects a selection for another squad\'s entry and a draft-state read for an unknown contest', async () => {
+  it('#200 rejects a selection for another squad\'s entry and a selection-state read for an unknown contest', async () => {
     const fixture = await seedUnsupportedSelectionTypeFixture();
 
     const wrongEntryResponse = await submitContestSelection({
@@ -695,10 +695,10 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
 
     expectFunctionalError(wrongEntryResponse, {
       status: 403,
-      code: 'DRAFT_ENTRY_ACCESS_DENIED',
+      code: 'ENTRY_ACCESS_DENIED',
     });
 
-    const missingStateResponse = await getDraftState({
+    const missingStateResponse = await getSelectionState({
       client: fixture.commissioner.client,
       path: {
         contestId: randomUUID(),
@@ -714,7 +714,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
   it('reads a budget-pick room and rejects duplicate roster picks across entries', async () => {
     const fixture = await seedBudgetPickFixture();
 
-    const stateResponse = await getDraftState({
+    const stateResponse = await getSelectionState({
       client: fixture.commissioner.client,
       path: {
         contestId: fixture.contestId,
@@ -727,7 +727,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     expect(stateResponse.data?.myEntryId).toBe(fixture.commissionerEntryId);
     expect(stateResponse.data?.contestConfiguration?.rosterSize).toBe(1);
     expect(stateResponse.data?.contestConfiguration?.budget).toBe(8000);
-    expect(stateResponse.data?.draftPickHistories).toHaveLength(0);
+    expect(stateResponse.data?.pickHistories).toHaveLength(0);
     expect(stateResponse.data?.availableParticipantIds).toEqual(
       expect.arrayContaining([fixture.firstEventParticipantId, fixture.secondEventParticipantId]),
     );
@@ -744,8 +744,8 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     });
 
     expect(firstPickResponse.data).toBeDefined();
-    expect(firstPickResponse.data?.draftPickHistories).toHaveLength(1);
-    expect(firstPickResponse.data?.draftPickHistories[0]).toEqual(
+    expect(firstPickResponse.data?.pickHistories).toHaveLength(1);
+    expect(firstPickResponse.data?.pickHistories[0]).toEqual(
       expect.objectContaining({
         entryId: fixture.commissionerEntryId,
         participantId: fixture.firstEventParticipantId,
@@ -754,15 +754,15 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     );
     expect(firstPickResponse.data?.isComplete).toBe(false);
 
-    const afterPickStateResponse = await getDraftState({
+    const afterPickStateResponse = await getSelectionState({
       client: fixture.commissioner.client,
       path: {
         contestId: fixture.contestId,
       },
     });
 
-    expect(afterPickStateResponse.data?.draftPickHistories).toHaveLength(1);
-    expect(afterPickStateResponse.data?.draftPickHistories[0]).toEqual(
+    expect(afterPickStateResponse.data?.pickHistories).toHaveLength(1);
+    expect(afterPickStateResponse.data?.pickHistories[0]).toEqual(
       expect.objectContaining({
         entryId: fixture.commissionerEntryId,
         participantId: fixture.firstEventParticipantId,
@@ -792,7 +792,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
   it('reads a tiered room, submits a selection, and returns updated tiered state', async () => {
     const fixture = await seedTieredDraftFixture();
 
-    const stateResponse = await getDraftState({
+    const stateResponse = await getSelectionState({
       client: fixture.commissioner.client,
       path: {
         contestId: fixture.contestId,
@@ -823,7 +823,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       }),
     );
     expect(stateResponse.data?.availableParticipantIds).toContain(fixture.sportEventParticipantId);
-    expect(stateResponse.data?.draftPickHistories).toHaveLength(0);
+    expect(stateResponse.data?.pickHistories).toHaveLength(0);
 
     const submitResponse = await submitContestSelection({
       client: fixture.commissioner.client,
@@ -839,8 +839,8 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     expect(submitResponse.data).toBeDefined();
     expect(submitResponse.data?.contestId).toBe(fixture.contestId);
     expect(submitResponse.data?.selectionType).toBe(SelectionType.TIERED);
-    expect(submitResponse.data?.draftPickHistories).toHaveLength(1);
-    expect(submitResponse.data?.draftPickHistories[0]).toEqual(
+    expect(submitResponse.data?.pickHistories).toHaveLength(1);
+    expect(submitResponse.data?.pickHistories[0]).toEqual(
       expect.objectContaining({
         entryId: fixture.entryId,
         participantId: fixture.sportEventParticipantId,
@@ -850,7 +850,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     );
     expect(submitResponse.data?.isComplete).toBe(true);
 
-    const afterPickStateResponse = await getDraftState({
+    const afterPickStateResponse = await getSelectionState({
       client: fixture.commissioner.client,
       path: {
         contestId: fixture.contestId,
@@ -860,8 +860,8 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       },
     });
 
-    expect(afterPickStateResponse.data?.draftPickHistories).toHaveLength(1);
-    expect(afterPickStateResponse.data?.draftPickHistories[0]).toEqual(
+    expect(afterPickStateResponse.data?.pickHistories).toHaveLength(1);
+    expect(afterPickStateResponse.data?.pickHistories[0]).toEqual(
       expect.objectContaining({
         participantId: fixture.sportEventParticipantId,
         tierId: 'tier-1',
@@ -906,7 +906,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       firstParticipantId,
       replacementParticipantId,
     ]);
-    expect(replacementResponse.data?.draftPickHistories).toHaveLength(2);
+    expect(replacementResponse.data?.pickHistories).toHaveLength(2);
 
     const unselectResponse = await submitContestSelection({
       client: fixture.commissioner.client,
@@ -917,10 +917,10 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     expect(unselectResponse.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([
       replacementParticipantId,
     ]);
-    expect(unselectResponse.data?.draftPickHistories).toHaveLength(1);
+    expect(unselectResponse.data?.pickHistories).toHaveLength(1);
   });
 
-  // #479 — the defect: the draft room took each tier's pick count from the event and ignored
+  // #479 — the defect: the selection room took each tier's pick count from the event and ignored
   // the commissioner's setting, so a "2 per tier" contest still allowed one golfer per tier.
   it('honours the commissioner\'s picksPerTier: a 3-tier contest at 2 per tier has a roster of 6, holds 2 golfers from one tier, and a third from that tier replaces the newest', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
@@ -951,7 +951,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     const entryId = entered.data?.entry.id as string;
     expect(entryId).toBeTruthy();
 
-    const room = await getDraftState({ client: commissioner.client, path: { contestId }, query: { entryId } });
+    const room = await getSelectionState({ client: commissioner.client, path: { contestId }, query: { entryId } });
     expect(room.data?.rosterSize).toBe(6);
     expect(room.data?.totalRounds).toBe(6);
     expect(room.data?.selectionGroups?.map((group) => group.picksFromGroup)).toEqual([2, 2, 2]);
@@ -975,7 +975,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       body: { entryId, participantId: thirdId },
     });
     expect(thirdPick.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([firstId, thirdId]);
-    expect(thirdPick.data?.draftPickHistories).toHaveLength(2);
+    expect(thirdPick.data?.pickHistories).toHaveLength(2);
   });
 
   it('#198 lets two entries in a non-exclusive budget-pick room hold the same participant', async () => {
@@ -987,7 +987,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       body: { entryId: fixture.commissionerEntryId, participantId: fixture.firstEventParticipantId },
     });
 
-    expect(firstPickResponse.data?.draftPickHistories).toHaveLength(1);
+    expect(firstPickResponse.data?.pickHistories).toHaveLength(1);
     expect(firstPickResponse.data?.availableParticipantIds).toEqual(
       expect.arrayContaining([fixture.firstEventParticipantId, fixture.secondEventParticipantId]),
     );
@@ -1000,7 +1000,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
 
     // Both entries now hold it, but while the contest is OPEN each team's history carries only
     // its own picks, so the challenger sees one row, their own.
-    expect(samePickResponse.data?.draftPickHistories).toEqual([
+    expect(samePickResponse.data?.pickHistories).toEqual([
       expect.objectContaining({
         entryId: fixture.challengerEntryId,
         participantId: fixture.firstEventParticipantId,
@@ -1027,7 +1027,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       body: { entryId: fixture.entryId, participantId: takenParticipantId },
     });
 
-    expect(firstPickResponse.data?.draftPickHistories).toHaveLength(1);
+    expect(firstPickResponse.data?.pickHistories).toHaveLength(1);
     expect(firstPickResponse.data?.availableParticipantIds).not.toContain(takenParticipantId);
     expect(firstPickResponse.data?.availableParticipantIds).toContain(otherParticipantId);
 
@@ -1050,7 +1050,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       body: { entryId: fixture.entryId, participantId: takenParticipantId },
     });
 
-    expect(toggleOffResponse.data?.draftPickHistories).toHaveLength(0);
+    expect(toggleOffResponse.data?.pickHistories).toHaveLength(0);
     expect(toggleOffResponse.data?.availableParticipantIds).toContain(takenParticipantId);
 
     const freedPickResponse = await submitContestSelection({
@@ -1059,7 +1059,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       body: { entryId: challengerEntryId, participantId: takenParticipantId },
     });
 
-    expect(freedPickResponse.data?.draftPickHistories).toEqual([
+    expect(freedPickResponse.data?.pickHistories).toEqual([
       expect.objectContaining({
         entryId: challengerEntryId,
         participantId: takenParticipantId,

@@ -1,5 +1,5 @@
 /**
- * The draft room's pure domain rules (#324).
+ * The selection room's pure domain rules (#324).
  *
  * Every function here is a function of its arguments: no Prisma, no ports, no request, no
  * state. That is deliberate. #323 deleted an `engine/` directory of stateful classes that
@@ -12,7 +12,7 @@
 
 import {
   deriveLegacyParticipantStatus,
-  DraftStatus,
+  SelectionStatus,
   type Contest,
   type ContestEntry,
   type Participant,
@@ -21,7 +21,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { SportEventTierGroup, ParticipantValuationView } from '../events/sport-event-tier-service';
 import type {
-  DraftTierConfig,
+  SelectionTierConfig,
   ParticipantValuation,
   SelectionParticipant,
 } from './types';
@@ -31,19 +31,19 @@ export function isCommissionerRole(role: unknown): boolean {
 }
 
 /**
- * The contest's lifecycle status as the draft room shows it. A room is COMPLETE once every
+ * The contest's lifecycle status as the selection room shows it. A room is COMPLETE once every
  * entry has a full roster even while the contest itself is still OPEN — the roster being
  * full is the thing the room is about.
  */
-export function mapContestStatusToDraftStatus(
+export function mapContestStatusToSelectionStatus(
   contestStatus: Contest['status'],
   isComplete: boolean,
-): DraftStatus {
-  if (isComplete || contestStatus === 'COMPLETED') return DraftStatus.COMPLETE;
+): SelectionStatus {
+  if (isComplete || contestStatus === 'COMPLETED') return SelectionStatus.COMPLETE;
   if (contestStatus === 'OPEN' || contestStatus === 'ACTIVE') {
-    return DraftStatus.LIVE;
+    return SelectionStatus.LIVE;
   }
-  return DraftStatus.PENDING;
+  return SelectionStatus.PENDING;
 }
 
 /**
@@ -69,16 +69,16 @@ export function buildEntryUserIdMap(
 
 /**
  * Tiers are event-owned data (plans/124 §4.6/§4.6b) — this is the one place an already
- * resolved `SportEventTierGroup[]` becomes the draft room's `DraftTierConfig[]`. How many
+ * resolved `SportEventTierGroup[]` becomes the selection room's `SelectionTierConfig[]`. How many
  * picks each tier takes is the contest's: the same `picksPerTier` for every tier (#479). The legacy
  * tierConfig-JSON branch this replaced is gone; there is exactly one source now. Per-golfer
  * tier and price are a separate lookup (`buildValuationLookup`), since a golfer can have a
  * price with no tier at all.
  */
-export function buildDraftTiers(
+export function buildSelectionTiers(
   tierGroups: readonly SportEventTierGroup[],
   picksPerTier: number,
-): DraftTierConfig[] {
+): SelectionTierConfig[] {
   return tierGroups.map((tier) => ({
     tierId: tier.tierKey,
     tierName: tier.label,
@@ -110,11 +110,11 @@ export function buildValuationLookup(
 }
 
 /**
- * The event's field as the draft room's selection lists show it: each row with its
+ * The event's field as the selection room's selection lists show it: each row with its
  * participant's identity and its effective tier and price, in tier order then by name.
  *
  * A row is selectable exactly while its field entry is active. The unavailable ones stay in
- * the list with a reason rather than being filtered out, because a draft room has to be able
+ * the list with a reason rather than being filtered out, because a selection room has to be able
  * to show why a golfer it used to offer can no longer be picked.
  */
 export function buildSelectionParticipants(input: {
@@ -166,17 +166,17 @@ export function buildSelectionParticipants(input: {
  * so both are accepted.
  */
 export function findTierByLabel(
-  tiers: readonly DraftTierConfig[],
+  tiers: readonly SelectionTierConfig[],
   tierLabel: string,
-): DraftTierConfig | undefined {
+): SelectionTierConfig | undefined {
   return tiers.find((tier) => tier.tierId === tierLabel || tier.tierName === tierLabel);
 }
 
 /** Which tier each participant sits in, for resolving a pick's tier from its participant. */
 export function buildTierByParticipantId(
-  tiers: readonly DraftTierConfig[],
-): Map<string, DraftTierConfig> {
-  const tierByParticipantId = new Map<string, DraftTierConfig>();
+  tiers: readonly SelectionTierConfig[],
+): Map<string, SelectionTierConfig> {
+  const tierByParticipantId = new Map<string, SelectionTierConfig>();
   for (const tier of tiers) {
     for (const participantId of tier.participantIds) {
       tierByParticipantId.set(participantId, tier);
