@@ -38,7 +38,7 @@ function headersFor(environment: string): string[] {
 describe('#182: session cookie Secure attribute', () => {
   // The value Terraform sets today. variables.tf defaults var.environment to "qa"
   // and the only live environment is QA, so this is the case that was broken.
-  it.each(['qa', 'staging', 'prod'])(
+  it.each(['ci', 'qa', 'staging', 'prod'])(
     'rule: sets Secure on all three session cookies in %s',
     (environment) => {
       const headers = headersFor(environment);
@@ -49,14 +49,23 @@ describe('#182: session cookie Secure attribute', () => {
     },
   );
 
-  it('rule: an unrecognised environment name fails closed with Secure on', () => {
+  it('rule: an unrecognised environment name refuses to build cookies rather than guess', () => {
     // Adding a deployment target must not silently reintroduce #182.
-    for (const header of headersFor('some-new-environment')) {
-      expect(header).toContain('Secure');
+    expect(() => headersFor('some-new-environment')).toThrow(/not a known environment/);
+  });
+
+  it('rule: sets Secure in prod even though NODE_ENV is "production", the value Terraform sets', () => {
+    process.env.NODE_ENV = 'production';
+    try {
+      for (const header of headersFor('prod')) {
+        expect(header).toContain('Secure');
+      }
+    } finally {
+      process.env.NODE_ENV = 'test';
     }
   });
 
-  it.each(['development', 'test', 'local'])(
+  it.each(['development', 'test'])(
     'rule: omits Secure in %s, so local HTTP development still works',
     (environment) => {
       for (const header of headersFor(environment)) {

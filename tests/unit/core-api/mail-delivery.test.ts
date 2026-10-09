@@ -156,16 +156,16 @@ function recordingTransport(): MailDeliveryProvider & { sent: MailDeliveryMessag
 }
 
 function emailConfig(overrides: Partial<EmailConfig> = {}): EmailConfig {
-  return { ...EMAIL_SETTINGS.defaults({ ENVIRONMENT: 'production' }), ...overrides };
+  return { ...EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }), ...overrides };
 }
 
 describe('EMAIL_CONFIG defaults', () => {
   it('sends nothing on QA until real delivery is set up', () => {
-    expect(EMAIL_SETTINGS.defaults({ ENVIRONMENT: 'qa' }).enabled).toBe(false);
+    expect(EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'qa' }).enabled).toBe(false);
   });
 
   it('sends every email, with no Reply-To, everywhere else', () => {
-    expect(EMAIL_SETTINGS.defaults({ ENVIRONMENT: 'production' })).toEqual({
+    expect(EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' })).toEqual({
       enabled: true,
       replyTo: null,
       templates: {
