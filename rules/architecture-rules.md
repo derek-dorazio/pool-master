@@ -72,7 +72,7 @@ Required implications:
 - `npm run api:refresh` is the standard regeneration command:
   - export spec
   - regenerate `hey-api` client
-- `npm run api:validate` must stay green. Missing JSON response content is a defect.
+- `npm run api:validate` must stay green. Missing JSON response content is a defect, and so is a request body or response that is not a named component.
 - `npm run api:check` is the CI freshness gate. It regenerates OpenAPI and
   the `hey-api` client into a temporary location and fails when committed
   generated artifacts are stale.

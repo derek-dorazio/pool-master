@@ -26,7 +26,7 @@ import {
   SendLeagueInvitationsResponseSchema,
   SquadListResponseSchema,
   SquadResponseSchema,
-  SuccessSchema,
+  SuccessResponseSchema,
   TokenRefreshResponseSchema,
 } from '@poolmaster/shared/dto';
 import type {
@@ -260,7 +260,7 @@ describe('Contract verification (web)', () => {
     });
 
     expect(deleteRes.statusCode).toBe(200);
-    expect(SuccessSchema.safeParse(deleteRes.json()).success).toBe(true);
+    expect(SuccessResponseSchema.safeParse(deleteRes.json()).success).toBe(true);
   });
 
   it('event list route matches SportEventListResponseSchema, with the loaded field and readiness, on the happy path', async () => {
@@ -657,7 +657,7 @@ describe('Contract verification (web)', () => {
     });
 
     expect(passwordRes.statusCode).toBe(200);
-    expect(SuccessSchema.safeParse(passwordRes.json()).success).toBe(true);
+    expect(SuccessResponseSchema.safeParse(passwordRes.json()).success).toBe(true);
 
     const inactivateRes = await getApp().inject({
       method: 'POST',
@@ -702,7 +702,7 @@ describe('Contract verification (web)', () => {
     });
 
     expect(deleteRes.statusCode).toBe(200);
-    expect(SuccessSchema.safeParse(deleteRes.json()).success).toBe(true);
+    expect(SuccessResponseSchema.safeParse(deleteRes.json()).success).toBe(true);
   });
 
   it('draft room routes match DraftStateResponseSchema', async () => {

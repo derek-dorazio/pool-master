@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { listContestConfigTemplates, updateContestConfigTemplate, type UpdateContestConfigTemplateResponses } from '@/lib/api';
+import { listContestConfigTemplates, updateContestConfigTemplate, type ContestConfigTemplateDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
   AdminConfigPage,
@@ -25,8 +25,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type ContestConfigTemplateUpdateResult =
-  UpdateContestConfigTemplateResponses[200]['template'];
+type ContestConfigTemplateUpdateResult = ContestConfigTemplateDto;
 
 export function RootAdminContentConfigurationDetailPage() {
   const { templateKey = '' } = useParams<{ templateKey: string }>();

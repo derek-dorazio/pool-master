@@ -3,7 +3,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { EmailInputSchema, SuccessSchema } from './common.dto';
+import { EmailInputSchema } from './common.dto';
 import { UserDtoSchema } from './users.dto';
 
 // --- Requests ---
@@ -91,13 +91,10 @@ export const TokenRefreshResponseSchema = AuthTokensDtoSchema.describe(
 );
 export type TokenRefreshResponse = z.infer<typeof TokenRefreshResponseSchema>;
 
-export const LogoutResponseSchema = SuccessSchema;
-export type LogoutResponse = z.infer<typeof LogoutResponseSchema>;
-
 // --- Published contract (#192) -------------------------------------------------
-// Only what auth/routes.ts serves. RefreshRequestSchema, LogoutRequestSchema and
-// LogoutResponseSchema are not referenced by any route, so registering them would
-// publish components nothing serves (check 2).
+// Only what auth/routes.ts serves. RefreshRequestSchema and LogoutRequestSchema are not
+// referenced by any route, so registering them would publish components nothing serves
+// (check 2). Logout answers with the shared SuccessResponse from common.dto.ts.
 //
 // `UserDto` itself is registered by users.dto.ts, which owns it as of #202 step 3.4 — it
 // was declared here as `UserProfileDto`, under a name that read as a view of a user rather

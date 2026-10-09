@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import {
   ContestStatus,
   ContestFormat,
@@ -94,12 +95,6 @@ export const CONTEST_NOT_DRAFT = 'CONTEST_NOT_DRAFT';
  * passed, or its status is IN_PROGRESS or later. The draft stays a draft; delete it instead.
  */
 export const CONTEST_EVENT_ALREADY_STARTED = 'CONTEST_EVENT_ALREADY_STARTED';
-
-export const UpdateContestConfigurationRequestSchema =
-  ContestConfigurationRequestSchema;
-export type UpdateContestConfigurationRequest = z.infer<
-  typeof UpdateContestConfigurationRequestSchema
->;
 
 export const GolfTieredContestConfigurationDtoSchema =
   GolfTieredContestConfigurationSchema.extend({
@@ -222,3 +217,13 @@ export const ContestManagementResponseSchema = z.object({
 export type ContestManagementResponse = z.infer<
   typeof ContestManagementResponseSchema
 >;
+
+registerSchema('ContestConfigurationRequest', ContestConfigurationRequestSchema);
+registerSchema('GolfEffectiveTierDto', GolfEffectiveTierDtoSchema);
+registerSchema('ContestManagementDetailDto', ContestManagementDetailDtoSchema);
+registerSchema('ContestConfigTemplateDto', ContestConfigTemplateDtoSchema);
+registerSchema('ContestManagementResponse', ContestManagementResponseSchema);
+registerSchema('ListContestConfigTemplatesQuery', ListContestConfigTemplatesQuerySchema);
+registerSchema('ContestConfigTemplateListResponse', ContestConfigTemplateListResponseSchema);
+registerSchema('UpdateContestConfigTemplateRequest', UpdateContestConfigTemplateRequestSchema);
+registerSchema('ContestConfigTemplateResponse', ContestConfigTemplateResponseSchema);

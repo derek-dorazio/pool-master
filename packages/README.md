@@ -35,7 +35,8 @@ modules were missing entirely** — `client-logs`, `contest-config-templates`,
 (that plan was deleted with its epic #201; retrieve via
 `git show 020de6bf:plans/145-one-object-one-operation-set.md`).
 Per `plans/142`, *an empty or generic README is worse than no README, because it looks like
-documentation*; a wrong one is worse still.
+documentation*; a wrong one is worse still (that plan was deleted when #140 closed; retrieve via
+`git show 44b0a7a:plans/142-durable-product-documentation.md`).
 
 Where to look instead, in order of authority:
 
@@ -47,8 +48,7 @@ Where to look instead, in order of authority:
   fails if it drifts.
 - **`ls packages/core-api/src/modules/`** — the module list, which cannot be stale.
 
-#140 decides whether `core-api` gets a real package README; `plans/142` notes it has none
-today, and did not count this file as one.
+`core-api` has no package README, deliberately: #140 closed without adding one.
 
 ### Draft Module (`modules/drafts/`)
 

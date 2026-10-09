@@ -15,10 +15,10 @@ The rules this routes to are authoritative. This file exists to say *what order*
 
 ## The chain
 
-1. **DTO** — define or update the Zod schema in `packages/shared/dto/`.
+1. **DTO** — define or update the Zod schema in `packages/shared/dto/`, and `registerSchema()` it.
 2. **Mapper** — map domain/service results to that DTO in
    `packages/core-api/src/mappers/<module>.mapper.ts`.
-3. **Route** — `zodToJsonSchema()` in the Fastify route schema, with `tags`, `summary`,
+3. **Route** — `schemaRef()` to the registered component in the Fastify route schema, with `tags`, `summary`,
    `operationId`, request schema, and a `response` schema **for every status the handler
    actually returns**.
 4. **Regenerate** — `npm run api:refresh`, then `npm run api:validate`.

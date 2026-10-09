@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 
 export const ErrorEnvelopeSchema = z.object({
   error: z.object({
@@ -10,4 +11,5 @@ export const ErrorEnvelopeSchema = z.object({
 
 export type ErrorEnvelope = z.infer<typeof ErrorEnvelopeSchema>;
 
-export const ErrorEnvelopeJsonSchemaName = 'ErrorEnvelope';
+// Every non-2xx response references this one component instead of inlining the shape (#192).
+registerSchema('ErrorEnvelope', ErrorEnvelopeSchema);
