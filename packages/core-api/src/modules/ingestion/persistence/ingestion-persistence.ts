@@ -12,6 +12,7 @@ import type {
   SportEvent,
   SportEventDetail,
   ProviderParticipant,
+  ProviderParticipantMetadata,
 } from '../core/provider-interface';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
@@ -457,17 +458,20 @@ function sortJson(value: unknown): unknown {
   return value;
 }
 
+/** The participant metadata keys that carry a number. */
+type NumericParticipantMetadataKey = 'seed' | 'odds';
+
 function readNumberMetadata(
-  metadata: Record<string, unknown>,
-  key: string,
+  metadata: ProviderParticipantMetadata,
+  key: NumericParticipantMetadataKey,
 ): number | null {
   const value = metadata[key];
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 function readIntegerMetadata(
-  metadata: Record<string, unknown>,
-  key: string,
+  metadata: ProviderParticipantMetadata,
+  key: NumericParticipantMetadataKey,
 ): number | null {
   const value = readNumberMetadata(metadata, key);
   return value === null ? null : Math.trunc(value);

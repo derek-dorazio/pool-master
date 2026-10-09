@@ -1,5 +1,6 @@
 import { expect } from '@jest/globals';
 import { createScheduledEventReader } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
+import type { Prisma } from '@prisma/client';
 import type { Sport } from '@poolmaster/shared/domain';
 
 describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
@@ -184,7 +185,7 @@ describe('pool-master-cgb: syncScope gating', () => {
   function createPrismaWithSyncScopeAwareFilter(rows: Array<{ externalId: string; syncScope: string }>) {
     return {
       sportEvent: {
-        findMany: jest.fn(async ({ where }: { where: Record<string, unknown> }) => rows
+        findMany: jest.fn(async ({ where }: { where: Prisma.SportEventWhereInput }) => rows
           .filter((row) => {
             const clause = where.syncScope as { in?: string[] } | string;
             return typeof clause === 'string'

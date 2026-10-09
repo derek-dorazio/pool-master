@@ -10,6 +10,7 @@ import {
   ParticipantScoringDefinitionIdSchema,
   rankSortedScores,
   type ContestEntryStatus,
+  type GolfContestConfig,
   type ParticipantScoringDefinition,
   type ParticipantScoringDefinitionId,
   type ScoreDirection,
@@ -18,6 +19,7 @@ import type {
   ContestEntryStandingRow,
   ScoredContestEntryPickRow,
 } from '../../mappers/contests.mapper';
+import type { Unvalidated } from '../../core/unvalidated';
 
 export interface ContestCountingRule {
   type: 'BEST_N_GOLFERS';
@@ -69,7 +71,7 @@ export function resolveContestCountingRule(
   const configJson = configuration?.configJson;
   const configRecord =
     configJson && typeof configJson === 'object' && !Array.isArray(configJson)
-      ? configJson as Record<string, unknown>
+      ? configJson as Unvalidated<GolfContestConfig>
       : null;
   const countedScores = readPositiveInteger(configRecord?.countedScores)
     ?? readPositiveInteger(configuration?.rosterSize)

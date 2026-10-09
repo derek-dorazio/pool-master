@@ -26,6 +26,7 @@ import type {
   ContestEntry,
   ContestConfiguration,
   LeagueMembership,
+  PersistedGolfContestTierDefinition,
   SquadMembership,
 } from '@poolmaster/shared/domain';
 import {
@@ -58,6 +59,7 @@ import {
   toParticipantScores,
 } from './contest-leaderboard-reads';
 import { areContestEntriesOpen } from './entry-window';
+import type { Unvalidated } from '../../core/unvalidated';
 import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import {
@@ -1208,7 +1210,7 @@ function readEmailTierDefinitions(tierConfig: unknown): EmailTierDefinition[] {
   if (!Array.isArray(tierConfig)) return [];
   return tierConfig
     .map((tier, index) => {
-      const record = tier as Record<string, unknown>;
+      const record = tier as Unvalidated<PersistedGolfContestTierDefinition>;
       return {
         // eslint-disable-next-line @typescript-eslint/no-base-to-string -- reading legacy/untrusted stored JSON config; the fallback chain is the safety net, not the type.
         tierId: String(record.tierId ?? record.tierName ?? `tier-${index + 1}`),

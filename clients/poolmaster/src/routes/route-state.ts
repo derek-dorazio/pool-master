@@ -11,7 +11,8 @@ export function parseRouteState(value: unknown): ParsedRouteState {
     return {};
   }
 
-  const candidate = value as Record<string, unknown>;
+  // Router state is whatever the navigating page passed; read the keys, check each value.
+  const candidate = value as { readonly [K in keyof ParsedRouteState]?: unknown };
   const parsed: ParsedRouteState = {};
 
   if (typeof candidate.from === 'string') {

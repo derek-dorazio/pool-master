@@ -30,6 +30,12 @@
     "noImplicitOverride": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    // #523 -- a dot read must name a declared property. Reading through an index
+    // signature (`Record<string, unknown>`, `process.env`) has to give the value a
+    // real type first: an interface, a typed DTO, `types/process-env.d.ts`. Bracket
+    // access is for genuine dictionaries keyed by data, with the key type narrowed;
+    // `obj['x']` on a known key only silences the flag.
+    "noPropertyAccessFromIndexSignature": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -39,5 +45,8 @@
     "sourceMap": true,
     "outDir": "dist",
     "rootDir": "src"
-  }
+  },
+  // Typed `process.env` (see the file). `files` is resolved against this config, and
+  // a child config that sets only `include` keeps it.
+  "files": ["types/process-env.d.ts"]
 }
