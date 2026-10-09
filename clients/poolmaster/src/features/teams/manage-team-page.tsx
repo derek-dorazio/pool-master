@@ -122,6 +122,16 @@ export function ManageTeamPage() {
 
       <section className="space-y-3" data-testid="manage-team-owners">
         <h2 className="text-lg font-semibold text-foreground">Owners</h2>
+        {invitationsQuery.isError ? (
+          <Alert
+            data-testid="manage-team-invitations-error"
+            title="Owner invitations are temporarily unavailable"
+            tone="warning"
+          >
+            Active owners are still shown below, but this team&apos;s pending owner invitations
+            could not be loaded right now.
+          </Alert>
+        ) : null}
         <MyTeamOwnersPanel
           activeMembers={activeMembers}
           canManageAnyTeam

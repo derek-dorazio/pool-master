@@ -192,6 +192,17 @@ describe('Commissioner tools › Manage team', () => {
     expect(screen.getByTestId('commissioner-tools-menu-teams')).toHaveAttribute('aria-current', 'page');
   });
 
+  it('warns that pending owner invitations could not be loaded rather than showing none', async () => {
+    primeMocks();
+    listSquadOwnerInvitationsMock.mockRejectedValue(new Error('Invitations unavailable'));
+
+    renderAdmin('/league/BIGDAWGS/admin/teams/team-2');
+
+    expect(await screen.findByTestId('manage-team-invitations-error'))
+      .toHaveTextContent('Owner invitations are temporarily unavailable');
+    expect(within(screen.getByTestId('manage-team-owners')).getByText('Morgan Member')).toBeInTheDocument();
+  });
+
   it('inactivates the team only after the commissioner confirms', async () => {
     primeMocks();
     inactivateLeagueSquadMock.mockResolvedValue(apiSuccess(updateLeagueSquadData({ ...memberTeam, isActive: false })));

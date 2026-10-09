@@ -23,11 +23,18 @@ import { useLeagueSquadsQuery } from './use-league-squads-query';
 
 const TEAMS_PER_PAGE = 25;
 
-const TEAM_FILTERS = ['all', 'commissioners', 'inactive'] as const;
-type TeamFilter = (typeof TEAM_FILTERS)[number];
+type TeamFilter = 'all' | 'commissioners' | 'inactive';
+
+const TEAM_FILTER_LABELS: Record<TeamFilter, string> = {
+  all: 'All',
+  commissioners: 'With a commissioner',
+  inactive: 'Inactive',
+};
+
+const TEAM_FILTER_OPTIONS = Object.entries(TEAM_FILTER_LABELS).map(([value, label]) => ({ label, value }));
 
 function isTeamFilter(value: string): value is TeamFilter {
-  return (TEAM_FILTERS as readonly string[]).includes(value);
+  return Object.hasOwn(TEAM_FILTER_LABELS, value);
 }
 
 type ManagedTeamRow = TeamDirectoryRow & { hasCommissioner: boolean };
@@ -127,11 +134,7 @@ export function ManageTeamsPage() {
                 setFilter(value);
               }
             }}
-            options={[
-              { label: 'All', value: 'all' },
-              { label: 'With a commissioner', value: 'commissioners' },
-              { label: 'Inactive', value: 'inactive' },
-            ]}
+            options={TEAM_FILTER_OPTIONS}
             value={filter}
           />
           <DataGrid

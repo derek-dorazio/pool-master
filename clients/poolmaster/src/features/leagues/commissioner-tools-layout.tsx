@@ -10,10 +10,11 @@ import {
   buildLeaguePath,
 } from './league-routing';
 
+import { useLeagueContext } from './use-league-context';
+
 function isAtOrUnder(pathname: string, path: string) {
   return pathname === path || pathname.startsWith(`${path}/`);
 }
-import { useLeagueContext } from './use-league-context';
 
 /**
  * The Commissioner tools area for one league: its own header with the way back to the league,

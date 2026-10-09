@@ -109,7 +109,7 @@ describe('Teams directory', () => {
     expect(await screen.findByTestId('teams-table')).toHaveTextContent('No teams exist for this league yet.');
   });
 
-  it('lists every team with a link to its Team Home and its active owners by name, marking inactive teams', async () => {
+  it('lists every team with a link to its Team Home, its active owners by name and the date it joined, marking inactive teams', async () => {
     primeMemberViewer();
     listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
       buildLeagueSquad({
@@ -129,6 +129,8 @@ describe('Teams directory', () => {
     expect(first.getByText('Casey Commissioner, Riley Cowner')).toBeInTheDocument();
     expect(first.queryByText(/Former/)).not.toBeInTheDocument();
     expect(first.queryByText('Inactive')).not.toBeInTheDocument();
+
+    expect(first.getByText(new Date('2026-04-15T00:00:00.000Z').toLocaleDateString())).toBeInTheDocument();
 
     const second = within(screen.getByTestId('league-team-team-2'));
     expect(second.getByText('Inactive')).toBeInTheDocument();
