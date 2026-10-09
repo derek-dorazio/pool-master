@@ -71,7 +71,7 @@ function resolveLocalRefs(node: unknown, root: Record<string, unknown>): unknown
     return node.map((item) => resolveLocalRefs(item, root));
   }
 
-  const obj = node as Record<string, unknown>;
+  const obj = node as { $ref?: unknown; [keyword: string]: unknown };
 
   if (typeof obj.$ref === 'string' && obj.$ref.startsWith('#/')) {
     const pointer = obj.$ref.slice(2).split('/');

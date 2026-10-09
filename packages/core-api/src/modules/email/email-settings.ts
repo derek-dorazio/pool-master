@@ -8,6 +8,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { EmailConfigSchema, EmailTemplateKeySchema } from '@poolmaster/shared/dto';
 import type { EmailConfig } from '@poolmaster/shared/dto';
+import { AppEnvironment, readAppEnv } from '../../core/config';
 import { defineSettingsGroup } from '../platform/settings-group';
 import type {
   MailDeliveryMessage,
@@ -21,9 +22,8 @@ export const EMAIL_SETTINGS = defineSettingsGroup<EmailConfig>({
   description: 'Whether system email is sent, which emails, and their Reply-To address.',
   schema: EmailConfigSchema,
   // QA sends nothing until real delivery is set up (#120); everywhere else must send.
-  // `ENVIRONMENT` is the name branching code reads (see readAppEnv in core/config.ts).
   defaults: (env) => ({
-    enabled: env.ENVIRONMENT !== 'qa',
+    enabled: readAppEnv(env) !== AppEnvironment.QA,
     replyTo: null,
     templates: {
       LEAGUE_MEMBER_INVITE: true,

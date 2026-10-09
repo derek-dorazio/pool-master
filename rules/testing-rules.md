@@ -99,6 +99,14 @@ it('rejects DELETE on an archived league with 409 LEAGUE_ARCHIVED', ...)
 
 That is the whole rule for ordinary tests. No ID is required.
 
+**Assert the observable, not the call.** Prefer a returned value, a thrown typed error or the
+persisted state to `expect(x.y).toHaveBeenCalledWith(...)`; keep a call-shape assertion only
+where the effect has no other observable, and fix the ones already in a file when you next
+touch it. A Prisma query or write is observable against Postgres, so it is asserted in an
+integration test, not by a call shape on a Prisma double. The one exception is that several
+writes land in one transaction, which has no end state to observe without fault injection; a
+Prisma double may assert that they all went through the transaction client.
+
 ### Struck: the defect-reference requirement
 
 Until 2026-09 this section **required** a regression test to reference its defect's issue

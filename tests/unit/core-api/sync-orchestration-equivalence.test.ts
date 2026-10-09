@@ -15,6 +15,7 @@ import type {
   IngestionJobRecord,
 } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
+import type { StoredSyncRunPayload } from '../../support/sync-run-payload';
 
 function createLedgerStore() {
   const rows = new Map<string, ProviderSyncRun>();
@@ -122,17 +123,16 @@ function createJob(input: {
   };
 }
 
-function clonePayload(payload: unknown): Record<string, unknown> {
-  return JSON.parse(JSON.stringify(payload)) as Record<string, unknown>;
+function clonePayload(payload: unknown): StoredSyncRunPayload {
+  return JSON.parse(JSON.stringify(payload)) as StoredSyncRunPayload;
 }
 
-function stripAllowedSourceDifferences(payload: unknown): Record<string, unknown> {
+function stripAllowedSourceDifferences(payload: unknown): StoredSyncRunPayload {
   const clone = clonePayload(payload);
   delete clone.runType;
-  const requestPayload = clone.requestPayload;
-  if (requestPayload && typeof requestPayload === 'object' && !Array.isArray(requestPayload)) {
-    delete (requestPayload as Record<string, unknown>).source;
-    delete (requestPayload as Record<string, unknown>).actor;
+  if (clone.requestPayload) {
+    delete clone.requestPayload.source;
+    delete clone.requestPayload.actor;
   }
   return clone;
 }

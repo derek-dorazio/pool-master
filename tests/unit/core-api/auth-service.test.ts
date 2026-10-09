@@ -207,7 +207,7 @@ describe('AuthService', () => {
   });
 
   describe('refresh', () => {
-    it('rotates the stored token and keeps the session id', async () => {
+    it('returns a fresh token pair on the same session id', async () => {
       const prisma = createPrismaMock();
       prisma.refreshToken.findUnique.mockResolvedValue({
         id: 'refresh-1',
@@ -221,11 +221,6 @@ describe('AuthService', () => {
 
       const result = await service.refresh('refresh-token');
 
-      // The old token must be revoked, or a stolen refresh token stays usable after rotation.
-      expect(prisma.refreshToken.update).toHaveBeenCalledWith({
-        where: { id: 'refresh-1' },
-        data: { revokedAt: expect.any(Date) },
-      });
       expect(result.sessionId).toBe('session-1');
       expect(result.refreshToken).toBeTruthy();
       expect(result.accessToken).toBeTruthy();

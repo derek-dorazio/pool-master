@@ -10,7 +10,7 @@ import { LeagueNotFoundError } from '../../../packages/core-api/src/modules/leag
 describe('core-api logging foundation', () => {
   describe('createFastifyLoggerOptions', () => {
     it('creates structured logger config with service metadata and redaction', () => {
-      const loggerOptions = createFastifyLoggerOptions('core-api') as Record<string, unknown>;
+      const loggerOptions = createFastifyLoggerOptions('core-api');
 
       expect(loggerOptions.level).toBeDefined();
       expect(loggerOptions.base).toEqual(

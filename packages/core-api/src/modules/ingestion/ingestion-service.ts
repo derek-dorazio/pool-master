@@ -30,6 +30,7 @@ import {
 import {
   ProviderSyncRunLedger,
   isEventSyncFeedType,
+  readPayload,
 } from './persistence/provider-sync-run-ledger';
 
 // ---------------------------------------------------------------------------
@@ -387,7 +388,7 @@ export class IngestionService {
       syncRunIds: input.syncRuns.map((run) => run.id),
     }, 'Executing submitted manual event sync');
     for (const syncRun of input.syncRuns) {
-      const requestedFeed = syncRun.payload.requestedFeed;
+      const { requestedFeed } = readPayload(syncRun);
       if (!isEventSyncFeedType(requestedFeed)) {
         await this.syncRunLedger.failSubmittedRun(syncRun, new Error(`Unsupported event sync feed: ${String(requestedFeed)}`));
         continue;

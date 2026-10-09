@@ -29,10 +29,12 @@ module.exports = {
   ],
   coverageThreshold: {
     global: {
-      statements: 24,
-      branches: 14.2,
-      functions: 21.15,
-      lines: 24.53,
+      // About 3 points under the lower of the two measurements of this suite (#298): Babel, here,
+      // 71.3 / 63.75 / 65.45 / 71.07; V8, in the merged report, 67.95 / 83.04 / 79.03 / 67.95.
+      statements: 65,
+      branches: 60.5,
+      functions: 62,
+      lines: 65,
     },
   },
 };

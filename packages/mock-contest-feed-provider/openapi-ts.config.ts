@@ -5,5 +5,4 @@ export default defineConfig({
   output: {
     path: './generated/hey-api',
   },
-  client: '@hey-api/client-fetch',
 });

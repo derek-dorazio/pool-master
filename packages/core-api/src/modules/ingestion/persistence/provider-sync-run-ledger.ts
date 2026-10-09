@@ -2,9 +2,15 @@ import { type Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
 import { IngestionJobStatus, ProviderSyncRunStatus, type ProviderSyncRun } from '@poolmaster/shared/domain';
-import type { ProviderSyncRequestPayloadDto } from '@poolmaster/shared/dto';
+import type { ProviderSyncRequestPayloadDto, ProviderSyncRunPayloadDto } from '@poolmaster/shared/dto';
 import type { IngestionFeedType, EventSyncRequest, IngestionJobRecord } from '../core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../core/sync-orchestrator';
+
+/** A stored payload the ledger rewrites: every key carries over, and it keeps `providerPayload` when one exists. */
+interface PayloadToRewrite {
+  providerPayload?: unknown;
+  [key: string]: unknown;
+}
 
 type SyncOutcomePayload = Prisma.InputJsonObject & {
   severity: 'SUCCESS' | 'WARNING' | 'ERROR';
@@ -71,10 +77,11 @@ export class ProviderSyncRunLedger {
     run: () => Promise<IngestionJobRecord | IngestionJobRecord[]>,
   ): Promise<IngestionJobRecord> {
     const startedAt = new Date();
-    const requestedFeed = syncRun.payload.requestedFeed;
+    // Every run the ledger creates names its feed; the caller has already checked it.
+    const requestedFeed = readPayload(syncRun).requestedFeed as IngestionFeedType;
     const startedPayload = {
       ...syncRun.payload,
-      detail: `Started ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
+      detail: `Started ${formatFeedLabel(requestedFeed)} sync.`,
       providerPayload: {
         operation: requestedFeed,
         rawCaptured: false,
@@ -82,7 +89,7 @@ export class ProviderSyncRunLedger {
       },
       outcome: buildSyncOutcome({
         status: 'IN_PROGRESS',
-        summary: `Started ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
+        summary: `Started ${formatFeedLabel(requestedFeed)} sync.`,
       }),
     };
 
@@ -172,9 +179,9 @@ export class ProviderSyncRunLedger {
     syncRun: ProviderSyncRun,
     error: unknown,
     startedAt: Date | null = new Date(),
-    payload: Record<string, unknown> = syncRun.payload,
+    payload: PayloadToRewrite = syncRun.payload,
   ): Promise<void> {
-    const requestedFeed = syncRun.payload.requestedFeed;
+    const { requestedFeed } = readPayload(syncRun);
     const completedAt = new Date();
     const updatedPayload = {
       ...payload,
@@ -326,6 +333,15 @@ function buildNormalizedSyncRequestContext(
     mockEventState: normalized.scope.mockEventState ?? null,
     normalizedAt: normalized.normalizedAt.toISOString(),
   };
+}
+
+/**
+ * The run's payload in the shape the ledger writes it (the payload DTO's keys). The
+ * stored JSON is not re-validated on read, so a reader still checks a value before it
+ * relies on it, as `isEventSyncFeedType` does for the feed.
+ */
+export function readPayload(syncRun: Pick<ProviderSyncRun, 'payload'>): ProviderSyncRunPayloadDto {
+  return syncRun.payload;
 }
 
 export function isEventSyncFeedType(

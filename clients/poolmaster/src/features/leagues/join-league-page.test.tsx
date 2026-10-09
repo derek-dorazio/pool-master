@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
+import { parseRouteState } from '@/routes/route-state';
 import { JoinLeaguePage } from './join-league-page';
 import {
   acceptInvitationData,
@@ -68,6 +69,12 @@ bindApiMocks({
   updateLeagueSquad: updateLeagueSquadMock,
 });
 
+/** Stands in for League Home and shows whether the join page asked it to report a failed team setup. */
+function LeagueDestination() {
+  const { teamSetupFailed = false } = parseRouteState(useLocation().state);
+  return <div data-team-setup-failed={String(teamSetupFailed)} data-testid="league-destination" />;
+}
+
 function renderJoinLeaguePage(initialEntry = '/invite/LEAGUE123') {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -83,7 +90,7 @@ function renderJoinLeaguePage(initialEntry = '/invite/LEAGUE123') {
         <MemoryRouter initialEntries={[initialEntry]}>
           <Routes>
             <Route element={<JoinLeaguePage />} path="/invite/:inviteCode" />
-            <Route element={<div data-testid="league-destination" />} path="/league/:leagueCode" />
+            <Route element={<LeagueDestination />} path="/league/:leagueCode" />
           </Routes>
         </MemoryRouter>
       </AuthProvider>
@@ -301,6 +308,7 @@ describe('Joining a league from an invite link', () => {
     expect(await screen.findByTestId('league-destination')).toBeInTheDocument();
     expect(acceptInvitationMock).toHaveBeenCalledWith({ body: { inviteCode: 'LEAGUE123' } });
     expect(updateLeagueSquadMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'false');
   });
 
   it('still takes the viewer into the league they joined when saving their chosen team name fails afterwards', async () => {
@@ -319,5 +327,68 @@ describe('Joining a league from an invite link', () => {
 
     expect(await screen.findByTestId('league-destination')).toBeInTheDocument();
     expect(acceptInvitationMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('tells League Home the chosen team name and icon did not save, so it can say so', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+    acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
+    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([viewersNewTeam()])));
+    updateLeagueSquadMock.mockResolvedValue({
+      error: { code: 'SQUAD_NAME_TAKEN', message: 'That team name is already taken in this league.' },
+    });
+
+    renderJoinLeaguePage();
+
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Team name' }), { target: { value: 'Taken Name' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
+
+    expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
+  });
+
+  it('tells League Home the chosen team name and icon did not save when the new team cannot be looked up', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+    acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
+    listLeagueSquadsMock.mockResolvedValue({ error: { code: 'INTERNAL_ERROR', message: 'Try again.' }, status: 500 });
+
+    renderJoinLeaguePage();
+
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Team name' }), { target: { value: 'Fresh Name' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
+
+    expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
+    expect(updateLeagueSquadMock).not.toHaveBeenCalled();
+  });
+
+  it('tells League Home the chosen team name and icon did not save when the viewer\'s new team is not in the league list', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+    acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
+    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([])));
+
+    renderJoinLeaguePage();
+
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Team name' }), { target: { value: 'Fresh Name' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
+
+    expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'true');
+  });
+
+  it('does not report a failed team setup when the chosen team name and icon save', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+    acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(buildAcceptedLeagueMembership())));
+    const team = viewersNewTeam();
+    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([team])));
+    updateLeagueSquadMock.mockResolvedValue(apiSuccess(updateLeagueSquadData({ ...team, name: 'Fresh Name' })));
+
+    renderJoinLeaguePage();
+
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Team name' }), { target: { value: 'Fresh Name' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
+
+    expect(await screen.findByTestId('league-destination')).toHaveAttribute('data-team-setup-failed', 'false');
+    expect(updateLeagueSquadMock).toHaveBeenCalledTimes(1);
   });
 });

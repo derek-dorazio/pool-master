@@ -26,7 +26,7 @@ async function buildService() {
   const settings = new AppSettingsService({
     repository: runtimeConfigs,
     groups: SETTINGS_GROUPS,
-    env: { POOLMASTER_ENVIRONMENT: 'production' },
+    env: { POOLMASTER_ENVIRONMENT: 'prod' },
     logger: fakeLogger(),
   });
   await settings.load();

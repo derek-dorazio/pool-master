@@ -169,7 +169,19 @@ export interface SportEvent {
   rounds?: number;
   participantCount?: number;
   fieldLocked: boolean;
-  metadata: Record<string, unknown>;
+  metadata: ProviderEventMetadata;
+}
+
+/**
+ * Provider-specific extras on an event. Stored as given; the named keys are the ones
+ * something reads back, so a provider that supplies them supplies them with these types.
+ */
+export interface ProviderEventMetadata {
+  /** The tour the event belongs to, matched against a sport league's matchKeyword (#385). */
+  tour?: string;
+  /** The mock feed's scenario the event came from. */
+  scenarioId?: string;
+  [key: string]: unknown;
 }
 
 export interface SportEventDetail extends SportEvent {
@@ -197,7 +209,19 @@ export interface ProviderParticipant {
    * the ranking it already has.
    */
   ranking?: number;
-  metadata: Record<string, unknown>;
+  metadata: ProviderParticipantMetadata;
+}
+
+/**
+ * Provider-specific extras on a participant. Stored as given; the named keys are the
+ * ones something reads back.
+ */
+export interface ProviderParticipantMetadata {
+  seed?: number;
+  /** Odds to win, valid only for the event named by `oddsSourceEventId`. */
+  odds?: number;
+  oddsSourceEventId?: string;
+  [key: string]: unknown;
 }
 
 export interface ProviderHealthStatus {

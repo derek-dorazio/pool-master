@@ -6,6 +6,7 @@ import {
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
+import { readPayload } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import type { SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { ProviderSyncRunRepository } from '../../../packages/shared/db';
 import { Sport, SportEventSyncScope, type SportEvent } from '../../../packages/shared/domain';
@@ -33,7 +34,7 @@ function configReader(config = GOLF_ONLY_CONFIG) {
 function syncRuns(overrides: Partial<ProviderSyncRunRepository> = {}): ProviderSyncRunRepository {
   return {
     create: mockFn<ProviderSyncRunRepository['create']>(async (input) => ({
-      id: `run-${String(input.payload.requestedFeed)}`,
+      id: `run-${String(readPayload(input).requestedFeed)}`,
       createdAt: new Date('2026-05-30T12:00:00.000Z'),
       ...input,
     })),

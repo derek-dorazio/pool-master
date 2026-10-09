@@ -103,12 +103,6 @@ export default tseslint.config(
       '**/generated/**',
       // Build/export helpers. Excluded by the scanners this config replaces.
       '**/scripts/**',
-      // Codegen configuration, not shipped code, and in no tsconfig `include`.
-      // Harmless while the parser was untyped; with `projectService` on, a file
-      // outside the project graph is a hard parse error rather than a finding.
-      // Surfaced when the lint glob widened to `packages/**` (#155) and this
-      // config turned on type-aware parsing -- neither change breaks alone.
-      '**/openapi-ts.config.ts',
       // Generated declaration output; never belonged in lint scope.
       '**/*.d.ts',
     ],
@@ -185,6 +179,28 @@ export default tseslint.config(
       // that inner node. The second covers the `as any` half the scanner also
       // checked. Verified a strict superset of the scanner's findings.
       'no-restricted-syntax': ['error', ...CAST_SELECTORS],
+    },
+  },
+  {
+    // #524 — build-tool configs. Each sits outside its package's `tsconfig.json` on
+    // purpose (they run in Node, and the codegen configs must stay out of `dist`), so
+    // `projectService`, which only finds the nearest `tsconfig.json`, cannot place
+    // them and reports a hard parse error. Naming the programs that include them is
+    // what lets the type-aware rules reach them at all.
+    files: [
+      'clients/poolmaster/*.config.ts',
+      'packages/*/openapi-ts.config.ts',
+    ],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+        project: [
+          'clients/poolmaster/tsconfig.node.json',
+          'clients/poolmaster/tsconfig.e2e.json',
+          'packages/shared/tsconfig.node.json',
+          'packages/mock-contest-feed-provider/tsconfig.node.json',
+        ],
+      },
     },
   },
   {
@@ -292,6 +308,15 @@ export default tseslint.config(
     rules: { 'poolmaster/no-inline-theme-styles': 'error' },
   },
   {
+    // Feature code only, tests included, minus the shared primitives -- the scanner's
+    // walk root and exclusion list. The primitives are where raw colour classes are
+    // allowed to live.
+    files: ['clients/poolmaster/src/features/**/*.{ts,tsx}'],
+    ignores: ['clients/poolmaster/src/features/shared/ui/**'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-raw-theme-colors': 'error' },
+  },
+  {
     // Matches the scanner: all of clients/poolmaster/src, tests excluded, because
     // a test may legitimately build a local stand-in named after the real shape.
     files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
@@ -360,6 +385,13 @@ export default tseslint.config(
         allow: ['LOG_LEVEL'],
       }],
     },
+  },
+  {
+    // Which environment this is comes from POOLMASTER_ENVIRONMENT via readAppEnv(); NODE_ENV
+    // is the Node ecosystem's and is "production" in every deployment (#184). No allowlist.
+    files: ['packages/*/src/**/*.ts'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-node-env-reads': 'error' },
   },
 
   // ---------------------------------------------------------------------------

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { UpdateSportEventRoundsRequest } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentHomePage } from './root-admin-golf-tournament-home-page';
 import { sportEventFixture, sportLeagueFixture } from './golf-test-fixtures';
@@ -420,7 +421,7 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
       expect(updateEventRoundsMock).toHaveBeenCalledTimes(1),
     );
     const body = (updateEventRoundsMock.mock.calls[0][0] as {
-      body: { rounds: Array<Record<string, unknown>> };
+      body: UpdateSportEventRoundsRequest;
     }).body;
     expect(body.rounds[0]).toMatchObject({ roundNumber: 1 });
     expect(body.rounds[0].scheduledDate).toContain('2026-05-09T');
@@ -613,7 +614,7 @@ describe('clearing an optional date and refused links on Tournament Home', () =>
 
     await waitFor(() => expect(updateEventRoundsMock).toHaveBeenCalledTimes(1));
     const body = (updateEventRoundsMock.mock.calls[0][0] as {
-      body: { rounds: Array<Record<string, unknown>> };
+      body: UpdateSportEventRoundsRequest;
     }).body;
     expect(body.rounds[0]).toHaveProperty('scheduledEndAt', null);
   });

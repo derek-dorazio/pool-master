@@ -45,7 +45,15 @@ import {
 } from './golf-live-simulation';
 import { loadTourSeedScenarios } from './tour-seeds';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+/**
+ * A parsed JSON object carrying the keys of the record `T` it should become, every
+ * value still unvalidated: the same contract as `Unvalidated<T>` in
+ * `@poolmaster/shared/domain`. This package keeps its own copy because it builds and
+ * typechecks without `@poolmaster/shared` (CI's mock-provider job never builds shared).
+ */
+type Unvalidated<T> = { readonly [K in keyof T]?: unknown };
+
+function isRecord<T>(value: unknown): value is Unvalidated<T> {
   return typeof value === 'object' && value !== null;
 }
 
@@ -118,7 +126,7 @@ function ensureUniqueIds(values: readonly string[], field: string): void {
 }
 
 function parseSeason(record: unknown, field: string): SeasonRecord {
-  if (!isRecord(record)) {
+  if (!isRecord<SeasonRecord>(record)) {
     throw new Error(`Invalid or missing ${field}`);
   }
 
@@ -146,7 +154,7 @@ function parseSeason(record: unknown, field: string): SeasonRecord {
 }
 
 function parseSchedule(record: unknown, field: string): EventScheduleRecord {
-  if (!isRecord(record)) {
+  if (!isRecord<EventScheduleRecord>(record)) {
     throw new Error(`Invalid or missing ${field}`);
   }
 
@@ -175,7 +183,7 @@ function parseVenue(record: unknown, field: string): EventVenueRecord | undefine
   if (record === undefined) {
     return undefined;
   }
-  if (!isRecord(record)) {
+  if (!isRecord<EventVenueRecord>(record)) {
     throw new Error(`Invalid ${field}`);
   }
 
@@ -192,7 +200,7 @@ function parseMetadata(record: unknown, field: string): EventMetadataRecord | un
   if (record === undefined) {
     return undefined;
   }
-  if (!isRecord(record)) {
+  if (!isRecord<EventMetadataRecord>(record)) {
     throw new Error(`Invalid ${field}`);
   }
 
@@ -214,7 +222,7 @@ function parseMetadata(record: unknown, field: string): EventMetadataRecord | un
 }
 
 function parseContestantRecord(record: unknown, field: string): ContestantRecord {
-  if (!isRecord(record)) {
+  if (!isRecord<ContestantRecord>(record)) {
     throw new Error(`Invalid ${field}`);
   }
 
@@ -243,7 +251,7 @@ function parseContestantRecord(record: unknown, field: string): ContestantRecord
 }
 
 function parseContestantDeltaRecord(record: unknown, field: string): ContestantDeltaRecord {
-  if (!isRecord(record)) {
+  if (!isRecord<ContestantDeltaRecord>(record)) {
     throw new Error(`Invalid ${field}`);
   }
 
@@ -272,7 +280,7 @@ function parseContestantDeltaRecord(record: unknown, field: string): ContestantD
 }
 
 function parseFieldSnapshot(record: unknown, field: string): FieldSnapshotRecord {
-  if (!isRecord(record)) {
+  if (!isRecord<FieldSnapshotRecord>(record)) {
     throw new Error(`Invalid or missing ${field}`);
   }
 
@@ -300,7 +308,7 @@ function parseFieldSnapshot(record: unknown, field: string): FieldSnapshotRecord
 }
 
 function parseFeedSnapshot(record: unknown, field: string): FeedSnapshotRecord {
-  if (!isRecord(record)) {
+  if (!isRecord<FeedSnapshotRecord>(record)) {
     throw new Error(`Invalid or missing ${field}`);
   }
 
@@ -322,7 +330,7 @@ function parseFeedSnapshot(record: unknown, field: string): FeedSnapshotRecord {
 }
 
 function parseFeeds(record: unknown, field: string): EventFeedsRecord {
-  if (!isRecord(record)) {
+  if (!isRecord<EventFeedsRecord>(record)) {
     throw new Error(`Invalid or missing ${field}`);
   }
 
@@ -338,7 +346,7 @@ function parseUpdates(record: unknown, field: string): readonly FeedUpdateRecord
   }
 
   const updates = toReadonlyArray<unknown>(record, field).map((item, index) => {
-    if (!isRecord(item)) {
+    if (!isRecord<FeedUpdateRecord>(item)) {
       throw new Error(`Invalid ${field}[${index}]`);
     }
 
@@ -420,7 +428,7 @@ function validateFeedReferences(
 }
 
 function parseEvent(record: unknown, field: string): ContestFeedEventRecord {
-  if (!isRecord(record)) {
+  if (!isRecord<ContestFeedEventRecord>(record)) {
     throw new Error(`Invalid ${field}`);
   }
 
@@ -455,7 +463,7 @@ function parseEvent(record: unknown, field: string): ContestFeedEventRecord {
 }
 
 export function validateScenario(record: unknown): ContestFeedScenarioRecord {
-  if (!isRecord(record)) {
+  if (!isRecord<ContestFeedScenarioRecord>(record)) {
     throw new Error('Scenario file must contain an object');
   }
 

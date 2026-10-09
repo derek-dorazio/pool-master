@@ -25,10 +25,10 @@ describe('zodToJsonSchema with a reused schema made nullable', () => {
   it('gives the reused nullable field its own type instead of an allOf with nullable and no type', () => {
     const schema = zodToJsonSchema(RunSchema) as { properties: Record<string, Record<string, unknown>> };
 
-    expect(schema.properties.completedAt).toEqual(expect.objectContaining({
+    expect(schema.properties['completedAt']).toEqual(expect.objectContaining({
       type: 'string', format: 'date-time', nullable: true,
     }));
-    expect(schema.properties.completedAt).not.toHaveProperty('allOf');
+    expect(schema.properties['completedAt']).not.toHaveProperty('allOf');
   });
 
   it('serializes a response that has both a reused nullable field and a union, rather than failing with a 500', async () => {

@@ -37,7 +37,7 @@ function sampleGroup(onChange?: (next: Sample, previous: Sample) => void): Setti
 function settingsFor(
   repository: InMemoryRuntimeConfigs,
   groups: readonly SettingsGroup<unknown>[],
-  env: Record<string, string> = { POOLMASTER_ENVIRONMENT: 'production' },
+  env: Record<string, string> = { POOLMASTER_ENVIRONMENT: 'prod' },
   logger = fakeLogger(),
 ) {
   return new AppSettingsService({ repository, groups, env, logger });
@@ -285,7 +285,7 @@ describe('AppSettingsService', () => {
   });
 
   it('every registered group has defaults its own schema accepts', () => {
-    for (const env of [{ POOLMASTER_ENVIRONMENT: 'qa' }, { POOLMASTER_ENVIRONMENT: 'production' }]) {
+    for (const env of [{ POOLMASTER_ENVIRONMENT: 'qa' }, { POOLMASTER_ENVIRONMENT: 'prod' }]) {
       expect(() => settingsFor(inMemoryRuntimeConfigs(), SETTINGS_GROUPS, env)).not.toThrow();
     }
   });

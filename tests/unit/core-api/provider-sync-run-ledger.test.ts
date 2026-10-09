@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
-import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
+import { ProviderSyncRunLedger, readPayload } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
@@ -189,7 +189,7 @@ describe('ProviderSyncRunLedger', () => {
         errors: 0,
       }),
     }));
-    const completedPayload = providerSyncRunUpdate.mock.calls[1][1].payload;
+    const completedPayload = readPayload(providerSyncRunUpdate.mock.calls[1][1]);
     expect(completedPayload.writeDiagnostics).toBe(job.writeDiagnostics);
     expect(completedPayload.jobPayload).not.toHaveProperty('writeDiagnostics');
   });

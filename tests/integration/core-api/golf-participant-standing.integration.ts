@@ -281,6 +281,42 @@ describe('Golf live-score persistence', () => {
     ]));
   });
 
+  it.each(['SCHEDULED', 'COMPLETED', 'CANCELLED'] as const)(
+    'writes no round or standing to a %s event, since live scores are accepted only while an event is in progress',
+    async (status) => {
+      const { event, sepByKey } = await createLiveField(`closed-${status.toLowerCase()}`, ['rory']);
+      await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status } });
+
+      const persisted = await publishLiveScoreUpdate({
+        category: 'GOLF',
+        externalEventId: event.externalId,
+        rounds: [{ participantExternalId: `closed-${status.toLowerCase()}-rory`, round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }],
+      }, { prisma: getPrisma(), providerId: PROVIDER });
+
+      expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
+      expect(await getPrisma().sportEventParticipantRound.count({
+        where: { sportEventParticipant: { sportEventId: event.id } },
+      })).toBe(0);
+      expect(await standingOf(sepByKey.get('rory')!)).toBeNull();
+    },
+  );
+
+  it('writes nothing for a round the provider sent without strokes', async () => {
+    const { event, sepByKey } = await createLiveField('nostrokes', ['rory']);
+
+    const persisted = await publishLiveScoreUpdate({
+      category: 'GOLF',
+      externalEventId: event.externalId,
+      rounds: [{ participantExternalId: 'nostrokes-rory', round: 1, strokes: null, scoreToPar: -2, status: 'IN_PROGRESS' }],
+    }, { prisma: getPrisma(), providerId: PROVIDER });
+
+    expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
+    expect(await getPrisma().sportEventParticipantRound.count({
+      where: { sportEventParticipant: { sportEventId: event.id } },
+    })).toBe(0);
+    expect(await standingOf(sepByKey.get('rory')!)).toBeNull();
+  });
+
   it('skips a round whose provider id maps to no participant, and persists the rest', async () => {
     const { event } = await createLiveField('unmapped', ['rory']);
 
