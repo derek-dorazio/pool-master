@@ -21,6 +21,9 @@ npm run dev:start
 migrations (which also seed the reference data), starts both dev servers, and prints every
 local URL it started. Copy `.env.example` to `.env` first if you need non-default settings.
 
+`npm install` also installs a pre-commit hook that lints the files you stage; see
+`docs/CI-AND-QUALITY-GATES.md` *Pre-commit hook*.
+
 This README deliberately does not restate commands, the stack, or the directory layout:
 `package.json` scripts are the command reference, the manifests are the stack, and the
 filesystem is the layout. A copy of any of those in prose drifts, and the drifted copy is
