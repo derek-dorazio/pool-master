@@ -1,7 +1,7 @@
 {
-  // #524 — the hey-api codegen config is build tooling, not package source, so it stays
-  // out of `tsconfig.json` (and out of `dist`). This program exists so it is still
-  // typechecked and linted.
+  // #524, #539 — the hey-api codegen config and the OpenAPI export script are build tooling,
+  // not package source, so they stay out of `tsconfig.json` (and out of `dist`). This program
+  // exists so they are still typechecked and linted.
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
@@ -11,5 +11,5 @@
     "module": "ESNext",
     "moduleResolution": "Bundler"
   },
-  "include": ["openapi-ts.config.ts"]
+  "include": ["openapi-ts.config.ts", "scripts/**/*.ts"]
 }

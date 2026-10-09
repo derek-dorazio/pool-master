@@ -461,16 +461,18 @@ Each entry in `eslint.config.js` names its owning PR; the reasoning for the
 permanent one, and for `require-await` being scheduled rather than fixed in
 PR 1, is written at the exemption itself rather than here.
 
-Build-tool configs sit outside their package's `tsconfig.json` on purpose: the
-webapp's `{vite,vitest,tailwind}.config.ts` run in Node, not the browser, and
-the two `openapi-ts.config.ts` codegen configs must stay out of `dist`. Each
-has its own program instead — `clients/poolmaster/tsconfig.node.json`,
-`packages/shared/tsconfig.node.json` and
-`packages/mock-contest-feed-provider/tsconfig.node.json`, with
+Build-tool configs and the `.ts` scripts that run under `tsx` sit outside their
+package's `tsconfig.json` on purpose: the webapp's `{vite,vitest,tailwind}.config.ts`
+run in Node, not the browser, and the codegen configs and scripts must stay out of
+`dist`. Each has its own program instead — the `tsconfig.node.json` in
+`clients/poolmaster`, `packages/shared`, `packages/mock-contest-feed-provider` and
+`packages/core-api` (which also takes the repo-root `scripts/*.ts`), with
 `playwright.config.ts` in `tsconfig.e2e.json` — and each package's `typecheck`
 script runs it. `projectService` only finds the nearest `tsconfig.json`, so
 `eslint.config.js` names those programs with `parserOptions.project` for these
-files; without that they are a hard parse error rather than a finding (#524).
+files; without that they are a hard parse error rather than a finding (#524, #539).
+Every `.ts` file in the repo is in some program; `.mjs` scripts are not
+typechecked or linted.
 
 ### Type-aware rules
 

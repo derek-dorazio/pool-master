@@ -101,8 +101,6 @@ export default tseslint.config(
       // fixable by hand and would block CI on generated output, so it is excluded
       // — matching the scanners, which never walked the generated tree.
       '**/generated/**',
-      // Build/export helpers. Excluded by the scanners this config replaces.
-      '**/scripts/**',
       // Generated declaration output; never belonged in lint scope.
       '**/*.d.ts',
     ],
@@ -182,14 +180,17 @@ export default tseslint.config(
     },
   },
   {
-    // #524 — build-tool configs. Each sits outside its package's `tsconfig.json` on
-    // purpose (they run in Node, and the codegen configs must stay out of `dist`), so
+    // #524, #539 — build-tool configs and tsx scripts. Each sits outside its package's
+    // `tsconfig.json` on purpose (they run in Node, and must stay out of `dist`), so
     // `projectService`, which only finds the nearest `tsconfig.json`, cannot place
     // them and reports a hard parse error. Naming the programs that include them is
-    // what lets the type-aware rules reach them at all.
+    // what lets the type-aware rules reach them at all. The `.mjs` scripts stay out of
+    // lint with every other `.js` flavour, above.
     files: [
       'clients/poolmaster/*.config.ts',
       'packages/*/openapi-ts.config.ts',
+      'packages/*/scripts/**/*.ts',
+      'scripts/**/*.ts',
     ],
     languageOptions: {
       parserOptions: {
@@ -199,6 +200,7 @@ export default tseslint.config(
           'clients/poolmaster/tsconfig.e2e.json',
           'packages/shared/tsconfig.node.json',
           'packages/mock-contest-feed-provider/tsconfig.node.json',
+          'packages/core-api/tsconfig.node.json',
         ],
       },
     },
@@ -375,6 +377,11 @@ export default tseslint.config(
   {
     // Backend source only, matching the scanner's SCAN_ROOT. Deployment identity
     // must come from the bootstrap readers in core/config.ts, which throw.
+    //
+    // Deliberately not the build tools and scripts (#539). A default there is what a local
+    // `vite`/`tsx` run with no CI variables set gets (asset base `/`, git SHA `local`), not
+    // a running service reporting itself as an environment it is not. Their variables are
+    // still declared in types/process-env.d.ts, so an undeclared name fails typecheck.
     files: ['packages/core-api/src/**/*.ts'],
     plugins: { poolmaster },
     rules: {

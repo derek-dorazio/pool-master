@@ -21,7 +21,13 @@ import { seedGolf, type GolfSeedFile } from './seed-golf';
 // Access tokens last 15 minutes; sign in again well before that.
 const SIGN_IN_AGAIN_AFTER_MS = 10 * 60 * 1000;
 
-function requireEnv(name: string): string {
+// Named, not `string`, so each read is a variable declared in types/process-env.d.ts.
+type SeedEnvName =
+  | 'POOLMASTER_SEED_BASE_URL'
+  | 'POOLMASTER_SEED_ADMIN_IDENTIFIER'
+  | 'POOLMASTER_SEED_ADMIN_PASSWORD';
+
+function requireEnv(name: SeedEnvName): string {
   const value = process.env[name];
   if (!value) {
     console.error(`${name} is required.`);

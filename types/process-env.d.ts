@@ -26,6 +26,9 @@ declare global {
       POOLMASTER_DISABLE_AUTO_START?: string;
       CLIENT_LOGS_RATE_LIMIT_PER_MIN?: string;
       OPENAPI_EXPORT?: string;
+      // Where packages/core-api/scripts/export-openapi.ts writes the spec; scripts/check-openapi-fresh.mjs
+      // points it at a temp file to compare against the committed one.
+      OPENAPI_OUTPUT_PATH?: string;
 
       // core-api build version. Read by scripts/export-openapi.ts to write a
       // version-info.json, and by the web app build (vite.config.ts) for the service
@@ -68,6 +71,11 @@ declare global {
       POOLMASTER_WEBAPP_GIT_SHA?: string;
       POOLMASTER_WEBAPP_VERSION?: string;
 
+      // golf seed CLI (packages/core-api/scripts/seed-golf/cli.ts, the "Seed QA golf data" workflow)
+      POOLMASTER_SEED_BASE_URL?: string;
+      POOLMASTER_SEED_ADMIN_IDENTIFIER?: string;
+      POOLMASTER_SEED_ADMIN_PASSWORD?: string;
+
       // test harnesses
       CI?: string;
       DATABASE_URL?: string;
@@ -77,6 +85,7 @@ declare global {
       FUNCTIONAL_SPAWNER_PID?: string;
       POOLMASTER_E2E_BASE_URL?: string;
       POOLMASTER_E2E_BROWSER_CHANNEL?: string;
+      POOLMASTER_E2E_ADMIN_IDENTIFIER?: string;
       POOLMASTER_E2E_ADMIN_PASSWORD?: string;
     }
   }
