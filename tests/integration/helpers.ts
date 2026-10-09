@@ -205,6 +205,7 @@ export async function setupIntegrationTests(): Promise<void> {
   // set here rather than in tests/setup.ts. buildTestApp() creates a logger,
   // which reads both.
   process.env.POOLMASTER_ENVIRONMENT ??= 'test';
+  process.env.LOG_LEVEL ??= 'warn';
   process.env.RELEASE_VERSION ??= '0.0.0-test';
   prisma = new PrismaClient();
   await prisma.$connect();

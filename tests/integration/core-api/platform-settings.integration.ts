@@ -353,7 +353,7 @@ describe('#450 migration: retired feed policies leave the stored ingestion sched
       },
     });
 
-    expect(migrated.INGESTION_SCHEDULE_CONFIG).toEqual({
+    expect(migrated).toHaveProperty('INGESTION_SCHEDULE_CONFIG', {
       scheduledSports: ['GOLF'],
       healthCheck: { enabled: true, intervalMinutes: 5 },
       eventParticipants: { enabled: true, intervalMinutes: 720, lookaheadDays: 21 },

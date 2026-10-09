@@ -1,11 +1,13 @@
 import {
   acceptInvitation,
+  acceptTeamOwnerInvitation,
   createLeagueSquad,
   createSquadOwnerInvitation,
   generateInviteLink,
   loginUser,
   listLeagueSquads,
   registerWithTeamOwnerInvitation,
+  removeMember,
 } from '@poolmaster/shared/generated/hey-api';
 import { randomUUID } from 'node:crypto';
 import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
@@ -140,6 +142,92 @@ describe('SDK Functional: Squads', () => {
         status: 400,
         code: 'SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED',
       });
+    });
+  });
+
+  /**
+   * A team can go inactive without the inactivate endpoint: removing its last owner does it, and
+   * that leaves the team's pending co-owner invitations in place. Accepting one of them must not
+   * bring the team back (#488).
+   */
+  describe('a pending co-owner invitation to a team that lost its last owner', () => {
+    async function buildTeamLeftOwnerless() {
+      const { league, commissioner } = await buildLeagueWithCommissioner({
+        displayName: 'Ownerless Commissioner',
+        leagueName: 'Ownerless Team League',
+      });
+      const member = await buildRegisteredUser({ displayName: 'Departing Owner' });
+      const link = await generateInviteLink({
+        client: commissioner.client,
+        path: { id: league.id },
+        body: { maxUses: 1 },
+      });
+      await acceptInvitation({
+        client: member.client,
+        body: { inviteCode: link.data?.invitation.inviteCode as string },
+      });
+      const memberSquad = await getFunctionalPrisma().squad.findFirstOrThrow({
+        where: { leagueId: league.id, createdBy: member.userId },
+      });
+
+      const inviteEmail = `coowner-${randomUUID().slice(0, 8)}@functional.test`;
+      const invite = await createSquadOwnerInvitation({
+        client: commissioner.client,
+        path: { id: league.id, squadId: memberSquad.id },
+        body: { email: inviteEmail },
+      });
+      expect(invite.data?.invitation.status).toBe('PENDING');
+
+      // The team's only owner leaves the league, which inactivates the team.
+      const removed = await removeMember({
+        client: commissioner.client,
+        path: { id: league.id, uid: member.userId },
+      });
+      expect(removed.response.status).toBeLessThan(300);
+      const inactive = await getFunctionalPrisma().squad.findUniqueOrThrow({ where: { id: memberSquad.id } });
+      expect(inactive.isActive).toBe(false);
+
+      return { inviteCode: invite.data?.invitation.inviteCode as string, inviteEmail, squadId: memberSquad.id };
+    }
+
+    it('refuses an account holder accepting it with SQUAD_INACTIVE and leaves the team inactive', async () => {
+      const { inviteCode, inviteEmail, squadId } = await buildTeamLeftOwnerless();
+      // The account was made after the invitation, so the invitation is still PENDING.
+      const invitee = await buildRegisteredUser({ email: inviteEmail, displayName: 'Late Invitee' });
+
+      const accepted = await acceptTeamOwnerInvitation({
+        client: invitee.client,
+        body: { inviteCode },
+      });
+
+      expectFunctionalError(accepted, { status: 400, code: 'SQUAD_INACTIVE' });
+      const squad = await getFunctionalPrisma().squad.findUniqueOrThrow({ where: { id: squadId } });
+      expect(squad.isActive).toBe(false);
+      const ownership = await getFunctionalPrisma().squadMembership.findFirst({
+        where: { squadId, userId: invitee.userId },
+      });
+      expect(ownership).toBeNull();
+    });
+
+    it('refuses registering against it with SQUAD_INACTIVE, creates no account, and leaves the team inactive', async () => {
+      const { inviteCode, inviteEmail, squadId } = await buildTeamLeftOwnerless();
+
+      const registered = await registerWithTeamOwnerInvitation({
+        client: getSdkClient(),
+        body: {
+          inviteCode,
+          username: `late-${randomUUID().slice(0, 8)}`,
+          password: 'Late-pass-1!',
+          firstName: 'Late',
+          lastName: 'Invitee',
+        },
+      });
+
+      expectFunctionalError(registered, { status: 400, code: 'SQUAD_INACTIVE' });
+      const squad = await getFunctionalPrisma().squad.findUniqueOrThrow({ where: { id: squadId } });
+      expect(squad.isActive).toBe(false);
+      const account = await getFunctionalPrisma().user.findFirst({ where: { email: inviteEmail } });
+      expect(account).toBeNull();
     });
   });
 

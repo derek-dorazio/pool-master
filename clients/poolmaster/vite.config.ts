@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   const assetBase = process.env.APP_ASSET_BASE ?? '/';
@@ -16,7 +16,7 @@ export default defineConfig(() => {
   ) as { devDependencies?: Record<string, string> };
   const versionInfoFallback = {
     schemaVersion: 1,
-    environment: process.env.POOLMASTER_ENVIRONMENT ?? process.env.NODE_ENV ?? 'development',
+    environment: process.env.POOLMASTER_ENVIRONMENT ?? 'development',
     buildTimeUtc: process.env.POOLMASTER_BUILD_TIME_UTC ?? 'unknown',
     releasePrefix: process.env.POOLMASTER_RELEASE_PREFIX ?? null,
     assetBase,
@@ -107,10 +107,6 @@ export default defineConfig(() => {
       port: 4175,
       strictPort: true,
       proxy: apiProxy,
-    },
-    test: {
-      include: ['src/**/*.{test,spec}.{ts,tsx}'],
-      exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
     },
   };
 });

@@ -160,7 +160,7 @@ describe('pool-master-m32 — committed generated artifacts are 3.1-clean and ca
         return;
       }
       if (typeof node !== 'object' || node === null) return;
-      const rec = node as Record<string, unknown>;
+      const rec = node as { type?: unknown; enum?: unknown };
       if (
         Array.isArray(rec.type)
         && rec.type.includes('null')

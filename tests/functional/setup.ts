@@ -544,10 +544,12 @@ export function expectFunctionalError(
   expect(result.data).toBeUndefined();
   expect(result.response?.status).toBe(expected.status);
 
-  const payload = result.error as Record<string, unknown> | undefined;
+  // The standard envelope nests `{ code }` under `error`; a body that never reached the
+  // error handler may carry `error` or `code` as a top-level string instead.
+  const payload = result.error as { error?: unknown; code?: unknown } | undefined;
   const nestedError =
     payload?.error && typeof payload.error === 'object'
-      ? payload.error as Record<string, unknown>
+      ? payload.error as { code?: unknown }
       : undefined;
   const actualCode =
     typeof nestedError?.code === 'string'

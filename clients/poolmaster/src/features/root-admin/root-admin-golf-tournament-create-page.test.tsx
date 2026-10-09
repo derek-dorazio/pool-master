@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { CreateSportEventRequest } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentCreatePage } from './root-admin-golf-tournament-create-page';
 import { sportEventFixture, sportLeagueFixture } from './golf-test-fixtures';
@@ -136,7 +137,7 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
     await waitFor(() =>
       expect(createEventMock).toHaveBeenCalledTimes(1),
     );
-    const body = (createEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body;
+    const body = (createEventMock.mock.calls[0][0] as { body: CreateSportEventRequest }).body;
     expect(body.name).toBe('Spring Classic');
     expect(body).toMatchObject({ sportLeagueId: 'league-1', eventYear: 2026 });
     expect(body.startDate).toContain('2026-03-12T');

@@ -180,6 +180,7 @@ async function startDaemon(runId) {
       // #134 — the spawned server builds the app, so it needs the deployment
       // identity the logger requires. Same reason as JWT_SECRET above.
       POOLMASTER_ENVIRONMENT: process.env.POOLMASTER_ENVIRONMENT || 'test',
+      LOG_LEVEL: process.env.LOG_LEVEL || 'warn',
       POOLMASTER_SERVICE_VERSION: process.env.POOLMASTER_SERVICE_VERSION || '0.0.0-fapi',
       NODE_V8_COVERAGE: functionalServerV8CoverageDir,
       OPENAPI_EXPORT: 'false',

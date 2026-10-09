@@ -31,6 +31,26 @@ These rules govern backend services in `packages/*/src`, especially Fastify modu
 - Logging and continuing after required runtime configuration is missing,
   malformed, or unsupported in deployed runtime paths
 
+### Which Environment This Is
+
+Two variables, each with one owner and one set of legal values (#184):
+
+| Variable | Owner | Values | Read by |
+|---|---|---|---|
+| `POOLMASTER_ENVIRONMENT` | us | `development`, `test`, `ci`, `qa`, `staging`, `prod` | our code, only through `readAppEnv()` in `core/config.ts`, which returns the `AppEnvironment` enum |
+| `NODE_ENV` | Node and third-party libraries | `development`, `test`, `production` | libraries only |
+
+- Every environment-gated behaviour (secure cookies, mock-provider refusal, email defaults,
+  the `env` field on log lines, `/version`) reads `readAppEnv()`. It throws when the
+  variable is unset or names an unknown environment; there is no fallback.
+- `NODE_ENV` is not ours to repurpose. Terraform sets it to the literal `production` in
+  every deployment and sets `POOLMASTER_ENVIRONMENT` to `var.environment`. Backend source
+  never reads it; `poolmaster/no-node-env-reads` enforces that with no allowlist.
+- Deployed names are Terraform's: `prod`, never `production`. Do not add a third variable
+  for the same question; `ENVIRONMENT` and `APP_ENV` were both tried and removed.
+- Test suites set what they need (`POOLMASTER_ENVIRONMENT=test`, `LOG_LEVEL=warn`) in test
+  setup; production code has no test branch.
+
 ---
 
 ## 2. No Mock Data in Application Code

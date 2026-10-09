@@ -385,7 +385,8 @@ describe('IngestionPersistence', () => {
     `;
 
     expect(table).toBeNull();
-    expect((prisma as unknown as Record<string, unknown>).participantRankingSnapshot).toBeUndefined();
+    // The model is gone, so the client type has no such key; ask the object itself.
+    expect(Reflect.get(prisma, 'participantRankingSnapshot')).toBeUndefined();
   });
 
   // #205 — the `pool-master-8yh` job-completion case went with `persistIngestionJob` and the

@@ -370,7 +370,7 @@ that claims are how authority works here. They are not; A10 is the exception, an
 |---|---|---|
 | Shape | one global property of the user | a relation between a user and a specific resource |
 | Needs data to interpret | no | yes — which league owns this contest, this squad |
-| Changes | effectively never within a session | constantly, and by side effect: ADR-0004 removes league access when a team is inactivated |
+| Changes | effectively never within a session | constantly, and by side effect: inactivating a team ends its owners' league memberships (`rules/domain-model-concepts.md` §3) |
 | Cardinality | one boolean | many leagues, many squads per user |
 | Revocation | `setUserRootAdmin` revokes the subject's sessions on demotion | nothing comparable exists |
 
@@ -392,7 +392,7 @@ already performs for every contest-scoped commissioner gate. Nothing about it ne
 path equivalent to the one that makes A10 safe** — removing a member, inactivating a squad or
 team, and every other path that ends a membership must invalidate whatever carries it, before
 the next request is decided. Nothing comparable exists for membership removal today, and
-ADR-0004's implicit removal makes it harder, not easier. Without it, saving the query introduces
+removal by side effect makes it harder, not easier. Without it, saving the query introduces
 a gate that keeps granting access to a league the user was removed from.
 
 ---
@@ -469,8 +469,8 @@ Never a sports team. Unique on `(leagueId, name)`.
 | Read one | `member`, `commissioner` | **A4** · peers readable |
 | List for a league | `member`, `commissioner` | **A4** · takes a league |
 | Update name, icon | `member:own`, `commissioner` | **A5 + A7** |
-| Activate / inactivate *(soft)* | `member:own`, `commissioner` | **A5 + A7** · `isActive`. The normal path |
-| Delete permanently *(hard)* | `commissioner` | `deleteInactiveSquad` — **gated: throws unless already inactive**, then cascades to `contestEntry` and `contestEntryPick`. See the note below |
+| Inactivate *(soft)* | `commissioner` | `inactivateSquad` · `isActive`. The normal path. Ends every owner's league membership, so it is league administration, not an owner's button (#219). Undone by inviting an owner back |
+| Delete permanently *(hard)* | `rootAdmin` | `deleteInactiveSquad` (#292) — **gated: throws unless already inactive**, then cascades to its entries, picks, owner invitations and memberships. QA-residue cleanup. See the note below |
 
 ### SquadMembership — the User↔Squad edge, and ownership
 
@@ -851,9 +851,10 @@ Easy to misremember as "soft delete only":
 
 - **Inactivate** sets `isActive = false`. This is the normal path.
 - **Delete permanently** is a real row removal, and it **throws unless the record is already
-  inactive**. For a squad it cascades to contest entries, picks and draft history; for a
-  league it also requires typing the `leagueCode` back. Permanent deletion is `commissioner`
-  only — a member inactivates their own squad but does not destroy contest history.
+  inactive**. For a squad it cascades to its entries, picks, owner invitations and
+  memberships; for a league it also requires typing the `leagueCode` back. Permanently deleting a league is
+  `commissioner`; permanently deleting a squad is `rootAdmin` only, and inactivating one is
+  `commissioner`, because it ends its owners' league memberships.
 
 The service methods say so in their names (`deleteInactiveSquad`, `deleteInactiveLeague`),
 and this is the "eligibility gating before a later hard delete" pattern of §1 *Lifecycle*.

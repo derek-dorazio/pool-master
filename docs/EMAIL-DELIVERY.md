@@ -28,7 +28,7 @@ Whether email is sent is the `EMAIL_CONFIG` app setting, which a root admin chan
 Email card of `/manage/settings`; every core-api task picks a save up within 30 seconds. It
 holds:
 
-- `enabled`: whether any system email is sent. It defaults to off when `ENVIRONMENT=qa` (until
+- `enabled`: whether any system email is sent. It defaults to off when `POOLMASTER_ENVIRONMENT=qa` (until
   real delivery is set up, #120) and on everywhere else.
 - `templates`: one switch per system email, all on by default.
 - `replyTo`: the Reply-To address, or none (the default), so replies go to the sender.
@@ -64,7 +64,7 @@ covers switching email, and one email, off.
 
 Terraform sets the core-api ECS task's `EMAIL_PROVIDER` to `ses` in every
 environment; QA's "send nothing yet" is the `EMAIL_CONFIG` default above. Terraform also configures
-`APP_BASE_URL`, `AWS_REGION`, `SES_FROM_EMAIL`, and `ENVIRONMENT`. It also
+`APP_BASE_URL`, `AWS_REGION`, `SES_FROM_EMAIL`, and `POOLMASTER_ENVIRONMENT`. It also
 grants the ECS task role `ses:SendEmail` and `ses:SendRawEmail` for the managed
 SES identity.
 
