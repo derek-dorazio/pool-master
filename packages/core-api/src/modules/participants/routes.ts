@@ -3,8 +3,8 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { zodToJsonSchema } from '@poolmaster/shared/dto';
-import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+// Registers ErrorEnvelope, which this module's error responses $ref (#192).
+import '@poolmaster/shared/dto/errors.dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components this module's routes $ref (#192).
@@ -67,7 +67,7 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
       operationId: 'getParticipant',
       response: {
         200: schemaRef('ParticipantResponse'),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handler.getParticipant,
@@ -81,26 +81,10 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
       description:
         'Creates a participant in the shared participant catalog. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).',
       operationId: 'createParticipant',
-      body: {
-        type: 'object',
-        required: ['sportId', 'name', 'participantType'],
-        properties: {
-          sportId: { type: 'string', minLength: 1 },
-          name: { type: 'string', minLength: 1, maxLength: 500 },
-          participantType: { type: 'string', enum: ['INDIVIDUAL', 'TEAM'] },
-          externalId: { type: 'string' },
-          firstName: { type: 'string', maxLength: 255 },
-          lastName: { type: 'string', maxLength: 255 },
-          shortName: { type: 'string', maxLength: 100 },
-          nationality: { type: 'string', maxLength: 10 },
-          role: { type: 'string', maxLength: 50 },
-          teamAffiliation: { type: 'string', maxLength: 255 },
-          externalIds: { type: 'object' },
-        },
-      },
+      body: schemaRef('CreateParticipantRequest'),
       response: {
         201: schemaRef('ParticipantResponse'),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handler.createParticipant,
@@ -116,8 +100,8 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
       operationId: 'updateParticipant',
       response: {
         200: schemaRef('ParticipantResponse'),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
       },
       body: schemaRef('UpdateParticipantRequest'),
     },
@@ -133,7 +117,7 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
       params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
       response: {
         200: schemaRef('ParticipantProviderMappingListResponse'),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handler.listProviderMappings,
@@ -150,9 +134,9 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
       body: schemaRef('BindParticipantProviderMappingRequest'),
       response: {
         200: schemaRef('ParticipantProviderMappingResponse'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handler.bindProviderMapping,

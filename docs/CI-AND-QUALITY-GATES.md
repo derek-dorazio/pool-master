@@ -78,7 +78,7 @@ with a ten-minute floor:
 |---|---|---|
 | `changes`, `all-contract-gates`, `service-lint-typecheck`, `service-unit-tests`, `schema-migration-drift`, `service-build`, `service-mock-provider-build`, health-issue jobs | under 2 min | 10 |
 | `poolmaster-unit-tests` | 2 min | 15 |
-| `service-integration-tests`, `service-functional-api-tests` | 4 min | 20 |
+| `service-integration-tests (1/2)`, `(2/2)` shards, `service-functional-api-tests` | 2.5–4 min | 20 |
 | `poolmaster-browser-e2e-local` | 4–9 min | 25 |
 | `poolmaster-build` | 1–12 min | 30 |
 | `deploy-publish-images` | 4–5 min | 20 |
@@ -409,9 +409,11 @@ and declined.
 
 ### Scope
 
-`npm run lint` globs `packages/**/*.ts`, `tests/**/*.{ts,tsx}` and
-`clients/poolmaster/src/**/*.{ts,tsx}` (637 files as of 2026-10-05), then runs
-`scripts/check-feature-theme-tokens.mjs`. `lint:service` (which carries
+`npm run lint` globs `packages/**/*.ts`, `tests/**/*.{ts,tsx}`,
+`clients/poolmaster/src/**/*.{ts,tsx}` and the webapp's build-tool configs
+`clients/poolmaster/*.config.ts`. It is ESLint alone: the last standalone
+scanner, `scripts/check-feature-theme-tokens.mjs`, became
+`poolmaster/no-raw-theme-colors` in #524. `lint:service` (which carries
 `packages/` **and** `tests/`) and `lint:webapp` are the two halves, run by
 different CI jobs — `npm run lint` itself is a local convenience and is not what
 CI invokes, so a glob added to one and not the other is linted locally and not
@@ -456,16 +458,16 @@ Each entry in `eslint.config.js` names its owning PR; the reasoning for the
 permanent one, and for `require-await` being scheduled rather than fixed in
 PR 1, is written at the exemption itself rather than here.
 
-Five files sit in no tsconfig `include` and throw
-`Parsing error: … was not found by the project service` if linted:
-`clients/poolmaster/{vite,vitest,playwright,tailwind}.config.ts` and
-`packages/shared/openapi-ts.config.ts`. None is inside the glob
-(`openapi-ts.config.ts` is additionally in `eslint.config.js`'s `ignores`), so
-they cost nothing. They sit outside it because the client half of the glob is
-`clients/poolmaster/src/**`, not because of anything `tests/` did: widening the
-glob to `tests/**` did not reach them, and `tests/tsconfig.json` resolved all
-120 test files through `projectService` with no parse error. Bringing those five
-in is its own decision, unrelated to #345 Phase 2.
+Build-tool configs sit outside their package's `tsconfig.json` on purpose: the
+webapp's `{vite,vitest,tailwind}.config.ts` run in Node, not the browser, and
+the two `openapi-ts.config.ts` codegen configs must stay out of `dist`. Each
+has its own program instead — `clients/poolmaster/tsconfig.node.json`,
+`packages/shared/tsconfig.node.json` and
+`packages/mock-contest-feed-provider/tsconfig.node.json`, with
+`playwright.config.ts` in `tsconfig.e2e.json` — and each package's `typecheck`
+script runs it. `projectService` only finds the nearest `tsconfig.json`, so
+`eslint.config.js` names those programs with `parserOptions.project` for these
+files; without that they are a hard parse error rather than a finding (#524).
 
 ### Type-aware rules
 
@@ -523,7 +525,7 @@ gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 | # | Gate | Command | Mode | Baseline | What it catches | Source |
 |---|---|---|---|---|---|---|
 | 1 | ~~No mocked API boundary~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | `vi.mock` / `jest.mock` of `@/lib/api` or `@/lib/api-client`. Widened past the scanner, which matched `vi` only. | `eslint-rules/no-mocked-api.mjs` |
-| 2 | Route discipline | `rules:check:route-discipline` | warn-only | 59 | The `service-rules.md §10` grep set: `prisma.*` calls in routes/handlers, inline `.map((`, `additionalProperties: true`, `SuccessSchema` on domain endpoints, inline JSON schemas | `scripts/check-route-discipline.mjs` |
+| 2 | Route discipline | `rules:check:route-discipline` | warn-only | 59 | The `service-rules.md §10` grep set: `prisma.*` calls in routes/handlers, inline `.map((`, `additionalProperties: true`, `SuccessResponse` on domain endpoints, inline JSON schemas | `scripts/check-route-discipline.mjs` |
 | 3 | ~~Test-disable discipline~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` / `pending()`, plus `*.skip.test.ts` files and `skipped/` dirs. The `SKIP: #NN` escape comment was **removed** — see below. | `eslint-rules/no-disabled-tests.mjs` |
 | 4 | ~~Shared UI controls~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | Bare `<button>`, `<input>`, `<textarea>` in `features/**` outside `features/shared/ui/`. More precise than the scanner, which also flagged controls inside comments. | `eslint-rules/no-bare-ui-controls.mjs` |
 | 2a | Route authorization | `rules:check:route-authorization` | **blocking** | clean | A route whose full path has a parameter, under any mount (by-id like `/api/v1/contests` or nested like `/api/v1/leagues/:id/squads`), that declares no `preHandler`/`onRequest` hook and is not on `scripts/route-authorization-opt-outs.mjs` with a reason. Also fails a stale or reasonless opt-out. Added by #193; nested mounts since #292. | `scripts/check-route-authorization.mjs` |
@@ -849,7 +851,8 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:service:integration` — run the suite (requires `DATABASE_URL` and a fresh DB)
   - `npm run test:service:integration:fresh` — reset DB then run
   - `npm run test:coverage:service:integration` — coverage variant
-- **CI job:** `service-integration-tests` (its own Postgres service container). Runs `npm run test:service:integration` with no coverage (#302).
+- **CI job:** two shards, `service-integration-tests (1/2)` and `(2/2)`, each with its own Postgres service container, run `npm run test:integration -- --shard=k/2` with no coverage (#302, #295). Jest shards by file, so every integration file must pass whichever other files share its shard (§9A isolation). A small `service-integration-tests` job turns the two shard results into the one verdict branch protection and `deploy-publish-images` depend on; it skips when the shards skip.
+- **Reproduce one shard locally:** `npm run test:integration -- --shard=1/2` (not the `test:service:integration` alias, which drops the flag: npm reads it as its own config).
 - **Required pre-push gate:** `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:integration`.
 - **Coverage policy:** **No threshold** in `tests/integration/jest.config.js`, and no coverage in CI. Integration coverage is collected only for the merged report in `coverage.yml`.
 - **Database setup:** `npm run db:test:reset` recreates the test DB (empty schema, every migration applied); `npm run db:test:migrate` applies pending migrations only.

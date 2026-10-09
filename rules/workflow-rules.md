@@ -315,8 +315,8 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 - [ ] Handlers call mapper functions — no inline `.map()` transformations in route or handler files
 
 **Route Schemas:**
-- [ ] Every route uses `zodToJsonSchema()` for request and response schemas — no inline `{ type: 'object', properties: ... }` JSON objects
-- [ ] No route uses `SuccessSchema` or `passthroughResponseSchema` for endpoints returning domain data
+- [ ] Every request body and response is a named component via `schemaRef()` (`rules/service-rules.md` §4) — no inline schemas
+- [ ] No route uses `SuccessResponse` or `passthroughResponseSchema` for endpoints returning domain data
 - [ ] Every route has `operationId`, `summary`, and `tags`
 - [ ] Changed backend/shared contract work also satisfies the contract-documentation checklist from `rules/service-rules.md`
 
@@ -691,7 +691,7 @@ Before pushing code that could trigger CI, agents must run the full local qualit
 Required local pre-push commands:
 
 1. `npx turbo typecheck --force`
-2. `npm run lint` (runs eslint at `--max-warnings 0` plus the theme-token scanner)
+2. `npm run lint` (eslint at `--max-warnings 0`)
 3. `npx jest --config tests/jest.config.js --forceExit`
 4. `npm run test:service:functional-api`
 5. `npm run test:poolmaster:unit`

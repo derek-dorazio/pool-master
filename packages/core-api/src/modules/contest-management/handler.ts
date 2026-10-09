@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { UpdateContestConfigurationRequest } from '@poolmaster/shared/dto';
+import type { ContestConfigurationRequest } from '@poolmaster/shared/dto';
 import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import {
@@ -41,7 +41,7 @@ export function createContestManagementHandlers(
   async function updateContestConfiguration(
     request: FastifyRequest<{
       Params: { contestId: string };
-      Body: UpdateContestConfigurationRequest;
+      Body: ContestConfigurationRequest;
     }>,
     reply: FastifyReply,
   ): Promise<void> {

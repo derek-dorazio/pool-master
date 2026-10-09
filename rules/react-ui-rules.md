@@ -373,7 +373,8 @@ state, stale actions, and unthemeable markup accumulate.
   animation transforms, and third-party widget geometry.
 - New reusable theme tokens belong in the theme/shared UI layer before feature
   code consumes them.
-- `npm run lint:theme-tokens` guards raw theme-token drift in feature code.
+- The `poolmaster/no-raw-theme-colors` ESLint rule guards raw Tailwind colour-scale
+  classes and literal colours in feature code outside `features/shared/ui/`.
 - The `poolmaster/no-inline-theme-styles` ESLint rule guards literal inline theme
   styles for color, border, shadow, and typography properties.
 

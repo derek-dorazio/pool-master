@@ -27,7 +27,8 @@
   ],
   "exclude": [
     // Build tooling config, not test or product code. It is typed against the
-    // generator's own CLI types and does not belong in the tests program.
+    // generator's own CLI types and does not belong in the tests program;
+    // `packages/shared/tsconfig.node.json` typechecks it instead.
     "../packages/shared/openapi-ts.config.ts"
   ]
 }

@@ -11,7 +11,8 @@ All plan documents and implementation work must conform to these rules. This is 
 - **[Android Rules](android-rules.md)** — Android Kotlin + Jetpack Compose rules
 - **[Testing Rules](testing-rules.md)** — unit, integration, contract, smoke, and browser E2E rules
 - **[Workflow Rules](workflow-rules.md)** — action-plan tracking and rule/documentation update requirements
-- **[Domain Model Conventions Rules](domain-model-conventions-rules.md)** — lifecycle, enums, one canonical DTO per entity, schema design, league/squad vocabulary, and operation access roles
+- **[Domain Model Concepts](domain-model-concepts.md)** — what the domain is: the entity chain, per-entity vocabulary and on-screen names, and what common phrases mean in the model
+- **[Domain Model Conventions Rules](domain-model-conventions-rules.md)** — lifecycle, enums, one canonical DTO per entity, schema design, league/squad invariants, and operation access roles
 
 ---
 
@@ -71,7 +72,7 @@ Required implications:
 - `npm run api:refresh` is the standard regeneration command:
   - export spec
   - regenerate `hey-api` client
-- `npm run api:validate` must stay green. Missing JSON response content is a defect.
+- `npm run api:validate` must stay green. Missing JSON response content is a defect, and so is a request body or response that is not a named component.
 - `npm run api:check` is the CI freshness gate. It regenerates OpenAPI and
   the `hey-api` client into a temporary location and fails when committed
   generated artifacts are stale.

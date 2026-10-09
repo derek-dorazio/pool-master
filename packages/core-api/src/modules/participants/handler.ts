@@ -9,6 +9,7 @@ import type { ParticipantSearchFilters } from '@poolmaster/shared/db';
 import type { ParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   BindParticipantProviderMappingRequest,
+  CreateParticipantRequest,
   ParticipantListQuery,
   ParticipantListResponse,
   UpdateParticipantRequest,
@@ -136,21 +137,7 @@ export function createParticipantHandlers(
   }
 
   async function createParticipant(
-    request: FastifyRequest<{
-      Body: {
-        sportId: string;
-        name: string;
-        participantType: string;
-        externalId?: string;
-        firstName?: string;
-        lastName?: string;
-        shortName?: string;
-        nationality?: string;
-        role?: string;
-        teamAffiliation?: string;
-        externalIds?: Record<string, string>;
-      };
-    }>,
+    request: FastifyRequest<{ Body: CreateParticipantRequest }>,
     reply: FastifyReply,
   ) {
     const body = request.body;
@@ -171,7 +158,7 @@ export function createParticipantHandlers(
       const participant = await participantService.create({
         sportId: body.sportId,
         name: body.name,
-        participantType: body.participantType as 'INDIVIDUAL' | 'TEAM',
+        participantType: body.participantType,
         externalId: body.externalId,
         firstName: body.firstName,
         lastName: body.lastName,

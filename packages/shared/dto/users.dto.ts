@@ -18,7 +18,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
-import { EmailInputSchema, SuccessSchema } from './common.dto';
+import { EmailInputSchema } from './common.dto';
 
 export const UserDtoSchema = z.object({
   id: z.string().describe('Stable user identifier.'),
@@ -163,11 +163,6 @@ export const RevokeUserSessionsResponseSchema = z.object({
   revokedCount: z.number().int().describe('How many live sessions were revoked.'),
 }).describe('Session-revocation response.');
 export type RevokeUserSessionsResponse = z.infer<typeof RevokeUserSessionsResponseSchema>;
-
-export const UserSuccessResponseSchema = SuccessSchema.describe(
-  'Minimal success response for user operations that return no entity.',
-);
-export type UserSuccessResponse = z.infer<typeof UserSuccessResponseSchema>;
 
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('UserDto', UserDtoSchema);

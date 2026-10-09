@@ -14,7 +14,7 @@
     "start": "node dist/index.js",
     "lint": "eslint src/",
     "test": "node --test --import tsx \"src/**/*.test.ts\"",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.node.json",
     "validate:scenarios": "node --import tsx src/validate-scenarios.ts",
     "generate:openapi": "node --import tsx scripts/export-openapi.ts",
     "generate:client": "npx @hey-api/openapi-ts -f openapi-ts.config.ts",
