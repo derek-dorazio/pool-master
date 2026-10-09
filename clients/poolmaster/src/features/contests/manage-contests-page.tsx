@@ -231,7 +231,7 @@ export function ManageContestsPage() {
               <div>
                 <h2 className="text-xl font-semibold text-foreground">Historical contests</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Completed and cancelled contests.
+                  Completed contests.
                 </p>
               </div>
               <Chip tone="neutral">{historicalContests.length}</Chip>

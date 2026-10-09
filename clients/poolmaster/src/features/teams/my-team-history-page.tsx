@@ -186,7 +186,7 @@ export function MyTeamHistoryPage() {
           <div>
             <h2 className="text-xl font-semibold text-foreground">Historical entries</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Completed and cancelled contests stay visible here, but only with this team&apos;s
+              Completed contests stay visible here, but only with this team&apos;s
               entries.
             </p>
           </div>
