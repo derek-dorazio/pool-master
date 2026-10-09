@@ -836,7 +836,7 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:coverage:service:unit` — run with coverage
 - **CI job:** `service-unit-tests` (no database). Runs `npm run test:coverage:service:unit` with Jest's default Babel coverage provider; the coverage threshold below fails the job, and it is the only coverage gate in CI.
 - **Required pre-push gate:** `npx jest --config tests/jest.config.js --forceExit` (per `AGENTS.md` Quality Gates).
-- **Coverage policy:** **Threshold configured at the suite level** — `coverageThreshold.global` in `tests/jest.config.js`: 24% statements, 14.2% branches, 21.15% functions, 24.53% lines. These are floor values from the rule-enforcement epic baseline, not aspirational targets — they exist to prevent regression while real coverage targets are set per-feature.
+- **Coverage policy:** **Threshold configured at the suite level** — `coverageThreshold.global` in `tests/jest.config.js`: 65% statements, 60.5% branches, 62% functions, 65% lines. These are regression floors, not aspirational targets, set in #298 about 3 points under the lower of two measurements: Babel (this job) 71.3 / 63.75 / 65.45 / 71.07, and V8 (the merged report, which reuses this config) 67.95 / 83.04 / 79.03 / 67.95.
 - **Database:** none. Pure unit tests must not touch Postgres; if a test needs a DB, it belongs in the integration suite.
 
 ### 2. Backend integration (`tests/integration/**/*.integration.ts`)
@@ -943,7 +943,7 @@ release, and the mock contest feed provider has its own suite.
 
 | Suite | Threshold today | Source of truth |
 |---|---|---|
-| Backend unit | 24% / 14.2% / 21.15% / 24.53% (stmts / branches / fns / lines) | `tests/jest.config.js` |
+| Backend unit | 65% / 60.5% / 62% / 65% (stmts / branches / fns / lines) | `tests/jest.config.js` |
 | Backend integration | none | — |
 | Backend FAPI | none | — |
 | Webapp unit | none | — |
