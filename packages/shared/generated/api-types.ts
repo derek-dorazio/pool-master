@@ -7110,7 +7110,6 @@ export interface components {
         };
         /** @description Contest-configuration payload used by contest create and update endpoints. */
         ContestCrudConfigurationRequest: {
-            draftMode?: string;
             rounds?: number;
             timePerPickSeconds?: number;
             /** @enum {string} */
@@ -7696,7 +7695,6 @@ export interface components {
         };
         /** @description Typed contest configuration returned by contest detail endpoints. Use this shape for client-side entry-cap and contest-behavior decisions instead of treating contestConfiguration as an untyped blob. */
         ContestConfigurationDetailDto: {
-            draftMode?: string;
             rounds?: number;
             timePerPickSeconds?: number;
             /** @enum {string} */
@@ -7775,7 +7773,6 @@ export interface components {
             };
             /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
             contestConfiguration?: {
-                draftMode?: string;
                 rounds?: number;
                 timePerPickSeconds?: number;
                 /** @enum {string} */

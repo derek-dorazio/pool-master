@@ -12615,9 +12615,6 @@
       "ContestCrudConfigurationRequest": {
         "type": "object",
         "properties": {
-          "draftMode": {
-            "type": "string"
-          },
           "rounds": {
             "type": "integer"
           },
@@ -14281,9 +14278,6 @@
       "ContestConfigurationDetailDto": {
         "type": "object",
         "properties": {
-          "draftMode": {
-            "type": "string"
-          },
           "rounds": {
             "type": "integer"
           },
@@ -14545,9 +14539,6 @@
               "null"
             ],
             "properties": {
-              "draftMode": {
-                "type": "string"
-              },
               "rounds": {
                 "type": "integer"
               },
