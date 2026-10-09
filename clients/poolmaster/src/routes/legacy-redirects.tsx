@@ -7,6 +7,11 @@
  * reloaded the whole app. Here they are ordinary component modules.
  */
 import { Navigate, useParams } from 'react-router-dom';
+import {
+  buildLeagueAdminContestCreatePath,
+  buildLeagueAdminContestPath,
+  buildLeagueAdminContestsPath,
+} from '@/features/leagues/league-routing';
 
 export function LegacyJoinInviteRedirect() {
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
@@ -16,4 +21,20 @@ export function LegacyJoinInviteRedirect() {
 export function LegacyLeagueEntriesRedirect() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   return <Navigate replace to={`/league/${leagueCode}`} />;
+}
+
+// Contest setup moved into Commissioner tools (#557).
+export function LegacyManageContestsRedirect() {
+  const { leagueCode = '' } = useParams<{ leagueCode: string }>();
+  return <Navigate replace to={buildLeagueAdminContestsPath(leagueCode)} />;
+}
+
+export function LegacyContestCreateRedirect() {
+  const { leagueCode = '' } = useParams<{ leagueCode: string }>();
+  return <Navigate replace to={buildLeagueAdminContestCreatePath(leagueCode)} />;
+}
+
+export function LegacyContestManageRedirect() {
+  const { contestId = '', leagueCode = '' } = useParams<{ contestId: string; leagueCode: string }>();
+  return <Navigate replace to={buildLeagueAdminContestPath(leagueCode, contestId)} />;
 }

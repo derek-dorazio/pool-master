@@ -288,28 +288,15 @@ describe('LeagueContestsPage, beyond the default list', () => {
     refreshTokenMock.mockReset();
   });
 
-  it('shows a plain member neither Manage Contests nor Create Contest', async () => {
-    primeCommonMocks({ leagueRole: 'MEMBER' });
-    listContestsMock.mockResolvedValue({ data: { contests: [contest('contest-1', 'Masters Pick 6')] } });
-
-    renderLeagueContestsPage();
-
-    expect(await screen.findByTestId('league-contests-active')).toHaveTextContent('Masters Pick 6');
-    expect(screen.queryByRole('link', { name: 'Manage Contests' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Create Contest' })).not.toBeInTheDocument();
-  });
-
-  it('offers a commissioner Manage Contests and Create Contest', async () => {
+  it('keeps contest setup out of the member Contests page, even for a commissioner', async () => {
     primeCommonMocks({ leagueRole: 'COMMISSIONER' });
     listContestsMock.mockResolvedValue({ data: { contests: [] } });
 
     renderLeagueContestsPage();
 
-    expect(await screen.findByRole('link', { name: 'Manage Contests' })).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/contests/manage',
-    );
-    expect(screen.getByRole('link', { name: 'Create Contest' })).toBeInTheDocument();
+    expect(await screen.findByTestId('league-contests-active')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Manage contests/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Create contest/i })).not.toBeInTheDocument();
   });
 
   it('says the league has no active contests when only finished ones exist', async () => {

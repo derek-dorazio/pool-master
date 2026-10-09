@@ -4,6 +4,8 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
+import { CommissionerToolsLayout } from '@/features/leagues/commissioner-tools-layout';
+import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
 import { ManageContestsPage } from './manage-contests-page';
 
 const getCurrentUserMock = vi.fn();
@@ -32,16 +34,15 @@ function renderManageContestsPage() {
   return render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <MemoryRouter initialEntries={['/league/BIGDAWGS/contests/manage']}>
+        <MemoryRouter initialEntries={['/league/BIGDAWGS/admin/contests']}>
           <Routes>
-            <Route
-              element={<ManageContestsPage />}
-              path="/league/:leagueCode/contests/manage"
-            />
-            <Route
-              element={<div data-testid="manage-contest-destination" />}
-              path="/league/:leagueCode/contests/:contestId/manage"
-            />
+            <Route element={<MemberRouteGuard />}>
+              <Route element={<CommissionerRouteGuard />} path="/league/:leagueCode/admin">
+                <Route element={<CommissionerToolsLayout />}>
+                  <Route element={<ManageContestsPage />} path="contests" />
+                </Route>
+              </Route>
+            </Route>
             <Route
               element={<div data-testid="contest-destination" />}
               path="/league/:leagueCode/contests/:contestId"
@@ -163,7 +164,7 @@ describe('ManageContestsPage', () => {
     expect(await screen.findByTestId('manage-contests-page')).toBeInTheDocument();
     expect(screen.getByTestId('manage-contests-create-link')).toHaveAttribute(
       'href',
-      '/league/BIGDAWGS/contests/new',
+      '/league/BIGDAWGS/admin/contests/new',
     );
     expect(await screen.findByTestId('manage-contests-row-contest-1')).toHaveTextContent(
       'TIERED · STROKE_PLAY · Open for entries',
@@ -177,26 +178,38 @@ describe('ManageContestsPage', () => {
     );
     expect(screen.getByTestId('manage-contests-manage-contest-1')).toHaveAttribute(
       'href',
-      '/league/BIGDAWGS/contests/contest-1/manage',
+      '/league/BIGDAWGS/admin/contests/contest-1',
     );
   });
 
-  it('shows a truthful access-denied state for members without commissioner authority', async () => {
+  it('sends a member who opens Commissioner tools contests to League Home, without loading the contests', async () => {
     primeCommonMocks({ leagueRole: 'MEMBER' });
-    listContestsMock.mockResolvedValue({
-      data: {
-        contests: [],
-      },
-    });
+    listContestsMock.mockResolvedValue({ data: { contests: [] } });
 
     renderManageContestsPage();
 
-    expect(await screen.findByTestId('manage-contests-access-denied')).toBeInTheDocument();
-    expect(screen.getByText('Only commissioners can manage contests.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open League Home' })).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS',
-    );
+    expect(await screen.findByTestId('league-home-destination')).toBeInTheDocument();
+    expect(screen.queryByTestId('manage-contests-page')).not.toBeInTheDocument();
+    expect(listContestsMock).not.toHaveBeenCalled();
+  });
+
+  it('lets a root admin who is not a commissioner manage the league\'s contests', async () => {
+    primeCommonMocks({ isRootAdmin: true, leagueRole: 'MEMBER' });
+    listContestsMock.mockResolvedValue({ data: { contests: [] } });
+
+    renderManageContestsPage();
+
+    expect(await screen.findByTestId('manage-contests-empty')).toBeInTheDocument();
+  });
+
+  it('marks Contests as the current tool in the Commissioner tools menu', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({ data: { contests: [] } });
+
+    renderManageContestsPage();
+
+    expect(await screen.findByTestId('commissioner-tools-menu-contests')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('commissioner-tools-menu-settings')).not.toHaveAttribute('aria-current');
   });
 
   it('offers a commissioner of an active league "Create first contest" when the league has none', async () => {
@@ -208,7 +221,7 @@ describe('ManageContestsPage', () => {
     expect(await screen.findByTestId('manage-contests-empty')).toHaveTextContent('No contests yet');
     expect(screen.getByRole('link', { name: 'Create first contest' })).toHaveAttribute(
       'href',
-      '/league/BIGDAWGS/contests/new',
+      '/league/BIGDAWGS/admin/contests/new',
     );
     expect(screen.getByTestId('manage-contests-create-link')).toBeInTheDocument();
   });

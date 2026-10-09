@@ -352,7 +352,11 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     });
 
     await test.step('create a contest on act 1\'s tournament: one pick per tier on six tiers, counted 4, one entry per team', async () => {
-      await page.goto(`/league/${run.leagueCode}/contests/new`);
+      // Contest setup lives in Commissioner tools, reached from the league menu.
+      await page.getByTestId('league-menu-commissioner-tools').click();
+      await page.getByTestId('commissioner-tools-menu-contests').click();
+      await expect(page.getByTestId('manage-contests-page')).toBeVisible();
+      await page.getByTestId('manage-contests-create-link').click();
       await expect(page.getByTestId('create-contest-page')).toBeVisible();
       // The picker lists every contest-eligible golf event on the platform, QA's whole catalog
       // included, so the run's own tournament is chosen by its id and checked by its name.
@@ -376,7 +380,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 
     await test.step('the new contest is a draft on its setup page, and its configuration still takes an edit', async () => {
       // #117 — create saves a draft and lands the commissioner on its setup page.
-      await expect(page).toHaveURL(new RegExp(`/league/${run.leagueCode}/contests/${state.contestId}/manage$`));
+      await expect(page).toHaveURL(new RegExp(`/league/${run.leagueCode}/admin/contests/${state.contestId}$`));
       await expect(page.getByTestId('manage-contest-page')).toBeVisible();
       const managed = await readManagedContest(page, state.leagueId, state.contestId);
       expect(managed.contest.status).toBe('DRAFT');

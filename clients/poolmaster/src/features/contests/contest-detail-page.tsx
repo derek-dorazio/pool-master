@@ -9,7 +9,7 @@ import {
   buildContestEntryPath,
   buildLeagueContestEntryPath,
   buildLeagueContestLeaderboardPath,
-  buildLeagueContestManagePath,
+  buildLeagueAdminContestPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
@@ -296,7 +296,7 @@ export function ContestDetailPage() {
     : '/welcome';
   const manageContestPath =
     hintedLeagueCode && contest.status === ContestStatus.DRAFT
-      ? buildLeagueContestManagePath(hintedLeagueCode, contestId)
+      ? buildLeagueAdminContestPath(hintedLeagueCode, contestId)
       : null;
   // #111 — the leaderboard is its own route, and it is only worth offering once the endpoint
   // behind it will answer: it is gated on picks being revealed.

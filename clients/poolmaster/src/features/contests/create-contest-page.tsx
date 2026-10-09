@@ -23,12 +23,10 @@ import {
 import { createContest, deleteContest, getContestConfiguration, listContestConfigTemplates, listEvents, updateContest, updateContestConfiguration } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
-import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
-  buildLeagueContestManagePath,
+  buildLeagueAdminContestPath,
+  buildLeagueAdminContestsPath,
   buildLeagueContestPath,
-  buildLeaguePath,
-  buildLeagueTeamPath,
 } from '@/features/leagues/league-routing';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { OpenContestAction } from './open-contest-action';
@@ -42,9 +40,9 @@ import {
   Input,
   LinkButton,
   LoadingState,
+  PageHeader,
   Select,
   SplitContentLayout,
-  StatusBadge,
   Tile,
 } from '@/features/shared/ui';
 import {
@@ -185,7 +183,7 @@ export function CreateContestPage() {
   }, [contestForm]);
 
   // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
-  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
+  const { league } = useLeagueContext(leagueCode);
 
   const eventsQuery = useQuery({
     queryKey: QueryKeys.sportEvents.list({ sport: Sport.GOLF }),
@@ -398,22 +396,6 @@ export function CreateContestPage() {
       selectTemplate(defaultTemplate.id);
     }
   }, [isEditMode, selectTemplate, selectedTemplateId, visibleTemplates]);
-
-  useEffect(() => {
-    if (leagueQuery.isError) {
-      logger.warn(
-        {
-          action: 'contestCreate.league.failed',
-          data: {
-            leagueCode,
-            isEditMode,
-          },
-          err: leagueQuery.error,
-        },
-        'Contest create page failed to load league detail',
-      );
-    }
-  }, [isEditMode, leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   useEffect(() => {
     if (eventsQuery.isError) {
@@ -631,7 +613,7 @@ export function CreateContestPage() {
       navigate(
         isEditMode
           ? buildLeagueContestPath(leagueCode, savedContestId)
-          : buildLeagueContestManagePath(leagueCode, savedContestId),
+          : buildLeagueAdminContestPath(leagueCode, savedContestId),
         { state: { leagueCode } },
       );
     },
@@ -706,7 +688,7 @@ export function CreateContestPage() {
         },
         'Deleted contest successfully',
       );
-      navigate(buildLeaguePath(leagueCode));
+      navigate(buildLeagueAdminContestsPath(leagueCode));
     },
     invalidates: [QueryKeys.contests.list({ leagueId: league?.id })],
     onError: (error) => {
@@ -732,16 +714,18 @@ export function CreateContestPage() {
     },
   });
 
-  const isCommissioner =
-    viewer.isCommissioner || viewer.isRootAdmin;
   const isDraftEditable = !isEditMode || managedContestQuery.data?.status === 'DRAFT';
 
   const isManagedContestHydrating =
     isEditMode && Boolean(managedContestQuery.data) && !isHydratedFromManagedContest;
 
+  // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
+  if (!league) {
+    return null;
+  }
+
   if (
-    leagueQuery.isLoading
-    || eventsQuery.isLoading
+    eventsQuery.isLoading
     || managedContestQuery.isLoading
     || templatesQuery.isLoading
     || isManagedContestHydrating
@@ -754,33 +738,12 @@ export function CreateContestPage() {
     );
   }
 
-  if (
-    leagueQuery.isError
-    || !league
-    || managedContestQuery.isError
-    || templatesQuery.isError
-  ) {
-    const copy = getLeagueLoadErrorCopy(leagueQuery.error);
+  if (managedContestQuery.isError || templatesQuery.isError) {
     return (
       <ErrorState
-        body={copy.body}
+        body="Try again in a moment."
         testId="create-contest-page-error"
-        title={copy.title}
-      />
-    );
-  }
-
-  if (!isCommissioner) {
-    return (
-      <ErrorState
-        action={(
-          <LinkButton to={buildLeaguePath(league.leagueCode)} variant="secondary">
-            Back to league home
-          </LinkButton>
-        )}
-        body="Only commissioners can set up contests."
-        testId="create-contest-page-unauthorized"
-        title="Commissioner access required"
+        title="We couldn't load this contest's setup."
       />
     );
   }
@@ -790,39 +753,12 @@ export function CreateContestPage() {
       className="space-y-6"
       data-testid={isEditMode ? 'manage-contest-page' : 'create-contest-page'}
     >
-      <Tile padding="lg">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-3">
-            <StatusBadge tone="info">
-              Commissioner contest setup
-            </StatusBadge>
-            <div>
-              <h2 className="text-3xl font-semibold tracking-tight">
-                {isEditMode ? 'Manage golf contest' : 'Create a golf contest'}
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-                {isEditMode
-                  ? 'Review and update this contest’s settings.'
-                  : 'Set up a tiered golf contest for your league.'}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <LinkButton
-              to={buildLeaguePath(league.leagueCode)}
-              variant="secondary"
-            >
-              Back to league
-            </LinkButton>
-            <LinkButton
-              to={buildLeagueTeamPath(league.leagueCode)}
-              variant="secondary"
-            >
-              My Team
-            </LinkButton>
-          </div>
-        </div>
-      </Tile>
+      <PageHeader
+        description={isEditMode
+          ? 'Review and update this contest’s settings.'
+          : 'Set up a tiered golf contest for your league.'}
+        title={isEditMode ? 'Manage golf contest' : 'Create a golf contest'}
+      />
 
       <SplitContentLayout
         main={(
@@ -997,7 +933,7 @@ export function CreateContestPage() {
                 </Button>
               ) : null}
               <LinkButton
-                to={buildLeaguePath(league.leagueCode)}
+                to={buildLeagueAdminContestsPath(league.leagueCode)}
                 variant="secondary"
               >
                 Cancel
