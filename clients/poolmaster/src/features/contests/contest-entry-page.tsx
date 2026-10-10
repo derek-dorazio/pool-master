@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { getContest, getSelectionState, listContestEntries, submitContestEntry, submitContestSelection, updateContestEntry, type SelectionStateResponse, type ContestDto, type ContestEntryListResponse } from '@/lib/api';
+import { getContest, getSelectionState, submitContestEntry, submitContestSelection, updateContestEntry, type SelectionStateResponse, type ContestDto } from '@/lib/api';
 import {
   buildLeagueContestPath,
   buildLeaguePath,
@@ -37,6 +37,8 @@ import {
   CONTEST_STATUS_TONES,
   contestStatusLabel,
 } from './contest-status';
+import { ContestHeader, ContestSubMenu } from './contest-header';
+import { fetchContestEntries } from './use-contest-entries';
 import { useContestSchedule } from './use-contest-schedule';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -189,13 +191,7 @@ export function ContestEntryPage() {
 
   const contestEntriesQuery = useQuery({
     queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: async (): Promise<ContestEntryListResponse> => {
-      const response = await listContestEntries({ path: { contestId } });
-      if (!response.data) {
-        throwApiError(response.error, 'Contest entries response is missing data.');
-      }
-      return response.data;
-    },
+    queryFn: () => fetchContestEntries(contestId),
     enabled: Boolean(contestId),
     retry: false,
   });
@@ -654,38 +650,18 @@ export function ContestEntryPage() {
 
   return (
     <section className="space-y-6">
-      <Tile padding="lg">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
-                {getContestPhaseLabel(contest, isEditable)}
-              </StatusBadge>
-              {picksHidden ? null : (
-                <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[entryStatus]}>
-                  {CONTEST_ENTRY_STATUS_LABELS[entryStatus]}
-                </StatusBadge>
-              )}
-            </div>
-            <div>
-              <h2 className="text-3xl font-semibold tracking-tight" data-testid="contest-entry-heading">
-                {selectedEntry?.name ?? entrySummary?.name ?? 'Contest entry'}
-              </h2>
-              <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
-                {contest.name}
-                {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <LinkButton
-              data-testid="contest-entry-back-to-contest"
-              state={{ leagueCode: backLeagueCode }}
-              to={backToContestPath}
-              variant="secondary"
-            >
-              Back to contest
-            </LinkButton>
+      <ContestHeader
+        actions={(
+          <>
+            {backLeagueCode ? null : (
+              <LinkButton
+                data-testid="contest-entry-back-to-contest"
+                to={backToContestPath}
+                variant="secondary"
+              >
+                Back to contest
+              </LinkButton>
+            )}
             <LinkButton
               data-testid="contest-entry-back-to-league"
               to={backToLeaguePath}
@@ -693,10 +669,41 @@ export function ContestEntryPage() {
             >
               Back to league
             </LinkButton>
-          </div>
-        </div>
+          </>
+        )}
+        badges={(
+          <>
+            <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
+              {getContestPhaseLabel(contest, isEditable)}
+            </StatusBadge>
+            {picksHidden ? null : (
+              <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[entryStatus]}>
+                {CONTEST_ENTRY_STATUS_LABELS[entryStatus]}
+              </StatusBadge>
+            )}
+          </>
+        )}
+        menu={backLeagueCode ? (
+          <ContestSubMenu
+            contestId={contestId}
+            current={isMyEntry ? 'my-entry' : null}
+            leagueCode={backLeagueCode}
+            myEntryId={myEntryIds[0] ?? null}
+            picksRevealed={contestEntriesQuery.data?.picksRevealed ?? false}
+          />
+        ) : null}
+        summary={(
+          <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
+            {contest.name}
+            {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
+          </p>
+        )}
+        title={selectedEntry?.name ?? entrySummary?.name ?? 'Contest entry'}
+        titleTestId="contest-entry-heading"
+      />
 
-        <MetricGrid className="mt-6 md:grid-cols-4">
+      <Tile>
+        <MetricGrid className="md:grid-cols-4">
           <MetricTile
             helperText={picksHidden ? HIDDEN_PICKS_HELPER : 'Tiers complete'}
             label="Tier progress"

@@ -19,39 +19,3 @@ export function SplitContentLayout({
     </div>
   );
 }
-
-type SummaryMediaLayoutProps = {
-  aside?: ReactNode;
-  children: ReactNode;
-  className?: string;
-};
-
-export function SummaryMediaLayout({
-  aside,
-  children,
-  className,
-}: SummaryMediaLayoutProps) {
-  return (
-    <div
-      className={cn(
-        "flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between",
-        className,
-      )}
-    >
-      <div className="min-w-0">{children}</div>
-      {aside ? <div className="shrink-0">{aside}</div> : null}
-    </div>
-  );
-}
-
-type ResponsiveGridLayoutProps = {
-  children: ReactNode;
-  className?: string;
-};
-
-export function ResponsiveGridLayout({
-  children,
-  className,
-}: ResponsiveGridLayoutProps) {
-  return <div className={cn("grid gap-4 md:grid-cols-2", className)}>{children}</div>;
-}

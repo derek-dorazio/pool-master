@@ -1,12 +1,29 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { AuthProvider } from '@/features/auth/auth-provider';
+import {
+  apiSuccess,
+  buildCurrentUser,
+  buildLeague,
+  buildLeagueMembership,
+  buildLeagueSquadMember,
+  getLeagueByCodeData,
+} from '@/features/leagues/test/fixtures';
 import { ContestLeaderboardPage } from './contest-leaderboard-page';
 import * as contestLeaderboard from './contest-leaderboard';
 
-const { getContestMock, getGolfContestLeaderboardMock, mockLogger } = vi.hoisted(() => {
+const {
+  getContestMock,
+  getCurrentUserMock,
+  getGolfContestLeaderboardMock,
+  getLeagueMock,
+  listContestEntriesMock,
+  mockLogger,
+  refreshTokenMock,
+} = vi.hoisted(() => {
   const logger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -20,14 +37,22 @@ const { getContestMock, getGolfContestLeaderboardMock, mockLogger } = vi.hoisted
 
   return {
     getContestMock: vi.fn(),
+    getCurrentUserMock: vi.fn(),
     getGolfContestLeaderboardMock: vi.fn(),
+    getLeagueMock: vi.fn(),
+    listContestEntriesMock: vi.fn(),
     mockLogger: logger,
+    refreshTokenMock: vi.fn(),
   };
 });
 
 bindApiMocks({
   getContest: getContestMock,
+  getUser: getCurrentUserMock,
   getGolfContestLeaderboard: getGolfContestLeaderboardMock,
+  getLeague: getLeagueMock,
+  listContestEntries: listContestEntriesMock,
+  refreshToken: refreshTokenMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -43,6 +68,7 @@ function renderLeaderboard() {
 
   return render(
     <QueryClientProvider client={queryClient}>
+      <AuthProvider>
       <MemoryRouter
         initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1/leaderboard' }]}
       >
@@ -52,8 +78,13 @@ function renderLeaderboard() {
             path="/league/:leagueCode/contests/:contestId/leaderboard"
           />
           <Route element={<div data-testid="contest-board" />} path="/league/:leagueCode/contests/:contestId" />
+          <Route
+            element={<div data-testid="contest-entry-page" />}
+            path="/league/:leagueCode/contests/:contestId/entries/:entryId"
+          />
         </Routes>
       </MemoryRouter>
+      </AuthProvider>
     </QueryClientProvider>,
   );
 }
@@ -261,14 +292,50 @@ function leaderboardWithTwoEntries() {
   };
 }
 
+/** `count` single-pick entries, ranked in order, each on its own team (`squad-N`). */
+function leaderboardWithEntries(count: number) {
+  const base = leaderboardResponse().data;
+  return {
+    ...base,
+    entries: Array.from({ length: count }, (_, index) => ({
+      ...base.entries[0],
+      entryId: `entry-${index + 1}`,
+      entryName: `Team ${index + 1} Entry 1`,
+      squadId: `squad-${index + 1}`,
+      squadName: `Team ${index + 1}`,
+      position: index + 1,
+      displayPosition: String(index + 1),
+      picks: [{ ...base.entries[0].picks[0], pickId: `pick-${index + 1}` }],
+    })),
+  };
+}
+
 function primeMocks(opts?: {
   contestStatus?: ContestStatusFixture;
   leaderboard?: Record<string, unknown>;
   leaderboardError?: { code: string; message: string };
+  /** The viewer's team, and its entries in this contest. */
+  mySquadId?: string | null;
+  myEntryIds?: string[];
 }) {
   getContestMock.mockReset();
   getGolfContestLeaderboardMock.mockReset();
   getContestMock.mockResolvedValue(contestResponse(opts?.contestStatus ?? 'ACTIVE'));
+  getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
+  refreshTokenMock.mockResolvedValue({ data: null });
+  const mySquadId = opts?.mySquadId ?? null;
+  getLeagueMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(buildLeague(), {
+    membership: buildLeagueMembership({ role: 'MEMBER' }),
+    squadMembership: mySquadId ? buildLeagueSquadMember({ squadId: mySquadId }) : null,
+  })));
+  const myEntryIds = opts?.myEntryIds ?? [];
+  listContestEntriesMock.mockResolvedValue(apiSuccess({
+    isJoined: myEntryIds.length > 0,
+    myEntryId: myEntryIds[0] ?? null,
+    myEntryIds,
+    picksRevealed: true,
+    entries: [],
+  }));
 
   if (opts?.leaderboardError) {
     getGolfContestLeaderboardMock.mockResolvedValue({
@@ -722,15 +789,100 @@ describe('ContestLeaderboardPage', () => {
     }
   });
 
-  it('links back to the contest board it was opened from', async () => {
+  it('returns to Entries through the contest menu, with Leaderboard selected', async () => {
     primeMocks();
 
     renderLeaderboard();
 
-    expect(await screen.findByTestId('contest-leaderboard-back')).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/contests/contest-1',
-    );
+    expect(await screen.findByTestId('contest-menu-leaderboard')).toBeChecked();
+    fireEvent.click(screen.getByTestId('contest-menu-entries'));
+
+    expect(await screen.findByTestId('contest-board')).toBeInTheDocument();
+  });
+
+  it('offers My entry in the contest menu once the viewer\'s team has an entry, and opens it', async () => {
+    primeMocks({ mySquadId: 'squad-1', myEntryIds: ['entry-1'] });
+
+    renderLeaderboard();
+
+    fireEvent.click(await screen.findByTestId('contest-menu-my-entry'));
+
+    expect(await screen.findByTestId('contest-entry-page')).toBeInTheDocument();
+  });
+
+  it('does not offer My entry when the viewer\'s team has no entry', async () => {
+    primeMocks();
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-menu-leaderboard');
+    expect(screen.queryByTestId('contest-menu-my-entry')).not.toBeInTheDocument();
+  });
+
+  it('finds a team by its team name or entry name, and says so when nothing matches', async () => {
+    primeMocks({ leaderboard: leaderboardWithTwoEntries() });
+
+    renderLeaderboard();
+
+    const search = await screen.findByRole('searchbox', { name: 'Find a team' });
+    fireEvent.change(search, { target: { value: 'eagle' } });
+
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-2')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-leaderboard-entry-entry-1')).not.toBeInTheDocument();
+
+    fireEvent.change(search, { target: { value: 'Nobody' } });
+
+    expect(screen.getByTestId('contest-leaderboard-no-match')).toBeInTheDocument();
+  });
+
+  it('shows 25 entries a page, in the server\'s order, with Next and Previous', async () => {
+    primeMocks({ leaderboard: leaderboardWithEntries(30) });
+
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-25')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-leaderboard-entry-entry-26')).not.toBeInTheDocument();
+    expect(screen.getByText('1–25 of 30')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-26')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-leaderboard-entry-entry-1')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
+  });
+
+  it('jumps to the page holding the viewer\'s best-placed entry, clearing the search, and marks it as their team', async () => {
+    primeMocks({ leaderboard: leaderboardWithEntries(30), mySquadId: 'squad-28' });
+
+    renderLeaderboard();
+
+    fireEvent.change(await screen.findByRole('searchbox', { name: 'Find a team' }), { target: { value: 'Team 3' } });
+    // The button needs the viewer's team, which the league context read brings after the contest.
+    fireEvent.click(await screen.findByTestId('contest-leaderboard-jump-to-mine'));
+
+    const mine = screen.getByTestId('contest-leaderboard-entry-entry-28');
+    expect(mine).toHaveTextContent('Your team');
+    expect(screen.getByRole('searchbox', { name: 'Find a team' })).toHaveValue('');
+    expect(screen.queryByTestId('contest-leaderboard-entry-entry-1')).not.toBeInTheDocument();
+  });
+
+  it('offers no Jump to my team when the viewer\'s team is not on the leaderboard', async () => {
+    primeMocks({ mySquadId: 'squad-elsewhere' });
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-entry-entry-1');
+    // The viewer's team comes from the league context; the answer is only meaningful once it has.
+    await screen.findByTestId('contest-menu-entries');
+    await waitFor(() => expect(getLeagueMock).toHaveBeenCalled());
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.queryByTestId('contest-leaderboard-jump-to-mine')).not.toBeInTheDocument();
   });
 
   it('shows a server failure with no refusal code under the generic error, and logs it', async () => {

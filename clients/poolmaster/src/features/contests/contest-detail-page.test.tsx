@@ -536,22 +536,20 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(screen.queryByRole('heading', { name: 'Leaderboard' })).not.toBeInTheDocument();
   });
 
-  it('offers the leaderboard only once picks are revealed', async () => {
+  it('offers Leaderboard in the contest menu only once picks are revealed, with Entries selected', async () => {
     primeMocks({ contestStatus: 'OPEN', picksRevealed: false, entries: [] });
 
     const { unmount } = renderContestBoard();
 
     await screen.findByTestId('contest-board-total-count');
-    expect(screen.queryByTestId('contest-leaderboard-link')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-menu-entries')).toBeChecked();
+    expect(screen.queryByTestId('contest-menu-leaderboard')).not.toBeInTheDocument();
     unmount();
 
     primeMocks({ contestStatus: 'ACTIVE', picksRevealed: true, entries: [] });
     renderContestBoard();
 
-    expect(await screen.findByTestId('contest-leaderboard-link')).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/contests/contest-1/leaderboard',
-    );
+    expect(await screen.findByTestId('contest-menu-leaderboard')).toBeInTheDocument();
   });
 
   // #246's note about standings frozen at settlement alongside live golfer scores moved to the

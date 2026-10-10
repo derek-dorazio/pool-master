@@ -142,6 +142,7 @@ export interface LeaderboardPickRow {
 export interface LeaderboardEntryRow {
   entryId: string;
   entryName: string;
+  squadId: string;
   squadName: string;
   displayPosition: string | null;
   total: string | null;
@@ -184,6 +185,7 @@ export function buildLeaderboardView(response: ContestLeaderboardResponse): Lead
     return {
       entryId: entry.entryId,
       entryName: entry.entryName,
+      squadId: entry.squadId,
       squadName: entry.squadName,
       displayPosition: entry.displayPosition,
       total: entryTotal === null ? null : definition.format(entryTotal),

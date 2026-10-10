@@ -15,6 +15,7 @@ import {
 import { extractErrorMessage } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { CreateTeamForm } from './create-team-form';
+import { MyTeamEntriesSection } from './my-team-entries-section';
 import { TEAM_PAGE_FALLBACK_ERROR } from './my-team-shared';
 import { formatOwnerCount } from './team-directory';
 import { TeamIcon } from './team-icon';
@@ -125,6 +126,8 @@ export function MyTeamPage() {
           This league is inactive, so your team is read-only.
         </Alert>
       ) : null}
+
+      <MyTeamEntriesSection leagueCode={leagueCode} leagueId={leagueId} teamId={myTeam.id} />
 
       <TeamOwnersSection
         canManageAnyTeam={viewer.isCommissioner || viewer.isRootAdmin}
