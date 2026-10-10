@@ -7,6 +7,7 @@ import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-
 import { asFastifyReply, asFastifyRequest } from '../../support/fastify-doubles';
 import { asPrismaClient } from '../../support/prisma-double';
 import { fakeLogger } from '../../support/fake-logger';
+import { expectDefined } from '../../support/expect-defined';
 
 /**
  * The team route handlers: what HTTP status and body each service outcome becomes. They run on
@@ -138,8 +139,8 @@ describe('Team route handlers', () => {
 
   it('renames a team with 200 and answers 400 SQUAD_NAME_TAKEN when the name is another team\'s', async () => {
     const { world, league, owner, ownerSquad, commissioner, handlers } = setup();
-    const commissionerTeam = world.squadMembershipOf(league.id, commissioner.id)!;
-    const takenName = world.tables.squads.get(commissionerTeam.squadId)!.name;
+    const commissionerTeam = expectDefined(world.squadMembershipOf(league.id, commissioner.id));
+    const takenName = expectDefined(world.tables.squads.get(commissionerTeam.squadId)).name;
 
     const renamed = await call(
       handlers.updateSquad,

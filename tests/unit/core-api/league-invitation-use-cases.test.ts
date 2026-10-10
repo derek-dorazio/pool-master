@@ -20,6 +20,7 @@ import type {
 } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
 import { asPrismaClient } from '../../support/prisma-double';
+import { expectDefined } from '../../support/expect-defined';
 
 /**
  * League invitation use cases — invite by email, invite link, revoke, preview, accept — against
@@ -116,7 +117,7 @@ describe('InvitationService — inviting by email', () => {
         currentUses: 0,
       });
       expect(invitation.inviteCode).toMatch(/^[0-9a-f]{12}$/);
-      const expiresIn = invitation.expiresAt!.getTime() - before;
+      const expiresIn = expectDefined(invitation.expiresAt).getTime() - before;
       expect(expiresIn).toBeGreaterThan(7 * DAY_MS - 60_000);
       expect(expiresIn).toBeLessThan(7 * DAY_MS + 60 * 60 * 1000 + 60_000);
     }
@@ -263,8 +264,8 @@ describe('InvitationService — invite links', () => {
     });
 
     expect(link.maxUses).toBe(5);
-    expect(link.expiresAt!.getTime() - before).toBeGreaterThan(3 * DAY_MS - 60 * 60 * 1000 - 60_000);
-    expect(link.expiresAt!.getTime() - before).toBeLessThan(3 * DAY_MS + 60 * 60 * 1000 + 60_000);
+    expect(expectDefined(link.expiresAt).getTime() - before).toBeGreaterThan(3 * DAY_MS - 60 * 60 * 1000 - 60_000);
+    expect(expectDefined(link.expiresAt).getTime() - before).toBeLessThan(3 * DAY_MS + 60 * 60 * 1000 + 60_000);
   });
 
   it('lets several people join through one link until its use limit, then marks it ACCEPTED and refuses the next', async () => {
@@ -362,7 +363,7 @@ describe('InvitationService — accepting', () => {
     const former = world.addUser({ email: 'invitee@example.com' });
     const { membership, squad } = world.addMember({ league, user: former, role: LeagueRole.COMMISSIONER });
     world.tables.memberships.patch(membership.id, { status: LeagueMembershipStatus.INACTIVE });
-    const formerSquadMembership = world.squadMembershipOf(league.id, former.id)!;
+    const formerSquadMembership = expectDefined(world.squadMembershipOf(league.id, former.id));
     world.tables.squadMemberships.patch(formerSquadMembership.id, { status: SquadMembershipStatus.INACTIVE });
     world.tables.squads.patch(squad.id, { isActive: false });
     const invitation = seedInvitation(world, league, commissioner);

@@ -3,6 +3,7 @@ import { seedGolf } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import type { GolfSeedFile, GolfSeedGolfer } from '../../packages/core-api/scripts/seed-golf/seed-golf-data';
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
+import { expectDefined } from '../support/expect-defined';
 
 // The manual-testing golf seed, run through the real admin API: what a commissioner gets to
 // build contests on, and that running it again changes nothing.
@@ -96,26 +97,26 @@ describe('Golf manual-testing seed through the admin API', () => {
     const first = await seedGolf(seed, { getClient, now: NOW });
     expect(first).toEqual([{ tour: TOUR, created: [`${RUN} Opener`, `${RUN} Classic`], skipped: [] }]);
 
-    const golfSportId = (await listSports({ client })).data!.sports.find((sport) => sport.name === 'GOLF')!.id;
-    const tour = (await listSportLeagues({ client, query: { sport: 'GOLF' } })).data!.sportLeagues.find((league) => league.name === TOUR)!;
+    const golfSportId = expectDefined(expectDefined((await listSports({ client })).data).sports.find((sport) => sport.name === 'GOLF')).id;
+    const tour = expectDefined(expectDefined((await listSportLeagues({ client, query: { sport: 'GOLF' } })).data).sportLeagues.find((league) => league.name === TOUR));
     expect(tour.matchKeyword).toBe(TOUR);
-    const events = (await listEvents({ client, query: { sportLeagueId: tour.id, eventYear: 2026 } })).data!.events;
-    const opener = events.find((event) => event.name === `${RUN} Opener`)!;
+    const events = expectDefined((await listEvents({ client, query: { sportLeagueId: tour.id, eventYear: 2026 } })).data).events;
+    const opener = expectDefined(events.find((event) => event.name === `${RUN} Opener`));
 
     // Released for contests, a whole number of weeks on from 2026-01-15 and at least a week after NOW.
     expect(events.map((event) => event.status)).toEqual(['SCHEDULED', 'SCHEDULED']);
     expect(opener.startDate).toBe('2026-10-22T12:00:00.000Z');
     expect(opener.autoLifecycleEnabled).toBe(false);
 
-    const field = (await listEventParticipants({ client, path: { eventId: opener.id } })).data!.participants;
+    const field = expectDefined((await listEventParticipants({ client, path: { eventId: opener.id } })).data).participants;
     const byName = new Map(field.map((row) => [row.participant.name, row]));
     expect(field).toHaveLength(12);
     expect(field.every((row) => row.valuation?.sportEventTierId && row.valuation.price !== null)).toBe(true);
     expect(byName.get(`${RUN} Golfer 1`)).toMatchObject({ ranking: 1, oddsToWin: 6, seedNumber: 1 });
-    expect(byName.get(`${RUN} Golfer 1`)!.standing).toMatchObject({ position: 1, status: 'COMPLETE' });
-    expect(byName.get(`${RUN} Golfer 11`)!.standing).toMatchObject({ position: null, status: 'ELIMINATED' });
-    expect(byName.get(`${RUN} Golfer 12`)!.standing).toMatchObject({ position: null, status: 'WITHDRAWN' });
-    expect(byName.get(`${RUN} Golfer 12`)!.rounds.find((round) => round.roundNumber === 2)?.status).toBe('DNF');
+    expect(expectDefined(byName.get(`${RUN} Golfer 1`)).standing).toMatchObject({ position: 1, status: 'COMPLETE' });
+    expect(expectDefined(byName.get(`${RUN} Golfer 11`)).standing).toMatchObject({ position: null, status: 'ELIMINATED' });
+    expect(expectDefined(byName.get(`${RUN} Golfer 12`)).standing).toMatchObject({ position: null, status: 'WITHDRAWN' });
+    expect(expectDefined(byName.get(`${RUN} Golfer 12`)).rounds.find((round) => round.roundNumber === 2)?.status).toBe('DNF');
 
     // A ranking an admin changed by hand survives the next run.
     const db = getFunctionalPrisma();
@@ -131,7 +132,7 @@ describe('Golf manual-testing seed through the admin API', () => {
       created: [],
       skipped: [{ name: `${RUN} Opener`, status: 'SCHEDULED' }, { name: `${RUN} Classic`, status: 'SCHEDULED' }],
     }]);
-    const golfers = (await listParticipants({ client, query: { sportId: golfSportId, q: RUN } })).data!.participants;
+    const golfers = expectDefined((await listParticipants({ client, query: { sportId: golfSportId, q: RUN } })).data).participants;
     expect(golfers).toHaveLength(12);
     const affiliation = await db.participantLeagueAffiliation.findUniqueOrThrow({
       where: { participantId_sportLeagueId: { participantId: golferOne.id, sportLeagueId: tour.id } },

@@ -77,6 +77,11 @@ async function must<T>(call: Promise<SdkResult<T>>, what: string): Promise<T> {
   return result.data;
 }
 
+function found<T>(value: T | undefined, what: string): T {
+  if (value === undefined) throw new Error(`${what} is missing`);
+  return value;
+}
+
 function splitName(name: string): { firstName: string; lastName: string } {
   const space = name.indexOf(' ');
   return space < 0 ? { firstName: name, lastName: name } : { firstName: name.slice(0, space), lastName: name.slice(space + 1) };
@@ -93,7 +98,7 @@ async function ensureTour(client: Client, name: string): Promise<string> {
 /** Each seed player's participant id: found by externalId, then exact name, else created. */
 async function ensurePlayers(client: Client, sportId: string, players: readonly GolfSeedPlayer[]): Promise<Map<string, string>> {
   const { participants } = await must(listParticipants({ client, query: { sportId } }), 'List golfers');
-  const byExternalId = new Map(participants.filter((p) => p.externalId).map((p) => [p.externalId!, p.id]));
+  const byExternalId = new Map(participants.flatMap((p) => (p.externalId ? [[p.externalId, p.id] as const] : [])));
   const byName = new Map(participants.map((p) => [p.name.toLowerCase(), p.id]));
   const ids = new Map<string, string>();
   for (const player of players) {
@@ -148,7 +153,7 @@ async function seedEvent(client: Client, input: {
     path,
     body: {
       participants: event.field.map((golfer, index) => ({
-        sportEventParticipantId: rowByParticipant.get(idOf(golfer))!,
+        sportEventParticipantId: found(rowByParticipant.get(idOf(golfer)), `${event.name}: the field row for ${golfer.player}`),
         ranking: golfer.ranking,
         oddsToWin: golfer.oddsToWin,
         seedNumber: index + 1,
@@ -191,7 +196,7 @@ export async function seedGolf(seed: GolfSeedFile, options: SeedGolfOptions): Pr
     const { affiliations } = await must(listParticipantLeagueAffiliations({ client: tourClient, path: { sportLeagueId } }), `List ${tour.name} golfers`);
     const affiliated = new Set(affiliations.map((affiliation) => affiliation.participantId));
     const rows = tour.players
-      .map((player) => ({ participantId: participantIds.get(player.key)!, ranking: player.ranking }))
+      .map((player) => ({ participantId: found(participantIds.get(player.key), `${tour.name}: the participant id for ${player.name}`), ranking: player.ranking }))
       .filter((row) => !affiliated.has(row.participantId));
     if (rows.length > 0) {
       await must(applyParticipantLeagueAffiliationUpload({ client: tourClient, path: { sportLeagueId }, body: { rows } }), `Add golfers to ${tour.name}`);

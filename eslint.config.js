@@ -138,9 +138,9 @@ export default tseslint.config(
       // operation — `process.env`, an OpenAPI schema node rewritten in place, and
       // `Record`-typed React state. The rule's alternative, a `Map`, fits none of them.
       '@typescript-eslint/no-dynamic-delete': 'off',
-      // Deferred to their own tickets, too large for this slice: 219 non-null assertions
-      // (206 in tests) are #549, 167 unnecessary conditions are #550.
-      '@typescript-eslint/no-non-null-assertion': 'off',
+      // Deferred to its own ticket, too large for this slice: 167 unnecessary conditions
+      // are #550. (`no-non-null-assertion` is on through the preset since #549; tests
+      // narrow with `expectDefined` from `tests/support/expect-defined.ts` instead.)
       '@typescript-eslint/no-unnecessary-condition': 'off',
 
       // #345 Phase 0 (from #160's survey of all 61 type-aware rules) — type-aware rules

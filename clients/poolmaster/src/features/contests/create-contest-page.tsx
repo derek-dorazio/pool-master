@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   useForm,
@@ -223,9 +223,9 @@ export function CreateContestPage() {
 
   const managedContestQuery = useQuery({
     queryKey: QueryKeys.managedContests.byLeagueAndContest(league?.id, contestId),
-    queryFn: async (): Promise<ManagedContest> => {
+    queryFn: league && contestId ? async (): Promise<ManagedContest> => {
       const response = await getContestConfiguration({
-        path: { id: league!.id, contestId: contestId! },
+        path: { id: league.id, contestId },
       });
 
       if (!response.data?.contest) {
@@ -233,8 +233,7 @@ export function CreateContestPage() {
       }
 
       return response.data.contest;
-    },
-    enabled: Boolean(contestId && league?.id),
+    } : skipToken,
     retry: false,
   });
 
@@ -535,7 +534,7 @@ export function CreateContestPage() {
           : {}),
       };
 
-      if (!isEditMode) {
+      if (!contestId) {
         // A template is an optional first step; the configuration the form holds is always
         // complete here (validated above), so it is sent either way and, with a template,
         // replaces the template's.
@@ -565,7 +564,7 @@ export function CreateContestPage() {
       };
 
       const metadataResponse = await updateContest({
-        path: { contestId: contestId! },
+        path: { contestId },
         body: metadataBody as never,
       });
       if (metadataResponse.error) {
@@ -573,7 +572,7 @@ export function CreateContestPage() {
       }
 
       const configurationResponse = await updateContestConfiguration({
-        path: { id: league.id, contestId: contestId! },
+        path: { id: league.id, contestId },
         body: configuration as never,
       });
 

@@ -34,7 +34,16 @@ export const LEAGUE_ICON_OPTIONS: Array<{
 ];
 
 const leagueIconByKey = new Map(LEAGUE_ICON_OPTIONS.map((icon) => [icon.key, icon]));
+const DEFAULT_LEAGUE_ICON = requireIcon(LeagueIconKeyEnum.TROPHY);
+
+function requireIcon(key: LeagueIconKey) {
+  const icon = leagueIconByKey.get(key);
+  if (!icon) {
+    throw new Error(`League icon catalog is missing ${key}`);
+  }
+  return icon;
+}
 
 export function getLeagueIconOption(iconKey: LeagueIconKey | undefined) {
-  return iconKey ? leagueIconByKey.get(iconKey) ?? leagueIconByKey.get(LeagueIconKeyEnum.TROPHY)! : leagueIconByKey.get(LeagueIconKeyEnum.TROPHY)!;
+  return (iconKey ? leagueIconByKey.get(iconKey) : undefined) ?? DEFAULT_LEAGUE_ICON;
 }

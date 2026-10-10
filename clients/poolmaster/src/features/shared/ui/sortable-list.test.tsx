@@ -21,7 +21,9 @@ function Harness() {
         items={items}
         onReorder={(orderedIds) =>
           setItems((current) =>
-            orderedIds.map((id) => current.find((item) => item.id === id)!),
+            current.filter((item) => orderedIds.includes(item.id)).sort(
+              (a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id),
+            ),
           )
         }
         renderItem={(item, { dragHandleProps }) => (

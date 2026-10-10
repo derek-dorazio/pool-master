@@ -8,6 +8,7 @@ import {
 import { Sport } from '@poolmaster/shared/domain';
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { freshEventEdition } from '../../support/event-edition';
+import { expectDefined } from '../../support/expect-defined';
 
 // #435 — scores land only in rounds an admin scheduled, so each event gets the four-round
 // schedule an admin-created event starts with.
@@ -221,12 +222,12 @@ describe('Golf live-score persistence', () => {
     }, { prisma: getPrisma(), providerId: PROVIDER });
 
     expect(persisted).toMatchObject({ updatesReturned: 2, updatesPersisted: 2, updatesSkipped: 0 });
-    expect(await standingOf(sepByKey.get('rory')!)).toMatchObject({
+    expect(await standingOf(expectDefined(sepByKey.get('rory')))).toMatchObject({
       currentRound: 1,
       status: 'COMPLETE',
       golf: { eventScoreToPar: -2, eventStrokes: 70, currentRoundThru: 18 },
     });
-    expect(await standingOf(sepByKey.get('tiger')!)).toMatchObject({
+    expect(await standingOf(expectDefined(sepByKey.get('tiger')))).toMatchObject({
       currentRound: 1,
       status: 'IN_PROGRESS',
       golf: { eventScoreToPar: 1, eventStrokes: 37, currentRoundThru: 9 },
@@ -249,9 +250,9 @@ describe('Golf live-score persistence', () => {
       ],
     }, { prisma: getPrisma(), providerId: PROVIDER });
 
-    expect((await standingOf(sepByKey.get('dnf')!))?.status).toBe('WITHDRAWN');
-    expect((await standingOf(sepByKey.get('dsq')!))?.status).toBe('WITHDRAWN');
-    expect((await standingOf(sepByKey.get('cut')!))?.status).toBe('ELIMINATED');
+    expect((await standingOf(expectDefined(sepByKey.get('dnf'))))?.status).toBe('WITHDRAWN');
+    expect((await standingOf(expectDefined(sepByKey.get('dsq'))))?.status).toBe('WITHDRAWN');
+    expect((await standingOf(expectDefined(sepByKey.get('cut'))))?.status).toBe('ELIMINATED');
   });
 
   it('reports an identical second poll as unchanged rows, not fresh writes', async () => {
@@ -297,7 +298,7 @@ describe('Golf live-score persistence', () => {
       expect(await getPrisma().sportEventParticipantRound.count({
         where: { sportEventParticipant: { sportEventId: event.id } },
       })).toBe(0);
-      expect(await standingOf(sepByKey.get('rory')!)).toBeNull();
+      expect(await standingOf(expectDefined(sepByKey.get('rory')))).toBeNull();
     },
   );
 
@@ -314,7 +315,7 @@ describe('Golf live-score persistence', () => {
     expect(await getPrisma().sportEventParticipantRound.count({
       where: { sportEventParticipant: { sportEventId: event.id } },
     })).toBe(0);
-    expect(await standingOf(sepByKey.get('rory')!)).toBeNull();
+    expect(await standingOf(expectDefined(sepByKey.get('rory')))).toBeNull();
   });
 
   it('skips a round whose provider id maps to no participant, and persists the rest', async () => {

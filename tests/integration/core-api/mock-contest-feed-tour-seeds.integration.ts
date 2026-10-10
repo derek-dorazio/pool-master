@@ -2,6 +2,7 @@ import { expect } from '@jest/globals';
 import { Sport } from '@poolmaster/shared/domain';
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
 import { startMockContestFeedProvider, type RunningMockContestFeedProvider } from '../mock-contest-feed-provider-helper';
+import { expectDefined } from '../../support/expect-defined';
 
 // #383 — the real mock serves the PGA TOUR and LPGA season slates through the same adapter
 // calls PoolMaster's catalog browse and field load use. No database is involved.
@@ -41,8 +42,8 @@ describe('mock contest feed tour seeds through the adapter', () => {
     const detail = await adapter.getEventDetails('lpga-tour-2026-the-chevron-championship');
 
     expect(detail).not.toBeNull();
-    expect(detail!.participants.length).toBeGreaterThanOrEqual(140);
-    expect(detail!.participants.every((participant) => participant.externalId.startsWith('lpga-tour-'))).toBe(true);
-    expect(detail!.participants.map((participant) => participant.name)).toContain('Nelly Korda');
+    expect(expectDefined(detail).participants.length).toBeGreaterThanOrEqual(140);
+    expect(expectDefined(detail).participants.every((participant) => participant.externalId.startsWith('lpga-tour-'))).toBe(true);
+    expect(expectDefined(detail).participants.map((participant) => participant.name)).toContain('Nelly Korda');
   });
 });

@@ -42,6 +42,7 @@ import {
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
+import { expectDefined } from '../../support/expect-defined';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return fakeContestRepo({
@@ -524,8 +525,8 @@ describe('ContestService', () => {
       });
       const result = await service.getContest('c-1');
       expect(result).not.toBeNull();
-      expect(result!.contest.id).toBe('c-1');
-      expect(result!.contestConfiguration).toBeDefined();
+      expect(expectDefined(result).contest.id).toBe('c-1');
+      expect(expectDefined(result).contestConfiguration).toBeDefined();
     });
 
     it('returns null for missing contest', async () => {
@@ -983,7 +984,7 @@ describe('ContestService', () => {
       expect(result.participants).toBe(await listEventParticipants.mock.results[0].value);
       const rory = result.participants.find((participant) => participant.entry.id === 'sep-1');
       const { formatRound } = PARTICIPANT_SCORING_DEFINITIONS[result.scoringDefinitionId];
-      expect(rory?.rounds.map(({ round, golf }) => formatRound({ status: round.status, ...golf! })))
+      expect(rory?.rounds.map(({ round, golf }) => formatRound({ status: round.status, ...expectDefined(golf) })))
         .toEqual(['69', '-2']);
       // Entry order is the port's contract (entryNumber, then createdAt); only active entries count.
       expect(entryRepo.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { submittedOnly: true });

@@ -16,6 +16,7 @@ import {
 } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
 import { mockFn } from '../../support/mock-fn';
+import { expectDefined } from '../../support/expect-defined';
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return fakeLeagueRepo({
@@ -630,8 +631,8 @@ describe('LeagueService', () => {
       const service = new LeagueService({ leagues: leagueRepo, memberships: membershipRepo, users: fakeUserRepo() });
       const result = await service.getLeagueWithMembers('league-1');
       expect(result).not.toBeNull();
-      expect(result!.league.id).toBe('league-1');
-      expect(result!.members).toHaveLength(1);
+      expect(expectDefined(result).league.id).toBe('league-1');
+      expect(expectDefined(result).members).toHaveLength(1);
     });
 
     it('returns null for missing league', async () => {

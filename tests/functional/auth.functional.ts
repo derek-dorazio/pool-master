@@ -14,6 +14,7 @@ import {
   getFunctionalPrisma,
   getSdkClient,
 } from './setup';
+import { expectDefined } from '../support/expect-defined';
 
 afterEach(async () => {
   await cleanupFunctionalData();
@@ -92,7 +93,7 @@ describe('SDK Functional: Auth', () => {
       },
     });
     const rotatedRefreshToken = await prisma.refreshToken.findUniqueOrThrow({
-      where: { token: refreshResponse.data!.refreshToken },
+      where: { token: expectDefined(refreshResponse.data).refreshToken },
       select: {
         sessionId: true,
         revokedAt: true,
