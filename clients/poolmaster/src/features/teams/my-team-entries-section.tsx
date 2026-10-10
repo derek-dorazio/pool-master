@@ -22,9 +22,11 @@ function LiveRank({ contest, teamId }: { contest: ContestDto; teamId: string }) 
     <span className="text-sm text-muted-foreground" data-testid={`my-team-entry-rank-${contest.id}`}>
       {leaderboardQuery.isLoading
         ? 'Checking your place...'
-        : position
-          ? `Place ${position}`
-          : 'Not ranked yet'}
+        : leaderboardQuery.isError
+          ? "We couldn't check your place."
+          : position
+            ? `Place ${position}`
+            : 'Not ranked yet'}
     </span>
   );
 }
