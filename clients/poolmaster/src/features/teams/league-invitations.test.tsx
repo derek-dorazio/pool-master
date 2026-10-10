@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LeagueInvitationDto, LeagueMembershipDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
@@ -103,6 +104,42 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     const email = await screen.findByTestId('league-invitation-email-1');
     expect(within(email).getByTestId('league-invitation-resend-email-1')).toBeEnabled();
     expect(screen.queryByTestId('league-invitation-link-1')).not.toBeInTheDocument();
+  });
+
+  it('offers no Copy on an expired invite, since its link no longer works', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({
+      data: { invitations: [emailInvite({ expiresAt: '2026-01-01T00:00:00.000Z' })] },
+    });
+
+    renderInvitations();
+    fireEvent.click(await screen.findByRole('radio', { name: 'Expired · 1' }));
+
+    const email = await screen.findByTestId('league-invitation-email-1');
+    expect(within(email).queryByTestId('league-invitation-copy-email-1')).not.toBeInTheDocument();
+    expect(within(email).getByTestId('league-invitation-resend-email-1')).toBeEnabled();
+  });
+
+  it('says there are no pending invites when every invite has expired, rather than that nothing matches', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({
+      data: { invitations: [emailInvite({ expiresAt: '2026-01-01T00:00:00.000Z' })] },
+    });
+
+    renderInvitations();
+
+    expect(await screen.findByText('No pending invites.')).toBeInTheDocument();
+  });
+
+  it('says there are no expired invites to show when a search under Expired finds nothing, not that none have expired', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({
+      data: { invitations: [emailInvite({ expiresAt: '2026-01-01T00:00:00.000Z' })] },
+    });
+
+    renderInvitations();
+    fireEvent.click(await screen.findByRole('radio', { name: 'Expired · 1' }));
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find an email' }), { target: { value: 'nobody' } });
+
+    expect(await screen.findByText('No expired invites.')).toBeInTheDocument();
+    expect(screen.queryByText('No invites have expired.')).not.toBeInTheDocument();
   });
 
   it('finds an invite by its email and hides the rest', async () => {
@@ -330,9 +367,7 @@ describe('Commissioner tools › Invites: invite people', () => {
     sendLeagueInvitationsMock.mockResolvedValue({ data: { sent: [emailInvite()], skippedMembers: [], skippedDuplicates: [] } });
 
     renderInvitations();
-    const field = await screen.findByRole('textbox', { name: 'Invite by email' });
-    fireEvent.change(field, { target: { value: 'friend@example.com' } });
-    fireEvent.submit(field);
+    await userEvent.type(await screen.findByRole('textbox', { name: 'Invite by email' }), 'friend@example.com{Enter}');
 
     await waitFor(() => expect(sendLeagueInvitationsMock).toHaveBeenCalledTimes(1));
   });
