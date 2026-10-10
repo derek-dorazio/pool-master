@@ -14,7 +14,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type { ParticipantDto, ParticipantProviderMappingDto } from '@/lib/api';
 import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
-import { golfPlayerStatusTone } from './golf-admin-utils';
+import { golfPlayerStatusLabel, golfPlayerStatusTone } from './golf-admin-utils';
 import { buildGolfPlayerPath } from './manage-navigation';
 import { useGolfPlayerQuery } from './use-golf-catalog';
 
@@ -70,7 +70,9 @@ function GolfPlayerHome({ player }: { player: ParticipantDto }) {
         icon={<UserRound aria-hidden size={22} />}
         meta={(
           <>
-            <StatusBadge tone={golfPlayerStatusTone(player.status)}>{player.status}</StatusBadge>
+            <StatusBadge tone={golfPlayerStatusTone(player.status)}>
+              {golfPlayerStatusLabel(player.status)}
+            </StatusBadge>
             {player.nationality ? <span>{player.nationality}</span> : null}
           </>
         )}
@@ -99,7 +101,11 @@ function GolfPlayerHome({ player }: { player: ParticipantDto }) {
         <SettingsRow label="Role" value={player.role || 'Not set'} />
         <SettingsRow label="Team affiliation" value={player.teamAffiliation || 'Not set'} />
         <SettingsRow label="External ID" value={player.externalId || 'Not set'} />
-        <SettingsRow label="Status" testId="root-admin-golf-player-status-row" value={player.status} />
+        <SettingsRow
+          label="Status"
+          testId="root-admin-golf-player-status-row"
+          value={golfPlayerStatusLabel(player.status)}
+        />
       </SettingsSection>
 
       <GolfPlayerMappingsSection participantId={player.id} />

@@ -9,7 +9,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { GOLF_PLAYER_STATUSES } from './golf-admin-utils';
+import { GOLF_PLAYER_STATUSES, golfPlayerStatusLabel } from './golf-admin-utils';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildGolfPlayerPath } from './manage-navigation';
 import { useGolfPlayerQuery } from './use-golf-catalog';
@@ -149,7 +149,7 @@ function GolfPlayerEditForm({ player }: { player: ParticipantDto }) {
           >
             {GOLF_PLAYER_STATUSES.map((value) => (
               <option key={value} value={value}>
-                {value}
+                {golfPlayerStatusLabel(value)}
               </option>
             ))}
           </Select>

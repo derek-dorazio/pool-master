@@ -12,6 +12,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import type { ParticipantDto } from '@/lib/api';
 import {
   GOLF_PLAYER_STATUSES,
+  golfPlayerStatusLabel,
   golfPlayerStatusTone,
   type GolfPlayerStatus,
 } from './golf-admin-utils';
@@ -57,7 +58,9 @@ export function RootAdminGolfPlayerListPage() {
       columnHelper.accessor('status', {
         header: 'Status',
         cell: ({ getValue }) => (
-          <StatusBadge tone={golfPlayerStatusTone(getValue())}>{getValue()}</StatusBadge>
+          <StatusBadge tone={golfPlayerStatusTone(getValue())}>
+            {golfPlayerStatusLabel(getValue())}
+          </StatusBadge>
         ),
       }),
     ],
@@ -70,12 +73,17 @@ export function RootAdminGolfPlayerListPage() {
         <FormField className="min-w-[12rem]" label="Status">
           <Select
             data-testid="root-admin-golf-player-list-status"
-            onChange={(event) => setStatus(event.target.value as GolfPlayerStatus)}
+            onChange={(event) => {
+              const next = GOLF_PLAYER_STATUSES.find((value) => value === event.target.value);
+              if (next) {
+                setStatus(next);
+              }
+            }}
             value={status}
           >
             {GOLF_PLAYER_STATUSES.map((value) => (
               <option key={value} value={value}>
-                {value}
+                {golfPlayerStatusLabel(value)}
               </option>
             ))}
           </Select>
@@ -91,7 +99,7 @@ export function RootAdminGolfPlayerListPage() {
       <DataGridPage
         columns={columns}
         data={playersQuery.data ?? []}
-        emptyMessage={`No ${status.toLowerCase()} golf players.`}
+        emptyMessage={`No ${golfPlayerStatusLabel(status).toLowerCase()} golf players.`}
         errorBody={extractErrorMessage(playersQuery.error, {
           fallback: 'We could not load golf players right now.',
         })}

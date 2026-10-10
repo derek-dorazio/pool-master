@@ -15,8 +15,8 @@ import { useGolfSportLeaguesQuery } from './use-golf-catalog';
 
 /**
  * /manage/golf/leagues/:leagueId, a tour's page. Owns the tour and roster queries and the
- * layout: identity heading, details with one Edit, the tournament calendar by event year
- * (plans/147), the rankings upload, the roster grid, and the danger zone last.
+ * layout: identity heading, details with one Edit, the tournament calendar by event
+ * year, the rankings upload, the roster grid, and the danger zone last.
  */
 export function RootAdminGolfLeagueHomePage() {
   const { leagueId = '' } = useParams<{ leagueId: string }>();
