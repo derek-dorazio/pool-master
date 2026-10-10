@@ -54,6 +54,20 @@ export function buildGolfTournamentPath(eventId: string) {
   return `/manage/golf/tournaments/${eventId}`;
 }
 
+export const SETTINGS_PATH = '/manage/settings';
+
+export const SYNC_PATH = '/manage/sync';
+
+export const UNMAPPED_COMPETITORS_PATH = `${SYNC_PATH}/unmapped-participants`;
+
+/** The page that maps one unmapped competitor; a provider's id can hold any character. */
+export function buildMapCompetitorPath(providerId: string, externalId: string) {
+  const query = new URLSearchParams({ provider: providerId, competitor: externalId });
+  return `${UNMAPPED_COMPETITORS_PATH}/map?${query.toString()}`;
+}
+
+export const GOLF_TOURNAMENT_LIST_PATH = '/manage/golf/tournaments';
+
 export const GOLF_PLAYER_LIST_PATH = '/manage/golf/players';
 
 export function buildGolfPlayerPath(participantId: string) {
@@ -81,9 +95,9 @@ export function buildManageMenuItems(pathname: string): NavMenuItem[] {
 }
 
 const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
-  'sync-config': 'Sync Configuration',
   'run-event-sync': 'Run Event Sync',
   'unmapped-participants': 'Unmapped Competitors',
+  map: 'Map competitor',
   'ingestion-schedule': 'Global Ingestion Schedule',
   'sport-overrides': 'Sport Ingestion Overrides',
   golf: 'Golf',

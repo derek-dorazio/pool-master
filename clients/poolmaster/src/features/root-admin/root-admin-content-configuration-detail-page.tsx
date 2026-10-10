@@ -3,17 +3,17 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { listContestConfigTemplates, updateContestConfigTemplate, type ContestConfigTemplateDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
+import { LayoutTemplate } from 'lucide-react';
 import {
-  AdminConfigPage,
+  AsyncPage,
   Button,
   Checkbox,
   FormEditorSection,
   FormField,
+  IdentityHeading,
   Input,
-  LinkButton,
   StatusBadge,
   Textarea,
-  Tile,
 } from '@/features/shared/ui';
 import {
   cloneContestTemplate,
@@ -24,6 +24,7 @@ import {
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 
 type ContestConfigTemplateUpdateResult = ContestConfigTemplateDto;
 
@@ -107,68 +108,46 @@ export function RootAdminContentConfigurationDetailPage() {
     });
   }
 
+  useManagePageOwnsHeading();
+  useManageBreadcrumbOverride(templateKey || undefined, template?.name);
+
   const pageState = templatesQuery.isError
     ? 'error'
     : templatesQuery.isLoading
       ? 'loading'
-      : 'ready';
+      : draft
+        ? 'ready'
+        : 'empty';
 
   return (
-    <AdminConfigPage
+    <AsyncPage
+      emptyBody={`No contest template matched ${templateKey}.`}
+      emptyTitle="Template not found"
       errorBody={extractErrorMessage(
         templatesQuery.error,
         { fallback: 'We could not load this contest template right now.' },
       )}
-      header={{
-        actions: (
-          <LinkButton to="/manage/content-configuration" variant="secondary">
-            Back to Content Configuration
-          </LinkButton>
-        ),
-        breadcrumbs: [
-          { href: '/manage/content-configuration', label: 'Content Configuration' },
-          { label: templateKey },
-        ],
-        title: draft?.name ?? templateKey,
-      }}
       loadingBody="Loading contest template..."
       state={pageState}
       testId="root-admin-content-configuration-detail-page"
     >
-      {!draft ? (
+      {draft ? (
         <>
-          <h2 className="text-2xl font-semibold text-foreground">
-            Template not found
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            No contest template matched <span className="font-medium text-foreground">{templateKey}</span>.
-          </p>
-        </>
-      ) : (
-        <>
-          <Tile>
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase text-muted-foreground">
-                  {draft.templateKey}
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold text-foreground">
-                  {draft.name}
-                </h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {draft.sport} · {draft.contestFormat} · {draft.selectionType}
-                </p>
-              </div>
-              <div className="flex gap-2">
+          <IdentityHeading
+            icon={<LayoutTemplate aria-hidden size={22} />}
+            meta={(
+              <>
                 <StatusBadge tone={draft.active ? 'active' : 'inactive'}>
                   {draft.active ? 'Active' : 'Inactive'}
                 </StatusBadge>
-                {draft.isDefault ? (
-                  <StatusBadge tone="info">Default</StatusBadge>
-                ) : null}
-              </div>
-            </div>
-          </Tile>
+                {draft.isDefault ? <StatusBadge tone="info">Default</StatusBadge> : null}
+                <span>{draft.sport} · {draft.contestFormat} · {draft.selectionType}</span>
+                <span className="font-mono">{draft.templateKey}</span>
+              </>
+            )}
+            name={draft.name}
+            testId="root-admin-content-configuration-identity"
+          />
 
           <FormEditorSection
             errorMessage={
@@ -283,7 +262,7 @@ export function RootAdminContentConfigurationDetailPage() {
               </div>
           </FormEditorSection>
         </>
-      )}
-    </AdminConfigPage>
+      ) : null}
+    </AsyncPage>
   );
 }

@@ -129,21 +129,3 @@ export function ListCard({
     </div>
   );
 }
-
-type ListEmptyRowProps = HTMLAttributes<HTMLDivElement> & {
-  children: ReactNode;
-};
-
-export function ListEmptyRow({ children, className, ...props }: ListEmptyRowProps) {
-  return (
-    <div
-      className={cn(
-        "rounded-[1.5rem] border border-dashed border-border bg-background p-5 text-sm text-muted-foreground",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}

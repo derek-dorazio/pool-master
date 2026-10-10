@@ -19,6 +19,7 @@ import {
 } from './golf-admin-utils';
 import type { SportEventDto } from '@/lib/api';
 import { buildGolfTournamentPath, MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
+import { GolfSectionMenu } from './golf-section-menu';
 
 const columnHelper = createColumnHelper<SportEventDto>();
 
@@ -108,6 +109,7 @@ export function RootAdminGolfTournamentListPage() {
 
   return (
     <div className="space-y-4">
+      <GolfSectionMenu current="tournaments" />
       <div className="flex justify-end">
         <LinkButton
           data-testid="root-admin-golf-tournament-list-new"

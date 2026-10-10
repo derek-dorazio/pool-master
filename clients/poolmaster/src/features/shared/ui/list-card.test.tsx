@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { ListCard, ListEmptyRow, ListStack } from "./list-card";
+import { ListCard, ListStack } from "./list-card";
 
 describe("pool-master-dn4.6: shared ListCard primitives", () => {
   it("rule: renders a link row card with metadata and trailing status", () => {
@@ -55,14 +55,13 @@ describe("pool-master-dn4.6: shared ListCard primitives", () => {
     ).toBeInTheDocument();
   });
 
-  it("rule: renders stack and empty row treatment", () => {
+  it("rule: stacks its children with even spacing", () => {
     render(
       <ListStack data-testid="list-stack">
-        <ListEmptyRow>No records yet.</ListEmptyRow>
+        <p>No records yet.</p>
       </ListStack>,
     );
 
     expect(screen.getByTestId("list-stack")).toHaveClass("space-y-3");
-    expect(screen.getByText("No records yet.")).toHaveClass("border-dashed");
   });
 });

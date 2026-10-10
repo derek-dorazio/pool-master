@@ -8,6 +8,7 @@ import {
 import { GolfTournamentManualCreateForm } from './golf-tournament-manual-create-form';
 import { GolfTournamentProviderBrowse } from './golf-tournament-provider-browse';
 import type { GolfTournamentEdition } from './golf-tournament-edition';
+import { GOLF_TOUR_LIST_PATH } from './manage-navigation';
 import { useGolfSportLeaguesQuery } from './use-golf-catalog';
 
 type CreateMode = 'manual' | 'provider';
@@ -59,7 +60,7 @@ export function RootAdminGolfTournamentCreatePage() {
           <div className="mt-3">
             <LinkButton
               data-testid="root-admin-golf-tournament-create-tours-link"
-              to="/manage/golf/leagues"
+              to={GOLF_TOUR_LIST_PATH}
               variant="secondary"
             >
               Go to Tours

@@ -24,6 +24,7 @@ import {
   formatSportEventStatus,
   sportEventStatusTone,
 } from './golf-admin-utils';
+import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 
 type AdminEvent = SportEventDto;
 
@@ -293,7 +294,9 @@ export function RootAdminEventsPage() {
         filterTestIdPrefix="root-admin-events-filter"
         getRowId={(event) => event.id}
         loadingBody="Loading events..."
+        pageSize={MANAGE_LIST_PAGE_SIZE}
         rowTestId={(event) => `root-admin-event-row-${event.id}`}
+        search={{ label: 'Find an event', testId: 'root-admin-events-search' }}
         state={
           eventsQuery.isLoading
             ? 'loading'

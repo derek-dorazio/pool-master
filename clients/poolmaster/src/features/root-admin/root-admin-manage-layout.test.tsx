@@ -23,7 +23,7 @@ function renderManage(path: string) {
           <Route element={<ManageLandingRedirect />} path="legacy" />
           <Route element={<LocationProbe />} path="leagues" />
           <Route element={<div>Detail body</div>} path="content-configuration/:templateKey" />
-          <Route element={<div>Sync config body</div>} path="sync-config/ingestion-schedule" />
+          <Route element={<div>Ingestion schedule body</div>} path="settings/ingestion-schedule" />
           <Route element={<EntityHomeProbe />} path="users/:userId" />
         </Route>
       </Routes>
@@ -88,12 +88,14 @@ describe('RootAdminManageLayout', () => {
     expect(screen.getByText('Detail body')).toBeInTheDocument();
   });
 
-  it('gives sync configuration sub-pages friendly trail labels', () => {
-    renderManage('/manage/sync-config/ingestion-schedule');
+  it('titles the ingestion schedule under Settings, marking Settings in the menu', () => {
+    renderManage('/manage/settings/ingestion-schedule');
 
     expect(screen.getByRole('heading', { name: 'Global Ingestion Schedule', level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Sync Configuration' })).toHaveAttribute('href', '/manage/sync-config');
-    expect(screen.getByText('Sync config body')).toBeInTheDocument();
+    const breadcrumbNav = screen.getByLabelText('Manage breadcrumbs');
+    expect(within(breadcrumbNav).getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/manage/settings');
+    expect(screen.getByTestId('root-admin-manage-menu-settings')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByText('Ingestion schedule body')).toBeInTheDocument();
   });
 
   it('leaves the title to an entity home that shows its own heading, keeping the trail with its name', () => {

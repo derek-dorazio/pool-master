@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getIngestionSchedule, resetIngestionSchedule, updateIngestionSchedule } from '@/lib/api';
 import {
-  AdminConfigPage,
   Alert,
+  AsyncPage,
   Button,
   Checkbox,
   FormField,
@@ -17,10 +17,11 @@ import {
   toPositiveNumber,
   type IngestionPolicyKey,
   type IngestionScheduleConfig,
-} from './root-admin-sync-config-utils';
+} from './ingestion-settings-utils';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { ManagePageIntro } from './manage-page-intro';
 
 type IngestionEditableField =
   | 'enabled'
@@ -121,10 +122,14 @@ export function RootAdminIngestionSchedulePage() {
       : 'ready';
 
   return (
-    <AdminConfigPage
+    <AsyncPage
       errorBody={extractErrorMessage(ingestionConfigQuery.error, { fallback: 'We could not load ingestion schedule configuration right now.' })}
-      header={{
-        actions: (
+      loadingBody="Loading ingestion schedule configuration..."
+      state={pageState}
+      testId="root-admin-ingestion-schedule-page"
+    >
+      <ManagePageIntro
+        actions={(
           <Button
             disabled={resetIngestionConfigMutation.isPending}
             onClick={() => {
@@ -138,19 +143,11 @@ export function RootAdminIngestionSchedulePage() {
               ? 'Resetting...'
               : 'Reset ingestion schedule'}
           </Button>
-        ),
-        breadcrumbs: [
-          { href: '/manage/sync-config', label: 'Sync Configuration' },
-          { label: 'Global Ingestion Schedule' },
-        ],
-        description:
-          'Control the default cadence and lifecycle windows that scheduled ingestion uses across sports before per-sport overrides apply.',
-        title: 'Global Ingestion Schedule',
-      }}
-      loadingBody="Loading ingestion schedule configuration..."
-      state={pageState}
-      testId="root-admin-ingestion-schedule-page"
-    >
+        )}
+      >
+        Control the default cadence and lifecycle windows that scheduled ingestion uses across
+        sports before per-sport overrides apply.
+      </ManagePageIntro>
       {ingestionConfigMutation.isError || resetIngestionConfigMutation.isError ? (
         <Alert
           className="mb-4"
@@ -253,6 +250,6 @@ export function RootAdminIngestionSchedulePage() {
           </div>
         </FormEditorSection>
       ) : null}
-    </AdminConfigPage>
+    </AsyncPage>
   );
 }

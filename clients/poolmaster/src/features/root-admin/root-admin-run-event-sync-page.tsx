@@ -7,8 +7,6 @@ import {
   Alert,
   Button,
   FormField,
-  LinkButton,
-  PageHeader,
   Select,
   Tile,
 } from '@/features/shared/ui';
@@ -26,6 +24,7 @@ import {
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { ManagePageIntro } from './manage-page-intro';
 
 type MockEventState = 'open' | 'locked' | 'live' | 'completed';
 
@@ -264,19 +263,9 @@ export function RootAdminRunEventSyncPage() {
       className="space-y-6"
       data-testid="root-admin-run-event-sync-page"
     >
-      <PageHeader
-        actions={(
-          <LinkButton
-            to="/manage/sync"
-            variant="subtle"
-          >
-            Back to Sync dashboard
-          </LinkButton>
-        )}
-        description="Use this action when a linked event needs a targeted refresh of its field or live scores."
-        eyebrow="Sync"
-        title="Run event sync"
-      />
+      <ManagePageIntro>
+        Use this action when a linked event needs a targeted refresh of its field or live scores.
+      </ManagePageIntro>
 
       <Tile>
         <div className="space-y-3">
