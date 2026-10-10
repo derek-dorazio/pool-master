@@ -489,7 +489,7 @@ describe('LeagueService', () => {
   });
 
   describe('updateLeagueDetails', () => {
-    it('updates name and description for an active league', async () => {
+    it('saves name, description and icon of an active league in a single repository write', async () => {
       const leagueRepo = createMockLeagueRepo({
         findById: jest.fn().mockResolvedValue(buildLeague({
           id: 'league-1',
@@ -501,15 +501,15 @@ describe('LeagueService', () => {
       await service.updateLeagueDetails('league-1', {
         name: 'Updated League',
         description: 'Updated description',
+        iconKey: LeagueIconKey.SOCCER_BALL,
       });
 
-      expect(leagueRepo.update).toHaveBeenCalledWith(
-        'league-1',
-        expect.objectContaining({
-          name: 'Updated League',
-          description: 'Updated description',
-        }),
-      );
+      expect(leagueRepo.update).toHaveBeenCalledTimes(1);
+      expect(leagueRepo.update).toHaveBeenCalledWith('league-1', {
+        name: 'Updated League',
+        description: 'Updated description',
+        iconKey: LeagueIconKey.SOCCER_BALL,
+      });
     });
 
     it('rejects details updates once a league is inactive', async () => {
@@ -525,6 +525,7 @@ describe('LeagueService', () => {
         service.updateLeagueDetails('league-1', {
           name: 'Updated League',
           description: 'Updated description',
+          iconKey: LeagueIconKey.SOCCER_BALL,
         }),
       ).rejects.toMatchObject({
         code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE',
