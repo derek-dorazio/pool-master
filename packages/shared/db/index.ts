@@ -20,6 +20,8 @@ export type {
   LeagueMembershipRepository,
   LeagueRepository,
   LeagueSearchFilters,
+  MembershipRepositories,
+  MembershipTransaction,
   ParticipantProviderMappingRepository,
   ParticipantRepository,
   ParticipantSearchFilters,

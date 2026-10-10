@@ -5,9 +5,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
-  SquadMembershipRepository,
-  SquadOwnerInvitationRepository,
-  SquadRepository,
+  MembershipTransaction,
 } from '@poolmaster/shared/db';
 import type { LeagueMembership, LeagueRole as LeagueRoleType } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
@@ -24,14 +22,23 @@ export interface ChangeRoleInput {
   newRole: LeagueRoleType;
 }
 
+export interface MemberServiceDeps {
+  leagueMemberships: LeagueMembershipRepository;
+  /** Removal writes the squad tables too, but only through this transaction's repositories. */
+  membershipTransaction: MembershipTransaction;
+  logger?: FastifyBaseLogger;
+}
+
 export class MemberService {
-  constructor(
-    private readonly membershipRepo: LeagueMembershipRepository,
-    private readonly squadRepo: SquadRepository,
-    private readonly squadMembershipRepo: SquadMembershipRepository,
-    private readonly ownerInvitationRepo: SquadOwnerInvitationRepository,
-    private readonly logger?: FastifyBaseLogger,
-  ) {}
+  private readonly membershipRepo: LeagueMembershipRepository;
+  private readonly membershipTransaction: MembershipTransaction;
+  private readonly logger?: FastifyBaseLogger;
+
+  constructor(deps: MemberServiceDeps) {
+    this.membershipRepo = deps.leagueMemberships;
+    this.membershipTransaction = deps.membershipTransaction;
+    this.logger = deps.logger;
+  }
 
   /** Changes a member's role. */
   async changeRole(input: ChangeRoleInput): Promise<LeagueMembership> {
@@ -116,22 +123,24 @@ export class MemberService {
     if (membership.role === LeagueRole.COMMISSIONER) {
       await this.ensureAnotherActiveCommissioner(leagueId, membership.userId);
     }
-    const { inactivatedSquadId } = await inactivateLeagueMemberUnit({
-      leagueId,
-      userId,
-      membershipRepo: this.membershipRepo,
-      squadRepo: this.squadRepo,
-      squadMembershipRepo: this.squadMembershipRepo,
-      logger: this.logger,
-    });
-    if (inactivatedSquadId) {
-      await revokePendingOwnerInvitations({
+    await this.membershipTransaction.run(async (repos) => {
+      const { inactivatedSquadId } = await inactivateLeagueMemberUnit({
         leagueId,
-        squadId: inactivatedSquadId,
-        ownerInvitationRepo: this.ownerInvitationRepo,
+        userId,
+        membershipRepo: repos.leagueMemberships,
+        squadRepo: repos.squads,
+        squadMembershipRepo: repos.squadMemberships,
         logger: this.logger,
       });
-    }
+      if (inactivatedSquadId) {
+        await revokePendingOwnerInvitations({
+          leagueId,
+          squadId: inactivatedSquadId,
+          ownerInvitationRepo: repos.squadOwnerInvitations,
+          logger: this.logger,
+        });
+      }
+    });
     this.logger?.info({
       action: 'leagueMember.remove.success',
       data: { leagueId, userId },

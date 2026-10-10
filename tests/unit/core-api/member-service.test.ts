@@ -19,6 +19,7 @@ import {
   fakeSquadMembershipRepo,
   fakeSquadOwnerInvitationRepo,
   fakeSquadRepo,
+  passThroughMembershipTransaction,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
 
@@ -63,12 +64,12 @@ describe('MemberService', () => {
     const membershipRepo = createMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
     });
-    const service = new MemberService(
-      membershipRepo,
-      createSquadRepo(),
-      createSquadMembershipRepo(),
-      fakeSquadOwnerInvitationRepo(),
-    );
+    const service = new MemberService(passThroughMembershipTransaction({
+      leagueMemberships: membershipRepo,
+      squads: createSquadRepo(),
+      squadMemberships: createSquadMembershipRepo(),
+      squadOwnerInvitations: fakeSquadOwnerInvitationRepo(),
+    }));
 
     const updatedMembership = await service.changeRole({
       leagueId: 'league-1',
@@ -84,12 +85,12 @@ describe('MemberService', () => {
   });
 
   it('rejects changing the role for a missing member', async () => {
-    const service = new MemberService(
-      createMembershipRepo(),
-      createSquadRepo(),
-      createSquadMembershipRepo(),
-      fakeSquadOwnerInvitationRepo(),
-    );
+    const service = new MemberService(passThroughMembershipTransaction({
+      leagueMemberships: createMembershipRepo(),
+      squads: createSquadRepo(),
+      squadMemberships: createSquadMembershipRepo(),
+      squadOwnerInvitations: fakeSquadOwnerInvitationRepo(),
+    }));
 
     await expect(service.changeRole({
       leagueId: 'league-1',
@@ -106,12 +107,12 @@ describe('MemberService', () => {
         status: LeagueMembershipStatus.INACTIVE,
       })),
     });
-    const service = new MemberService(
-      membershipRepo,
-      createSquadRepo(),
-      createSquadMembershipRepo(),
-      fakeSquadOwnerInvitationRepo(),
-    );
+    const service = new MemberService(passThroughMembershipTransaction({
+      leagueMemberships: membershipRepo,
+      squads: createSquadRepo(),
+      squadMemberships: createSquadMembershipRepo(),
+      squadOwnerInvitations: fakeSquadOwnerInvitationRepo(),
+    }));
 
     await expect(service.changeRole({
       leagueId: 'league-1',
@@ -133,12 +134,12 @@ describe('MemberService', () => {
       findByLeagueAndUser: jest.fn().mockResolvedValue(commissioner),
       findByLeague: jest.fn().mockResolvedValue([commissioner]),
     });
-    const service = new MemberService(
-      membershipRepo,
-      createSquadRepo(),
-      createSquadMembershipRepo(),
-      fakeSquadOwnerInvitationRepo(),
-    );
+    const service = new MemberService(passThroughMembershipTransaction({
+      leagueMemberships: membershipRepo,
+      squads: createSquadRepo(),
+      squadMemberships: createSquadMembershipRepo(),
+      squadOwnerInvitations: fakeSquadOwnerInvitationRepo(),
+    }));
 
     await expect(service.changeRole({
       leagueId: 'league-1',
@@ -189,12 +190,12 @@ describe('MemberService', () => {
         updatedAt: new Date(),
       }),
     });
-    const service = new MemberService(
-      membershipRepo,
-      squadRepo,
-      squadMembershipRepo,
-      fakeSquadOwnerInvitationRepo(),
-    );
+    const service = new MemberService(passThroughMembershipTransaction({
+      leagueMemberships: membershipRepo,
+      squads: squadRepo,
+      squadMemberships: squadMembershipRepo,
+      squadOwnerInvitations: fakeSquadOwnerInvitationRepo(),
+    }));
 
     await service.removeMember('league-1', 'user-1');
 
@@ -225,12 +226,12 @@ describe('MemberService', () => {
       findByLeagueAndUser: jest.fn().mockResolvedValue(commissioner),
       findByLeague: jest.fn().mockResolvedValue([commissioner]),
     });
-    const service = new MemberService(
-      membershipRepo,
-      createSquadRepo(),
-      createSquadMembershipRepo(),
-      fakeSquadOwnerInvitationRepo(),
-    );
+    const service = new MemberService(passThroughMembershipTransaction({
+      leagueMemberships: membershipRepo,
+      squads: createSquadRepo(),
+      squadMemberships: createSquadMembershipRepo(),
+      squadOwnerInvitations: fakeSquadOwnerInvitationRepo(),
+    }));
 
     await expect(service.removeMember('league-1', 'user-1')).rejects.toBeInstanceOf(MemberOperationError);
   });

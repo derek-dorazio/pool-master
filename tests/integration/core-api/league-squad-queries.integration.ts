@@ -1,9 +1,17 @@
 import { randomUUID } from 'node:crypto';
-import { ContestStatus, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import type { MembershipRepositories } from '@poolmaster/shared/db';
+import {
+  ContestStatus,
+  LeagueMembershipStatus,
+  LeagueRole,
+  SquadMembershipStatus,
+  SquadOwnerInvitationStatus,
+} from '@poolmaster/shared/domain';
 import {
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaSquadMembershipRepository,
+  PrismaMembershipTransaction,
   PrismaSquadOwnerInvitationRepository,
   PrismaSquadRepository,
   PrismaUserRepository,
@@ -57,14 +65,15 @@ function leagueService() {
 
 function ownerInvitationService() {
   const prisma = getPrisma();
-  return new SquadOwnerInvitationService(
-    new PrismaSquadOwnerInvitationRepository(prisma),
-    new PrismaLeagueMembershipRepository(prisma),
-    new PrismaSquadRepository(prisma),
-    new PrismaSquadMembershipRepository(prisma),
-    new PrismaUserRepository(prisma),
+  return new SquadOwnerInvitationService({
+    squadOwnerInvitations: new PrismaSquadOwnerInvitationRepository(prisma),
+    leagueMemberships: new PrismaLeagueMembershipRepository(prisma),
+    squads: new PrismaSquadRepository(prisma),
+    squadMemberships: new PrismaSquadMembershipRepository(prisma),
+    users: new PrismaUserRepository(prisma),
     prisma,
-  );
+    membershipTransaction: new PrismaMembershipTransaction(prisma),
+  });
 }
 
 describe('LeagueService.countLeagueActivity', () => {
@@ -156,5 +165,80 @@ describe('Team-owner invitations', () => {
     }));
     await expect(ownerInvitationService().getInvitationPreview('no-such-code'))
       .rejects.toBeInstanceOf(SquadOwnerInvitationNotFoundError);
+  });
+});
+
+describe('PrismaMembershipTransaction', () => {
+  /** A member who owns a team alone, with one pending co-owner invitation on it. */
+  async function memberWithTeamAndInvitation() {
+    const prisma = getPrisma();
+    const { league, commissioner } = await createLeague('Membership Tx');
+    const member = (await createTestUser({ displayName: `Member ${randomUUID().slice(0, 8)}` })).user;
+    const membership = await prisma.leagueMembership.create({
+      data: { leagueId: league.id, userId: member.id, role: LeagueRole.MEMBER, status: LeagueMembershipStatus.ACTIVE },
+    });
+    const squad = await prisma.squad.create({
+      data: { leagueId: league.id, name: `Tx Team ${randomUUID().slice(0, 8)}`, createdBy: member.id },
+    });
+    const squadMembership = await prisma.squadMembership.create({
+      data: { leagueId: league.id, squadId: squad.id, userId: member.id, status: SquadMembershipStatus.ACTIVE },
+    });
+    const invitation = await prisma.squadOwnerInvitation.create({
+      data: {
+        leagueId: league.id,
+        squadId: squad.id,
+        email: `owner-${randomUUID().slice(0, 8)}@integration.test`,
+        inviteCode: `LSQ-${randomUUID()}`,
+        invitedBy: commissioner.id,
+      },
+    });
+    return { membership, squad, squadMembership, invitation };
+  }
+
+  /** Ends the membership, the team ownership, the team and its invitation, all through `repos`. */
+  async function endEverything(repos: MembershipRepositories, seeded: Awaited<ReturnType<typeof memberWithTeamAndInvitation>>) {
+    await repos.leagueMemberships.update(seeded.membership.id, { status: LeagueMembershipStatus.INACTIVE });
+    await repos.squadMemberships.update(seeded.squadMembership.id, { status: SquadMembershipStatus.INACTIVE });
+    await repos.squads.update(seeded.squad.id, { isActive: false });
+    await repos.squadOwnerInvitations.update(seeded.invitation.id, { status: SquadOwnerInvitationStatus.REVOKED });
+  }
+
+  async function stored(seeded: Awaited<ReturnType<typeof memberWithTeamAndInvitation>>) {
+    const prisma = getPrisma();
+    return {
+      membership: (await prisma.leagueMembership.findUniqueOrThrow({ where: { id: seeded.membership.id } })).status,
+      squadMembership: (await prisma.squadMembership.findUniqueOrThrow({ where: { id: seeded.squadMembership.id } })).status,
+      squadActive: (await prisma.squad.findUniqueOrThrow({ where: { id: seeded.squad.id } })).isActive,
+      invitation: (await prisma.squadOwnerInvitation.findUniqueOrThrow({ where: { id: seeded.invitation.id } })).status,
+    };
+  }
+
+  it('commits writes to all four membership tables when the work resolves', async () => {
+    const seeded = await memberWithTeamAndInvitation();
+
+    await new PrismaMembershipTransaction(getPrisma()).run((repos) => endEverything(repos, seeded));
+
+    expect(await stored(seeded)).toEqual({
+      membership: LeagueMembershipStatus.INACTIVE,
+      squadMembership: SquadMembershipStatus.INACTIVE,
+      squadActive: false,
+      invitation: SquadOwnerInvitationStatus.REVOKED,
+    });
+  });
+
+  it('rolls back every write in all four tables when the work throws after making them', async () => {
+    const seeded = await memberWithTeamAndInvitation();
+
+    await expect(new PrismaMembershipTransaction(getPrisma()).run(async (repos) => {
+      await endEverything(repos, seeded);
+      throw new Error('fails after the last write');
+    })).rejects.toThrow('fails after the last write');
+
+    expect(await stored(seeded)).toEqual({
+      membership: LeagueMembershipStatus.ACTIVE,
+      squadMembership: SquadMembershipStatus.ACTIVE,
+      squadActive: true,
+      invitation: SquadOwnerInvitationStatus.PENDING,
+    });
   });
 });

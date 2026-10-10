@@ -235,6 +235,26 @@ export interface SquadOwnerInvitationRepository {
   update(id: string, updates: Partial<SquadOwnerInvitation>): Promise<SquadOwnerInvitation>;
 }
 
+/**
+ * The repositories a league-membership change writes through, all bound to one transaction.
+ *
+ * Ending a membership touches up to four tables: the league membership, the squad membership,
+ * the squad's `isActive`, and the squad's pending co-owner invitations. They commit together or
+ * not at all, so a failure part way never leaves a member removed while their team keeps open
+ * invitations, or a team inactive while it is being handed to a new owner.
+ */
+export interface MembershipRepositories {
+  leagueMemberships: LeagueMembershipRepository;
+  squads: SquadRepository;
+  squadMemberships: SquadMembershipRepository;
+  squadOwnerInvitations: SquadOwnerInvitationRepository;
+}
+
+/** Runs `work` in one transaction: every write it makes commits when it resolves, none if it throws. */
+export interface MembershipTransaction {
+  run<T>(work: (repos: MembershipRepositories) => Promise<T>): Promise<T>;
+}
+
 export interface LeagueInvitationRepository {
   findById(id: string): Promise<LeagueInvitation | null>;
   findByLeague(leagueId: string): Promise<LeagueInvitation[]>;

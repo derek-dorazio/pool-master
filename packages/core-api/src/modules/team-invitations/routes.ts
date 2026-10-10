@@ -10,6 +10,7 @@ import '@poolmaster/shared/dto/auth.dto';
 import {
   PrismaLeagueMembershipRepository,
   PrismaSquadMembershipRepository,
+  PrismaMembershipTransaction,
   PrismaSquadOwnerInvitationRepository,
   PrismaSquadRepository,
   PrismaUserRepository,
@@ -28,14 +29,15 @@ export function teamInvitationsModule(fastify: FastifyInstance): void {
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const userRepo = new PrismaUserRepository(prisma);
-  const service = new SquadOwnerInvitationService(
-    invitationRepo,
-    membershipRepo,
-    squadRepo,
-    squadMembershipRepo,
-    userRepo,
+  const service = new SquadOwnerInvitationService({
+    squadOwnerInvitations: invitationRepo,
+    leagueMemberships: membershipRepo,
+    squads: squadRepo,
+    squadMemberships: squadMembershipRepo,
+    users: userRepo,
     prisma,
-  );
+    membershipTransaction: new PrismaMembershipTransaction(prisma),
+  });
   // #217 — this module is the only one that exposes register-and-accept, so it is the only one
   // that hands the handlers an AuthService.
   const handlers = createSquadOwnerInvitationHandlers(

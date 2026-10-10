@@ -41,15 +41,15 @@ function leagueWithTwoTeams(): TwoTeamLeague {
   const owner = world.addUser({ firstName: 'Olive', lastName: 'Owner' });
   const { squad: commissionerSquad } = world.addMember({ league, user: commissioner, role: LeagueRole.COMMISSIONER });
   const { squad: ownerSquad } = world.addMember({ league, user: owner });
-  const service = new SquadService(
-    world.squads,
-    world.squadMemberships,
-    world.memberships,
-    world.users,
+  const service = new SquadService({
+    squads: world.squads,
+    squadMemberships: world.squadMemberships,
+    membershipTransaction: world.transaction,
+    leagueMemberships: world.memberships,
+    users: world.users,
     // Only `deleteInactiveSquad` reaches Prisma; these tests stop before its transaction.
-    asPrismaClient({}),
-    world.ownerInvitations,
-  );
+    prisma: asPrismaClient({}),
+  });
   return { world, league, commissioner, commissionerSquad, owner, ownerSquad, service };
 }
 
@@ -371,6 +371,30 @@ describe('Team use cases', () => {
       await expect(rejectionCode(service.inactivateSquad(league.id, ownerSquad.id, owner.id))).resolves.toBe('LEAGUE_PERMISSION_DENIED');
       expect(world.tables.squads.get(ownerSquad.id)?.isActive).toBe(true);
     });
+
+    it('leaves the team, every owner\'s memberships and its pending invitations untouched when revoking the invitations fails part way', async () => {
+      const { world, league, commissioner, owner, ownerSquad, service } = leagueWithTwoTeams();
+      const coOwner = world.addUser();
+      world.addMember({ league, user: coOwner, squadId: ownerSquad.id });
+      const pending = world.tables.ownerInvitations.insert({
+        leagueId: league.id,
+        squadId: ownerSquad.id,
+        email: 'pending@example.com',
+        inviteCode: 'pending1',
+        status: SquadOwnerInvitationStatus.PENDING,
+        invitedBy: owner.id,
+        expiresAt: new Date(Date.now() + 86_400_000),
+      });
+      jest.spyOn(world.ownerInvitations, 'update').mockRejectedValue(new Error('database unavailable'));
+
+      await expect(service.inactivateSquad(league.id, ownerSquad.id, commissioner.id)).rejects.toThrow('database unavailable');
+
+      expect(world.tables.squads.get(ownerSquad.id)?.isActive).toBe(true);
+      expect(ownersOf(world, ownerSquad.id)).toEqual([owner.id, coOwner.id].sort());
+      expect(world.membershipOf(league.id, owner.id)?.status).toBe(LeagueMembershipStatus.ACTIVE);
+      expect(world.membershipOf(league.id, coOwner.id)?.status).toBe(LeagueMembershipStatus.ACTIVE);
+      expect(world.tables.ownerInvitations.get(pending.id)?.status).toBe(SquadOwnerInvitationStatus.PENDING);
+    });
   });
 
   describe('adding a team owner directly', () => {
@@ -432,6 +456,18 @@ describe('Team use cases', () => {
       expect(ownersOf(world, ownerSquad.id)).toEqual([owner.id]);
       expect(world.tables.squads.get(ownerSquad.id)?.isActive).toBe(true);
       expect(world.membershipOf(league.id, coOwner.id)?.status).toBe(LeagueMembershipStatus.INACTIVE);
+    });
+
+    it('keeps a co-owner on the team and in the league when ending their team membership fails part way', async () => {
+      const { world, league, owner, ownerSquad, service } = leagueWithTwoTeams();
+      const coOwner = world.addUser();
+      world.addMember({ league, user: coOwner, squadId: ownerSquad.id });
+      jest.spyOn(world.squadMemberships, 'update').mockRejectedValue(new Error('database unavailable'));
+
+      await expect(service.removeOwner(league.id, ownerSquad.id, owner.id, coOwner.id)).rejects.toThrow('database unavailable');
+
+      expect(ownersOf(world, ownerSquad.id)).toEqual([owner.id, coOwner.id].sort());
+      expect(world.membershipOf(league.id, coOwner.id)?.status).toBe(LeagueMembershipStatus.ACTIVE);
     });
 
     it('reports removing someone who does not own the team as not found', async () => {

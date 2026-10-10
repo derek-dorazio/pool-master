@@ -48,14 +48,15 @@ function leagueWithTwoTeams(): League3 {
       findUnique: jest.fn(async ({ where }: { where: { id: string } }) => world.tables.leagues.get(where.id)),
     },
   });
-  const service = new SquadOwnerInvitationService(
-    world.ownerInvitations,
-    world.memberships,
-    world.squads,
-    world.squadMemberships,
-    world.users,
+  const service = new SquadOwnerInvitationService({
+    squadOwnerInvitations: world.ownerInvitations,
+    leagueMemberships: world.memberships,
+    squads: world.squads,
+    squadMemberships: world.squadMemberships,
+    membershipTransaction: world.transaction,
+    users: world.users,
     prisma,
-  );
+  });
   return { world, league, commissioner, commissionerSquad, owner, ownerSquad, service };
 }
 
@@ -314,6 +315,47 @@ describe('SquadOwnerInvitationService — replacing an owner', () => {
 
     expect(invitation).toMatchObject({ status: SquadOwnerInvitationStatus.ACCEPTED, acceptedBy: pat.id });
     expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([setup.owner.id, pat.id].sort());
+  });
+
+  it('keeps a sole owner on an active team, records no invitation, and leaves them in the league when reactivating the team fails part way', async () => {
+    const setup = leagueWithTwoTeams();
+    const updateSquad = setup.world.squads.update.bind(setup.world.squads);
+    jest.spyOn(setup.world.squads, 'update').mockImplementation(async (id, updates) => {
+      if (updates.isActive === true) throw new Error('database unavailable');
+      return updateSquad(id, updates);
+    });
+
+    await expect(setup.service.replaceOwner({
+      leagueId: setup.league.id,
+      squadId: setup.ownerSquad.id,
+      actorUserId: setup.commissioner.id,
+      targetUserId: setup.owner.id,
+      email: 'replacement@example.com',
+    })).rejects.toThrow('database unavailable');
+
+    expect(setup.world.tables.squads.get(setup.ownerSquad.id)?.isActive).toBe(true);
+    expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([setup.owner.id]);
+    expect(setup.world.membershipOf(setup.league.id, setup.owner.id)?.status).toBe(LeagueMembershipStatus.ACTIVE);
+    expect(setup.world.tables.ownerInvitations.where(() => true)).toEqual([]);
+  });
+
+  it('keeps the replaced co-owner on the team and records no invitation when seating the existing account fails part way', async () => {
+    const setup = leagueWithTwoTeams();
+    const coOwner = withCoOwner(setup);
+    setup.world.addUser({ email: 'pat@example.com' });
+    jest.spyOn(setup.world.squadMemberships, 'create').mockRejectedValue(new Error('database unavailable'));
+
+    await expect(setup.service.replaceOwner({
+      leagueId: setup.league.id,
+      squadId: setup.ownerSquad.id,
+      actorUserId: setup.commissioner.id,
+      targetUserId: coOwner.id,
+      email: 'pat@example.com',
+    })).rejects.toThrow('database unavailable');
+
+    expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([setup.owner.id, coOwner.id].sort());
+    expect(setup.world.membershipOf(setup.league.id, coOwner.id)?.status).toBe(LeagueMembershipStatus.ACTIVE);
+    expect(setup.world.tables.ownerInvitations.where(() => true)).toEqual([]);
   });
 
   it('refuses an owner replacing themself with SQUAD_OWNER_REPLACE_SELF_FORBIDDEN', async () => {
