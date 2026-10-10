@@ -459,7 +459,7 @@ function WaitingInvites({
         enableSorting: false,
         enableGlobalFilter: false,
         cell: ({ row }) => {
-          const { invitation, isEmail, label, link } = row.original;
+          const { invitation, isEmail, isExpired, label, link } = row.original;
           const isCopied = rowCopy?.invitationId === invitation.id && rowCopy.state === 'copied';
           return (
             <div className="flex items-center justify-end gap-2 whitespace-nowrap">
@@ -468,18 +468,21 @@ function WaitingInvites({
                   Link copied
                 </span>
               ) : null}
-              <Button
-                aria-label={`Copy invite link for ${label}`}
-                data-testid={`league-invitation-copy-${invitation.id}`}
-                disabled={isResending}
-                onClick={() => void handleCopyRowLink(invitation.id, link)}
-                size="sm"
-                title="Copy invite link"
-                type="button"
-                variant="ghost"
-              >
-                {isCopied ? <Check aria-hidden size={16} /> : <Copy aria-hidden size={16} />}
-              </Button>
+              {/* An expired link no longer works, so there is nothing to copy; Resend makes a new one. */}
+              {isExpired ? null : (
+                <Button
+                  aria-label={`Copy invite link for ${label}`}
+                  data-testid={`league-invitation-copy-${invitation.id}`}
+                  disabled={isResending}
+                  onClick={() => void handleCopyRowLink(invitation.id, link)}
+                  size="sm"
+                  title="Copy invite link"
+                  type="button"
+                  variant="ghost"
+                >
+                  {isCopied ? <Check aria-hidden size={16} /> : <Copy aria-hidden size={16} />}
+                </Button>
+              )}
               {isEmail ? (
                 <Button
                   data-testid={`league-invitation-resend-${invitation.id}`}
@@ -540,7 +543,7 @@ function WaitingInvites({
             columns={columns}
             data={visibleRows}
             emptyMessage={rows.length
-              ? (filter === 'expired' ? 'No invites have expired.' : 'No invite matches.')
+              ? (filter === 'expired' ? 'No expired invites.' : 'No pending invites.')
               : 'No invites are waiting on an answer.'}
             getRowId={(row) => row.invitation.id}
             pageSize={INVITES_PER_PAGE}
