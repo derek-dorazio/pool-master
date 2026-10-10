@@ -64,7 +64,7 @@ export class SquadOwnerInvitationService {
     const invitations = await this.invitationRepo.findByLeague(leagueId);
     const visibleInvitations = isRootAdmin || isCommissioner
       ? invitations
-      : invitations.filter((invitation) => invitation.squadId === actorSquadMembership!.squadId);
+      : invitations.filter((invitation) => invitation.squadId === actorSquadMembership?.squadId);
     return this.mapInvitationDtos(visibleInvitations);
   }
 

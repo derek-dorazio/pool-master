@@ -186,7 +186,8 @@ function buildEvent(tour: GolfSeedTour, event: TourFile['events'][number]): Golf
   // The public winner wins outright: they swap cards with the leader if they are not ahead,
   // and take a shot off Sunday if anyone is still level with them.
   if (winner) {
-    const champion = golfers.find((golfer) => golfer.player === winner)!;
+    const champion = golfers.find((golfer) => golfer.player === winner);
+    if (!champion) throw new Error(`The winner ${winner.name} is not in the field`);
     const others = golfers.filter((golfer) => !golfer.finish && golfer !== champion);
     const leader = others.reduce((best, golfer) => (total(golfer) < total(best) ? golfer : best));
     if (total(leader) < total(champion)) [champion.rounds, leader.rounds] = [leader.rounds, champion.rounds];

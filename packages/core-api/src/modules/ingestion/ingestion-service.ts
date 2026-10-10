@@ -297,7 +297,8 @@ export class IngestionService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<ProviderManualSyncSubmissionResult> {
-    if (!this.scheduler) {
+    const scheduler = this.scheduler;
+    if (!scheduler) {
       throw new Error('Ingestion scheduler is required for manual event sync');
     }
 
@@ -353,6 +354,7 @@ export class IngestionService {
 
     setImmediate(() => {
       void this.executeSubmittedEventSync({
+        scheduler,
         normalizedScope,
         syncRuns,
       });
@@ -377,6 +379,7 @@ export class IngestionService {
   }
 
   private async executeSubmittedEventSync(input: {
+    scheduler: IngestionScheduler;
     normalizedScope: NormalizedEventSyncScope;
     syncRuns: ProviderSyncRun[];
   }): Promise<void> {
@@ -396,7 +399,7 @@ export class IngestionService {
 
       try {
         await this.syncRunLedger.executeFeedRun(syncRun, () =>
-          this.scheduler!.runEventSync({
+          input.scheduler.runEventSync({
             sport: input.normalizedScope.sport,
             eventId: input.normalizedScope.eventId,
             feeds: [requestedFeed],

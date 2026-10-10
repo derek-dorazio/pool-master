@@ -114,7 +114,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
         key: body.key,
         value: body.value,
         expectedUpdatedAt: body.expectedUpdatedAt === null ? null : new Date(body.expectedUpdatedAt),
-      }, request.authUser!.userId));
+      }, requireAuthUser(request).userId));
     },
   });
 
@@ -133,7 +133,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       },
     },
     handler: async (request: FastifyRequest<{ Params: { key: string } }>) =>
-      toSettingsGroupDto(await platformSettings.reset(request.params.key, request.authUser!.userId)),
+      toSettingsGroupDto(await platformSettings.reset(request.params.key, requireAuthUser(request).userId)),
   });
 
   fastify.get('/settings/:key/history', {

@@ -28,6 +28,7 @@ import {
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
 } from '../../../packages/core-api/src/adapters';
+import { expectDefined } from '../../support/expect-defined';
 
 const providerId = 'mock-contest-feed';
 const eventExternalId = 'golf-masters-2026';
@@ -607,18 +608,18 @@ describe('mock contest feed provider event-first verification', () => {
 
     // plans/147 — sync updates the event linked to this provider event; it never creates one.
     await linkedProviderEvent(prisma, {
-      providerId: detail!.providerId,
-      externalId: detail!.externalId,
-      name: detail!.name,
-      startDate: detail!.startDate,
+      providerId: expectDefined(detail).providerId,
+      externalId: expectDefined(detail).externalId,
+      name: expectDefined(detail).name,
+      startDate: expectDefined(detail).startDate,
     });
 
-    const persistDetailResult = (await persistence.persistEventDetailWithDiagnostics(detail!)).value;
+    const persistDetailResult = (await persistence.persistEventDetailWithDiagnostics(expectDefined(detail))).value;
     expect(persistDetailResult.eventsPersisted).toBe(1);
     expect(persistDetailResult.participantsPersisted).toBe(detail?.participants.length);
     expect(persistDetailResult.sportEventParticipantsPersisted).toBe(detail?.participants.length);
 
-    await expect(persistence.persistEventDetailWithDiagnostics(detail!).then((result) => result.value)).resolves.toEqual({
+    await expect(persistence.persistEventDetailWithDiagnostics(expectDefined(detail)).then((result) => result.value)).resolves.toEqual({
       eventsPersisted: 1,
       participantsPersisted: detail?.participants.length,
       sportEventParticipantsPersisted: detail?.participants.length,
@@ -658,7 +659,7 @@ describe('mock contest feed provider event-first verification', () => {
       where: {
         sportEventId_participantId: {
           sportEventId: persistedEvent.id,
-          participantId: scottieMapping!.participantId,
+          participantId: expectDefined(scottieMapping).participantId,
         },
       },
     });
@@ -687,12 +688,12 @@ describe('mock contest feed provider event-first verification', () => {
       where: { id: linked.id },
       data: { syncScope: 'SCORES_ONLY', rounds: 4, venue: 'Admin Links' },
     });
-    expect(detail!.startDate.toISOString()).not.toBe(adminStart.toISOString());
-    expect(detail!.name).not.toBe('Admin Spring Classic');
+    expect(expectDefined(detail).startDate.toISOString()).not.toBe(adminStart.toISOString());
+    expect(expectDefined(detail).name).not.toBe('Admin Spring Classic');
 
-    const result = (await persistence.persistEventDetailWithDiagnostics(detail!)).value;
+    const result = (await persistence.persistEventDetailWithDiagnostics(expectDefined(detail))).value;
 
-    expect(result.sportEventParticipantsPersisted).toBe(detail!.participants.length);
+    expect(result.sportEventParticipantsPersisted).toBe(expectDefined(detail).participants.length);
     const after = await prisma.sportEvent.findUniqueOrThrow({ where: { id: linked.id } });
     expect(after).toMatchObject({
       name: 'Admin Spring Classic',
@@ -701,10 +702,10 @@ describe('mock contest feed provider event-first verification', () => {
       rounds: 4,
       status: linked.status,
       syncScope: 'SCORES_ONLY',
-      participantCount: detail!.participants.length,
+      participantCount: expectDefined(detail).participants.length,
     });
     await expect(prisma.sportEventParticipant.count({ where: { sportEventId: linked.id } }))
-      .resolves.toBe(detail!.participants.length);
+      .resolves.toBe(expectDefined(detail).participants.length);
   });
 
   it('gives a made-up tournament its own sandbox event from the real mock: an 80-golfer field and a simulation it can start and read', async () => {
@@ -713,8 +714,8 @@ describe('mock contest feed provider event-first verification', () => {
 
     const detail = await adapter.getEventDetails(sandboxId);
     expect(detail).not.toBeNull();
-    expect(detail!.externalId).toBe(sandboxId);
-    expect(detail!.participants).toHaveLength(80);
+    expect(expectDefined(detail).externalId).toBe(sandboxId);
+    expect(expectDefined(detail).participants).toHaveLength(80);
 
     await expect(adapter.getLiveSimulation(sandboxId)).resolves.toBeNull();
     const started = await adapter.startLiveSimulation(sandboxId, { minutesPerRound: 15 });

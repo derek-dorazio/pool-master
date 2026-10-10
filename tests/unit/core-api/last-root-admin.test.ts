@@ -15,6 +15,7 @@ import { UserService } from '../../../packages/core-api/src/modules/users/user-s
 import { UserOperationError } from '../../../packages/core-api/src/modules/users/user-errors';
 import { asPrismaClient } from '../../support/prisma-double';
 import { fakeUserRepo } from '../../support/repo-fakes';
+import { expectDefined } from '../../support/expect-defined';
 
 function buildUser(id: string, overrides: Partial<User> = {}): User {
   return {
@@ -35,11 +36,14 @@ function createUserWorld(seed: User[]) {
   const rows = new Map(seed.map((user) => [user.id, { ...user }]));
 
   const users: UserRepository = fakeUserRepo({
-    findById: async (id) => (rows.has(id) ? { ...rows.get(id)! } : null),
+    findById: async (id) => {
+      const row = rows.get(id);
+      return row ? { ...row } : null;
+    },
     countActiveRootAdmins: async () =>
       [...rows.values()].filter((user) => user.isRootAdmin === true && user.isActive).length,
     update: async (id, updates) => {
-      const next = { ...rows.get(id)!, ...updates } as User;
+      const next = { ...expectDefined(rows.get(id)), ...updates } as User;
       rows.set(id, next);
       return { ...next };
     },
@@ -48,7 +52,7 @@ function createUserWorld(seed: User[]) {
   const tx = {
     user: {
       update: async ({ where, data }: { where: { id: string }; data: Partial<User> }) => {
-        rows.set(where.id, { ...rows.get(where.id)!, ...data });
+        rows.set(where.id, { ...expectDefined(rows.get(where.id)), ...data });
       },
       delete: async ({ where }: { where: { id: string } }) => {
         rows.delete(where.id);

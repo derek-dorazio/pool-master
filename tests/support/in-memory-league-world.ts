@@ -46,6 +46,7 @@ import {
   SquadOwnerInvitationStatus,
   TeamIconKey,
 } from '@poolmaster/shared/domain';
+import { expectDefined } from './expect-defined';
 
 type NewRow<T extends DomainEntity> = Omit<T, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -287,7 +288,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
         joinedAt: new Date('2026-09-01T00:00:00.000Z'),
       });
       const squad = squadId
-        ? squads.get(squadId)!
+        ? expectDefined(squads.get(squadId))
         : squads.insert({
           leagueId: league.id,
           createdBy: user.id,

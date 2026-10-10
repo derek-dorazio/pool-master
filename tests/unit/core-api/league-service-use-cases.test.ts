@@ -14,6 +14,7 @@ import {
 } from '../../../packages/core-api/src/modules/leagues/service';
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
 import { asPrismaClient } from '../../support/prisma-double';
+import { expectDefined } from '../../support/expect-defined';
 
 /**
  * LeagueService use cases against the in-memory league world: what each operation leaves
@@ -46,7 +47,7 @@ describe('LeagueService — creating a league', () => {
     expect(membership).toMatchObject({ role: LeagueRole.COMMISSIONER, status: LeagueMembershipStatus.ACTIVE });
     const squadMembership = world.squadMembershipOf(league.id, creator.id);
     expect(squadMembership?.status).toBe(SquadMembershipStatus.ACTIVE);
-    expect(world.tables.squads.get(squadMembership!.squadId)?.isActive).toBe(true);
+    expect(world.tables.squads.get(expectDefined(squadMembership).squadId)?.isActive).toBe(true);
   });
 
   it('refuses a league code already in use with LeagueCodeConflictError (409) and creates nothing', async () => {

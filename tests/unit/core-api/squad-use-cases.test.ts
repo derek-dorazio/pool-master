@@ -13,6 +13,7 @@ import { SquadNotFoundError, SquadOperationError } from '../../../packages/core-
 import { SquadService } from '../../../packages/core-api/src/modules/squads/service';
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
 import { asPrismaClient } from '../../support/prisma-double';
+import { expectDefined } from '../../support/expect-defined';
 
 /**
  * Team use cases — list, read, create, rename and re-icon, inactivate, add and remove owners —
@@ -96,7 +97,7 @@ describe('Team use cases', () => {
       expect(squads.map((squad) => squad.id).sort()).toEqual(
         world.tables.squads.where(() => true).map((squad) => squad.id).sort(),
       );
-      const listed = squads.find((squad) => squad.id === ownerSquad.id)!;
+      const listed = expectDefined(squads.find((squad) => squad.id === ownerSquad.id));
       expect(listed.isActive).toBe(false);
       expect(listed.memberCount).toBe(1);
       expect((listed.members ?? []).map((member) => member.user.id)).toEqual([owner.id]);
@@ -111,7 +112,7 @@ describe('Team use cases', () => {
 
     it('refuses to list a league\'s teams to a member whose league membership has ended', async () => {
       const { world, league, owner, service } = leagueWithTwoTeams();
-      const membership = world.membershipOf(league.id, owner.id)!;
+      const membership = expectDefined(world.membershipOf(league.id, owner.id));
       world.tables.memberships.patch(membership.id, { status: LeagueMembershipStatus.INACTIVE });
 
       await expect(rejectionCode(service.listSquads(league.id, owner.id))).resolves.toBe('LEAGUE_MEMBERSHIP_REQUIRED');
@@ -121,7 +122,7 @@ describe('Team use cases', () => {
       const { world, league, owner, ownerSquad, commissioner, service } = leagueWithTwoTeams();
       const former = world.addUser({ firstName: 'Fran', lastName: 'Former' });
       world.addMember({ league, user: former, squadId: ownerSquad.id });
-      const formerMembership = world.squadMembershipOf(league.id, former.id)!;
+      const formerMembership = expectDefined(world.squadMembershipOf(league.id, former.id));
       world.tables.squadMemberships.patch(formerMembership.id, { status: SquadMembershipStatus.INACTIVE });
 
       const squad = await service.getSquad(league.id, ownerSquad.id, commissioner.id);
@@ -186,7 +187,7 @@ describe('Team use cases', () => {
 
     it('refuses a new team for a member who already has a past team in the league, so their history is not split', async () => {
       const { world, league, owner, service } = leagueWithTwoTeams();
-      const ownership = world.squadMembershipOf(league.id, owner.id)!;
+      const ownership = expectDefined(world.squadMembershipOf(league.id, owner.id));
       world.tables.squadMemberships.patch(ownership.id, { status: SquadMembershipStatus.INACTIVE });
 
       await expect(rejectionCode(service.createSquad(league.id, owner.id, { name: 'Fresh Start' }))).resolves.toBe('SQUAD_HISTORY_EXISTS');
@@ -222,7 +223,7 @@ describe('Team use cases', () => {
 
     it('lets an owner change only the icon, leaving the name as it was', async () => {
       const { world, league, owner, ownerSquad, service } = leagueWithTwoTeams();
-      const otherIcon = Object.values(TeamIconKey).find((key) => key !== ownerSquad.iconKey)!;
+      const otherIcon = expectDefined(Object.values(TeamIconKey).find((key) => key !== ownerSquad.iconKey));
 
       await service.updateSquad(league.id, ownerSquad.id, owner.id, { iconKey: otherIcon });
 
@@ -247,7 +248,7 @@ describe('Team use cases', () => {
       const { world, league, ownerSquad, service } = leagueWithTwoTeams();
       const former = world.addUser();
       world.addMember({ league, user: former, squadId: ownerSquad.id });
-      const formerOwnership = world.squadMembershipOf(league.id, former.id)!;
+      const formerOwnership = expectDefined(world.squadMembershipOf(league.id, former.id));
       world.tables.squadMemberships.patch(formerOwnership.id, { status: SquadMembershipStatus.INACTIVE });
 
       await expect(rejectionCode(service.updateSquad(league.id, ownerSquad.id, former.id, { name: 'Mine Again' }))).resolves.toBe('SQUAD_OWNER_REQUIRED');
@@ -401,7 +402,7 @@ describe('Team use cases', () => {
 
     it('restores a former owner of the team and reactivates the team if it had been inactivated', async () => {
       const { world, league, commissioner, ownerSquad, owner, service } = leagueWithTwoTeams();
-      const ownership = world.squadMembershipOf(league.id, owner.id)!;
+      const ownership = expectDefined(world.squadMembershipOf(league.id, owner.id));
       world.tables.squadMemberships.patch(ownership.id, { status: SquadMembershipStatus.INACTIVE });
       world.tables.squads.patch(ownerSquad.id, { isActive: false });
 
@@ -443,7 +444,7 @@ describe('Team use cases', () => {
       const { world, league, owner, ownerSquad, service } = leagueWithTwoTeams();
       const former = world.addUser();
       world.addMember({ league, user: former, squadId: ownerSquad.id });
-      const ownership = world.squadMembershipOf(league.id, former.id)!;
+      const ownership = expectDefined(world.squadMembershipOf(league.id, former.id));
       world.tables.squadMemberships.patch(ownership.id, { status: SquadMembershipStatus.INACTIVE });
 
       await expect(rejectionCode(service.removeOwner(league.id, ownerSquad.id, owner.id, former.id))).resolves.toBe('SQUAD_NOT_FOUND');

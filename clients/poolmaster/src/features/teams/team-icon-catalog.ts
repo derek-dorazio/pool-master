@@ -72,9 +72,16 @@ export const TEAM_ICON_OPTIONS: Array<{
 );
 
 const teamIconByKey = new Map(TEAM_ICON_OPTIONS.map((icon) => [icon.key, icon]));
+const DEFAULT_TEAM_ICON = requireIcon(TeamIconKeyEnum.CAPTAIN_SMILE_FIELD);
+
+function requireIcon(key: TeamIconKey) {
+  const icon = teamIconByKey.get(key);
+  if (!icon) {
+    throw new Error(`Team icon catalog is missing ${key}`);
+  }
+  return icon;
+}
 
 export function getTeamIconOption(iconKey: TeamIconKey | undefined) {
-  return iconKey
-    ? teamIconByKey.get(iconKey) ?? teamIconByKey.get(TeamIconKeyEnum.CAPTAIN_SMILE_FIELD)!
-    : teamIconByKey.get(TeamIconKeyEnum.CAPTAIN_SMILE_FIELD)!;
+  return (iconKey ? teamIconByKey.get(iconKey) : undefined) ?? DEFAULT_TEAM_ICON;
 }

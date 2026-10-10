@@ -14,6 +14,7 @@ import {
   MemberService,
 } from '../../../packages/core-api/src/modules/leagues/member-service';
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
+import { expectDefined } from '../../support/expect-defined';
 
 /**
  * League membership use cases — role changes, removal, and the member roster — against the
@@ -164,7 +165,7 @@ describe('MemberService — removing a member', () => {
     const member = world.addUser();
     const { squad } = world.addMember({ league, user: member });
     const invitation = pendingInvitationFor(world, league, squad, member.id);
-    const commissionerSquad = world.tables.squads.get(world.squadMembershipOf(league.id, commissioner.id)!.squadId)!;
+    const commissionerSquad = expectDefined(world.tables.squads.get(expectDefined(world.squadMembershipOf(league.id, commissioner.id)).squadId));
     const otherTeamInvitation = pendingInvitationFor(world, league, commissionerSquad, commissioner.id);
 
     await memberService(world).removeMember(league.id, member.id);
@@ -225,7 +226,7 @@ describe('MemberService — removing a member', () => {
     const { world, league } = leagueWithCommissioner();
     const member = world.addUser();
     world.addMember({ league, user: member });
-    const squadMembership = world.squadMembershipOf(league.id, member.id)!;
+    const squadMembership = expectDefined(world.squadMembershipOf(league.id, member.id));
     world.tables.squadMemberships.remove(squadMembership.id);
 
     await memberService(world).removeMember(league.id, member.id);
