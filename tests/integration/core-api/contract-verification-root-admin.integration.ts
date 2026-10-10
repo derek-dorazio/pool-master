@@ -56,6 +56,7 @@ import type {
   UserResponse,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+import { standardEventPricing } from '../../support/budget-pricing';
 import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
 import { participantsModule } from '../../../packages/core-api/src/modules/participants/routes';
 import { eventsModule } from '../../../packages/core-api/src/modules/events/routes';
@@ -1308,7 +1309,7 @@ describe('Contract verification (root admin)', () => {
       expect(SportEventRoundListResponseSchema.safeParse(roundsRes.json()).success).toBe(true);
       expect(roundsRes.json<SportEventRoundListResponse>().rounds).toHaveLength(4);
 
-      // --- releaseEvent (422 while golfers lack a tier, then 200 once tiered) -
+      // --- releaseEvent (422 while golfers lack a tier, then 200 once tiered and priced) -
       const releaseRefusedRes = await getApp().inject({
         method: 'POST',
         url: `/api/v1/events/${eventId}/release`,
@@ -1325,6 +1326,16 @@ describe('Contract verification (root admin)', () => {
         payload: { source: 'RANKING' },
       });
       expect(autoTierRes.statusCode).toBe(200);
+
+      // --- autoAssignEventPrices: release also needs every active golfer priced (#93) ---
+      const autoPriceRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        headers: rootAdmin.headers,
+        payload: standardEventPricing(),
+      });
+      expect(autoPriceRes.statusCode).toBe(200);
+      expect(SportEventParticipantListResponseSchema.safeParse(autoPriceRes.json()).success).toBe(true);
 
       const releaseRes = await getApp().inject({
         method: 'POST',
