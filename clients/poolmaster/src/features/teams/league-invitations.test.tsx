@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LeagueInvitationDto, LeagueMembershipDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
@@ -54,17 +55,12 @@ function renderInvitations({ isInactiveLeague = false } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <LeagueInvitations
-        isInactiveLeague={isInactiveLeague}
-        leagueId="league-1"
-        leagueName="Big Dawgs"
-        membersByUserId={membersByUserId}
-      />
+      <LeagueInvitations isInactiveLeague={isInactiveLeague} leagueId="league-1" membersByUserId={membersByUserId} />
     </QueryClientProvider>,
   );
 }
 
-describe('LeagueInvitations', () => {
+describe('Commissioner tools › Invites: waiting on an answer', () => {
   afterEach(() => {
     generateInviteLinkMock.mockReset();
     listLeagueInvitationsMock.mockReset();
@@ -80,28 +76,102 @@ describe('LeagueInvitations', () => {
 
     const email = await screen.findByTestId('league-invitation-email-1');
     expect(email).toHaveTextContent('friend@example.com');
-    expect(email).toHaveTextContent('Pending');
-    expect(email).toHaveTextContent('Invited by Derek Dorazio');
-    expect(within(email).getByTestId('league-invitation-resend-email-1')).toHaveTextContent('Resend Invite');
-    expect(within(email).getByTestId('league-invitation-cancel-email-1')).toHaveTextContent('Cancel Invite');
+    expect(email).toHaveTextContent('Derek Dorazio');
+    expect(within(email).getByTestId('league-invitation-resend-email-1')).toHaveTextContent('Resend');
+    expect(within(email).getByTestId('league-invitation-cancel-email-1')).toHaveTextContent('Cancel');
 
     const link = screen.getByTestId('league-invitation-link-1');
     expect(link).toHaveTextContent('Join link');
     expect(link).toHaveTextContent('2 joined');
+    expect(link).toHaveTextContent('Never');
     expect(within(link).queryByTestId('league-invitation-resend-link-1')).not.toBeInTheDocument();
     expect(within(link).getByTestId('league-invitation-cancel-link-1')).toBeInTheDocument();
   });
 
-  it('marks an email invite past its expiry as Expired and still offers Resend', async () => {
+  it('keeps an email invite past its expiry out of Pending and lists it under Expired, still offering Resend', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({
+      data: { invitations: [emailInvite({ expiresAt: '2026-01-01T00:00:00.000Z' }), joinLink()] },
+    });
+
+    renderInvitations();
+
+    await screen.findByTestId('league-invitation-link-1');
+    expect(screen.getByRole('radio', { name: 'Pending · 1' })).toBeChecked();
+    expect(screen.queryByTestId('league-invitation-email-1')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Expired · 1' }));
+
+    const email = await screen.findByTestId('league-invitation-email-1');
+    expect(within(email).getByTestId('league-invitation-resend-email-1')).toBeEnabled();
+    expect(screen.queryByTestId('league-invitation-link-1')).not.toBeInTheDocument();
+  });
+
+  it('offers no Copy on an expired invite, since its link no longer works', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({
+      data: { invitations: [emailInvite({ expiresAt: '2026-01-01T00:00:00.000Z' })] },
+    });
+
+    renderInvitations();
+    fireEvent.click(await screen.findByRole('radio', { name: 'Expired · 1' }));
+
+    const email = await screen.findByTestId('league-invitation-email-1');
+    expect(within(email).queryByTestId('league-invitation-copy-email-1')).not.toBeInTheDocument();
+    expect(within(email).getByTestId('league-invitation-resend-email-1')).toBeEnabled();
+  });
+
+  it('says there are no pending invites when every invite has expired, rather than that nothing matches', async () => {
     listLeagueInvitationsMock.mockResolvedValue({
       data: { invitations: [emailInvite({ expiresAt: '2026-01-01T00:00:00.000Z' })] },
     });
 
     renderInvitations();
 
-    const email = await screen.findByTestId('league-invitation-email-1');
-    expect(within(email).getAllByText('Expired').length).toBeGreaterThan(0);
-    expect(within(email).getByTestId('league-invitation-resend-email-1')).toBeEnabled();
+    expect(await screen.findByText('No pending invites.')).toBeInTheDocument();
+  });
+
+  it('says there are no expired invites to show when a search under Expired finds nothing, not that none have expired', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({
+      data: { invitations: [emailInvite({ expiresAt: '2026-01-01T00:00:00.000Z' })] },
+    });
+
+    renderInvitations();
+    fireEvent.click(await screen.findByRole('radio', { name: 'Expired · 1' }));
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find an email' }), { target: { value: 'nobody' } });
+
+    expect(await screen.findByText('No expired invites.')).toBeInTheDocument();
+    expect(screen.queryByText('No invites have expired.')).not.toBeInTheDocument();
+  });
+
+  it('finds an invite by its email and hides the rest', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [
+          emailInvite(),
+          emailInvite({ id: 'email-2', inviteCode: 'email-code-2', email: 'rival@example.com' }),
+        ],
+      },
+    });
+
+    renderInvitations();
+    await screen.findByTestId('league-invitation-email-2');
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find an email' }), { target: { value: 'rival' } });
+
+    await waitFor(() => expect(screen.queryByTestId('league-invitation-email-1')).not.toBeInTheDocument());
+    expect(screen.getByTestId('league-invitation-email-2')).toBeInTheDocument();
+  });
+
+  it('pages the invites 25 at a time', async () => {
+    const many = Array.from({ length: 30 }, (_, index) => emailInvite({
+      id: `email-${String(index)}`,
+      inviteCode: `code-${String(index)}`,
+      email: `friend${String(index)}@example.com`,
+    }));
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: many } });
+
+    renderInvitations();
+
+    await screen.findByTestId('league-invitations-table');
+    expect(within(screen.getByTestId('league-invitations-table')).getAllByRole('row')).toHaveLength(26);
   });
 
   it('resends an email invite and reloads the list, telling the commissioner the old link stopped working', async () => {
@@ -130,7 +200,7 @@ describe('LeagueInvitations', () => {
     await waitFor(() =>
       expect(revokeInviteLinkMock).toHaveBeenCalledWith({ path: { id: 'league-1', code: 'link-code' } }),
     );
-    expect(await screen.findByTestId('league-invitations-empty')).toHaveTextContent('No invites are waiting on an answer.');
+    expect(await screen.findByText('No invites are waiting on an answer.')).toBeInTheDocument();
   });
 
   it('shows the reason when a resend fails', async () => {
@@ -173,48 +243,10 @@ describe('LeagueInvitations', () => {
     fireEvent.click(await screen.findByTestId('league-invitation-cancel-email-1'));
 
     expect(await screen.findByTestId('league-invitation-cancel-error')).toBeInTheDocument();
-    expect(await screen.findByTestId('league-invitations-empty')).toBeInTheDocument();
+    expect(await screen.findByText('No invites are waiting on an answer.')).toBeInTheDocument();
   });
 
-  it('creates a copyable join URL from the Invite members modal and refreshes the pending list', async () => {
-    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
-    generateInviteLinkMock.mockResolvedValue({ data: { invitation: buildGeneratedInviteLink({ inviteCode: 'invite-abc' }) } });
-    const writeTextMock = vi.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
-
-    renderInvitations();
-    fireEvent.click(await screen.findByTestId('league-open-invite-members'));
-    await screen.findByTestId('league-invitations-section');
-    fireEvent.click(screen.getByTestId('league-create-join-url'));
-
-    await waitFor(() =>
-      expect(screen.getByTestId('league-join-url')).toHaveValue(`${window.location.origin}/invite/invite-abc`),
-    );
-    fireEvent.click(screen.getByTestId('league-copy-join-url'));
-    await waitFor(() => expect(writeTextMock).toHaveBeenCalledWith(expect.stringContaining('/invite/invite-abc')));
-    await waitFor(() => expect(listLeagueInvitationsMock).toHaveBeenCalledTimes(2));
-  });
-
-  it('sends an email invite from the modal and refreshes the pending list', async () => {
-    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
-    sendLeagueInvitationsMock.mockResolvedValue({ data: { sent: [emailInvite()], skippedMembers: [], skippedDuplicates: [] } });
-
-    renderInvitations();
-    fireEvent.click(await screen.findByTestId('league-open-invite-members'));
-    fireEvent.change(await screen.findByTestId('league-invite-email'), { target: { value: 'friend@example.com' } });
-    fireEvent.click(screen.getByTestId('league-send-invite'));
-
-    await waitFor(() =>
-      expect(sendLeagueInvitationsMock).toHaveBeenCalledWith({
-        path: { id: 'league-1' },
-        body: { emails: ['friend@example.com'] },
-      }),
-    );
-    await waitFor(() => expect(listLeagueInvitationsMock).toHaveBeenCalledTimes(2));
-    expect(screen.getByTestId('league-invite-email')).toHaveValue('');
-  });
-
-  it('copies an email invite\'s link from its pending row, so the commissioner can share it by hand when no email goes out', async () => {
+  it('copies an email invite\'s link from its row, so the commissioner can share it by hand when no email goes out', async () => {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
     const writeTextMock = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
@@ -277,43 +309,67 @@ describe('LeagueInvitations', () => {
     await waitFor(() => expect(writeTextMock).toHaveBeenCalledWith(`${window.location.origin}/invite/link-code`));
   });
 
-  it('disables inviting and resending while the league is inactive', async () => {
+  it('disables inviting and resending while the league is inactive, and says why, but still allows cancelling', async () => {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
 
     renderInvitations({ isInactiveLeague: true });
 
     expect(await screen.findByTestId('league-invitation-resend-email-1')).toBeDisabled();
-    expect(screen.getByTestId('league-open-invite-members')).toBeDisabled();
+    expect(screen.getByTestId('league-invite-email')).toBeDisabled();
+    expect(screen.getByTestId('league-create-join-url')).toBeDisabled();
+    expect(screen.getByTestId('league-invites-inactive')).toHaveTextContent('nobody new can be invited');
     expect(screen.getByTestId('league-invitation-cancel-email-1')).toBeEnabled();
   });
 });
 
-describe('Inviting members from Commissioner tools › Invites', () => {
+describe('Commissioner tools › Invites: invite people', () => {
   afterEach(() => {
     generateInviteLinkMock.mockReset();
     listLeagueInvitationsMock.mockReset();
     sendLeagueInvitationsMock.mockReset();
   });
 
-  async function openInviteMembers() {
+  async function sendInviteTo(email: string) {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
     renderInvitations();
-    fireEvent.click(await screen.findByTestId('league-open-invite-members'));
-    await screen.findByRole('dialog', { name: 'Invite Members' });
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Invite by email' }), { target: { value: email } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }));
   }
 
-  async function sendInviteTo(email: string) {
-    await openInviteMembers();
-    fireEvent.change(screen.getByRole('textbox', { name: 'Invite by email' }), { target: { value: email } });
-    fireEvent.click(screen.getByTestId('league-send-invite'));
-  }
+  it('shows the invite form on the page itself, with no dialog to open first', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
 
-  it('confirms who an email invitation was sent to', async () => {
+    renderInvitations();
+
+    expect(await screen.findByRole('textbox', { name: 'Invite by email' })).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Join link' })).toBeVisible();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('sends an email invite, clears the field and refreshes the list', async () => {
     sendLeagueInvitationsMock.mockResolvedValue({ data: { sent: [emailInvite()], skippedMembers: [], skippedDuplicates: [] } });
 
     await sendInviteTo('friend@example.com');
 
+    await waitFor(() =>
+      expect(sendLeagueInvitationsMock).toHaveBeenCalledWith({
+        path: { id: 'league-1' },
+        body: { emails: ['friend@example.com'] },
+      }),
+    );
     expect(await screen.findByText('Invitation sent to friend@example.com.')).toBeInTheDocument();
+    await waitFor(() => expect(listLeagueInvitationsMock).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole('textbox', { name: 'Invite by email' })).toHaveValue('');
+  });
+
+  it('sends the invite when the commissioner presses Enter in the email field', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
+    sendLeagueInvitationsMock.mockResolvedValue({ data: { sent: [emailInvite()], skippedMembers: [], skippedDuplicates: [] } });
+
+    renderInvitations();
+    await userEvent.type(await screen.findByRole('textbox', { name: 'Invite by email' }), 'friend@example.com{Enter}');
+
+    await waitFor(() => expect(sendLeagueInvitationsMock).toHaveBeenCalledTimes(1));
   });
 
   it('tells the commissioner an email already belongs to a member instead of implying it was sent', async () => {
@@ -345,31 +401,62 @@ describe('Inviting members from Commissioner tools › Invites', () => {
     expect(screen.getByRole('textbox', { name: 'Invite by email' })).toHaveValue('friend@example.com');
   });
 
-  it('shows the server reason when a join URL cannot be created and leaves the field empty', async () => {
+  it('shows the league\'s current join link from the list, with how many people have used it', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite(), joinLink()] } });
+
+    renderInvitations();
+
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'Join link' })).toHaveValue(`${window.location.origin}/invite/link-code`),
+    );
+    expect(screen.getByText('Anyone with the link can join. 2 people have used it.')).toBeInTheDocument();
+    expect(screen.getByTestId('league-create-join-url')).toHaveTextContent('New link');
+  });
+
+  it('creates a join link, shows it in the field and copies it', async () => {
+    listLeagueInvitationsMock
+      .mockResolvedValueOnce({ data: { invitations: [] } })
+      .mockResolvedValue({ data: { invitations: [joinLink({ inviteCode: 'invite-abc', currentUses: 0 })] } });
+    generateInviteLinkMock.mockResolvedValue({ data: { invitation: joinLink({ inviteCode: 'invite-abc', currentUses: 0 }) } });
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
+
+    renderInvitations();
+    expect(await screen.findByRole('button', { name: 'Copy join link' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Create join link' }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'Join link' })).toHaveValue(`${window.location.origin}/invite/invite-abc`),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Copy join link' }));
+    await waitFor(() => expect(writeTextMock).toHaveBeenCalledWith(`${window.location.origin}/invite/invite-abc`));
+  });
+
+  it('shows the server reason when a join link cannot be created and leaves the field empty', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
     generateInviteLinkMock.mockResolvedValue({
       error: { error: { code: 'LEAGUE_INACTIVE', message: 'This league is inactive and cannot create invite links.' } },
     });
 
-    await openInviteMembers();
-    fireEvent.click(screen.getByTestId('league-create-join-url'));
+    renderInvitations();
+    fireEvent.click(await screen.findByRole('button', { name: 'Create join link' }));
 
     expect(await screen.findByText('This league is inactive and cannot create invite links.')).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Join URL' })).toHaveValue('');
+    expect(screen.getByRole('textbox', { name: 'Join link' })).toHaveValue('');
   });
 
-  it('keeps a created join URL visible for manual copy when the clipboard refuses the write', async () => {
+  it('keeps the join link visible for manual copy when the clipboard refuses the write', async () => {
     const writeTextMock = vi.fn().mockRejectedValue(new Error('Clipboard blocked'));
     Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
-    generateInviteLinkMock.mockResolvedValue({ data: { invitation: buildGeneratedInviteLink({ inviteCode: 'invite-xyz' }) } });
+    listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [joinLink({ inviteCode: 'invite-xyz' })] } });
 
-    await openInviteMembers();
-    fireEvent.click(screen.getByTestId('league-create-join-url'));
-    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Join URL' })).toHaveValue(
-      'http://localhost:3000/invite/invite-xyz',
-    ));
-    fireEvent.click(screen.getByRole('button', { name: 'Copy join URL' }));
+    renderInvitations();
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'Join link' })).toHaveValue(`${window.location.origin}/invite/invite-xyz`),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Copy join link' }));
 
     await waitFor(() => expect(writeTextMock).toHaveBeenCalled());
-    expect(screen.getByRole('textbox', { name: 'Join URL' })).toHaveValue('http://localhost:3000/invite/invite-xyz');
+    expect(screen.getByRole('textbox', { name: 'Join link' })).toHaveValue(`${window.location.origin}/invite/invite-xyz`);
   });
 });

@@ -3,7 +3,6 @@ import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/errors";
 import {
-  ActionModal,
   ConfirmationModal,
   FormModal,
   PickerModal,
@@ -96,38 +95,6 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(
       screen.getByRole("button", { name: "Delete league" }),
     ).toBeDisabled();
-  });
-
-  it("pool-master-3ew.9: renders action modal sections and footer actions", () => {
-    const handleClose = vi.fn();
-
-    render(
-      <ActionModal
-        footer={
-          <button onClick={handleClose} type="button">
-            Done
-          </button>
-        }
-        onCancel={vi.fn()}
-        onOpenChange={vi.fn()}
-        open
-        sections={[
-          {
-            key: "invite",
-            title: "Invite Members",
-            body: <input aria-label="Invite email" />,
-          },
-        ]}
-        title="League actions"
-      />,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: "Invite Members" }),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("Invite email")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
-    expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
   it("pool-master-3ew.10: renders picker items with selected state and apply", () => {

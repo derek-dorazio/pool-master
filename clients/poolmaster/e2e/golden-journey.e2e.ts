@@ -445,7 +445,6 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     await test.step('generate the join URL in Commissioner tools › Invites, and see it pending', async () => {
       // Inviting members lives in Commissioner tools, beside the invites still pending.
       await page.goto(`/league/${run.leagueCode}/admin/invites`);
-      await page.getByTestId('league-open-invite-members').click();
       const created = await submitAndRead<{ invitation: { id: string; inviteCode: string } }>(
         page,
         'league-create-join-url',
@@ -456,7 +455,6 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(joinUrl).toHaveValue(new RegExp(`/invite/${created.invitation.inviteCode}$`));
       // The hand-off to act 3: the string a commissioner would copy and send.
       state.joinUrl = await joinUrl.inputValue();
-      await page.keyboard.press('Escape');
       await expect(page.getByTestId(`league-invitation-${created.invitation.id}`)).toContainText('Join link');
     });
 

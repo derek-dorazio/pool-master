@@ -135,7 +135,6 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
 
       // Inviting members lives in Commissioner tools › Invites.
       await commissioner.goto(`/league/${run.leagueCode}/admin/invites`);
-      await commissioner.getByTestId('league-open-invite-members').click();
       const invitation = await submitAndRead<{ invitation: { inviteCode: string } }>(
         commissioner,
         'league-create-join-url',
@@ -145,7 +144,6 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
       const joinUrlField = commissioner.getByTestId('league-join-url');
       await expect(joinUrlField).toHaveValue(new RegExp(`/invite/${invitation.invitation.inviteCode}$`));
       joinUrl = await joinUrlField.inputValue();
-      await commissioner.keyboard.press('Escape');
     });
 
     const owner = await newRolePage();
