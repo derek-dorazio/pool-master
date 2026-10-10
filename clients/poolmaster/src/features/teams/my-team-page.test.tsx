@@ -316,6 +316,19 @@ describe('My team › My entries', () => {
     expect(await screen.findByTestId('my-team-entries-none')).toHaveTextContent('No contests are open or live right now.');
   });
 
+  it('says the team\'s place could not be checked when the live leaderboard read fails, not that it is unranked', async () => {
+    primeTeam();
+    primeContests([contest('c-live', 'Masters Pool', 'ACTIVE')], { 'c-live': [teamEntry('c-live', 'SUBMITTED')] });
+    getGolfContestLeaderboardMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN', message: 'Picks are hidden.' } },
+    });
+
+    renderTeamRoutes();
+
+    await waitFor(() => expect(screen.getByTestId('my-team-entry-rank-c-live')).toHaveTextContent('We couldn\'t check your place.'));
+    expect(screen.getByTestId('my-team-entry-rank-c-live')).not.toHaveTextContent('Not ranked yet');
+  });
+
   it('says the contests could not load rather than showing none', async () => {
     primeTeam();
     listContestsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'Down' } } });

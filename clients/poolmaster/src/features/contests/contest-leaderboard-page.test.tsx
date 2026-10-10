@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -861,7 +861,8 @@ describe('ContestLeaderboardPage', () => {
     renderLeaderboard();
 
     fireEvent.change(await screen.findByRole('searchbox', { name: 'Find a team' }), { target: { value: 'Team 3' } });
-    fireEvent.click(screen.getByTestId('contest-leaderboard-jump-to-mine'));
+    // The button needs the viewer's team, which the league context read brings after the contest.
+    fireEvent.click(await screen.findByTestId('contest-leaderboard-jump-to-mine'));
 
     const mine = screen.getByTestId('contest-leaderboard-entry-entry-28');
     expect(mine).toHaveTextContent('Your team');
@@ -875,6 +876,12 @@ describe('ContestLeaderboardPage', () => {
     renderLeaderboard();
 
     await screen.findByTestId('contest-leaderboard-entry-entry-1');
+    // The viewer's team comes from the league context; the answer is only meaningful once it has.
+    await screen.findByTestId('contest-menu-entries');
+    await waitFor(() => expect(getLeagueMock).toHaveBeenCalled());
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(screen.queryByTestId('contest-leaderboard-jump-to-mine')).not.toBeInTheDocument();
   });
 
