@@ -53,7 +53,6 @@ export function TeamOwnersSection({
       <MyTeamOwnersPanel
         activeMembers={activeMembers}
         canManageAnyTeam={canManageAnyTeam}
-        canManageSelectedTeam
         isBusy={isBusy}
         isInactiveLeague={isInactiveLeague}
         isInactiveTeam={!team.isActive}
