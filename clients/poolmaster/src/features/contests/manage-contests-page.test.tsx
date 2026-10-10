@@ -152,6 +152,51 @@ describe('ManageContestsPage', () => {
     ]));
   });
 
+  it('waits for the contests\' events before listing them, so no row says its event is unavailable or moves while events load', async () => {
+    primeCommonMocks();
+    let releaseEvents: () => void = () => undefined;
+    const eventsLoaded = new Promise<void>((resolve) => {
+      releaseEvents = resolve;
+    });
+    getEventMock.mockImplementation(async ({ path }: { path: { eventId: string } }) => {
+      await eventsLoaded;
+      const event = [masters, heritage].find((candidate) => candidate.id === path.eventId);
+      return apiSuccess({ event });
+    });
+    listContestsMock.mockResolvedValue(apiSuccess({
+      contests: [
+        buildContest({ id: 'draft-heritage', status: 'DRAFT', sportEventId: 'event-2' }),
+        buildContest({ id: 'draft-masters', status: 'DRAFT', sportEventId: 'event-1' }),
+      ],
+    }));
+
+    renderManageContestsPage();
+
+    expect(await screen.findByText('Loading contests...')).toBeInTheDocument();
+    await waitFor(() => expect(getEventMock).toHaveBeenCalledTimes(2));
+    expect(screen.queryByTestId('manage-contests-row-draft-heritage')).not.toBeInTheDocument();
+    expect(screen.queryByText('Event unavailable')).not.toBeInTheDocument();
+
+    releaseEvents();
+
+    await screen.findByTestId('manage-contests-row-draft-masters');
+    expect(rowOrder()).toEqual(['manage-contests-row-draft-masters', 'manage-contests-row-draft-heritage']);
+    expect(screen.queryByText('Event unavailable')).not.toBeInTheDocument();
+  });
+
+  it('says a contest\'s event is unavailable when its event cannot be read, and still lists the contest', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue(apiSuccess({
+      contests: [buildContest({ id: 'contest-lost', name: 'Lost Event Pool', sportEventId: 'event-missing' })],
+    }));
+
+    renderManageContestsPage();
+
+    const row = within(await screen.findByTestId('manage-contests-row-contest-lost'));
+    expect(await row.findByText('Event unavailable')).toBeInTheDocument();
+    expect(row.getByText('Lost Event Pool')).toBeInTheDocument();
+  });
+
   it('keeps finished contests under History, with each switch counting its contests', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue(apiSuccess({

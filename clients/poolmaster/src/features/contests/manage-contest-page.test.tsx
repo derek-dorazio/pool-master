@@ -327,16 +327,18 @@ describe('Commissioner tools › Contests › one contest › Edit', () => {
     expect(updateContestConfigurationMock).not.toHaveBeenCalled();
   });
 
-  it('says the contest could not be saved when the save is refused without a message', async () => {
+  it('leaves the name as it was when the rules are refused, and says the contest could not be saved', async () => {
     primeMocks();
-    updateContestMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR' } }, status: 500 });
+    updateContestConfigurationMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR' } }, status: 500 });
 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1/edit');
 
-    fireEvent.click(await screen.findByTestId('edit-contest-save'));
+    fireEvent.change(await screen.findByTestId('contest-name'), { target: { value: 'Masters Best Four' } });
+    fireEvent.click(screen.getByTestId('edit-contest-save'));
 
     expect(await screen.findByText('We could not save that contest. Please try again.')).toBeInTheDocument();
-    expect(updateContestConfigurationMock).not.toHaveBeenCalled();
+    expect(updateContestConfigurationMock).toHaveBeenCalled();
+    expect(updateContestMock).not.toHaveBeenCalled();
   });
 
   it('goes back to the contest page once the contest is open, since its settings are locked', async () => {
