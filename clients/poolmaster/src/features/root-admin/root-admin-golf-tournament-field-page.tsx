@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { AsyncPage, Button, LinkButton } from '@/features/shared/ui';
+import { AsyncPage, Button } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
+import { GolfTournamentHeader } from './golf-tournament-header';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import { golfTiersLocked, golfTournamentHasScoreSync } from './golf-admin-utils';
 import { GolfFieldGridCard } from './golf-field-grid-card';
 import { GolfFieldSeedAction } from './golf-field-seed-action';
@@ -25,6 +26,7 @@ export function RootAdminGolfTournamentFieldPage() {
   const fieldQuery = useGolfFieldQuery(eventId);
 
   const tournament = tournamentQuery.data;
+  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
   const entries = useMemo(() => fieldQuery.data ?? [], [fieldQuery.data]);
@@ -50,15 +52,9 @@ export function RootAdminGolfTournamentFieldPage() {
     >
       {tournament ? (
         <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <LinkButton
-              data-testid="root-admin-golf-field-back"
-              size="sm"
-              to={`/manage/golf/tournaments/${eventId}`}
-              variant="secondary"
-            >
-              ← Tournament Home
-            </LinkButton>
+          <GolfTournamentHeader current="field" tournament={tournament} />
+
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <div className="flex flex-wrap gap-2">
               <GolfFieldSeedAction eventId={eventId} />
               <Button

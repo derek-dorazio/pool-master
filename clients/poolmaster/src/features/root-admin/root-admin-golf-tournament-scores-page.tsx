@@ -5,14 +5,14 @@ import { listEventRounds } from '@/lib/api';
 import {
   Alert,
   AsyncPage,
-  LinkButton,
   SegmentedControl,
   formatDateDisplay,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportEventRoundDto } from '@/lib/api';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
+import { GolfTournamentHeader } from './golf-tournament-header';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import {
   golfRoundScoreRows,
   golfTournamentHasScoreSync,
@@ -50,6 +50,7 @@ export function RootAdminGolfTournamentScoresPage() {
   const fieldQuery = useGolfFieldQuery(eventId);
 
   const tournament = tournamentQuery.data;
+  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
   const roundOptions = useMemo(() => {
@@ -99,16 +100,7 @@ export function RootAdminGolfTournamentScoresPage() {
     >
       {tournament ? (
         <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <LinkButton
-              data-testid="root-admin-golf-scores-back"
-              size="sm"
-              to={`/manage/golf/tournaments/${eventId}`}
-              variant="secondary"
-            >
-              ← Tournament Home
-            </LinkButton>
-          </div>
+          <GolfTournamentHeader current="scores" tournament={tournament} />
 
           {golfTournamentHasScoreSync(tournament.syncScope) ? (
             <Alert data-testid="root-admin-golf-scores-sync-alert" tone="warning">

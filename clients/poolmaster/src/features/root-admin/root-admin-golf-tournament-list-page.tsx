@@ -18,6 +18,7 @@ import {
   sportEventStatusTone,
 } from './golf-admin-utils';
 import type { SportEventDto } from '@/lib/api';
+import { buildGolfTournamentPath, MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 
 const columnHelper = createColumnHelper<SportEventDto>();
 
@@ -125,9 +126,11 @@ export function RootAdminGolfTournamentListPage() {
         })}
         filterTestIdPrefix="root-admin-golf-tournament-list-filter"
         getRowId={(tournament) => tournament.id}
-        getRowLink={(tournament) => `/manage/golf/tournaments/${tournament.id}`}
+        getRowLink={(tournament) => buildGolfTournamentPath(tournament.id)}
         loadingBody="Loading golf tournaments..."
+        pageSize={MANAGE_LIST_PAGE_SIZE}
         rowTestId={(tournament) => `root-admin-golf-tournament-row-${tournament.id}`}
+        search={{ label: 'Find a tournament', testId: 'root-admin-golf-tournament-list-search' }}
         state={
           tournamentsQuery.isLoading
             ? 'loading'

@@ -8,7 +8,8 @@ import {
   SplitContentLayout,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
+import { GolfTournamentHeader } from './golf-tournament-header';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import { GolfTierAutoAssignActions } from './golf-tier-auto-assign-actions';
 import { GolfTierBoard } from './golf-tier-board';
 import { GolfTierDefinitionsPanel } from './golf-tier-definitions-panel';
@@ -28,6 +29,7 @@ export function RootAdminGolfTournamentTiersPage() {
   const fieldQuery = useGolfFieldQuery(eventId);
 
   const tournament = tournamentQuery.data;
+  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
   const tiers = useMemo(() => tiersQuery.data ?? [], [tiersQuery.data]);
@@ -62,15 +64,9 @@ export function RootAdminGolfTournamentTiersPage() {
     >
       {tournament ? (
         <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <LinkButton
-              data-testid="root-admin-golf-tiers-back"
-              size="sm"
-              to={`/manage/golf/tournaments/${eventId}`}
-              variant="secondary"
-            >
-              ← Tournament Home
-            </LinkButton>
+          <GolfTournamentHeader current="tiers" tournament={tournament} />
+
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <GolfTierAutoAssignActions
               disabled={locked || field.length === 0}
               eventId={eventId}

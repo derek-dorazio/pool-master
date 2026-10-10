@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -98,5 +98,44 @@ describe('pool-master-3dg RootAdminGolfTournamentListPage', () => {
     expect(
       await screen.findByText('No golf tournaments have been created yet.'),
     ).toBeInTheDocument();
+  });
+
+  it('narrows the tournament list to matching names from the search box', async () => {
+    listEventsMock.mockResolvedValue({
+      data: {
+        events: [
+          tournament({ id: 'tour-1', name: 'Masters Tournament' }),
+          tournament({ id: 'tour-2', name: 'Open Championship' }),
+        ],
+      },
+    });
+
+    renderPage();
+
+    await screen.findByTestId('root-admin-golf-tournament-row-tour-1');
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find a tournament' }), {
+      target: { value: 'Open' },
+    });
+
+    expect(screen.queryByTestId('root-admin-golf-tournament-row-tour-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-tournament-row-tour-2')).toBeInTheDocument();
+  });
+
+  it('shows 25 tournaments a page and pages on to the rest', async () => {
+    listEventsMock.mockResolvedValue({
+      data: {
+        events: Array.from({ length: 30 }, (_, index) =>
+          tournament({ id: `tour-${String(index + 1)}`, name: `Event ${String(index + 1).padStart(2, '0')}` }),
+        ),
+      },
+    });
+
+    renderPage();
+
+    await screen.findByTestId('root-admin-golf-tournament-row-tour-1');
+    expect(screen.queryByTestId('root-admin-golf-tournament-row-tour-26')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+    expect(await screen.findByTestId('root-admin-golf-tournament-row-tour-26')).toBeInTheDocument();
   });
 });
