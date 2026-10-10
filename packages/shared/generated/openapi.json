@@ -16058,7 +16058,7 @@
         "additionalProperties": false,
         "description": "Request payload for submitting a pick."
       },
-      "SelectionBudgetLineupSummary": {
+      "SelectionBudgetLineupSummaryDto": {
         "type": "object",
         "properties": {
           "selectionType": {

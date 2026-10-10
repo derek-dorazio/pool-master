@@ -7824,7 +7824,7 @@ export type SubmitPickRequest = {
 /**
  * Budget contest: the viewed entry's spend against the salary cap (#93).
  */
-export type SelectionBudgetLineupSummary = {
+export type SelectionBudgetLineupSummaryDto = {
     selectionType: 'BUDGET_PICK';
     /**
      * Whole dollars the entry's picks may cost at most: its event's cap.

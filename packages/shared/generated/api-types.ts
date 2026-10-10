@@ -8193,7 +8193,7 @@ export interface components {
             participantId: string;
         };
         /** @description Budget contest: the viewed entry's spend against the salary cap (#93). */
-        SelectionBudgetLineupSummary: {
+        SelectionBudgetLineupSummaryDto: {
             /** @enum {string} */
             selectionType: "BUDGET_PICK";
             /** @description Whole dollars the entry's picks may cost at most: its event's cap. */

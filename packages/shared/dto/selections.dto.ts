@@ -236,6 +236,6 @@ export type SelectionPickResponse = z.infer<typeof SelectionPickResponseSchema>;
 
 registerSchema('SelectionStateQuery', SelectionStateQuerySchema);
 registerSchema('SubmitPickRequest', SubmitPickRequestSchema);
-registerSchema('SelectionBudgetLineupSummary', SelectionBudgetLineupSummaryDtoSchema);
+registerSchema('SelectionBudgetLineupSummaryDto', SelectionBudgetLineupSummaryDtoSchema);
 registerSchema('SelectionStateResponse', SelectionStateResponseSchema);
 registerSchema('SelectionPickResponse', SelectionPickResponseSchema);
