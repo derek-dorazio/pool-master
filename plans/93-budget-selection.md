@@ -1,6 +1,6 @@
 # Golf budget selection (#93)
 
-> **Status:** Plan approved by Derek 2026-10-09; in implementation. Slice 0 (pricing) merged in #586; slice 1 (typed contest rules) merged in #588, with the column drop in #587 and the typed contest detail DTO in #589; slice 2 (budget rules in the selection room) is the third PR. Built as planned except: `findShortfall` became `findLineupIssues`, the room summary is `summarizeLineup`, and a budget pick takes the lowest free lineup place so a toggle-off's place is reused. **Tracking issue:** #93.
+> **Status:** Plan approved by Derek 2026-10-09; in implementation. Slice 0 (pricing) merged in #586; slice 1 (typed contest rules) merged in #588, with the legacy columns dropped by #587 and the typed contest detail DTO in #589; slice 2 (budget rules in the selection room) is the third PR. Built as planned except: `findShortfall` became `findLineupIssues`, the room summary is `summarizeLineup`, and a budget pick takes the lowest free lineup place so a toggle-off's place is reused. **Tracking issue:** #93.
 > **Supersedes** `plans/128-golf-budget-drafts.md`, deleted by the first PR; read it with
 > `git show 3a6481a:plans/128-golf-budget-drafts.md`.
 > Checked against `main` at `1012778` (2026-10-09); refreshed against `3a6481a` (2026-10-10), see §9.
@@ -93,8 +93,8 @@ validation sits next to each arm:
 - Money is summed in **cents** (integers) from the `Decimal` prices, never as floats.
 
 The legacy `contest_configurations.budget`, `roster_size` and `pick_count` columns stop being
-read. The leaderboard's fallback to them goes; dropping the columns is a follow-up dead-code
-ticket filed by slice 1 (per the 2026-10-08 dead-code goal), so this epic's migrations stay small.
+read. The leaderboard's fallback to them goes; #587 then drops the columns as a separate
+dead-code change (per the 2026-10-08 dead-code goal), so this epic's migrations stay small.
 
 ### 4.2 Engine seam additions (what makes #99 and #199 cheap)
 The shared handler stays as is; the engine interface grows three things, each with a tiered

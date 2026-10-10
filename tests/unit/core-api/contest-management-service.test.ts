@@ -730,8 +730,7 @@ describe('ContestManagementService', () => {
       picksPerTier: 2,
     };
     // #245 — an update never rewrites selectionType: it is fixed at create, and the
-    // mapSelectionType echo that re-derived it on every save is gone. #479 — the roster is
-    // derived from the event's tiers, so no rosterSize or pickCount column is written.
+    // mapSelectionType echo that re-derived it on every save is gone.
     expect(contestConfigurationRepo.update).toHaveBeenCalledWith('config-1', {
       configJson: storedConfigJson,
       maxEntriesPerSquad: 2,
