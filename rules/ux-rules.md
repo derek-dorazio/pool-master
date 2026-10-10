@@ -246,3 +246,14 @@ administration area (root admin included), reusing the same shared components.
    `ContestHeader`: Entries, Leaderboard once picks are revealed, and My entry
    once the viewer's team has one. A golf tournament's pages in Manage share
    `GolfTournamentHeader`: Overview, Field, Tiers and Scores.
+10. **Actions are named for what they do, never "draft".** "Draft" is a contest
+    status and also the snake-draft selection type, so no button or link uses
+    it as a verb or noun: **Create contest**, **Save**, **Delete contest**,
+    **Open to league**, **Finish setup**. The status label itself stays as
+    `contestStatusLabel` gives it. A list row has one action naming the next
+    step (Finish setup before a contest opens, Manage after).
+11. **Formats and tiers in plain words.** A contest's format is its name
+    ("Tiered", from `formatSelectionTypeName`) and its rules one sentence
+    (`formatContestRules`), never raw enums such as `TIERED · STROKE_PLAY`. An
+    event's tiers read **Tier 1**, **Tier 2**, … from `tierNumber`, one per
+    row with Tier 1 on top.

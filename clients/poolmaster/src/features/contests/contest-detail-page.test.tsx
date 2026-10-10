@@ -688,14 +688,25 @@ describe('ContestDetailPage (Contest Board)', () => {
       });
     });
   });
-  it('offers a commissioner "Open to league" on a draft, with the draft note, and no create-entry button', async () => {
+  it('shows a commissioner previewing a draft the draft note but no commissioner controls, which live in Commissioner tools', async () => {
     primeMocks({ contestStatus: 'DRAFT', role: 'COMMISSIONER' });
 
     renderContestBoard();
 
-    expect(await screen.findByTestId('contest-open-to-league')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-draft-note')).toHaveTextContent(/only commissioners can see it/i);
+    expect(await screen.findByTestId('contest-draft-note')).toHaveTextContent(/only commissioners can see it/i);
+    await waitFor(() => expect(getLeagueMock).toHaveBeenCalled());
+    expect(screen.queryByTestId('contest-open-to-league')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Manage contest' })).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
+  });
+
+  it('sums up the contest by its format name, not the raw selection and scoring enums', async () => {
+    primeMocks({ contestStatus: 'OPEN' });
+
+    renderContestBoard();
+
+    expect(await screen.findByTestId('contest-detail-summary')).toHaveTextContent('Tiered');
+    expect(screen.getByTestId('contest-detail-summary')).not.toHaveTextContent(/TIERED|STROKE_PLAY/);
   });
 
   it.each([

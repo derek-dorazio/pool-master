@@ -10,6 +10,8 @@ import { ContestEntryPage } from '@/features/contests/contest-entry-page';
 import { ContestLeaderboardPage } from '@/features/contests/contest-leaderboard-page';
 import { LeagueContestHistoryPage } from '@/features/contests/league-contest-history-page';
 import { LeagueContestsPage } from '@/features/contests/league-contests-page';
+import { EditContestPage } from '@/features/contests/edit-contest-page';
+import { ManageContestPage } from '@/features/contests/manage-contest-page';
 import { ManageContestsPage } from '@/features/contests/manage-contests-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { CommissionerToolsLayout } from '@/features/leagues/commissioner-tools-layout';
@@ -152,7 +154,11 @@ export const router = createBrowserRouter([
                   },
                   {
                     path: 'contests/:contestId',
-                    element: <CreateContestPage />,
+                    element: <ManageContestPage />,
+                  },
+                  {
+                    path: 'contests/:contestId/edit',
+                    element: <EditContestPage />,
                   },
                 ],
               },

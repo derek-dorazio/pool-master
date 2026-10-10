@@ -8,7 +8,6 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
   buildContestEntryPath,
   buildLeagueContestEntryPath,
-  buildLeagueAdminContestPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
@@ -31,7 +30,7 @@ import {
 } from '@/features/shared/ui';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { ContestStatusBadge } from './contest-status-badge';
-import { OpenContestAction } from './open-contest-action';
+import { formatSelectionTypeName } from './contest-rules';
 import {
   areContestEntriesOpen,
   CONTEST_ENTRY_STATUS_LABELS,
@@ -287,17 +286,10 @@ export function ContestDetailPage() {
   const entriesOpen = areContestEntriesOpen(contest.status, schedule?.startsAt);
   const isDraft = contest.status === ContestStatus.DRAFT;
   const canCreateEntry = entriesOpen && Boolean(myTeamId);
-  // Only commissioners can read a draft at all (#117); the check keeps the release action theirs
-  // in the UI too.
-  const canOpenToLeague = isDraft && (viewer.isCommissioner || viewer.isRootAdmin);
 
   const backToLeaguePath = hintedLeagueCode
     ? buildLeaguePath(hintedLeagueCode)
     : '/welcome';
-  const manageContestPath =
-    hintedLeagueCode && contest.status === ContestStatus.DRAFT
-      ? buildLeagueAdminContestPath(hintedLeagueCode, contestId)
-      : null;
 
   function startRenameEntry(entry: ContestEntryDto) {
     setRenameEntryId(entry.id);
@@ -315,27 +307,13 @@ export function ContestDetailPage() {
     <section className="space-y-6" data-testid="contest-board">
       <ContestHeader
         actions={(
-          <>
-            {canOpenToLeague ? (
-              <OpenContestAction contestId={contestId} leagueId={leagueId} />
-            ) : null}
-            {manageContestPath ? (
-              <LinkButton
-                data-testid="contest-manage-link"
-                to={manageContestPath}
-                variant="secondary"
-              >
-                Manage contest
-              </LinkButton>
-            ) : null}
-            <LinkButton
-              data-testid="contest-back-to-league"
-              to={backToLeaguePath}
-              variant="secondary"
-            >
-              Back to league
-            </LinkButton>
-          </>
+          <LinkButton
+            data-testid="contest-back-to-league"
+            to={backToLeaguePath}
+            variant="secondary"
+          >
+            Back to league
+          </LinkButton>
         )}
         badges={<ContestStatusBadge status={contest.status} />}
         menu={hintedLeagueCode ? (
@@ -349,8 +327,7 @@ export function ContestDetailPage() {
         ) : null}
         summary={(
           <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-detail-summary">
-            {contest.selectionType} · {contest.scoringEngine}
-            {contest.sport ? ` · ${contest.sport}` : ''}
+            {formatSelectionTypeName(contest.selectionType)}
           </p>
         )}
         title={contest.name}
