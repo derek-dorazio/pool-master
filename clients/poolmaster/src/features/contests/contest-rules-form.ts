@@ -1,14 +1,24 @@
-import { SelectionType, getDefaultCountedScores, getTieredRosterSize } from '@poolmaster/shared/domain';
+import {
+  BUDGET_ROSTER_SIZE_MAX,
+  SelectionType,
+  getDefaultCountedScores,
+  getTieredRosterSize,
+} from '@poolmaster/shared/domain';
 import type { ContestConfigurationRequest } from '@poolmaster/shared/dto';
 
-/** The tiered arm of a contest's rules: the only one these fields edit so far. */
-export type TieredContestConfiguration = Extract<ContestConfigurationRequest, { selectionType: typeof SelectionType.TIERED }>;
+/** The selection types the rules fields can edit: one arm each of the configuration request. */
+export type EditableSelectionType = ContestConfigurationRequest['selectionType'];
 
-/** The rules fields as the form holds them: text from the inputs, and the No limit box. */
+/**
+ * The rules fields as the form holds them: text from the inputs, and the No limit box. Both
+ * formats' fields live here so switching format keeps what was typed; only the chosen format's
+ * are read.
+ */
 export type ContestRulesValues = {
   countedScores: string;
   maxEntriesPerTeam: string;
   picksPerTier: string;
+  rosterSize: string;
   unlimitedEntries: boolean;
 };
 
@@ -17,15 +27,29 @@ function parseWholeNumber(value: string) {
   return Number.isInteger(parsed) && parsed >= 1 ? parsed : null;
 }
 
+type RulesResult =
+  | { configuration: ContestConfigurationRequest; error: null }
+  | { configuration: null; error: string };
+
+/** Entries per team, the part of the rules every format shares. */
+function withEntryLimit<T extends object>(values: ContestRulesValues, rules: T):
+  | { configuration: T & { maxEntriesPerSquad?: number }; error: null }
+  | { configuration: null; error: string } {
+  if (values.unlimitedEntries) {
+    return { configuration: rules, error: null };
+  }
+  const maxEntriesPerSquad = parseWholeNumber(values.maxEntriesPerTeam);
+  if (maxEntriesPerSquad === null) {
+    return { configuration: null, error: 'Entries per team must be a positive whole number.' };
+  }
+  return { configuration: { ...rules, maxEntriesPerSquad }, error: null };
+}
+
 /**
- * The configuration the rules fields describe, or the first thing wrong with them in the words
- * the form shows. An event with no tiers yet has no roster to check "Scores that count" against;
- * the server skips that check too.
+ * The tiered rules. An event with no tiers yet has no roster to check "Scores that count"
+ * against; the server skips that check too.
  */
-export function parseContestRules(
-  values: ContestRulesValues,
-  tierCount: number,
-): { configuration: TieredContestConfiguration; error: null } | { configuration: null; error: string } {
+function parseTieredRules(values: ContestRulesValues, tierCount: number): RulesResult {
   const picksPerTier = parseWholeNumber(values.picksPerTier);
   if (picksPerTier === null) {
     return { configuration: null, error: 'Picks per tier must be a positive whole number.' };
@@ -41,26 +65,76 @@ export function parseContestRules(
         : 'Scores that count must be a positive whole number.',
     };
   }
-
-  if (values.unlimitedEntries) {
-    return { configuration: { selectionType: SelectionType.TIERED, picksPerTier, countedScores }, error: null };
-  }
-  const maxEntriesPerSquad = parseWholeNumber(values.maxEntriesPerTeam);
-  if (maxEntriesPerSquad === null) {
-    return { configuration: null, error: 'Entries per team must be a positive whole number.' };
-  }
-  return { configuration: { selectionType: SelectionType.TIERED, picksPerTier, countedScores, maxEntriesPerSquad }, error: null };
+  return withEntryLimit(values, { selectionType: SelectionType.TIERED, picksPerTier, countedScores });
 }
 
-/** The form's starting values for a saved configuration. */
-export function toContestRulesValues(configuration: TieredContestConfiguration): ContestRulesValues {
-  return {
+/** The budget rules (#93). The salary cap is the event's, so it is not part of them. */
+function parseBudgetRules(values: ContestRulesValues): RulesResult {
+  const rosterSize = parseWholeNumber(values.rosterSize);
+  if (rosterSize === null || rosterSize > BUDGET_ROSTER_SIZE_MAX) {
+    return { configuration: null, error: `Golfers per entry must be between 1 and ${BUDGET_ROSTER_SIZE_MAX}.` };
+  }
+  const countedScores = parseWholeNumber(values.countedScores);
+  if (countedScores === null || countedScores > rosterSize) {
+    return { configuration: null, error: `Scores that count must be between 1 and the ${rosterSize} golfers picked.` };
+  }
+  return withEntryLimit(values, { selectionType: SelectionType.BUDGET_PICK, rosterSize, countedScores });
+}
+
+/**
+ * The configuration the rules fields describe for a format, or the first thing wrong with them
+ * in the words the form shows.
+ */
+export function parseContestRules(
+  values: ContestRulesValues,
+  selectionType: EditableSelectionType,
+  tierCount: number,
+): RulesResult {
+  switch (selectionType) {
+    case SelectionType.TIERED:
+      return parseTieredRules(values, tierCount);
+    case SelectionType.BUDGET_PICK:
+      return parseBudgetRules(values);
+  }
+}
+
+/**
+ * The form's values for a saved configuration or a preset. Only its own format's fields change;
+ * the other format's keep what `current` holds.
+ */
+export function toContestRulesValues(
+  configuration: ContestConfigurationRequest,
+  current: ContestRulesValues = DEFAULT_CONTEST_RULES,
+): ContestRulesValues {
+  // Only the rules fields: `current` may be a whole form's values.
+  const rules: ContestRulesValues = {
+    countedScores: current.countedScores,
+    maxEntriesPerTeam: current.maxEntriesPerTeam,
+    picksPerTier: current.picksPerTier,
+    rosterSize: current.rosterSize,
+    unlimitedEntries: current.unlimitedEntries,
+  };
+  const entryLimit = {
     countedScores: String(configuration.countedScores),
     maxEntriesPerTeam: configuration.maxEntriesPerSquad == null ? '1' : String(configuration.maxEntriesPerSquad),
-    picksPerTier: String(configuration.picksPerTier),
     unlimitedEntries: configuration.maxEntriesPerSquad == null,
   };
+  switch (configuration.selectionType) {
+    case SelectionType.TIERED:
+      return { ...rules, ...entryLimit, picksPerTier: String(configuration.picksPerTier) };
+    case SelectionType.BUDGET_PICK:
+      return { ...rules, ...entryLimit, rosterSize: String(configuration.rosterSize) };
+  }
 }
+
+/** Where the rules fields start before a preset or a saved contest fills them. */
+export const DEFAULT_CONTEST_RULES: ContestRulesValues = {
+  countedScores: '4',
+  maxEntriesPerTeam: '1',
+  picksPerTier: '1',
+  rosterSize: '6',
+  unlimitedEntries: false,
+};
 
 /**
  * "Scores that count" follows picks per tier: a new picks-per-tier value resets it to the default

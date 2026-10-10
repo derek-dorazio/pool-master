@@ -1,13 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ListOrdered } from 'lucide-react';
+import { ListOrdered, Wallet, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
-import type { CreateContestRequest } from '@poolmaster/shared/dto';
+import {
+  CONTEST_BUDGET_UNFILLABLE,
+  CONTEST_EVENT_NOT_PRICED,
+  type CreateContestRequest,
+} from '@poolmaster/shared/dto';
 import { ContestFormat, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { createContest, listContestConfigTemplates, listEvents } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
@@ -43,23 +47,39 @@ import {
   suggestContestName,
 } from './contest-rules';
 import { ContestRulesFields } from './contest-rules-fields';
-import { defaultCountedScoresFor, parseContestRules, toContestRulesValues, type ContestRulesValues } from './contest-rules-form';
+import {
+  DEFAULT_CONTEST_RULES,
+  defaultCountedScoresFor,
+  parseContestRules,
+  toContestRulesValues,
+} from './contest-rules-form';
 
 const CUSTOM_PRESET = 'custom';
 
 /** The ways of picking the create contract accepts; it widens as new formats are built. */
 type CreatableSelectionType = CreateContestRequest['selectionType'];
 
-/**
- * The ways of picking Create contest offers, one card each. Budget (#93) adds its card here with
- * its own rules fields.
- */
-const FORMAT_CHOICES: Array<{ description: string; selectionType: CreatableSelectionType }> = [
+/** The ways of picking Create contest offers, one card each, with its own rules fields. */
+const FORMAT_CHOICES: Array<{ description: string; icon: LucideIcon; selectionType: CreatableSelectionType }> = [
   {
     selectionType: SelectionType.TIERED,
+    icon: ListOrdered,
     description: "Pick golfers from each of the event's tiers, so the favorites are spread across every entry.",
   },
+  {
+    selectionType: SelectionType.BUDGET_PICK,
+    icon: Wallet,
+    description: 'Every golfer has a price. Pick a roster whose prices fit under the salary cap.',
+  },
 ];
+
+/** Copy for the budget refusals Create contest can meet (#93), beside the release ones. */
+const CREATE_CONTEST_CODE_MESSAGES: Record<string, string> = {
+  ...CONTEST_RELEASE_CODE_MESSAGES,
+  [CONTEST_EVENT_NOT_PRICED]: 'This event’s golfers have no prices yet, so it cannot hold a budget contest.',
+  [CONTEST_BUDGET_UNFILLABLE]:
+    'Even the cheapest golfers for every place cost more than the salary cap. Pick fewer golfers per entry.',
+};
 
 const creatableSelectionTypes = FORMAT_CHOICES.map((choice) => choice.selectionType) as [
   CreatableSelectionType,
@@ -71,6 +91,7 @@ const createContestFormSchema = z.object({
   countedScores: z.string(),
   maxEntriesPerTeam: z.string(),
   picksPerTier: z.string(),
+  rosterSize: z.string(),
   selectedTemplateId: z.string(),
   selectionType: z.enum(creatableSelectionTypes),
   sportEventId: z.string().min(1, 'Choose an event for the contest.'),
@@ -78,13 +99,6 @@ const createContestFormSchema = z.object({
 });
 
 type CreateContestFormValues = z.infer<typeof createContestFormSchema>;
-
-const DEFAULT_RULES: ContestRulesValues = {
-  countedScores: '4',
-  maxEntriesPerTeam: '1',
-  picksPerTier: '1',
-  unlimitedEntries: false,
-};
 
 function sortEventsBySoonest(events: SportEventDto[]) {
   return [...events].sort((left, right) => Date.parse(left.startDate) - Date.parse(right.startDate));
@@ -159,7 +173,7 @@ export function CreateContestPage() {
       selectedTemplateId: '',
       selectionType: SelectionType.TIERED,
       sportEventId: '',
-      ...DEFAULT_RULES,
+      ...DEFAULT_CONTEST_RULES,
     },
   });
   const values = form.watch();
@@ -207,17 +221,21 @@ export function CreateContestPage() {
   );
   const selectedEvent = eligibleEvents.find((event) => event.id === sportEventId) ?? null;
   const tierCount = selectedEvent?.tierCount ?? 0;
-  // The format's presets. The rules fields hold tiered rules, so a preset is offered when its
-  // rules are tiered too.
-  const presets = useMemo(
-    () => (templatesQuery.data ?? []).flatMap((template) => (
-      template.selectionType === selectionType && template.configuration.selectionType === SelectionType.TIERED
-        ? [{ ...template, configuration: template.configuration }]
-        : []
-    )),
-    [selectionType, templatesQuery.data],
+  // The event's salary cap, which every budget contest on it plays under; null until it is priced.
+  const salaryCap = selectedEvent?.pricing?.salaryCap ?? null;
+  const isBudgetUnavailable = selectedEvent !== null && salaryCap === null;
+  // Each format's presets: the templates whose rules are that format's.
+  const presetsFor = useCallback(
+    (format: CreatableSelectionType) => (templatesQuery.data ?? []).flatMap((template) => {
+      const { configuration } = template;
+      return template.selectionType === format && configuration.selectionType === format
+        ? [{ ...template, configuration }]
+        : [];
+    }),
+    [templatesQuery.data],
   );
-  const parsedRules = parseContestRules(values, tierCount);
+  const presets = useMemo(() => presetsFor(selectionType), [presetsFor, selectionType]);
+  const parsedRules = parseContestRules(values, selectionType, tierCount);
 
   const selectPreset = useCallback((templateId: string) => {
     const template = presets.find((candidate) => candidate.id === templateId);
@@ -225,8 +243,19 @@ export function CreateContestPage() {
       setFormValues({ selectedTemplateId: '' });
       return;
     }
-    setFormValues({ selectedTemplateId: template.id, ...toContestRulesValues(template.configuration) });
-  }, [presets, setFormValues]);
+    setFormValues({ selectedTemplateId: template.id, ...toContestRulesValues(template.configuration, form.getValues()) });
+  }, [form, presets, setFormValues]);
+
+  // A new format starts from its default preset, or from what the fields hold when it has none.
+  const selectFormat = useCallback((format: CreatableSelectionType) => {
+    const formatPresets = presetsFor(format);
+    const preset = formatPresets.find((template) => template.isDefault) ?? formatPresets[0];
+    setFormValues({
+      selectionType: format,
+      selectedTemplateId: preset?.id ?? '',
+      ...(preset ? toContestRulesValues(preset.configuration, form.getValues()) : {}),
+    });
+  }, [form, presetsFor, setFormValues]);
 
   // The soonest contest-ready event is chosen to start with.
   useEffect(() => {
@@ -248,12 +277,16 @@ export function CreateContestPage() {
     }
   }, [presets, selectPreset]);
 
-  // "Scores that count" starts at the default for the chosen event's tiers. A preset whose picks
-  // per tier the form still holds keeps its own count over the formula.
+  // A tiered contest's "Scores that count" starts at the default for the chosen event's tiers. A
+  // preset whose picks per tier the form still holds keeps its own count over the formula.
   useEffect(() => {
+    if (form.getValues('selectionType') !== SelectionType.TIERED) {
+      return;
+    }
     const picksPerTier = form.getValues('picksPerTier');
     const preset = presets.find((template) => template.id === form.getValues('selectedTemplateId'));
-    if (preset && String(preset.configuration.picksPerTier) === picksPerTier) {
+    if (preset?.configuration.selectionType === SelectionType.TIERED
+      && String(preset.configuration.picksPerTier) === picksPerTier) {
       return;
     }
     const countedScores = defaultCountedScoresFor(picksPerTier, tierCount);
@@ -290,7 +323,7 @@ export function CreateContestPage() {
       if (!event) {
         throw new Error('Choose a contest-ready event for the contest.');
       }
-      const parsed = parseContestRules(submitted, event.tierCount);
+      const parsed = parseContestRules(submitted, submitted.selectionType, event.tierCount);
       if (parsed.error !== null) {
         throw new Error(parsed.error);
       }
@@ -365,7 +398,7 @@ export function CreateContestPage() {
     ?? errors.sportEventId?.message
     ?? (createMutation.isError
       ? extractErrorMessage(createMutation.error, {
-        codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
+        codeMessages: CREATE_CONTEST_CODE_MESSAGES,
         fallback: 'We could not create that contest. Please try again.',
       })
       : null);
@@ -384,7 +417,9 @@ export function CreateContestPage() {
       description="Only commissioners see it until you open it to the league."
       errorMessage={errorMessage}
       isPending={createMutation.isPending}
-      isSubmitDisabled={!selectedEvent || parsedRules.error !== null}
+      isSubmitDisabled={!selectedEvent
+        || parsedRules.error !== null
+        || (selectionType === SelectionType.BUDGET_PICK && isBudgetUnavailable)}
       onSubmit={(submitEvent) => {
         createMutation.reset();
         void form.handleSubmit((submitted) => {
@@ -436,22 +471,31 @@ export function CreateContestPage() {
 
       <SetupSection step={2} testId="create-contest-format" title="Format">
         <div aria-label="Format" className="grid gap-2 md:grid-cols-2" role="radiogroup">
-          {FORMAT_CHOICES.map((choice) => (
-            <ChoiceCard
-              isSelected={choice.selectionType === selectionType}
-              key={choice.selectionType}
-              onSelect={() => setFormValues({ selectedTemplateId: '', selectionType: choice.selectionType })}
-              testId={`contest-format-${choice.selectionType}`}
-            >
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2 font-semibold">
-                  <ListOrdered aria-hidden size={16} />
-                  {formatSelectionTypeName(choice.selectionType)}
+          {FORMAT_CHOICES.map((choice) => {
+            const isSelected = choice.selectionType === selectionType;
+            // A budget contest needs a priced field; the card says so rather than vanishing.
+            const isUnavailable = choice.selectionType === SelectionType.BUDGET_PICK && isBudgetUnavailable;
+            const Icon = choice.icon;
+            return (
+              <ChoiceCard
+                isDisabled={isUnavailable && !isSelected}
+                isSelected={isSelected}
+                key={choice.selectionType}
+                onSelect={() => selectFormat(choice.selectionType)}
+                testId={`contest-format-${choice.selectionType}`}
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2 font-semibold">
+                    <Icon aria-hidden size={16} />
+                    {formatSelectionTypeName(choice.selectionType)}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {isUnavailable ? 'This event’s golfers have no prices yet.' : choice.description}
+                  </span>
                 </span>
-                <span className="block text-xs text-muted-foreground">{choice.description}</span>
-              </span>
-            </ChoiceCard>
-          ))}
+              </ChoiceCard>
+            );
+          })}
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-sm text-muted-foreground">Start from</span>
@@ -467,6 +511,8 @@ export function CreateContestPage() {
       <SetupSection step={3} testId="create-contest-rules" title="Rules">
         <ContestRulesFields
           onChange={(next) => setFormValues({ ...next, selectedTemplateId: '' })}
+          salaryCap={salaryCap}
+          selectionType={selectionType}
           tierCount={tierCount}
           values={values}
         />
@@ -492,7 +538,7 @@ export function CreateContestPage() {
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Members will see</div>
             <div className="font-semibold">{`${contestName.trim() || 'Untitled contest'} · ${selectedEvent.name}`}</div>
             <div>
-              {`${formatContestRules(parsedRules.configuration, tierCount)} ${formatEntriesPerTeamSentence(parsedRules.configuration.maxEntriesPerSquad)}.`}
+              {`${formatContestRules(parsedRules.configuration, tierCount, salaryCap)} ${formatEntriesPerTeamSentence(parsedRules.configuration.maxEntriesPerSquad)}.`}
             </div>
           </div>
         ) : null}

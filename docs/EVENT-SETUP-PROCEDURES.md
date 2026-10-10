@@ -124,8 +124,10 @@ As a commissioner of a test league (root admin is not needed):
 
 1. In *Commissioner tools* › *Contests*, press *Create contest*
    (`/league/:leagueCode/admin/contests/new`). The one page lists only tournaments that are
-   released and haven't started, soonest first; pick yours, keep or change the preset and rules,
-   and the name follows the event until you type your own. The contest is saved
+   released and haven't started, soonest first; pick yours, choose Tiered or Budget, keep or
+   change the preset and rules, and the name follows the event until you type your own. Budget
+   is offered only on an event whose field has been priced; its salary cap is the event's and
+   shows read-only. The contest is saved
    as a draft and you land on its page in Commissioner tools, which checks the event is ready;
    press *Open to league* there to let members enter. Until then *Edit* changes its name and
    rules, and *Delete contest* sits in its danger zone.
