@@ -598,6 +598,6 @@ italic 80, and each golfer's total there is their contest score.
 
 ## Source Files
 
-- Entry aggregation — how an entry's pick scores roll up into its standing: `packages/core-api/src/modules/contests/contest-leaderboard-calculator.ts`. `ContestCountingRule` is the rule, `resolveContestCountingRule` reads N from the configuration (`configJson.countedScores`, else `rosterSize`, else `pickCount`), and `buildContestEntryStanding` sums the best N scored picks in the scoring definition's direction. Live leaderboards and settlement both go through it. `BEST_N_GOLFERS` is the only counting rule implemented; the other sports' aggregation described above has no implementation yet.
+- Entry aggregation — how an entry's pick scores roll up into its standing: `packages/core-api/src/modules/contests/contest-leaderboard-calculator.ts`. `ContestCountingRule` is the rule, `resolveContestCountingRule` reads N from the configuration (`configJson.countedScores` only), and `buildContestEntryStanding` sums the best N scored picks in the scoring definition's direction. Live leaderboards and settlement both go through it. `BEST_N_GOLFERS` is the only counting rule implemented; the other sports' aggregation described above has no implementation yet.
 - Participant scoring definitions — score direction, unit and the one display format per measure: `packages/shared/domain/contest-scoring.ts`
 - Domain enums: `packages/shared/domain/enums.ts`

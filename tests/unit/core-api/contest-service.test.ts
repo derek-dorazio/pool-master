@@ -869,8 +869,6 @@ describe('ContestService', () => {
           id: 'config-1',
           contestId: 'contest-1',
           configJson: { countedScores: 2 },
-          rosterSize: 3,
-          pickCount: 3,
           rounds: 4,
         }),
       });
@@ -1298,7 +1296,6 @@ describe('ContestService', () => {
                 participantIds: ['participant-2'],
               },
             ],
-            rosterSize: 2,
           }),
         }),
         leagues: fakeLeagueRepo({
@@ -1372,7 +1369,7 @@ describe('ContestService', () => {
       const service = buildService({
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
         configurations: createMockContestConfigurationRepo({
-          findByContest: jest.fn().mockResolvedValue({ rosterSize: 2 }),
+          findByContest: jest.fn().mockResolvedValue({}),
         }),
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
@@ -1428,7 +1425,6 @@ describe('ContestService', () => {
         configurations: createMockContestConfigurationRepo({
           findByContest: jest.fn().mockResolvedValue({
             tierConfig: [{ tierName: 'Tier A', tierNumber: 1, picksFromTier: 1, participantIds: ['participant-1'] }],
-            rosterSize: 1,
           }),
         }),
         leagues: fakeLeagueRepo({
@@ -1476,7 +1472,6 @@ describe('ContestService', () => {
         configurations: createMockContestConfigurationRepo({
           findByContest: jest.fn().mockResolvedValue({
             tierConfig: [{ tierName: 'Tier A', tierNumber: 1, picksFromTier: 1, participantIds: ['participant-1'] }],
-            rosterSize: 1,
           }),
         }),
         leagues: fakeLeagueRepo({
@@ -1705,8 +1700,6 @@ describe('ContestService.getGolfLeaderboard — refusals and the settled read', 
       id: 'config-1',
       contestId: 'contest-1',
       configJson: { countedScores: 2 },
-      rosterSize: 3,
-      pickCount: 3,
       rounds: 4,
       ...overrides,
     }),
@@ -1755,7 +1748,7 @@ describe('ContestService.getGolfLeaderboard — refusals and the settled read', 
     const service = buildService({
       contests: contestRepoFor(),
       memberships: member(),
-      configurations: configuration({ configJson: {}, rosterSize: null, pickCount: null }),
+      configurations: configuration({ configJson: {} }),
       scoringRules: rules(golfRule),
     });
 
