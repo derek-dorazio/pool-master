@@ -107,7 +107,7 @@ function requireJourney(): Required<JourneyState> {
 }
 
 test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
-  test('act 1: the root admin builds a golf catalog — tour, six players, a tournament, its field and tiers — and releases it', async ({ page }) => {
+  test('act 1: the root admin builds a golf catalog — tour, six players, a tournament, its field, tiers and prices — and releases it', async ({ page }) => {
     test.setTimeout(180_000);
     const credentials = readAdminCredentials();
     admin = credentials;
@@ -294,6 +294,20 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         ).toBeVisible();
       }
       return entryIds;
+    });
+
+    await test.step('price the field with the default Budget pricing profile', async () => {
+      // Release needs every active golfer priced (#93); the dialog starts on the default profile.
+      await page.getByTestId('root-admin-golf-tier-auto-prices').click();
+      await expect(page.getByTestId('root-admin-golf-tier-auto-prices-modal')).toBeVisible();
+      await expect(page.getByTestId('root-admin-golf-tier-auto-prices-preview')).toBeVisible();
+      await submitAndRead(
+        page,
+        'root-admin-golf-tier-auto-prices-confirm',
+        'POST',
+        `/api/v1/events/${eventId}/prices/auto-assign`,
+      );
+      await expect(page.getByTestId('root-admin-golf-tiers-pricing')).toContainText('Priced with');
     });
 
     // #431 — a new tournament is a draft commissioners can't see. Act 2 can only create a

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
+  EventPricingConfigSchema,
   ParticipantInactiveReason,
   ParticipantRoundStatus,
   ParticipantStandingStatus,
@@ -62,6 +63,8 @@ export const SportEventDtoSchema = z.object({
   participantCount: z.number().int().nullable().describe('Field size the provider reports, when it reports one; null otherwise.'),
   loadedParticipantCount: z.number().int().describe('Number of event participants currently persisted for the event.'),
   untieredParticipantCount: z.number().int().describe(`Active event participants with no tier. A DRAFT event can't be released while any remain. ${ADMIN_ONLY}`),
+  unpricedParticipantCount: z.number().int().describe(`Active event participants with no price. A DRAFT event can't be released while any remain. ${ADMIN_ONLY}`),
+  pricing: EventPricingConfigSchema.nullable().describe('The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.'),
   readinessStatus: EventReadinessStatusDtoSchema.describe('Contest-setup readiness right now.'),
   readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started.'),
   contestEligible: z.boolean().describe('Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started.'),
@@ -271,10 +274,9 @@ export const ReplaceSportEventTierAssignmentsRequestSchema = z.object({
 }).describe('The drag-and-drop tier save.');
 export type ReplaceSportEventTierAssignmentsRequest = z.infer<typeof ReplaceSportEventTierAssignmentsRequestSchema>;
 
-export const AutoAssignSportEventPricesRequestSchema = z.object({
-  minPrice: z.number().min(0),
-  maxPrice: z.number().min(0),
-}).describe('Prices the seeded, active field between minPrice and maxPrice by seed.');
+export const AutoAssignSportEventPricesRequestSchema = EventPricingConfigSchema.describe(
+  'Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event as its pricing. The values usually come from a Budget pricing profile, possibly changed.',
+);
 export type AutoAssignSportEventPricesRequest = z.infer<typeof AutoAssignSportEventPricesRequestSchema>;
 
 // --- SportEventParticipant — the Participant↔SportEvent edge ----------------------
@@ -483,6 +485,7 @@ registerSchema('SportEventTierListResponse', SportEventTierListResponseSchema);
 registerSchema('ReplaceSportEventTiersRequest', ReplaceSportEventTiersRequestSchema);
 registerSchema('AutoAssignSportEventTiersRequest', AutoAssignSportEventTiersRequestSchema);
 registerSchema('ReplaceSportEventTierAssignmentsRequest', ReplaceSportEventTierAssignmentsRequestSchema);
+registerSchema('EventPricingConfig', EventPricingConfigSchema);
 registerSchema('AutoAssignSportEventPricesRequest', AutoAssignSportEventPricesRequestSchema);
 registerSchema('SportEventParticipantValuationDto', SportEventParticipantValuationDtoSchema);
 registerSchema('SportEventParticipantStandingDto', SportEventParticipantStandingDtoSchema);

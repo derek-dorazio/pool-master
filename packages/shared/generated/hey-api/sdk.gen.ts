@@ -1288,7 +1288,7 @@ export const replaceEventTierAssignments = <ThrowOnError extends boolean = false
 /**
  * Price a sport event's seeded field
  *
- * Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.
+ * Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0.
  */
 export const autoAssignEventPrices = <ThrowOnError extends boolean = false>(options: Options<AutoAssignEventPricesData, ThrowOnError>) => (options.client ?? client).post<AutoAssignEventPricesResponses, AutoAssignEventPricesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

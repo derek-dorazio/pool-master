@@ -7,6 +7,7 @@ import type {
   SportEventStatus,
   SportEventSyncScope,
 } from './enums';
+import type { EventPricingConfig } from './budget-pricing';
 import type { ParticipantScoringDefinitionId } from './contest-scoring';
 import type { DomainEntity } from './types';
 
@@ -89,6 +90,11 @@ export interface SportEvent extends DomainEntity {
   syncScope: SportEventSyncScope;
   /** False stops the lifecycle scheduler moving this event's status. */
   autoLifecycleEnabled: boolean;
+  /**
+   * The values the field was last priced with for budget contests (#93); unset until prices are
+   * assigned. Locks with the prices at release, and is every budget contest's salary cap.
+   */
+  pricingConfig?: EventPricingConfig;
 }
 
 /**

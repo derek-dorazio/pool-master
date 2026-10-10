@@ -1,11 +1,13 @@
 /**
  * golf-seeding-algorithm.ts — pure, I/O-free derivation used at field-seed
- * time (deriveSeedNumbersAndOdds) and by the separate, later price-assign
- * action (deriveGolfPrices). Both are deliberately simple first-pass
- * placeholders with no real market-odds signal to draw on yet (plans/124
- * §4.7/§4.7a). deriveGolfTournamentRounds is a later addition to this same
- * file (plans/124 §4.10) — not part of this slice.
+ * time (deriveSeedNumbersAndOdds), a deliberately simple first-pass placeholder
+ * with no real market-odds signal to draw on yet (plans/124 §4.7), and by the
+ * separate, later price-assign action (deriveGolfPrices, the #93 budget
+ * curve). deriveGolfTournamentRounds is a later addition to this same file
+ * (plans/124 §4.10).
  */
+
+import { priceOnBudgetCurve, type BudgetPricingValues } from '@poolmaster/shared/domain';
 
 export interface SeedingRosterEntry {
   participantId: string;
@@ -21,12 +23,12 @@ export interface SeededParticipant {
 
 export interface PricingFieldEntry {
   participantId: string;
-  seedNumber: number;
+  /** Null for a golfer added to the field without a seed, such as an invited guest. */
+  seedNumber: number | null;
 }
 
 export interface PricedParticipant {
   participantId: string;
-  seedNumber: number;
   price: number;
 }
 
@@ -65,37 +67,17 @@ export function deriveSeedNumbersAndOdds(
 }
 
 /**
- * Uses the field's already-assigned seedNumber as position — no re-sort, the
- * tie-break happened once at seed time. Min-max normalizes an inverse-weighted,
- * freshly-jittered distribution into [minPrice, maxPrice] (plans/124 §4.7a).
+ * Prices the field on the budget curve (#93) in seed order, best seed first, with golfers who
+ * have no seed after every seeded one, in the order given. Position in that order, not the raw
+ * seed number, places each golfer on the curve, so a withdrawal leaves no gap. No jitter: a
+ * price is explainable from seed order alone.
  */
-export function deriveGolfPrices(
-  field: PricingFieldEntry[],
-  minPrice: number,
-  maxPrice: number,
-  random: () => number = Math.random,
-): PricedParticipant[] {
-  if (field.length === 0) {
-    return [];
-  }
-
-  const ordered = [...field].sort((left, right) => left.seedNumber - right.seedNumber);
-  const scores = ordered.map((entry) => {
-    const jitter = 1 + (random() * ODDS_JITTER_RANGE - ODDS_JITTER_OFFSET);
-    return (1 / entry.seedNumber) * jitter;
-  });
-  const min = Math.min(...scores);
-  const max = Math.max(...scores);
-  const range = max - min;
-
-  return ordered.map((entry, index) => {
-    const proportion = range === 0 ? 1 : (scores[index] - min) / range;
-    return {
-      participantId: entry.participantId,
-      seedNumber: entry.seedNumber,
-      price: roundToCents(minPrice + proportion * (maxPrice - minPrice)),
-    };
-  });
+export function deriveGolfPrices(field: PricingFieldEntry[], values: BudgetPricingValues): PricedParticipant[] {
+  const ordered = [...field].sort((left, right) => (left.seedNumber ?? Infinity) - (right.seedNumber ?? Infinity));
+  return ordered.map((entry, position) => ({
+    participantId: entry.participantId,
+    price: priceOnBudgetCurve(values, position, ordered.length),
+  }));
 }
 
 function tieBreakByRanking(

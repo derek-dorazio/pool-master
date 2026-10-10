@@ -5,6 +5,7 @@ import { SportEventService } from '../../../packages/core-api/src/modules/events
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { standardEventPricing } from '../../support/budget-pricing';
 import {
   fakeContestEntryRepo,
   fakeContestRepo,
@@ -247,8 +248,18 @@ describe('SportEventService.cloneEventYear', () => {
 });
 
 describe('SportEventService.releaseEvent (#431)', () => {
-  /** A draft whose field holds `golfers` active golfers, the first `tiered` of them in a tier. */
-  async function draftWithField(store: InMemorySportEvents, golfers: number, tiered: number, overrides: Parameters<InMemorySportEvents['addEvent']>[0] = {}) {
+  /**
+   * A draft whose field holds `golfers` active golfers, the first `tiered` of them in a tier and
+   * the first `priced` of them priced with the Standard profile (all, unless `priced` says).
+   * `priced: null` leaves the event with no prices assigned at all.
+   */
+  async function draftWithField(
+    store: InMemorySportEvents,
+    golfers: number,
+    tiered: number,
+    overrides: Parameters<InMemorySportEvents['addEvent']>[0] = {},
+    priced: number | null = golfers,
+  ) {
     const event = store.addEvent({ status: SportEventStatus.DRAFT, ...overrides });
     await store.tierRepo().createMany(event.id, [{ tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 }]);
     const tierId = store.tierRows[0].id;
@@ -259,6 +270,13 @@ describe('SportEventService.releaseEvent (#431)', () => {
       tierOrderIndex: index + 1,
       source: 'MANUAL',
     })));
+    if (priced !== null) {
+      await store.valuationRepo().assignEventPrices({
+        sportEventId: event.id,
+        pricingConfig: standardEventPricing(),
+        assignments: entries.slice(0, priced).map((entry) => ({ sportEventParticipantId: entry.id, price: 6000, source: 'AUTO_RANKING' })),
+      });
+    }
     return event;
   }
 
@@ -290,7 +308,28 @@ describe('SportEventService.releaseEvent (#431)', () => {
     });
   });
 
-  it('ignores a withdrawn golfer with no tier: only active golfers must be tiered', async () => {
+  it('refuses a draft whose prices were never assigned with 422 SPORT_EVENT_NOT_READY (#93)', async () => {
+    const { store, service } = setup();
+    const event = await draftWithField(store, 3, 3, {}, null);
+
+    await expect(service.releaseEvent(event.id)).rejects.toMatchObject({
+      code: 'SPORT_EVENT_NOT_READY',
+      message: expect.stringContaining('its prices have not been assigned'),
+    });
+    expect(store.events[0].status).toBe(SportEventStatus.DRAFT);
+  });
+
+  it('refuses a draft with an active golfer who has no price with 422 SPORT_EVENT_NOT_READY (#93)', async () => {
+    const { store, service } = setup();
+    const event = await draftWithField(store, 3, 3, {}, 2);
+
+    await expect(service.releaseEvent(event.id)).rejects.toMatchObject({
+      code: 'SPORT_EVENT_NOT_READY',
+      message: expect.stringContaining('1 active participant(s) have no price'),
+    });
+  });
+
+  it('ignores a withdrawn golfer with no tier or price: only active golfers must be tiered and priced', async () => {
     const { store, service } = setup();
     const event = await draftWithField(store, 2, 2);
     const withdrawn = store.addToField(event.id, 'participant-withdrawn');

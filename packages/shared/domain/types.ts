@@ -225,29 +225,6 @@ export interface TierDefinition {
 
 // --- Pricing & Tier Configuration ---
 
-export interface PricingConfig {
-  sport: Sport;
-  contestId?: string;
-  totalBudget: number;
-  minPrice: number;
-  maxPrice: number;
-  priceIncrement: number;
-  rankingWeight: number;
-  formWeight: number;
-  oddsWeight: number;
-  seedWeight: number;
-  manualOverrides: PriceOverride[];
-}
-
-/** Manual pricing override applied to a participant. */
-export interface PriceOverride {
-  participantId: string;
-  overridePrice: number;
-  reason: string;
-  setBy: string;
-  setAt: Date;
-}
-
 /** Tier assignment configuration for contests that use tier-based selection. */
 export interface TierConfig {
   contestId: string;

@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SettingsChange, SettingsGroup } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
+import { budgetPricingGroupFixture } from './golf-test-fixtures';
 import { RootAdminSettingsPage } from './root-admin-settings-page';
 
 const { listSettingsGroupsMock, listSettingsGroupHistoryMock, updateSettingsGroupMock } = vi.hoisted(() => ({
@@ -221,5 +222,62 @@ describe('RootAdminSettingsPage email card', () => {
     await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(2));
     const [retry] = updateSettingsGroupMock.mock.calls[1] as [{ body: { expectedUpdatedAt: string | null } }];
     expect(retry.body.expectedUpdatedAt).toBe('2026-10-07T14:00:00.000Z');
+  });
+});
+
+describe('RootAdminSettingsPage budget pricing card (#93)', () => {
+  beforeEach(() => {
+    listSettingsGroupsMock.mockReset();
+    listSettingsGroupHistoryMock.mockReset();
+    updateSettingsGroupMock.mockReset();
+    listSettingsGroupsMock.mockResolvedValue({ data: { groups: [budgetPricingGroupFixture()] } });
+  });
+
+  it('lists each profile with its values, the default first', async () => {
+    renderPage();
+
+    const card = within(await screen.findByTestId('root-admin-settings-group-BUDGET_PRICING_CONFIG'));
+    expect(card.getByText('Standard (default)')).toBeInTheDocument();
+    expect(card.getByText('$50,000 cap · $100 unit · best 24% · worst 12% · steepness 4')).toBeInTheDocument();
+    expect(card.getByText('$5,000 cap · $10 unit · best 24% · worst 12% · steepness 4')).toBeInTheDocument();
+  });
+
+  it('saves a changed profile and an added one, with the version it was read at', async () => {
+    updateSettingsGroupMock.mockResolvedValue({ data: budgetPricingGroupFixture() });
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-budget-pricing-topSharePercent-1'), { target: { value: '30' } });
+    fireEvent.click(screen.getByTestId('root-admin-budget-pricing-add'));
+    fireEvent.change(screen.getByTestId('root-admin-budget-pricing-name-2'), { target: { value: 'Big' } });
+    fireEvent.change(screen.getByTestId('root-admin-budget-pricing-salaryCap-2'), { target: { value: '100000' } });
+    fireEvent.click(screen.getByTestId('root-admin-budget-pricing-settings-save'));
+
+    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
+    expect(updateSettingsGroupMock.mock.calls[0][0]).toEqual(expect.objectContaining({
+      path: { key: 'BUDGET_PRICING_CONFIG' },
+      body: {
+        key: 'BUDGET_PRICING_CONFIG',
+        expectedUpdatedAt: null,
+        value: {
+          profiles: [
+            { name: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+            { name: 'Small', salaryCap: 5000, unit: 10, topSharePercent: 30, floorSharePercent: 12, steepness: 4 },
+            { name: 'Big', salaryCap: 100000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+          ],
+        },
+      },
+    }));
+  });
+
+  it('refuses to save two profiles with one name, or a worst-golfer share above the best', async () => {
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-budget-pricing-name-1'), { target: { value: 'standard' } });
+    fireEvent.change(screen.getByTestId('root-admin-budget-pricing-floorSharePercent-0'), { target: { value: '40' } });
+    fireEvent.click(screen.getByTestId('root-admin-budget-pricing-settings-save'));
+
+    expect(await screen.findByText('Another profile already has this name.')).toBeInTheDocument();
+    expect(screen.getByText('The worst seed\'s share can\'t be above the best seed\'s.')).toBeInTheDocument();
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 });

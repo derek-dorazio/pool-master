@@ -2,6 +2,7 @@ import { expect, jest } from '@jest/globals';
 import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { standardEventPricing } from '../../support/budget-pricing';
 
 // The field's rules against an in-memory store: the one read every field screen uses,
 // seeding from the sport league, adding anyone, the all-or-none grid save, and removal.
@@ -35,7 +36,11 @@ describe('SportEventParticipantService.listEventParticipants', () => {
     const [round] = await (async () => { await store.roundRepo().createMany(event.id, [{ roundNumber: 1, scheduledDate: new Date() }]); return store.roundRows; })();
     await store.golfRoundRepo().upsert({ sportEventParticipantId: entry.id, sportEventRoundId: round.id, status: 'COMPLETED', completedAt: null, strokes: 70, scoreToPar: -2, thru: 18 });
     await store.golfStandingRepo().upsert({ sportEventParticipantId: entry.id, currentRound: 1, status: 'COMPLETE', asOf: new Date(), eventScoreToPar: -2, eventStrokes: 70, currentRoundThru: 18 });
-    await store.valuationRepo().assignPrices([{ sportEventParticipantId: entry.id, price: 9, source: 'MANUAL' }]);
+    await store.valuationRepo().assignEventPrices({
+      sportEventId: event.id,
+      pricingConfig: standardEventPricing(),
+      assignments: [{ sportEventParticipantId: entry.id, price: 9, source: 'MANUAL' }],
+    });
 
     const [view] = await service.listEventParticipants(event.id);
 

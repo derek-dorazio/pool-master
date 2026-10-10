@@ -37,6 +37,7 @@ import type {
   TierAssignment,
 } from '@poolmaster/shared/db';
 import type {
+  EventPricingConfig,
   EventSeries,
   ParticipantInactiveReason,
   ParticipantLeagueAffiliation,
@@ -56,7 +57,7 @@ import type {
   TournamentFormat,
   ValuationSource,
 } from '@poolmaster/shared/domain';
-import { SportEventStatus } from '@poolmaster/shared/domain';
+import { EventPricingConfigSchema, SportEventStatus } from '@poolmaster/shared/domain';
 import { mapToParticipant } from './prisma-participant-repository';
 
 type Db = PrismaClient;
@@ -287,6 +288,19 @@ export class PrismaSportEventRepository implements SportEventRepository {
         sportEventId: { in: [...sportEventIds] },
         isActive: true,
         OR: [{ valuation: null }, { valuation: { sportEventTierId: null } }],
+      },
+      _count: { _all: true },
+    });
+    return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
+  }
+
+  async countUnpricedActiveParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>> {
+    const groups = await this.prisma.sportEventParticipant.groupBy({
+      by: ['sportEventId'],
+      where: {
+        sportEventId: { in: [...sportEventIds] },
+        isActive: true,
+        OR: [{ valuation: null }, { valuation: { price: null } }],
       },
       _count: { _all: true },
     });
@@ -579,15 +593,25 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
     }));
   }
 
-  async assignPrices(assignments: readonly PriceAssignment[]): Promise<void> {
-    await this.prisma.$transaction(assignments.map((assignment) => {
-      const price = { price: assignment.price, priceAssignedSource: assignment.source };
-      return this.prisma.sportEventParticipantValuation.upsert({
-        where: { sportEventParticipantId: assignment.sportEventParticipantId },
-        create: { sportEventParticipantId: assignment.sportEventParticipantId, ...price },
-        update: price,
-      });
-    }));
+  async assignEventPrices(input: {
+    sportEventId: string;
+    pricingConfig: EventPricingConfig;
+    assignments: readonly PriceAssignment[];
+  }): Promise<void> {
+    await this.prisma.$transaction([
+      ...input.assignments.map((assignment) => {
+        const price = { price: assignment.price, priceAssignedSource: assignment.source };
+        return this.prisma.sportEventParticipantValuation.upsert({
+          where: { sportEventParticipantId: assignment.sportEventParticipantId },
+          create: { sportEventParticipantId: assignment.sportEventParticipantId, ...price },
+          update: price,
+        });
+      }),
+      this.prisma.sportEvent.update({
+        where: { id: input.sportEventId },
+        data: { pricingConfig: input.pricingConfig },
+      }),
+    ]);
   }
 }
 
@@ -691,6 +715,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     sportLeagueId: row.eventSeries.sportLeagueId,
     syncScope: row.syncScope as SportEventSyncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
+    ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

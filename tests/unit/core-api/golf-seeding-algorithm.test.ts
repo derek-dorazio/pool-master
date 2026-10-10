@@ -3,6 +3,7 @@ import {
   deriveGolfTournamentRounds,
   deriveSeedNumbersAndOdds,
 } from '../../../packages/core-api/src/modules/golf/golf-seeding-algorithm';
+import { standardEventPricing } from '../../support/budget-pricing';
 
 /** Deterministic sequence injector matching ScenarioStoreOptions's random DI pattern. */
 function fixedSequence(values: number[]): () => number {
@@ -77,37 +78,79 @@ describe('deriveSeedNumbersAndOdds', () => {
   });
 });
 
-describe('deriveGolfPrices', () => {
-  it('pool-master-2re orders by the field\'s existing seedNumber, not a fresh sort', () => {
-    const field = [
+describe('deriveGolfPrices — the budget pricing curve (#93)', () => {
+  const standard = standardEventPricing();
+  const field = (size: number) => Array.from({ length: size }, (_, i) => ({ participantId: `p-${i + 1}`, seedNumber: i + 1 }));
+
+  it('orders by the field\'s existing seedNumber, not a fresh sort', () => {
+    const result = deriveGolfPrices([
       { participantId: 'p-3', seedNumber: 3 },
       { participantId: 'p-1', seedNumber: 1 },
       { participantId: 'p-2', seedNumber: 2 },
-    ];
-
-    const result = deriveGolfPrices(field, 10, 100, fixedSequence([0.5]));
+    ], standard);
 
     expect(result.map((r) => r.participantId)).toEqual(['p-1', 'p-2', 'p-3']);
   });
 
-  it('pool-master-2re puts the best seed near maxPrice and the worst near minPrice', () => {
-    const field = Array.from({ length: 10 }, (_, i) => ({ participantId: `p-${i + 1}`, seedNumber: i + 1 }));
+  it('prices a 144-golfer field with the Standard profile from $12,000 at the top to $6,000 at the bottom, steepest at the top', () => {
+    const prices = deriveGolfPrices(field(144), standard).map((r) => r.price);
 
-    const result = deriveGolfPrices(field, 10, 100, fixedSequence([0.5]));
-
-    expect(result[0].price).toBeCloseTo(100, 0);
-    expect(result[result.length - 1].price).toBeCloseTo(10, 0);
-    expect(result.every((r) => r.price >= 10 && r.price <= 100)).toBe(true);
+    expect([1, 5, 10, 20, 40, 72, 144].map((seed) => prices[seed - 1])).toEqual([12000, 11400, 10600, 9400, 7700, 6400, 6000]);
   });
 
-  it('pool-master-2re returns a single entry at maxPrice when the field has only one golfer (zero range)', () => {
-    const result = deriveGolfPrices([{ participantId: 'p-1', seedNumber: 1 }], 10, 100, fixedSequence([0.5]));
+  it('makes the cap bind: the six dearest golfers cost more than the $50,000 cap and the six cheapest less', () => {
+    const prices = deriveGolfPrices(field(144), standard).map((r) => r.price);
+    const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
-    expect(result).toEqual([{ participantId: 'p-1', seedNumber: 1, price: 100 }]);
+    expect(sum(prices.slice(0, 6))).toBeGreaterThan(standard.salaryCap);
+    expect(sum(prices.slice(-6))).toBeLessThan(standard.salaryCap);
   });
 
-  it('pool-master-2re returns an empty array for an empty field', () => {
-    expect(deriveGolfPrices([], 10, 100, fixedSequence([0.5]))).toEqual([]);
+  it('rounds every price to the profile\'s unit: whole $10s with the Small profile', () => {
+    const small = { ...standard, salaryCap: 5000, unit: 10 };
+    const prices = deriveGolfPrices(field(37), small).map((r) => r.price);
+
+    expect(prices.every((price) => price % 10 === 0)).toBe(true);
+    expect(prices[0]).toBe(1200);
+    expect(prices[prices.length - 1]).toBe(600);
+  });
+
+  it('places golfers by position, so a gap in seed numbers left by a withdrawal still prices the last golfer at the floor', () => {
+    const result = deriveGolfPrices([
+      { participantId: 'p-1', seedNumber: 1 },
+      { participantId: 'p-2', seedNumber: 2 },
+      { participantId: 'p-9', seedNumber: 9 },
+    ], standard);
+
+    expect(result.map((r) => r.price)).toEqual([12000, 6400, 6000]);
+  });
+
+  it('prices golfers with no seed after every seeded golfer, keeping their given order', () => {
+    const result = deriveGolfPrices([
+      { participantId: 'guest-a', seedNumber: null },
+      { participantId: 'p-2', seedNumber: 2 },
+      { participantId: 'guest-b', seedNumber: null },
+      { participantId: 'p-1', seedNumber: 1 },
+    ], standard);
+
+    expect(result.map((r) => r.participantId)).toEqual(['p-1', 'p-2', 'guest-a', 'guest-b']);
+    expect(result[result.length - 1]?.price).toBe(6000);
+  });
+
+  it('prices a straight line with steepness 1', () => {
+    const prices = deriveGolfPrices(field(3), { ...standard, steepness: 1 }).map((r) => r.price);
+
+    expect(prices).toEqual([12000, 9000, 6000]);
+  });
+
+  it('prices a field of one golfer at the top share', () => {
+    expect(deriveGolfPrices([{ participantId: 'p-1', seedNumber: 1 }], standard)).toEqual([
+      { participantId: 'p-1', price: 12000 },
+    ]);
+  });
+
+  it('returns an empty array for an empty field', () => {
+    expect(deriveGolfPrices([], standard)).toEqual([]);
   });
 });
 

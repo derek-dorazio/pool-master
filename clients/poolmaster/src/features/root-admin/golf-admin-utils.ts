@@ -130,7 +130,7 @@ export function resolveGolfLifecycleStage(status: GolfTournamentStatus): GolfLif
  * the server makes. Empty when it is ready, or when it is not a draft.
  */
 export function describeGolfReleaseBlockers(
-  tournament: Pick<SportEventDto, 'status' | 'startDate' | 'loadedParticipantCount' | 'untieredParticipantCount'>,
+  tournament: Pick<SportEventDto, 'status' | 'startDate' | 'loadedParticipantCount' | 'untieredParticipantCount' | 'unpricedParticipantCount' | 'pricing'>,
   now: Date = new Date(),
 ): string[] {
   if (tournament.status !== SportEventStatus.DRAFT) {
@@ -148,6 +148,15 @@ export function describeGolfReleaseBlockers(
       tournament.untieredParticipantCount === 1
         ? 'Put the 1 active golfer without a tier into a tier.'
         : `Put the ${tournament.untieredParticipantCount} active golfers without a tier into tiers.`,
+    );
+  }
+  if (!tournament.pricing) {
+    blockers.push('Assign prices on the Tiers page.');
+  } else if (tournament.unpricedParticipantCount > 0) {
+    blockers.push(
+      tournament.unpricedParticipantCount === 1
+        ? 'Price the 1 active golfer without a price.'
+        : `Price the ${tournament.unpricedParticipantCount} active golfers without a price.`,
     );
   }
   return blockers;
@@ -234,7 +243,7 @@ export type GolfTournamentReadiness = {
 export function deriveGolfTournamentReadiness(
   tournament: Pick<
     SportEventDto,
-    'status' | 'loadedParticipantCount' | 'tierCount' | 'untieredParticipantCount'
+    'status' | 'loadedParticipantCount' | 'tierCount' | 'untieredParticipantCount' | 'unpricedParticipantCount' | 'pricing'
   >,
 ): GolfTournamentReadiness {
   if (tournament.status === SportEventStatus.COMPLETED) {
@@ -268,6 +277,13 @@ export function deriveGolfTournamentReadiness(
       label: 'Tiers pending',
       tone: 'warning',
       reasons: [`${tournament.untieredParticipantCount} golfer(s) without a tier`],
+    };
+  }
+  if (!tournament.pricing || tournament.unpricedParticipantCount > 0) {
+    return {
+      label: 'Prices pending',
+      tone: 'warning',
+      reasons: [tournament.pricing ? `${tournament.unpricedParticipantCount} golfer(s) without a price` : 'No prices assigned'],
     };
   }
   return { label: 'Ready to release', tone: 'info', reasons: [] };

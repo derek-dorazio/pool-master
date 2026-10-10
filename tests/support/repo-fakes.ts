@@ -274,6 +274,7 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     delete: nothing(),
     countParticipants: noCounts(),
     countUntieredActiveParticipants: noCounts(),
+    countUnpricedActiveParticipants: noCounts(),
     countTiers: noCounts(),
     countContests: noCounts(),
     countBySportLeagues: noCounts(),

@@ -39,6 +39,7 @@ export {
   TabsList,
   TabsTrigger,
 } from "./tabs";
+export { formatDollars } from "./money-format";
 export { Modal } from "./modal";
 export { MutationActionToast } from "./mutation-action-toast";
 export { useMutationActionWorkflow } from "./mutation-action-workflow";

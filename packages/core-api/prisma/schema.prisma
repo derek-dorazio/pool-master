@@ -976,6 +976,10 @@ model SportEvent {
   // from ever touching this event's status, no matter what the recorded
   // round schedule says — a rain delay, a dispute, etc.
   autoLifecycleEnabled Boolean                   @default(true) @map("auto_lifecycle_enabled")
+  // The values the field was last priced with for budget contests (#93), typed by
+  // EventPricingConfigSchema. Null until prices are assigned; written with the
+  // prices in one transaction and locked with them at release.
+  pricingConfig        Json?                     @map("pricing_config")
   createdAt            DateTime                  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt            DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
 

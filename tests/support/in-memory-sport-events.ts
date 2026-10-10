@@ -283,6 +283,11 @@ export class InMemorySportEvents {
         && row.isActive
         && !this.valuationRows.some((valuation) => valuation.sportEventParticipantId === row.id && valuation.sportEventTierId)
       )).length),
+      countUnpricedActiveParticipants: async (ids) => count(ids, (id) => this.field.filter((row) => (
+        row.sportEventId === id
+        && row.isActive
+        && !this.valuationRows.some((valuation) => valuation.sportEventParticipantId === row.id && valuation.price !== null)
+      )).length),
       countTiers: async (ids) => count(ids, (id) => this.tierRows.filter((row) => row.sportEventId === id).length),
       countContests: async (ids) => count(ids, (id) => this.contestsByEvent.get(id) ?? 0),
       countBySportLeagues: async (ids, filters = {}) => count(ids, (id) => this.events.filter((row) => (
@@ -437,10 +442,11 @@ export class InMemorySportEvents {
           });
         }
       },
-      assignPrices: async (assignments) => {
+      assignEventPrices: async ({ sportEventId, pricingConfig, assignments }) => {
         for (const assignment of assignments) {
           Object.assign(valuationFor(assignment.sportEventParticipantId), { price: assignment.price, priceAssignedSource: assignment.source });
         }
+        Object.assign(this.events.find((row) => row.id === sportEventId) as SportEvent, { pricingConfig });
       },
     };
   }

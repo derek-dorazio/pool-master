@@ -49,6 +49,8 @@ export interface SportEventSummary {
   loadedParticipantCount: number;
   /** Active participants with no tier: a DRAFT event can't be released while any remain. */
   untieredParticipantCount: number;
+  /** Active participants with no price: a DRAFT event can't be released while any remain (#93). */
+  unpricedParticipantCount: number;
   tierCount: number;
   contestCount: number;
 }
@@ -356,8 +358,8 @@ export class SportEventService {
    * "Release for contests" (#431): DRAFT → SCHEDULED, after which commissioners can build
    * contests on the event and its tiers and prices are locked for good. 409
    * SPORT_EVENT_NOT_DRAFT once released; 409 SPORT_EVENT_ALREADY_STARTED once its start time
-   * has passed; 422 SPORT_EVENT_NOT_READY while its field is empty or any active participant
-   * has no tier.
+   * has passed; 422 SPORT_EVENT_NOT_READY while its field is empty, any active participant
+   * has no tier, or its prices are not assigned or miss an active participant (#93).
    */
   async releaseEvent(sportEventId: string): Promise<SportEventSummary> {
     const summary = await this.requireSummary(sportEventId);
@@ -384,7 +386,13 @@ export class SportEventService {
     const missing = describeReleaseBlockers(summary);
     if (missing.length > 0) {
       this.deps.logger?.warn(
-        { sportEventId, loadedParticipantCount: summary.loadedParticipantCount, untieredParticipantCount: summary.untieredParticipantCount },
+        {
+          sportEventId,
+          loadedParticipantCount: summary.loadedParticipantCount,
+          untieredParticipantCount: summary.untieredParticipantCount,
+          unpricedParticipantCount: summary.unpricedParticipantCount,
+          isPriced: summary.event.pricingConfig !== undefined,
+        },
         'Refused to release a sport event that is not ready',
       );
       throw new SportEventError(
@@ -475,9 +483,10 @@ export class SportEventService {
 
   private async summarize(events: SportEvent[]): Promise<SportEventSummary[]> {
     const ids = events.map((event) => event.id);
-    const [participants, untiered, tiers, contests] = await Promise.all([
+    const [participants, untiered, unpriced, tiers, contests] = await Promise.all([
       this.deps.sportEvents.countParticipants(ids),
       this.deps.sportEvents.countUntieredActiveParticipants(ids),
+      this.deps.sportEvents.countUnpricedActiveParticipants(ids),
       this.deps.sportEvents.countTiers(ids),
       this.deps.sportEvents.countContests(ids),
     ]);
@@ -485,6 +494,7 @@ export class SportEventService {
       event,
       loadedParticipantCount: participants.get(event.id) ?? 0,
       untieredParticipantCount: untiered.get(event.id) ?? 0,
+      unpricedParticipantCount: unpriced.get(event.id) ?? 0,
       tierCount: tiers.get(event.id) ?? 0,
       contestCount: contests.get(event.id) ?? 0,
     }));
@@ -499,6 +509,11 @@ function describeReleaseBlockers(summary: SportEventSummary): string[] {
   }
   if (summary.untieredParticipantCount > 0) {
     blockers.push(`${summary.untieredParticipantCount} active participant(s) have no tier`);
+  }
+  if (!summary.event.pricingConfig) {
+    blockers.push('its prices have not been assigned');
+  } else if (summary.unpricedParticipantCount > 0) {
+    blockers.push(`${summary.unpricedParticipantCount} active participant(s) have no price`);
   }
   return blockers;
 }

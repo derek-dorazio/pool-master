@@ -1,6 +1,7 @@
 import { SportEventStatus, TierSource } from '@poolmaster/shared/domain';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { standardEventPricing } from '../../support/budget-pricing';
 
 // Tier and valuation rules against an in-memory store: defaults, the fill order of
 // auto-assignment, the orphan guard on replacement, the drag-and-drop save's checks,
@@ -21,7 +22,6 @@ function setup(status: SportEventStatus = SportEventStatus.DRAFT) {
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
     field: store.fieldRepo(),
-    random: () => 0.5,
   });
   return { store, event, service };
 }
@@ -112,24 +112,56 @@ describe('SportEventTierService — assignment', () => {
 });
 
 describe('SportEventTierService — prices and the contest-side read', () => {
-  it('prices only the seeded, active field, best seed dearest, leaving tiers alone', async () => {
+  it('prices the whole active field on the curve, best seed dearest and an unseeded golfer cheapest, leaving tiers alone', async () => {
+    const { store, event, service } = setup();
+    store.addToField(event.id, 'p-unseeded');
+    store.addToField(event.id, 'p-2', { seedNumber: 2 });
+    store.addToField(event.id, 'p-1', { seedNumber: 1 });
+    store.addToField(event.id, 'p-withdrawn', { seedNumber: 3, isActive: false });
+
+    const views = await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() });
+
+    const priceOf = new Map(views.map((view) => [view.participantId, view.price]));
+    expect(Object.fromEntries(priceOf)).toEqual({ 'p-1': 12000, 'p-2': 6400, 'p-unseeded': 6000 });
+    expect(views.every((view) => view.tierId === null)).toBe(true);
+    expect(store.valuationRows.every((row) => row.priceAssignedSource === 'AUTO_RANKING')).toBe(true);
+  });
+
+  it('records on the event the values its field was priced with, replacing the last ones on a re-price', async () => {
     const { store, event, service } = setup();
     store.addToField(event.id, 'p-1', { seedNumber: 1 });
-    store.addToField(event.id, 'p-2', { seedNumber: 2 });
-    store.addToField(event.id, 'p-unseeded');
+    const small = { ...standardEventPricing(), profileName: 'Small', salaryCap: 5000, unit: 10 };
 
-    const views = await service.autoAssignPrices({ sportEventId: event.id, minPrice: 5, maxPrice: 50 });
+    await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() });
+    await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: small });
 
-    expect(views).toHaveLength(2);
-    const [first, second] = views;
-    expect(first.price).toBeGreaterThan(second.price as number);
-    expect(views.every((view) => view.tierId === null)).toBe(true);
+    expect((await store.sportEventRepo().findById(event.id))?.pricingConfig).toEqual(small);
+    expect(store.valuationRows.map((row) => row.price)).toEqual([1200]);
+  });
+
+  it.each([
+    ['a floor share above the top share', { floorSharePercent: 30 }],
+    ['a rounding unit above the salary cap', { unit: 60_000 }],
+    // The worst seed's price is $6,000 (12% of $50,000): a $20,000 unit would round it to $0.
+    ['a rounding unit above the worst golfer\'s price, which would round it to $0', { unit: 20_000 }],
+  ])('refuses %s with 422 PRICING_CONFIG_INVALID, pricing nothing', async (_case, change) => {
+    const { store, event, service } = setup();
+    store.addToField(event.id, 'p-1', { seedNumber: 1 });
+
+    await expect(service.autoAssignPrices({ sportEventId: event.id, pricingConfig: { ...standardEventPricing(), ...change } }))
+      .rejects.toMatchObject({ code: 'PRICING_CONFIG_INVALID', statusCode: 422 });
+    expect(store.valuationRows).toEqual([]);
+    expect((await store.sportEventRepo().findById(event.id))?.pricingConfig).toBeUndefined();
   });
 
   it('reads a price-only valuation with no tier, which a read starting from the tiers would miss', async () => {
     const { store, event, service } = setup();
     const entry = store.addToField(event.id, 'p-budget');
-    await store.valuationRepo().assignPrices([{ sportEventParticipantId: entry.id, price: 12, source: 'MANUAL' }]);
+    await store.valuationRepo().assignEventPrices({
+      sportEventId: event.id,
+      pricingConfig: standardEventPricing(),
+      assignments: [{ sportEventParticipantId: entry.id, price: 12, source: 'MANUAL' }],
+    });
 
     await expect(service.getEffectiveValuationsForSportEvent(event.id)).resolves.toEqual([
       expect.objectContaining({ participantId: 'p-budget', price: 12, tierId: null, tierKey: null }),
@@ -155,7 +187,7 @@ describe('SportEventTierService — locked once the event is released (#431)', (
       assignments: [{ sportEventParticipantId: entry.id, tierKey: 'tier-1', tierOrderIndex: 1 }],
     })).rejects.toMatchObject(locked);
     await expect(service.autoAssignTiers({ sportEventId: event.id, source: TierSource.RANKING })).rejects.toMatchObject(locked);
-    await expect(service.autoAssignPrices({ sportEventId: event.id, minPrice: 5, maxPrice: 10 })).rejects.toMatchObject(locked);
+    await expect(service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() })).rejects.toMatchObject(locked);
 
     expect(store.tierRows).toHaveLength(2);
     expect(store.valuationRows).toEqual([]);
@@ -227,12 +259,11 @@ describe('SportEventTierService — the field changing between assignments', () 
     expect(groups.map((group) => [group.tierKey, group.participants.map((p) => p.participantId)])).toEqual([['tier-1', ['p-1']]]);
   });
 
-  it('prices nothing and writes nothing when no one in the active field has a seed', async () => {
+  it('prices nothing and writes nothing when the event has no active golfer', async () => {
     const { store, event, service } = setup();
-    store.addToField(event.id, 'p-unseeded');
     store.addToField(event.id, 'p-withdrawn', { seedNumber: 1, isActive: false });
 
-    await expect(service.autoAssignPrices({ sportEventId: event.id, minPrice: 5, maxPrice: 50 })).resolves.toEqual([]);
+    await expect(service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() })).resolves.toEqual([]);
     expect(store.valuationRows).toEqual([]);
   });
 });

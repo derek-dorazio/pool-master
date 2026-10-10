@@ -8817,6 +8817,67 @@
             "type": "integer",
             "description": "Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
           },
+          "unpricedParticipantCount": {
+            "type": "integer",
+            "description": "Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
+          },
+          "pricing": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "salaryCap": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000000,
+                "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+              },
+              "unit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000000,
+                "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+              },
+              "topSharePercent": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 100,
+                "description": "The best seed's price, as a percentage of the salary cap."
+              },
+              "floorSharePercent": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 100,
+                "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+              },
+              "steepness": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 10,
+                "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+              },
+              "profileName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The profile the values started from. The admin may have changed any value before assigning.",
+                "x-transform": [
+                  "trim"
+                ]
+              }
+            },
+            "required": [
+              "salaryCap",
+              "unit",
+              "topSharePercent",
+              "floorSharePercent",
+              "steepness",
+              "profileName"
+            ],
+            "additionalProperties": false,
+            "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event."
+          },
           "readinessStatus": {
             "type": "string",
             "enum": [
@@ -8919,6 +8980,8 @@
           "participantCount",
           "loadedParticipantCount",
           "untieredParticipantCount",
+          "unpricedParticipantCount",
+          "pricing",
           "readinessStatus",
           "readinessReasons",
           "contestEligible",
@@ -9101,6 +9164,67 @@
                   "type": "integer",
                   "description": "Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
                 },
+                "unpricedParticipantCount": {
+                  "type": "integer",
+                  "description": "Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
+                },
+                "pricing": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "salaryCap": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10000000,
+                      "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                    },
+                    "unit": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10000000,
+                      "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                    },
+                    "topSharePercent": {
+                      "type": "number",
+                      "minimum": 0.1,
+                      "maximum": 100,
+                      "description": "The best seed's price, as a percentage of the salary cap."
+                    },
+                    "floorSharePercent": {
+                      "type": "number",
+                      "minimum": 0.1,
+                      "maximum": 100,
+                      "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                    },
+                    "steepness": {
+                      "type": "number",
+                      "minimum": 0.1,
+                      "maximum": 10,
+                      "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                    },
+                    "profileName": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 50,
+                      "description": "The profile the values started from. The admin may have changed any value before assigning.",
+                      "x-transform": [
+                        "trim"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "salaryCap",
+                    "unit",
+                    "topSharePercent",
+                    "floorSharePercent",
+                    "steepness",
+                    "profileName"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event."
+                },
                 "readinessStatus": {
                   "type": "string",
                   "enum": [
@@ -9203,6 +9327,8 @@
                 "participantCount",
                 "loadedParticipantCount",
                 "untieredParticipantCount",
+                "unpricedParticipantCount",
+                "pricing",
                 "readinessStatus",
                 "readinessReasons",
                 "contestEligible",
@@ -9340,6 +9466,67 @@
                 "type": "integer",
                 "description": "Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
               },
+              "unpricedParticipantCount": {
+                "type": "integer",
+                "description": "Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
+              },
+              "pricing": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "salaryCap": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10000000,
+                    "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                  },
+                  "unit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10000000,
+                    "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                  },
+                  "topSharePercent": {
+                    "type": "number",
+                    "minimum": 0.1,
+                    "maximum": 100,
+                    "description": "The best seed's price, as a percentage of the salary cap."
+                  },
+                  "floorSharePercent": {
+                    "type": "number",
+                    "minimum": 0.1,
+                    "maximum": 100,
+                    "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                  },
+                  "steepness": {
+                    "type": "number",
+                    "minimum": 0.1,
+                    "maximum": 10,
+                    "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                  },
+                  "profileName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "description": "The profile the values started from. The admin may have changed any value before assigning.",
+                    "x-transform": [
+                      "trim"
+                    ]
+                  }
+                },
+                "required": [
+                  "salaryCap",
+                  "unit",
+                  "topSharePercent",
+                  "floorSharePercent",
+                  "steepness",
+                  "profileName"
+                ],
+                "additionalProperties": false,
+                "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event."
+              },
               "readinessStatus": {
                 "type": "string",
                 "enum": [
@@ -9442,6 +9629,8 @@
               "participantCount",
               "loadedParticipantCount",
               "untieredParticipantCount",
+              "unpricedParticipantCount",
+              "pricing",
               "readinessStatus",
               "readinessReasons",
               "contestEligible",
@@ -9724,6 +9913,67 @@
                   "type": "integer",
                   "description": "Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
                 },
+                "unpricedParticipantCount": {
+                  "type": "integer",
+                  "description": "Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)"
+                },
+                "pricing": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "salaryCap": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10000000,
+                      "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                    },
+                    "unit": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10000000,
+                      "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                    },
+                    "topSharePercent": {
+                      "type": "number",
+                      "minimum": 0.1,
+                      "maximum": 100,
+                      "description": "The best seed's price, as a percentage of the salary cap."
+                    },
+                    "floorSharePercent": {
+                      "type": "number",
+                      "minimum": 0.1,
+                      "maximum": 100,
+                      "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                    },
+                    "steepness": {
+                      "type": "number",
+                      "minimum": 0.1,
+                      "maximum": 10,
+                      "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                    },
+                    "profileName": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 50,
+                      "description": "The profile the values started from. The admin may have changed any value before assigning.",
+                      "x-transform": [
+                        "trim"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "salaryCap",
+                    "unit",
+                    "topSharePercent",
+                    "floorSharePercent",
+                    "steepness",
+                    "profileName"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event."
+                },
                 "readinessStatus": {
                   "type": "string",
                   "enum": [
@@ -9826,6 +10076,8 @@
                 "participantCount",
                 "loadedParticipantCount",
                 "untieredParticipantCount",
+                "unpricedParticipantCount",
+                "pricing",
                 "readinessStatus",
                 "readinessReasons",
                 "contestEligible",
@@ -10353,24 +10605,113 @@
         "additionalProperties": false,
         "description": "The drag-and-drop tier save."
       },
-      "AutoAssignSportEventPricesRequest": {
+      "EventPricingConfig": {
         "type": "object",
         "properties": {
-          "minPrice": {
-            "type": "number",
-            "minimum": 0
+          "salaryCap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
           },
-          "maxPrice": {
+          "unit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+          },
+          "topSharePercent": {
             "type": "number",
-            "minimum": 0
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The best seed's price, as a percentage of the salary cap."
+          },
+          "floorSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+          },
+          "steepness": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 10,
+            "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+          },
+          "profileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The profile the values started from. The admin may have changed any value before assigning.",
+            "x-transform": [
+              "trim"
+            ]
           }
         },
         "required": [
-          "minPrice",
-          "maxPrice"
+          "salaryCap",
+          "unit",
+          "topSharePercent",
+          "floorSharePercent",
+          "steepness",
+          "profileName"
         ],
         "additionalProperties": false,
-        "description": "Prices the seeded, active field between minPrice and maxPrice by seed."
+        "description": "The values an event's field was priced with for budget contests."
+      },
+      "AutoAssignSportEventPricesRequest": {
+        "type": "object",
+        "properties": {
+          "salaryCap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+          },
+          "unit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+          },
+          "topSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The best seed's price, as a percentage of the salary cap."
+          },
+          "floorSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+          },
+          "steepness": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 10,
+            "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+          },
+          "profileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The profile the values started from. The admin may have changed any value before assigning.",
+            "x-transform": [
+              "trim"
+            ]
+          }
+        },
+        "required": [
+          "salaryCap",
+          "unit",
+          "topSharePercent",
+          "floorSharePercent",
+          "steepness",
+          "profileName"
+        ],
+        "additionalProperties": false,
+        "description": "Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event as its pricing. The values usually come from a Budget pricing profile, possibly changed."
       },
       "SportEventParticipantValuationDto": {
         "type": "object",
@@ -16632,6 +16973,130 @@
         "additionalProperties": false,
         "description": "Whether and how system email is sent."
       },
+      "BudgetPricingProfile": {
+        "type": "object",
+        "properties": {
+          "salaryCap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+          },
+          "unit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+          },
+          "topSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The best seed's price, as a percentage of the salary cap."
+          },
+          "floorSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+          },
+          "steepness": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 10,
+            "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The profile's name, such as \"Standard\".",
+            "x-transform": [
+              "trim"
+            ]
+          }
+        },
+        "required": [
+          "salaryCap",
+          "unit",
+          "topSharePercent",
+          "floorSharePercent",
+          "steepness",
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "A named set of budget pricing values."
+      },
+      "BudgetPricingConfig": {
+        "type": "object",
+        "properties": {
+          "profiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "salaryCap": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000000,
+                  "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                },
+                "unit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000000,
+                  "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                },
+                "topSharePercent": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 100,
+                  "description": "The best seed's price, as a percentage of the salary cap."
+                },
+                "floorSharePercent": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 100,
+                  "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                },
+                "steepness": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 10,
+                  "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50,
+                  "description": "The profile's name, such as \"Standard\".",
+                  "x-transform": [
+                    "trim"
+                  ]
+                }
+              },
+              "required": [
+                "salaryCap",
+                "unit",
+                "topSharePercent",
+                "floorSharePercent",
+                "steepness",
+                "name"
+              ],
+              "additionalProperties": false,
+              "description": "A named set of budget pricing values."
+            },
+            "minItems": 1,
+            "maxItems": 10,
+            "description": "The pricing profiles, the default first. Names are unique."
+          }
+        },
+        "required": [
+          "profiles"
+        ],
+        "additionalProperties": false,
+        "description": "The named sets of values an event's field is priced with for budget contests."
+      },
       "IngestionScheduleConfigOverride": {
         "type": "object",
         "properties": {
@@ -16983,7 +17448,8 @@
         "type": "string",
         "enum": [
           "INGESTION_SCHEDULE_CONFIG",
-          "EMAIL_CONFIG"
+          "EMAIL_CONFIG",
+          "BUDGET_PRICING_CONFIG"
         ],
         "description": "The stored key of a settings group."
       },
@@ -17714,6 +18180,215 @@
                   "enabled",
                   "replyTo",
                   "templates"
+                ],
+                "additionalProperties": false,
+                "description": "The value a reset would store."
+              }
+            },
+            "required": [
+              "key",
+              "title",
+              "description",
+              "source",
+              "updatedAt",
+              "updatedBy",
+              "value",
+              "defaults"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "BUDGET_PRICING_CONFIG"
+                ]
+              },
+              "title": {
+                "type": "string",
+                "description": "Short display name of the group."
+              },
+              "description": {
+                "type": "string",
+                "description": "What the group controls."
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "stored",
+                  "defaults"
+                ],
+                "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
+              },
+              "updatedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save."
+              },
+              "updatedBy": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The user id of the root admin who made the change."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The admin's full name, for display."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Who last saved the stored value, when known."
+              },
+              "value": {
+                "type": "object",
+                "properties": {
+                  "profiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "salaryCap": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000000,
+                          "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                        },
+                        "unit": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000000,
+                          "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                        },
+                        "topSharePercent": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 100,
+                          "description": "The best seed's price, as a percentage of the salary cap."
+                        },
+                        "floorSharePercent": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 100,
+                          "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                        },
+                        "steepness": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 10,
+                          "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 50,
+                          "description": "The profile's name, such as \"Standard\".",
+                          "x-transform": [
+                            "trim"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "salaryCap",
+                        "unit",
+                        "topSharePercent",
+                        "floorSharePercent",
+                        "steepness",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A named set of budget pricing values."
+                    },
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "description": "The pricing profiles, the default first. Names are unique."
+                  }
+                },
+                "required": [
+                  "profiles"
+                ],
+                "additionalProperties": false,
+                "description": "The value in use."
+              },
+              "defaults": {
+                "type": "object",
+                "properties": {
+                  "profiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "salaryCap": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000000,
+                          "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                        },
+                        "unit": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000000,
+                          "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                        },
+                        "topSharePercent": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 100,
+                          "description": "The best seed's price, as a percentage of the salary cap."
+                        },
+                        "floorSharePercent": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 100,
+                          "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                        },
+                        "steepness": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 10,
+                          "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 50,
+                          "description": "The profile's name, such as \"Standard\".",
+                          "x-transform": [
+                            "trim"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "salaryCap",
+                        "unit",
+                        "topSharePercent",
+                        "floorSharePercent",
+                        "steepness",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A named set of budget pricing values."
+                    },
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "description": "The pricing profiles, the default first. Names are unique."
+                  }
+                },
+                "required": [
+                  "profiles"
                 ],
                 "additionalProperties": false,
                 "description": "The value a reset would store."
@@ -18462,6 +19137,215 @@
                     "defaults"
                   ],
                   "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "BUDGET_PRICING_CONFIG"
+                      ]
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Short display name of the group."
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "What the group controls."
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "stored",
+                        "defaults"
+                      ],
+                      "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
+                    },
+                    "updatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time",
+                      "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save."
+                    },
+                    "updatedBy": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The user id of the root admin who made the change."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The admin's full name, for display."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Who last saved the stored value, when known."
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "profiles": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "salaryCap": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000000,
+                                "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                              },
+                              "unit": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000000,
+                                "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                              },
+                              "topSharePercent": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 100,
+                                "description": "The best seed's price, as a percentage of the salary cap."
+                              },
+                              "floorSharePercent": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 100,
+                                "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                              },
+                              "steepness": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 10,
+                                "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 50,
+                                "description": "The profile's name, such as \"Standard\".",
+                                "x-transform": [
+                                  "trim"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "salaryCap",
+                              "unit",
+                              "topSharePercent",
+                              "floorSharePercent",
+                              "steepness",
+                              "name"
+                            ],
+                            "additionalProperties": false,
+                            "description": "A named set of budget pricing values."
+                          },
+                          "minItems": 1,
+                          "maxItems": 10,
+                          "description": "The pricing profiles, the default first. Names are unique."
+                        }
+                      },
+                      "required": [
+                        "profiles"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value in use."
+                    },
+                    "defaults": {
+                      "type": "object",
+                      "properties": {
+                        "profiles": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "salaryCap": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000000,
+                                "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                              },
+                              "unit": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000000,
+                                "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                              },
+                              "topSharePercent": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 100,
+                                "description": "The best seed's price, as a percentage of the salary cap."
+                              },
+                              "floorSharePercent": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 100,
+                                "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                              },
+                              "steepness": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 10,
+                                "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 50,
+                                "description": "The profile's name, such as \"Standard\".",
+                                "x-transform": [
+                                  "trim"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "salaryCap",
+                              "unit",
+                              "topSharePercent",
+                              "floorSharePercent",
+                              "steepness",
+                              "name"
+                            ],
+                            "additionalProperties": false,
+                            "description": "A named set of budget pricing values."
+                          },
+                          "minItems": 1,
+                          "maxItems": 10,
+                          "description": "The pricing profiles, the default first. Names are unique."
+                        }
+                      },
+                      "required": [
+                        "profiles"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value a reset would store."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "title",
+                    "description",
+                    "source",
+                    "updatedAt",
+                    "updatedBy",
+                    "value",
+                    "defaults"
+                  ],
+                  "additionalProperties": false
                 }
               ],
               "description": "One settings group: its current value, its defaults, and who last changed it."
@@ -18797,6 +19681,101 @@
                   "enabled",
                   "replyTo",
                   "templates"
+                ],
+                "additionalProperties": false,
+                "description": "The whole new value."
+              },
+              "expectedUpdatedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT."
+              }
+            },
+            "required": [
+              "key",
+              "value",
+              "expectedUpdatedAt"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "BUDGET_PRICING_CONFIG"
+                ]
+              },
+              "value": {
+                "type": "object",
+                "properties": {
+                  "profiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "salaryCap": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000000,
+                          "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                        },
+                        "unit": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000000,
+                          "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                        },
+                        "topSharePercent": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 100,
+                          "description": "The best seed's price, as a percentage of the salary cap."
+                        },
+                        "floorSharePercent": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 100,
+                          "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                        },
+                        "steepness": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 10,
+                          "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 50,
+                          "description": "The profile's name, such as \"Standard\".",
+                          "x-transform": [
+                            "trim"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "salaryCap",
+                        "unit",
+                        "topSharePercent",
+                        "floorSharePercent",
+                        "steepness",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A named set of budget pricing values."
+                    },
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "description": "The pricing profiles, the default first. Names are unique."
+                  }
+                },
+                "required": [
+                  "profiles"
                 ],
                 "additionalProperties": false,
                 "description": "The whole new value."
@@ -19515,6 +20494,201 @@
               "newValue"
             ],
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "BUDGET_PRICING_CONFIG"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "changedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              },
+              "changedBy": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The user id of the root admin who made the change."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The admin's full name, for display."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Who saved it, when known."
+              },
+              "previousValue": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "profiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "salaryCap": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000000,
+                          "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                        },
+                        "unit": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000000,
+                          "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                        },
+                        "topSharePercent": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 100,
+                          "description": "The best seed's price, as a percentage of the salary cap."
+                        },
+                        "floorSharePercent": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 100,
+                          "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                        },
+                        "steepness": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 10,
+                          "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 50,
+                          "description": "The profile's name, such as \"Standard\".",
+                          "x-transform": [
+                            "trim"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "salaryCap",
+                        "unit",
+                        "topSharePercent",
+                        "floorSharePercent",
+                        "steepness",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A named set of budget pricing values."
+                    },
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "description": "The pricing profiles, the default first. Names are unique."
+                  }
+                },
+                "required": [
+                  "profiles"
+                ],
+                "additionalProperties": false,
+                "description": "The stored value before the save; null when the save created the first stored value."
+              },
+              "newValue": {
+                "type": "object",
+                "properties": {
+                  "profiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "salaryCap": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000000,
+                          "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                        },
+                        "unit": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000000,
+                          "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                        },
+                        "topSharePercent": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 100,
+                          "description": "The best seed's price, as a percentage of the salary cap."
+                        },
+                        "floorSharePercent": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 100,
+                          "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                        },
+                        "steepness": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 10,
+                          "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 50,
+                          "description": "The profile's name, such as \"Standard\".",
+                          "x-transform": [
+                            "trim"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "salaryCap",
+                        "unit",
+                        "topSharePercent",
+                        "floorSharePercent",
+                        "steepness",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A named set of budget pricing values."
+                    },
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "description": "The pricing profiles, the default first. Names are unique."
+                  }
+                },
+                "required": [
+                  "profiles"
+                ],
+                "additionalProperties": false,
+                "description": "The value the save stored."
+              }
+            },
+            "required": [
+              "key",
+              "id",
+              "changedAt",
+              "changedBy",
+              "previousValue",
+              "newValue"
+            ],
+            "additionalProperties": false
           }
         ],
         "description": "One saved change to a settings group, each value typed by the group's own schema."
@@ -20205,6 +21379,201 @@
                         "enabled",
                         "replyTo",
                         "templates"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value the save stored."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "id",
+                    "changedAt",
+                    "changedBy",
+                    "previousValue",
+                    "newValue"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "BUDGET_PRICING_CONFIG"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "changedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601 datetime string."
+                    },
+                    "changedBy": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The user id of the root admin who made the change."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The admin's full name, for display."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Who saved it, when known."
+                    },
+                    "previousValue": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "profiles": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "salaryCap": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000000,
+                                "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                              },
+                              "unit": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000000,
+                                "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                              },
+                              "topSharePercent": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 100,
+                                "description": "The best seed's price, as a percentage of the salary cap."
+                              },
+                              "floorSharePercent": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 100,
+                                "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                              },
+                              "steepness": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 10,
+                                "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 50,
+                                "description": "The profile's name, such as \"Standard\".",
+                                "x-transform": [
+                                  "trim"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "salaryCap",
+                              "unit",
+                              "topSharePercent",
+                              "floorSharePercent",
+                              "steepness",
+                              "name"
+                            ],
+                            "additionalProperties": false,
+                            "description": "A named set of budget pricing values."
+                          },
+                          "minItems": 1,
+                          "maxItems": 10,
+                          "description": "The pricing profiles, the default first. Names are unique."
+                        }
+                      },
+                      "required": [
+                        "profiles"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The stored value before the save; null when the save created the first stored value."
+                    },
+                    "newValue": {
+                      "type": "object",
+                      "properties": {
+                        "profiles": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "salaryCap": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000000,
+                                "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                              },
+                              "unit": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000000,
+                                "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                              },
+                              "topSharePercent": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 100,
+                                "description": "The best seed's price, as a percentage of the salary cap."
+                              },
+                              "floorSharePercent": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 100,
+                                "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                              },
+                              "steepness": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 10,
+                                "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 50,
+                                "description": "The profile's name, such as \"Standard\".",
+                                "x-transform": [
+                                  "trim"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "salaryCap",
+                              "unit",
+                              "topSharePercent",
+                              "floorSharePercent",
+                              "steepness",
+                              "name"
+                            ],
+                            "additionalProperties": false,
+                            "description": "A named set of budget pricing values."
+                          },
+                          "minItems": 1,
+                          "maxItems": 10,
+                          "description": "The pricing profiles, the default first. Names are unique."
+                        }
+                      },
+                      "required": [
+                        "profiles"
                       ],
                       "additionalProperties": false,
                       "description": "The value the save stored."
@@ -28720,7 +30089,7 @@
             }
           },
           "422": {
-            "description": "SPORT_EVENT_NOT_READY: the field is not loaded, or an active participant has no tier.",
+            "description": "SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, or prices are not assigned or miss an active participant.",
             "content": {
               "application/json": {
                 "schema": {
@@ -30225,7 +31594,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.",
+        "description": "Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0.",
         "requestBody": {
           "required": true,
           "content": {
@@ -30289,6 +31658,16 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

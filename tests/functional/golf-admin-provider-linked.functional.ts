@@ -23,6 +23,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { standardEventPricing } from '../support/budget-pricing';
 
 // plans/124 §8 — pool-master-cs8. The provider-linked half of the golf-admin
 // epic, which the flagship scenario (golf-admin-tournament.functional.ts)
@@ -384,7 +385,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
         .response?.status,
     ).toBe(200);
     expect(
-      (await autoAssignEventPrices({ client: admin, path: { eventId }, body: { minPrice: 1000, maxPrice: 10000 } }))
+      (await autoAssignEventPrices({ client: admin, path: { eventId }, body: standardEventPricing() }))
         .response?.status,
     ).toBe(200);
 

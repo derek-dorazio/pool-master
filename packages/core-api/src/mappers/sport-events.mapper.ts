@@ -37,6 +37,7 @@ export function mapSportEventToDto({
   event,
   loadedParticipantCount,
   untieredParticipantCount,
+  unpricedParticipantCount,
   tierCount,
   contestCount,
 }: SportEventSummary): SportEventDto {
@@ -62,6 +63,8 @@ export function mapSportEventToDto({
     participantCount: event.participantCount ?? null,
     loadedParticipantCount,
     untieredParticipantCount,
+    unpricedParticipantCount,
+    pricing: event.pricingConfig ?? null,
     readinessStatus: operationalState.readinessStatus as EventReadinessStatusDto,
     readinessReasons: operationalState.readinessReasons as EventReadinessReasonDto[],
     contestEligible: operationalState.contestEligible,

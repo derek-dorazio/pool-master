@@ -1,4 +1,5 @@
-import type { EmailConfig, IngestionScheduleConfig, SettingsChange } from '@/lib/api';
+import type { BudgetPricingConfig, EmailConfig, IngestionScheduleConfig, SettingsChange } from '@/lib/api';
+import { describeBudgetPricing } from './budget-pricing-format';
 
 export type SettingsSummaryItem = {
   id: string;
@@ -48,6 +49,15 @@ export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
     { id: 'templates', label: 'Emails switched off', value: off.length > 0 ? off.join(', ') : 'None' },
     { id: 'replyTo', label: 'Reply-To', value: config.replyTo ?? 'The sender address' },
   ];
+}
+
+/** One row per pricing profile, the default first, as the price dialog offers them (#93). */
+export function summarizeBudgetPricing(config: BudgetPricingConfig): SettingsSummaryItem[] {
+  return config.profiles.map((profile, index) => ({
+    id: `profile-${index}`,
+    label: index === 0 ? `${profile.name} (default)` : profile.name,
+    value: describeBudgetPricing(profile),
+  }));
 }
 
 /** The top-level fields a change touched, in the order the new value lists them. */

@@ -26,6 +26,8 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     participantCount: 89,
     loadedParticipantCount: 89,
     untieredParticipantCount: 0,
+    unpricedParticipantCount: 0,
+    pricing: { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
     readinessStatus: 'CONTEST_ELIGIBLE',
     readinessReasons: [],
     contestEligible: true,
