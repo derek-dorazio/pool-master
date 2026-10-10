@@ -123,8 +123,9 @@ golfer added after release stays untiered and can't be picked (#431).
 As a commissioner of a test league (root admin is not needed):
 
 1. In *Commissioner tools* › *Contests*, press *Create contest*
-   (`/league/:leagueCode/admin/contests/new`) and pick the tournament. Creation
-   is refused while the tournament is a draft or once it has started. The contest is saved
+   (`/league/:leagueCode/admin/contests/new`). The one page lists only tournaments that are
+   released and haven't started, soonest first; pick yours, keep or change the preset and rules,
+   and the name follows the event until you type your own. The contest is saved
    as a draft and you land on its page in Commissioner tools, which checks the event is ready;
    press *Open to league* there to let members enter. Until then *Edit* changes its name and
    rules, and *Delete contest* sits in its danger zone.

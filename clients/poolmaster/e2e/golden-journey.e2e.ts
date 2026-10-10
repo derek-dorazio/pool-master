@@ -359,11 +359,12 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('manage-contests-page')).toBeVisible();
       await page.getByTestId('manage-contests-create-link').click();
       await expect(page.getByTestId('create-contest-page')).toBeVisible();
-      // The picker lists every contest-eligible golf event on the platform, QA's whole catalog
-      // included, so the run's own tournament is chosen by its id and checked by its name.
-      const picker = page.getByTestId('contest-sport-event');
-      await expect(picker.locator(`option[value="${state.eventId}"]`)).toContainText(run.tournamentName);
-      await picker.selectOption(state.eventId);
+      // The event list holds every contest-eligible golf event on the platform, QA's whole
+      // catalog included, so the run's own tournament is chosen by its id and checked by its name.
+      const eventChoice = page.getByTestId(`contest-event-${state.eventId}`);
+      await expect(eventChoice).toContainText(run.tournamentName);
+      await eventChoice.click();
+      await expect(eventChoice).toBeChecked();
       await page.getByTestId('contest-name').fill(run.contestName);
       await page.getByTestId('contest-max-entries-unlimited').uncheck();
       await page.getByTestId('contest-max-entries').fill('1');

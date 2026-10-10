@@ -20,7 +20,8 @@ export function formatSelectionTypeName(selectionType: SelectionType) {
 
 type ContestRulesConfiguration = Pick<ContestConfigurationRequest, 'countedScores' | 'picksPerTier'>;
 
-function pluralize(count: number, singular: string, plural = `${singular}s`) {
+/** "1 golfer", "6 golfers": a count with its noun. */
+export function pluralize(count: number, singular: string, plural = `${singular}s`) {
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
@@ -61,4 +62,56 @@ export function formatContestRules(
 /** How many entries a team may make: a number, or "No limit" when the contest sets none. */
 export function formatEntriesPerTeam(maxEntriesPerSquad: number | null | undefined) {
   return maxEntriesPerSquad == null ? 'No limit' : String(maxEntriesPerSquad);
+}
+
+/** "1 entry per team", "3 entries per team" or "No limit on entries per team", for a sentence. */
+export function formatEntriesPerTeamSentence(maxEntriesPerSquad: number | null | undefined) {
+  if (maxEntriesPerSquad == null) {
+    return 'No limit on entries per team';
+  }
+  return `${pluralize(maxEntriesPerSquad, 'entry', 'entries')} per team`;
+}
+
+/**
+ * A preset's short label for the "Start from" choice, such as "Pick 6, best 4" on an event with
+ * six tiers. Before the event has tiers it reads per tier: "1 per tier, best 4".
+ */
+export function formatPresetLabel(
+  selectionType: SelectionType,
+  configuration: ContestRulesConfiguration,
+  tierCount: number,
+) {
+  switch (selectionType) {
+    case SelectionType.TIERED: {
+      const pick = tierCount > 0
+        ? `Pick ${getTieredRosterSize(tierCount, configuration.picksPerTier)}`
+        : `${configuration.picksPerTier} per tier`;
+      const count = tierCount > 0 && configuration.countedScores >= getTieredRosterSize(tierCount, configuration.picksPerTier)
+        ? 'all count'
+        : `best ${configuration.countedScores}`;
+      return `${pick}, ${count}`;
+    }
+    default:
+      return formatSelectionTypeName(selectionType);
+  }
+}
+
+/**
+ * The name Create contest suggests from the event and the rules, such as "The Masters Pick 6",
+ * until the commissioner types their own.
+ */
+export function suggestContestName(
+  eventName: string,
+  selectionType: SelectionType,
+  configuration: Pick<ContestRulesConfiguration, 'picksPerTier'> | null,
+  tierCount: number,
+) {
+  switch (selectionType) {
+    case SelectionType.TIERED:
+      return configuration && tierCount > 0
+        ? `${eventName} Pick ${getTieredRosterSize(tierCount, configuration.picksPerTier)}`
+        : `${eventName} Tiered`;
+    default:
+      return `${eventName} ${formatSelectionTypeName(selectionType)}`;
+  }
 }

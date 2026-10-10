@@ -5,6 +5,7 @@ export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
 export { Button, LinkButton } from "./button";
 export { Breadcrumbs, PageHeader } from "./page-header";
+export { ChoiceCard } from "./choice-card";
 export { cn } from "./class-names";
 export { ConfirmDialog } from "./confirm-dialog";
 export { DataGrid } from "./data-grid";
