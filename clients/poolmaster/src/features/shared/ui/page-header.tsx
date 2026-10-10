@@ -88,5 +88,3 @@ export function PageHeader({
     </Tile>
   );
 }
-
-export const BreadcrumbHeader = PageHeader;

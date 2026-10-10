@@ -49,8 +49,6 @@ Use modal templates when the modal follows one of the common workflows:
 - `ActionModal` for compact action workflows launched from action menus.
 - `PickerModal` for selecting an item from a constrained list.
 - `ReadOnlyDetailModal` for payloads and operational metadata.
-- `WizardModal` for multi-step flows where a modal remains the right
-  interaction model.
 
 Modals should use the templates for predictable footer ordering, pending state,
 scroll behavior, and error placement. Add a new template only when a workflow
