@@ -189,6 +189,35 @@ describe('MemberService — removing a member', () => {
     expect(world.tables.ownerInvitations.get(invitation.id)?.status).toBe(SquadOwnerInvitationStatus.PENDING);
   });
 
+  it('leaves the member, their team and its pending invitations untouched when revoking the invitations fails part way', async () => {
+    const { world, league } = leagueWithCommissioner();
+    const member = world.addUser();
+    const { squad } = world.addMember({ league, user: member });
+    const invitation = pendingInvitationFor(world, league, squad, member.id);
+    jest.spyOn(world.ownerInvitations, 'update').mockRejectedValue(new Error('database unavailable'));
+
+    await expect(memberService(world).removeMember(league.id, member.id)).rejects.toThrow('database unavailable');
+
+    expect(world.membershipOf(league.id, member.id)?.status).toBe(LeagueMembershipStatus.ACTIVE);
+    expect(world.squadMembershipOf(league.id, member.id)?.status).toBe(SquadMembershipStatus.ACTIVE);
+    expect(world.tables.squads.get(squad.id)?.isActive).toBe(true);
+    expect(world.tables.ownerInvitations.get(invitation.id)?.status).toBe(SquadOwnerInvitationStatus.PENDING);
+  });
+
+  it('keeps a co-owner in the league when ending their team membership fails part way', async () => {
+    const { world, league } = leagueWithCommissioner();
+    const owner = world.addUser();
+    const coOwner = world.addUser();
+    const { squad } = world.addMember({ league, user: owner });
+    world.addMember({ league, user: coOwner, squadId: squad.id });
+    jest.spyOn(world.squadMemberships, 'update').mockRejectedValue(new Error('database unavailable'));
+
+    await expect(memberService(world).removeMember(league.id, coOwner.id)).rejects.toThrow('database unavailable');
+
+    expect(world.membershipOf(league.id, coOwner.id)?.status).toBe(LeagueMembershipStatus.ACTIVE);
+    expect(world.squadMembershipOf(league.id, coOwner.id)?.status).toBe(SquadMembershipStatus.ACTIVE);
+  });
+
   it('removes a commissioner when another active commissioner remains', async () => {
     const { world, league, commissioner } = leagueWithCommissioner();
     world.addMember({ league, user: world.addUser(), role: LeagueRole.COMMISSIONER });
