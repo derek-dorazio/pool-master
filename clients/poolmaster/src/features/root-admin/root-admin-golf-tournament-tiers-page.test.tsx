@@ -7,6 +7,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentTiersPage } from './root-admin-golf-tournament-tiers-page';
 import {
   fieldEntryFixture,
+  budgetPricingGroupFixture,
   participantFixture,
   sportEventFixture,
   tierFixture,
@@ -25,6 +26,7 @@ const {
   autoAssignEventTiersMock,
   autoAssignEventPricesMock,
   updateEventParticipantsMock,
+  listSettingsGroupsMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -45,6 +47,7 @@ const {
     autoAssignEventTiersMock: vi.fn(),
     autoAssignEventPricesMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
+    listSettingsGroupsMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -58,6 +61,7 @@ bindApiMocks({
   autoAssignEventTiers: autoAssignEventTiersMock,
   autoAssignEventPrices: autoAssignEventPricesMock,
   updateEventParticipants: updateEventParticipantsMock,
+  listSettingsGroups: listSettingsGroupsMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -130,6 +134,7 @@ function seed(overrides: { tournament?: Parameters<typeof tournament>[0] } = {})
   listEventTiersMock.mockResolvedValue({
     data: { tiers: [tier(1), tier(2), tier(3)] },
   });
+  listSettingsGroupsMock.mockResolvedValue({ data: { groups: [budgetPricingGroupFixture()] } });
 }
 
 function renderPage() {
@@ -280,19 +285,30 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     );
   });
 
-  it('pool-master-dyb auto-assigns prices with a validated min/max range', async () => {
-    seed();
-    autoAssignEventPricesMock.mockResolvedValue({ data: null });
+  it('prices the field with the default profile, previewing the best and worst price, and with a changed one (#93)', async () => {
+    seed({ tournament: { pricing: null } });
+    autoAssignEventPricesMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
 
-    await userEvent.click(await screen.findByTestId('root-admin-golf-tier-auto-prices'));
+    expect(await screen.findByTestId('root-admin-golf-tiers-pricing')).toHaveTextContent('Not priced yet.');
+    await userEvent.click(screen.getByTestId('root-admin-golf-tier-auto-prices'));
+    expect(screen.getByTestId('root-admin-golf-tier-auto-prices-profile')).toHaveValue('Standard');
+    expect(screen.getByTestId('root-admin-golf-tier-auto-prices-salaryCap')).toHaveValue('50000');
+    expect(screen.getByTestId('root-admin-golf-tier-auto-prices-preview')).toHaveTextContent(
+      'Best golfer $12,000, worst $6,000, across 3 active golfers.',
+    );
+
+    await userEvent.selectOptions(screen.getByTestId('root-admin-golf-tier-auto-prices-profile'), 'Small');
+    expect(screen.getByTestId('root-admin-golf-tier-auto-prices-salaryCap')).toHaveValue('5000');
+    await userEvent.clear(screen.getByTestId('root-admin-golf-tier-auto-prices-steepness'));
+    await userEvent.type(screen.getByTestId('root-admin-golf-tier-auto-prices-steepness'), '1');
     await userEvent.click(screen.getByTestId('root-admin-golf-tier-auto-prices-confirm'));
 
     await waitFor(() =>
       expect(autoAssignEventPricesMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { eventId: 'evt-1' },
-          body: { minPrice: 1000, maxPrice: 10000 },
+          body: { profileName: 'Small', salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 1 },
         }),
       ),
     );
@@ -451,30 +467,36 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     expect(await within(modal).findByText('Tiers are locked for this tournament.')).toBeInTheDocument();
   });
 
-  it('refuses an auto-price range that is not two whole numbers with max above min', async () => {
+  it('refuses pricing values that contradict each other or are not numbers, naming the problem (#93)', async () => {
     seed();
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-golf-tier-auto-prices'));
-    const min = screen.getByTestId('root-admin-golf-tier-auto-prices-min');
-    const max = screen.getByTestId('root-admin-golf-tier-auto-prices-max');
+    const floor = screen.getByTestId('root-admin-golf-tier-auto-prices-floorSharePercent');
     const confirm = screen.getByTestId('root-admin-golf-tier-auto-prices-confirm');
 
-    await userEvent.clear(min);
-    await userEvent.type(min, '1.5');
-    expect(screen.getByText('Enter a whole number')).toBeInTheDocument();
+    await userEvent.clear(floor);
+    await userEvent.type(floor, '30');
+    expect(screen.getByText('The worst seed\'s share can\'t be above the best seed\'s.')).toBeInTheDocument();
     expect(confirm).toBeDisabled();
 
-    await userEvent.clear(min);
-    await userEvent.type(min, '5000');
-    await userEvent.clear(max);
-    await userEvent.type(max, '4000');
-    expect(screen.getByText('Max must exceed min')).toBeInTheDocument();
+    await userEvent.clear(screen.getByTestId('root-admin-golf-tier-auto-prices-salaryCap'));
+    await userEvent.type(screen.getByTestId('root-admin-golf-tier-auto-prices-salaryCap'), '500.5');
+    expect(screen.getByText('Enter whole dollars for the cap and rounding, and shares and steepness above 0.')).toBeInTheDocument();
     expect(confirm).toBeDisabled();
-
-    await userEvent.clear(max);
-    expect(screen.getByText('Enter a whole number')).toBeInTheDocument();
     expect(autoAssignEventPricesMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the values a tournament was priced with and starts the price dialog from them (#93)', async () => {
+    seed({ tournament: { pricing: { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } } });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-golf-tiers-pricing')).toHaveTextContent(
+      'Priced with Standard: $50,000 cap · $100 unit · best 30% · worst 12% · steepness 4.',
+    );
+    await userEvent.click(screen.getByTestId('root-admin-golf-tier-auto-prices'));
+    expect(screen.getByTestId('root-admin-golf-tier-auto-prices-topSharePercent')).toHaveValue('30');
+    expect(screen.getByTestId('root-admin-golf-tier-auto-prices-confirm')).toHaveTextContent('Replace prices');
   });
 
   it('deletes a tier with no golfers without asking where they should go', async () => {

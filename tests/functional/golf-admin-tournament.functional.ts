@@ -36,6 +36,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { standardEventPricing } from '../support/budget-pricing';
 
 // plans/124 §8 — pool-master-z3l. End-to-end golf-admin authoring journey through
 // the generated SDK: tour -> players -> roster upload -> tournament in an event
@@ -333,19 +334,22 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
 
     // --- Auto-assign prices; tier placement must be untouched ------------------
     const tierKeyBySep = new Map(expectDefined(autoTiers.data).participants.map((e) => [e.id, tierKeyById.get(e.valuation?.sportEventTierId ?? '')]));
-    const prices = await autoAssignEventPrices({ client: c, path: { eventId }, body: { minPrice: 1000, maxPrice: 10000 } });
+    const prices = await autoAssignEventPrices({ client: c, path: { eventId }, body: standardEventPricing() });
     expect(prices.response?.status).toBe(200);
     let pricedCount = 0;
     expectDefined(prices.data).participants.forEach((e) => {
       expect(tierKeyById.get(e.valuation?.sportEventTierId ?? '')).toBe(tierKeyBySep.get(e.id));
-      // Every seeded, active golfer gets a price in range; the guest (no seed) has none yet.
+      // Every active golfer, the unseeded guest included, gets a price between the Standard
+      // profile's floor and top shares of its $50,000 cap (#93).
       if (e.valuation?.price != null) {
-        expect(e.valuation.price).toBeGreaterThanOrEqual(1000);
-        expect(e.valuation.price).toBeLessThanOrEqual(10000);
+        expect(e.valuation.price).toBeGreaterThanOrEqual(6000);
+        expect(e.valuation.price).toBeLessThanOrEqual(12000);
         pricedCount += 1;
       }
     });
-    expect(pricedCount).toBeGreaterThanOrEqual(18); // 20 seeded - 2 withdrawn
+    expect(pricedCount).toBe(expectDefined(prices.data).participants.filter((e) => e.isActive).length);
+    const pricedEvent = await getEvent({ client: c, path: { eventId } });
+    expect(expectDefined(pricedEvent.data).event.pricing).toEqual(standardEventPricing());
 
     // --- "Drag" one golfer to another tier via the assignments PUT --------------
     const placed = expectDefined(prices.data).participants.filter((e) => e.valuation?.sportEventTierId);
@@ -545,7 +549,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await seedEventParticipants({ client: c, path: { eventId: 'x' } }), deny);
     expectFunctionalError(await addEventParticipants({ client: c, path: { eventId: 'x' }, body: { participantIds: [] } }), deny);
     expectFunctionalError(await autoAssignEventTiers({ client: c, path: { eventId: 'x' }, body: { source: 'ODDS' } }), deny);
-    expectFunctionalError(await autoAssignEventPrices({ client: c, path: { eventId: 'x' }, body: { minPrice: 1, maxPrice: 2 } }), deny);
+    expectFunctionalError(await autoAssignEventPrices({ client: c, path: { eventId: 'x' }, body: standardEventPricing() }), deny);
     expectFunctionalError(await replaceEventTierAssignments({ client: c, path: { eventId: 'x' }, body: { assignments: [] } }), deny);
     expectFunctionalError(await applyEventGolfRoundScores({ client: c, path: { eventId: 'x', roundNumber: 1 }, body: { rows: [] } }), deny);
     expectFunctionalError(await previewEventParticipantUpload({ client: c, path: { eventId: 'x' }, body: { rows: [] } }), deny);

@@ -25,9 +25,11 @@ import type {
   SportEventTierRepository,
 } from '@poolmaster/shared/db';
 import {
+  findBudgetPricingProblem,
   SportEventStatus,
   TierSource,
   ValuationSource,
+  type EventPricingConfig,
   type SportEvent,
   type SportEventParticipant,
   type SportEventTier,
@@ -82,7 +84,6 @@ export interface SportEventTierServiceDeps {
   tiers: SportEventTierRepository;
   valuations: SportEventParticipantValuationRepository;
   field: SportEventParticipantRepository;
-  random?: () => number;
   logger?: FastifyBaseLogger;
 }
 
@@ -271,34 +272,45 @@ export class SportEventTierService {
   }
 
   /**
-   * Prices the seeded, active field between `minPrice` and `maxPrice` by seed position —
-   * a separate, later action from seeding (plans/124 §4.7a). Tiers are untouched.
+   * Prices the active field on the budget curve (#93) with `pricingConfig`'s values, best seed
+   * first and golfers with no seed (an invited guest) at the bottom in a stable order, and
+   * records those values on the event, in one write. A separate, later action from seeding (plans/124
+   * §4.7a), repeatable with other values until release. Tiers are untouched. 422
+   * PRICING_CONFIG_INVALID when the values contradict each other.
    */
-  async autoAssignPrices(input: { sportEventId: string; minPrice: number; maxPrice: number }): Promise<ParticipantValuationView[]> {
-    await this.requireEditableEvent(input.sportEventId);
-    const seeded = (await this.deps.field.findBySportEvent(input.sportEventId))
-      .filter((entry) => entry.isActive && entry.seedNumber !== undefined);
-    if (seeded.length === 0) {
-      this.deps.logger?.warn({ sportEventId: input.sportEventId }, 'Cannot auto-assign prices — no seeded field participants');
+  async autoAssignPrices(input: { sportEventId: string; pricingConfig: EventPricingConfig }): Promise<ParticipantValuationView[]> {
+    const { sportEventId, pricingConfig } = input;
+    await this.requireEditableEvent(sportEventId);
+    const problem = findBudgetPricingProblem(pricingConfig);
+    if (problem) {
+      throw new SportEventError(problem, 'PRICING_CONFIG_INVALID', 422);
+    }
+    const active = (await this.deps.field.findBySportEvent(sportEventId))
+      .filter((entry) => entry.isActive)
+      .sort((left, right) => left.id.localeCompare(right.id));
+    if (active.length === 0) {
+      this.deps.logger?.warn({ sportEventId }, 'Cannot auto-assign prices — the event has no active field participants');
       return [];
     }
     const priced = deriveGolfPrices(
-      seeded.map((entry) => ({ participantId: entry.id, seedNumber: entry.seedNumber as number })),
-      input.minPrice,
-      input.maxPrice,
-      this.deps.random,
+      active.map((entry) => ({ participantId: entry.id, seedNumber: entry.seedNumber ?? null })),
+      pricingConfig,
     );
-    await this.deps.valuations.assignPrices(priced.map((entry) => ({
-      sportEventParticipantId: entry.participantId,
-      price: entry.price,
-      source: ValuationSource.AUTO_ODDS,
-    })));
+    await this.deps.valuations.assignEventPrices({
+      sportEventId,
+      pricingConfig,
+      assignments: priced.map((entry) => ({
+        sportEventParticipantId: entry.participantId,
+        price: entry.price,
+        source: ValuationSource.AUTO_RANKING,
+      })),
+    });
 
     this.deps.logger?.info(
-      { sportEventId: input.sportEventId, minPrice: input.minPrice, maxPrice: input.maxPrice, pricedCount: priced.length },
+      { sportEventId, profileName: pricingConfig.profileName, salaryCap: pricingConfig.salaryCap, pricedCount: priced.length },
       'Auto-assigned prices',
     );
-    return this.getEffectiveValuationsForSportEvent(input.sportEventId);
+    return this.getEffectiveValuationsForSportEvent(sportEventId);
   }
 
   /** 404 EVENT_NOT_FOUND for an unknown event; 409 SPORT_EVENT_TIERS_LOCKED once it is released. */

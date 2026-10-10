@@ -212,7 +212,7 @@ describe('settings routes (contract verification)', () => {
     expect(list.statusCode).toBe(200);
     expect(SettingsGroupListSchema.safeParse(list.json()).success).toBe(true);
     expect(list.json<{ groups: SettingsGroup[] }>().groups.map((group) => group.key))
-      .toEqual(['INGESTION_SCHEDULE_CONFIG', 'EMAIL_CONFIG']);
+      .toEqual(['INGESTION_SCHEDULE_CONFIG', 'EMAIL_CONFIG', 'BUDGET_PRICING_CONFIG']);
     expect(refused.statusCode).toBe(403);
   });
 

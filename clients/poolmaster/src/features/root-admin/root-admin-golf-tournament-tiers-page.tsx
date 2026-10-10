@@ -10,6 +10,8 @@ import {
 import { extractErrorMessage } from '@/lib/errors';
 import { GolfTournamentHeader } from './golf-tournament-header';
 import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { describeBudgetPricing } from './budget-pricing-format';
+import { GolfPriceAssignAction } from './golf-price-assign-action';
 import { GolfTierAutoAssignActions } from './golf-tier-auto-assign-actions';
 import { GolfTierBoard } from './golf-tier-board';
 import { GolfTierDefinitionsPanel } from './golf-tier-definitions-panel';
@@ -20,6 +22,8 @@ import { useGolfFieldQuery, useGolfTiersQuery, useGolfTournamentQuery } from './
  * plans/124 §6.3 — /manage/golf/tournaments/:eventId/tiers. Owns the tournament /
  * tiers / field queries and the split layout; the tier-definition panel, the
  * drag-and-drop board, and the auto-assign actions are each their own component.
+ * Prices are assigned here too, with the values they were assigned with shown
+ * above the board (#93).
  */
 export function RootAdminGolfTournamentTiersPage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
@@ -66,11 +70,24 @@ export function RootAdminGolfTournamentTiersPage() {
         <div className="space-y-6">
           <GolfTournamentHeader current="tiers" tournament={tournament} />
 
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            <GolfTierAutoAssignActions
-              disabled={locked || field.length === 0}
-              eventId={eventId}
-            />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground" data-testid="root-admin-golf-tiers-pricing">
+              {tournament.pricing
+                ? `Priced with ${tournament.pricing.profileName}: ${describeBudgetPricing(tournament.pricing)}.`
+                : 'Not priced yet. Prices are needed for budget contests and before release.'}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <GolfTierAutoAssignActions
+                disabled={locked || field.length === 0}
+                eventId={eventId}
+              />
+              <GolfPriceAssignAction
+                activeGolferCount={field.filter((entry) => entry.isActive).length}
+                current={tournament.pricing}
+                disabled={locked || field.length === 0}
+                eventId={eventId}
+              />
+            </div>
           </div>
 
           {locked ? (

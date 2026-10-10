@@ -152,7 +152,7 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 | **create a league** | Writes the `League`, a `COMMISSIONER` `LeagueMembership` for the creator, and the creator's first `Squad`, in one request. The commissioner membership is the only record of who runs the league |
 | **join a league** | Accept a `LeagueInvitation` (email or link). Creates the `LeagueMembership` and the user's `Squad` with them as owner, or restores the squad they had before |
 | **invite a co-owner** | A `SquadOwnerInvitation` to one active squad, sent to one email address. An existing account is added as an owner (and league member) straight away; a new address joins on sign-up. Refused to someone already in the league |
-| **release an event** | Root admin moves a `SportEvent` from `DRAFT` to `SCHEDULED`. Until then commissioners cannot see it. Needs a loaded field with every active golfer tiered; locks tiers and prices for good |
+| **release an event** | Root admin moves a `SportEvent` from `DRAFT` to `SCHEDULED`. Until then commissioners cannot see it. Needs a loaded field with every active golfer tiered and priced (#93); locks tiers, prices and the event's pricing values for good |
 | **create a contest** | Commissioner creates a `Contest` on a released event that has not started. It is born `DRAFT`, seen only by commissioners, and its settings stay editable |
 | **open a contest** | Commissioner moves it `DRAFT` → `OPEN`. Members can now see and enter it; its name and settings are locked with no undo |
 | **enter a contest**, **create an entry** | A squad owner creates a `ContestEntry`, status `DRAFT`, numbered after the squad's highest entry in that contest |

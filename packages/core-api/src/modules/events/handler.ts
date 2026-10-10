@@ -321,7 +321,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       request: FastifyRequest<EventParams & { Body: AutoAssignSportEventPricesRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
       await sportEvents.requireSummary(request.params.eventId);
-      await tiers.autoAssignPrices({ sportEventId: request.params.eventId, ...request.body });
+      await tiers.autoAssignPrices({ sportEventId: request.params.eventId, pricingConfig: request.body });
       return fieldResponse(request.params.eventId);
     },
 

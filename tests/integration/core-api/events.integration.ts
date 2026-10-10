@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { Sport } from '@poolmaster/shared/domain';
+import { SportEventParticipantListResponseSchema } from '@poolmaster/shared/dto';
 import {
   cleanupTestData,
   createTestUser,
@@ -10,6 +11,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
+import { standardEventPricing } from '../../support/budget-pricing';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -324,6 +326,26 @@ describe('events routes', () => {
       });
       expect(draftTierRes.statusCode).toBe(200);
 
+      const unpricedRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/release`,
+        headers: withoutJsonBodyHeaders(admin.headers),
+      });
+      expect(unpricedRes.statusCode).toBe(422);
+      const unpriced = unpricedRes.json<{ error: { code: string; message: string } }>();
+      expect(unpriced.error.code).toBe('SPORT_EVENT_NOT_READY');
+      expect(unpriced.error.message).toContain('its prices have not been assigned');
+
+      const pricesRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        headers: admin.headers,
+        payload: standardEventPricing(),
+      });
+      expect(pricesRes.statusCode).toBe(200);
+      expect(SportEventParticipantListResponseSchema.safeParse(pricesRes.json()).success).toBe(true);
+      expect(pricesRes.json()).toMatchObject({ participants: [{ valuation: { price: 12000, priceAssignedSource: 'AUTO_RANKING' } }] });
+
       const releaseRes = await getApp().inject({
         method: 'POST',
         url: `/api/v1/events/${eventId}/release`,
@@ -342,6 +364,16 @@ describe('events routes', () => {
       });
       expect(lockedTierRes.statusCode).toBe(409);
       expect(lockedTierRes.json()).toMatchObject({ error: { code: 'SPORT_EVENT_TIERS_LOCKED' } });
+      expect(releaseRes.json()).toMatchObject({ event: { pricing: standardEventPricing() } });
+
+      const lockedPricesRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        headers: admin.headers,
+        payload: { ...standardEventPricing(), salaryCap: 5000, unit: 10 },
+      });
+      expect(lockedPricesRes.statusCode).toBe(409);
+      expect(lockedPricesRes.json()).toMatchObject({ error: { code: 'SPORT_EVENT_TIERS_LOCKED' } });
 
       const againRes = await getApp().inject({
         method: 'POST',

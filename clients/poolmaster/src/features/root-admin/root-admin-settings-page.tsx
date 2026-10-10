@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { listSettingsGroupHistory, listSettingsGroups, type SettingsGroup } from '@/lib/api';
+import { listSettingsGroupHistory, type SettingsGroup } from '@/lib/api';
 import {
   AsyncPage,
   Button,
@@ -12,11 +12,14 @@ import {
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError, extractErrorMessage } from '@/lib/errors';
+import { BudgetPricingSettingsForm } from './root-admin-budget-pricing-settings-form';
 import { EmailSettingsForm } from './root-admin-email-settings-form';
+import { useSettingsGroupsQuery } from './use-settings-groups';
 import { ManagePageIntro } from './manage-page-intro';
 import { SETTINGS_PATH } from './manage-navigation';
 import {
   changedFields,
+  summarizeBudgetPricing,
   summarizeEmail,
   summarizeIngestionSchedule,
   type SettingsSummaryItem,
@@ -28,17 +31,7 @@ import {
  * its own pages under Settings; Email is edited in its section.
  */
 export function RootAdminSettingsPage() {
-  const settingsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.settings,
-    queryFn: async () => {
-      const response = await listSettingsGroups();
-      if (!response.data) {
-        throwApiError(response.error, 'Settings response is missing data.');
-      }
-      return response.data.groups;
-    },
-    retry: false,
-  });
+  const settingsQuery = useSettingsGroupsQuery();
 
   const pageState = settingsQuery.isError ? 'error' : settingsQuery.isLoading ? 'loading' : 'ready';
 
@@ -80,6 +73,7 @@ function SettingsGroupSection({ group }: { group: SettingsGroup }) {
       ))}
       <div className="space-y-5 px-5 py-4">
         {group.key === 'EMAIL_CONFIG' ? <EmailSettingsForm group={group} /> : null}
+        {group.key === 'BUDGET_PRICING_CONFIG' ? <BudgetPricingSettingsForm group={group} /> : null}
         <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
           {group.updatedAt ? (
             <>
@@ -123,6 +117,9 @@ function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; a
     case 'EMAIL_CONFIG':
       // Edited in place: the section carries the form.
       return { summary: summarizeEmail(group.value), actions: null };
+    case 'BUDGET_PRICING_CONFIG':
+      // Edited in place: the section carries the form.
+      return { summary: summarizeBudgetPricing(group.value), actions: null };
   }
 }
 

@@ -26,9 +26,9 @@
   event sync controls in the first pass.
 - `BR-101A` `(Confirmed)` Root admin does not manually author sporting events;
   events are provider-discovered/imported from real-world schedules.
-- `BR-101B` `(Confirmed, revised by #431)` Root admin releases each event for
-  contests once its field is loaded and every active golfer is tiered. Until
-  then the event is a draft that commissioners cannot see.
+- `BR-101B` `(Confirmed, revised by #431 and #93)` Root admin releases each
+  event for contests once its field is loaded and every active golfer is tiered
+  and priced. Until then the event is a draft that commissioners cannot see.
 - `BR-101C` `(Confirmed)` Root-admin routes and functions are exceptional
   operational tools, not the normal way the product runs day to day.
 - `BR-102` `(Confirmed)` Commissioners create and configure contests for their

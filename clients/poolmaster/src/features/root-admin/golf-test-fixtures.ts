@@ -1,6 +1,7 @@
 import type {
   ParticipantDto,
   ParticipantLeagueAffiliationDto,
+  SettingsGroup,
   SportEventDto,
   SportEventParticipantDto,
   SportEventRoundDto,
@@ -30,6 +31,8 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     participantCount: null,
     loadedParticipantCount: 0,
     untieredParticipantCount: 0,
+    unpricedParticipantCount: 0,
+    pricing: { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
     readinessStatus: 'NOT_RELEASED',
     readinessReasons: ['EVENT_NOT_RELEASED', 'FIELD_NOT_LOADED'],
     contestEligible: false,
@@ -167,3 +170,21 @@ export const GOLF_SPORT_FIXTURE = {
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
+
+/** The Budget pricing settings group with the app's two default profiles, Standard first (#93). */
+export function budgetPricingGroupFixture(): Extract<SettingsGroup, { key: 'BUDGET_PRICING_CONFIG' }> {
+  const profiles = [
+    { name: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+    { name: 'Small', salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+  ];
+  return {
+    key: 'BUDGET_PRICING_CONFIG',
+    title: 'Budget pricing',
+    description: 'The pricing profiles an event\'s field is priced with for budget contests.',
+    source: 'defaults',
+    updatedAt: null,
+    updatedBy: null,
+    value: { profiles },
+    defaults: { profiles },
+  };
+}

@@ -7,7 +7,8 @@
 > slice 9 (`pool-master-piv`) — not `124`'s full epic. That epic (`pool-master-476`) closed
 > 2026-09-03, so nothing here is blocked.
 >
-> **Coordination warning: shares a touchpoint with `plans/128`.** This epic's slice 5
+> **Coordination warning: shares a touchpoint with `plans/128`** (since superseded by
+> `plans/93-budget-selection.md`; the old file is `git show 3a6481a:plans/128-golf-budget-drafts.md`). This epic's slice 5
 > (#105) and `plans/128`'s epic (#93) slice 4 (#95)
 > both extend `contest-entry-page.tsx`'s `selectionType !== 'TIERED'` gate. Do not let
 > both land independently — whichever lands first should extend the gate to admit **both**

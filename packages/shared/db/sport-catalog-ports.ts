@@ -5,6 +5,7 @@
  */
 
 import type {
+  EventPricingConfig,
   EventSeries,
   ParticipantInactiveReason,
   ParticipantLeagueAffiliation,
@@ -77,7 +78,7 @@ export interface SportEventFilters {
 }
 
 /** The sport league comes from the series, so it is not supplied. */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId'>;
+export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'pricingConfig'>;
 
 /** undefined leaves a field alone; null clears a nullable one. */
 export interface SportEventUpdate {
@@ -121,6 +122,11 @@ export interface SportEventRepository {
    * An event can't be released while any remain (#431).
    */
   countUntieredActiveParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
+  /**
+   * Active event participants with no price, per event, for each id asked about (0 where none).
+   * An event can't be released while any remain (#93).
+   */
+  countUnpricedActiveParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Tiers per event, for each id asked about (0 where none). */
   countTiers(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Contests run on each event, for each id asked about (0 where none). */
@@ -231,6 +237,15 @@ export interface SportEventParticipantValuationRepository {
   assignTiers(assignments: readonly TierAssignment[]): Promise<void>;
   /** Prices field rows, all or none. Tiers are untouched. */
   assignPrices(assignments: readonly PriceAssignment[]): Promise<void>;
+  /**
+   * Prices field rows and records on the event the values they were priced with, all or none
+   * (#93). Tiers are untouched.
+   */
+  assignEventPrices(input: {
+    sportEventId: string;
+    pricingConfig: EventPricingConfig;
+    assignments: readonly PriceAssignment[];
+  }): Promise<void>;
 }
 
 export interface SportEventParticipantRoundRepository {

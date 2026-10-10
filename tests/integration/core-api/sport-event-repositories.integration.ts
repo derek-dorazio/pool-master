@@ -22,6 +22,8 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
+import { standardEventPricing } from '../../support/budget-pricing';
+import { expectDefined } from '../../support/expect-defined';
 
 // The event-core write ports and the golf extension ports (#236) against real Postgres:
 // what each write leaves in the tables, that "all or none" is all or none, and that
@@ -369,6 +371,65 @@ describe('SportEventTierRepository and valuations', () => {
     await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([expect.objectContaining({
       sportEventTierId: tier1.id, tierAssignedSource: 'AUTO_RANKING', price: 15, priceAssignedSource: 'AUTO_ODDS',
     })]);
+  });
+});
+
+describe('Budget pricing on the event (#93)', () => {
+  it('prices the field and records the pricing values on the event in one write, read back typed', async () => {
+    const { events, valuations, field } = repos();
+    const event = await createEvent();
+    const [ana, ben] = await createParticipants(['Ana', 'Ben']);
+    await field.createMany(event.id, [{ participantId: ana.id }, { participantId: ben.id }]);
+    const [first, second] = await field.findBySportEvent(event.id);
+
+    await valuations.assignEventPrices({
+      sportEventId: event.id,
+      pricingConfig: standardEventPricing(),
+      assignments: [
+        { sportEventParticipantId: first.id, price: 12000, source: 'AUTO_RANKING' },
+        { sportEventParticipantId: second.id, price: 6000, source: 'AUTO_RANKING' },
+      ],
+    });
+
+    expect((await events.findById(event.id))?.pricingConfig).toEqual(standardEventPricing());
+    expect((await valuations.findBySportEvent(event.id)).map((row) => row.price)).toEqual(expect.arrayContaining([12000, 6000]));
+  });
+
+  it('writes neither the prices nor the event\'s pricing values when one price fails', async () => {
+    const { events, valuations, field } = repos();
+    const event = await createEvent();
+    const [ana] = await createParticipants(['Ana']);
+    await field.createMany(event.id, [{ participantId: ana.id }]);
+    const [entry] = await field.findBySportEvent(event.id);
+
+    await expect(valuations.assignEventPrices({
+      sportEventId: event.id,
+      pricingConfig: standardEventPricing(),
+      assignments: [
+        { sportEventParticipantId: entry.id, price: 12000, source: 'AUTO_RANKING' },
+        { sportEventParticipantId: randomUUID(), price: 6000, source: 'AUTO_RANKING' },
+      ],
+    })).rejects.toBeDefined();
+
+    expect((await events.findById(event.id))?.pricingConfig).toBeUndefined();
+    await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([]);
+  });
+
+  it('counts the active golfers with no price, skipping withdrawn ones and ones priced manually', async () => {
+    const { events, valuations, field } = repos();
+    const event = await createEvent();
+    const [ana, ben, cal, dee] = await createParticipants(['Ana', 'Ben', 'Cal', 'Dee']);
+    await field.createMany(event.id, [
+      { participantId: ana.id },
+      { participantId: ben.id },
+      { participantId: cal.id },
+      { participantId: dee.id, isActive: false },
+    ]);
+    const rows = await field.findBySportEvent(event.id);
+    const priced = expectDefined(rows.find((row) => row.participantId === ana.id));
+    await valuations.assignPrices([{ sportEventParticipantId: priced.id, price: 9000, source: 'MANUAL' }]);
+
+    await expect(events.countUnpricedActiveParticipants([event.id])).resolves.toEqual(new Map([[event.id, 2]]));
   });
 });
 

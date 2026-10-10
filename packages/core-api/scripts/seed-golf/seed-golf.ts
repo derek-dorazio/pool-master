@@ -17,6 +17,7 @@
  */
 
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
+import type { AutoAssignSportEventPricesRequest } from '@poolmaster/shared/generated/hey-api';
 import {
   addEventParticipants,
   applyEventGolfRoundScores,
@@ -26,6 +27,7 @@ import {
   createEvent,
   createParticipant,
   createSportLeague,
+  getSettingsGroup,
   listEventParticipants,
   listParticipantLeagueAffiliations,
   listEvents,
@@ -61,8 +63,6 @@ export interface SeedGolfOptions {
   log?: (line: string) => void;
 }
 
-const PRICE_RANGE = { minPrice: 1000, maxPrice: 10000 };
-
 interface SdkResult<T> {
   data?: T;
   error?: unknown;
@@ -85,6 +85,17 @@ function found<T>(value: T | undefined, what: string): T {
 function splitName(name: string): { firstName: string; lastName: string } {
   const space = name.indexOf(' ');
   return space < 0 ? { firstName: name, lastName: name } : { firstName: name.slice(0, space), lastName: name.slice(space + 1) };
+}
+
+/**
+ * Every seeded tournament is priced for budget contests with the app's default Budget pricing
+ * profile, the one the admin's price dialog starts on.
+ */
+async function defaultPricing(client: Client): Promise<AutoAssignSportEventPricesRequest> {
+  const group = await must(getSettingsGroup({ client, path: { key: 'BUDGET_PRICING_CONFIG' } }), 'Read budget pricing settings');
+  if (group.key !== 'BUDGET_PRICING_CONFIG') throw new Error(`Read budget pricing settings returned ${group.key}`);
+  const { name, ...values } = found(group.value.profiles[0], 'The default budget pricing profile');
+  return { profileName: name, ...values };
 }
 
 async function ensureTour(client: Client, name: string): Promise<string> {
@@ -161,7 +172,7 @@ async function seedEvent(client: Client, input: {
     },
   }), `Set rankings and odds for ${event.name}`);
   await must(autoAssignEventTiers({ client, path, body: { source: 'ODDS' } }), `Assign tiers for ${event.name}`);
-  await must(autoAssignEventPrices({ client, path, body: PRICE_RANGE }), `Assign prices for ${event.name}`);
+  await must(autoAssignEventPrices({ client, path, body: await defaultPricing(client) }), `Assign prices for ${event.name}`);
 
   for (let roundNumber = 1; roundNumber <= event.rounds; roundNumber += 1) {
     const rows = event.field.flatMap((golfer) => {

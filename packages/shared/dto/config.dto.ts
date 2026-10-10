@@ -3,7 +3,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { Sport } from '@poolmaster/shared/domain';
+import { BudgetPricingProfileSchema, Sport } from '@poolmaster/shared/domain';
 
 const SportSchema = z.enum([
   Sport.GOLF,
@@ -110,7 +110,20 @@ export const EmailConfigSchema = z.object({
 }).describe('Whether and how system email is sent.');
 export type EmailConfig = z.infer<typeof EmailConfigSchema>;
 
+/**
+ * BUDGET_PRICING_CONFIG (#93): the named sets of values an admin prices an event's field with
+ * for budget contests. The first profile is the one the price dialog starts on.
+ */
+export const BudgetPricingConfigSchema = z.object({
+  profiles: z.array(BudgetPricingProfileSchema).min(1).max(10).describe(
+    'The pricing profiles, the default first. Names are unique.',
+  ),
+}).describe('The named sets of values an event\'s field is priced with for budget contests.');
+export type BudgetPricingConfig = z.infer<typeof BudgetPricingConfigSchema>;
+
 registerSchema('EmailTemplateKey', EmailTemplateKeySchema);
 registerSchema('EmailConfig', EmailConfigSchema);
+registerSchema('BudgetPricingProfile', BudgetPricingProfileSchema);
+registerSchema('BudgetPricingConfig', BudgetPricingConfigSchema);
 registerSchema('IngestionScheduleConfigOverride', IngestionScheduleConfigOverrideSchema);
 registerSchema('IngestionScheduleConfig', IngestionScheduleConfigSchema);

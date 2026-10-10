@@ -11,7 +11,7 @@ import type { SportEventDto } from '@/lib/api';
 const RELEASE_CODE_MESSAGES: Record<string, string> = {
   SPORT_EVENT_NOT_DRAFT: 'This tournament has already been released.',
   SPORT_EVENT_ALREADY_STARTED: 'This tournament has already started, so it can no longer be released.',
-  SPORT_EVENT_NOT_READY: 'This tournament is not ready yet: load its field and put every active golfer in a tier.',
+  SPORT_EVENT_NOT_READY: 'This tournament is not ready yet: load its field, put every active golfer in a tier and assign prices.',
 };
 
 /**

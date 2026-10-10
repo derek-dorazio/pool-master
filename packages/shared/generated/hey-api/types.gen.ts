@@ -4498,6 +4498,39 @@ export type SportEventDto = {
      */
     untieredParticipantCount: number;
     /**
+     * Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
+     */
+    unpricedParticipantCount: number;
+    /**
+     * The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.
+     */
+    pricing: {
+        /**
+         * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+         */
+        salaryCap: number;
+        /**
+         * Whole dollars. Every price is rounded to a multiple of it.
+         */
+        unit: number;
+        /**
+         * The best seed's price, as a percentage of the salary cap.
+         */
+        topSharePercent: number;
+        /**
+         * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+         */
+        floorSharePercent: number;
+        /**
+         * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+         */
+        steepness: number;
+        /**
+         * The profile the values started from. The admin may have changed any value before assigning.
+         */
+        profileName: string;
+    } | null;
+    /**
      * Contest-setup readiness right now.
      */
     readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'EVENT_STARTED';
@@ -4646,6 +4679,39 @@ export type SportEventListResponse = {
          */
         untieredParticipantCount: number;
         /**
+         * Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
+         */
+        unpricedParticipantCount: number;
+        /**
+         * The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.
+         */
+        pricing: {
+            /**
+             * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+             */
+            salaryCap: number;
+            /**
+             * Whole dollars. Every price is rounded to a multiple of it.
+             */
+            unit: number;
+            /**
+             * The best seed's price, as a percentage of the salary cap.
+             */
+            topSharePercent: number;
+            /**
+             * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+             */
+            floorSharePercent: number;
+            /**
+             * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+             */
+            steepness: number;
+            /**
+             * The profile the values started from. The admin may have changed any value before assigning.
+             */
+            profileName: string;
+        } | null;
+        /**
          * Contest-setup readiness right now.
          */
         readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'EVENT_STARTED';
@@ -4768,6 +4834,39 @@ export type SportEventResponse = {
          * Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
          */
         untieredParticipantCount: number;
+        /**
+         * Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
+         */
+        unpricedParticipantCount: number;
+        /**
+         * The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.
+         */
+        pricing: {
+            /**
+             * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+             */
+            salaryCap: number;
+            /**
+             * Whole dollars. Every price is rounded to a multiple of it.
+             */
+            unit: number;
+            /**
+             * The best seed's price, as a percentage of the salary cap.
+             */
+            topSharePercent: number;
+            /**
+             * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+             */
+            floorSharePercent: number;
+            /**
+             * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+             */
+            steepness: number;
+            /**
+             * The profile the values started from. The admin may have changed any value before assigning.
+             */
+            profileName: string;
+        } | null;
         /**
          * Contest-setup readiness right now.
          */
@@ -4982,6 +5081,39 @@ export type ImportSportEventYearFromProviderResponse = {
          * Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
          */
         untieredParticipantCount: number;
+        /**
+         * Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
+         */
+        unpricedParticipantCount: number;
+        /**
+         * The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.
+         */
+        pricing: {
+            /**
+             * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+             */
+            salaryCap: number;
+            /**
+             * Whole dollars. Every price is rounded to a multiple of it.
+             */
+            unit: number;
+            /**
+             * The best seed's price, as a percentage of the salary cap.
+             */
+            topSharePercent: number;
+            /**
+             * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+             */
+            floorSharePercent: number;
+            /**
+             * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+             */
+            steepness: number;
+            /**
+             * The profile the values started from. The admin may have changed any value before assigning.
+             */
+            profileName: string;
+        } | null;
         /**
          * Contest-setup readiness right now.
          */
@@ -5277,11 +5409,63 @@ export type ReplaceSportEventTierAssignmentsRequest = {
 };
 
 /**
- * Prices the seeded, active field between minPrice and maxPrice by seed.
+ * The values an event's field was priced with for budget contests.
+ */
+export type EventPricingConfig = {
+    /**
+     * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+     */
+    salaryCap: number;
+    /**
+     * Whole dollars. Every price is rounded to a multiple of it.
+     */
+    unit: number;
+    /**
+     * The best seed's price, as a percentage of the salary cap.
+     */
+    topSharePercent: number;
+    /**
+     * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+     */
+    floorSharePercent: number;
+    /**
+     * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+     */
+    steepness: number;
+    /**
+     * The profile the values started from. The admin may have changed any value before assigning.
+     */
+    profileName: string;
+};
+
+/**
+ * Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event as its pricing. The values usually come from a Budget pricing profile, possibly changed.
  */
 export type AutoAssignSportEventPricesRequest = {
-    minPrice: number;
-    maxPrice: number;
+    /**
+     * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+     */
+    salaryCap: number;
+    /**
+     * Whole dollars. Every price is rounded to a multiple of it.
+     */
+    unit: number;
+    /**
+     * The best seed's price, as a percentage of the salary cap.
+     */
+    topSharePercent: number;
+    /**
+     * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+     */
+    floorSharePercent: number;
+    /**
+     * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+     */
+    steepness: number;
+    /**
+     * The profile the values started from. The admin may have changed any value before assigning.
+     */
+    profileName: string;
 };
 
 /**
@@ -7871,6 +8055,71 @@ export type EmailConfig = {
 };
 
 /**
+ * A named set of budget pricing values.
+ */
+export type BudgetPricingProfile = {
+    /**
+     * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+     */
+    salaryCap: number;
+    /**
+     * Whole dollars. Every price is rounded to a multiple of it.
+     */
+    unit: number;
+    /**
+     * The best seed's price, as a percentage of the salary cap.
+     */
+    topSharePercent: number;
+    /**
+     * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+     */
+    floorSharePercent: number;
+    /**
+     * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+     */
+    steepness: number;
+    /**
+     * The profile's name, such as "Standard".
+     */
+    name: string;
+};
+
+/**
+ * The named sets of values an event's field is priced with for budget contests.
+ */
+export type BudgetPricingConfig = {
+    /**
+     * The pricing profiles, the default first. Names are unique.
+     */
+    profiles: Array<{
+        /**
+         * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+         */
+        salaryCap: number;
+        /**
+         * Whole dollars. Every price is rounded to a multiple of it.
+         */
+        unit: number;
+        /**
+         * The best seed's price, as a percentage of the salary cap.
+         */
+        topSharePercent: number;
+        /**
+         * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+         */
+        floorSharePercent: number;
+        /**
+         * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+         */
+        steepness: number;
+        /**
+         * The profile's name, such as "Standard".
+         */
+        name: string;
+    }>;
+};
+
+/**
  * Partial ingestion scheduling override used for global updates and per-sport overrides.
  */
 export type IngestionScheduleConfigOverride = {
@@ -8087,7 +8336,7 @@ export type IngestionScheduleConfig = {
 /**
  * The stored key of a settings group.
  */
-export type SettingsGroupKey = 'INGESTION_SCHEDULE_CONFIG' | 'EMAIL_CONFIG';
+export type SettingsGroupKey = 'INGESTION_SCHEDULE_CONFIG' | 'EMAIL_CONFIG' | 'BUDGET_PRICING_CONFIG';
 
 /**
  * The root admin who saved a settings change.
@@ -8522,6 +8771,105 @@ export type SettingsGroup = {
             CONTEST_STARTED_SUMMARY: boolean;
         };
     };
+} | {
+    key: 'BUDGET_PRICING_CONFIG';
+    /**
+     * Short display name of the group.
+     */
+    title: string;
+    /**
+     * What the group controls.
+     */
+    description: string;
+    /**
+     * `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
+     */
+    source: 'stored' | 'defaults';
+    /**
+     * When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
+     */
+    updatedAt: string | null;
+    /**
+     * Who last saved the stored value, when known.
+     */
+    updatedBy: {
+        /**
+         * The user id of the root admin who made the change.
+         */
+        id: string;
+        /**
+         * The admin's full name, for display.
+         */
+        name: string;
+    } | null;
+    /**
+     * The value in use.
+     */
+    value: {
+        /**
+         * The pricing profiles, the default first. Names are unique.
+         */
+        profiles: Array<{
+            /**
+             * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+             */
+            salaryCap: number;
+            /**
+             * Whole dollars. Every price is rounded to a multiple of it.
+             */
+            unit: number;
+            /**
+             * The best seed's price, as a percentage of the salary cap.
+             */
+            topSharePercent: number;
+            /**
+             * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+             */
+            floorSharePercent: number;
+            /**
+             * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+             */
+            steepness: number;
+            /**
+             * The profile's name, such as "Standard".
+             */
+            name: string;
+        }>;
+    };
+    /**
+     * The value a reset would store.
+     */
+    defaults: {
+        /**
+         * The pricing profiles, the default first. Names are unique.
+         */
+        profiles: Array<{
+            /**
+             * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+             */
+            salaryCap: number;
+            /**
+             * Whole dollars. Every price is rounded to a multiple of it.
+             */
+            unit: number;
+            /**
+             * The best seed's price, as a percentage of the salary cap.
+             */
+            topSharePercent: number;
+            /**
+             * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+             */
+            floorSharePercent: number;
+            /**
+             * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+             */
+            steepness: number;
+            /**
+             * The profile's name, such as "Standard".
+             */
+            name: string;
+        }>;
+    };
 };
 
 /**
@@ -8947,6 +9295,105 @@ export type SettingsGroupList = {
                 CONTEST_STARTED_SUMMARY: boolean;
             };
         };
+    } | {
+        key: 'BUDGET_PRICING_CONFIG';
+        /**
+         * Short display name of the group.
+         */
+        title: string;
+        /**
+         * What the group controls.
+         */
+        description: string;
+        /**
+         * `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
+         */
+        source: 'stored' | 'defaults';
+        /**
+         * When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
+         */
+        updatedAt: string | null;
+        /**
+         * Who last saved the stored value, when known.
+         */
+        updatedBy: {
+            /**
+             * The user id of the root admin who made the change.
+             */
+            id: string;
+            /**
+             * The admin's full name, for display.
+             */
+            name: string;
+        } | null;
+        /**
+         * The value in use.
+         */
+        value: {
+            /**
+             * The pricing profiles, the default first. Names are unique.
+             */
+            profiles: Array<{
+                /**
+                 * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+                 */
+                salaryCap: number;
+                /**
+                 * Whole dollars. Every price is rounded to a multiple of it.
+                 */
+                unit: number;
+                /**
+                 * The best seed's price, as a percentage of the salary cap.
+                 */
+                topSharePercent: number;
+                /**
+                 * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+                 */
+                floorSharePercent: number;
+                /**
+                 * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+                 */
+                steepness: number;
+                /**
+                 * The profile's name, such as "Standard".
+                 */
+                name: string;
+            }>;
+        };
+        /**
+         * The value a reset would store.
+         */
+        defaults: {
+            /**
+             * The pricing profiles, the default first. Names are unique.
+             */
+            profiles: Array<{
+                /**
+                 * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+                 */
+                salaryCap: number;
+                /**
+                 * Whole dollars. Every price is rounded to a multiple of it.
+                 */
+                unit: number;
+                /**
+                 * The best seed's price, as a percentage of the salary cap.
+                 */
+                topSharePercent: number;
+                /**
+                 * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+                 */
+                floorSharePercent: number;
+                /**
+                 * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+                 */
+                steepness: number;
+                /**
+                 * The profile's name, such as "Standard".
+                 */
+                name: string;
+            }>;
+        };
     }>;
 };
 
@@ -9137,6 +9584,46 @@ export type SettingsGroupUpdateRequest = {
              */
             CONTEST_STARTED_SUMMARY: boolean;
         };
+    };
+    /**
+     * The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
+     */
+    expectedUpdatedAt: string | null;
+} | {
+    key: 'BUDGET_PRICING_CONFIG';
+    /**
+     * The whole new value.
+     */
+    value: {
+        /**
+         * The pricing profiles, the default first. Names are unique.
+         */
+        profiles: Array<{
+            /**
+             * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+             */
+            salaryCap: number;
+            /**
+             * Whole dollars. Every price is rounded to a multiple of it.
+             */
+            unit: number;
+            /**
+             * The best seed's price, as a percentage of the salary cap.
+             */
+            topSharePercent: number;
+            /**
+             * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+             */
+            floorSharePercent: number;
+            /**
+             * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+             */
+            steepness: number;
+            /**
+             * The profile's name, such as "Standard".
+             */
+            name: string;
+        }>;
     };
     /**
      * The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
@@ -9541,6 +10028,94 @@ export type SettingsChange = {
             CONTEST_STARTED_SUMMARY: boolean;
         };
     };
+} | {
+    key: 'BUDGET_PRICING_CONFIG';
+    id: string;
+    /**
+     * ISO 8601 datetime string.
+     */
+    changedAt: string;
+    /**
+     * Who saved it, when known.
+     */
+    changedBy: {
+        /**
+         * The user id of the root admin who made the change.
+         */
+        id: string;
+        /**
+         * The admin's full name, for display.
+         */
+        name: string;
+    } | null;
+    /**
+     * The stored value before the save; null when the save created the first stored value.
+     */
+    previousValue: {
+        /**
+         * The pricing profiles, the default first. Names are unique.
+         */
+        profiles: Array<{
+            /**
+             * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+             */
+            salaryCap: number;
+            /**
+             * Whole dollars. Every price is rounded to a multiple of it.
+             */
+            unit: number;
+            /**
+             * The best seed's price, as a percentage of the salary cap.
+             */
+            topSharePercent: number;
+            /**
+             * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+             */
+            floorSharePercent: number;
+            /**
+             * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+             */
+            steepness: number;
+            /**
+             * The profile's name, such as "Standard".
+             */
+            name: string;
+        }>;
+    } | null;
+    /**
+     * The value the save stored.
+     */
+    newValue: {
+        /**
+         * The pricing profiles, the default first. Names are unique.
+         */
+        profiles: Array<{
+            /**
+             * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+             */
+            salaryCap: number;
+            /**
+             * Whole dollars. Every price is rounded to a multiple of it.
+             */
+            unit: number;
+            /**
+             * The best seed's price, as a percentage of the salary cap.
+             */
+            topSharePercent: number;
+            /**
+             * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+             */
+            floorSharePercent: number;
+            /**
+             * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+             */
+            steepness: number;
+            /**
+             * The profile's name, such as "Standard".
+             */
+            name: string;
+        }>;
+    };
 };
 
 /**
@@ -9943,6 +10518,94 @@ export type SettingsChangeList = {
                  */
                 CONTEST_STARTED_SUMMARY: boolean;
             };
+        };
+    } | {
+        key: 'BUDGET_PRICING_CONFIG';
+        id: string;
+        /**
+         * ISO 8601 datetime string.
+         */
+        changedAt: string;
+        /**
+         * Who saved it, when known.
+         */
+        changedBy: {
+            /**
+             * The user id of the root admin who made the change.
+             */
+            id: string;
+            /**
+             * The admin's full name, for display.
+             */
+            name: string;
+        } | null;
+        /**
+         * The stored value before the save; null when the save created the first stored value.
+         */
+        previousValue: {
+            /**
+             * The pricing profiles, the default first. Names are unique.
+             */
+            profiles: Array<{
+                /**
+                 * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+                 */
+                salaryCap: number;
+                /**
+                 * Whole dollars. Every price is rounded to a multiple of it.
+                 */
+                unit: number;
+                /**
+                 * The best seed's price, as a percentage of the salary cap.
+                 */
+                topSharePercent: number;
+                /**
+                 * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+                 */
+                floorSharePercent: number;
+                /**
+                 * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+                 */
+                steepness: number;
+                /**
+                 * The profile's name, such as "Standard".
+                 */
+                name: string;
+            }>;
+        } | null;
+        /**
+         * The value the save stored.
+         */
+        newValue: {
+            /**
+             * The pricing profiles, the default first. Names are unique.
+             */
+            profiles: Array<{
+                /**
+                 * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+                 */
+                salaryCap: number;
+                /**
+                 * Whole dollars. Every price is rounded to a multiple of it.
+                 */
+                unit: number;
+                /**
+                 * The best seed's price, as a percentage of the salary cap.
+                 */
+                topSharePercent: number;
+                /**
+                 * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+                 */
+                floorSharePercent: number;
+                /**
+                 * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+                 */
+                steepness: number;
+                /**
+                 * The profile's name, such as "Standard".
+                 */
+                name: string;
+            }>;
         };
     }>;
 };
@@ -14068,7 +14731,7 @@ export type ReleaseEventErrors = {
      */
     409: ErrorEnvelope;
     /**
-     * SPORT_EVENT_NOT_READY: the field is not loaded, or an active participant has no tier.
+     * SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, or prices are not assigned or miss an active participant.
      */
     422: ErrorEnvelope;
 };
@@ -14852,6 +15515,10 @@ export type AutoAssignEventPricesErrors = {
      * Standard API error envelope.
      */
     409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type AutoAssignEventPricesError = AutoAssignEventPricesErrors[keyof AutoAssignEventPricesErrors];

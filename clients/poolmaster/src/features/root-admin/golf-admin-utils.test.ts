@@ -68,6 +68,8 @@ describe('golf-admin-utils: resolveGolfLifecycleStage', () => {
   });
 });
 
+const STANDARD_PRICING = { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+
 describe('golf-admin-utils: describeGolfReleaseBlockers', () => {
   const now = new Date('2026-04-01T00:00:00.000Z');
   const ready = {
@@ -75,6 +77,8 @@ describe('golf-admin-utils: describeGolfReleaseBlockers', () => {
     startDate: '2026-05-07T12:00:00.000Z',
     loadedParticipantCount: 120,
     untieredParticipantCount: 0,
+    unpricedParticipantCount: 0,
+    pricing: STANDARD_PRICING,
   };
 
   it('lists nothing for a draft with a loaded, fully tiered field before its start', () => {
@@ -95,6 +99,19 @@ describe('golf-admin-utils: describeGolfReleaseBlockers', () => {
     ]);
     expect(describeGolfReleaseBlockers({ ...ready, untieredParticipantCount: 3 }, now)).toEqual([
       'Put the 3 active golfers without a tier into tiers.',
+    ]);
+  });
+
+  it('asks for prices to be assigned when the draft was never priced (#93)', () => {
+    expect(describeGolfReleaseBlockers({ ...ready, pricing: null }, now)).toEqual(['Assign prices on the Tiers page.']);
+  });
+
+  it('counts the active golfers still without a price once the draft is priced (#93)', () => {
+    expect(describeGolfReleaseBlockers({ ...ready, unpricedParticipantCount: 1 }, now)).toEqual([
+      'Price the 1 active golfer without a price.',
+    ]);
+    expect(describeGolfReleaseBlockers({ ...ready, unpricedParticipantCount: 2 }, now)).toEqual([
+      'Price the 2 active golfers without a price.',
     ]);
   });
 
@@ -154,7 +171,14 @@ describe('pool-master-3dg golf-admin-utils: deriveGolfAutoTransition', () => {
 });
 
 describe('golf-admin-utils: deriveGolfTournamentReadiness', () => {
-  const base = { status: 'DRAFT' as const, loadedParticipantCount: 120, tierCount: 6, untieredParticipantCount: 0 };
+  const base = {
+    status: 'DRAFT' as const,
+    loadedParticipantCount: 120,
+    tierCount: 6,
+    untieredParticipantCount: 0,
+    unpricedParticipantCount: 0,
+    pricing: STANDARD_PRICING,
+  };
 
   it('reports Setup with a reason when a draft has no field', () => {
     expect(deriveGolfTournamentReadiness({ ...base, loadedParticipantCount: 0 })).toEqual({
@@ -176,7 +200,16 @@ describe('golf-admin-utils: deriveGolfTournamentReadiness', () => {
     });
   });
 
-  it('reports Ready to release for a fully tiered draft, and Released, Live and Completed after', () => {
+  it('reports Prices pending while a fully tiered draft is unpriced or has golfers without a price (#93)', () => {
+    expect(deriveGolfTournamentReadiness({ ...base, pricing: null })).toEqual({
+      label: 'Prices pending',
+      tone: 'warning',
+      reasons: ['No prices assigned'],
+    });
+    expect(deriveGolfTournamentReadiness({ ...base, unpricedParticipantCount: 2 }).reasons).toEqual(['2 golfer(s) without a price']);
+  });
+
+  it('reports Ready to release for a fully tiered and priced draft, and Released, Live and Completed after', () => {
     expect(deriveGolfTournamentReadiness(base).label).toBe('Ready to release');
     expect(deriveGolfTournamentReadiness({ ...base, status: 'SCHEDULED' }).label).toBe('Released');
     expect(deriveGolfTournamentReadiness({ ...base, status: 'IN_PROGRESS' }).label).toBe('Live');

@@ -1,5 +1,6 @@
 import type { SportEvent } from '@poolmaster/shared/domain';
 import { mapSportEventToDto } from '../../../packages/core-api/src/mappers/sport-events.mapper';
+import { standardEventPricing } from '../../support/budget-pricing';
 
 function event(overrides: Partial<SportEvent> = {}): SportEvent {
   return {
@@ -25,8 +26,20 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
 }
 
 function summary(sportEvent: SportEvent, loadedParticipantCount: number, untieredParticipantCount = 0) {
-  return { event: sportEvent, loadedParticipantCount, untieredParticipantCount, tierCount: 0, contestCount: 0 };
+  return { event: sportEvent, loadedParticipantCount, untieredParticipantCount, unpricedParticipantCount: 0, tierCount: 0, contestCount: 0 };
 }
+
+describe('SportEvent pricing on the wire (#93)', () => {
+  it('carries the values the field was priced with, whose salary cap every budget contest on the event uses', () => {
+    const pricing = standardEventPricing();
+
+    expect(mapSportEventToDto(summary(event({ pricingConfig: pricing }), 72)).pricing).toEqual(pricing);
+  });
+
+  it('carries null pricing for an event whose prices were never assigned', () => {
+    expect(mapSportEventToDto(summary(event(), 72)).pricing).toBeNull();
+  });
+});
 
 describe('SportEvent readiness on the wire', () => {
   it('is contest-eligible once released with a loaded field and before it starts', () => {
@@ -85,7 +98,7 @@ describe('SportEvent readiness on the wire', () => {
 
 describe('SportEvent next statuses on the wire', () => {
   it('carries the declared transitions from the event\'s current status, and its counts', () => {
-    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), loadedParticipantCount: 0, untieredParticipantCount: 0, tierCount: 6, contestCount: 2 })).toMatchObject({
+    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), loadedParticipantCount: 0, untieredParticipantCount: 0, unpricedParticipantCount: 0, tierCount: 6, contestCount: 2 })).toMatchObject({
       allowedTransitions: ['IN_PROGRESS', 'POSTPONED', 'CANCELLED'],
       tierCount: 6,
       contestCount: 2,

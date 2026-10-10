@@ -196,7 +196,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
         200: schemaRef('SportEventResponse'),
         ...errors(401, 403, 404),
         409: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_DRAFT: the event has already been released. SPORT_EVENT_ALREADY_STARTED: its start time has passed.' },
-        422: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_READY: the field is not loaded, or an active participant has no tier.' },
+        422: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, or prices are not assigned or miss an active participant.' },
       },
     },
     handler: handler.releaseEvent,
@@ -479,11 +479,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Price a sport event\'s seeded field',
-      description: 'Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.',
+      description: 'Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event\'s pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the salary cap.',
       operationId: 'autoAssignEventPrices',
       params: EVENT_PARAMS,
       body: schemaRef('AutoAssignSportEventPricesRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409, 422) },
     },
     handler: handler.autoAssignEventPrices,
   });
