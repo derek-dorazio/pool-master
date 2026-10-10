@@ -233,9 +233,15 @@ administration area (root admin included), reusing the same shared components.
    bottom of the settings page (`DangerZone`), each with a confirm step, never
    beside everyday actions. Settings themselves are shown as labelled rows
    (`SettingsSection`, `SettingsRow`) with one Edit for the group.
-7. **Lists scale.** Team, owner and leaderboard lists are compact tables with
-   search and paging, assuming hundreds of rows. Summary cards show a few rows
-   and link to the full page.
+7. **Lists scale.** Team, owner and leaderboard lists have search and paging,
+   assuming hundreds of rows: tables through `DataGrid`, other lists through
+   the same `Pager`. A long ranked list also offers a way to jump to the
+   viewer's own row. Summary cards show a few rows and link to the full page.
 8. **Summary first.** A landing page leads with what needs the member now (the
    next contest to enter, with its cutoff), then live standings, then their own
    team.
+9. **One header per entity's pages.** Pages that show one entity from
+   different angles share one header and a segmented sub-menu between them,
+   not "Back to" and "View" links on each page. A contest's pages share
+   `ContestHeader`: Entries, Leaderboard once picks are revealed, and My entry
+   once the viewer's team has one.

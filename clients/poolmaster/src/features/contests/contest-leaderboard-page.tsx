@@ -6,7 +6,7 @@ import {
   type ContestDto,
 } from '@/lib/api';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
-import { buildLeagueContestPath } from '@/features/leagues/league-routing';
+import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import {
@@ -14,8 +14,9 @@ import {
   Chip,
   EmptyState,
   ErrorState,
-  LinkButton,
+  Input,
   LoadingState,
+  Pager,
   Tile,
   cn,
   formatDateTimeDisplay,
@@ -25,8 +26,10 @@ import {
   contestRefetchInterval,
   refreshOnContestStatusChange,
 } from './contest-status';
+import { ContestHeader, ContestSubMenu } from './contest-header';
 import { ContestStatusBadge } from './contest-status-badge';
 import { buildLeaderboardView, type LeaderboardEntryRow } from './contest-leaderboard';
+import { fetchContestEntries } from './use-contest-entries';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import { useContestLeaderboardQuery } from './use-contest-leaderboard';
 
@@ -54,23 +57,43 @@ const LEADERBOARD_ERROR_MESSAGES: Record<string, string> = {
 /** An unscored cell. A golfer with no round posted is not a zero. */
 const NO_SCORE = '—';
 
+/** Entries per page. A league can have hundreds; one page stays readable on a phone. */
+const LEADERBOARD_PAGE_SIZE = 25;
+
+function entryBlockId(entryId: string) {
+  return `contest-leaderboard-entry-${entryId}`;
+}
+
+/** Whether an entry matches the "Find a team" box: its entry name or its team's name. */
+function matchesSearch(entry: LeaderboardEntryRow, search: string) {
+  const needle = search.trim().toLowerCase();
+  return !needle
+    || entry.entryName.toLowerCase().includes(needle)
+    || entry.squadName.toLowerCase().includes(needle);
+}
+
 function EntryBlock({
   entry,
   gridTemplateColumns,
   isCollapsed,
+  isMine,
   onToggle,
   roundNumbers,
 }: {
   entry: LeaderboardEntryRow;
   gridTemplateColumns: string;
   isCollapsed: boolean;
+  isMine: boolean;
   onToggle: () => void;
   roundNumbers: readonly number[];
 }) {
   const picksId = `contest-leaderboard-picks-${entry.entryId}`;
   return (
     <Tile
+      className={isMine ? 'border-primary/40' : undefined}
+      data-mine={isMine || undefined}
       data-testid={`contest-leaderboard-entry-${entry.entryId}`}
+      id={entryBlockId(entry.entryId)}
       padding="none"
       radius="lg"
       variant="subtle"
@@ -97,6 +120,7 @@ function EntryBlock({
               {entry.displayPosition ?? NO_SCORE}
             </span>
             <span className="font-medium text-foreground">{entry.entryName}</span>
+            {isMine ? <Chip tone="active">Your team</Chip> : null}
           </span>
           <span className="mt-1 block text-xs text-muted-foreground">
             {entry.squadName} · best {entry.countingPickLimit} of {entry.picks.length} count ·{' '}
@@ -180,6 +204,10 @@ export function ContestLeaderboardPage() {
   // #389 — which entries' golfer rows are hidden. Keyed by entry id so it survives the live
   // polls; an entry that first appears mid-session starts expanded like every other.
   const [collapsedEntryIds, setCollapsedEntryIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [search, setSearch] = useState('');
+  const [pageIndex, setPageIndex] = useState(0);
+  // Set by Jump to my team; once the page holding that entry renders, it is scrolled into view.
+  const [jumpTargetId, setJumpTargetId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
   const contestQuery = useQuery({
@@ -209,6 +237,22 @@ export function ContestLeaderboardPage() {
   // stops when the contest settles, and each status change it sees reads the leaderboard once
   // more, which is how the final standings land.
   const leaderboardQuery = useContestLeaderboardQuery(contestId, contestQuery.data?.status);
+  const contestEntriesQuery = useQuery({
+    queryKey: QueryKeys.contestEntries.byContest(contestId),
+    queryFn: () => fetchContestEntries(contestId),
+    enabled: Boolean(contestId),
+    retry: false,
+  });
+  const { league, viewer } = useLeagueContextById(contestQuery.data?.leagueId);
+  const leagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
+
+  useEffect(() => {
+    if (!jumpTargetId) {
+      return;
+    }
+    document.getElementById(entryBlockId(jumpTargetId))?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    setJumpTargetId(null);
+  }, [jumpTargetId, pageIndex]);
 
   useEffect(() => {
     if (!leaderboardQuery.isError) {
@@ -224,10 +268,6 @@ export function ContestLeaderboardPage() {
       'Contest leaderboard failed to load',
     );
   }, [contestId, hintedLeagueCode, leaderboardQuery.error, leaderboardQuery.isError, logger]);
-
-  const backPath = hintedLeagueCode
-    ? buildLeagueContestPath(hintedLeagueCode, contestId)
-    : '/welcome';
 
   if (contestQuery.isLoading || leaderboardQuery.isLoading) {
     return <LoadingState body="Loading contest leaderboard..." />;
@@ -283,42 +323,94 @@ export function ContestLeaderboardPage() {
     setCollapsedEntryIds(allCollapsed ? new Set() : new Set(view.entries.map((entry) => entry.entryId)));
   };
 
+  const mySquadId = viewer.mySquadId;
+  const matchingEntries = view.entries.filter((entry) => matchesSearch(entry, search));
+  const pageCount = Math.max(1, Math.ceil(matchingEntries.length / LEADERBOARD_PAGE_SIZE));
+  // A refetch or a narrower search can leave fewer pages than the one being shown.
+  const currentPage = Math.min(pageIndex, pageCount - 1);
+  const pageEntries = matchingEntries.slice(
+    currentPage * LEADERBOARD_PAGE_SIZE,
+    (currentPage + 1) * LEADERBOARD_PAGE_SIZE,
+  );
+  // The server ranks best first, so the team's first entry is its best placed.
+  const myBestIndex = mySquadId === null
+    ? -1
+    : view.entries.findIndex((entry) => entry.squadId === mySquadId);
+  const jumpToMyTeam = () => {
+    const target = view.entries[myBestIndex];
+    if (!target) {
+      return;
+    }
+    setSearch('');
+    setPageIndex(Math.floor(myBestIndex / LEADERBOARD_PAGE_SIZE));
+    setCollapsedEntryIds((current) => {
+      const next = new Set(current);
+      next.delete(target.entryId);
+      return next;
+    });
+    setJumpTargetId(target.entryId);
+  };
+
   return (
     <section className="space-y-6" data-testid="contest-leaderboard">
-      <Tile padding="lg">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-2">
-            <ContestStatusBadge status={contest.status} />
-            <h2
-              className="text-3xl font-semibold tracking-tight"
-              data-testid="contest-leaderboard-heading"
-            >
-              {contest.name}
-            </h2>
-            <p className="text-sm text-muted-foreground">Leaderboard</p>
-            {view.currentRoundLabel ? (
-              <Chip data-testid="contest-leaderboard-round-cue" tone="info">
-                {view.currentRoundLabel}
-              </Chip>
-            ) : null}
-            {contest.status === ContestStatus.COMPLETED ? (
-              // #246 — an entry's standing is frozen at settlement while each golfer's own
-              // score stays live, so a late correction can make the two disagree on this very
-              // page. Say so rather than let it read as a bug.
-              <p className="text-sm text-muted-foreground" data-testid="contest-leaderboard-settled-note">
-                {`Final result, settled ${formatDateTimeDisplay(contest.endsAt, 'at the end of the event')}. Entry standings are frozen at settlement; golfer scores show current event data and can differ after a late score correction.`}
-              </p>
-            ) : null}
-          </div>
-          <LinkButton data-testid="contest-leaderboard-back" to={backPath} variant="secondary">
-            Back to contest
-          </LinkButton>
+      <ContestHeader
+        badges={<ContestStatusBadge status={contest.status} />}
+        menu={leagueCode ? (
+          <ContestSubMenu
+            contestId={contestId}
+            current="leaderboard"
+            leagueCode={leagueCode}
+            myEntryId={contestEntriesQuery.data?.myEntryIds?.[0] ?? null}
+            picksRevealed
+          />
+        ) : null}
+        title={contest.name}
+        titleTestId="contest-leaderboard-heading"
+      >
+        <div className="mt-2 space-y-2">
+          {view.currentRoundLabel ? (
+            <Chip data-testid="contest-leaderboard-round-cue" tone="info">
+              {view.currentRoundLabel}
+            </Chip>
+          ) : null}
+          {contest.status === ContestStatus.COMPLETED ? (
+            // #246 — an entry's standing is frozen at settlement while each golfer's own
+            // score stays live, so a late correction can make the two disagree on this very
+            // page. Say so rather than let it read as a bug.
+            <p className="text-sm text-muted-foreground" data-testid="contest-leaderboard-settled-note">
+              {`Final result, settled ${formatDateTimeDisplay(contest.endsAt, 'at the end of the event')}. Entry standings are frozen at settlement; golfer scores show current event data and can differ after a late score correction.`}
+            </p>
+          ) : null}
         </div>
-      </Tile>
+      </ContestHeader>
 
       <Tile>
         {view.entries.length > 0 ? (
-          <div className="flex justify-end px-4 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <Input
+                aria-label="Find a team"
+                className="max-w-xs"
+                data-testid="contest-leaderboard-search"
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPageIndex(0);
+                }}
+                placeholder="Find a team"
+                type="search"
+                value={search}
+              />
+              {myBestIndex >= 0 ? (
+                <Button
+                  data-testid="contest-leaderboard-jump-to-mine"
+                  onClick={jumpToMyTeam}
+                  size="sm"
+                  variant="secondary"
+                >
+                  Jump to my team
+                </Button>
+              ) : null}
+            </div>
             <Button
               data-testid="contest-leaderboard-toggle-all"
               onClick={toggleAllEntries}
@@ -352,18 +444,31 @@ export function ContestLeaderboardPage() {
         <div className="space-y-3" data-testid="contest-leaderboard-entries">
           {view.entries.length === 0 ? (
             <EmptyState body="No entries have been scored in this contest yet." />
+          ) : matchingEntries.length === 0 ? (
+            <EmptyState body="No team or entry matches that name." testId="contest-leaderboard-no-match" />
           ) : (
-            view.entries.map((entry) => (
+            pageEntries.map((entry) => (
               <EntryBlock
                 entry={entry}
                 gridTemplateColumns={gridTemplateColumns}
                 isCollapsed={collapsedEntryIds.has(entry.entryId)}
+                isMine={mySquadId !== null && entry.squadId === mySquadId}
                 key={entry.entryId}
                 onToggle={() => toggleEntry(entry.entryId)}
                 roundNumbers={view.roundNumbers}
               />
             ))
           )}
+        </div>
+        <div className="px-4 pt-3">
+          <Pager
+            onNext={() => setPageIndex(currentPage + 1)}
+            onPrevious={() => setPageIndex(currentPage - 1)}
+            pageCount={pageCount}
+            pageIndex={currentPage}
+            pageSize={LEADERBOARD_PAGE_SIZE}
+            total={matchingEntries.length}
+          />
         </div>
         {view.hasUnplayedRounds ? (
           <p className="px-4 pt-3 text-xs text-muted-foreground" data-testid="contest-leaderboard-unplayed-note">

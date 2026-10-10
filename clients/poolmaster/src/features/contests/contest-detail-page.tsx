@@ -8,7 +8,6 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
   buildContestEntryPath,
   buildLeagueContestEntryPath,
-  buildLeagueContestLeaderboardPath,
   buildLeagueAdminContestPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
@@ -30,6 +29,7 @@ import {
   LoadingState,
   Tile,
 } from '@/features/shared/ui';
+import { ContestHeader, ContestSubMenu } from './contest-header';
 import { ContestStatusBadge } from './contest-status-badge';
 import { OpenContestAction } from './open-contest-action';
 import {
@@ -298,11 +298,6 @@ export function ContestDetailPage() {
     hintedLeagueCode && contest.status === ContestStatus.DRAFT
       ? buildLeagueAdminContestPath(hintedLeagueCode, contestId)
       : null;
-  // #111 — the leaderboard is its own route, and it is only worth offering once the endpoint
-  // behind it will answer: it is gated on picks being revealed.
-  const leaderboardPath = hintedLeagueCode && picksRevealed
-    ? buildLeagueContestLeaderboardPath(hintedLeagueCode, contestId)
-    : null;
 
   function startRenameEntry(entry: ContestEntryDto) {
     setRenameEntryId(entry.id);
@@ -318,54 +313,11 @@ export function ContestDetailPage() {
 
   return (
     <section className="space-y-6" data-testid="contest-board">
-      <Tile padding="lg">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-3">
-            <ContestStatusBadge status={contest.status} />
-            <div>
-              <h2 className="text-3xl font-semibold tracking-tight" data-testid="contest-detail-heading">
-                {contest.name}
-              </h2>
-              <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-detail-summary">
-                {contest.selectionType} · {contest.scoringEngine}
-                {contest.sport ? ` · ${contest.sport}` : ''}
-              </p>
-              {schedule ? (
-                <p className="mt-1 text-sm text-muted-foreground" data-testid="contest-detail-schedule">
-                  <span data-testid="contest-detail-starts">
-                    Starts <DateDisplay className="text-muted-foreground" value={schedule.startsAt} />
-                  </span>
-                  {schedule.endsAt ? (
-                    <span data-testid="contest-detail-ends">
-                      {' · '}Ends <DateDisplay className="text-muted-foreground" value={schedule.endsAt} />
-                    </span>
-                  ) : null}
-                </p>
-              ) : null}
-              <div className="mt-4 flex flex-wrap gap-3 text-sm">
-                <Chip
-                  data-testid="contest-board-my-count"
-                  tone="info"
-                >
-                  My Entries: <span className="font-semibold text-foreground">{myCount}</span>
-                </Chip>
-                <Chip
-                  data-testid="contest-board-total-count"
-                  tone="info"
-                >
-                  Total Entries: <span className="font-semibold text-foreground">{totalCount}</span>
-                </Chip>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3">
+      <ContestHeader
+        actions={(
+          <>
             {canOpenToLeague ? (
               <OpenContestAction contestId={contestId} leagueId={leagueId} />
-            ) : null}
-            {leaderboardPath ? (
-              <LinkButton data-testid="contest-leaderboard-link" to={leaderboardPath}>
-                View leaderboard
-              </LinkButton>
             ) : null}
             {manageContestPath ? (
               <LinkButton
@@ -383,9 +335,54 @@ export function ContestDetailPage() {
             >
               Back to league
             </LinkButton>
-          </div>
+          </>
+        )}
+        badges={<ContestStatusBadge status={contest.status} />}
+        menu={hintedLeagueCode ? (
+          <ContestSubMenu
+            contestId={contestId}
+            current="entries"
+            leagueCode={hintedLeagueCode}
+            myEntryId={contestEntriesQuery.data?.myEntryIds?.[0] ?? null}
+            picksRevealed={picksRevealed}
+          />
+        ) : null}
+        summary={(
+          <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-detail-summary">
+            {contest.selectionType} · {contest.scoringEngine}
+            {contest.sport ? ` · ${contest.sport}` : ''}
+          </p>
+        )}
+        title={contest.name}
+        titleTestId="contest-detail-heading"
+      >
+        {schedule ? (
+          <p className="mt-1 text-sm text-muted-foreground" data-testid="contest-detail-schedule">
+            <span data-testid="contest-detail-starts">
+              Starts <DateDisplay className="text-muted-foreground" value={schedule.startsAt} />
+            </span>
+            {schedule.endsAt ? (
+              <span data-testid="contest-detail-ends">
+                {' · '}Ends <DateDisplay className="text-muted-foreground" value={schedule.endsAt} />
+              </span>
+            ) : null}
+          </p>
+        ) : null}
+        <div className="mt-4 flex flex-wrap gap-3 text-sm">
+          <Chip
+            data-testid="contest-board-my-count"
+            tone="info"
+          >
+            My Entries: <span className="font-semibold text-foreground">{myCount}</span>
+          </Chip>
+          <Chip
+            data-testid="contest-board-total-count"
+            tone="info"
+          >
+            Total Entries: <span className="font-semibold text-foreground">{totalCount}</span>
+          </Chip>
         </div>
-      </Tile>
+      </ContestHeader>
 
       {isDraft ? (
         <Alert data-testid="contest-draft-note">

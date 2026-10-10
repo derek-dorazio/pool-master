@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ContestEntryStatus, ContestStatus, SquadMembershipStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto, SquadDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
@@ -15,12 +15,15 @@ import { TeamIcon } from '@/features/teams/team-icon';
 import {
   buildTopStandings,
   countdownUntil,
-  type MyEntriesState,
   type StandingRow,
   type UpNextContest,
 } from './league-home';
 import {
-  buildLeagueContestEntryPath,
+  describeMyEntry,
+  ENTRY_STATE_NOTE,
+  type MyEntriesState,
+} from '@/features/contests/my-contest-entry';
+import {
   buildLeagueContestLeaderboardPath,
   buildLeagueContestPath,
   buildLeagueContestsPath,
@@ -60,46 +63,6 @@ function HomeCard({
       ) : null}
     </section>
   );
-}
-
-const ENTRY_STATE_NOTE = {
-  failed: "We couldn't check your entry.",
-  loading: 'Checking your entry...',
-} as const;
-
-/** What the viewer's entries in a contest mean for them, and where to go next. */
-function describeMyEntry(
-  leagueCode: string,
-  contest: ContestDto,
-  myEntries: readonly ContestEntryDto[] | undefined,
-  entriesState: MyEntriesState,
-  hasTeam: boolean,
-) {
-  const contestPath = buildLeagueContestPath(leagueCode, contest.id);
-  if (!hasTeam) {
-    return { label: 'View contest', note: 'Create your team to enter.', to: contestPath };
-  }
-  // Until the entries are known, offering to make picks could start a second entry.
-  if (entriesState !== 'ready') {
-    return { label: 'View contest', note: ENTRY_STATE_NOTE[entriesState], to: contestPath };
-  }
-  const submitted = myEntries?.find((entry) => entry.status === ContestEntryStatus.SUBMITTED);
-  if (submitted) {
-    return {
-      label: 'View entry',
-      note: 'Your entry is submitted.',
-      to: buildLeagueContestEntryPath(leagueCode, contest.id, submitted.id),
-    };
-  }
-  const draft = myEntries?.[0];
-  if (draft) {
-    return {
-      label: 'Finish your picks',
-      note: 'Your entry is not submitted yet.',
-      to: buildLeagueContestEntryPath(leagueCode, contest.id, draft.id),
-    };
-  }
-  return { label: 'Make your picks', note: 'You have not entered yet.', to: contestPath };
 }
 
 export function UpNextCard({

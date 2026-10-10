@@ -552,7 +552,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 
     await test.step('rename the entry inline on the board', async () => {
       const name = `E2E Entry ${run.runId}`;
-      await page.getByTestId('contest-entry-back-to-contest').click();
+      await page.getByTestId('contest-menu-entries').click();
       await page.getByTestId(`contest-board-rename-${state.entryId}`).click();
       await page.getByTestId(`contest-board-rename-input-${state.entryId}`).fill(name);
       const renamed = await submitAndRead<{ entry: { name: string } }>(

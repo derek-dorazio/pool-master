@@ -27,7 +27,8 @@ Use page templates when a page matches an existing workflow shape:
 `DataGrid` takes an optional `search` (one box matching every text column),
 `pageSize` (rows per page, with a Previous/Next pager once there is more than
 one page) and `showColumnFilters` (on by default). A list that can grow to
-hundreds of rows uses `search` and `pageSize` (`rules/ux-rules.md` §12).
+hundreds of rows uses `search` and `pageSize` (`rules/ux-rules.md` §12). A list
+that is not a table pages through `Pager`, the same Previous/Next control.
 
 League pages and administration areas use the pieces named in
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
