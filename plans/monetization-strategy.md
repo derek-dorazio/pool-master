@@ -2,7 +2,8 @@
 
 **Tracking issue:** #581
 
-Written 2026-10-10 for Derek's review. Research and strategy only: no implementation is
+Written 2026-10-10 for Derek's review. Open questions sit under the section they belong to,
+each with a recommendation. Research and strategy only: no implementation is
 scheduled. **Taking payments is out of scope** throughout: this document covers what to sell
 and how the app would know a league or contest has it, not how money is collected.
 
@@ -138,6 +139,33 @@ Rules that make the two mechanisms work together:
   make last week's winner vanish, which reads as a bug. Past seasons are what the paid tiers
   open.
 
+#### Open questions: contest unlocks vs league tiers
+
+Each has a recommendation; answer only where you disagree.
+
+1. **Offer both mechanisms from the start, or one first?** Both is the plan, but league
+   tiers alone are simpler to explain and build. Recommended: build the model for both, ship
+   league tiers first, and add contest unlocks once a commissioner hits a cap.
+2. **Three paid tiers or two?** Three gives room; two (Premium and Platinum) is simpler to
+   explain. Recommended: start with two, add Pro if the gap feels too wide.
+3. **Which features can be bought à la carte?** Recommended: only entry caps and selection
+   types. History, reminders and branding are league-wide by nature and stay tier-only, which
+   gives a league a reason to subscribe.
+4. **Does a contest's unlock count toward a later tier?** For example, credit for unlocks
+   bought this season against a Premium upgrade. Recommended: no for now; it only matters
+   once payments exist.
+5. **Can the same unlock be bought twice in steps** (100, then later 200)? Recommended: yes;
+   the higher one wins and the lower one is simply superseded.
+6. **Should a free league's first contest get a trial of the top tier?** Recommended: yes,
+   so the commissioner sees reminders and history working before being asked to pay.
+7. **Majors pass worth offering** (one price for a league's four majors contests)?
+   Recommended: yes, as a later addition once unlocks exist.
+8. **Who may grant plans and unlocks before payments exist?** Recommended: root admin only,
+   from the root admin screens.
+9. **What happens when a league's tier lapses mid-season?** Recommended: contests already
+   open keep what they opened with; new contests get the free level; history is hidden, not
+   deleted.
+
 ### Where the cap goes
 
 Derek asked whether the cap belongs on squads per league or entries per contest.
@@ -149,6 +177,24 @@ Derek asked whether the cap belongs on squads per league or entries per contest.
   unit every office-pool site prices by.
 - It sits next to the existing per-team entry limit, so commissioners already think in these
   terms.
+
+#### Open questions: the entry cap
+
+1. **Cap on entries per contest rather than squads per league?** Recommended: entries per
+   contest.
+2. **Free cap of 20, and bands of 100, 200 and unlimited?** Recommended: keep them; tune the
+   numbers in app settings later.
+3. **Do draft (unsubmitted) entries count toward the cap?** Recommended: yes, every entry
+   counts, so the count never surprises anyone at submit time. Deleting a draft frees a slot.
+4. **What does a member see when the contest is full?** Recommended: the contest page shows
+   "20 of 20 entries", the add-entry button is disabled with "This contest is full", and the
+   server refuses with its own error if someone gets there anyway.
+5. **What does the commissioner see?** Recommended: the same counter on their contest page,
+   a heads-up at 80% full, and an upgrade note when full.
+6. **Can a commissioner set a lower cap than the plan allows?** Recommended: yes, an optional
+   "maximum entries" on contest settings, never above the plan's cap.
+7. **Can the cap be raised after the contest opens?** Recommended: yes, any time until picks
+   close; it can never be lowered below the entries already made.
 
 ## Premium features worth paying for
 
@@ -170,6 +216,19 @@ Grouped by area, with why each is worth money. Engagement features that bring pe
 Good news for cost: results are already frozen per entry when a contest settles, so history
 is mostly reading and aggregating data we keep, not new data capture.
 
+#### Open questions: history
+
+1. **Free keeps this season's results visible, past seasons paid?** Recommended: yes. Hiding
+   last week's winner would read as a bug.
+2. **What is a season?** Recommended: the calendar year of the event's start.
+3. **How do locked pages behave?** Recommended: the History tab is shown to every league; on
+   a free league it lists past seasons by name with a short "Premium shows past seasons"
+   note instead of the results.
+4. **Who sees the upgrade note?** Recommended: everyone sees that history is locked, but only
+   the commissioner sees how to unlock it.
+5. **Do history dashboards count removed or inactive teams?** Recommended: yes, shown with
+   their name as it was; history should not change when a team leaves.
+
 ### Notifications (Derek's)
 
 - **Entry deadline reminders**: one day and one hour before picks close. The paid version only
@@ -182,6 +241,19 @@ is mostly reading and aggregating data we keep, not new data capture.
 - **Final results**: winner and full standings when the contest settles.
 - **Commissioner announcement**: a message to the whole league from the commissioner.
 
+#### Open questions: notifications
+
+1. **Keep a one-day reminder free?** Competitors give reminders away. Recommended: yes; the
+   last-hour reminder and "only to teams not yet submitted" are the paid part.
+2. **Email only, or in-app too?** Recommended: email first; in-app notices later.
+3. **Can members turn reminders off?** Recommended: yes, per member, in account settings;
+   commissioners can't force them on.
+4. **Who gets them for a team with co-owners?** Recommended: every owner of the team.
+5. **Can the commissioner choose the reminder times?** Recommended: no, fixed at one day and
+   one hour to start.
+6. **When is the end-of-day standings email sent?** Recommended: once a round's scores are
+   final for the day, one email per league per day, not one per contest.
+
 ### Scale and formats
 
 - Bigger entry caps, alternative selection types (budget now, category and snake later).
@@ -189,6 +261,15 @@ is mostly reading and aggregating data we keep, not new data capture.
   league's contests in a year, crowning a season champion. Pairs naturally with history.
 - **Multiple contests on one event** with different formats, if a cap on contests per event is
   ever wanted for the free level.
+
+#### Open questions: scale and formats
+
+1. **How does the Create contest page show a locked selection type?** Recommended: the
+   format card is shown with a lock and "Budget is a Premium format", and can't be picked;
+   the commissioner sees how to unlock it.
+2. **Which selection types are free?** Recommended: tiered only, as you said.
+3. **Is season-long standings a top-tier feature?** Recommended: yes, it pairs with history.
+4. **Cap the number of contests per event on the free level?** Recommended: no for now.
 
 ### Commissioner convenience
 
@@ -199,12 +280,26 @@ is mostly reading and aggregating data we keep, not new data capture.
 - **Export** of entries and results.
 - **Branding**: logo upload, colours, custom trophy names.
 
+#### Open questions: commissioner convenience
+
+1. **Is paid tracking in scope?** It records payments made elsewhere and takes no money.
+   Recommended: yes, as a Premium feature.
+2. **Who sees who has paid?** Recommended: commissioner only.
+3. **How many co-commissioners per tier?** Recommended: one on free, unlimited on paid tiers.
+
 ### Live event extras
 
 - **Pick popularity**: after picks are revealed, how many entries took each golfer. Popular in
   daily fantasy and cheap for us, since picks are revealed when the event starts.
 - **Projected finish**: where each entry would finish if the event ended now, including the
   cut. Partly what the leaderboard already shows.
+
+#### Open questions: live event extras
+
+1. **Pick popularity: which tier?** Recommended: Pro and above, shown only after picks are
+   revealed.
+2. **Projected finish worth building?** Recommended: later; the live leaderboard covers most
+   of it.
 
 ## How it fits the current system
 
@@ -255,6 +350,17 @@ enums.
   current entry count, so the app can show "18 of 20 entries" and locked states. The server
   stays the authority (`rules/architecture-rules.md` §2 *Contract-First API Architecture*).
 
+#### Open questions: how it behaves
+
+1. **Where does the league's plan show?** Recommended: a plan badge on league settings for
+   the commissioner; members don't need to see it.
+2. **What does the root admin screen offer?** Recommended: on a league, grant or end a plan
+   with dates; on a contest, add or remove unlocks; every change recorded with who made it.
+3. **Plan numbers in app settings or code?** Recommended: caps and allowed selection types
+   in a new app settings group; feature names as code enums.
+4. **What happens to an existing league when this ships?** Recommended: every existing league
+   starts on a free Platinum grant for a set period, so nothing it already uses disappears.
+
 ### What does not exist yet
 
 - **Scheduled notifications**: email today is invite and system mail only. Reminders need a
@@ -269,16 +375,6 @@ enums.
 
 Rough shape: the plan and unlock model with root admin granting is one or two PRs; caps and
 selection gating one or two more. History and notifications are each their own epic.
-
-## Questions for Derek
-
-1. **Cap on entries per contest rather than squads per league?** Recommended: entries per
-   contest.
-2. **Free keeps this season's results visible**, past seasons paid? Recommended: yes.
-3. **Three paid tiers or two?** Three gives room; two (Premium and Platinum) is simpler to
-   explain. Recommended: start with two, add Pro if the gap feels too wide.
-4. **Paid tracking checkbox in scope?** It records payments, it does not take them.
-5. **Try a Majors pass and a first-contest trial?** Both cheap once the model exists.
 
 ## Sources
 
