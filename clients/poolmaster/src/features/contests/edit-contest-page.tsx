@@ -94,19 +94,22 @@ function EditContestForm({
       if (parsed.error !== null) {
         throw new Error(parsed.error);
       }
-      const nameResponse = await updateContest({
-        path: { contestId: contest.id },
-        body: { name: submitted.contestName.trim() },
-      });
-      if (nameResponse.error) {
-        throwApiError(nameResponse.error);
-      }
+      // The rules go first: they are what the server validates, so a refusal lands before
+      // anything is written. The rename after it can only be refused for a contest that is no
+      // longer a draft, which the rules write has just checked.
       const configurationResponse = await updateContestConfiguration({
         path: { id: leagueId, contestId: contest.id },
         body: parsed.configuration,
       });
       if (!configurationResponse.data?.contest) {
         throwApiError(configurationResponse.error, 'Contest update response is missing data.');
+      }
+      const nameResponse = await updateContest({
+        path: { contestId: contest.id },
+        body: { name: submitted.contestName.trim() },
+      });
+      if (nameResponse.error) {
+        throwApiError(nameResponse.error);
       }
     },
     onSuccess: () => {

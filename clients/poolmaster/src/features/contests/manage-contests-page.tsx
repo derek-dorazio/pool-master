@@ -110,7 +110,9 @@ export function ManageContestsPage() {
     () => [...new Set(shownContests.map((contest) => contest.sportEventId).filter((id): id is string => Boolean(id)))],
     [shownContests],
   );
-  const eventsById = useQueries({
+  // The table waits for every read to settle, so no row reorders or says its event is
+  // unavailable while its read is still in flight; a failed read shows as "Event unavailable".
+  const { eventsById, eventsLoading } = useQueries({
     queries: eventIds.map((eventId) => sportEventQueryOptions(eventId)),
     combine: (results) => {
       const byId = new Map<string, SportEventDto>();
@@ -119,7 +121,7 @@ export function ManageContestsPage() {
           byId.set(result.data.id, result.data);
         }
       }
-      return byId;
+      return { eventsById: byId, eventsLoading: results.some((result) => result.isPending) };
     },
   });
 
@@ -220,7 +222,7 @@ export function ManageContestsPage() {
         title="Contests"
       />
 
-      {contestsQuery.isLoading ? (
+      {contestsQuery.isLoading || eventsLoading ? (
         <LoadingState body="Loading contests..." />
       ) : contestsQuery.isError ? (
         <ErrorState body="We couldn't load contests for this league." />
