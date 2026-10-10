@@ -1,13 +1,8 @@
-import { getTieredRosterSize } from '@poolmaster/shared/domain';
-import { Checkbox, FormField, Input } from '@/features/shared/ui';
-import { defaultCountedScoresFor, type ContestRulesValues } from './contest-rules-form';
+import { SelectionType, getTieredRosterSize } from '@poolmaster/shared/domain';
+import { Checkbox, FormField, formatDollars, Input } from '@/features/shared/ui';
+import { defaultCountedScoresFor, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
-/**
- * The rules inputs for a contest's format: picks per tier and scores that count for a tiered
- * contest, then entries per team with No limit. Create and Edit contest both use it, so a new
- * format adds its fields here once.
- */
-export function ContestRulesFields({
+function TieredRulesInputs({
   onChange,
   tierCount,
   values,
@@ -22,32 +17,69 @@ export function ContestRulesFields({
     : null;
 
   return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <FormField
+        helperText={tierCount > 0
+          ? `${tierCount} tiers × ${values.picksPerTier || '?'} = ${rosterSize ?? '—'} golfers per entry`
+          : 'The event has no tiers yet.'}
+        label="Picks per tier"
+      >
+        <Input
+          data-testid="contest-tiered-picks-per-tier"
+          min={1}
+          onChange={(event) => {
+            const next = event.target.value;
+            const countedScores = defaultCountedScoresFor(next, tierCount);
+            onChange(countedScores === null ? { picksPerTier: next } : { countedScores, picksPerTier: next });
+          }}
+          type="number"
+          value={values.picksPerTier}
+        />
+      </FormField>
+      <FormField
+        helperText={rosterSize !== null ? `Best ${values.countedScores || '?'} of ${rosterSize}` : undefined}
+        label="Scores that count"
+      >
+        <Input
+          data-testid="contest-tiered-counted-scores"
+          min={1}
+          onChange={(event) => onChange({ countedScores: event.target.value })}
+          type="number"
+          value={values.countedScores}
+        />
+      </FormField>
+    </div>
+  );
+}
+
+/** The budget inputs (#93). The salary cap is the event's, so it shows but does not edit. */
+function BudgetRulesInputs({
+  onChange,
+  salaryCap,
+  values,
+}: {
+  onChange: (next: Partial<ContestRulesValues>) => void;
+  salaryCap: number | null;
+  values: ContestRulesValues;
+}) {
+  return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
-        <FormField
-          helperText={tierCount > 0
-            ? `${tierCount} tiers × ${values.picksPerTier || '?'} = ${rosterSize ?? '—'} golfers per entry`
-            : 'The event has no tiers yet.'}
-          label="Picks per tier"
-        >
+        <FormField label="Golfers per entry">
           <Input
-            data-testid="contest-tiered-picks-per-tier"
+            data-testid="contest-budget-roster-size"
             min={1}
-            onChange={(event) => {
-              const next = event.target.value;
-              const countedScores = defaultCountedScoresFor(next, tierCount);
-              onChange(countedScores === null ? { picksPerTier: next } : { countedScores, picksPerTier: next });
-            }}
+            onChange={(event) => onChange({ rosterSize: event.target.value })}
             type="number"
-            value={values.picksPerTier}
+            value={values.rosterSize}
           />
         </FormField>
         <FormField
-          helperText={rosterSize !== null ? `Best ${values.countedScores || '?'} of ${rosterSize}` : undefined}
+          helperText={`Best ${values.countedScores || '?'} of ${values.rosterSize || '?'}`}
           label="Scores that count"
         >
           <Input
-            data-testid="contest-tiered-counted-scores"
+            data-testid="contest-budget-counted-scores"
             min={1}
             onChange={(event) => onChange({ countedScores: event.target.value })}
             type="number"
@@ -55,6 +87,45 @@ export function ContestRulesFields({
           />
         </FormField>
       </div>
+      <div className="rounded-xl bg-muted/40 px-4 py-3 text-sm" data-testid="contest-budget-salary-cap">
+        <span className="font-semibold">
+          {salaryCap === null ? 'Salary cap not set' : `${formatDollars(salaryCap)} salary cap`}
+        </span>
+        <span className="block text-xs text-muted-foreground">
+          {salaryCap === null
+            ? 'The event’s golfers have no prices yet.'
+            : 'Set by the event’s prices, the same for every budget contest on it.'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The rules inputs for a contest's format: picks per tier and scores that count for a tiered
+ * contest, golfers per entry and scores that count under the event's salary cap for a budget
+ * one, then entries per team with No limit. Create and Edit contest both use it, so a new format
+ * adds its fields here once.
+ */
+export function ContestRulesFields({
+  onChange,
+  salaryCap,
+  selectionType,
+  tierCount,
+  values,
+}: {
+  onChange: (next: Partial<ContestRulesValues>) => void;
+  /** The event's salary cap, or null while its field is unpriced. */
+  salaryCap: number | null;
+  selectionType: EditableSelectionType;
+  tierCount: number;
+  values: ContestRulesValues;
+}) {
+  return (
+    <div className="space-y-4">
+      {selectionType === SelectionType.BUDGET_PICK
+        ? <BudgetRulesInputs onChange={onChange} salaryCap={salaryCap} values={values} />
+        : <TieredRulesInputs onChange={onChange} tierCount={tierCount} values={values} />}
       <div className="grid gap-4 md:grid-cols-2">
         <FormField label="Entries per team">
           <Input

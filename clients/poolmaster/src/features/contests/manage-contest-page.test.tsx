@@ -235,6 +235,23 @@ describe('Commissioner tools › Contests › one contest', () => {
     expect(await screen.findByTestId('contest-open-error')).toHaveTextContent(/already started/);
   });
 
+  it('says in the same words as Create contest when opening is refused because the budget roster cannot be filled', async () => {
+    primeMocks();
+    openContestMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_BUDGET_UNFILLABLE', message: 'server sentence' } },
+      status: 409,
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    fireEvent.click(await screen.findByTestId('contest-open-to-league'));
+    fireEvent.click(await screen.findByTestId('contest-open-confirm'));
+
+    expect(await screen.findByTestId('contest-open-error')).toHaveTextContent(
+      'Even the cheapest golfers for every place cost more than the salary cap, so nobody could enter. Pick fewer golfers per entry.',
+    );
+  });
+
   it('counts an open contest\'s teams with a submitted entry against the league\'s active teams', async () => {
     primeMocks({ contest: buildContest({ status: 'OPEN' }), managedContest: buildManagedContest({ status: 'OPEN' }) });
     listContestEntriesMock.mockResolvedValue(apiSuccess({
@@ -312,6 +329,33 @@ describe('Commissioner tools › Contests › one contest › Edit', () => {
       expect.objectContaining({ path: { contestId: 'contest-1' }, body: { name: 'Masters Best Four' } }),
     );
     expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
+  });
+
+  it('edits a budget contest\'s golfers per entry under the event\'s cap, which it shows but does not send', async () => {
+    primeMocks({
+      contest: buildContest({ selectionType: 'BUDGET_PICK' }),
+      managedContest: buildManagedContest({
+        configuration: {
+          id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1,
+          selectionType: 'BUDGET_PICK', rosterSize: 6, countedScores: 4, salaryCap: 50_000,
+        },
+      }),
+    });
+    updateContestMock.mockResolvedValue(apiSuccess({ contest: buildContest() }));
+    updateContestConfigurationMock.mockResolvedValue(apiSuccess({ contest: buildManagedContest() }));
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1/edit');
+
+    expect(await screen.findByTestId('contest-budget-roster-size')).toHaveValue(6);
+    expect(screen.getByTestId('contest-budget-salary-cap')).toHaveTextContent('$50,000 salary cap');
+    fireEvent.change(screen.getByTestId('contest-budget-roster-size'), { target: { value: '5' } });
+    fireEvent.click(screen.getByTestId('edit-contest-save'));
+
+    await waitFor(() => expect(updateContestConfigurationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: { selectionType: 'BUDGET_PICK', rosterSize: 5, countedScores: 4, maxEntriesPerSquad: 1 },
+      }),
+    ));
   });
 
   it('refuses more scores that count than golfers picked, without sending anything', async () => {

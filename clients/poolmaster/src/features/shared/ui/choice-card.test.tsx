@@ -18,4 +18,15 @@ describe("ChoiceCard", () => {
     fireEvent.click(screen.getByTestId("choice-b"));
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
+
+  it("ignores a click on a disabled card, so a choice that cannot be made is never reported", () => {
+    const onSelect = vi.fn();
+    render(
+      <ChoiceCard isDisabled isSelected={false} onSelect={onSelect} testId="choice-budget">Budget</ChoiceCard>,
+    );
+
+    expect(screen.getByRole("radio", { name: "Budget" })).toBeDisabled();
+    fireEvent.click(screen.getByTestId("choice-budget"));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
 });

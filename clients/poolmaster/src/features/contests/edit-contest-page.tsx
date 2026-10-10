@@ -33,7 +33,6 @@ import {
   parseContestRules,
   toContestRulesValues,
   type ContestRulesValues,
-  type TieredContestConfiguration,
 } from './contest-rules-form';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useLeagueContestsQuery } from './use-league-contests-query';
@@ -44,6 +43,7 @@ const editContestFormSchema = z.object({
   countedScores: z.string(),
   maxEntriesPerTeam: z.string(),
   picksPerTier: z.string(),
+  rosterSize: z.string(),
   unlimitedEntries: z.boolean(),
 });
 
@@ -77,7 +77,7 @@ function EditContestForm({
   leagueId,
   managedContest,
 }: {
-  configuration: TieredContestConfiguration;
+  configuration: ContestManagementDetailDto['configuration'];
   contest: ContestDto;
   event: SportEventDto;
   leagueCode: string;
@@ -88,6 +88,8 @@ function EditContestForm({
   const navigate = useNavigate();
   const contestPath = buildLeagueAdminContestPath(leagueCode, contest.id);
   const tierCount = managedContest.effectiveTiers.length;
+  const { selectionType } = configuration;
+  const salaryCap = configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null;
   const [rulesError, setRulesError] = useState<string | null>(null);
   const form = useForm<EditContestFormValues>({
     resolver: zodResolver(editContestFormSchema),
@@ -97,7 +99,7 @@ function EditContestForm({
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (submitted: EditContestFormValues) => {
-      const parsed = parseContestRules(submitted, tierCount);
+      const parsed = parseContestRules(submitted, selectionType, tierCount);
       if (parsed.error !== null) {
         throw new Error(parsed.error);
       }
@@ -156,7 +158,7 @@ function EditContestForm({
       onSubmit={(submitEvent) => {
         setRulesError(null);
         void form.handleSubmit((submitted) => {
-          const parsed = parseContestRules(submitted, tierCount);
+          const parsed = parseContestRules(submitted, selectionType, tierCount);
           if (parsed.error !== null) {
             setRulesError(parsed.error);
             return;
@@ -189,6 +191,8 @@ function EditContestForm({
               form.setValue(field, value, { shouldDirty: true });
             }
           }}
+          salaryCap={salaryCap}
+          selectionType={selectionType}
           tierCount={tierCount}
           values={values}
         />
@@ -226,16 +230,9 @@ export function EditContestPage() {
   if (!contest || !managedContest || !event || contest.status !== ContestStatus.DRAFT || !league.isActive) {
     return <Navigate replace to={contestPath} />;
   }
-  // The rules fields edit tiered rules only so far; a budget contest's arrive with its Create
-  // contest card (#93).
-  const { configuration } = managedContest;
-  if (configuration.selectionType !== SelectionType.TIERED) {
-    return <Navigate replace to={contestPath} />;
-  }
-
   return (
     <EditContestForm
-      configuration={configuration}
+      configuration={managedContest.configuration}
       contest={contest}
       event={event}
       key={contest.id}

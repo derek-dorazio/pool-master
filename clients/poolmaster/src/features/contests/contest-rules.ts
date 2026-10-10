@@ -1,4 +1,5 @@
 import { SelectionType, getTieredRosterSize, type ContestRules } from '@poolmaster/shared/domain';
+import { formatDollars } from '@/features/shared/ui';
 
 /**
  * The name a commissioner and a member read for each way of picking. A `Record` over the enum,
@@ -45,21 +46,23 @@ function formatTieredRules({ countedScores, picksPerTier }: TieredRules, tierCou
   return `${pick} ${formatCountedScores(countedScores, rosterSize)}`;
 }
 
-function formatBudgetRules({ countedScores, rosterSize }: BudgetRules) {
-  return `Pick ${pluralize(rosterSize, 'golfer')} whose prices fit under the salary cap. ${formatCountedScores(countedScores, rosterSize)}`;
+function formatBudgetRules({ countedScores, rosterSize }: BudgetRules, salaryCap: number | null) {
+  const cap = salaryCap === null ? 'the salary cap' : `the ${formatDollars(salaryCap)} salary cap`;
+  return `Pick ${pluralize(rosterSize, 'golfer')} whose prices fit under ${cap}. ${formatCountedScores(countedScores, rosterSize)}`;
 }
 
 /**
  * A contest's rules as one plain sentence, such as "Pick 1 golfer from each of 6 tiers. The best
  * 4 scores count." Keyed by selection type, so each new way of picking adds its own arm here.
- * `tierCount` is the event's; an event with no tiers yet still reads sensibly.
+ * `tierCount` is the event's; an event with no tiers yet still reads sensibly. `salaryCap` is the
+ * event's too, named in a budget sentence when it is known.
  */
-export function formatContestRules(configuration: ContestRules, tierCount: number) {
+export function formatContestRules(configuration: ContestRules, tierCount: number, salaryCap: number | null = null) {
   switch (configuration.selectionType) {
     case SelectionType.TIERED:
       return formatTieredRules(configuration, tierCount);
     case SelectionType.BUDGET_PICK:
-      return formatBudgetRules(configuration);
+      return formatBudgetRules(configuration, salaryCap);
   }
 }
 
@@ -97,8 +100,8 @@ export function formatPresetLabel(configuration: ContestRules, tierCount: number
 }
 
 /**
- * The name Create contest suggests from the event and the rules, such as "The Masters Pick 6",
- * until the commissioner types their own.
+ * The name Create contest suggests from the event and the rules, such as "The Masters Pick 6" or
+ * "The Masters Budget Pick 6", until the commissioner types their own.
  */
 export function suggestContestName(
   eventName: string,
@@ -111,6 +114,10 @@ export function suggestContestName(
       return configuration?.selectionType === SelectionType.TIERED && tierCount > 0
         ? `${eventName} Pick ${getTieredRosterSize(tierCount, configuration.picksPerTier)}`
         : `${eventName} Tiered`;
+    case SelectionType.BUDGET_PICK:
+      return configuration?.selectionType === SelectionType.BUDGET_PICK
+        ? `${eventName} Budget Pick ${configuration.rosterSize}`
+        : `${eventName} Budget`;
     default:
       return `${eventName} ${formatSelectionTypeName(selectionType)}`;
   }

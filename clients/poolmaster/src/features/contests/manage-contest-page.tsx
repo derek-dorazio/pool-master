@@ -149,7 +149,11 @@ export function ManageContestPage() {
   const isTiered = contest.selectionType === SelectionType.TIERED;
   const activeTeamCount = (teamsQuery.data ?? []).filter((team) => team.isActive).length;
   const { configuration } = managedContest;
-  const rules = formatContestRules(configuration, managedContest.effectiveTiers.length);
+  const rules = formatContestRules(
+    configuration,
+    managedContest.effectiveTiers.length,
+    configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null,
+  );
   const eventLabel = event.venue ? `${event.name} · ${event.venue}` : event.name;
 
   function closeDeleteDialog() {

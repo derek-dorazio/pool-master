@@ -8,7 +8,7 @@ import {
   formatSelectionTypeName,
   suggestContestName,
 } from './contest-rules';
-import { parseContestRules } from './contest-rules-form';
+import { DEFAULT_CONTEST_RULES, parseContestRules, toContestRulesValues } from './contest-rules-form';
 
 describe('contest rules sentence', () => {
   it('names every selection type in plain words, so a new type without a name fails', () => {
@@ -42,6 +42,11 @@ describe('contest rules sentence', () => {
       .toBe('Pick 6 golfers whose prices fit under the salary cap. Every score counts.');
   });
 
+  it('names the event\'s salary cap in a budget sentence once it is known', () => {
+    expect(formatContestRules({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 }, 0, 50_000))
+      .toBe('Pick 6 golfers whose prices fit under the $50,000 salary cap. The best 4 scores count.');
+  });
+
   it('shows an unlimited entry allowance as No limit', () => {
     expect(formatEntriesPerTeam(null)).toBe('No limit');
     expect(formatEntriesPerTeam(undefined)).toBe('No limit');
@@ -50,28 +55,48 @@ describe('contest rules sentence', () => {
 });
 
 describe('contest rules form', () => {
-  const valid = { picksPerTier: '1', countedScores: '4', maxEntriesPerTeam: '2', unlimitedEntries: false };
+  const valid = { ...DEFAULT_CONTEST_RULES, picksPerTier: '1', countedScores: '4', maxEntriesPerTeam: '2' };
 
   it('turns valid fields into the configuration the API takes', () => {
-    expect(parseContestRules(valid, 6)).toEqual({
+    expect(parseContestRules(valid, SelectionType.TIERED, 6)).toEqual({
       configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 2 },
       error: null,
     });
   });
 
   it('sends no entry limit when No limit is ticked', () => {
-    expect(parseContestRules({ ...valid, unlimitedEntries: true, maxEntriesPerTeam: '' }, 6).configuration)
+    expect(parseContestRules({ ...valid, unlimitedEntries: true, maxEntriesPerTeam: '' }, SelectionType.TIERED, 6).configuration)
       .toEqual({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 });
   });
 
   it('refuses more scores that count than golfers picked, naming the roster size', () => {
-    expect(parseContestRules({ ...valid, countedScores: '7' }, 6).error)
+    expect(parseContestRules({ ...valid, countedScores: '7' }, SelectionType.TIERED, 6).error)
       .toBe('Scores that count must be between 1 and the 6 golfers picked.');
   });
 
   it('refuses a picks-per-tier or entry limit that is not a positive whole number', () => {
-    expect(parseContestRules({ ...valid, picksPerTier: '0' }, 6).error).toBe('Picks per tier must be a positive whole number.');
-    expect(parseContestRules({ ...valid, maxEntriesPerTeam: '1.5' }, 6).error).toBe('Entries per team must be a positive whole number.');
+    expect(parseContestRules({ ...valid, picksPerTier: '0' }, SelectionType.TIERED, 6).error).toBe('Picks per tier must be a positive whole number.');
+    expect(parseContestRules({ ...valid, maxEntriesPerTeam: '1.5' }, SelectionType.TIERED, 6).error).toBe('Entries per team must be a positive whole number.');
+  });
+
+  it('turns budget fields into budget rules, leaving the salary cap to the event', () => {
+    expect(parseContestRules({ ...valid, rosterSize: '6' }, SelectionType.BUDGET_PICK, 0)).toEqual({
+      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4, maxEntriesPerSquad: 2 },
+      error: null,
+    });
+  });
+
+  it('refuses a budget roster outside 1 to 12 golfers, or more scores that count than it holds', () => {
+    expect(parseContestRules({ ...valid, rosterSize: '13' }, SelectionType.BUDGET_PICK, 0).error)
+      .toBe('Golfers per entry must be between 1 and 12.');
+    expect(parseContestRules({ ...valid, rosterSize: '3' }, SelectionType.BUDGET_PICK, 0).error)
+      .toBe('Scores that count must be between 1 and the 3 golfers picked.');
+  });
+
+  it('fills only the preset\'s own format fields, keeping what the other format holds', () => {
+    const current = { ...valid, picksPerTier: '2', rosterSize: '8' };
+    expect(toContestRulesValues({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 5, maxEntriesPerSquad: null }, current))
+      .toEqual({ ...current, rosterSize: '6', countedScores: '5', unlimitedEntries: true, maxEntriesPerTeam: '1' });
   });
 });
 
@@ -91,6 +116,11 @@ describe('Create contest wording', () => {
     expect(suggestContestName('The Masters', SelectionType.TIERED, { selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 8 }, 6)).toBe('The Masters Pick 12');
     expect(suggestContestName('The Masters', SelectionType.TIERED, { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, 0)).toBe('The Masters Tiered');
     expect(suggestContestName('The Masters', SelectionType.TIERED, null, 6)).toBe('The Masters Tiered');
+  });
+
+  it('suggests a budget name from the event and the roster size', () => {
+    expect(suggestContestName('The Masters', SelectionType.BUDGET_PICK, { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 }, 0)).toBe('The Masters Budget Pick 6');
+    expect(suggestContestName('The Masters', SelectionType.BUDGET_PICK, null, 0)).toBe('The Masters Budget');
   });
 
   it('says entries per team as a phrase a member reads', () => {

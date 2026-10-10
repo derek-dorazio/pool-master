@@ -509,3 +509,100 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
   });
 });
+
+describe('Commissioner tools › Contests › Create contest › Budget format (#93)', () => {
+  const PRICING = { profileName: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+  const BUDGET_TEMPLATE = {
+    id: '55555555-5555-4555-8555-555555555555',
+    sport: 'GOLF',
+    contestFormat: 'ROSTER',
+    selectionType: 'BUDGET_PICK',
+    templateKey: 'golf-budget-pick-6',
+    name: 'Pick 6 under the cap, 4 count',
+    description: 'Default golf budget template',
+    sortOrder: 3,
+    isDefault: true,
+    active: true,
+    schemaVersion: 1,
+    configuration: { maxEntriesPerSquad: 1, selectionType: 'BUDGET_PICK', rosterSize: 6, countedScores: 4 },
+  };
+
+  /** The common mocks with the budget preset added and the one event priced, or not. */
+  async function primeBudgetMocks(pricing: typeof PRICING | null) {
+    primeCommonMocks();
+    listEventsMock.mockResolvedValue(singleEvent({ pricing }));
+    const { data } = await (listContestConfigTemplatesMock.getMockImplementation()?.() as Promise<{ data: { templates: unknown[] } }>);
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [...data.templates, BUDGET_TEMPLATE] } });
+  }
+
+  afterEach(() => {
+    createContestMock.mockReset();
+    getLeagueByCodeMock.mockReset();
+    listContestConfigTemplatesMock.mockReset();
+    listEventsMock.mockReset();
+  });
+
+  it('keeps Budget unavailable and says why while the event\'s golfers have no prices', async () => {
+    await primeBudgetMocks(null);
+
+    renderCreateContestPage();
+
+    await waitForStartingChoices();
+    const budget = screen.getByTestId('contest-format-BUDGET_PICK');
+    expect(budget).toBeDisabled();
+    expect(budget).toHaveTextContent('This event’s golfers have no prices yet.');
+    fireEvent.click(budget);
+    expect(screen.getByTestId('contest-format-TIERED')).toBeChecked();
+  });
+
+  it('switches to Budget with its default preset, shows the event\'s cap read-only, and creates budget rules', async () => {
+    await primeBudgetMocks(PRICING);
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-budget' } } });
+
+    renderCreateContestPage();
+
+    await waitForStartingChoices();
+    fireEvent.click(screen.getByTestId('contest-format-BUDGET_PICK'));
+
+    expect(screen.getByTestId('contest-format-BUDGET_PICK')).toBeChecked();
+    expect(screen.getByTestId('contest-template-golf-budget-pick-6')).toBeChecked();
+    expect(screen.queryByTestId('contest-template-golf-tiered-pick-6')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-budget-roster-size')).toHaveValue(6);
+    expect(screen.getByTestId('contest-budget-counted-scores')).toHaveValue(4);
+    expect(screen.getByTestId('contest-budget-salary-cap')).toHaveTextContent('$50,000 salary cap');
+    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Budget Pick 6'));
+    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
+      'Pick 6 golfers whose prices fit under the $50,000 salary cap. The best 4 scores count. 1 entry per team.',
+    );
+
+    fireEvent.change(screen.getByTestId('contest-budget-roster-size'), { target: { value: '5' } });
+    expect(screen.getByTestId('contest-template-custom')).toBeChecked();
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+    expect(submittedBody()).toEqual({
+      name: 'Masters Tournament Budget Pick 5',
+      sportEventId: 'event-1',
+      contestFormat: 'ROSTER',
+      selectionType: 'BUDGET_PICK',
+      configuration: { selectionType: 'BUDGET_PICK', rosterSize: 5, countedScores: 4, maxEntriesPerSquad: 1 },
+    });
+  });
+
+  it('says in plain words when even the cheapest golfers for every place cost more than the cap', async () => {
+    await primeBudgetMocks(PRICING);
+    createContestMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_BUDGET_UNFILLABLE', message: 'Budget rules cannot be filled.' } },
+    });
+
+    renderCreateContestPage();
+
+    await waitForStartingChoices();
+    fireEvent.click(screen.getByTestId('contest-format-BUDGET_PICK'));
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    expect(await screen.findByText(
+      'Even the cheapest golfers for every place cost more than the salary cap, so nobody could enter. Pick fewer golfers per entry.',
+    )).toBeInTheDocument();
+  });
+});
