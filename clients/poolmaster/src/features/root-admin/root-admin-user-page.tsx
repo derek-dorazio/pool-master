@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { deleteUser, disableUser, enableUser, getUser, resetUserPassword, setUserRootAdmin, type UserDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
+import { buildUserPath } from '@/features/account/user-routing';
+import { useAuth } from '@/features/auth/auth-context';
 import {
   Alert,
   Button,
@@ -49,6 +51,9 @@ export function RootAdminUserPage() {
     feature: 'root-admin-user-page',
   });
   const navigate = useNavigate();
+  const auth = useAuth();
+  // A root admin's own account is theirs to manage on their own page, not with admin actions.
+  const isSelf = auth.user?.id === userId;
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const [deleteEmailConfirmation, setDeleteEmailConfirmation] = useState('');
   const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
@@ -69,6 +74,7 @@ export function RootAdminUserPage() {
       // #202 — `{ user: UserDto }`, the same envelope the current-user read uses.
       return response.data.user;
     },
+    enabled: !isSelf,
   });
 
   const viewedUser = userDetailQuery.data;
@@ -195,6 +201,10 @@ export function RootAdminUserPage() {
     resetPasswordMutation.reset();
     lifecycleMutation.reset();
     deleteMutation.reset();
+  }
+
+  if (isSelf) {
+    return <Navigate replace to={buildUserPath(userId)} />;
   }
 
   if (userDetailQuery.isLoading) {

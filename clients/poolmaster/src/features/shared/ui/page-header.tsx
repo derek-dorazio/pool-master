@@ -103,5 +103,3 @@ export function Breadcrumbs({
     </nav>
   );
 }
-
-export const BreadcrumbHeader = PageHeader;

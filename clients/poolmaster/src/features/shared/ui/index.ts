@@ -7,7 +7,7 @@ export type { BulkUploadFormat, BulkUploadPanelProps } from "./bulk-upload-panel
 export { parseDelimitedRecords } from "./bulk-upload-parse";
 export { Button, LinkButton } from "./button";
 export type { ButtonProps, LinkButtonProps } from "./button";
-export { BreadcrumbHeader, Breadcrumbs, PageHeader } from "./page-header";
+export { Breadcrumbs, PageHeader } from "./page-header";
 export { cn } from "./class-names";
 export { ConfirmDialog } from "./confirm-dialog";
 export { CopyField } from "./copy-field";
