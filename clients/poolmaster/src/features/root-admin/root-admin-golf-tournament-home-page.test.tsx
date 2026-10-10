@@ -4,7 +4,9 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UpdateSportEventRoundsRequest } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
+import { RootAdminGolfTournamentEditPage } from './root-admin-golf-tournament-edit-page';
 import { RootAdminGolfTournamentHomePage } from './root-admin-golf-tournament-home-page';
+import { RootAdminGolfTournamentSchedulePage } from './root-admin-golf-tournament-schedule-page';
 import { sportEventFixture, sportLeagueFixture } from './golf-test-fixtures';
 
 // plans/124 §6.3 — Tournament Home: summary + workflow rail + score source + sections
@@ -127,6 +129,18 @@ function renderPage() {
             element={<RootAdminGolfTournamentHomePage />}
             path="/manage/golf/tournaments/:eventId"
           />
+          <Route
+            element={<RootAdminGolfTournamentEditPage />}
+            path="/manage/golf/tournaments/:eventId/edit"
+          />
+          <Route
+            element={<RootAdminGolfTournamentSchedulePage />}
+            path="/manage/golf/tournaments/:eventId/schedule"
+          />
+          <Route
+            element={<div data-testid="tournament-subpage" />}
+            path="/manage/golf/tournaments/:eventId/:view"
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -139,7 +153,7 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('pool-master-3dg renders summary, workflow rail, auto-lifecycle hint, and section links', async () => {
+  it('shows the tournament header and sub-menu, details, workflow rail and auto-lifecycle hint, and the sub-menu opens Tiers', async () => {
     seedDefaults();
     renderPage();
 
@@ -161,18 +175,12 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
       screen.getByTestId('root-admin-golf-tournament-auto-hint'),
     ).toHaveTextContent('In Progress');
 
-    expect(screen.getByTestId('root-admin-golf-tournament-section-field')).toHaveAttribute(
-      'href',
-      '/manage/golf/tournaments/tour-1/field',
-    );
-    expect(screen.getByTestId('root-admin-golf-tournament-section-tiers')).toHaveAttribute(
-      'href',
-      '/manage/golf/tournaments/tour-1/tiers',
-    );
-    expect(screen.getByTestId('root-admin-golf-tournament-section-scores')).toHaveAttribute(
-      'href',
-      '/manage/golf/tournaments/tour-1/scores',
-    );
+    // One header for every tournament page: name, status, year and counts, then the sub-menu.
+    expect(screen.getByRole('heading', { name: 'Rolling Weekend Invitational', level: 1 })).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-tournament-counts')).toHaveTextContent('120 golfers · 6 tiers');
+    expect(screen.getByTestId('root-admin-golf-tournament-menu-overview')).toBeChecked();
+    fireEvent.click(screen.getByTestId('root-admin-golf-tournament-menu-tiers'));
+    expect(await screen.findByTestId('tournament-subpage')).toBeInTheDocument();
   });
 
   describe('Release for contests', () => {
@@ -309,12 +317,12 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
-    const modal = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
+    const modal = await screen.findByTestId('root-admin-golf-tournament-edit-page');
     fireEvent.change(within(modal).getByDisplayValue('Rolling Weekend Invitational'), {
       target: { value: 'Renamed Invitational' },
     });
     fireEvent.click(
-      within(modal).getByTestId('root-admin-golf-tournament-home-edit-save'),
+      within(modal).getByTestId('root-admin-golf-tournament-edit-save'),
     );
 
     await waitFor(() =>
@@ -332,19 +340,20 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
-    const modal = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
-    expect(within(modal).getByTestId('root-admin-golf-tournament-home-edit-rounds-par')).toHaveValue(null);
-    fireEvent.change(within(modal).getByTestId('root-admin-golf-tournament-home-edit-rounds-par'), {
+    const modal = await screen.findByTestId('root-admin-golf-tournament-edit-page');
+    expect(within(modal).getByTestId('root-admin-golf-tournament-edit-rounds-par')).toHaveValue(null);
+    fireEvent.change(within(modal).getByTestId('root-admin-golf-tournament-edit-rounds-par'), {
       target: { value: '72' },
     });
-    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-home-edit-save'));
+    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-edit-save'));
 
     await waitFor(() => expect(updateEventMock).toHaveBeenCalledTimes(1));
     expect(updateEventMock.mock.calls[0][0]).toMatchObject({ body: { roundsPar: 72 } });
 
+    // Saving returns to Overview; Edit opens the form again from the tournament as read.
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
-    const reopened = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
-    fireEvent.click(within(reopened).getByTestId('root-admin-golf-tournament-home-edit-save'));
+    const reopened = await screen.findByTestId('root-admin-golf-tournament-edit-page');
+    fireEvent.click(within(reopened).getByTestId('root-admin-golf-tournament-edit-save'));
 
     await waitFor(() => expect(updateEventMock).toHaveBeenCalledTimes(2));
     expect(updateEventMock.mock.calls[1][0]).toMatchObject({ body: { roundsPar: null } });
@@ -355,13 +364,13 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
-    const modal = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
-    fireEvent.change(within(modal).getByTestId('root-admin-golf-tournament-home-edit-rounds-par'), {
+    const modal = await screen.findByTestId('root-admin-golf-tournament-edit-page');
+    fireEvent.change(within(modal).getByTestId('root-admin-golf-tournament-edit-rounds-par'), {
       target: { value: '85' },
     });
 
     expect(await within(modal).findByText('Par is a whole number from 60 to 80, or blank')).toBeInTheDocument();
-    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-home-edit-save'));
+    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-edit-save'));
     expect(updateEventMock).not.toHaveBeenCalled();
   });
 
@@ -370,12 +379,12 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
-    const modal = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
+    const modal = await screen.findByTestId('root-admin-golf-tournament-edit-page');
     fireEvent.change(within(modal).getByDisplayValue('Rolling Weekend Invitational'), {
       target: { value: '' },
     });
     fireEvent.click(
-      within(modal).getByTestId('root-admin-golf-tournament-home-edit-save'),
+      within(modal).getByTestId('root-admin-golf-tournament-edit-save'),
     );
 
     await screen.findByText('Name is required');
@@ -410,7 +419,7 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-rounds-edit'));
-    const modal = await screen.findByTestId('root-admin-golf-tournament-rounds-modal');
+    const modal = await screen.findByTestId('root-admin-golf-tournament-schedule-page');
     fireEvent.change(
       within(modal).getByTestId('root-admin-golf-tournament-round-1-date'),
       { target: { value: '2026-05-09T09:00' } },
@@ -589,11 +598,11 @@ describe('clearing an optional date and refused links on Tournament Home', () =>
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
-    const modal = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
+    const modal = await screen.findByTestId('root-admin-golf-tournament-edit-page');
     const endInput = within(modal).getByLabelText('Ends');
     expect(endInput).not.toHaveValue('');
     fireEvent.change(endInput, { target: { value: '' } });
-    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-home-edit-save'));
+    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-edit-save'));
 
     await waitFor(() => expect(updateEventMock).toHaveBeenCalledTimes(1));
     expect((updateEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body)
@@ -606,7 +615,7 @@ describe('clearing an optional date and refused links on Tournament Home', () =>
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-rounds-edit'));
-    const modal = await screen.findByTestId('root-admin-golf-tournament-rounds-modal');
+    const modal = await screen.findByTestId('root-admin-golf-tournament-schedule-page');
     const roundOneEnd = within(modal).getByLabelText('Round 1 end');
     expect(roundOneEnd).not.toHaveValue('');
     fireEvent.change(roundOneEnd, { target: { value: '' } });
@@ -685,7 +694,7 @@ describe('Tournament Home blocks: empty values, refusals and closing dialogs', (
     );
   });
 
-  it('reads "Not set" for a missing venue, location and round count, "0 rounds" in Scores, and "Open tour" when the tour is unknown', async () => {
+  it('reads "Not set" for a missing venue, location and round count, and "Open tour" when the tour is unknown', async () => {
     seedDefaults();
     getEventMock.mockResolvedValue({
       data: { event: tournament({ venue: null, location: null, rounds: null, sportLeagueId: 'league-unknown' }) },
@@ -694,7 +703,6 @@ describe('Tournament Home blocks: empty values, refusals and closing dialogs', (
 
     expect(await screen.findByTestId('root-admin-golf-tournament-home-tour-link')).toHaveTextContent('Open tour');
     expect(screen.getAllByText('Not set')).toHaveLength(3);
-    expect(screen.getByText('0 rounds')).toBeInTheDocument();
   });
 
   it('sends a blank venue and location as null and defaults a missing round count to 1 when the details are saved', async () => {
@@ -706,12 +714,12 @@ describe('Tournament Home blocks: empty values, refusals and closing dialogs', (
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
-    const modal = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
+    const modal = await screen.findByTestId('root-admin-golf-tournament-edit-page');
     expect(within(modal).getByLabelText('Ends')).toHaveValue('');
     expect(within(modal).getByLabelText('Rounds')).toHaveValue(1);
     fireEvent.change(within(modal).getByLabelText('Venue'), { target: { value: '   ' } });
-    await waitFor(() => expect(within(modal).getByTestId('root-admin-golf-tournament-home-edit-save')).toBeEnabled());
-    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-home-edit-save'));
+    await waitFor(() => expect(within(modal).getByTestId('root-admin-golf-tournament-edit-save')).toBeEnabled());
+    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-edit-save'));
 
     await waitFor(() => expect(updateEventMock).toHaveBeenCalledTimes(1));
     expect((updateEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body).toMatchObject({
@@ -722,30 +730,29 @@ describe('Tournament Home blocks: empty values, refusals and closing dialogs', (
     });
   });
 
-  it('shows the server\'s reason inside Edit details when saving the details is refused, and keeps the dialog open', async () => {
+  it('shows the server\'s reason on Edit details when saving the details is refused, and stays on the form', async () => {
     seedDefaults();
     updateEventMock.mockResolvedValue(refusal('VALIDATION_ERROR', 'The end date must be after the start date.'));
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
-    const modal = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
-    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-home-edit-save'));
+    const modal = await screen.findByTestId('root-admin-golf-tournament-edit-page');
+    fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-edit-save'));
 
     expect(await within(modal).findByText('The end date must be after the start date.')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-golf-tournament-home-edit-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-tournament-edit-page')).toBeInTheDocument();
   });
 
-  it('closes Edit details from its close button without saving', async () => {
+  it('returns to Overview from Edit details\' Cancel without saving', async () => {
     seedDefaults();
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-home-edit'));
-    const modal = await screen.findByTestId('root-admin-golf-tournament-home-edit-modal');
-    fireEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+    const modal = await screen.findByTestId('root-admin-golf-tournament-edit-page');
+    fireEvent.click(within(modal).getByRole('link', { name: 'Cancel' }));
 
-    await waitFor(() =>
-      expect(screen.queryByTestId('root-admin-golf-tournament-home-edit-modal')).not.toBeInTheDocument(),
-    );
+    expect(await screen.findByTestId('root-admin-golf-tournament-home-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-golf-tournament-edit-page')).not.toBeInTheDocument();
     expect(updateEventMock).not.toHaveBeenCalled();
   });
 
@@ -859,23 +866,21 @@ describe('Tournament Home blocks: empty values, refusals and closing dialogs', (
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-rounds-edit'));
-    const modal = await screen.findByTestId('root-admin-golf-tournament-rounds-modal');
+    const modal = await screen.findByTestId('root-admin-golf-tournament-schedule-page');
     fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-rounds-save'));
 
     expect(await within(modal).findByText('Round 2 must start after round 1.')).toBeInTheDocument();
   });
 
-  it('closes the schedule editor from its close button without saving', async () => {
+  it('returns to Overview from the round schedule\'s Cancel without saving', async () => {
     seedDefaults();
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-rounds-edit'));
-    const modal = await screen.findByTestId('root-admin-golf-tournament-rounds-modal');
-    fireEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+    const modal = await screen.findByTestId('root-admin-golf-tournament-schedule-page');
+    fireEvent.click(within(modal).getByRole('link', { name: 'Cancel' }));
 
-    await waitFor(() =>
-      expect(screen.queryByTestId('root-admin-golf-tournament-rounds-modal')).not.toBeInTheDocument(),
-    );
+    expect(await screen.findByTestId('root-admin-golf-tournament-home-page')).toBeInTheDocument();
     expect(updateEventRoundsMock).not.toHaveBeenCalled();
   });
 

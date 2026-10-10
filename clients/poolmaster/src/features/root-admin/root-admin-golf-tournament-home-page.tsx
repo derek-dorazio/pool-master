@@ -1,56 +1,31 @@
-import { useQuery } from '@tanstack/react-query';
 import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { getEvent, listEventRounds } from '@/lib/api';
 import {
   AsyncPage,
   Callout,
   LinkButton,
-  ListCard,
 } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
-import { QueryKeys } from '@/lib/query-keys';
-import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
+import { extractErrorMessage } from '@/lib/errors';
+import { GolfTournamentDetailsSection } from './golf-tournament-details-section';
+import { GolfTournamentHeader } from './golf-tournament-header';
 import { GolfTournamentScoreSourceCard } from './golf-tournament-score-source-card';
-import { GolfTournamentSummaryCard } from './golf-tournament-summary-card';
 import { GolfTournamentWorkflowCard } from './golf-tournament-workflow-card';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { buildGolfTournamentPath } from './manage-navigation';
 import { useGolfSportLeaguesQuery } from './use-golf-catalog';
+import { useGolfRoundsQuery, useGolfTournamentQuery } from './use-golf-tournament';
 
 /**
- * plans/124 §6.3 — Tournament Home, the canonical page. Owns the tournament /
- * rounds / tour queries and the block layout; each of the four blocks is its
- * own component (Summary, Workflow, Score source, Sections).
+ * A tournament's Overview: the shared tournament header, its details with one Edit, the
+ * workflow (release, transitions, round schedule) and its score source. Field, Tiers and
+ * Scores are the header's other pages.
  */
 export function RootAdminGolfTournamentHomePage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
 
-  const tournamentQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.tournament(eventId),
-    queryFn: async (): Promise<SportEventDto> => {
-      const response = await getEvent({ path: { eventId } });
-      if (!response.data?.event) {
-        throwApiError(response.error, 'Golf tournament response is missing data.');
-      }
-      return response.data.event;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
-
-  const roundsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.rounds(eventId),
-    queryFn: async (): Promise<SportEventRoundDto[]> => {
-      const response = await listEventRounds({ path: { eventId } });
-      if (!response.data?.rounds) {
-        throwApiError(response.error, 'Golf tournament rounds response is missing data.');
-      }
-      return response.data.rounds;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
+  const tournamentQuery = useGolfTournamentQuery(eventId);
+  const roundsQuery = useGolfRoundsQuery(eventId);
 
   const tournament = tournamentQuery.data;
 
@@ -58,6 +33,7 @@ export function RootAdminGolfTournamentHomePage() {
   const toursQuery = useGolfSportLeaguesQuery();
   const tourName = toursQuery.data?.find((tour) => tour.id === tournament?.sportLeagueId)?.name;
 
+  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
   const rounds = useMemo(() => roundsQuery.data ?? [], [roundsQuery.data]);
@@ -79,6 +55,8 @@ export function RootAdminGolfTournamentHomePage() {
     >
       {tournament ? (
         <div className="space-y-6">
+          <GolfTournamentHeader current="overview" tournament={tournament} />
+
           {tournament.syncScope !== SportEventSyncScope.NONE && tournament.loadedParticipantCount === 0 ? (
             <Callout tone="info">
               <p className="font-medium">The participant field is not loaded yet</p>
@@ -89,7 +67,7 @@ export function RootAdminGolfTournamentHomePage() {
               <div className="mt-3">
                 <LinkButton
                   data-testid="root-admin-golf-tournament-home-load-field"
-                  to={`/manage/golf/tournaments/${eventId}/field`}
+                  to={`${buildGolfTournamentPath(eventId)}/field`}
                   variant="secondary"
                 >
                   Open Field
@@ -98,11 +76,7 @@ export function RootAdminGolfTournamentHomePage() {
             </Callout>
           ) : null}
 
-          <GolfTournamentSummaryCard
-            eventId={eventId}
-            tourName={tourName}
-            tournament={tournament}
-          />
+          <GolfTournamentDetailsSection tourName={tourName} tournament={tournament} />
 
           <GolfTournamentWorkflowCard
             eventId={eventId}
@@ -112,48 +86,6 @@ export function RootAdminGolfTournamentHomePage() {
           />
 
           <GolfTournamentScoreSourceCard eventId={eventId} tournament={tournament} />
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <ListCard
-              actions={
-                <LinkButton
-                  data-testid="root-admin-golf-tournament-section-field"
-                  to={`/manage/golf/tournaments/${eventId}/field`}
-                  variant="secondary"
-                >
-                  Open Field
-                </LinkButton>
-              }
-              description={`${tournament.loadedParticipantCount} golfers in the field`}
-              title="Field"
-            />
-            <ListCard
-              actions={
-                <LinkButton
-                  data-testid="root-admin-golf-tournament-section-tiers"
-                  to={`/manage/golf/tournaments/${eventId}/tiers`}
-                  variant="secondary"
-                >
-                  Open Tiers
-                </LinkButton>
-              }
-              description={`${tournament.tierCount} tiers defined`}
-              title="Tiers"
-            />
-            <ListCard
-              actions={
-                <LinkButton
-                  data-testid="root-admin-golf-tournament-section-scores"
-                  to={`/manage/golf/tournaments/${eventId}/scores`}
-                  variant="secondary"
-                >
-                  Open Scores
-                </LinkButton>
-              }
-              description={`${tournament.rounds ?? 0} rounds`}
-              title="Round scores"
-            />
-          </div>
         </div>
       ) : null}
     </AsyncPage>

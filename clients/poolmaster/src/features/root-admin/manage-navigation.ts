@@ -50,6 +50,10 @@ export function buildManageUserPath(userId: string) {
   return `/manage/users/${userId}`;
 }
 
+export function buildGolfTournamentPath(eventId: string) {
+  return `/manage/golf/tournaments/${eventId}`;
+}
+
 function isAtOrUnder(pathname: string, path: string) {
   return pathname === path || pathname.startsWith(`${path}/`);
 }
@@ -78,6 +82,8 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   tiers: 'Tiers',
   scores: 'Scores',
   new: 'New',
+  edit: 'Edit details',
+  schedule: 'Round schedule',
 };
 
 export function getManageBreadcrumbLabel(segment: string): string {
