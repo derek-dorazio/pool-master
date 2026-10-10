@@ -133,16 +133,42 @@ function primeCommonMocks() {
     data: {
       events: [
         {
+          id: 'event-2',
+          sport: 'GOLF',
+          name: 'RBC Heritage',
+          venue: 'Harbour Town',
+          status: 'SCHEDULED',
+          startDate: '2099-04-16T12:00:00.000Z',
+          participantCount: 132,
+          readinessStatus: 'CONTEST_ELIGIBLE',
+          readinessReasons: [],
+          contestEligible: true,
+          tierCount: 5,
+        },
+        {
           id: 'event-1',
           sport: 'GOLF',
           name: 'Masters Tournament',
+          venue: 'Augusta National',
           status: 'SCHEDULED',
-          startDate: '2026-04-10T12:00:00.000Z',
+          startDate: '2099-04-09T12:00:00.000Z',
           participantCount: 144,
           readinessStatus: 'CONTEST_ELIGIBLE',
           readinessReasons: [],
           contestEligible: true,
           tierCount: 6,
+        },
+        {
+          id: 'event-3',
+          sport: 'GOLF',
+          name: 'Zurich Classic',
+          status: 'SCHEDULED',
+          startDate: '2099-04-23T12:00:00.000Z',
+          participantCount: 0,
+          readinessStatus: 'PENDING_FIELD',
+          readinessReasons: ['FIELD_NOT_LOADED'],
+          contestEligible: false,
+          tierCount: 0,
         },
       ],
     },
@@ -191,7 +217,34 @@ function primeCommonMocks() {
   });
 }
 
-describe('CreateContestPage', () => {
+function singleEvent(overrides: Record<string, unknown> = {}) {
+  return {
+    data: {
+      events: [
+        {
+          id: 'event-1',
+          sport: 'GOLF',
+          name: 'Masters Tournament',
+          status: 'SCHEDULED',
+          startDate: '2099-04-09T12:00:00.000Z',
+          participantCount: 144,
+          readinessStatus: 'CONTEST_ELIGIBLE',
+          readinessReasons: [],
+          contestEligible: true,
+          tierCount: 6,
+          ...overrides,
+        },
+      ],
+    },
+  };
+}
+
+function submittedBody() {
+  const [request] = createContestMock.mock.calls[0] as [{ body: Record<string, unknown> }];
+  return request.body;
+}
+
+describe('Commissioner tools › Contests › Create contest', () => {
   afterEach(() => {
     createContestMock.mockReset();
     getLeagueByCodeMock.mockReset();
@@ -203,131 +256,111 @@ describe('CreateContestPage', () => {
     mockLogger.error.mockReset();
   });
 
-  it('submits the commissioner golf tiered contest payload', async () => {
+  it('starts with the soonest contest-ready event, the default preset, and a name suggested from them', async () => {
     primeCommonMocks();
-    createContestMock.mockResolvedValue({
-      data: {
-        contest: {
-          id: 'contest-1',
-        },
-      },
-    });
 
     renderCreateContestPage();
 
-    await screen.findByTestId('contest-name');
-    fireEvent.change(screen.getByTestId('contest-name'), {
-      target: { value: 'Masters Pick 6' },
-    });
-    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), {
-      target: { value: '1' },
-    });
-    fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), {
-      target: { value: '4' },
-    });
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
-
-    await waitFor(() =>
-      expect(createContestMock).toHaveBeenCalledWith({
-        path: { id: 'league-1' },
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
-        body: expect.objectContaining({
-          name: 'Masters Pick 6',
-          sportEventId: 'event-1',
-          contestFormat: 'ROSTER',
-          selectionType: 'TIERED',
-          templateId: '11111111-1111-4111-8111-111111111111',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
-          configuration: expect.objectContaining({
-            picksPerTier: 1,
-            countedScores: 4,
-          }),
-        }),
-      }),
+    expect(await screen.findByTestId('contest-event-event-1')).toBeChecked();
+    expect(screen.getByTestId('contest-event-event-2')).not.toBeChecked();
+    expect(screen.queryByTestId('contest-event-event-3')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-event-event-1')).toHaveTextContent('144 golfers · 6 tiers');
+    expect(screen.getByTestId('contest-format-TIERED')).toBeChecked();
+    expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toBeChecked();
+    expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Pick 6, best 4');
+    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Pick 6'));
+    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
+      'Masters Tournament Pick 6 · Masters Tournament · Pick 1 golfer from each of 6 tiers. The best 4 scores count. · 1 entry per team',
     );
-    expect(mockLogger.info).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'contest.create.succeeded',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
-        data: expect.objectContaining({
-          contestId: 'contest-1',
-        }),
-      }),
-      expect.any(String),
-    );
+    expect(screen.getByTestId('create-contest-submit')).toHaveTextContent('Create contest');
   });
 
-  it('offers no lock-time setting and sends no lock time, because entries close when the event starts', async () => {
+  it('creates the contest from the chosen event, preset and rules, then lands on the new contest\'s page', async () => {
     primeCommonMocks();
-    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-1' } } });
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-90' } } });
 
     renderCreateContestPage();
 
-    await screen.findByTestId('contest-name');
-    expect(screen.queryByTestId('contest-lock-preset')).not.toBeInTheDocument();
-    fireEvent.change(screen.getByTestId('contest-name'), {
-      target: { value: 'Masters Pick 6' },
-    });
+    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Pick 6'));
     fireEvent.click(screen.getByTestId('create-contest-submit'));
 
-    await waitFor(() => expect(createContestMock).toHaveBeenCalled());
-    const [request] = createContestMock.mock.calls[0] as [{ body: { configuration: Record<string, unknown> } }];
-    expect(request.body.configuration).not.toHaveProperty('locksAt');
-  });
-
-  it('pool-master-7wj.6 shows setup validation before submitting an unnamed contest', async () => {
-    primeCommonMocks();
-
-    renderCreateContestPage();
-
-    await screen.findByTestId('contest-name');
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
-
-    expect(await screen.findByTestId('create-contest-error')).toHaveTextContent(
-      'Contest name is required.',
-    );
-    expect(createContestMock).not.toHaveBeenCalled();
-  });
-
-  // pool-master-dxd.39 — pick-12 templates seed the wider roster shape.
-  it('applies the pick-12 template: two picks per tier on six tiers is twelve golfers, eight counting', async () => {
-    primeCommonMocks();
-    createContestMock.mockResolvedValue({
-      data: {
-        contest: {
-          id: 'contest-12',
-        },
-      },
+    expect(await screen.findByTestId('admin-contest-destination')).toHaveTextContent('contest-90');
+    expect(createContestMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
+    expect(submittedBody()).toEqual({
+      name: 'Masters Tournament Pick 6',
+      sportEventId: 'event-1',
+      contestFormat: 'ROSTER',
+      selectionType: 'TIERED',
+      templateId: '11111111-1111-4111-8111-111111111111',
+      configuration: { picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 },
     });
+  });
+
+  it('moves the suggested name and the tiers with the event chosen', async () => {
+    primeCommonMocks();
 
     renderCreateContestPage();
 
-    await screen.findByTestId('contest-name');
-    fireEvent.click(screen.getByTestId('contest-template-golf-tiered-pick-12'));
+    fireEvent.click(await screen.findByTestId('contest-event-event-2'));
+
+    expect(screen.getByTestId('contest-event-event-2')).toBeChecked();
+    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('RBC Heritage Pick 5'));
+    expect(screen.getByText('5 tiers × 1 = 5 golfers per entry')).toBeInTheDocument();
+  });
+
+  it('keeps the suggested name in step with the preset until the commissioner types their own', async () => {
+    primeCommonMocks();
+
+    renderCreateContestPage();
+
+    fireEvent.click(await screen.findByTestId('contest-template-golf-tiered-pick-12'));
+    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Pick 12'));
+
+    fireEvent.change(screen.getByTestId('contest-name'), { target: { value: 'Spring Major' } });
+    fireEvent.click(screen.getByTestId('contest-template-golf-tiered-pick-6'));
+
+    expect(screen.getByTestId('contest-name')).toHaveValue('Spring Major');
+  });
+
+  it('applies the pick-12 preset: two picks per tier on six tiers is twelve golfers, eight counting', async () => {
+    primeCommonMocks();
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-12' } } });
+
+    renderCreateContestPage();
+
+    const pick12 = await screen.findByTestId('contest-template-golf-tiered-pick-12');
+    expect(pick12).toHaveTextContent('Pick 12, best 8');
+    fireEvent.click(pick12);
 
     expect(screen.getByTestId('contest-tiered-picks-per-tier')).toHaveValue(2);
     expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(8);
-    expect(screen.getByText('6 tiers × 2 = 12 golfers picked.')).toBeInTheDocument();
+    expect(screen.getByText('6 tiers × 2 = 12 golfers per entry')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByTestId('contest-name'), {
-      target: { value: 'Masters Pick 12' },
-    });
     fireEvent.click(screen.getByTestId('create-contest-submit'));
 
-    await waitFor(() =>
-      expect(createContestMock).toHaveBeenCalledWith({
-        path: { id: 'league-1' },
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
-        body: expect.objectContaining({
-          templateId: '33333333-3333-4333-8333-333333333333',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
-          configuration: expect.objectContaining({
-            picksPerTier: 2,
-            countedScores: 8,
-          }),
-        }),
-      }),
-    );
+    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+    expect(submittedBody()).toEqual(expect.objectContaining({
+      templateId: '33333333-3333-4333-8333-333333333333',
+      configuration: { picksPerTier: 2, countedScores: 8, maxEntriesPerSquad: 1 },
+    }));
+  });
+
+  it('switches to Custom when a rule is changed by hand, and creates without a preset', async () => {
+    primeCommonMocks();
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-custom' } } });
+
+    renderCreateContestPage();
+
+    fireEvent.change(await screen.findByTestId('contest-tiered-counted-scores'), { target: { value: '5' } });
+    fireEvent.click(screen.getByTestId('contest-max-entries-unlimited'));
+
+    expect(screen.getByTestId('contest-template-custom')).toBeChecked();
+    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent('The best 5 scores count. · No limit on entries per team');
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+    expect(submittedBody()).not.toHaveProperty('templateId');
+    expect(submittedBody()).toEqual(expect.objectContaining({ configuration: { picksPerTier: 1, countedScores: 5 } }));
   });
 
   it('resets scores that count to all but two tiers\' worth when picks per tier changes', async () => {
@@ -335,18 +368,14 @@ describe('CreateContestPage', () => {
 
     renderCreateContestPage();
 
-    await screen.findByTestId('contest-name');
-    expect(screen.getByText('6 tiers × 1 = 6 golfers picked.')).toBeInTheDocument();
-
-    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), {
-      target: { value: '2' },
-    });
+    expect(await screen.findByText('6 tiers × 1 = 6 golfers per entry')).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), { target: { value: '2' } });
 
     expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(8);
-    expect(screen.getByText('6 tiers × 2 = 12 golfers picked.')).toBeInTheDocument();
+    expect(screen.getByText('6 tiers × 2 = 12 golfers per entry')).toBeInTheDocument();
   });
 
-  it('keeps a selected template\'s own scores that count when the event\'s tiers load', async () => {
+  it('keeps a selected preset\'s own scores that count when the event\'s tiers load', async () => {
     primeCommonMocks();
     listContestConfigTemplatesMock.mockResolvedValue({
       data: {
@@ -369,8 +398,7 @@ describe('CreateContestPage', () => {
       },
     });
 
-    // The events (and so the tier count) arrive after the template has been applied.
-    const primedEvents = await (listEventsMock.getMockImplementation()?.() as Promise<unknown>);
+    // The events (and so the tier count) arrive after the preset has been applied.
     let releaseEvents: (value: unknown) => void = () => undefined;
     listEventsMock.mockReturnValue(new Promise((resolve) => { releaseEvents = resolve; }));
 
@@ -378,169 +406,85 @@ describe('CreateContestPage', () => {
 
     await waitFor(() => expect(listContestConfigTemplatesMock).toHaveBeenCalled());
     await act(async () => { await Promise.resolve(); });
-    releaseEvents(primedEvents);
+    releaseEvents(singleEvent());
 
-    await screen.findByText('6 tiers × 2 = 12 golfers picked.');
+    await screen.findByText('6 tiers × 2 = 12 golfers per entry');
     expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(10);
   });
 
-  it('starts scores that count at the selected event\'s tier count less two', async () => {
+  it('starts scores that count at the chosen event\'s tier count less two when there is no preset', async () => {
     primeCommonMocks();
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [] } });
-    listEventsMock.mockResolvedValue({
-      data: {
-        events: [
-          {
-            id: 'event-1',
-            sport: 'GOLF',
-            name: 'Masters Tournament',
-            status: 'SCHEDULED',
-            startDate: '2026-04-10T12:00:00.000Z',
-            participantCount: 144,
-            readinessStatus: 'CONTEST_ELIGIBLE',
-            readinessReasons: [],
-            contestEligible: true,
-            tierCount: 4,
-          },
-        ],
-      },
-    });
+    listEventsMock.mockResolvedValue(singleEvent({ tierCount: 4 }));
 
     renderCreateContestPage();
 
-    await screen.findByTestId('contest-name');
     await waitFor(() => expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(2));
-    expect(screen.getByText('4 tiers × 1 = 4 golfers picked.')).toBeInTheDocument();
+    expect(screen.getByText('4 tiers × 1 = 4 golfers per entry')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-template-custom')).toBeChecked();
   });
 
-  // #245 — a template is optional: with none, the complete form configuration is the contest's.
-  it('creates a contest from the form configuration alone when no template is offered', async () => {
+  it('keeps Create contest disabled and says why while the rules are incomplete or out of range', async () => {
     primeCommonMocks();
-    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [] } });
-    createContestMock.mockResolvedValue({
-      data: {
-        contest: {
-          id: 'contest-no-template',
-        },
-      },
-    });
 
     renderCreateContestPage();
 
-    await screen.findByTestId('contest-name');
-    fireEvent.change(screen.getByTestId('contest-name'), {
-      target: { value: 'Masters Custom' },
-    });
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
-
-    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
-    const [call] = createContestMock.mock.calls[0] as [{ body: Record<string, unknown> }];
-    expect(call.body).not.toHaveProperty('templateId');
-    expect(call.body).toEqual(
-      expect.objectContaining({
-        name: 'Masters Custom',
-        selectionType: 'TIERED',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
-        configuration: expect.objectContaining({ picksPerTier: 1, countedScores: 4 }),
-      }),
-    );
-  });
-
-  // #245 client obligation — with neither a template nor a complete configuration, submit stays
-  // disabled; the server's CONTEST_CONFIGURATION_REQUIRED is the contract, this is the experience.
-  it('keeps submit disabled with no template and an incomplete configuration', async () => {
-    primeCommonMocks();
-    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [] } });
-
-    renderCreateContestPage();
-
-    await screen.findByTestId('contest-name');
-    fireEvent.change(screen.getByTestId('contest-name'), {
-      target: { value: 'Masters Custom' },
-    });
     await waitFor(() => expect(screen.getByTestId('create-contest-submit')).toBeEnabled());
 
-    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), {
-      target: { value: '' },
-    });
+    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), { target: { value: '' } });
     expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
+    expect(screen.getByTestId('contest-rules-error')).toHaveTextContent('Picks per tier must be a positive whole number.');
 
-    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), {
-      target: { value: '1' },
-    });
-    fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), {
-      target: { value: '7' },
-    });
+    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), { target: { value: '7' } });
     expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
+    expect(screen.getByTestId('contest-rules-error')).toHaveTextContent('Scores that count must be between 1 and the 6 golfers picked.');
+    expect(screen.queryByTestId('contest-members-will-see')).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), {
-      target: { value: '6' },
-    });
+    fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), { target: { value: '6' } });
     expect(screen.getByTestId('create-contest-submit')).toBeEnabled();
     expect(createContestMock).not.toHaveBeenCalled();
   });
 
-  // #245 — a selected template never disables submit, even while the form configuration is
-  // incomplete (the form's own validation reports that on submit).
-  it('keeps submit enabled while a template is selected', async () => {
+  it('refuses a contest with its name cleared, without sending anything', async () => {
     primeCommonMocks();
 
     renderCreateContestPage();
 
-    await screen.findByTestId('contest-name');
-    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), {
-      target: { value: '' },
-    });
-    await waitFor(() => expect(screen.getByTestId('create-contest-submit')).toBeEnabled());
+    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Pick 6'));
+    fireEvent.change(screen.getByTestId('contest-name'), { target: { value: '  ' } });
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    expect(await screen.findByText('Contest name is required.')).toBeInTheDocument();
+    expect(createContestMock).not.toHaveBeenCalled();
   });
 
-  it('shows the rejection message when contest creation is rejected with an expected payload', async () => {
+  it('shows the server\'s message when contest creation is refused', async () => {
     primeCommonMocks();
     createContestMock.mockResolvedValue({
-      error: {
-        error: {
-          code: 'CONTEST_NAME_IN_USE',
-          message: 'Contest name is already in use.',
-        },
-      },
+      error: { error: { code: 'CONTEST_NAME_IN_USE', message: 'Contest name is already in use.' } },
     });
 
     renderCreateContestPage();
 
-    await screen.findByTestId('contest-name');
-    fireEvent.change(screen.getByTestId('contest-name'), {
-      target: { value: 'Masters Pick 6' },
-    });
+    await waitFor(() => expect(screen.getByTestId('create-contest-submit')).toBeEnabled());
     fireEvent.click(screen.getByTestId('create-contest-submit'));
 
     await screen.findByText('Contest name is already in use.');
     expect(mockLogger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'contest.create.failed',
-      }),
+      expect.objectContaining({ action: 'contest.create.failed' }),
       expect.any(String),
     );
   });
 
-  it('shows a no-events-available message when no golf event is contest-ready', async () => {
+  it('says no event is available and keeps Create contest disabled when no golf event is contest-ready', async () => {
     primeCommonMocks();
-    listEventsMock.mockResolvedValue({
-      data: {
-        events: [
-          {
-            id: 'event-1',
-            sport: 'GOLF',
-            name: 'Masters Tournament',
-            status: 'SCHEDULED',
-            startDate: '2026-04-10T12:00:00.000Z',
-            participantCount: 0,
-            readinessStatus: 'PENDING_FIELD',
-            readinessReasons: ['FIELD_NOT_LOADED'],
-            contestEligible: false,
-          },
-        ],
-      },
-    });
+    listEventsMock.mockResolvedValue(singleEvent({
+      participantCount: 0,
+      readinessStatus: 'PENDING_FIELD',
+      readinessReasons: ['FIELD_NOT_LOADED'],
+      contestEligible: false,
+    }));
 
     renderCreateContestPage();
 
@@ -548,31 +492,5 @@ describe('CreateContestPage', () => {
       'No golf events are currently available for contest setup.',
     );
     expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
-  });
-
-  it('notes that the contest uses the event\'s own tiers', async () => {
-    primeCommonMocks();
-
-    renderCreateContestPage();
-
-    await screen.findByTestId('contest-name');
-    expect(
-      screen.getByText(
-        /This contest uses the tournament’s tiers and golfer assignments/i,
-      ),
-    ).toBeInTheDocument();
-  });
-
-  it('lands the commissioner on the new contest\'s page in Commissioner tools after create', async () => {
-    primeCommonMocks();
-    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-90' } } });
-
-    renderCreateContestPage();
-
-    await screen.findByTestId('contest-name');
-    fireEvent.change(screen.getByTestId('contest-name'), { target: { value: 'Masters Pick 6' } });
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
-
-    expect(await screen.findByTestId('admin-contest-destination')).toHaveTextContent('contest-90');
   });
 });
