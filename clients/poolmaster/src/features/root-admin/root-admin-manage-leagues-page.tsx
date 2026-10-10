@@ -9,6 +9,7 @@ import {
 } from "@/features/shared/ui";
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 
 const columnHelper = createColumnHelper<LeagueDto>();
 
@@ -103,7 +104,9 @@ export function RootAdminManageLeaguesPage() {
       getRowId={(league) => league.id}
       getRowLink={(league) => buildLeaguePath(league.leagueCode)}
       loadingBody="Loading leagues..."
+      pageSize={MANAGE_LIST_PAGE_SIZE}
       rowTestId={(league) => `root-admin-manage-leagues-link-${league.id}`}
+      search={{ label: "Find a league", testId: "root-admin-manage-leagues-search" }}
       state={
         leaguesQuery.isLoading
           ? "loading"

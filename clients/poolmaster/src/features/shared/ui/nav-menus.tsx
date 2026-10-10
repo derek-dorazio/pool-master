@@ -1,8 +1,10 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "./class-names";
 
 export type NavMenuItem = {
+  /** A side-menu heading this item sits under; consecutive items share one heading. */
+  group?: string;
   isActive: boolean;
   label: ReactNode;
   testId: string;
@@ -95,21 +97,27 @@ export function AdminAreaLayout({
 
       <div className="grid items-start gap-6 md:grid-cols-[13rem_minmax(0,1fr)]">
         <nav aria-label={menuLabel} className="flex gap-1 overflow-x-auto md:sticky md:top-4 md:flex-col">
-          {menuItems.map((item) => (
-            <Link
-              aria-current={item.isActive ? "page" : undefined}
-              className={cn(
-                "whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition",
-                item.isActive
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              data-testid={item.testId}
-              key={item.testId}
-              to={item.to}
-            >
-              {item.label}
-            </Link>
+          {menuItems.map((item, index) => (
+            <Fragment key={item.testId}>
+              {item.group && item.group !== menuItems[index - 1]?.group ? (
+                <div className="hidden px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground first:pt-0 md:block">
+                  {item.group}
+                </div>
+              ) : null}
+              <Link
+                aria-current={item.isActive ? "page" : undefined}
+                className={cn(
+                  "whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition",
+                  item.isActive
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                data-testid={item.testId}
+                to={item.to}
+              >
+                {item.label}
+              </Link>
+            </Fragment>
           ))}
         </nav>
         <div className="min-w-0">{children}</div>

@@ -64,7 +64,8 @@ export async function adminSignInReachManageLogOut(
   await adminSignIn(page, credentials);
 
   await page.goto('/manage');
-  await expect(page.getByTestId('root-admin-manage-hub-page')).toBeVisible();
+  await expect(page).toHaveURL(/\/manage\/leagues$/);
+  await expect(page.getByTestId('root-admin-manage-leagues-page')).toBeVisible();
 
   await logOut(page);
 }

@@ -8,6 +8,7 @@ import {
   StatusBadge,
 } from "@/features/shared/ui";
 import { QueryKeys } from '@/lib/query-keys';
+import { buildManageUserPath, MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 
 // #202 step 3.4 — the canonical named component, not an index into the response map.
 type RootAdminUser = UserDto;
@@ -96,9 +97,11 @@ export function RootAdminManageUsersPage() {
       error={usersQuery.error}
       errorBody="We could not load users right now."
       getRowId={(user) => user.id}
-      getRowLink={(user) => `/users/${user.id}`}
+      getRowLink={(user) => buildManageUserPath(user.id)}
       loadingBody="Loading users..."
+      pageSize={MANAGE_LIST_PAGE_SIZE}
       rowTestId={(user) => `root-admin-manage-user-row-${user.id}`}
+      search={{ label: "Find a user", testId: "root-admin-manage-users-search" }}
       state={
         usersQuery.isLoading
           ? "loading"

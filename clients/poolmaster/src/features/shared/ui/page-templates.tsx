@@ -2,7 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { Button, type ButtonProps } from "./button";
 import { cn } from "./class-names";
-import { DataGrid } from "./data-grid";
+import { DataGrid, type DataGridSearch } from "./data-grid";
 import { DetailsActionsLayout } from "./details-actions-layout";
 import { PageHeader } from "./page-header";
 import { ServerErrorBar } from "./server-error";
@@ -175,7 +175,11 @@ export type ManagementListPageProps<TData> = AsyncPageStateProps & {
     row: TData,
   ) => Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">;
   header?: HeaderConfig;
+  /** Rows per page; omitted, every row shows on one page. */
+  pageSize?: number;
   rowTestId?: (row: TData, index: number) => string;
+  /** A search box above the grid matching any text column. */
+  search?: DataGridSearch;
   tableTestId?: string;
   testId?: string;
 };
@@ -193,7 +197,9 @@ export function DataGridPage<TData>({
   getRowLink,
   getRowLinkProps,
   header,
+  pageSize,
   rowTestId,
+  search,
   tableTestId,
   testId,
   ...stateProps
@@ -215,7 +221,9 @@ export function DataGridPage<TData>({
           getRowId={getRowId}
           getRowLink={getRowLink}
           getRowLinkProps={getRowLinkProps}
+          pageSize={pageSize}
           rowTestId={rowTestId}
+          search={search}
           tableTestId={tableTestId}
         />
       </Tile>

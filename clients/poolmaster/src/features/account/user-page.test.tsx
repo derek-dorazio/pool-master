@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import {
@@ -26,8 +26,6 @@ const {
   getUserMock,
   logoutUserMock,
   refreshTokenMock,
-  resetUserPasswordMock,
-  setUserRootAdminMock,
   updateUserPreferencesMock,
   updateUserProfileMock,
   updateUserUsernameMock,
@@ -51,8 +49,6 @@ const {
     getUserMock: vi.fn(),
     logoutUserMock: vi.fn(),
     refreshTokenMock: vi.fn(),
-    resetUserPasswordMock: vi.fn(),
-    setUserRootAdminMock: vi.fn(),
     updateUserPreferencesMock: vi.fn(),
     updateUserProfileMock: vi.fn(),
     updateUserUsernameMock: vi.fn(),
@@ -68,8 +64,6 @@ bindApiMocks({
   getUser: getUserMock,
   logoutUser: logoutUserMock,
   refreshToken: refreshTokenMock,
-  resetUserPassword: resetUserPasswordMock,
-  setUserRootAdmin: setUserRootAdminMock,
   updateUserPreferences: updateUserPreferencesMock,
   updateUserProfile: updateUserProfileMock,
   updateUserUsername: updateUserUsernameMock,
@@ -80,6 +74,10 @@ vi.mock('@/lib/logger', () => ({
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
+
+function LocationProbe() {
+  return <div data-testid="location">{useLocation().pathname}</div>;
+}
 
 function renderUserPage(initialEntry = '/users/user-1') {
   const queryClient = new QueryClient({
@@ -97,6 +95,7 @@ function renderUserPage(initialEntry = '/users/user-1') {
           <Routes>
             <Route element={<UserPage />} path="/users/:userId" />
             <Route element={<div data-testid="root-route" />} path="/" />
+            <Route element={<LocationProbe />} path="/manage/users/:userId" />
           </Routes>
         </MemoryRouter>
       </AuthProvider>
@@ -170,32 +169,6 @@ function primeCurrentUserThenRefetches(updatedUser: AuthSessionUser) {
   refreshTokenMock.mockResolvedValue({ data: null });
 }
 
-function primeAdminUserDetail({
-  id = 'user-2',
-  isActive = true,
-  isRootAdmin = false,
-}: {
-  id?: string;
-  isActive?: boolean;
-  isRootAdmin?: boolean;
-} = {}) {
-  primeUserRead(id, {
-    id,
-    email: 'target@example.com',
-    username: 'target-user',
-    firstName: 'Target',
-    lastName: 'User',
-    isActive,
-    isRootAdmin,
-    authProvider: 'email',
-    timezone: 'America/New_York',
-    locale: 'en-US',
-    timeFormat: '12H',
-    dateFormat: 'MDY',
-    createdAt: '2026-04-13T00:00:00.000Z',
-  });
-}
-
 describe('UserPage', () => {
   afterEach(() => {
     changeUserPasswordMock.mockReset();
@@ -206,8 +179,6 @@ describe('UserPage', () => {
     primedUsersByPath.clear();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
-    resetUserPasswordMock.mockReset();
-    setUserRootAdminMock.mockReset();
     updateUserPreferencesMock.mockReset();
     updateUserProfileMock.mockReset();
     updateUserUsernameMock.mockReset();
@@ -568,115 +539,12 @@ describe('UserPage', () => {
     expect(screen.getByTestId('user-page-self-link')).toHaveAttribute('href', '/users/user-1');
   });
 
-  it('shows root-admin account controls for a non-self user route', async () => {
+  it('sends a root admin who opens another user\'s page to that user in Manage', async () => {
     primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
-    primeAdminUserDetail({ id: 'user-2', isRootAdmin: false, isActive: true });
 
     renderUserPage('/users/user-2');
 
-    expect(await screen.findByTestId('root-admin-user-page')).toBeVisible();
-    expect(getUserMock).toHaveBeenCalledWith({
-      path: {
-        userId: 'user-2',
-      },
-    });
-    expect(screen.getByTestId('root-admin-user-open-role')).toBeVisible();
-    expect(screen.getByTestId('root-admin-user-open-reset-password')).toBeVisible();
-    expect(screen.getByTestId('root-admin-user-open-lifecycle')).toBeVisible();
-    expect(screen.getByTestId('root-admin-user-open-delete')).toBeDisabled();
-  });
-
-  it('submits a root-admin role change from the non-self user page', async () => {
-    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
-    primeAdminUserDetail({ id: 'user-2', isRootAdmin: false, isActive: true });
-    setUserRootAdminMock.mockResolvedValue({
-      data: { success: true },
-    });
-
-    renderUserPage('/users/user-2');
-
-    await screen.findByTestId('root-admin-user-page');
-    fireEvent.click(screen.getByTestId('root-admin-user-open-role'));
-    await screen.findByTestId('root-admin-user-role-dialog');
-    fireEvent.click(screen.getByTestId('root-admin-user-submit-role'));
-
-    await waitFor(() =>
-      expect(setUserRootAdminMock).toHaveBeenCalledWith({
-        path: {
-          userId: 'user-2',
-        },
-        body: {
-          isRootAdmin: true,
-        },
-      }),
-    );
-  });
-
-  it('generates a temporary password for the viewed user from the root-admin page', async () => {
-    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
-    primeAdminUserDetail({ id: 'user-2', isRootAdmin: false, isActive: true });
-    resetUserPasswordMock.mockResolvedValue({
-      data: {
-        temporaryPassword: 'Pm-temp-password!9a',
-      },
-    });
-
-    renderUserPage('/users/user-2');
-
-    await screen.findByTestId('root-admin-user-page');
-    fireEvent.click(screen.getByTestId('root-admin-user-open-reset-password'));
-    await screen.findByTestId('root-admin-user-reset-password-dialog');
-    fireEvent.click(screen.getByTestId('root-admin-user-submit-reset-password'));
-
-    expect(await screen.findByTestId('root-admin-user-temp-password')).toHaveTextContent(
-      'Pm-temp-password!9a',
-    );
-  });
-
-  it('keeps the lifecycle dialog open and shows the server refusal when a root admin cannot inactivate the account', async () => {
-    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
-    primeAdminUserDetail({ id: 'user-2', isRootAdmin: true, isActive: true });
-    disableUserMock.mockResolvedValue({
-      error: {
-        error: {
-          code: 'ACCOUNT_LAST_ROOT_ADMIN',
-          message: 'This is the only root admin. Promote another root admin before deactivating the account.',
-        },
-      },
-    });
-
-    renderUserPage('/users/user-2');
-
-    await screen.findByTestId('root-admin-user-page');
-    fireEvent.click(screen.getByTestId('root-admin-user-open-lifecycle'));
-    const dialog = await screen.findByTestId('root-admin-user-lifecycle-dialog');
-    fireEvent.click(screen.getByTestId('root-admin-user-submit-lifecycle'));
-
-    expect(await within(dialog).findByText(/only root admin/i)).toBeVisible();
-    expect(screen.getByTestId('root-admin-user-lifecycle-dialog')).toBeVisible();
-  });
-
-  it('deletes with the account email when the root admin types it in another case or with spaces', async () => {
-    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
-    primeAdminUserDetail({ id: 'user-2', isRootAdmin: false, isActive: false });
-    deleteUserMock.mockResolvedValue({ data: { success: true } });
-
-    renderUserPage('/users/user-2');
-
-    await screen.findByTestId('root-admin-user-page');
-    fireEvent.click(screen.getByTestId('root-admin-user-open-delete'));
-    await screen.findByTestId('root-admin-user-delete-dialog');
-    fireEvent.change(screen.getByTestId('root-admin-user-delete-confirmation'), {
-      target: { value: ' Target@Example.com ' },
-    });
-    fireEvent.click(screen.getByTestId('root-admin-user-submit-delete'));
-
-    await waitFor(() =>
-      expect(deleteUserMock).toHaveBeenCalledWith({
-        path: { userId: 'user-2' },
-        body: { email: 'target@example.com' },
-      }),
-    );
+    expect(await screen.findByTestId('location')).toHaveTextContent('/manage/users/user-2');
   });
 
   it('sends the password change with the three fields the user typed', async () => {
@@ -759,59 +627,4 @@ describe('UserPage', () => {
     expect(screen.queryByTestId('user-page-delete-success')).not.toBeInTheDocument();
   });
 
-  it('shows an error state when a root admin opens a user who cannot be read', async () => {
-    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
-
-    renderUserPage('/users/user-missing');
-
-    expect(await screen.findByTestId('root-admin-user-page-error')).toBeVisible();
-  });
-
-  it('reactivates an inactive user from the root-admin page and closes the dialog', async () => {
-    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
-    primeAdminUserDetail({ id: 'user-2', isActive: false });
-    enableUserMock.mockResolvedValue({ data: { user: buildCurrentUser({ id: 'user-2', isActive: true }) } });
-
-    renderUserPage('/users/user-2');
-
-    expect(await screen.findByTestId('root-admin-user-inactive-banner')).toBeVisible();
-    fireEvent.click(screen.getByTestId('root-admin-user-open-lifecycle'));
-    await screen.findByTestId('root-admin-user-lifecycle-dialog');
-    fireEvent.click(screen.getByTestId('root-admin-user-submit-lifecycle'));
-
-    await waitFor(() => expect(enableUserMock).toHaveBeenCalledWith({ path: { userId: 'user-2' } }));
-    await waitFor(() => expect(screen.queryByTestId('root-admin-user-lifecycle-dialog')).not.toBeInTheDocument());
-  });
-
-  it('shows the server refusal in the role dialog when demoting the last root admin', async () => {
-    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
-    primeAdminUserDetail({ id: 'user-2', isRootAdmin: true });
-    setUserRootAdminMock.mockResolvedValue({
-      error: { error: { code: 'LAST_ROOT_ADMIN', message: 'Cannot remove the last remaining root admin.' } },
-    });
-
-    renderUserPage('/users/user-2');
-
-    await screen.findByTestId('root-admin-user-page');
-    fireEvent.click(screen.getByTestId('root-admin-user-open-role'));
-    const dialog = await screen.findByTestId('root-admin-user-role-dialog');
-    fireEvent.click(screen.getByTestId('root-admin-user-submit-role'));
-
-    expect(await within(dialog).findByText(/last remaining root admin/)).toBeVisible();
-  });
-
-  it('keeps the delete button disabled until the confirmation matches the viewed user\'s email', async () => {
-    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
-    primeAdminUserDetail({ id: 'user-2', isActive: false });
-
-    renderUserPage('/users/user-2');
-
-    await screen.findByTestId('root-admin-user-page');
-    fireEvent.click(screen.getByTestId('root-admin-user-open-delete'));
-    await screen.findByTestId('root-admin-user-delete-dialog');
-    fireEvent.change(screen.getByTestId('root-admin-user-delete-confirmation'), { target: { value: 'someone@example.com' } });
-
-    expect(screen.getByTestId('root-admin-user-submit-delete')).toBeDisabled();
-    expect(deleteUserMock).not.toHaveBeenCalled();
-  });
 });
