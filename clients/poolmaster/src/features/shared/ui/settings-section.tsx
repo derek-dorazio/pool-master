@@ -19,7 +19,8 @@ export function SettingsSection({ action, children, description, testId, title }
   );
 }
 
-function SettingsSectionHeader({
+/** A settings-style section title, for a section whose body is not a card of rows (a table). */
+export function SettingsSectionHeader({
   action,
   description,
   title,

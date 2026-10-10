@@ -32,7 +32,8 @@ that is not a table pages through `Pager`, the same Previous/Next control.
 
 League pages and administration areas use the pieces named in
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
-`AdminAreaLayout`, `IdentityHeading`, `SettingsSection` / `SettingsRow`,
+`AdminAreaLayout`, `IdentityHeading`, `SettingsSection` / `SettingsRow`
+(`SettingsSectionHeader` alone titles a section whose body is a `DataGrid`),
 `DangerZone` / `DangerZoneAction`, and `FormPage` for a full-page edit
 (with `IconPalette` when the form picks an icon).
 
@@ -47,7 +48,6 @@ Use modal templates when the modal follows one of the common workflows:
 - `FormModal` for edit/create forms.
 - `ConfirmationModal` for destructive or lifecycle confirmations, including
   exact-match confirmation inputs.
-- `ActionModal` for compact action workflows launched from action menus.
 - `PickerModal` for selecting an item from a constrained list.
 - `ReadOnlyDetailModal` for payloads and operational metadata.
 

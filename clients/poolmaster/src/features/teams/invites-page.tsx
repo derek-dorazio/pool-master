@@ -24,7 +24,6 @@ export function InvitesPage() {
       <LeagueInvitations
         isInactiveLeague={!league.isActive}
         leagueId={league.id}
-        leagueName={league.name}
         membersByUserId={membersByUserId}
       />
     </section>

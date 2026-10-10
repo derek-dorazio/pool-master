@@ -28,7 +28,7 @@ export { SelectableDataGrid } from "./selectable-data-grid";
 export { SortableList } from "./sortable-list";
 export { ServerErrorBar } from "./server-error";
 export { SectionHeader } from "./section";
-export { DangerZone, DangerZoneAction, SettingsRow, SettingsSection } from "./settings-section";
+export { DangerZone, DangerZoneAction, SettingsRow, SettingsSection, SettingsSectionHeader } from "./settings-section";
 export { EmptyState, ErrorState, LoadingState } from "./state";
 export { ProgressIndicator } from "./progress";
 export {
@@ -42,7 +42,6 @@ export { Modal } from "./modal";
 export { MutationActionToast } from "./mutation-action-toast";
 export { useMutationActionWorkflow } from "./mutation-action-workflow";
 export {
-  ActionModal,
   ConfirmationModal,
   FormModal,
   PickerModal,

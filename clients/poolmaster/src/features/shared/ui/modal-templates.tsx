@@ -7,7 +7,6 @@ import { FormField, Input } from "./form-field";
 import { Modal } from "./modal";
 import { ServerErrorBar } from "./server-error";
 import { StatusBadge } from "./status-badge";
-import { Tile } from "./tile";
 
 type BaseModalTemplateProps = {
   description?: ReactNode;
@@ -189,64 +188,6 @@ export function ConfirmationModal({
         </p>
       ) : null}
     </ConfirmDialog>
-  );
-}
-
-export type ActionModalSection = {
-  body: ReactNode;
-  key: string;
-  title?: ReactNode;
-};
-
-export type ActionModalProps = BaseModalTemplateProps & {
-  children?: ReactNode;
-  footer?: ReactNode;
-  isPending?: boolean;
-  sections?: readonly ActionModalSection[];
-  size?: "sm" | "md" | "lg" | "xl";
-};
-
-export function ActionModal({
-  children,
-  description,
-  footer,
-  isPending = false,
-  onCancel,
-  onOpenChange,
-  open,
-  sections,
-  size = "lg",
-  testId,
-  title,
-}: ActionModalProps) {
-  return (
-    <Modal
-      description={description}
-      footer={footer}
-      isCloseDisabled={isPending}
-      onClose={onCancel}
-      onOpenChange={onOpenChange}
-      open={open}
-      size={size}
-      testId={testId}
-      title={title}
-    >
-      <div className="space-y-4">
-        {sections?.map((section) => (
-          <Tile key={section.key} padding="sm" radius="lg" variant="subtle">
-            {section.title ? (
-              <h3 className="text-base font-semibold text-foreground">
-                {section.title}
-              </h3>
-            ) : null}
-            <div className={section.title ? "mt-3" : undefined}>
-              {section.body}
-            </div>
-          </Tile>
-        ))}
-        {children}
-      </div>
-    </Modal>
   );
 }
 
