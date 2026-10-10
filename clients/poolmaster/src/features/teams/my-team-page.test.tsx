@@ -25,6 +25,9 @@ import { TeamPage } from './team-page';
 const createLeagueSquadMock = vi.fn();
 const createSquadOwnerInvitationMock = vi.fn();
 const getCurrentUserMock = vi.fn();
+const getGolfContestLeaderboardMock = vi.fn();
+const listContestEntriesMock = vi.fn();
+const listContestsMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const listLeagueMembersMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
@@ -38,6 +41,9 @@ bindApiMocks({
   createLeagueSquad: createLeagueSquadMock,
   createSquadOwnerInvitation: createSquadOwnerInvitationMock,
   getUser: getCurrentUserMock,
+  getGolfContestLeaderboard: getGolfContestLeaderboardMock,
+  listContestEntries: listContestEntriesMock,
+  listContests: listContestsMock,
   getLeagueByCode: getLeagueByCodeMock,
   listLeagueMembers: listLeagueMembersMock,
   listLeagueSquads: listLeagueSquadsMock,
@@ -128,6 +134,57 @@ function primeTeam({
     ],
   }));
   listSquadOwnerInvitationsMock.mockResolvedValue(apiSuccess({ invitations: [] }));
+  listContestsMock.mockResolvedValue(apiSuccess({ contests: [] }));
+}
+
+function contest(id: string, name: string, status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED') {
+  return {
+    id,
+    name,
+    status,
+    contestFormat: 'ROSTER',
+    selectionType: 'TIERED',
+    scoringEngine: 'STROKE_PLAY',
+    leagueId: 'league-1',
+    sportEventId: `event-${id}`,
+    sport: 'GOLF',
+    entryCount: 4,
+    isExclusive: false,
+  };
+}
+
+function teamEntry(contestId: string, status: 'DRAFT' | 'SUBMITTED', squadId = 'team-1') {
+  return {
+    id: `${contestId}-${squadId}`,
+    contestId,
+    squadId,
+    squadName: squadId,
+    entryNumber: 1,
+    name: `${squadId} entry`,
+    status,
+    picksCount: 6,
+    createdAt: '2026-04-01T00:00:00.000Z',
+    updatedAt: '2026-04-01T00:00:00.000Z',
+  };
+}
+
+function primeContests(
+  contests: ReturnType<typeof contest>[],
+  entriesByContest: Record<string, ReturnType<typeof teamEntry>[]>,
+) {
+  listContestsMock.mockResolvedValue(apiSuccess({ contests }));
+  listContestEntriesMock.mockImplementation(({ path }: { path: { contestId: string } }) => {
+    const entries = entriesByContest[path.contestId] ?? [];
+    return apiSuccess({
+      contestId: path.contestId,
+      total: entries.length,
+      isJoined: false,
+      myEntryId: null,
+      myEntryIds: [],
+      picksRevealed: false,
+      entries,
+    });
+  });
 }
 
 afterEach(() => {
@@ -135,6 +192,7 @@ afterEach(() => {
     createLeagueSquadMock, createSquadOwnerInvitationMock, getCurrentUserMock, getLeagueByCodeMock,
     listLeagueMembersMock, listLeagueSquadsMock, listSquadOwnerInvitationsMock, refreshTokenMock,
     replaceSquadOwnerMock, revokeSquadOwnerInvitationMock, updateLeagueSquadMock,
+    getGolfContestLeaderboardMock, listContestEntriesMock, listContestsMock,
   ]) {
     mock.mockReset();
   }
@@ -198,6 +256,73 @@ describe('My team', () => {
     renderTeamRoutes();
 
     expect(await screen.findByRole('link', { name: 'Back to welcome' })).toHaveAttribute('href', '/welcome');
+  });
+});
+
+describe('My team › My entries', () => {
+  it('offers Make your picks for an open contest the team has not entered, and Finish your picks for a draft', async () => {
+    primeTeam();
+    primeContests(
+      [contest('c-open', 'Masters Pool', 'OPEN'), contest('c-draft', 'PGA Pool', 'OPEN')],
+      { 'c-draft': [teamEntry('c-draft', 'DRAFT')] },
+    );
+
+    renderTeamRoutes();
+
+    const open = await screen.findByTestId('my-team-entry-action-c-open');
+    expect(open).toHaveTextContent('Make your picks');
+    expect(open).toHaveAttribute('href', '/league/BIGDAWGS/contests/c-open');
+    expect(await screen.findByText('Finish your picks')).toHaveAttribute(
+      'href',
+      '/league/BIGDAWGS/contests/c-draft/entries/c-draft-team-1',
+    );
+  });
+
+  it('shows the team\'s place in a live contest it entered, links to the leaderboard, and leaves out live contests it did not enter', async () => {
+    primeTeam();
+    primeContests(
+      [contest('c-live', 'Masters Pool', 'ACTIVE'), contest('c-other', 'Other Pool', 'ACTIVE')],
+      { 'c-live': [teamEntry('c-live', 'SUBMITTED')], 'c-other': [teamEntry('c-other', 'SUBMITTED', 'team-9')] },
+    );
+    getGolfContestLeaderboardMock.mockResolvedValue(apiSuccess({
+      contestId: 'c-live',
+      sportEventId: 'event-c-live',
+      scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+      countingRule: { type: 'BEST_N_GOLFERS', count: 4 },
+      participants: [],
+      entries: [
+        { entryId: 'e-9', entryName: 'Leaders', entryNumber: 1, squadId: 'team-9', squadName: 'Leaders', status: 'SUBMITTED', position: 1, displayPosition: '1', countingPickLimit: 4, scoredPickCount: 0, golf: { totalScoreToPar: -8 }, picks: [] },
+        { entryId: 'e-1', entryName: 'Mine', entryNumber: 1, squadId: 'team-1', squadName: 'Casey Crushers', status: 'SUBMITTED', position: 2, displayPosition: 'T2', countingPickLimit: 4, scoredPickCount: 0, golf: { totalScoreToPar: -3 }, picks: [] },
+      ],
+      asOf: '2026-04-11T18:00:00.000Z',
+    }));
+
+    renderTeamRoutes();
+
+    await waitFor(() => expect(screen.getByTestId('my-team-entry-rank-c-live')).toHaveTextContent('Place T2'));
+    expect(screen.getByTestId('my-team-entry-action-c-live')).toHaveAttribute(
+      'href',
+      '/league/BIGDAWGS/contests/c-live/leaderboard',
+    );
+    expect(screen.queryByTestId('my-team-entry-c-other')).not.toBeInTheDocument();
+  });
+
+  it('says no contests are open or live when there are none, and leaves out drafts and finished ones', async () => {
+    primeTeam();
+    primeContests([contest('c-draft', 'Draft', 'DRAFT'), contest('c-done', 'Done', 'COMPLETED')], {});
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('my-team-entries-none')).toHaveTextContent('No contests are open or live right now.');
+  });
+
+  it('says the contests could not load rather than showing none', async () => {
+    primeTeam();
+    listContestsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'Down' } } });
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('my-team-entries-error')).toBeInTheDocument();
   });
 });
 
