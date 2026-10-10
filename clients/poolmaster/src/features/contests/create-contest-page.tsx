@@ -7,11 +7,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
-import {
-  CONTEST_BUDGET_UNFILLABLE,
-  CONTEST_EVENT_NOT_PRICED,
-  type CreateContestRequest,
-} from '@poolmaster/shared/dto';
+import type { CreateContestRequest } from '@poolmaster/shared/dto';
 import { ContestFormat, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { createContest, listContestConfigTemplates, listEvents } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
@@ -73,13 +69,6 @@ const FORMAT_CHOICES: Array<{ description: string; icon: LucideIcon; selectionTy
   },
 ];
 
-/** Copy for the budget refusals Create contest can meet (#93), beside the release ones. */
-const CREATE_CONTEST_CODE_MESSAGES: Record<string, string> = {
-  ...CONTEST_RELEASE_CODE_MESSAGES,
-  [CONTEST_EVENT_NOT_PRICED]: 'This event’s golfers have no prices yet, so it cannot hold a budget contest.',
-  [CONTEST_BUDGET_UNFILLABLE]:
-    'Even the cheapest golfers for every place cost more than the salary cap. Pick fewer golfers per entry.',
-};
 
 const creatableSelectionTypes = FORMAT_CHOICES.map((choice) => choice.selectionType) as [
   CreatableSelectionType,
@@ -398,7 +387,7 @@ export function CreateContestPage() {
     ?? errors.sportEventId?.message
     ?? (createMutation.isError
       ? extractErrorMessage(createMutation.error, {
-        codeMessages: CREATE_CONTEST_CODE_MESSAGES,
+        codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
         fallback: 'We could not create that contest. Please try again.',
       })
       : null);

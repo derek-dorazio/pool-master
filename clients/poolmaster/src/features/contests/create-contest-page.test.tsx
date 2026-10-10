@@ -602,7 +602,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
     fireEvent.click(screen.getByTestId('create-contest-submit'));
 
     expect(await screen.findByText(
-      'Even the cheapest golfers for every place cost more than the salary cap. Pick fewer golfers per entry.',
+      'Even the cheapest golfers for every place cost more than the salary cap, so nobody could enter. Pick fewer golfers per entry.',
     )).toBeInTheDocument();
   });
 });
