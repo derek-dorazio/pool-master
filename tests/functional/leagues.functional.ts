@@ -18,7 +18,6 @@ import {
   listLeagueSquads,
   removeMember,
   updateLeagueDetails,
-  updateLeagueIcon,
 } from '@poolmaster/shared/generated/hey-api';
 import { randomUUID } from 'node:crypto';
 import { buildRegisteredUser } from './builders';
@@ -127,7 +126,7 @@ describe('SDK Functional: Leagues', () => {
     );
   });
 
-  it('updates active league details and rejects edits after inactivation', async () => {
+  it('saves name, description and icon in one details request and rejects edits after inactivation', async () => {
     const commissioner = await buildRegisteredUser({
       displayName: 'League Editor',
     });
@@ -145,11 +144,13 @@ describe('SDK Functional: Leagues', () => {
       body: {
         name: 'Edited Functional League',
         description: 'Edited description',
+        iconKey: 'SOCCER_BALL',
       },
     });
 
     expect(updateResponse.data?.league.name).toBe('Edited Functional League');
     expect(updateResponse.data?.league.description).toBe('Edited description');
+    expect(updateResponse.data?.league.iconKey).toBe('SOCCER_BALL');
     expect(updateResponse.data?.league.leagueCode).toBe(createResponse.data?.league.leagueCode);
 
     const inactiveResponse = await inactivateLeague({
@@ -165,53 +166,13 @@ describe('SDK Functional: Leagues', () => {
       body: {
         name: 'Should Not Save',
         description: 'Should not save',
-      },
-    });
-
-    expectFunctionalError(rejectedUpdate, {
-      status: 400,
-      code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE',
-    });
-  });
-
-  it('updates the league icon from the curated catalog and rejects icon edits after inactivation', async () => {
-    const commissioner = await buildRegisteredUser({
-      displayName: 'League Icon Editor',
-    });
-
-    const createResponse = await createLeague({
-      client: commissioner.client,
-      body: buildCreateLeagueBody('Icon Functional League'),
-    });
-
-    const leagueId = createResponse.data?.league.id as string;
-
-    const updateResponse = await updateLeagueIcon({
-      client: commissioner.client,
-      path: { id: leagueId },
-      body: {
-        iconKey: 'SOCCER_BALL',
-      },
-    });
-
-    expect(updateResponse.data?.league.iconKey).toBe('SOCCER_BALL');
-
-    await inactivateLeague({
-      client: commissioner.client,
-      path: { id: leagueId },
-    });
-
-    const rejectedUpdate = await updateLeagueIcon({
-      client: commissioner.client,
-      path: { id: leagueId },
-      body: {
         iconKey: 'TROPHY',
       },
     });
 
     expectFunctionalError(rejectedUpdate, {
       status: 400,
-      code: 'LEAGUE_ICON_READ_ONLY_WHEN_INACTIVE',
+      code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE',
     });
   });
 

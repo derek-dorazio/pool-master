@@ -72,7 +72,6 @@ const MANIFEST = {
     create: 'createLeague',
     detail: 'getLeague',
     details: 'updateLeagueDetails',
-    icon: 'updateLeagueIcon',
     inactivate: 'inactivateLeague',
     activate: 'activateLeague',
     byCode: 'getLeagueByCode',

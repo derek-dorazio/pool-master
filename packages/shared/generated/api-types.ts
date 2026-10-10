@@ -471,29 +471,9 @@ export interface paths {
         get?: never;
         /**
          * Update league details
-         * @description Allows a commissioner to edit the active league detail fields that are currently product truth: name and description. League code remains immutable after creation.
+         * @description Allows a commissioner to edit an active league's name, description and built-in icon in one request, so the change applies whole or not at all. League code remains immutable after creation.
          */
         put: operations["updateLeagueDetails"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/icon": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update league icon
-         * @description Allows a commissioner to select a built-in league icon from the curated PoolMaster icon catalog. Custom uploads remain out of scope for this slice.
-         */
-        put: operations["updateLeagueIcon"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3181,17 +3161,14 @@ export interface components {
             /** @description Exact league code confirmation required before permanently deleting an inactive league. */
             leagueCode: string;
         };
-        /** @description Commissioner request payload for editing league details while the league remains active. */
+        /** @description Commissioner request payload for editing league details while the league remains active. Name, description and icon are replaced together, so a save either applies all three or none. */
         UpdateLeagueDetailsRequest: {
             /** @description Updated primary league name shown in selectors, tiles, and league home. */
             name: string;
             /** @description Optional updated commissioner-facing league description. Omit or send an empty value to clear it. */
             description?: string;
-        };
-        /** @description Commissioner request payload for selecting a built-in league icon. */
-        UpdateLeagueIconRequest: {
             /**
-             * @description Selected built-in league icon from the curated PoolMaster icon catalog.
+             * @description Built-in league icon from the curated PoolMaster icon catalog. Send the current icon to keep it.
              * @enum {string}
              */
             iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
@@ -11791,50 +11768,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdateLeagueDetailsRequest"];
-            };
-        };
-        responses: {
-            /** @description Single-league response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LeagueResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    updateLeagueIcon: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateLeagueIconRequest"];
             };
         };
         responses: {

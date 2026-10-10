@@ -415,6 +415,7 @@ describe('Contract verification (web)', () => {
       payload: {
         name: 'Edited League',
         description: 'Edited description',
+        iconKey: 'SOCCER_BALL',
       },
     });
 
@@ -422,28 +423,35 @@ describe('Contract verification (web)', () => {
     expect(LeagueResponseSchema.safeParse(updateRes.json()).success).toBe(true);
   });
 
-  it('league icon update route matches LeagueResponseSchema', async () => {
-    const owner = await createTestUser({ displayName: 'Contract League Icon Editor' });
+  it.each([
+    ['missing', {}],
+    ['not in the icon catalog', { iconKey: 'NOT_AN_ICON' }],
+  ])('league detail update refuses a body whose iconKey is %s with a 400 error envelope and leaves the league unchanged', async (_case, icon) => {
+    const owner = await createTestUser({ displayName: 'Contract League Icon Validator' });
 
     const leagueRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.create,
       headers: owner.headers,
-      payload: buildCreateLeaguePayload('Icon League'),
+      payload: buildCreateLeaguePayload('Icon Validation League'),
     });
-    const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
+    const league = leagueRes.json<LeagueContextResponse>().league;
 
     const updateRes = await getApp().inject({
       method: 'PUT',
-      url: API_ROUTES.leagues.icon(leagueId),
+      url: API_ROUTES.leagues.details(league.id),
       headers: owner.headers,
-      payload: {
-        iconKey: 'SOCCER_BALL',
-      },
+      payload: { name: 'Should Not Save', ...icon },
     });
 
-    expect(updateRes.statusCode).toBe(200);
-    expect(LeagueResponseSchema.safeParse(updateRes.json()).success).toBe(true);
+    expect(updateRes.statusCode).toBe(400);
+    expect(ErrorEnvelopeSchema.safeParse(updateRes.json()).success).toBe(true);
+    const stored = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.leagues.byCode(league.leagueCode),
+      headers: owner.headers,
+    });
+    expect(stored.json<LeagueContextResponse>().league).toMatchObject({ name: league.name, iconKey: league.iconKey });
   });
 
   it('team lifecycle routes match Squad DTOs', async () => {

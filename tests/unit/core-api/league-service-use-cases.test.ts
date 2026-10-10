@@ -215,8 +215,7 @@ describe('LeagueService — lifecycle', () => {
   it.each([
     ['inactivateLeague', (service: LeagueService) => service.inactivateLeague('missing')],
     ['activateLeague', (service: LeagueService) => service.activateLeague('missing')],
-    ['updateLeagueDetails', (service: LeagueService) => service.updateLeagueDetails('missing', { name: 'x' })],
-    ['updateLeagueIcon', (service: LeagueService) => service.updateLeagueIcon('missing', { iconKey: LeagueIconKey.TROPHY })],
+    ['updateLeagueDetails', (service: LeagueService) => service.updateLeagueDetails('missing', { name: 'x', iconKey: LeagueIconKey.TROPHY })],
     ['deleteInactiveLeague', (service: LeagueService) => service.deleteInactiveLeague('missing', 'X')],
   ])('%s on an unknown league throws LeagueNotFoundError naming the league', async (_name, act) => {
     const attempt = act(serviceFor(inMemoryLeagueWorld()));
@@ -230,7 +229,7 @@ describe('LeagueService — editing details and icon', () => {
     const world = inMemoryLeagueWorld();
     const league = world.addLeague({ name: 'Old', description: 'Old text' });
 
-    await serviceFor(world).updateLeagueDetails(league.id, { name: 'New', description: '  New text  ' });
+    await serviceFor(world).updateLeagueDetails(league.id, { name: 'New', description: '  New text  ', iconKey: LeagueIconKey.TROPHY });
 
     expect(world.tables.leagues.get(league.id)).toMatchObject({ name: 'New', description: 'New text' });
   });
@@ -239,7 +238,7 @@ describe('LeagueService — editing details and icon', () => {
     const world = inMemoryLeagueWorld();
     const league = world.addLeague({ description: 'Stale rules link' });
 
-    await serviceFor(world).updateLeagueDetails(league.id, { name: league.name, description: '   ' });
+    await serviceFor(world).updateLeagueDetails(league.id, { name: league.name, description: '   ', iconKey: league.iconKey });
 
     expect(world.tables.leagues.get(league.id)?.description ?? null).toBeNull();
   });
@@ -248,32 +247,37 @@ describe('LeagueService — editing details and icon', () => {
     const world = inMemoryLeagueWorld();
     const league = world.addLeague({ description: 'Old text' });
 
-    await serviceFor(world).updateLeagueDetails(league.id, { name: 'Renamed' });
+    await serviceFor(world).updateLeagueDetails(league.id, { name: 'Renamed', iconKey: league.iconKey });
 
-    expect(world.tables.leagues.get(league.id)).toMatchObject({ name: 'Renamed' });
+    expect(world.tables.leagues.get(league.id)).toMatchObject({ name: 'Renamed', iconKey: league.iconKey });
     expect(world.tables.leagues.get(league.id)?.description ?? null).toBeNull();
   });
 
-  it('refuses detail and icon edits on an inactive league with the read-only codes, leaving it unchanged', async () => {
+  it('refuses edits on an inactive league with LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE, leaving name and icon unchanged', async () => {
     const world = inMemoryLeagueWorld();
-    const league = world.addLeague({ name: 'Frozen', isActive: false });
+    const league = world.addLeague({ name: 'Frozen', isActive: false, iconKey: LeagueIconKey.TROPHY });
     const service = serviceFor(world);
 
-    await expect(service.updateLeagueDetails(league.id, { name: 'Thawed' }))
+    await expect(service.updateLeagueDetails(league.id, { name: 'Thawed', iconKey: LeagueIconKey.SOCCER_BALL }))
       .rejects.toMatchObject({ code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE', statusCode: 400 });
-    await expect(service.updateLeagueIcon(league.id, { iconKey: LeagueIconKey.TROPHY }))
-      .rejects.toMatchObject({ code: 'LEAGUE_ICON_READ_ONLY_WHEN_INACTIVE' });
-    expect(world.tables.leagues.get(league.id)?.name).toBe('Frozen');
+    expect(world.tables.leagues.get(league.id)).toMatchObject({ name: 'Frozen', iconKey: LeagueIconKey.TROPHY });
   });
 
-  it('stores a new icon on an active league', async () => {
+  it('stores a new icon together with the name and description in the same save', async () => {
     const world = inMemoryLeagueWorld();
-    const league = world.addLeague();
-    const iconKey = expectDefined(Object.values(LeagueIconKey).find((key) => key !== LeagueIconKey.TROPHY));
+    const league = world.addLeague({ name: 'Old', iconKey: LeagueIconKey.TROPHY });
 
-    await serviceFor(world).updateLeagueIcon(league.id, { iconKey });
+    await serviceFor(world).updateLeagueDetails(league.id, {
+      name: 'New',
+      description: 'New text',
+      iconKey: LeagueIconKey.SOCCER_BALL,
+    });
 
-    expect(world.tables.leagues.get(league.id)?.iconKey).toBe(iconKey);
+    expect(world.tables.leagues.get(league.id)).toMatchObject({
+      name: 'New',
+      description: 'New text',
+      iconKey: LeagueIconKey.SOCCER_BALL,
+    });
   });
 });
 

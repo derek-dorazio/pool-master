@@ -2428,17 +2428,7 @@
               "trim"
             ],
             "description": "Optional updated commissioner-facing league description. Omit or send an empty value to clear it."
-          }
-        },
-        "required": [
-          "name"
-        ],
-        "additionalProperties": false,
-        "description": "Commissioner request payload for editing league details while the league remains active."
-      },
-      "UpdateLeagueIconRequest": {
-        "type": "object",
-        "properties": {
+          },
           "iconKey": {
             "type": "string",
             "enum": [
@@ -2463,14 +2453,15 @@
               "WHISTLE",
               "STOPWATCH"
             ],
-            "description": "Selected built-in league icon from the curated PoolMaster icon catalog."
+            "description": "Built-in league icon from the curated PoolMaster icon catalog. Send the current icon to keep it."
           }
         },
         "required": [
+          "name",
           "iconKey"
         ],
         "additionalProperties": false,
-        "description": "Commissioner request payload for selecting a built-in league icon."
+        "description": "Commissioner request payload for editing league details while the league remains active. Name, description and icon are replaced together, so a save either applies all three or none."
       },
       "SendLeagueInvitationsRequest": {
         "type": "object",
@@ -24682,75 +24673,13 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Allows a commissioner to edit the active league detail fields that are currently product truth: name and description. League code remains immutable after creation.",
+        "description": "Allows a commissioner to edit an active league's name, description and built-in icon in one request, so the change applies whole or not at all. League code remains immutable after creation.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateLeagueDetailsRequest"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Single-league response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LeagueResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/leagues/{id}/icon": {
-      "put": {
-        "operationId": "updateLeagueIcon",
-        "summary": "Update league icon",
-        "tags": [
-          "Leagues"
-        ],
-        "description": "Allows a commissioner to select a built-in league icon from the curated PoolMaster icon catalog. Custom uploads remain out of scope for this slice.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateLeagueIconRequest"
               }
             }
           }
