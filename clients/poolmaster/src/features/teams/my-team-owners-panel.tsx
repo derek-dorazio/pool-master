@@ -12,6 +12,13 @@ import type { MyTeamOwners } from './use-my-team-owners';
 
 type LeagueMembersByUserId = ReturnType<typeof useLeagueMembersQuery>['membersByUserId'];
 
+const OWNER_INVITATION_STATUS_LABELS: Record<SquadOwnerInvitationStatus, string> = {
+  [SquadOwnerInvitationStatus.PENDING]: 'Pending',
+  [SquadOwnerInvitationStatus.ACCEPTED]: 'Accepted',
+  [SquadOwnerInvitationStatus.EXPIRED]: 'Expired',
+  [SquadOwnerInvitationStatus.REVOKED]: 'Revoked',
+};
+
 /** Co-owner invites, the active owner list, pending invites, and replace owner. */
 export function MyTeamOwnersPanel({
   owners,
@@ -117,7 +124,6 @@ export function MyTeamOwnersPanel({
                     </span>
                   ) : null}
                 </div>
-                <div className="text-sm text-muted-foreground">{member.userId}</div>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <TeamOwnerActionMenu
@@ -164,7 +170,8 @@ export function MyTeamOwnersPanel({
                 <div>
                   <div className="font-medium text-foreground">{invitation.email}</div>
                   <div className="text-sm text-muted-foreground">
-                    {invitation.status} {invitation.replacementForUserId ? '· Replacement invite' : ''}
+                    {OWNER_INVITATION_STATUS_LABELS[invitation.status]}
+                    {invitation.replacementForUserId ? ' · Replacement invite' : ''}
                   </div>
                 </div>
                 {invitation.status === SquadOwnerInvitationStatus.PENDING ? (
