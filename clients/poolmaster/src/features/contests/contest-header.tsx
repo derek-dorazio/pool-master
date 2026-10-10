@@ -8,7 +8,7 @@ import {
 import { SegmentedControl, Tile } from '@/features/shared/ui';
 
 /** The contest pages a member moves between. */
-export type ContestView = 'entries' | 'leaderboard' | 'my-entry';
+type ContestView = 'entries' | 'leaderboard' | 'my-entry';
 
 /**
  * Entries, Leaderboard and My entry for one contest. Leaderboard appears once picks are revealed,

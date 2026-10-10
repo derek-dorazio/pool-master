@@ -43,11 +43,7 @@ export { IconAvatar, IconBadge } from "./icon-avatar";
 export { IconPalette } from "./icon-palette";
 export { IdentityHeading } from "./identity-heading";
 export { ListCard, ListEmptyRow, ListStack } from "./list-card";
-export {
-  ResponsiveGridLayout,
-  SplitContentLayout,
-  SummaryMediaLayout,
-} from "./layout-presets";
+export { SplitContentLayout } from "./layout-presets";
 export { DefinitionList, MetricGrid, MetricTile } from "./metric-grid";
 export { SelectableDataGrid } from "./selectable-data-grid";
 export type { SelectableDataGridProps } from "./selectable-data-grid";
