@@ -1153,6 +1153,24 @@ describe('SelectionService budget rooms (#93): the cap blocks submitting, never 
       cheapestFill: 40,
     });
   });
+
+  it.each([
+    { isExclusive: true, cheapestFill: 80 },
+    { isExclusive: false, cheapestFill: 40 },
+  ])('prices the cheapest fill without golfers another entry holds only when exclusive is $isExclusive', async ({ isExclusive, cheapestFill }) => {
+    const { service } = setup({
+      ...BUDGET,
+      configuration: { ...BUDGET.configuration, isExclusive },
+      picks: [
+        pick('pick-b', 'p-b', 'sep-b', { lineupSlot: 1 }),
+        pick('pick-other', 'p-d', 'sep-d', { entryId: OTHER_ENTRY_ID, lineupSlot: 1 }),
+      ],
+    });
+
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+
+    expect(view.lineupSummary).toMatchObject({ openSlots: 1, cheapestFill });
+  });
 });
 
 // Exclusivity is the shared handler's, not an engine's (#198): it is driven by the contest's
