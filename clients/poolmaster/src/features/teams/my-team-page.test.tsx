@@ -17,6 +17,7 @@ import {
   updateLeagueSquadData,
 } from '@/features/leagues/test/fixtures';
 import type { LeagueDto, SquadDto } from '@/lib/api';
+import { QueryKeys } from '@/lib/query-keys';
 import { MyTeamEditPage } from './my-team-edit-page';
 import { MyTeamPage } from './my-team-page';
 import { TeamPage } from './team-page';
@@ -49,7 +50,7 @@ bindApiMocks({
 
 function renderTeamRoutes(path = '/league/BIGDAWGS/team') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <MemoryRouter initialEntries={[path]}>
@@ -63,6 +64,7 @@ function renderTeamRoutes(path = '/league/BIGDAWGS/team') {
       </AuthProvider>
     </QueryClientProvider>,
   );
+  return { ...view, queryClient };
 }
 
 const coOwner = buildLeagueSquadMember({
@@ -304,6 +306,36 @@ describe('My team › Owners', () => {
     await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Replacement owner email' })).not.toBeInTheDocument());
   });
 
+  it('shows a failed replacement\'s reason and keeps the Replace owner form open with the email', async () => {
+    primeTeam({ squads: [buildLeagueSquad({ members: [buildLeagueSquadMember(), coOwner], memberCount: 2 })] });
+    replaceSquadOwnerMock.mockResolvedValue({
+      error: { error: { code: 'SQUAD_OWNER_EMAIL_IN_LEAGUE', message: 'That person is already in this league.' } },
+    });
+
+    renderTeamRoutes();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Replace owner' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replacement owner email' }), { target: { value: 'taken@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Replace' }));
+
+    expect(await screen.findByText('That person is already in this league.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Replacement owner email' })).toHaveValue('taken@example.com');
+  });
+
+  it('names each owner without their account id and words pending invites as Pending and Replacement invite', async () => {
+    primeTeam();
+    listSquadOwnerInvitationsMock.mockResolvedValue(apiSuccess({
+      invitations: [{ ...pendingOwnerInvite, replacementForUserId: 'user-2' }],
+    }));
+
+    renderTeamRoutes();
+
+    const invite = await screen.findByTestId('my-team-owner-invitation-owner-invite-1');
+    expect(invite).toHaveTextContent('Pending · Replacement invite');
+    expect(invite).not.toHaveTextContent('PENDING');
+    expect(screen.getByTestId('my-team-member-user-1')).not.toHaveTextContent('user-1');
+  });
+
   it('shows the reason when revoking a pending owner invite fails', async () => {
     primeTeam();
     listSquadOwnerInvitationsMock.mockResolvedValue(apiSuccess({ invitations: [pendingOwnerInvite] }));
@@ -351,6 +383,38 @@ describe('My team › Edit team', () => {
       path: { id: 'league-1', squadId: 'team-1' },
       body: { name: 'Renamed', iconKey: TeamIconKey.HELMET_BOLT_MIDNIGHT },
     }));
+  });
+
+  it('shows the reason and keeps the typed name and chosen icon when saving is rejected', async () => {
+    primeTeam();
+    updateLeagueSquadMock.mockResolvedValue({
+      error: { error: { code: 'SQUAD_NAME_TAKEN', message: 'Another team in this league already uses that name.' } },
+    });
+
+    renderTeamRoutes('/league/BIGDAWGS/team/edit');
+
+    fireEvent.change(await screen.findByTestId('edit-team-name'), { target: { value: 'Rival Squad' } });
+    fireEvent.click(screen.getByTestId(`team-icon-${TeamIconKey.HELMET_BOLT_MIDNIGHT}`));
+    fireEvent.click(screen.getByTestId('edit-team-save'));
+
+    expect(await screen.findByText('Another team in this league already uses that name.')).toBeInTheDocument();
+    expect(screen.getByTestId('edit-team-name')).toHaveValue('Rival Squad');
+    expect(screen.getByTestId(`team-icon-${TeamIconKey.HELMET_BOLT_MIDNIGHT}`)).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('keeps an unsaved name when the team list refetches with new server data', async () => {
+    primeTeam();
+    const { queryClient } = renderTeamRoutes('/league/BIGDAWGS/team/edit');
+
+    fireEvent.change(await screen.findByTestId('edit-team-name'), { target: { value: 'My draft name' } });
+    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
+      buildLeagueSquad({ name: 'Renamed elsewhere' }),
+      rivalTeam,
+    ])));
+    await queryClient.refetchQueries({ queryKey: QueryKeys.leagueTeams.byLeague('league-1') });
+
+    await waitFor(() => expect(listLeagueSquadsMock).toHaveBeenCalledTimes(2));
+    expect(screen.getByTestId('edit-team-name')).toHaveValue('My draft name');
   });
 
   it('sends the edit link back to My team while the league is inactive', async () => {
