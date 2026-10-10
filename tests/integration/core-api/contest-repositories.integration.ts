@@ -177,7 +177,6 @@ describe('ContestRepository', () => {
       data: {
         contestId: contest.id,
         selectionType: 'TIERED',
-        rosterSize: 1,
         participantScoringRules: {
           create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },
         },
