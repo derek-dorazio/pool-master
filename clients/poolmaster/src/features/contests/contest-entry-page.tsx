@@ -13,6 +13,7 @@ import { parseRouteState } from '@/routes/route-state';
 import {
   Alert,
   DefinitionList,
+  formatDollars,
   ErrorState,
   formatDateTimeDisplay,
   FormField,
@@ -30,6 +31,14 @@ import {
   TiebreakerSelector,
   type SelectionGroup,
 } from './contest-entry-selection';
+import { BudgetLineupBuilder, LockedBudgetLineup } from './contest-entry-budget';
+import {
+  buildPickedAtById,
+  CONTEST_ENTRY_CODE_MESSAGES,
+  getNextSelectedParticipantIds,
+  isEnterableSelectionType,
+  LINEUP_RULES,
+} from './contest-entry-lineup';
 import {
   areContestEntriesOpen,
   CONTEST_ENTRY_STATUS_LABELS,
@@ -84,75 +93,6 @@ function getCompletionStats(selectionGroups: SelectionGroup[]) {
 
 function getNextIncompleteGroupId(selectionGroups: SelectionGroup[]) {
   return selectionGroups.find((group) => group.selectedParticipantIds.length < group.picksFromGroup)?.groupId ?? null;
-}
-
-/**
- * When each of the entry's golfers was picked, by sport-event participant id. A full tier's swap
- * displaces the tier's most recently picked golfer on the server, and the tier's list is in tier
- * order, not pick order, so the optimistic swap needs this to drop the same one.
- */
-function buildPickedAtById(selectionState: SelectionState, entryId: string): Map<string, string> {
-  return new Map(
-    (selectionState.pickHistories ?? [])
-      .flatMap((pick) => (pick.entryId === entryId && pick.participantId
-        ? [[pick.participantId, pick.pickedAt] as const]
-        : [])),
-  );
-}
-
-function getNextSelectedParticipantIds(
-  group: SelectionGroup,
-  participantId: string,
-  pickedAtById: ReadonlyMap<string, string>,
-) {
-  if (group.selectedParticipantIds.includes(participantId)) {
-    return group.selectedParticipantIds.filter((selectedParticipantId) => selectedParticipantId !== participantId);
-  }
-
-  if (group.selectedParticipantIds.length >= group.picksFromGroup) {
-    // A golfer with no pick time is treated as the oldest, so it is never the one displaced.
-    const newest = group.selectedParticipantIds.reduce((latest, candidate) =>
-      (pickedAtById.get(candidate) ?? '') >= (pickedAtById.get(latest) ?? '') ? candidate : latest);
-    return [...group.selectedParticipantIds.filter((selectedParticipantId) => selectedParticipantId !== newest), participantId];
-  }
-
-  return Array.from(new Set([...group.selectedParticipantIds, participantId]));
-}
-
-function applyOptimisticSelection(selectionState: SelectionState, participantId: string, entryId: string): SelectionState {
-  const selectionGroups = selectionState.selectionGroups ?? [];
-  const pickedAtById = buildPickedAtById(selectionState, entryId);
-  const nextSelectionGroups = selectionGroups.map((group) => {
-    if (!group.participants.some((participant) => participant.sportEventParticipantId === participantId)) {
-      return group;
-    }
-
-    const selectedParticipantIds = getNextSelectedParticipantIds(group, participantId, pickedAtById);
-    const selectedIdSet = new Set(selectedParticipantIds);
-
-    return {
-      ...group,
-      selectedParticipantIds,
-      participants: group.participants.map((participant) => ({
-        ...participant,
-        isSelected: selectedIdSet.has(participant.sportEventParticipantId),
-      })),
-    };
-  });
-  const totalSelections = nextSelectionGroups.reduce(
-    (sum, group) => sum + group.selectedParticipantIds.length,
-    0,
-  );
-  const requiredSelections = nextSelectionGroups.reduce(
-    (sum, group) => sum + group.picksFromGroup,
-    0,
-  );
-
-  return {
-    ...selectionState,
-    selectionGroups: nextSelectionGroups,
-    isComplete: requiredSelections > 0 && totalSelections >= requiredSelections,
-  };
 }
 
 export function ContestEntryPage() {
@@ -470,11 +410,12 @@ export function ContestEntryPage() {
       );
       await queryClient.cancelQueries({ queryKey: selectionStateQueryKey });
       const previousSelectionState = queryClient.getQueryData<SelectionState>(selectionStateQueryKey);
+      const selectionType = previousSelectionState?.selectionType;
 
-      if (previousSelectionState) {
+      if (previousSelectionState && selectionType && isEnterableSelectionType(selectionType)) {
         queryClient.setQueryData<SelectionState>(
           selectionStateQueryKey,
-          applyOptimisticSelection(previousSelectionState, participantId, entryId),
+          LINEUP_RULES[selectionType].applySelection(previousSelectionState, participantId, entryId),
         );
       }
 
@@ -611,10 +552,16 @@ export function ContestEntryPage() {
     selectedTiebreakerValue !== null
     && Number.isFinite(selectedTiebreakerValue)
     && TIEBREAKER_OPTIONS.includes(selectedTiebreakerValue);
+  const isBudget = contest.selectionType === SelectionType.BUDGET_PICK;
+  const lineupSummary = picksHidden ? null : selectionState.lineupSummary ?? null;
+  const submitBlockedReason = !picksHidden && isEnterableSelectionType(contest.selectionType)
+    ? LINEUP_RULES[contest.selectionType].submitBlockedReason(selectionState)
+    : null;
   const finalSubmitDisabled =
     !isMyEntry
     || !isEditable
     || !lineupComplete
+    || submitBlockedReason !== null
     || !hasSelectedTiebreaker
     || saveEntryDetailsMutation.isPending
     || submitEntryMutation.isPending
@@ -634,7 +581,7 @@ export function ContestEntryPage() {
     });
   }
 
-  if (contest.selectionType !== SelectionType.TIERED) {
+  if (!isEnterableSelectionType(contest.selectionType)) {
     return (
       <ErrorState
         action={(
@@ -642,7 +589,7 @@ export function ContestEntryPage() {
             Back to contest
           </LinkButton>
         )}
-        body="Only tiered contests can be entered here."
+        body="Only tiered and budget contests can be entered here."
         title="This contest can't be entered here."
       />
     );
@@ -704,11 +651,19 @@ export function ContestEntryPage() {
 
       <Tile>
         <MetricGrid className="md:grid-cols-4">
-          <MetricTile
-            helperText={picksHidden ? HIDDEN_PICKS_HELPER : 'Tiers complete'}
-            label="Tier progress"
-            value={picksHidden ? 'Hidden' : `${completionStats.completedTiers}/${selectionGroups.length || 0}`}
-          />
+          {isBudget ? (
+            <MetricTile
+              helperText={picksHidden ? HIDDEN_PICKS_HELPER : lineupSummary ? `Of the ${formatDollars(lineupSummary.salaryCap)} salary cap` : 'Salary cap'}
+              label="Spent"
+              value={picksHidden || !lineupSummary ? 'Hidden' : formatDollars(lineupSummary.spent)}
+            />
+          ) : (
+            <MetricTile
+              helperText={picksHidden ? HIDDEN_PICKS_HELPER : 'Tiers complete'}
+              label="Tier progress"
+              value={picksHidden ? 'Hidden' : `${completionStats.completedTiers}/${selectionGroups.length || 0}`}
+            />
+          )}
           <MetricTile
             helperText={picksHidden ? HIDDEN_PICKS_HELPER : 'Lineup slots filled'}
             label="Picks saved"
@@ -739,7 +694,9 @@ export function ContestEntryPage() {
                 ? HIDDEN_PICKS_HELPER
                 : isEditable
                 ? nextIncompleteGroupId
-                  ? `Next focus: ${selectionGroups.find((group) => group.groupId === nextIncompleteGroupId)?.groupName ?? 'Open tier'}`
+                  ? isBudget
+                    ? `${completionStats.requiredSelections - completionStats.totalSelections} golfers still to pick`
+                    : `Next focus: ${selectionGroups.find((group) => group.groupId === nextIncompleteGroupId)?.groupName ?? 'Open tier'}`
                   : 'Lineup is fully selected'
                 : 'Entry editing is closed'
             }
@@ -814,7 +771,21 @@ export function ContestEntryPage() {
                 This team&apos;s picks stay hidden until the contest locks.
               </Alert>
             ) : null}
-            {selectionGroups.map((group) => {
+            {isBudget ? selectionGroups.map((group) => (isEditable ? (
+              <BudgetLineupBuilder
+                canSelect={isMyEntry}
+                group={group}
+                isBusy={submitSelectionMutation.isPending}
+                key={group.groupId}
+                onParticipantSelect={(participant) => {
+                  // A refused pick is shown by the mutation's error state and rolled back there.
+                  void submitSelectionMutation.mutateAsync(participant.sportEventParticipantId).catch(() => undefined);
+                }}
+                summary={lineupSummary}
+              />
+            ) : (
+              <LockedBudgetLineup group={group} key={group.groupId} summary={lineupSummary} />
+            ))) : selectionGroups.map((group) => {
               if (!isEditable) {
                 return <LockedSelectionGroup group={group} key={group.groupId} />;
               }
@@ -877,13 +848,25 @@ export function ContestEntryPage() {
 
             {submitSelectionMutation.isError ? (
               <Alert tone="danger">
-                {extractErrorMessage(submitSelectionMutation.error, { fallback: 'We could not save this entry right now.' })}
+                {extractErrorMessage(submitSelectionMutation.error, {
+                  codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
+                  fallback: 'We could not save this entry right now.',
+                })}
               </Alert>
             ) : null}
 
             {submitEntryMutation.isError ? (
               <Alert data-testid="contest-entry-submit-error" tone="danger">
-                {extractErrorMessage(submitEntryMutation.error, { fallback: 'We could not submit this entry right now.' })}
+                {extractErrorMessage(submitEntryMutation.error, {
+                  codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
+                  fallback: 'We could not submit this entry right now.',
+                })}
+              </Alert>
+            ) : null}
+
+            {isEditable && isMyEntry && lineupComplete && submitBlockedReason ? (
+              <Alert data-testid="contest-entry-submit-blocked" tone="danger">
+                {submitBlockedReason}
               </Alert>
             ) : null}
 

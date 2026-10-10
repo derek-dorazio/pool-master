@@ -1191,3 +1191,173 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     });
   });
 });
+
+describe('ContestEntryPage — a budget entry (#93)', () => {
+  afterEach(() => {
+    getContestMock.mockReset();
+    getSelectionStateMock.mockReset();
+    getEventMock.mockReset();
+    getLeagueMock.mockReset();
+    listContestEntriesMock.mockReset();
+    submitContestEntryMock.mockReset();
+    submitContestSelectionMock.mockReset();
+    updateContestEntryMock.mockReset();
+  });
+
+  // Two golfers under a $15,000 cap. Scheffler $9,000, McIlroy $7,000, Spieth $4,000.
+  const PRICES: Record<string, number> = { 'sep-1': 9000, 'sep-2': 7000, 'sep-3': 4000 };
+  const NAMES: Record<string, string> = { 'sep-1': 'Scottie Scheffler', 'sep-2': 'Rory McIlroy', 'sep-3': 'Jordan Spieth' };
+
+  function budgetState(selectedParticipantIds: string[], summary: Record<string, unknown> = {}) {
+    const field = {
+      groupId: 'field',
+      groupName: 'Field',
+      groupNumber: 1,
+      picksFromGroup: 2,
+      selectedParticipantIds,
+      participants: Object.keys(PRICES).map((id, index) => ({
+        ...buildGolfParticipant(id, NAMES[id] ?? id, index + 1, selectedParticipantIds.includes(id)),
+        price: PRICES[id] ?? null,
+      })),
+    };
+    const spent = selectedParticipantIds.reduce((sum, id) => sum + (PRICES[id] ?? 0), 0);
+    return {
+      ...buildSelectionState([field]),
+      selectionType: 'BUDGET_PICK',
+      lineupSummary: {
+        selectionType: 'BUDGET_PICK',
+        salaryCap: 15000,
+        spent,
+        remaining: 15000 - spent,
+        isOverBudget: spent > 15000,
+        openSlots: 2 - selectedParticipantIds.length,
+        cheapestFill: selectedParticipantIds.length === 2 ? 0 : 4000,
+        ...summary,
+      },
+    };
+  }
+
+  function primeBudgetMocks(selectedParticipantIds: string[], summary?: Record<string, unknown>) {
+    primeCommonMocks();
+    getContestMock.mockResolvedValue({
+      data: {
+        contest: {
+          id: 'contest-1',
+          leagueId: 'league-1',
+          name: 'Bohler Masters Budget',
+          status: 'OPEN',
+          contestType: 'ROSTER',
+          selectionType: 'BUDGET_PICK',
+          scoringEngine: 'STROKE_PLAY',
+        },
+      },
+    });
+    getSelectionStateMock.mockResolvedValue({ data: budgetState(selectedParticipantIds, summary) });
+  }
+
+  it('lists the field with prices and shows the spend against the cap, with what is left per open place', async () => {
+    primeBudgetMocks(['sep-2']);
+
+    renderContestEntryPage();
+
+    expect(await screen.findByTestId('contest-entry-spend-bar')).toHaveTextContent('Spent $7,000 of $15,000');
+    expect(screen.getByTestId('contest-entry-budget-remaining')).toHaveTextContent('$8,000 left');
+    expect(screen.getByTestId('contest-entry-budget-per-place')).toHaveTextContent('About $8,000 per place');
+    expect(screen.getByTestId('contest-entry-participant-sep-1')).toHaveTextContent('$9,000');
+    expect(screen.getByTestId('contest-entry-selected-sep-2')).toHaveTextContent('Rory McIlroy · $7,000');
+    expect(screen.queryByText('This contest can\'t be entered here.')).not.toBeInTheDocument();
+  });
+
+  it('adds a golfer that takes the entry over the cap, then turns the spend red and keeps Submit disabled with the reason', async () => {
+    primeBudgetMocks(['sep-2']);
+    const deferred = createDeferred<unknown>();
+    submitContestSelectionMock.mockReturnValue(deferred.promise);
+
+    renderContestEntryPage();
+
+    fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-1'));
+
+    // Before the server answers, the spend already counts Scheffler.
+    expect(await screen.findByTestId('contest-entry-over-budget')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-budget-remaining')).toHaveTextContent('$1,000 over the cap');
+    expect(submitContestSelectionMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { entryId: 'entry-1', participantId: 'sep-1' },
+    }));
+
+    await act(async () => {
+      deferred.resolve({ data: budgetState(['sep-2', 'sep-1']) });
+      await deferred.promise;
+    });
+    fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-select'), { target: { value: '-12' } });
+
+    expect(screen.getByTestId('contest-entry-submit-blocked')).toHaveTextContent(
+      'Your golfers cost $16,000, over the $15,000 salary cap. Remove a golfer to get under it, then submit.',
+    );
+    expect(screen.getByTestId('contest-entry-submit')).toBeDisabled();
+  });
+
+  it('removes a picked golfer when their chip is tapped', async () => {
+    primeBudgetMocks(['sep-1', 'sep-2']);
+    submitContestSelectionMock.mockResolvedValue({ data: budgetState(['sep-1']) });
+
+    renderContestEntryPage();
+
+    fireEvent.click(await screen.findByTestId('contest-entry-selected-sep-2'));
+
+    await waitFor(() => expect(submitContestSelectionMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { entryId: 'entry-1', participantId: 'sep-2' },
+    })));
+    await waitFor(() => expect(screen.queryByTestId('contest-entry-selected-sep-2')).not.toBeInTheDocument());
+  });
+
+  it('holds new golfers back once the roster is full, so the only way in is to remove someone', async () => {
+    primeBudgetMocks(['sep-2', 'sep-3']);
+
+    renderContestEntryPage();
+
+    const scheffler = await screen.findByTestId('contest-entry-participant-sep-1');
+    expect(scheffler).toBeDisabled();
+    expect(scheffler).toHaveTextContent('Roster full');
+    expect(screen.getByTestId('contest-entry-participant-sep-2')).toBeEnabled();
+  });
+
+  it('narrows the price list to golfers whose name matches the search', async () => {
+    primeBudgetMocks([]);
+
+    renderContestEntryPage();
+
+    fireEvent.change(await screen.findByTestId('contest-entry-budget-search'), { target: { value: 'spie' } });
+
+    expect(screen.getByTestId('contest-entry-participant-sep-3')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-participant-sep-1')).not.toBeInTheDocument();
+  });
+
+  it('warns, without blocking, when the cheapest golfers left cost more than is left for the open places', async () => {
+    primeBudgetMocks(['sep-1'], { cheapestFill: 7000, remaining: 6000 });
+
+    renderContestEntryPage();
+
+    expect(await screen.findByTestId('contest-entry-budget-unfillable')).toHaveTextContent(
+      'The cheapest golfers left for your 1 place cost $7,000, more than you have left.',
+    );
+    expect(screen.getByTestId('contest-entry-participant-sep-3')).toBeEnabled();
+  });
+
+  it('says in plain words when the server refuses to submit an entry over the cap', async () => {
+    primeBudgetMocks(['sep-2', 'sep-3']);
+    updateContestEntryMock.mockResolvedValue({ data: { entry: { id: 'entry-1' } } });
+    submitContestEntryMock.mockResolvedValue({
+      error: { error: { code: 'ENTRY_OVER_BUDGET', message: 'server sentence' } },
+      status: 409,
+    });
+
+    renderContestEntryPage();
+
+    fireEvent.change(await screen.findByTestId('contest-entry-tiebreaker-select'), { target: { value: '-12' } });
+    fireEvent.click(screen.getByTestId('contest-entry-submit'));
+
+    expect(await screen.findByTestId('contest-entry-submit-error')).toHaveTextContent(
+      'Your golfers cost more than the salary cap. Remove a golfer to get under it, then submit.',
+    );
+  });
+});

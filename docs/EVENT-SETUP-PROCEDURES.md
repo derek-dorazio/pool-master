@@ -131,7 +131,11 @@ As a commissioner of a test league (root admin is not needed):
    as a draft and you land on its page in Commissioner tools, which checks the event is ready;
    press *Open to league* there to let members enter. Until then *Edit* changes its name and
    rules, and *Delete contest* sits in its danger zone.
-2. Submit entries from one or more test accounts while the contest is open.
+2. Submit entries from one or more test accounts while the contest is open. A budget entry
+   lists the field by price under a spend bar; it may go over the cap while you rearrange it,
+   but Submit stays disabled until it fits. To test the over-cap path, raise a few prices in
+   the Field grid before releasing the event: auto-pricing puts every unseeded golfer at the
+   same floor price, and a field priced that way can never go over the cap.
 
 ## 8. Go live
 

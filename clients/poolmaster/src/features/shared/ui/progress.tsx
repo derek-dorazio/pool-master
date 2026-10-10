@@ -4,6 +4,8 @@ type ProgressIndicatorProps = {
   className?: string;
   label: string;
   max?: number;
+  /** `danger` draws the bar in the destructive color, for a value past a limit. */
+  tone?: "default" | "danger";
   value: number;
 };
 
@@ -11,6 +13,7 @@ export function ProgressIndicator({
   className,
   label,
   max = 100,
+  tone = "default",
   value,
 }: ProgressIndicatorProps) {
   const boundedValue = Math.min(Math.max(value, 0), max);
@@ -31,7 +34,7 @@ export function ProgressIndicator({
         role="progressbar"
       >
         <div
-          className="h-full rounded-full bg-primary"
+          className={cn("h-full rounded-full", tone === "danger" ? "bg-destructive" : "bg-primary")}
           style={{ width: `${percentage}%` }}
         />
       </div>
