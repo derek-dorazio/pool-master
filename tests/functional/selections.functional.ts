@@ -777,7 +777,7 @@ describe('SDK Functional: Roster Selection', () => {
     expect(afterPickStateResponse.data?.availableParticipantIds).not.toContain(fixture.firstEventParticipantId);
     expect(afterPickStateResponse.data?.availableParticipantIds).toContain(fixture.secondEventParticipantId);
 
-    const duplicatePickResponse = await submitContestSelection({
+    const takenPickResponse = await submitContestSelection({
       client: fixture.challenger.client,
       path: {
         contestId: fixture.contestId,
@@ -788,7 +788,7 @@ describe('SDK Functional: Roster Selection', () => {
       },
     });
 
-    expectFunctionalError(duplicatePickResponse, {
+    expectFunctionalError(takenPickResponse, {
       status: 400,
       code: 'PARTICIPANT_ALREADY_TAKEN',
     });
@@ -832,6 +832,39 @@ describe('SDK Functional: Roster Selection', () => {
       await expect(getFunctionalPrisma().contestEntry.findUniqueOrThrow({ where: { id: fixture.commissionerEntryId } }))
         .resolves.toMatchObject({ status: 'DRAFT' });
     }
+  });
+
+  // #93: a full budget roster takes a new golfer only after one comes off, so a swap is unselect
+  // then pick. The unselect leaves the submitted entry short, which sends it back to DRAFT, and
+  // the dearer golfer leaves it over the cap, so it cannot count again until it fits.
+  it('sends a submitted budget entry back to DRAFT when it swaps to a golfer over the cap, and refuses to resubmit it', async () => {
+    const fixture = await seedBudgetPickFixture({ isExclusive: false, rosterSize: 1, salaryCap: 4000 });
+    const pickFor = (participantId: string) => submitContestSelection({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.commissionerEntryId, participantId },
+    });
+    const submit = () => submitContestEntry({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId },
+    });
+    const entryStatus = async () => (await getFunctionalPrisma().contestEntry.findUniqueOrThrow({
+      where: { id: fixture.commissionerEntryId },
+    })).status;
+
+    expect((await pickFor(fixture.firstEventParticipantId)).response.status).toBe(200);
+    expect((await submit()).response.status).toBe(200);
+    expect(await entryStatus()).toBe('SUBMITTED');
+
+    expect((await pickFor(fixture.firstEventParticipantId)).response.status).toBe(200);
+    const overCapRoom = await pickFor(fixture.secondEventParticipantId);
+    expect(overCapRoom.response.status).toBe(200);
+    expect(overCapRoom.data?.lineupSummary).toMatchObject({ spent: 5100, isOverBudget: true, openSlots: 0 });
+    expect(overCapRoom.data?.entries?.find((entry) => entry.id === fixture.commissionerEntryId)?.status).toBe('DRAFT');
+    expect(await entryStatus()).toBe('DRAFT');
+
+    expectFunctionalError(await submit(), { status: 409, code: 'ENTRY_OVER_BUDGET' });
+    expect(await entryStatus()).toBe('DRAFT');
   });
 
   it('reads a tiered room, submits a selection, and returns updated tiered state', async () => {

@@ -40,8 +40,6 @@ export type SelectionOutcomeKind = (typeof SelectionOutcomeKind)[keyof typeof Se
  * handler answers with, so the published codes do not change.
  */
 export const SelectionRejectCode = {
-  /** The participant is already on the entry, in a type with no unselect gesture. */
-  DUPLICATE_PICK: 'DUPLICATE_PICK',
   /** A budget selection of a participant with no price to spend against the cap (#93). */
   PRICE_MISSING: 'PRICE_MISSING',
   /** The roster is full and the selection displaces nothing. */
@@ -54,7 +52,6 @@ export const SelectionRejectCode = {
 export type SelectionRejectCode = (typeof SelectionRejectCode)[keyof typeof SelectionRejectCode];
 
 export type SelectionRejection =
-  | { kind: typeof SelectionOutcomeKind.REJECT; code: typeof SelectionRejectCode.DUPLICATE_PICK }
   | { kind: typeof SelectionOutcomeKind.REJECT; code: typeof SelectionRejectCode.ENTRY_COMPLETE }
   | { kind: typeof SelectionOutcomeKind.REJECT; code: typeof SelectionRejectCode.PRICE_MISSING }
   | { kind: typeof SelectionOutcomeKind.REJECT; code: typeof SelectionRejectCode.TIER_MISSING }
@@ -140,12 +137,11 @@ export interface SelectionEngine {
 
   /**
    * What the room tells the viewer about the viewed lineup beyond its picks, or null when the
-   * type has nothing to say. `field` is every selectable row, for what the open places could cost.
+   * type has nothing to say. `openField` is the golfers this entry could still add (available,
+   * not taken by another entry in an exclusive contest, and not already on it), for what the
+   * open places could cost.
    */
-  summarizeLineup(input: LineupInput & {
-    heldParticipantIds: ReadonlySet<string>;
-    field: readonly SelectionParticipant[];
-  }): LineupSummary | null;
+  summarizeLineup(input: LineupInput & { openField: readonly SelectionParticipant[] }): LineupSummary | null;
 
   /**
    * The round a pick shows in within the room's history. `tierNumber` is the tier the pick's

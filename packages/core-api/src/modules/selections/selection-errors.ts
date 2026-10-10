@@ -110,13 +110,6 @@ export const selectionErrors = {
       400,
     ),
 
-  duplicatePick: (participantId: string) =>
-    new SelectionError(
-      `SportEventParticipant ${participantId} is already on this entry`,
-      'DUPLICATE_PICK',
-      400,
-    ),
-
   participantAlreadyTaken: (participantId: string) =>
     new SelectionError(
       `SportEventParticipant ${participantId} is already selected by another entry`,

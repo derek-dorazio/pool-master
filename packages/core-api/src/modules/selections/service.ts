@@ -573,6 +573,7 @@ export class SelectionService {
     const selectedSportEventParticipantIds = new Set(
       selectedEntryPicks.map((pick) => pick.sportEventParticipantId),
     );
+    const availableSportEventParticipantIds = this.buildAvailableParticipantIds(context, picks);
 
     const isComplete =
       rosterSize > 0
@@ -605,7 +606,7 @@ export class SelectionService {
         engine,
       }),
       selectionGroups: this.buildSelectionGroups(context, engine, rosterSize, selectedSportEventParticipantIds),
-      availableSportEventParticipantIds: this.buildAvailableParticipantIds(context, picks),
+      availableSportEventParticipantIds: [...availableSportEventParticipantIds],
       myEntryId,
       selectedEntryId: resolvedSelectedEntryId,
       selectedEntryName: selectedEntry?.name ?? null,
@@ -629,8 +630,9 @@ export class SelectionService {
             participantId: pick.participant.participantId,
             price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
           })),
-          heldParticipantIds: new Set(selectedEntryPicks.map((pick) => pick.participant.participantId)),
-          field: context.selectionParticipants,
+          openField: context.selectionParticipants.filter((participant) =>
+            availableSportEventParticipantIds.has(participant.sportEventParticipantId)
+            && !selectedSportEventParticipantIds.has(participant.sportEventParticipantId)),
         })
         : null,
     };
@@ -712,16 +714,16 @@ export class SelectionService {
   private buildAvailableParticipantIds(
     context: SelectionContext,
     picks: readonly ContestEntryPickWithParticipant[],
-  ): string[] {
+  ): Set<string> {
     const takenSportEventParticipantIds = context.configuration?.isExclusive
       ? new Set(picks.map((pick) => pick.sportEventParticipantId))
       : null;
 
-    return context.selectionParticipants.flatMap((participant) => {
+    return new Set(context.selectionParticipants.flatMap((participant) => {
       if (!participant.isAvailable) return [];
       if (takenSportEventParticipantIds?.has(participant.sportEventParticipantId)) return [];
       return [participant.sportEventParticipantId];
-    });
+    }));
   }
 }
 
@@ -743,8 +745,6 @@ function rejectionError(
   request: { contestId: string; entryId: string; participantId: string; rosterSize: number },
 ): SelectionError {
   switch (rejection.code) {
-    case SelectionRejectCode.DUPLICATE_PICK:
-      return selectionErrors.duplicatePick(request.participantId);
     case SelectionRejectCode.ENTRY_COMPLETE:
       return selectionErrors.entryComplete(request.entryId, request.rosterSize);
     case SelectionRejectCode.PRICE_MISSING:

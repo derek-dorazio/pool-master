@@ -242,8 +242,7 @@ describe('tiered selection engine — groupField and summarizeLineup', () => {
       rosterSize: 3,
       tiers: TIERS,
       picks: [],
-      heldParticipantIds: new Set(),
-      field: [],
+      openField: [],
     })).toBeNull();
   });
 });
@@ -364,11 +363,11 @@ describe('budget-pick selection engine', () => {
   });
 
   describe('summarizeLineup', () => {
-    const field = [
-      pricedParticipant('held', 50),
+    // What the entry could still add; the room has already dropped held, taken and withdrawn rows.
+    const openField = [
       pricedParticipant('cheap', 10),
       pricedParticipant('mid', 20),
-      pricedParticipant('withdrawn', 1, false),
+      pricedParticipant('unpriced', undefined),
       pricedParticipant('dear', 90),
     ];
     const summarize = (salaryCap: number, rosterSize: number, heldPrices: number[]) =>
@@ -377,11 +376,10 @@ describe('budget-pick selection engine', () => {
         rosterSize,
         tiers: [],
         picks: heldPrices.map((price) => ({ participantId: 'held', price })),
-        heldParticipantIds: new Set(['held']),
-        field,
+        openField,
       });
 
-    it('reports spend, what is left, and what the cheapest available golfers not on the entry cost to fill its open places', () => {
+    it('reports spend, what is left, and what the cheapest priced golfers the entry could add cost to fill its open places', () => {
       expect(summarize(100, 3, [50])).toEqual({
         selectionType: SelectionType.BUDGET_PICK,
         salaryCap: 100,
@@ -397,7 +395,7 @@ describe('budget-pick selection engine', () => {
       expect(summarize(40, 1, [50])).toMatchObject({ remaining: -10, isOverBudget: true, openSlots: 0, cheapestFill: 0 });
     });
 
-    it('has no cheapest fill when the available field cannot fill the open places', () => {
+    it('has no cheapest fill when the priced golfers the entry could add cannot fill the open places', () => {
       expect(summarize(1_000, 6, [50])).toMatchObject({ openSlots: 5, cheapestFill: null });
     });
 
@@ -407,8 +405,7 @@ describe('budget-pick selection engine', () => {
         rosterSize: 2,
         tiers: [],
         picks: [],
-        heldParticipantIds: new Set(),
-        field,
+        openField,
       })).toBeNull();
     });
   });

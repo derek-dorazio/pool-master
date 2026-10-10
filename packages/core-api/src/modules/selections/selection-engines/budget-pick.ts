@@ -89,19 +89,15 @@ export const budgetPickSelectionEngine: SelectionEngine = {
     participants: [...participants].sort(byPriceDescending),
   }],
 
-  summarizeLineup: ({ configuration, rosterSize, picks, heldParticipantIds, field }) => {
+  summarizeLineup: ({ configuration, rosterSize, picks, openField }) => {
     const salaryCap = salaryCapOf(configuration);
     if (salaryCap === null) return null;
 
     const capCents = toCents(salaryCap);
     const spent = spentCents(picks);
     const openSlots = Math.max(0, rosterSize - picks.length);
-    const cheapestOpen = field
-      .flatMap((participant) => participant.isAvailable
-        && participant.price !== undefined
-        && !heldParticipantIds.has(participant.participantId)
-        ? [toCents(participant.price)]
-        : [])
+    const cheapestOpen = openField
+      .flatMap((participant) => participant.price === undefined ? [] : [toCents(participant.price)])
       .sort((left, right) => left - right)
       .slice(0, openSlots);
 
