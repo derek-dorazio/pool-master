@@ -240,6 +240,15 @@ describe('My team › Create team', () => {
     expect(screen.getByTestId('create-team-name')).toHaveValue('Derek Squad');
   });
 
+  it('says why Create team is unavailable while the league is inactive', async () => {
+    primeTeam({ league: { isActive: false }, squadId: null, squads: [] });
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('my-team-league-inactive')).toHaveTextContent('you can\'t create a team');
+    expect(screen.getByTestId('create-team-save')).toBeDisabled();
+  });
+
   it('tells a root admin who is not a member that they have no team here, with no Create team', async () => {
     primeTeam({ isMember: false, isRootAdmin: true, squadId: null });
 

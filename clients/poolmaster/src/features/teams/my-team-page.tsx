@@ -71,6 +71,11 @@ export function MyTeamPage() {
   if (!myTeam) {
     return (
       <section className="space-y-6" data-testid="my-team-page">
+        {viewer.isMember && isInactiveLeague ? (
+          <Alert data-testid="my-team-league-inactive" tone="warning">
+            This league is inactive, so you can&apos;t create a team.
+          </Alert>
+        ) : null}
         {viewer.isMember ? (
           <CreateTeamForm isInactiveLeague={isInactiveLeague} leagueCode={leagueCode} leagueId={leagueId} />
         ) : (
