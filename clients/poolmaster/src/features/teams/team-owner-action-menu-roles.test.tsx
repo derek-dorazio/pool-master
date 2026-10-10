@@ -14,7 +14,6 @@ function renderMenu(overrides: Partial<MenuProps> = {}) {
   const props: MenuProps = {
     activeOwnerCount: 2,
     canManageLeagueRole: true,
-    canRemoveOwner: true,
     leagueCode: 'BIGDAWGS',
     leagueId: 'league-1',
     ownerName: 'Jordan Rivers',
@@ -44,12 +43,6 @@ async function chooseAction(name: string) {
 }
 
 describe('TeamOwnerActionMenu by viewer role', () => {
-  it('renders nothing when the viewer can neither change the owner\'s role nor remove them', () => {
-    renderMenu({ canManageLeagueRole: false, canRemoveOwner: false });
-
-    expect(screen.queryByRole('button', { name: 'Owner actions' })).not.toBeInTheDocument();
-  });
-
   it('offers promote and remove, but not demote, for an owner who is a league member', () => {
     renderMenu({ ownerRole: 'MEMBER' });
 

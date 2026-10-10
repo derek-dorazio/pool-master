@@ -123,7 +123,6 @@ export function MyTeamOwnersPanel({
                 <TeamOwnerActionMenu
                   activeOwnerCount={activeMembers.length}
                   canManageLeagueRole={canManageAnyTeam}
-                  canRemoveOwner
                   leagueCode={leagueCode}
                   leagueId={leagueId}
                   ownerName={formatUserName(member.user.firstName, member.user.lastName)}
