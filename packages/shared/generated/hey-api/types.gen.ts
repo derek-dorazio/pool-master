@@ -4510,7 +4510,7 @@ export type SportEventDto = {
          */
         salaryCap: number;
         /**
-         * Whole dollars. Every price is rounded to a multiple of it.
+         * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
          */
         unit: number;
         /**
@@ -4691,7 +4691,7 @@ export type SportEventListResponse = {
              */
             salaryCap: number;
             /**
-             * Whole dollars. Every price is rounded to a multiple of it.
+             * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
              */
             unit: number;
             /**
@@ -4847,7 +4847,7 @@ export type SportEventResponse = {
              */
             salaryCap: number;
             /**
-             * Whole dollars. Every price is rounded to a multiple of it.
+             * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
              */
             unit: number;
             /**
@@ -5094,7 +5094,7 @@ export type ImportSportEventYearFromProviderResponse = {
              */
             salaryCap: number;
             /**
-             * Whole dollars. Every price is rounded to a multiple of it.
+             * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
              */
             unit: number;
             /**
@@ -5417,7 +5417,7 @@ export type EventPricingConfig = {
      */
     salaryCap: number;
     /**
-     * Whole dollars. Every price is rounded to a multiple of it.
+     * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
      */
     unit: number;
     /**
@@ -5447,7 +5447,7 @@ export type AutoAssignSportEventPricesRequest = {
      */
     salaryCap: number;
     /**
-     * Whole dollars. Every price is rounded to a multiple of it.
+     * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
      */
     unit: number;
     /**
@@ -8063,7 +8063,7 @@ export type BudgetPricingProfile = {
      */
     salaryCap: number;
     /**
-     * Whole dollars. Every price is rounded to a multiple of it.
+     * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
      */
     unit: number;
     /**
@@ -8097,7 +8097,7 @@ export type BudgetPricingConfig = {
          */
         salaryCap: number;
         /**
-         * Whole dollars. Every price is rounded to a multiple of it.
+         * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
          */
         unit: number;
         /**
@@ -8815,7 +8815,7 @@ export type SettingsGroup = {
              */
             salaryCap: number;
             /**
-             * Whole dollars. Every price is rounded to a multiple of it.
+             * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
              */
             unit: number;
             /**
@@ -8849,7 +8849,7 @@ export type SettingsGroup = {
              */
             salaryCap: number;
             /**
-             * Whole dollars. Every price is rounded to a multiple of it.
+             * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
              */
             unit: number;
             /**
@@ -9339,7 +9339,7 @@ export type SettingsGroupList = {
                  */
                 salaryCap: number;
                 /**
-                 * Whole dollars. Every price is rounded to a multiple of it.
+                 * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
                  */
                 unit: number;
                 /**
@@ -9373,7 +9373,7 @@ export type SettingsGroupList = {
                  */
                 salaryCap: number;
                 /**
-                 * Whole dollars. Every price is rounded to a multiple of it.
+                 * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
                  */
                 unit: number;
                 /**
@@ -9604,7 +9604,7 @@ export type SettingsGroupUpdateRequest = {
              */
             salaryCap: number;
             /**
-             * Whole dollars. Every price is rounded to a multiple of it.
+             * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
              */
             unit: number;
             /**
@@ -10061,7 +10061,7 @@ export type SettingsChange = {
              */
             salaryCap: number;
             /**
-             * Whole dollars. Every price is rounded to a multiple of it.
+             * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
              */
             unit: number;
             /**
@@ -10095,7 +10095,7 @@ export type SettingsChange = {
              */
             salaryCap: number;
             /**
-             * Whole dollars. Every price is rounded to a multiple of it.
+             * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
              */
             unit: number;
             /**
@@ -10552,7 +10552,7 @@ export type SettingsChangeList = {
                  */
                 salaryCap: number;
                 /**
-                 * Whole dollars. Every price is rounded to a multiple of it.
+                 * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
                  */
                 unit: number;
                 /**
@@ -10586,7 +10586,7 @@ export type SettingsChangeList = {
                  */
                 salaryCap: number;
                 /**
-                 * Whole dollars. Every price is rounded to a multiple of it.
+                 * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
                  */
                 unit: number;
                 /**

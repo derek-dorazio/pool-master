@@ -235,8 +235,6 @@ export interface SportEventParticipantValuationRepository {
   findBySportEvent(sportEventId: string): Promise<SportEventParticipantValuation[]>;
   /** Places field rows in tiers, all or none. Prices are untouched. */
   assignTiers(assignments: readonly TierAssignment[]): Promise<void>;
-  /** Prices field rows, all or none. Tiers are untouched. */
-  assignPrices(assignments: readonly PriceAssignment[]): Promise<void>;
   /**
    * Prices field rows and records on the event the values they were priced with, all or none
    * (#93). Tiers are untouched.

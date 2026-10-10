@@ -25,7 +25,7 @@ export const BudgetPricingValuesSchema = z.object({
   salaryCap: z.number().int().min(1).max(BUDGET_SALARY_CAP_MAX)
     .describe('Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.'),
   unit: z.number().int().min(1).max(BUDGET_SALARY_CAP_MAX)
-    .describe('Whole dollars. Every price is rounded to a multiple of it.'),
+    .describe('Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer\'s price.'),
   topSharePercent: z.number().min(0.1).max(100)
     .describe('The best seed\'s price, as a percentage of the salary cap.'),
   floorSharePercent: z.number().min(0.1).max(100)
@@ -62,8 +62,10 @@ export function findBudgetPricingProblem(values: BudgetPricingValues): string | 
   if (values.floorSharePercent > values.topSharePercent) {
     return 'The worst seed\'s share can\'t be above the best seed\'s.';
   }
-  if (values.unit > values.salaryCap) {
-    return 'The rounding unit can\'t be larger than the salary cap.';
+  // Rounding to a unit above the worst seed's price could take that price to $0.
+  const worstPrice = (values.salaryCap * values.floorSharePercent) / 100;
+  if (values.unit > worstPrice) {
+    return `The rounding unit can't be larger than the worst golfer's price, $${worstPrice.toLocaleString('en-US', { maximumFractionDigits: 2 })}.`;
   }
   return null;
 }

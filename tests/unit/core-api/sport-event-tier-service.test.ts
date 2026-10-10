@@ -157,7 +157,11 @@ describe('SportEventTierService — prices and the contest-side read', () => {
   it('reads a price-only valuation with no tier, which a read starting from the tiers would miss', async () => {
     const { store, event, service } = setup();
     const entry = store.addToField(event.id, 'p-budget');
-    await store.valuationRepo().assignPrices([{ sportEventParticipantId: entry.id, price: 12, source: 'MANUAL' }]);
+    await store.valuationRepo().assignEventPrices({
+      sportEventId: event.id,
+      pricingConfig: standardEventPricing(),
+      assignments: [{ sportEventParticipantId: entry.id, price: 12, source: 'MANUAL' }],
+    });
 
     await expect(service.getEffectiveValuationsForSportEvent(event.id)).resolves.toEqual([
       expect.objectContaining({ participantId: 'p-budget', price: 12, tierId: null, tierKey: null }),

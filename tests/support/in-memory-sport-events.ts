@@ -442,11 +442,6 @@ export class InMemorySportEvents {
           });
         }
       },
-      assignPrices: async (assignments) => {
-        for (const assignment of assignments) {
-          Object.assign(valuationFor(assignment.sportEventParticipantId), { price: assignment.price, priceAssignedSource: assignment.source });
-        }
-      },
       assignEventPrices: async ({ sportEventId, pricingConfig, assignments }) => {
         for (const assignment of assignments) {
           Object.assign(valuationFor(assignment.sportEventParticipantId), { price: assignment.price, priceAssignedSource: assignment.source });

@@ -352,7 +352,7 @@ describe('SportEventTierRepository and valuations', () => {
     await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([expect.objectContaining({ sportEventTierId: null })]);
   });
 
-  it('sets tier and price independently, each all or none', async () => {
+  it('sets tier and price independently, each leaving the other in place', async () => {
     const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana] = await createParticipants(['Ana']);
@@ -362,11 +362,11 @@ describe('SportEventTierRepository and valuations', () => {
     const [tier1] = await tiers.findBySportEvent(event.id);
 
     await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier1.id, tierOrderIndex: 1, source: 'AUTO_RANKING' }]);
-    await valuations.assignPrices([{ sportEventParticipantId: entry.id, price: 15, source: 'AUTO_ODDS' }]);
-    await expect(valuations.assignPrices([
-      { sportEventParticipantId: entry.id, price: 99, source: 'MANUAL' },
-      { sportEventParticipantId: randomUUID(), price: 1, source: 'MANUAL' },
-    ])).rejects.toBeDefined();
+    await valuations.assignEventPrices({
+      sportEventId: event.id,
+      pricingConfig: standardEventPricing(),
+      assignments: [{ sportEventParticipantId: entry.id, price: 15, source: 'AUTO_ODDS' }],
+    });
 
     await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([expect.objectContaining({
       sportEventTierId: tier1.id, tierAssignedSource: 'AUTO_RANKING', price: 15, priceAssignedSource: 'AUTO_ODDS',
@@ -427,7 +427,11 @@ describe('Budget pricing on the event (#93)', () => {
     ]);
     const rows = await field.findBySportEvent(event.id);
     const priced = expectDefined(rows.find((row) => row.participantId === ana.id));
-    await valuations.assignPrices([{ sportEventParticipantId: priced.id, price: 9000, source: 'MANUAL' }]);
+    await valuations.assignEventPrices({
+      sportEventId: event.id,
+      pricingConfig: standardEventPricing(),
+      assignments: [{ sportEventParticipantId: priced.id, price: 9000, source: 'MANUAL' }],
+    });
 
     await expect(events.countUnpricedActiveParticipants([event.id])).resolves.toEqual(new Map([[event.id, 2]]));
   });

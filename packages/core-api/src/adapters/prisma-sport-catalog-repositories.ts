@@ -593,31 +593,25 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
     }));
   }
 
-  async assignPrices(assignments: readonly PriceAssignment[]): Promise<void> {
-    await this.prisma.$transaction(assignments.map((assignment) => this.upsertPrice(assignment)));
-  }
-
   async assignEventPrices(input: {
     sportEventId: string;
     pricingConfig: EventPricingConfig;
     assignments: readonly PriceAssignment[];
   }): Promise<void> {
     await this.prisma.$transaction([
-      ...input.assignments.map((assignment) => this.upsertPrice(assignment)),
+      ...input.assignments.map((assignment) => {
+        const price = { price: assignment.price, priceAssignedSource: assignment.source };
+        return this.prisma.sportEventParticipantValuation.upsert({
+          where: { sportEventParticipantId: assignment.sportEventParticipantId },
+          create: { sportEventParticipantId: assignment.sportEventParticipantId, ...price },
+          update: price,
+        });
+      }),
       this.prisma.sportEvent.update({
         where: { id: input.sportEventId },
         data: { pricingConfig: input.pricingConfig },
       }),
     ]);
-  }
-
-  private upsertPrice(assignment: PriceAssignment) {
-    const price = { price: assignment.price, priceAssignedSource: assignment.source };
-    return this.prisma.sportEventParticipantValuation.upsert({
-      where: { sportEventParticipantId: assignment.sportEventParticipantId },
-      create: { sportEventParticipantId: assignment.sportEventParticipantId, ...price },
-      update: price,
-    });
   }
 }
 

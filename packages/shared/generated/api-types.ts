@@ -1669,7 +1669,7 @@ export interface paths {
         put?: never;
         /**
          * Price a sport event's seeded field
-         * @description Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the salary cap.
+         * @description Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0.
          */
         post: operations["autoAssignEventPrices"];
         delete?: never;
@@ -5704,7 +5704,7 @@ export interface components {
             pricing: {
                 /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                 salaryCap: number;
-                /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                 unit: number;
                 /** @description The best seed's price, as a percentage of the salary cap. */
                 topSharePercent: number;
@@ -5837,7 +5837,7 @@ export interface components {
                 pricing: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                     salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                     unit: number;
                     /** @description The best seed's price, as a percentage of the salary cap. */
                     topSharePercent: number;
@@ -5949,7 +5949,7 @@ export interface components {
                 pricing: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                     salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                     unit: number;
                     /** @description The best seed's price, as a percentage of the salary cap. */
                     topSharePercent: number;
@@ -6130,7 +6130,7 @@ export interface components {
                 pricing: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                     salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                     unit: number;
                     /** @description The best seed's price, as a percentage of the salary cap. */
                     topSharePercent: number;
@@ -6375,7 +6375,7 @@ export interface components {
         EventPricingConfig: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
-            /** @description Whole dollars. Every price is rounded to a multiple of it. */
+            /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
             unit: number;
             /** @description The best seed's price, as a percentage of the salary cap. */
             topSharePercent: number;
@@ -6390,7 +6390,7 @@ export interface components {
         AutoAssignSportEventPricesRequest: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
-            /** @description Whole dollars. Every price is rounded to a multiple of it. */
+            /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
             unit: number;
             /** @description The best seed's price, as a percentage of the salary cap. */
             topSharePercent: number;
@@ -8419,7 +8419,7 @@ export interface components {
         BudgetPricingProfile: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
-            /** @description Whole dollars. Every price is rounded to a multiple of it. */
+            /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
             unit: number;
             /** @description The best seed's price, as a percentage of the salary cap. */
             topSharePercent: number;
@@ -8436,7 +8436,7 @@ export interface components {
             profiles: {
                 /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                 salaryCap: number;
-                /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                 unit: number;
                 /** @description The best seed's price, as a percentage of the salary cap. */
                 topSharePercent: number;
@@ -8876,7 +8876,7 @@ export interface components {
                 profiles: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                     salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                     unit: number;
                     /** @description The best seed's price, as a percentage of the salary cap. */
                     topSharePercent: number;
@@ -8894,7 +8894,7 @@ export interface components {
                 profiles: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                     salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                     unit: number;
                     /** @description The best seed's price, as a percentage of the salary cap. */
                     topSharePercent: number;
@@ -9203,7 +9203,7 @@ export interface components {
                     profiles: {
                         /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                         salaryCap: number;
-                        /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                        /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                         unit: number;
                         /** @description The best seed's price, as a percentage of the salary cap. */
                         topSharePercent: number;
@@ -9221,7 +9221,7 @@ export interface components {
                     profiles: {
                         /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                         salaryCap: number;
-                        /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                        /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                         unit: number;
                         /** @description The best seed's price, as a percentage of the salary cap. */
                         topSharePercent: number;
@@ -9359,7 +9359,7 @@ export interface components {
                 profiles: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                     salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                     unit: number;
                     /** @description The best seed's price, as a percentage of the salary cap. */
                     topSharePercent: number;
@@ -9650,7 +9650,7 @@ export interface components {
                 profiles: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                     salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                     unit: number;
                     /** @description The best seed's price, as a percentage of the salary cap. */
                     topSharePercent: number;
@@ -9668,7 +9668,7 @@ export interface components {
                 profiles: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                     salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                     unit: number;
                     /** @description The best seed's price, as a percentage of the salary cap. */
                     topSharePercent: number;
@@ -9956,7 +9956,7 @@ export interface components {
                     profiles: {
                         /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                         salaryCap: number;
-                        /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                        /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                         unit: number;
                         /** @description The best seed's price, as a percentage of the salary cap. */
                         topSharePercent: number;
@@ -9974,7 +9974,7 @@ export interface components {
                     profiles: {
                         /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                         salaryCap: number;
-                        /** @description Whole dollars. Every price is rounded to a multiple of it. */
+                        /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
                         unit: number;
                         /** @description The best seed's price, as a percentage of the salary cap. */
                         topSharePercent: number;
