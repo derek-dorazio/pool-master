@@ -114,7 +114,7 @@ function GolfTournamentScheduleForm({
       submitLabel="Save schedule"
       submitTestId="root-admin-golf-tournament-rounds-save"
       testId="root-admin-golf-tournament-schedule-page"
-      title="Edit round schedule"
+      title="Round schedule"
     >
       {fields.map((field, index) => (
         <div className="grid gap-3 sm:grid-cols-2" key={field.id}>

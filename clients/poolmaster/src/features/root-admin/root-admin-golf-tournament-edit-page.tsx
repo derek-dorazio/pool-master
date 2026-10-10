@@ -115,7 +115,7 @@ function GolfTournamentEditForm({ tournament }: { tournament: SportEventDto }) {
       submitLabel="Save details"
       submitTestId="root-admin-golf-tournament-edit-save"
       testId="root-admin-golf-tournament-edit-page"
-      title="Edit tournament details"
+      title="Edit details"
     >
       <FormField error={form.formState.errors.name?.message} label="Name">
         <Input data-testid="root-admin-golf-tournament-edit-name" {...form.register('name')} />

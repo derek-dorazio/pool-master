@@ -9,7 +9,7 @@ import { RootAdminGolfTournamentHomePage } from './root-admin-golf-tournament-ho
 import { RootAdminGolfTournamentSchedulePage } from './root-admin-golf-tournament-schedule-page';
 import { sportEventFixture, sportLeagueFixture } from './golf-test-fixtures';
 
-// plans/124 §6.3 — Tournament Home: summary + workflow rail + score source + sections
+// plans/124 §6.3 — tournament Overview: header + details + workflow rail + score source
 // (pool-master-3dg).
 
 const {
@@ -117,13 +117,13 @@ function seedDefaults() {
   });
 }
 
-function renderPage() {
+function renderPage(path = '/manage/golf/tournaments/tour-1') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/golf/tournaments/tour-1']}>
+      <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route
             element={<RootAdminGolfTournamentHomePage />}
@@ -586,7 +586,7 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
   });
 });
 
-describe('clearing an optional date and refused links on Tournament Home', () => {
+describe('clearing an optional date and refused links on Overview', () => {
   afterEach(() => {
     vi.clearAllMocks();
     mockLogger.child.mockReturnValue(mockLogger);
@@ -659,7 +659,7 @@ describe('clearing an optional date and refused links on Tournament Home', () =>
   });
 });
 
-describe('Tournament Home blocks: empty values, refusals and closing dialogs', () => {
+describe('Overview blocks: empty values, refusals and closing dialogs', () => {
   afterEach(() => {
     vi.clearAllMocks();
     vi.useRealTimers();
@@ -882,6 +882,25 @@ describe('Tournament Home blocks: empty values, refusals and closing dialogs', (
 
     expect(await screen.findByTestId('root-admin-golf-tournament-home-page')).toBeInTheDocument();
     expect(updateEventRoundsMock).not.toHaveBeenCalled();
+  });
+
+  it('tells the admin there is nothing to schedule, with no Save, when the tournament has no rounds', async () => {
+    seedDefaults();
+    listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
+    renderPage('/manage/golf/tournaments/tour-1/schedule');
+
+    expect(await screen.findByText('This tournament has no rounds to schedule yet.')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-golf-tournament-rounds-save')).not.toBeInTheDocument();
+  });
+
+  it('shows the server\'s reason as a load error, with no Save, when the round schedule cannot be loaded', async () => {
+    seedDefaults();
+    listEventRoundsMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'The round store is unavailable.', 500));
+    renderPage('/manage/golf/tournaments/tour-1/schedule');
+
+    const alert = await screen.findByTestId('shared-error-state');
+    expect(within(alert).getByText('The round store is unavailable.')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-golf-tournament-rounds-save')).not.toBeInTheDocument();
   });
 
   it('closes the release confirmation from its close button without releasing the draft', async () => {

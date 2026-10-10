@@ -5,8 +5,10 @@ import { IdentityHeading, SegmentedControl, StatusBadge } from '@/features/share
 import { formatSportEventStatus, sportEventStatusTone } from './golf-admin-utils';
 import { buildGolfTournamentPath } from './manage-navigation';
 
+const VIEWS = ['overview', 'field', 'tiers', 'scores'] as const;
+
 /** The tournament pages a root admin moves between. */
-type GolfTournamentView = 'overview' | 'field' | 'tiers' | 'scores';
+type GolfTournamentView = (typeof VIEWS)[number];
 
 const VIEW_LABELS: Record<GolfTournamentView, string> = {
   overview: 'Overview',
@@ -14,8 +16,6 @@ const VIEW_LABELS: Record<GolfTournamentView, string> = {
   tiers: 'Tiers',
   scores: 'Scores',
 };
-
-const VIEWS = ['overview', 'field', 'tiers', 'scores'] as const;
 
 /**
  * The header every page of one tournament shares (rules/ux-rules.md §12 rule 9): its name,
