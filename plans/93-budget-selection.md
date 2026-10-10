@@ -1,6 +1,6 @@
 # Golf budget selection (#93)
 
-> **Status:** Plan approved by Derek 2026-10-09; in implementation. Slice 0 (pricing) merged in #586; slice 1 (typed contest rules) is the second PR, and the column drop it promised is #587. **Tracking issue:** #93.
+> **Status:** Plan approved by Derek 2026-10-09; in implementation. Slice 0 (pricing) merged in #586; slice 1 (typed contest rules) merged in #588, with the column drop in #587 and the typed contest detail DTO in #589; slice 2 (budget rules in the selection room) is the third PR. Built as planned except: `findShortfall` became `findLineupIssues`, the room summary is `summarizeLineup`, and a budget pick takes the lowest free lineup place so a toggle-off's place is reused. **Tracking issue:** #93.
 > **Supersedes** `plans/128-golf-budget-drafts.md`, deleted by the first PR; read it with
 > `git show 3a6481a:plans/128-golf-budget-drafts.md`.
 > Checked against `main` at `1012778` (2026-10-09); refreshed against `3a6481a` (2026-10-10), see §9.

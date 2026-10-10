@@ -628,32 +628,29 @@ describe('#324 SelectionService.submitSelection — the guards, in order', () =>
     expect(createPick).not.toHaveBeenCalled();
   });
 
-  it('answers 400 DUPLICATE_PICK when a budget-pick entry already holds the participant', async () => {
+  it('unselects a golfer a budget-pick entry already holds, deleting the pick and inserting nothing', async () => {
     const { service, createPick, deletePick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
       configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, salaryCap: 500, countedScores: 3 } },
-      picks: [pick('pick-a', 'p-a', 'sep-a')],
+      picks: [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 })],
     });
 
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
-      code: 'DUPLICATE_PICK',
-      statusCode: 400,
-      message: 'SportEventParticipant sep-a is already on this entry',
-    });
+    const result = await service.submitSelection(submit());
+
+    expect(result.outcome).toBe('toggled-off');
+    expect(deletePick).toHaveBeenCalledWith('pick-a');
     expect(createPick).not.toHaveBeenCalled();
-    expect(deletePick).not.toHaveBeenCalled();
   });
 
   // An engine's rejection is answered after the shared exclusivity check. The one input where
-  // that order shows is a budget-pick re-pick of a golfer another entry also holds, a state an
-  // exclusive contest reaches only through two concurrent picks: exclusivity answers first.
-  it('answers 400 PARTICIPANT_ALREADY_TAKEN, not DUPLICATE_PICK, when an exclusive budget-pick entry re-picks a golfer another entry also holds', async () => {
+  // that order shows is a full exclusive budget-pick entry picking a golfer another entry
+  // already holds: exclusivity answers first.
+  it('answers 400 PARTICIPANT_ALREADY_TAKEN, not ENTRY_COMPLETE, when a full exclusive budget-pick entry picks a golfer another entry holds', async () => {
     const { service, createPick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
       configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 500, countedScores: 2 }, isExclusive: true },
-      picks: [pick('pick-a', 'p-a', 'sep-a')],
+      picks: [pick('pick-b', 'p-b', 'sep-b', { lineupSlot: 1 }), pick('pick-c', 'p-c', 'sep-c', { lineupSlot: 2 })],
       contestPicksForParticipant: [
-        pick('pick-a', 'p-a', 'sep-a'),
         pick('pick-other', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID }),
       ] as unknown as ContestEntryPick[],
     });
@@ -795,11 +792,11 @@ describe('#324 SelectionService.submitSelection — the three outcomes', () => {
 });
 
 describe('SelectionService — rooms with missing or partial data', () => {
-  it('places a budget pick in the next round when the entry still has room', async () => {
+  it('places a budget pick in the next free place when the entry still has room', async () => {
     const { service, createPick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
       configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, salaryCap: 500, countedScores: 3 } },
-      picks: [pick('pick-a', 'p-a', 'sep-a')],
+      picks: [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 })],
     });
 
     const result = await service.submitSelection(submit({ participantId: 'sep-d' }));
@@ -1050,6 +1047,111 @@ describe('SelectionService.submitSelection — a pick change on a submitted entr
     await service.submitSelection(submit({ participantId: 'sep-a' }));
 
     expect(deps.entries.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('SelectionService budget rooms (#93): the cap blocks submitting, never a pick', () => {
+  // Valuation prices: sep-a $100, sep-b $90, sep-c $80, sep-d $40. Two golfers under a $150 cap.
+  const BUDGET = {
+    contest: { selectionType: SelectionType.BUDGET_PICK },
+    configuration: {
+      selectionType: SelectionType.BUDGET_PICK,
+      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 150, countedScores: 2 },
+    },
+  } satisfies SetupOptions;
+  const UNDER = [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 }), pick('pick-d', 'p-d', 'sep-d', { lineupSlot: 2 })];
+  const OVER = [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 }), pick('pick-b', 'p-b', 'sep-b', { lineupSlot: 2 })];
+  const submitEntryInput = { contestId: CONTEST_ID, entryId: ENTRY_ID, actorUserId: OWNER_USER_ID };
+
+  it('submits a full lineup that costs no more than the cap', async () => {
+    const { service, deps } = setup({ ...BUDGET, picks: UNDER });
+
+    await service.submitEntry(submitEntryInput);
+
+    expect(deps.entries.update).toHaveBeenCalledWith(ENTRY_ID, { status: 'SUBMITTED' });
+  });
+
+  it('refuses 409 ENTRY_OVER_BUDGET for a full lineup over the cap, naming both amounts, and leaves the entry a draft', async () => {
+    const { service, deps } = setup({ ...BUDGET, picks: OVER });
+
+    await expect(service.submitEntry(submitEntryInput)).rejects.toMatchObject({
+      code: 'ENTRY_OVER_BUDGET',
+      statusCode: 409,
+      message: `Entry ${ENTRY_ID} cannot be submitted while its picks cost $190, over the $150 salary cap`,
+    });
+    expect(deps.entries.update).not.toHaveBeenCalled();
+  });
+
+  it('reports a short lineup as incomplete ahead of the budget, even when it is already over the cap', async () => {
+    const { service } = setup({
+      ...BUDGET,
+      configuration: { ...BUDGET.configuration, configJson: { ...BUDGET.configuration.configJson, salaryCap: 50 } },
+      picks: [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 })],
+    });
+
+    await expect(service.submitEntry(submitEntryInput)).rejects.toMatchObject({
+      code: 'ENTRY_LINEUP_INCOMPLETE',
+      message: `Entry ${ENTRY_ID} cannot be submitted until its lineup is complete: it holds 1 of 2 picks`,
+    });
+  });
+
+  it('places a pick that takes the entry over the cap', async () => {
+    const { service, createPick } = setup({ ...BUDGET, picks: [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 })] });
+
+    const result = await service.submitSelection(submit({ participantId: 'sep-b' }));
+
+    expect(result.outcome).toBe('placed');
+    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: 'sep-b', lineupSlot: 2 }));
+  });
+
+  it('refuses 400 PRICE_MISSING for a golfer with no price, placing nothing', async () => {
+    const { service, createPick } = setup({
+      ...BUDGET,
+      valuations: VALUATIONS.map((valuation) =>
+        (valuation as { sportEventParticipantId: string }).sportEventParticipantId === 'sep-d'
+          ? { ...(valuation as object), price: null }
+          : valuation),
+    });
+
+    await expect(service.submitSelection(submit({ participantId: 'sep-d' }))).rejects.toMatchObject({
+      code: 'PRICE_MISSING',
+      statusCode: 400,
+    });
+    expect(createPick).not.toHaveBeenCalled();
+  });
+
+  it('sends a submitted entry back to DRAFT when a swap takes its full lineup over the cap', async () => {
+    const { service, deps } = setup({ ...BUDGET, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
+    (deps.picks.findByEntriesWithParticipant as jest.Mock)
+      .mockResolvedValueOnce([UNDER[0]])
+      .mockResolvedValue(OVER);
+    (deps.entries.update as jest.Mock).mockImplementation(async (id: string, updates: Partial<ContestEntry>) => ({
+      ...entry(id, SQUAD_ID, 'Entry', 'SUBMITTED'),
+      ...updates,
+    }));
+
+    const result = await service.submitSelection(submit({ participantId: 'sep-b' }));
+
+    expect(deps.entries.update).toHaveBeenCalledWith(ENTRY_ID, { status: 'DRAFT' });
+    expect(result.view.entries.find((row) => row.id === ENTRY_ID)?.status).toBe('DRAFT');
+  });
+
+  it('lists the whole field as one group, dearest first, and summarises the viewed entry\'s spend', async () => {
+    const { service } = setup({ ...BUDGET, picks: [pick('pick-b', 'p-b', 'sep-b', { lineupSlot: 1 })] });
+
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+
+    expect(view.selectionGroups.map((group) => [group.groupName, group.participants.map((row) => [row.sportEventParticipantId, row.isSelected])]))
+      .toEqual([['Field', [['sep-a', false], ['sep-b', true], ['sep-c', false], ['sep-d', false]]]]);
+    expect(view.lineupSummary).toEqual({
+      selectionType: SelectionType.BUDGET_PICK,
+      salaryCap: 150,
+      spent: 90,
+      remaining: 60,
+      isOverBudget: false,
+      openSlots: 1,
+      cheapestFill: 40,
+    });
   });
 });
 

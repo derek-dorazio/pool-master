@@ -5,6 +5,7 @@ import {
   generateInviteLink,
   getSelectionState,
   openContest,
+  submitContestEntry,
   submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
@@ -210,10 +211,11 @@ async function seedUnsupportedSelectionTypeFixture() {
 }
 
 /**
- * A budget-pick room with two entries and two priced golfers. Exclusive by default; pass
- * `isExclusive: false` for the room where both entries may hold the same golfer.
+ * A budget-pick room with two entries and two priced golfers ($3,200 and $5,100). Exclusive by
+ * default; pass `isExclusive: false` for the room where both entries may hold the same golfer,
+ * and a roster size or cap to test the budget.
  */
-async function seedBudgetPickFixture(options: { isExclusive?: boolean } = {}) {
+async function seedBudgetPickFixture(options: { isExclusive?: boolean; rosterSize?: number; salaryCap?: number } = {}) {
   const { commissioner, league } = await buildLeagueWithCommissioner({
     displayName: 'Budget Commissioner',
     leagueName: 'Budget Functional League',
@@ -252,7 +254,12 @@ async function seedBudgetPickFixture(options: { isExclusive?: boolean } = {}) {
     selectionType: SelectionType.BUDGET_PICK,
     scoringEngine: ScoringEngine.STROKE_PLAY,
     configuration: {
-      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 1, salaryCap: 8000, countedScores: 1 },
+      configJson: {
+        selectionType: SelectionType.BUDGET_PICK,
+        rosterSize: options.rosterSize ?? 1,
+        salaryCap: options.salaryCap ?? 8000,
+        countedScores: 1,
+      },
       isExclusive: options.isExclusive ?? true,
     },
   });
@@ -785,6 +792,46 @@ describe('SDK Functional: Roster Selection', () => {
       status: 400,
       code: 'PARTICIPANT_ALREADY_TAKEN',
     });
+  });
+
+  // #93: the cap never refuses a pick; it refuses the submit, and the room shows the spend.
+  it.each([
+    { salaryCap: 8000, expectSubmitted: false },
+    { salaryCap: 8300, expectSubmitted: true },
+  ])('lets a budget entry pick both golfers ($8,300) under a $$salaryCap cap, and submits it only when it fits', async ({ salaryCap, expectSubmitted }) => {
+    const fixture = await seedBudgetPickFixture({ isExclusive: false, rosterSize: 2, salaryCap });
+    const pickFor = (participantId: string) => submitContestSelection({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.commissionerEntryId, participantId },
+    });
+
+    expect((await pickFor(fixture.secondEventParticipantId)).response.status).toBe(200);
+    const fullRoom = await pickFor(fixture.firstEventParticipantId);
+    expect(fullRoom.response.status).toBe(200);
+    expect(fullRoom.data?.lineupSummary).toEqual({
+      selectionType: SelectionType.BUDGET_PICK,
+      salaryCap,
+      spent: 8300,
+      remaining: salaryCap - 8300,
+      isOverBudget: !expectSubmitted,
+      openSlots: 0,
+      cheapestFill: 0,
+    });
+
+    const submitted = await submitContestEntry({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId },
+    });
+
+    if (expectSubmitted) {
+      expect(submitted.response.status).toBe(200);
+      expect(submitted.data?.entries.find((entry) => entry.id === fixture.commissionerEntryId)?.status).toBe('SUBMITTED');
+    } else {
+      expectFunctionalError(submitted, { status: 409, code: 'ENTRY_OVER_BUDGET' });
+      await expect(getFunctionalPrisma().contestEntry.findUniqueOrThrow({ where: { id: fixture.commissionerEntryId } }))
+        .resolves.toMatchObject({ status: 'DRAFT' });
+    }
   });
 
   it('reads a tiered room, submits a selection, and returns updated tiered state', async () => {

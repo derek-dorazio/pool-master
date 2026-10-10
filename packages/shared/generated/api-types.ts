@@ -2260,7 +2260,7 @@ export interface paths {
         };
         /**
          * Get current selection state for a contest
-         * @description Returns the current selection-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (ACTIVE onwards); otherwise it falls back to the caller's own.
+         * @description Returns the current selection-room state for the contest, including queue, picks, timers, and selection availability. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry's spend against the salary cap. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (ACTIVE onwards); otherwise it falls back to the caller's own.
          */
         get: operations["getSelectionState"];
         put?: never;
@@ -2282,7 +2282,7 @@ export interface paths {
         put?: never;
         /**
          * Submit a pick
-         * @description Submits a pick for the current turn and returns the refreshed selection state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. A change that leaves a SUBMITTED entry's lineup short sends the entry back to DRAFT; it must be submitted again to count.
+         * @description Submits a pick for the current turn and returns the refreshed selection state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. In a budget contest re-selecting a held golfer unselects it, a golfer with no price is refused with 400 PRICE_MISSING, and the salary cap never refuses a pick: an entry may go over it while it rearranges. A change that leaves a SUBMITTED entry's lineup short, or over a budget contest's cap, sends the entry back to DRAFT; it must be submitted again to count.
          */
         post: operations["submitContestSelection"];
         delete?: never;
@@ -2302,7 +2302,7 @@ export interface paths {
         put?: never;
         /**
          * Submit a contest entry
-         * @description Submits the caller's entry once its lineup is complete, and returns the refreshed selection state. An entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. Submitting an already submitted entry changes nothing. A later pick change that leaves the lineup short sends the entry back to DRAFT. Entries are submitted only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. Only a member of the entry's team may submit it: 403 ENTRY_ACCESS_DENIED otherwise.
+         * @description Submits the caller's entry once its lineup is complete, and returns the refreshed selection state. An entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. In a budget contest its picks must also cost no more than the salary cap: 409 ENTRY_OVER_BUDGET otherwise, reported only once the lineup is complete. Submitting an already submitted entry changes nothing. A later pick change that leaves the lineup short or over the cap sends the entry back to DRAFT. Entries are submitted only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. Only a member of the entry's team may submit it: 403 ENTRY_ACCESS_DENIED otherwise.
          */
         post: operations["submitContestEntry"];
         delete?: never;
@@ -8192,6 +8192,23 @@ export interface components {
             /** @description Participant being selected. */
             participantId: string;
         };
+        /** @description Budget contest: the viewed entry's spend against the salary cap (#93). */
+        SelectionBudgetLineupSummary: {
+            /** @enum {string} */
+            selectionType: "BUDGET_PICK";
+            /** @description Whole dollars the entry's picks may cost at most: its event's cap. */
+            salaryCap: number;
+            /** @description What the entry's picks cost, in dollars, summed in cents. */
+            spent: number;
+            /** @description Cap minus spent; negative while the entry is over budget. */
+            remaining: number;
+            /** @description Whether the picks cost more than the cap. Picks are still allowed; submitting is refused with 409 ENTRY_OVER_BUDGET. */
+            isOverBudget: boolean;
+            /** @description Roster places the entry has yet to fill. */
+            openSlots: number;
+            /** @description What the cheapest available golfers not on the entry would cost to fill its open places; null when the field cannot fill them. For a warning only, never a block. */
+            cheapestFill: number | null;
+        };
         /** @description Selection-state response. */
         SelectionStateResponse: {
             contestId: string;
@@ -8338,6 +8355,23 @@ export interface components {
                 /** @description Winning team identifier when the matchup has been decided. */
                 winnerId: string | null;
             }[];
+            /** @description The viewed entry's lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none. */
+            lineupSummary?: {
+                /** @enum {string} */
+                selectionType: "BUDGET_PICK";
+                /** @description Whole dollars the entry's picks may cost at most: its event's cap. */
+                salaryCap: number;
+                /** @description What the entry's picks cost, in dollars, summed in cents. */
+                spent: number;
+                /** @description Cap minus spent; negative while the entry is over budget. */
+                remaining: number;
+                /** @description Whether the picks cost more than the cap. Picks are still allowed; submitting is refused with 409 ENTRY_OVER_BUDGET. */
+                isOverBudget: boolean;
+                /** @description Roster places the entry has yet to fill. */
+                openSlots: number;
+                /** @description What the cheapest available golfers not on the entry would cost to fill its open places; null when the field cannot fill them. For a warning only, never a block. */
+                cheapestFill: number | null;
+            } | null;
         };
         /** @description Selection response returned immediately after a pick mutation. */
         SelectionPickResponse: {
@@ -8485,6 +8519,23 @@ export interface components {
                 /** @description Winning team identifier when the matchup has been decided. */
                 winnerId: string | null;
             }[];
+            /** @description The viewed entry's lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none. */
+            lineupSummary?: {
+                /** @enum {string} */
+                selectionType: "BUDGET_PICK";
+                /** @description Whole dollars the entry's picks may cost at most: its event's cap. */
+                salaryCap: number;
+                /** @description What the entry's picks cost, in dollars, summed in cents. */
+                spent: number;
+                /** @description Cap minus spent; negative while the entry is over budget. */
+                remaining: number;
+                /** @description Whether the picks cost more than the cap. Picks are still allowed; submitting is refused with 409 ENTRY_OVER_BUDGET. */
+                isOverBudget: boolean;
+                /** @description Roster places the entry has yet to fill. */
+                openSlots: number;
+                /** @description What the cheapest available golfers not on the entry would cost to fill its open places; null when the field cannot fill them. For a warning only, never a block. */
+                cheapestFill: number | null;
+            } | null;
         };
         /**
          * @description A system email template.

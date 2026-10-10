@@ -7822,6 +7822,37 @@ export type SubmitPickRequest = {
 };
 
 /**
+ * Budget contest: the viewed entry's spend against the salary cap (#93).
+ */
+export type SelectionBudgetLineupSummary = {
+    selectionType: 'BUDGET_PICK';
+    /**
+     * Whole dollars the entry's picks may cost at most: its event's cap.
+     */
+    salaryCap: number;
+    /**
+     * What the entry's picks cost, in dollars, summed in cents.
+     */
+    spent: number;
+    /**
+     * Cap minus spent; negative while the entry is over budget.
+     */
+    remaining: number;
+    /**
+     * Whether the picks cost more than the cap. Picks are still allowed; submitting is refused with 409 ENTRY_OVER_BUDGET.
+     */
+    isOverBudget: boolean;
+    /**
+     * Roster places the entry has yet to fill.
+     */
+    openSlots: number;
+    /**
+     * What the cheapest available golfers not on the entry would cost to fill its open places; null when the field cannot fill them. For a warning only, never a block.
+     */
+    cheapestFill: number | null;
+};
+
+/**
  * Selection-state response.
  */
 export type SelectionStateResponse = {
@@ -7992,6 +8023,36 @@ export type SelectionStateResponse = {
          */
         winnerId: string | null;
     }>;
+    /**
+     * The viewed entry's lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none.
+     */
+    lineupSummary?: {
+        selectionType: 'BUDGET_PICK';
+        /**
+         * Whole dollars the entry's picks may cost at most: its event's cap.
+         */
+        salaryCap: number;
+        /**
+         * What the entry's picks cost, in dollars, summed in cents.
+         */
+        spent: number;
+        /**
+         * Cap minus spent; negative while the entry is over budget.
+         */
+        remaining: number;
+        /**
+         * Whether the picks cost more than the cap. Picks are still allowed; submitting is refused with 409 ENTRY_OVER_BUDGET.
+         */
+        isOverBudget: boolean;
+        /**
+         * Roster places the entry has yet to fill.
+         */
+        openSlots: number;
+        /**
+         * What the cheapest available golfers not on the entry would cost to fill its open places; null when the field cannot fill them. For a warning only, never a block.
+         */
+        cheapestFill: number | null;
+    } | null;
 };
 
 /**
@@ -8165,6 +8226,36 @@ export type SelectionPickResponse = {
          */
         winnerId: string | null;
     }>;
+    /**
+     * The viewed entry's lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none.
+     */
+    lineupSummary?: {
+        selectionType: 'BUDGET_PICK';
+        /**
+         * Whole dollars the entry's picks may cost at most: its event's cap.
+         */
+        salaryCap: number;
+        /**
+         * What the entry's picks cost, in dollars, summed in cents.
+         */
+        spent: number;
+        /**
+         * Cap minus spent; negative while the entry is over budget.
+         */
+        remaining: number;
+        /**
+         * Whether the picks cost more than the cap. Picks are still allowed; submitting is refused with 409 ENTRY_OVER_BUDGET.
+         */
+        isOverBudget: boolean;
+        /**
+         * Roster places the entry has yet to fill.
+         */
+        openSlots: number;
+        /**
+         * What the cheapest available golfers not on the entry would cost to fill its open places; null when the field cannot fill them. For a warning only, never a block.
+         */
+        cheapestFill: number | null;
+    } | null;
 };
 
 /**

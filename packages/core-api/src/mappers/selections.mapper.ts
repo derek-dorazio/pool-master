@@ -162,5 +162,6 @@ export function toSelectionStateResponse(view: SelectionView): SelectionStateRes
     pickHistories: view.picks.map(toPickHistoryDto),
     availableParticipantIds: view.availableSportEventParticipantIds,
     isComplete: view.isComplete,
+    lineupSummary: view.lineupSummary,
   };
 }

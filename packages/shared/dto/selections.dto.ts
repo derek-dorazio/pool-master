@@ -131,6 +131,17 @@ export const SelectionBracketMatchupDtoSchema = z.object({
 }).describe('Bracket matchup returned to bracket-style pick clients.');
 export type SelectionBracketMatchupDto = z.infer<typeof SelectionBracketMatchupDtoSchema>;
 
+export const SelectionBudgetLineupSummaryDtoSchema = z.object({
+  selectionType: z.literal(SelectionType.BUDGET_PICK),
+  salaryCap: z.number().describe('Whole dollars the entry\'s picks may cost at most: its event\'s cap.'),
+  spent: z.number().describe('What the entry\'s picks cost, in dollars, summed in cents.'),
+  remaining: z.number().describe('Cap minus spent; negative while the entry is over budget.'),
+  isOverBudget: z.boolean().describe('Whether the picks cost more than the cap. Picks are still allowed; submitting is refused with 409 ENTRY_OVER_BUDGET.'),
+  openSlots: z.number().int().describe('Roster places the entry has yet to fill.'),
+  cheapestFill: z.number().nullable().describe('What the cheapest available golfers not on the entry would cost to fill its open places; null when the field cannot fill them. For a warning only, never a block.'),
+}).describe('Budget contest: the viewed entry\'s spend against the salary cap (#93).');
+export type SelectionBudgetLineupSummaryDto = z.infer<typeof SelectionBudgetLineupSummaryDtoSchema>;
+
 // --- Responses ---
 
 export const SelectionStateResponseSchema = z.object({
@@ -174,6 +185,7 @@ export const SelectionStateResponseSchema = z.object({
   isComplete: z.boolean(),
   pickEmEvents: z.array(SelectionPickEmEventDtoSchema).optional(),
   bracketMatchups: z.array(SelectionBracketMatchupDtoSchema).optional().describe('Bracket pick data when relevant to the selection.'),
+  lineupSummary: SelectionBudgetLineupSummaryDtoSchema.nullable().optional().describe('The viewed entry\'s lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none.'),
 }).describe('Selection-state response.');
 export type SelectionStateResponse = z.infer<typeof SelectionStateResponseSchema>;
 
@@ -218,10 +230,12 @@ export const SelectionPickResponseSchema = z.object({
   isComplete: z.boolean(),
   pickEmEvents: z.array(SelectionPickEmEventDtoSchema).optional(),
   bracketMatchups: z.array(SelectionBracketMatchupDtoSchema).optional().describe('Bracket pick data when relevant to the selection.'),
+  lineupSummary: SelectionBudgetLineupSummaryDtoSchema.nullable().optional().describe('The viewed entry\'s lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none.'),
 }).describe('Selection response returned immediately after a pick mutation.');
 export type SelectionPickResponse = z.infer<typeof SelectionPickResponseSchema>;
 
 registerSchema('SelectionStateQuery', SelectionStateQuerySchema);
 registerSchema('SubmitPickRequest', SubmitPickRequestSchema);
+registerSchema('SelectionBudgetLineupSummary', SelectionBudgetLineupSummaryDtoSchema);
 registerSchema('SelectionStateResponse', SelectionStateResponseSchema);
 registerSchema('SelectionPickResponse', SelectionPickResponseSchema);
