@@ -15,7 +15,6 @@ import {
   PrismaLeagueInvitationRepository,
   PrismaSquadMembershipRepository,
   PrismaMembershipTransaction,
-  PrismaSquadOwnerInvitationRepository,
   PrismaSquadRepository,
   PrismaUserRepository,
 } from '../../adapters';
@@ -74,9 +73,6 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
   });
   const memberService = new MemberService({
     leagueMemberships: membershipRepo,
-    squads: squadRepo,
-    squadMemberships: squadMembershipRepo,
-    squadOwnerInvitations: new PrismaSquadOwnerInvitationRepository(prisma),
     membershipTransaction: new PrismaMembershipTransaction(prisma),
     logger: fastify.log,
   });

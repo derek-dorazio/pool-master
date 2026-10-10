@@ -25,10 +25,7 @@ import { expectDefined } from '../../support/expect-defined';
 function memberService(world: InMemoryLeagueWorld) {
   return new MemberService({
     leagueMemberships: world.memberships,
-    squads: world.squads,
-    squadMemberships: world.squadMemberships,
     membershipTransaction: world.transaction,
-    squadOwnerInvitations: world.ownerInvitations,
   });
 }
 

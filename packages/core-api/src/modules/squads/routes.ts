@@ -44,7 +44,6 @@ export function squadsModule(fastify: FastifyInstance): void {
     leagueMemberships: leagueMembershipRepo,
     users: userRepo,
     prisma,
-    squadOwnerInvitations: squadOwnerInvitationRepo,
     membershipTransaction,
     logger: fastify.log,
   });

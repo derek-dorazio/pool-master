@@ -38,7 +38,6 @@ function setup(): Setup {
     leagueMemberships: world.memberships,
     users: world.users,
     prisma: asPrismaClient({}),
-    squadOwnerInvitations: world.ownerInvitations,
   });
   return { world, league, commissioner, owner, ownerSquad, handlers: createSquadHandlers(service) };
 }

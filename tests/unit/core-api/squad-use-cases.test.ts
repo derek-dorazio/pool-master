@@ -49,7 +49,6 @@ function leagueWithTwoTeams(): TwoTeamLeague {
     users: world.users,
     // Only `deleteInactiveSquad` reaches Prisma; these tests stop before its transaction.
     prisma: asPrismaClient({}),
-    squadOwnerInvitations: world.ownerInvitations,
   });
   return { world, league, commissioner, commissionerSquad, owner, ownerSquad, service };
 }

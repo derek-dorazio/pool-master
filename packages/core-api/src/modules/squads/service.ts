@@ -2,10 +2,8 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
-  MembershipRepositories,
   MembershipTransaction,
   SquadMembershipRepository,
-  SquadOwnerInvitationRepository,
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
@@ -44,7 +42,10 @@ interface UpdateSquadInput {
   iconKey?: TeamIconKey;
 }
 
-export interface SquadServiceDeps extends MembershipRepositories {
+export interface SquadServiceDeps {
+  squads: SquadRepository;
+  squadMemberships: SquadMembershipRepository;
+  leagueMemberships: LeagueMembershipRepository;
   users: UserRepository;
   prisma: PrismaClient;
   membershipTransaction: MembershipTransaction;
@@ -57,7 +58,7 @@ export class SquadService {
   private readonly leagueMembershipRepo: LeagueMembershipRepository;
   private readonly users: UserRepository;
   private readonly prisma: PrismaClient;
-  private readonly ownerInvitationRepo: SquadOwnerInvitationRepository;
+  private readonly membershipTransaction: MembershipTransaction;
   private readonly logger?: FastifyBaseLogger;
 
   constructor(deps: SquadServiceDeps) {
@@ -66,7 +67,7 @@ export class SquadService {
     this.leagueMembershipRepo = deps.leagueMemberships;
     this.users = deps.users;
     this.prisma = deps.prisma;
-    this.ownerInvitationRepo = deps.squadOwnerInvitations;
+    this.membershipTransaction = deps.membershipTransaction;
     this.logger = deps.logger;
   }
 
@@ -231,28 +232,31 @@ export class SquadService {
 
     await this.requireCommissionerOutsideSquad(leagueId, squadId, activeMemberships.map((m) => m.userId));
 
-    await Promise.all(
-      activeMemberships.map(async (membership) =>
-        inactivateLeagueMemberUnit({
+    // One transaction, so the team, every owner's memberships and its invitations end together.
+    // Sequential: an interactive transaction runs one statement at a time.
+    await this.membershipTransaction.run(async (repos) => {
+      for (const membership of activeMemberships) {
+        await inactivateLeagueMemberUnit({
           leagueId,
           userId: membership.userId,
-          membershipRepo: this.leagueMembershipRepo,
-          squadRepo: this.squadRepo,
-          squadMembershipRepo: this.squadMembershipRepo,
+          membershipRepo: repos.leagueMemberships,
+          squadRepo: repos.squads,
+          squadMembershipRepo: repos.squadMemberships,
           logger: this.logger,
-        })),
-    );
+        });
+      }
 
-    const refreshedSquad = await this.squadRepo.findById(squadId);
-    if (refreshedSquad?.isActive) {
-      await this.squadRepo.update(squadId, { isActive: false });
-    }
+      const refreshedSquad = await repos.squads.findById(squadId);
+      if (refreshedSquad?.isActive) {
+        await repos.squads.update(squadId, { isActive: false });
+      }
 
-    await revokePendingOwnerInvitations({
-      leagueId,
-      squadId,
-      ownerInvitationRepo: this.ownerInvitationRepo,
-      logger: this.logger,
+      await revokePendingOwnerInvitations({
+        leagueId,
+        squadId,
+        ownerInvitationRepo: repos.squadOwnerInvitations,
+        logger: this.logger,
+      });
     });
 
     const squadDto = await this.loadSquadDto(squadId);
@@ -378,14 +382,14 @@ export class SquadService {
      * accept a re-invitation — which restores their original squad, contest history intact.
      */
     await this.requireAnotherActiveCommissioner(leagueId, targetUserId);
-    await inactivateLeagueMemberUnit({
+    await this.membershipTransaction.run(async (repos) => inactivateLeagueMemberUnit({
       leagueId,
       userId: targetUserId,
-      membershipRepo: this.leagueMembershipRepo,
-      squadRepo: this.squadRepo,
-      squadMembershipRepo: this.squadMembershipRepo,
+      membershipRepo: repos.leagueMemberships,
+      squadRepo: repos.squads,
+      squadMembershipRepo: repos.squadMemberships,
       logger: this.logger,
-    });
+    }));
 
     const updated = await this.squadMembershipRepo.findBySquadAndUser(squadId, targetUserId);
     if (!updated) {
