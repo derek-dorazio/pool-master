@@ -13,12 +13,14 @@ import type {
   GolfEffectiveTierDto,
 } from '@poolmaster/shared/dto';
 import {
+  CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
   CONTEST_BUDGET_UNFILLABLE,
   CONTEST_CONFIGURATION_LOCKED,
   CONTEST_CONFIGURATION_REQUIRED,
   CONTEST_EVENT_NOT_PRICED,
   CONTEST_EVENT_ALREADY_STARTED,
   CONTEST_NOT_DRAFT,
+  CONTEST_RULES_SELECTION_TYPE_MISMATCH,
 } from '@poolmaster/shared/dto';
 import type {
   BudgetContestConfig,
@@ -524,7 +526,7 @@ export class ContestManagementService {
     if (rules.countedScores > rules.rosterSize) {
       throw new ContestManagementError(
         `countedScores (${rules.countedScores}) cannot exceed the roster of ${rules.rosterSize}.`,
-        'CONTEST_BUDGET_FIELD_OUT_OF_RANGE',
+        CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
       );
     }
     if (!sportEventId || !sportEvent || sportEvent.salaryCap === null || !this.sportEventReader) {
@@ -605,7 +607,7 @@ function assertRulesMatchSelectionType(rules: ContestRules, selectionType: Selec
   if (rules.selectionType !== selectionType) {
     throw new ContestManagementError(
       `This contest is ${selectionType}, so its rules must be ${selectionType} rules, not ${rules.selectionType}.`,
-      'CONTEST_RULES_SELECTION_TYPE_MISMATCH',
+      CONTEST_RULES_SELECTION_TYPE_MISMATCH,
     );
   }
 }

@@ -8,7 +8,9 @@ import {
   TournamentFormat,
 } from '@poolmaster/shared/domain';
 import {
+  CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
   CONTEST_BUDGET_UNFILLABLE,
+  CONTEST_RULES_SELECTION_TYPE_MISMATCH,
   CONTEST_CONFIGURATION_LOCKED,
   CONTEST_CONFIGURATION_REQUIRED,
   CONTEST_EVENT_ALREADY_STARTED,
@@ -1408,7 +1410,7 @@ describe('ContestManagementService budget rules (#93)', () => {
     const { contestCoreRepo, service } = budgetService(createSportEventReader({ salaryCap: 50_000, activeFieldPrices: [1, 1, 1, 1, 1, 1] }));
 
     await expect(service.createContest({ leagueId: 'league-1' }, budgetRequest({ rosterSize: 4, countedScores: 5 })))
-      .rejects.toMatchObject({ code: 'CONTEST_BUDGET_FIELD_OUT_OF_RANGE', statusCode: 422 });
+      .rejects.toMatchObject({ code: CONTEST_BUDGET_FIELD_OUT_OF_RANGE, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
@@ -1419,14 +1421,46 @@ describe('ContestManagementService budget rules (#93)', () => {
     }));
 
     await expect(service.createContest({ leagueId: 'league-1' }, { ...budgetRequest({ rosterSize: 6, countedScores: 6 }), selectionType: SelectionType.TIERED }))
-      .rejects.toMatchObject({ code: 'CONTEST_RULES_SELECTION_TYPE_MISMATCH', statusCode: 422 });
+      .rejects.toMatchObject({ code: CONTEST_RULES_SELECTION_TYPE_MISMATCH, statusCode: 422 });
     // The stored contest is tiered: budget rules cannot replace its rules.
     await expect(service.updateContestConfiguration('contest-1', {
       selectionType: SelectionType.BUDGET_PICK,
       rosterSize: 6,
       countedScores: 6,
-    })).rejects.toMatchObject({ code: 'CONTEST_RULES_SELECTION_TYPE_MISMATCH', statusCode: 422 });
+    })).rejects.toMatchObject({ code: CONTEST_RULES_SELECTION_TYPE_MISMATCH, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+    expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
+  });
+  it('refuses to open a budget draft whose event field, after withdrawals, can no longer fill the roster under the cap, saving nothing', async () => {
+    const { contestCoreRepo, contestConfigurationRepo, service } = budgetService(createSportEventReader({
+      salaryCap: 100,
+      activeFieldPrices: [60, 50],
+    }));
+    (contestCoreRepo.findById as jest.Mock).mockResolvedValue({
+      id: 'contest-1',
+      leagueId: 'league-1',
+      sportEventId: '11111111-1111-1111-1111-111111111111',
+      name: 'Masters Budget',
+      status: ContestStatus.DRAFT,
+      contestFormat: ContestFormat.ROSTER,
+      selectionType: SelectionType.BUDGET_PICK,
+      scoringEngine: 'STROKE_PLAY',
+      createdAt: new Date('2026-04-07T12:00:00.000Z'),
+      updatedAt: new Date('2026-04-07T12:00:00.000Z'),
+    });
+    (contestConfigurationRepo.findByContest as jest.Mock).mockResolvedValue({
+      id: 'config-1',
+      contestId: 'contest-1',
+      selectionType: SelectionType.BUDGET_PICK,
+      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2, salaryCap: 100 },
+      maxEntriesPerSquad: 1,
+      createdAt: new Date('2026-04-07T12:00:01.000Z'),
+      updatedAt: new Date('2026-04-07T12:00:01.000Z'),
+    });
+
+    await expect(service.openContest('league-1', 'contest-1'))
+      .rejects.toMatchObject({ code: CONTEST_BUDGET_UNFILLABLE, statusCode: 409 });
+    expect(contestCoreRepo.transitionStatus).not.toHaveBeenCalled();
     expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
   });
 });

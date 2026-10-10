@@ -80,9 +80,13 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
         },
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
+        409: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'Budget rules the event cannot run. CONTEST_EVENT_NOT_PRICED — the event\'s golfers have no prices, so there is no salary cap. CONTEST_BUDGET_UNFILLABLE — the cheapest golfers for every roster place cost more than the cap.',
+        },
         422: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).',
+          description: 'The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest\'s), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).',
         },
       },
     },

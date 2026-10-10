@@ -79,6 +79,12 @@ export const CONTEST_EVENT_NOT_PRICED = 'CONTEST_EVENT_NOT_PRICED';
  */
 export const CONTEST_BUDGET_UNFILLABLE = 'CONTEST_BUDGET_UNFILLABLE';
 
+/** Error code for budget rules counting more scores than the roster holds (#93). */
+export const CONTEST_BUDGET_FIELD_OUT_OF_RANGE = 'CONTEST_BUDGET_FIELD_OUT_OF_RANGE';
+
+/** Error code for rules of another selection type than the contest's (#93). */
+export const CONTEST_RULES_SELECTION_TYPE_MISMATCH = 'CONTEST_RULES_SELECTION_TYPE_MISMATCH';
+
 /**
  * Error code for a configuration edit on a contest that is no longer DRAFT (#117). Opening a
  * contest to its league locks its configuration for good: members enter against those rules.

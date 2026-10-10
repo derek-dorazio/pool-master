@@ -13,12 +13,13 @@ WHERE "selection_type" = 'TIERED' AND jsonb_typeof("config_json") = 'object';
 
 -- Budget rows (#198 built the room; nothing let a commissioner create one) are rebuilt from the
 -- legacy columns: a roster of 1 to 12 (6 when unset), the event's cap when it is priced, else
--- the legacy budget, else the Standard $50,000; every score counts unless fewer were stored.
+-- a positive legacy budget, else the Standard $50,000, at most the $10,000,000 cap limit; every
+-- score counts unless fewer were stored.
 WITH "budget_rules" AS (
   SELECT
     cc."id",
     LEAST(12, GREATEST(1, COALESCE((cc."config_json"->>'rosterSize')::int, cc."roster_size", cc."pick_count", 6))) AS "roster_size",
-    COALESCE((se."pricing_config"->>'salaryCap')::int, cc."budget", 50000) AS "salary_cap",
+    LEAST(10000000, COALESCE((se."pricing_config"->>'salaryCap')::int, CASE WHEN cc."budget" > 0 THEN cc."budget" END, 50000)) AS "salary_cap",
     (cc."config_json"->>'countedScores')::int AS "counted_scores"
   FROM "contest_configurations" cc
   JOIN "contests" c ON c."id" = cc."contest_id"
