@@ -1,5 +1,4 @@
-import { SelectionType, getTieredRosterSize } from '@poolmaster/shared/domain';
-import type { ContestConfigurationRequest } from '@poolmaster/shared/dto';
+import { SelectionType, getTieredRosterSize, type ContestRules } from '@poolmaster/shared/domain';
 
 /**
  * The name a commissioner and a member read for each way of picking. A `Record` over the enum,
@@ -18,27 +17,36 @@ export function formatSelectionTypeName(selectionType: SelectionType) {
   return SELECTION_TYPE_NAMES[selectionType];
 }
 
-type ContestRulesConfiguration = Pick<ContestConfigurationRequest, 'countedScores' | 'picksPerTier'>;
-
 /** "1 golfer", "6 golfers": a count with its noun. */
 export function pluralize(count: number, singular: string, plural = `${singular}s`) {
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
-function formatTieredRules({ countedScores, picksPerTier }: ContestRulesConfiguration, tierCount: number) {
+type TieredRules = Extract<ContestRules, { selectionType: typeof SelectionType.TIERED }>;
+type BudgetRules = Extract<ContestRules, { selectionType: typeof SelectionType.BUDGET_PICK }>;
+
+/** "Every score counts.", "The best score counts." or "The best 4 scores count." */
+function formatCountedScores(countedScores: number, rosterSize: number | null) {
+  return rosterSize !== null && countedScores >= rosterSize
+    ? 'Every score counts.'
+    : countedScores === 1
+      ? 'The best score counts.'
+      : `The best ${countedScores} scores count.`;
+}
+
+function formatTieredRules({ countedScores, picksPerTier }: TieredRules, tierCount: number) {
   const golfers = pluralize(picksPerTier, 'golfer');
   const pick = tierCount === 0
     ? `Pick ${golfers} from each of the event's tiers.`
     : tierCount === 1
       ? `Pick ${golfers} from the event's one tier.`
       : `Pick ${golfers} from each of ${tierCount} tiers.`;
-  const rosterSize = getTieredRosterSize(tierCount, picksPerTier);
-  const count = tierCount > 0 && countedScores >= rosterSize
-    ? 'Every score counts.'
-    : countedScores === 1
-      ? 'The best score counts.'
-      : `The best ${countedScores} scores count.`;
-  return `${pick} ${count}`;
+  const rosterSize = tierCount > 0 ? getTieredRosterSize(tierCount, picksPerTier) : null;
+  return `${pick} ${formatCountedScores(countedScores, rosterSize)}`;
+}
+
+function formatBudgetRules({ countedScores, rosterSize }: BudgetRules) {
+  return `Pick ${pluralize(rosterSize, 'golfer')} whose prices fit under the salary cap. ${formatCountedScores(countedScores, rosterSize)}`;
 }
 
 /**
@@ -46,16 +54,12 @@ function formatTieredRules({ countedScores, picksPerTier }: ContestRulesConfigur
  * 4 scores count." Keyed by selection type, so each new way of picking adds its own arm here.
  * `tierCount` is the event's; an event with no tiers yet still reads sensibly.
  */
-export function formatContestRules(
-  selectionType: SelectionType,
-  configuration: ContestRulesConfiguration,
-  tierCount: number,
-) {
-  switch (selectionType) {
+export function formatContestRules(configuration: ContestRules, tierCount: number) {
+  switch (configuration.selectionType) {
     case SelectionType.TIERED:
       return formatTieredRules(configuration, tierCount);
-    default:
-      return `${formatSelectionTypeName(selectionType)} contest.`;
+    case SelectionType.BUDGET_PICK:
+      return formatBudgetRules(configuration);
   }
 }
 
@@ -76,12 +80,8 @@ export function formatEntriesPerTeamSentence(maxEntriesPerSquad: number | null |
  * A preset's short label for the "Start from" choice, such as "Pick 6, best 4" on an event with
  * six tiers. Before the event has tiers it reads per tier: "1 per tier, best 4".
  */
-export function formatPresetLabel(
-  selectionType: SelectionType,
-  configuration: ContestRulesConfiguration,
-  tierCount: number,
-) {
-  switch (selectionType) {
+export function formatPresetLabel(configuration: ContestRules, tierCount: number) {
+  switch (configuration.selectionType) {
     case SelectionType.TIERED: {
       const pick = tierCount > 0
         ? `Pick ${getTieredRosterSize(tierCount, configuration.picksPerTier)}`
@@ -91,8 +91,8 @@ export function formatPresetLabel(
         : `best ${configuration.countedScores}`;
       return `${pick}, ${count}`;
     }
-    default:
-      return formatSelectionTypeName(selectionType);
+    case SelectionType.BUDGET_PICK:
+      return `Pick ${configuration.rosterSize}, ${configuration.countedScores >= configuration.rosterSize ? 'all count' : `best ${configuration.countedScores}`}`;
   }
 }
 
@@ -103,12 +103,12 @@ export function formatPresetLabel(
 export function suggestContestName(
   eventName: string,
   selectionType: SelectionType,
-  configuration: Pick<ContestRulesConfiguration, 'picksPerTier'> | null,
+  configuration: ContestRules | null,
   tierCount: number,
 ) {
   switch (selectionType) {
     case SelectionType.TIERED:
-      return configuration && tierCount > 0
+      return configuration?.selectionType === SelectionType.TIERED && tierCount > 0
         ? `${eventName} Pick ${getTieredRosterSize(tierCount, configuration.picksPerTier)}`
         : `${eventName} Tiered`;
     default:

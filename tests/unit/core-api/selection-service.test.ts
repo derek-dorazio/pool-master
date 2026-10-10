@@ -103,7 +103,7 @@ function configuration(overrides: Partial<ContestConfiguration> = {}): ContestCo
     selectionType: SelectionType.TIERED,
     isExclusive: false,
     // Every tier takes the contest's picksPerTier (#479): two tiers × 2 is a roster of 4.
-    configJson: { picksPerTier: 2, countedScores: 3 },
+    configJson: { selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 3 },
     ...TIMESTAMPS,
     ...overrides,
   } as ContestConfiguration;
@@ -452,7 +452,7 @@ describe('#324 SelectionService.getSelectionState', () => {
   it('builds a budget-pick room from the configuration\'s roster size', async () => {
     const { service } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
-      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, budget: 500 },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 500, countedScores: 2 } },
     });
 
     const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
@@ -631,7 +631,7 @@ describe('#324 SelectionService.submitSelection — the guards, in order', () =>
   it('answers 400 DUPLICATE_PICK when a budget-pick entry already holds the participant', async () => {
     const { service, createPick, deletePick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
-      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3 },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, salaryCap: 500, countedScores: 3 } },
       picks: [pick('pick-a', 'p-a', 'sep-a')],
     });
 
@@ -650,7 +650,7 @@ describe('#324 SelectionService.submitSelection — the guards, in order', () =>
   it('answers 400 PARTICIPANT_ALREADY_TAKEN, not DUPLICATE_PICK, when an exclusive budget-pick entry re-picks a golfer another entry also holds', async () => {
     const { service, createPick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
-      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, isExclusive: true },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 500, countedScores: 2 }, isExclusive: true },
       picks: [pick('pick-a', 'p-a', 'sep-a')],
       contestPicksForParticipant: [
         pick('pick-a', 'p-a', 'sep-a'),
@@ -668,7 +668,7 @@ describe('#324 SelectionService.submitSelection — the guards, in order', () =>
   it('answers 400 ENTRY_COMPLETE when a full budget-pick entry submits again', async () => {
     const { service, createPick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
-      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2 },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 500, countedScores: 2 } },
       picks: [pick('pick-b', 'p-b', 'sep-b'), pick('pick-c', 'p-c', 'sep-c')],
     });
 
@@ -798,7 +798,7 @@ describe('SelectionService — rooms with missing or partial data', () => {
   it('places a budget pick in the next round when the entry still has room', async () => {
     const { service, createPick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
-      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3 },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, salaryCap: 500, countedScores: 3 } },
       picks: [pick('pick-a', 'p-a', 'sep-a')],
     });
 
@@ -882,7 +882,7 @@ describe('SelectionService — rooms with missing or partial data', () => {
   it('numbers a budget-pick history by each entry\'s own pick order, not by tier', async () => {
     const { service } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK, status: ContestStatus.ACTIVE },
-      configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3 },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, salaryCap: 500, countedScores: 3 } },
       picks: [pick('pick-d', 'p-d', 'sep-d'), pick('pick-a', 'p-a', 'sep-a')],
     });
 
@@ -896,7 +896,7 @@ describe('SelectionService — rooms with missing or partial data', () => {
 // entries count. These suites take one pick per tier, so a complete lineup is one from each.
 describe('SelectionService.submitEntry — an entry counts only once its owner submits a complete lineup', () => {
   const COMPLETE = [pick('pick-a', 'p-a', 'sep-a'), pick('pick-d', 'p-d', 'sep-d')];
-  const ONE_PER_TIER = { configJson: { picksPerTier: 1, countedScores: 1 } };
+  const ONE_PER_TIER = { configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 } };
 
   function submitEntryInput(overrides: { entryId?: string; actorUserId?: string } = {}) {
     return {
@@ -1011,7 +1011,7 @@ describe('SelectionService.submitEntry — an entry counts only once its owner s
 
 describe('SelectionService.submitSelection — a pick change on a submitted entry (#481)', () => {
   const COMPLETE = [pick('pick-a', 'p-a', 'sep-a'), pick('pick-d', 'p-d', 'sep-d')];
-  const ONE_PER_TIER = { configJson: { picksPerTier: 1, countedScores: 1 } };
+  const ONE_PER_TIER = { configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 } };
 
   it('sends a submitted entry back to DRAFT when unselecting a golfer leaves its lineup short', async () => {
     const { service, deps } = setup({ configuration: ONE_PER_TIER, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
@@ -1059,7 +1059,10 @@ describe('SelectionService.submitSelection — a pick change on a submitted entr
 // fails here for the engine it drops.
 describe.each([
   { selectionType: SelectionType.TIERED, configuration: {} },
-  { selectionType: SelectionType.BUDGET_PICK, configuration: { rosterSize: 2 } },
+  {
+    selectionType: SelectionType.BUDGET_PICK,
+    configuration: { configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 500, countedScores: 2 } },
+  },
 ])('SelectionService exclusivity in a $selectionType room', ({ selectionType, configuration: typeConfiguration }) => {
   const takenByOtherEntry = [pick('pick-other', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID })];
   const roomWith = (isExclusive: boolean, extra: SetupOptions = {}) =>

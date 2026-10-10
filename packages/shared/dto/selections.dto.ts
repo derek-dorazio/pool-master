@@ -85,9 +85,7 @@ export type SelectionGroupDto = z.infer<typeof SelectionGroupDtoSchema>;
 export const SelectionContestConfigurationDtoSchema = z.object({
   isExclusive: z.boolean(),
   rounds: z.number().optional(),
-  pickCount: z.number().optional(),
-  rosterSize: z.number().optional(),
-  budget: z.number().optional(),
+  rosterSize: z.number().optional().describe('How many picks a full roster holds.'),
   timePerPickSeconds: z.number().optional(),
   picksPerPeriod: z.number().optional(),
   roundValues: z.array(z.number()).optional(),

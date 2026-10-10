@@ -903,7 +903,7 @@ export const listContestConfigTemplates = <ThrowOnError extends boolean = false>
 /**
  * Update a contest configuration template
  *
- * Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration.
+ * Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template's own selection type's rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise).
  */
 export const updateContestConfigTemplate = <ThrowOnError extends boolean = false>(options: Options<UpdateContestConfigTemplateData, ThrowOnError>) => (options.client ?? client).put<UpdateContestConfigTemplateResponses, UpdateContestConfigTemplateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

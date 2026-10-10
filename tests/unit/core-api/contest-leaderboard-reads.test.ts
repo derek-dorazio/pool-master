@@ -24,7 +24,7 @@ describe('contest leaderboard reads', () => {
     expect(scoringRules.findByContestConfiguration).not.toHaveBeenCalled();
   });
 
-  it('reads unset roster size, pick count, rounds and config JSON as null', async () => {
+  it('reads unset rounds and rules as null', async () => {
     const configuration = await loadContestScoringConfiguration({
       configurations: fakeContestConfigurationRepo({
         findByContest: jest.fn().mockResolvedValue({ id: 'config-1', contestId: 'contest-1' }),
@@ -38,8 +38,6 @@ describe('contest leaderboard reads', () => {
 
     expect(configuration).toEqual({
       configJson: null,
-      rosterSize: null,
-      pickCount: null,
       rounds: null,
       participantScoringRules: [{ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: true }],
     });

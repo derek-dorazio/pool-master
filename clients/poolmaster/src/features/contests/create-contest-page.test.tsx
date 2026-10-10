@@ -190,6 +190,7 @@ function primeCommonMocks() {
           schemaVersion: 1,
           configuration: {
             maxEntriesPerSquad: 1,
+            selectionType: 'TIERED',
             picksPerTier: 1,
             countedScores: 4,
           },
@@ -208,6 +209,7 @@ function primeCommonMocks() {
           schemaVersion: 1,
           configuration: {
             maxEntriesPerSquad: 1,
+            selectionType: 'TIERED',
             picksPerTier: 2,
             countedScores: 8,
           },
@@ -300,7 +302,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       templateId: '11111111-1111-4111-8111-111111111111',
-      configuration: { picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 },
+      configuration: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 },
     });
   });
 
@@ -352,7 +354,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toEqual(expect.objectContaining({
       templateId: '33333333-3333-4333-8333-333333333333',
-      configuration: { picksPerTier: 2, countedScores: 8, maxEntriesPerSquad: 1 },
+      configuration: { selectionType: 'TIERED', picksPerTier: 2, countedScores: 8, maxEntriesPerSquad: 1 },
     }));
   });
 
@@ -372,7 +374,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).not.toHaveProperty('templateId');
-    expect(submittedBody()).toEqual(expect.objectContaining({ configuration: { picksPerTier: 1, countedScores: 5 } }));
+    expect(submittedBody()).toEqual(expect.objectContaining({ configuration: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 5 } }));
   });
 
   it('resets scores that count to all but two tiers\' worth when picks per tier changes', async () => {
@@ -405,7 +407,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
             isDefault: true,
             active: true,
             schemaVersion: 1,
-            configuration: { maxEntriesPerSquad: 1, picksPerTier: 2, countedScores: 10 },
+            configuration: { maxEntriesPerSquad: 1, selectionType: 'TIERED', picksPerTier: 2, countedScores: 10 },
           },
         ],
       },

@@ -380,9 +380,7 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
       data: {
         contestId: contest.id,
         selectionType: 'TIERED',
-        configJson: { countedScores: 2 },
-        rosterSize: 2,
-        pickCount: 2,
+        configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
         participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
       },
     });
@@ -489,9 +487,7 @@ async function createSettlementContest(input: {
     data: {
       contestId: contest.id,
       selectionType: 'TIERED',
-      configJson: { countedScores: 2 },
-      rosterSize: 3,
-      pickCount: 3,
+      configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
       ...(input.withScoringRule !== false && {
         participantScoringRules: {
           create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },

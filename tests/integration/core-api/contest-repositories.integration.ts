@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { ContestStatus, Sport } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigTemplateRepository,
+  PrismaContestConfigurationRepository,
   PrismaContestEntryPickRepository,
   PrismaContestEntryRepository,
   PrismaContestEntryStandingRepository,
@@ -237,6 +238,36 @@ describe('ContestRepository', () => {
   });
 });
 
+describe('ContestConfigurationRepository', () => {
+  it('reads stored rules back typed by selection type, dropping keys the rules do not define', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Budget rules', ContestStatus.DRAFT);
+    await getPrisma().contestConfiguration.create({
+      data: {
+        contestId: contest.id,
+        selectionType: 'BUDGET_PICK',
+        configJson: {
+          selectionType: SelectionType.BUDGET_PICK,
+          rosterSize: 6,
+          countedScores: 4,
+          salaryCap: 50_000,
+          budget: 8_000,
+          pickCount: 6,
+        },
+      },
+    });
+
+    const configuration = await new PrismaContestConfigurationRepository(getPrisma()).findByContest(contest.id);
+
+    expect(configuration?.configJson).toEqual({
+      selectionType: SelectionType.BUDGET_PICK,
+      rosterSize: 6,
+      countedScores: 4,
+      salaryCap: 50_000,
+    });
+  });
+});
+
 describe('ContestConfigTemplateRepository', () => {
   // Templates are reference data the cleanup leaves alone, so these use a sport of their own.
   const sport = `ITEST-${randomUUID().slice(0, 8)}`;
@@ -255,7 +286,7 @@ describe('ContestConfigTemplateRepository', () => {
         name: `Template ${templateKey}`,
         description: 'Integration template',
         sortOrder,
-        configJson: { picksPerTier: 1 },
+        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
       },
     });
   }
@@ -283,7 +314,7 @@ describe('ContestConfigTemplateRepository', () => {
       active: false,
       description: 'Integration template',
       sortOrder: 1,
-      configJson: { picksPerTier: 1 },
+      configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
     }));
     const active = await repo.list({ sport: sport as Sport, active: true });
     expect(active.map((template) => template.id)).toEqual([kept.id]);

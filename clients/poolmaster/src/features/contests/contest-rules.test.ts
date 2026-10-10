@@ -19,20 +19,27 @@ describe('contest rules sentence', () => {
   });
 
   it('reads a tiered contest as picks per tier across the event\'s tiers and the best scores that count', () => {
-    expect(formatContestRules(SelectionType.TIERED, { picksPerTier: 1, countedScores: 4 }, 6))
+    expect(formatContestRules({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, 6))
       .toBe('Pick 1 golfer from each of 6 tiers. The best 4 scores count.');
-    expect(formatContestRules(SelectionType.TIERED, { picksPerTier: 2, countedScores: 1 }, 6))
+    expect(formatContestRules({ selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 1 }, 6))
       .toBe('Pick 2 golfers from each of 6 tiers. The best score counts.');
   });
 
   it('says every score counts when the counted scores cover the whole roster', () => {
-    expect(formatContestRules(SelectionType.TIERED, { picksPerTier: 1, countedScores: 6 }, 6))
+    expect(formatContestRules({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 6 }, 6))
       .toBe('Pick 1 golfer from each of 6 tiers. Every score counts.');
   });
 
   it('still reads sensibly before the event has tiers', () => {
-    expect(formatContestRules(SelectionType.TIERED, { picksPerTier: 1, countedScores: 4 }, 0))
+    expect(formatContestRules({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, 0))
       .toBe("Pick 1 golfer from each of the event's tiers. The best 4 scores count.");
+  });
+
+  it('reads a budget contest as a roster under the salary cap and the best scores that count', () => {
+    expect(formatContestRules({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 }, 6))
+      .toBe('Pick 6 golfers whose prices fit under the salary cap. The best 4 scores count.');
+    expect(formatContestRules({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 6 }, 0))
+      .toBe('Pick 6 golfers whose prices fit under the salary cap. Every score counts.');
   });
 
   it('shows an unlimited entry allowance as No limit', () => {
@@ -47,14 +54,14 @@ describe('contest rules form', () => {
 
   it('turns valid fields into the configuration the API takes', () => {
     expect(parseContestRules(valid, 6)).toEqual({
-      configuration: { picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 2 },
+      configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 2 },
       error: null,
     });
   });
 
   it('sends no entry limit when No limit is ticked', () => {
     expect(parseContestRules({ ...valid, unlimitedEntries: true, maxEntriesPerTeam: '' }, 6).configuration)
-      .toEqual({ picksPerTier: 1, countedScores: 4 });
+      .toEqual({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 });
   });
 
   it('refuses more scores that count than golfers picked, naming the roster size', () => {
@@ -70,14 +77,19 @@ describe('contest rules form', () => {
 
 describe('Create contest wording', () => {
   it('labels a tiered preset by the golfers picked and the scores that count on the chosen event', () => {
-    expect(formatPresetLabel(SelectionType.TIERED, { picksPerTier: 1, countedScores: 4 }, 6)).toBe('Pick 6, best 4');
-    expect(formatPresetLabel(SelectionType.TIERED, { picksPerTier: 1, countedScores: 6 }, 6)).toBe('Pick 6, all count');
-    expect(formatPresetLabel(SelectionType.TIERED, { picksPerTier: 2, countedScores: 8 }, 0)).toBe('2 per tier, best 8');
+    expect(formatPresetLabel({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, 6)).toBe('Pick 6, best 4');
+    expect(formatPresetLabel({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 6 }, 6)).toBe('Pick 6, all count');
+    expect(formatPresetLabel({ selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 8 }, 0)).toBe('2 per tier, best 8');
+  });
+
+  it('labels a budget preset by its roster and the scores that count, whatever the event\'s tiers', () => {
+    expect(formatPresetLabel({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 }, 0)).toBe('Pick 6, best 4');
+    expect(formatPresetLabel({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 6 }, 6)).toBe('Pick 6, all count');
   });
 
   it('suggests a name from the event and the golfers picked, or the format before the event has tiers', () => {
-    expect(suggestContestName('The Masters', SelectionType.TIERED, { picksPerTier: 2 }, 6)).toBe('The Masters Pick 12');
-    expect(suggestContestName('The Masters', SelectionType.TIERED, { picksPerTier: 1 }, 0)).toBe('The Masters Tiered');
+    expect(suggestContestName('The Masters', SelectionType.TIERED, { selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 8 }, 6)).toBe('The Masters Pick 12');
+    expect(suggestContestName('The Masters', SelectionType.TIERED, { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, 0)).toBe('The Masters Tiered');
     expect(suggestContestName('The Masters', SelectionType.TIERED, null, 6)).toBe('The Masters Tiered');
   });
 

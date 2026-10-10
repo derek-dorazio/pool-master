@@ -252,8 +252,7 @@ async function seedBudgetPickFixture(options: { isExclusive?: boolean } = {}) {
     selectionType: SelectionType.BUDGET_PICK,
     scoringEngine: ScoringEngine.STROKE_PLAY,
     configuration: {
-      rosterSize: 1,
-      budget: 8000,
+      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 1, salaryCap: 8000, countedScores: 1 },
       isExclusive: options.isExclusive ?? true,
     },
   });
@@ -425,7 +424,7 @@ async function seedTieredDraftFixture(options: {
       rounds: 1,
       isExclusive: options.isExclusive ?? false,
       // The contest's picks per tier, which every event tier takes (#479).
-      configJson: { picksPerTier: picksFromTier, countedScores: 1 },
+      configJson: { selectionType: SelectionType.TIERED, picksPerTier: picksFromTier, countedScores: 1 },
       tierConfig: [
         {
           tierId: 'tier-1',
@@ -726,7 +725,6 @@ describe('SDK Functional: Roster Selection', () => {
     expect(stateResponse.data?.selectionType).toBe(SelectionType.BUDGET_PICK);
     expect(stateResponse.data?.myEntryId).toBe(fixture.commissionerEntryId);
     expect(stateResponse.data?.contestConfiguration?.rosterSize).toBe(1);
-    expect(stateResponse.data?.contestConfiguration?.budget).toBe(8000);
     expect(stateResponse.data?.pickHistories).toHaveLength(0);
     expect(stateResponse.data?.availableParticipantIds).toEqual(
       expect.arrayContaining([fixture.firstEventParticipantId, fixture.secondEventParticipantId]),
@@ -938,7 +936,7 @@ describe('SDK Functional: Roster Selection', () => {
         sportEventId: event.sportEventId,
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
-        configuration: { maxEntriesPerSquad: 1, picksPerTier: 2, countedScores: 4 },
+        configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 4 },
       },
     });
     expect(created.response.status).toBe(201);

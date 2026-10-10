@@ -8,6 +8,7 @@ import type {
   SportEventSyncScope,
 } from './enums';
 import type { EventPricingConfig } from './budget-pricing';
+import type { ContestRulesWithEntryLimit, ContestSelectionConfig } from './contest-rules';
 import type { ParticipantScoringDefinitionId } from './contest-scoring';
 import type { DomainEntity } from './types';
 
@@ -26,33 +27,6 @@ export interface PersistedGolfContestTierDefinition extends GolfContestTierDefin
   picksFromTier?: number;
   participantIds?: string[];
 }
-
-/**
- * Shrunk per plans/124 §4.6/§4.6a: tiers and price are event-owned data
- * (SportEventTier/SportEventParticipantValuation via
- * SportEventTierService.getEffectiveTiersForSportEvent), never a per-contest
- * override, so tierSource/tierGeneration/tiers all drop. cutRule/
- * playoffHandling/displayScoring/tiebreaker each had exactly one possible
- * value and zero real reads downstream — dropped as dead configuration, not
- * simplified. picksPerTier/countedScores are the one thing that's genuinely a
- * per-pool rule (two commissioners on the same tournament can legitimately
- * pick different numbers per tier). The roster is the event's tier count times
- * picksPerTier, derived on read (#479; see tiered-roster.ts).
- */
-export interface GolfTieredContestConfig {
-  /** Picks every tier takes; the same for each tier. */
-  picksPerTier: number;
-  /** Best N picks that count toward the entry total; at most the derived roster size. */
-  countedScores: number;
-}
-
-/**
- * Golf-first managed contest configuration. Only the tiered mode is
- * implemented today; `GOLF_CATEGORY_PICKS` was a fully-typed stub with no
- * backend and was removed (plans/124 §4.11). `plans/127-golf-category-drafts.md`
- * rebuilds category picks on a clean slate, not by resurrecting the stub.
- */
-export type GolfContestConfig = GolfTieredContestConfig;
 
 export type SportEventReadinessStatus =
   | 'NOT_RELEASED'
@@ -136,7 +110,8 @@ export interface ContestConfiguration extends DomainEntity {
   templateId?: string | null;
   templateVersion?: number | null;
   selectionType: SelectionType;
-  configJson?: GolfContestConfig;
+  /** The contest's rules; its `selectionType` matches the contest's (#93). */
+  configJson?: ContestSelectionConfig;
   rounds?: number;
   timePerPickSeconds?: number;
   autoPickPolicy?: AutoPickPolicy;
@@ -148,11 +123,8 @@ export interface ContestConfiguration extends DomainEntity {
   roundValues?: number[];
   startRound?: string;
   tierConfig?: PersistedGolfContestTierDefinition[];
-  budget?: number;
-  pickCount?: number;
   isExclusive?: boolean;
   picksPerPeriod?: number;
-  rosterSize?: number;
 }
 
 /** Seeded reusable contest template selected during commissioner create flow. */
@@ -168,7 +140,7 @@ export interface ContestConfigTemplate extends DomainEntity {
   sortOrder: number;
   isDefault: boolean;
   active: boolean;
-  configJson: GolfContestConfig;
+  configJson: ContestRulesWithEntryLimit;
   schemaVersion: number;
 }
 

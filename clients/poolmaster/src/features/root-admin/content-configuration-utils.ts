@@ -1,3 +1,4 @@
+import { SelectionType } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto } from '@/lib/api';
 
 export type ContestConfigTemplate = ContestConfigTemplateDto;
@@ -18,24 +19,31 @@ export function toPositiveNumber(value: string) {
 }
 
 /**
- * Tiers/price are event-owned data now, resolved via
- * SportEventTierService.getEffectiveTiersForSportEvent — never a per-contest or
- * per-template override (plans/124 §4.6/§4.6a). A template only ever says
- * "how many picks per tier, how many count," not the tier structure itself.
+ * Tiers and prices are event-owned data, resolved per tournament — never a per-contest or
+ * per-template override (plans/124 §4.6/§4.6a). A template only says how big the roster is
+ * (picks per tier for tiered rules, golfers per entry for budget rules) and how many scores
+ * count. An update for the other selection type's size is ignored.
  */
-export function updateTieredTemplateConfiguration(
+export function updateTemplateRules(
   template: ContestConfigTemplate,
   updates: {
     picksPerTier?: number;
+    rosterSize?: number;
     countedScores?: number;
   },
 ): ContestConfigTemplate {
-  return {
-    ...template,
-    configuration: {
-      ...template.configuration,
-      picksPerTier: updates.picksPerTier ?? template.configuration.picksPerTier,
-      countedScores: updates.countedScores ?? template.configuration.countedScores,
-    },
-  };
+  const { configuration } = template;
+  const countedScores = updates.countedScores ?? configuration.countedScores;
+  switch (configuration.selectionType) {
+    case SelectionType.TIERED:
+      return {
+        ...template,
+        configuration: { ...configuration, picksPerTier: updates.picksPerTier ?? configuration.picksPerTier, countedScores },
+      };
+    case SelectionType.BUDGET_PICK:
+      return {
+        ...template,
+        configuration: { ...configuration, rosterSize: updates.rosterSize ?? configuration.rosterSize, countedScores },
+      };
+  }
 }

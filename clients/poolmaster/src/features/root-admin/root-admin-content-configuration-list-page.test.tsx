@@ -54,6 +54,7 @@ function seedTemplates() {
           active: true,
           schemaVersion: 1,
           configuration: {
+            selectionType: 'TIERED',
             picksPerTier: 1,
             countedScores: 4,
           },

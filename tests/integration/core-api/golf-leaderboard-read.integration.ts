@@ -159,10 +159,10 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
         contestId: contest.id,
         selectionType: 'TIERED',
         configJson: {
+          selectionType: 'TIERED',
+          picksPerTier: 1,
           countedScores: 2,
         },
-        rosterSize: 3,
-        pickCount: 3,
         // Every configuration carries its scoring rule (#246); there is no golf fallback.
         participantScoringRules: {
           create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },

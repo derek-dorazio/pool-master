@@ -47,7 +47,7 @@ export function contestConfigTemplatesModule(fastify: FastifyInstance): void {
       tags: ['Contest Config Templates'],
       summary: 'Update a contest configuration template',
       description:
-        'Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration.',
+        'Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template\'s own selection type\'s rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise).',
       operationId: 'updateContestConfigTemplate',
       body: schemaRef('UpdateContestConfigTemplateRequest'),
       response: {
@@ -56,6 +56,7 @@ export function contestConfigTemplatesModule(fastify: FastifyInstance): void {
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
         404: schemaRef('ErrorEnvelope'),
+        422: schemaRef('ErrorEnvelope'),
       },
     },
     onRequest: requireRootAdmin,

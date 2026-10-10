@@ -629,9 +629,7 @@ async function buildGolfContestFixture(sportEventId: string): Promise<string> {
     data: {
       contestId: contest.id,
       selectionType: 'TIERED',
-      configJson: { countedScores: 2 },
-      rosterSize: 3,
-      pickCount: 3,
+      configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
       // Every configuration carries its scoring rule (#246); there is no golf fallback.
       participantScoringRules: {
         create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },

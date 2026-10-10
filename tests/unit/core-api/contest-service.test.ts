@@ -16,11 +16,10 @@ import type {
 import {
   ContestStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
-
-
   ContestFormat,
   LeagueMembershipStatus,
   LeagueRole,
+  SelectionType,
   Sport,
   SquadMembershipStatus,
   TeamIconKey,
@@ -793,7 +792,7 @@ describe('ContestService', () => {
         contests: contestRepo,
         configurations: createMockContestConfigurationRepo({
           findByContest: jest.fn().mockResolvedValue({
-            configJson: { picksPerTier: 1, countedScores: 4 },
+            configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
             maxEntriesPerSquad: null,
           }),
         }),

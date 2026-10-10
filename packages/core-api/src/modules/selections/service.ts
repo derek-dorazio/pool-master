@@ -34,6 +34,7 @@ import {
   ContestEntryStatus,
   ContestStatus,
   SelectionStatus,
+  SelectionType,
   LeagueMembershipStatus,
   type ContestEntry,
   type Participant,
@@ -457,7 +458,10 @@ export class SelectionService {
       squadMemberships,
       // A configuration without typed settings takes no picks per tier: its roster is 0, and the
       // room refuses picks with SELECTION_CONFIG_INVALID rather than guessing a number.
-      tiers: buildSelectionTiers(tierGroups, configuration?.configJson?.picksPerTier ?? 0),
+      tiers: buildSelectionTiers(
+        tierGroups,
+        configuration?.configJson?.selectionType === SelectionType.TIERED ? configuration.configJson.picksPerTier : 0,
+      ),
       // One rule for every entry change: see contests/entry-window.
       acceptsPicks: areContestEntriesOpen(contest, sportEvent, now),
       selectionParticipants: buildSelectionParticipants({

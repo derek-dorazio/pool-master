@@ -1,3 +1,4 @@
+import { SelectionType } from '@poolmaster/shared/domain';
 import type {
   ContestDto,
   ContestEntryDto,
@@ -51,7 +52,7 @@ export function buildContest(overrides: Partial<ContestDto> = {}): ContestDto {
     name: 'Masters One-and-Done',
     status: 'DRAFT',
     contestFormat: 'ROSTER',
-    selectionType: 'TIERED',
+    selectionType: SelectionType.TIERED,
     scoringEngine: 'STROKE_PLAY',
     leagueId: 'league-1',
     sportEventId: 'event-1',
@@ -92,6 +93,7 @@ export function buildManagedContest(
       id: `config-${id}`,
       contestId: id,
       maxEntriesPerSquad: 1,
+      selectionType: SelectionType.TIERED,
       picksPerTier: 1,
       countedScores: 4,
     },

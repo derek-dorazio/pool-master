@@ -198,7 +198,7 @@ export class InMemoryContestWorld {
       contestId,
       selectionType: SelectionType.TIERED,
       // A managed tiered configuration stores picks per tier, never a roster size (#479).
-      configJson: { picksPerTier: 1, countedScores: 4 },
+      configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
       maxEntriesPerSquad: null,
       createdAt: T0,
       updatedAt: T0,

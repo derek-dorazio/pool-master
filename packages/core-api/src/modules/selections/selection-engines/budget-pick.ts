@@ -17,8 +17,9 @@ import {
 export const budgetPickSelectionEngine: SelectionEngine = {
   selectionType: SelectionType.BUDGET_PICK,
 
-  /** The roster size the contest's configuration carries, and 0 when it carries none. */
-  rosterSize: ({ configuration }) => configuration?.rosterSize ?? 0,
+  /** The roster size the contest's budget rules carry, and 0 when it carries none. */
+  rosterSize: ({ configuration }) =>
+    configuration?.configJson?.selectionType === SelectionType.BUDGET_PICK ? configuration.configJson.rosterSize : 0,
 
   evaluate: ({ heldPick, existingPicks, rosterSize }) => {
     if (heldPick) return { kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.DUPLICATE_PICK };

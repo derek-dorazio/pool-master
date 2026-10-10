@@ -53,6 +53,7 @@ describe('Contest Validation Integration', () => {
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         configuration: {
+          selectionType: SelectionType.TIERED,
           countedScores: 4,
         },
       },
@@ -91,7 +92,7 @@ describe('Contest Validation Integration', () => {
         sportEventId: randomUUID(),
         contestFormat: ContestFormat.ROSTER,
         selectionType,
-        configuration: { picksPerTier: 1, countedScores: 4 },
+        configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
       },
     });
 

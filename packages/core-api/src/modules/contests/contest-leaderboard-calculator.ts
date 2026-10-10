@@ -10,8 +10,7 @@ import {
   ParticipantScoringDefinitionIdSchema,
   rankSortedScores,
   type ContestEntryStatus,
-  type GolfContestConfig,
-  type Unvalidated,
+  type ContestSelectionConfig,
   type ParticipantScoringDefinition,
   type ParticipantScoringDefinitionId,
   type ScoreDirection,
@@ -28,9 +27,8 @@ export interface ContestCountingRule {
 
 /** What the leaderboard reads off a contest's configuration: its counting inputs and its scoring rules. */
 export interface ContestScoringConfigurationRow {
-  configJson: unknown;
-  rosterSize: number | null;
-  pickCount: number | null;
+  /** The contest's typed rules; every selection type's carry `countedScores` (#93). */
+  configJson: ContestSelectionConfig | null;
   rounds: number | null;
   participantScoringRules: Array<{
     participantScoringDefinitionId: string;
@@ -68,14 +66,7 @@ export interface ParticipantScore {
 export function resolveContestCountingRule(
   configuration: ContestScoringConfigurationRow | null,
 ): ContestCountingRule | null {
-  const configJson = configuration?.configJson;
-  const configRecord =
-    configJson && typeof configJson === 'object' && !Array.isArray(configJson)
-      ? configJson as Unvalidated<GolfContestConfig>
-      : null;
-  const countedScores = readPositiveInteger(configRecord?.countedScores)
-    ?? readPositiveInteger(configuration?.rosterSize)
-    ?? readPositiveInteger(configuration?.pickCount);
+  const countedScores = configuration?.configJson?.countedScores;
 
   if (!countedScores) {
     return null;
@@ -278,9 +269,3 @@ function compareSlots(left: number | null, right: number | null): number {
   return left - right;
 }
 
-function readPositiveInteger(value: unknown): number | null {
-  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
-    return null;
-  }
-  return value;
-}

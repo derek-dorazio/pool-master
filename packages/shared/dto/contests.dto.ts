@@ -33,9 +33,6 @@ export const ContestCrudConfigurationRequestSchema = z.object({
   timePerPickSeconds: z.number().int().optional(),
   autoPickPolicy: z.nativeEnum(AutoPickPolicy).optional(),
   tierConfig: z.array(TierDefinitionRequestSchema).optional(),
-  budget: z.number().optional(),
-  rosterSize: z.number().int().optional(),
-  pickCount: z.number().int().optional(),
   picksPerPeriod: z.number().int().optional(),
   roundValues: z.array(z.number()).optional(),
   startRound: z.string().optional(),
@@ -62,8 +59,8 @@ export const CreateContestRequestSchema = z.object({
   contestFormat: z.literal(ContestFormat.ROSTER).describe(
     'First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.',
   ),
-  selectionType: z.literal(SelectionType.TIERED).describe(
-    'How an entry picks. Tiered only until another selection type has a typed configuration (budget #93, category #99); it must match the template\'s selection type when a template is named.',
+  selectionType: z.enum([SelectionType.TIERED, SelectionType.BUDGET_PICK]).describe(
+    'How an entry picks: the selection types with typed rules. It must match the template\'s selection type when a template is named, and the configuration\'s.',
   ),
   templateId: z.string().uuid().optional().describe('Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.'),
   configuration: ContestConfigurationRequestSchema.optional().describe('The contest configuration. With a template, replaces the template\'s configuration; without one, is the configuration.'),
@@ -276,7 +273,9 @@ const nullablePositiveIntSchema = z
 
 export const ContestConfigurationDetailDtoSchema = ContestCrudConfigurationRequestSchema.extend({
   maxEntriesPerSquad: nullablePositiveIntSchema,
-  picksPerTier: z.number().int().optional().describe("How many golfers an entry picks from each of the event's tiers in managed tiered golf contests."),
+  picksPerTier: z.number().int().optional().describe("Tiered contests: how many golfers an entry picks from each of the event's tiers."),
+  rosterSize: z.number().int().optional().describe('Budget contests: how many golfers an entry picks.'),
+  salaryCap: z.number().int().optional().describe('Budget contests: whole dollars an entry\'s picks may cost at most; the event\'s cap.'),
   countedScores: z.number().int().optional().describe('How many roster scores count toward the entry total in managed golf contests.'),
 }).describe(
   'Typed contest configuration returned by contest detail endpoints. Use this shape for client-side entry-cap and contest-behavior decisions instead of treating contestConfiguration as an untyped blob.',

@@ -54,9 +54,12 @@ export function contestManagementModule(
         404: schemaRef('ErrorEnvelope'),
         409: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'CONTEST_CONFIGURATION_LOCKED — the contest has been opened to the league (it is not DRAFT), so its configuration can no longer change.',
+          description: 'CONTEST_CONFIGURATION_LOCKED — the contest has been opened to the league (it is not DRAFT), so its configuration can no longer change. CONTEST_EVENT_NOT_PRICED — budget rules on an event whose golfers have no prices. CONTEST_BUDGET_UNFILLABLE — the cheapest golfers for every roster place cost more than the event\'s salary cap.',
         },
-        422: schemaRef('ErrorEnvelope'),
+        422: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'CONTEST_RULES_SELECTION_TYPE_MISMATCH — the rules are of another selection type than the contest\'s. CONTEST_TIER_FIELD_OUT_OF_RANGE — the tiered rules do not fit the event\'s tiers. CONTEST_BUDGET_FIELD_OUT_OF_RANGE — counted scores above the roster size.',
+        },
       },
     },
     preHandler: requireCommissioner(membershipRepo),
@@ -81,11 +84,11 @@ export function contestManagementModule(
         },
         409: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'CONTEST_NOT_DRAFT — the contest is already open, or past it. CONTEST_EVENT_ALREADY_STARTED — the event\'s start time has passed or it is IN_PROGRESS, COMPLETED or CANCELLED; the draft stays a draft.',
+          description: 'CONTEST_NOT_DRAFT — the contest is already open, or past it. CONTEST_EVENT_ALREADY_STARTED — the event\'s start time has passed or it is IN_PROGRESS, COMPLETED or CANCELLED; the draft stays a draft. CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules the event\'s active field can no longer fill under its salary cap, for example after withdrawals; edit the draft first.',
         },
         422: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event\'s tiers; edit the draft first.',
+          description: 'CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event\'s tiers; edit the draft first. CONTEST_RULES_SELECTION_TYPE_MISMATCH or CONTEST_BUDGET_FIELD_OUT_OF_RANGE — stored rules that break their selection type\'s checks.',
         },
       },
     },
