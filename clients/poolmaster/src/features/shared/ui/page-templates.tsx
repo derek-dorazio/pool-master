@@ -1,6 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
-import { Button, type ButtonProps } from "./button";
 import { cn } from "./class-names";
 import { DataGrid } from "./data-grid";
 import { DetailsActionsLayout } from "./details-actions-layout";
@@ -223,12 +222,6 @@ export function DataGridPage<TData>({
   );
 }
 
-export type CollectionPageProps<TData> = DataGridPageProps<TData>;
-
-export function CollectionPage<TData>(props: CollectionPageProps<TData>) {
-  return <DataGridPage {...props} />;
-}
-
 export function ManagementListPage<TData>(props: ManagementListPageProps<TData>) {
   return <DataGridPage {...props} />;
 }
@@ -369,13 +362,4 @@ export function PublicInviteJoinPage({
       </Tile>
     </main>
   );
-}
-
-export type FormEditorActionProps = Pick<
-  ButtonProps,
-  "children" | "disabled" | "isLoading" | "onClick" | "variant"
->;
-
-export function FormEditorAction(props: FormEditorActionProps) {
-  return <Button type="button" {...props} />;
 }
