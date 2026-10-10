@@ -747,15 +747,12 @@ model ContestConfiguration {
   timePerPickSeconds   Int?                  @map("time_per_pick_seconds")
   autoPickPolicy       PrismaAutoPickPolicy? @map("auto_pick_policy")
   tierConfig           Json?                 @map("tier_config")
-  budget               Int?
-  pickCount            Int?                  @map("pick_count")
   isExclusive          Boolean               @default(false) @map("is_exclusive")
   picksPerPeriod       Int?                  @map("picks_per_period")
   roundValues          Json?                 @map("round_values")
   startRound           String?               @map("start_round") @db.VarChar(50)
   minimumEntries       Int?                  @map("minimum_entries")
   maxEntriesPerSquad   Int?                  @map("max_entries_per_squad")
-  rosterSize           Int?                  @map("roster_size")
   totalPrizePoolAmount Float?                @map("total_prize_pool_amount")
   createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz
   updatedAt            DateTime              @updatedAt @map("updated_at") @db.Timestamptz

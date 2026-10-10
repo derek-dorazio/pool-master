@@ -402,7 +402,7 @@ export class ContestService {
     const countingRule = resolveContestCountingRule(configuration);
     if (!countingRule) {
       throw new ContestOperationError(
-        'Golf leaderboard requires a contest configuration with countedScores, rosterSize, or pickCount.',
+        'Golf leaderboard requires a contest configuration with countedScores.',
         'CONTEST_GOLF_LEADERBOARD_COUNTING_RULE_MISSING',
       );
     }
