@@ -142,6 +142,8 @@ describe('SportEventTierService — prices and the contest-side read', () => {
   it.each([
     ['a floor share above the top share', { floorSharePercent: 30 }],
     ['a rounding unit above the salary cap', { unit: 60_000 }],
+    // The worst seed's price is $6,000 (12% of $50,000): a $20,000 unit would round it to $0.
+    ['a rounding unit above the worst golfer\'s price, which would round it to $0', { unit: 20_000 }],
   ])('refuses %s with 422 PRICING_CONFIG_INVALID, pricing nothing', async (_case, change) => {
     const { store, event, service } = setup();
     store.addToField(event.id, 'p-1', { seedNumber: 1 });
