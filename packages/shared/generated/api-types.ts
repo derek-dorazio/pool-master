@@ -1208,12 +1208,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get the current user contest entry
-         * @deprecated
-         * @description Deprecated legacy helper. New clients should use listContestEntries and filter entries by squadId/client context; this operation remains for older clients through the next release boundary. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A member with no team gets a null entry.
-         */
-        get: operations["getMyContestEntry"];
+        get?: never;
         put?: never;
         /**
          * Create the current user contest entry
@@ -8006,54 +8001,6 @@ export interface components {
                 }[];
             }[];
         };
-        /** @description Current-user contest-entry response. */
-        MyContestEntryResponse: {
-            /** @description Contest being queried. */
-            contestId: string;
-            /** @description Current user entry, or null when the user has not joined the contest. */
-            entry: {
-                id: string;
-                contestId: string;
-                squadId: string;
-                squadName: string;
-                entryNumber: number;
-                name: string;
-                /**
-                 * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
-                 * @enum {string}
-                 */
-                status: "DRAFT" | "SUBMITTED";
-                tiebreakerValue?: number | null;
-                /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
-                picksCount: number;
-                /**
-                 * Format: date-time
-                 * @description When the contest entry was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the contest entry was last updated.
-                 */
-                updatedAt: string;
-                /** @description The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them. */
-                participants?: {
-                    pickId: string;
-                    sportEventParticipantId: string;
-                    participantId: string;
-                    participantName: string;
-                    participantStatus?: string | null;
-                    /** @description The participant's playing role, when known. */
-                    role?: string | null;
-                    teamAffiliation?: string | null;
-                    /**
-                     * Format: date-time
-                     * @description When the participant was added to the contest entry.
-                     */
-                    pickedAt: string;
-                }[];
-            } | null;
-        };
         /** @description Contest-entry deletion response. */
         ContestEntryDeletionResponse: {
             /** @description Contest from which the entry was removed. */
@@ -14114,64 +14061,6 @@ export interface operations {
                 };
             };
             /** @description CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _SPORT_UNSUPPORTED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know). */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    getMyContestEntry: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current-user contest-entry response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MyContestEntryResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
             400: {
                 headers: {
                     [name: string]: unknown;

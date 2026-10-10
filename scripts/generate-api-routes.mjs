@@ -109,7 +109,7 @@ const MANIFEST = {
     $comment: 'Contests',
     detail: 'getContest',
     entries: 'listContestEntries',
-    myEntry: 'getMyContestEntry',
+    myEntry: 'enterContest',
   },
   contestManagement: {
     detail: 'getContestConfiguration',

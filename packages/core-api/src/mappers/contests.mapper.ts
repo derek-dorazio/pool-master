@@ -12,7 +12,6 @@ import type {
   ContestEntryDetailResponse,
   ContestEntryResponse,
   ContestLeaderboardResponse,
-  MyContestEntryResponse,
 } from '@poolmaster/shared/dto';
 import {
   Sport,
@@ -266,13 +265,6 @@ export function toContestEntryListResponse(input: {
     picksRevealed: input.picksRevealed,
     entries: input.entries,
   };
-}
-
-export function toMyContestEntryResponse(
-  contestId: string,
-  entry: ContestEntryDto | null,
-): MyContestEntryResponse {
-  return { contestId, entry };
 }
 
 export function toContestLeaderboardResponse(

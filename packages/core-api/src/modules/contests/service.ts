@@ -329,18 +329,6 @@ export class ContestService {
     };
   }
 
-  async getMyEntry(
-    contestId: string,
-    userId: string,
-  ): Promise<ContestEntryDto | null> {
-    const context = await this.getEntryContext(contestId, userId, 'read');
-    if (!context.squadMembership) {
-      return null;
-    }
-    const entries = await this.loadEntryDtos(contestId);
-    return entries.find((entry) => entry.squadId === context.squadMembership?.squadId) ?? null;
-  }
-
   async getEntryDetail(
     contestId: string,
     entryId: string,
@@ -923,20 +911,6 @@ export class ContestService {
   ): Promise<ContestEntry | null> {
     const entries = await this.findEntriesBySquad(contestId, squadId);
     return entries[0] ?? null;
-  }
-
-  private async loadEntryDtos(contestId: string): Promise<ContestEntryDto[]> {
-    const rows = await this.deps.entries.findByContestWithSquad(contestId);
-    const pickCountByEntry = await this.deps.picks.countByEntries(rows.map((row) => row.id));
-
-    return rows.map((row) =>
-      toContestEntryDto({
-        ...row,
-        picksCount: pickCountByEntry.get(row.id) ?? 0,
-      }, {
-        name: row.squadName,
-      }),
-    );
   }
 
   private async loadEntryDetailDtos(

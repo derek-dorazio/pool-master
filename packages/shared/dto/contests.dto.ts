@@ -320,12 +320,6 @@ export const ContestEntryListResponseSchema = z.object({
 }).describe('Contest-entry list response.');
 export type ContestEntryListResponse = z.infer<typeof ContestEntryListResponseSchema>;
 
-export const MyContestEntryResponseSchema = z.object({
-  contestId: z.string().describe('Contest being queried.'),
-  entry: ContestEntryDtoSchema.nullable().describe('Current user entry, or null when the user has not joined the contest.'),
-}).describe('Current-user contest-entry response.');
-export type MyContestEntryResponse = z.infer<typeof MyContestEntryResponseSchema>;
-
 export const ContestEntryDeletionResponseSchema = z.object({
   contestId: z.string().describe('Contest from which the entry was removed.'),
   deleted: z.literal(true).describe('Confirms that the delete operation succeeded.'),
@@ -357,5 +351,4 @@ registerSchema('ContestListResponse', ContestListResponseSchema);
 registerSchema('ContestEntryResponse', ContestEntryResponseSchema);
 registerSchema('ContestEntryDetailResponse', ContestEntryDetailResponseSchema);
 registerSchema('ContestEntryListResponse', ContestEntryListResponseSchema);
-registerSchema('MyContestEntryResponse', MyContestEntryResponseSchema);
 registerSchema('ContestEntryDeletionResponse', ContestEntryDeletionResponseSchema);

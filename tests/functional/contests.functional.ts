@@ -5,7 +5,6 @@ import {
   getContest,
   getContestEntry,
   getContestConfiguration,
-  getMyContestEntry,
   leaveContest,
   listContestEntries,
   listContestConfigTemplates,
@@ -346,15 +345,6 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expect(entryResponse.data?.contestId).toBe(contestId);
     expect(entryResponse.data?.entry.entryNumber).toBe(1);
-
-    const myEntryResponse = await getMyContestEntry({
-      client: commissioner.client,
-      path: {
-        contestId,
-      },
-    });
-
-    expect(myEntryResponse.data?.entry?.id).toBe(entryResponse.data?.entry.id);
   });
 
   it('runs managed contest entry lifecycle against an imported event-backed field and rejects participants from another event', async () => {
@@ -652,17 +642,6 @@ describe('SDK Functional: Contests and Entries', () => {
       code: 'CONTEST_ENTRY_LIMIT_REACHED',
     });
 
-    const myEntryResponse = await getMyContestEntry({
-      client: commissioner.client,
-      path: {
-        contestId,
-      },
-    });
-
-    expect(myEntryResponse.data).toBeDefined();
-    expect(myEntryResponse.data?.contestId).toBe(contestId);
-    expect(myEntryResponse.data?.entry?.id).toBe(enterResponse.data?.entry.id);
-
     const entriesResponse = await listContestEntries({
       client: commissioner.client,
       path: {
@@ -694,17 +673,6 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(leaveResponse.data).toBeDefined();
     expect(leaveResponse.data?.contestId).toBe(contestId);
     expect(leaveResponse.data?.deleted).toBe(true);
-
-    const afterLeaveMyEntry = await getMyContestEntry({
-      client: commissioner.client,
-      path: {
-        contestId,
-      },
-    });
-
-    expect(afterLeaveMyEntry.data).toBeDefined();
-    expect(afterLeaveMyEntry.data?.contestId).toBe(contestId);
-    expect(afterLeaveMyEntry.data?.entry).toBeNull();
 
     const afterLeaveEntries = await listContestEntries({
       client: commissioner.client,
@@ -894,10 +862,11 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(updateResponse.data?.entry.id).toBe(entryResponse.data?.entry.id);
     expect(updateResponse.data?.entry.tiebreakerValue).toBe(271);
 
-    const refreshedEntryResponse = await getMyContestEntry({
+    const refreshedEntryResponse = await getContestEntry({
       client: commissioner.client,
       path: {
         contestId,
+        entryId: entryResponse.data?.entry.id as string,
       },
     });
 
