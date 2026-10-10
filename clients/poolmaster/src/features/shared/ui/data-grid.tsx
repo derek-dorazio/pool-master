@@ -11,9 +11,9 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useMemo, useState, type AnchorHTMLAttributes } from "react";
-import { Button } from "./button";
 import { cn } from "./class-names";
 import { Input } from "./form-field";
+import { Pager } from "./pager";
 
 /** One search box across the grid's text columns (rules/ux-rules.md §12 rule 7). */
 export type DataGridSearch = {
@@ -138,8 +138,6 @@ export function DataGrid<TData>({
     // show the last page there still is rather than an empty one.
     setPagination({ ...pagination, pageIndex: Math.max(pageCount - 1, 0) });
   }
-  const firstShown = matchingRowCount ? pagination.pageIndex * pagination.pageSize + 1 : 0;
-  const lastShown = Math.min(matchingRowCount, (pagination.pageIndex + 1) * pagination.pageSize);
 
   return (
     <div className="grid gap-3">
@@ -275,33 +273,15 @@ export function DataGrid<TData>({
           </tbody>
         </table>
       </div>
-      {pageSize && pageCount > 1 ? (
-        <nav
-          aria-label="Pages"
-          className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground"
-        >
-          <span>
-            {firstShown}–{lastShown} of {matchingRowCount}
-          </span>
-          <div className="flex gap-2">
-            <Button
-              disabled={!table.getCanPreviousPage()}
-              onClick={() => table.previousPage()}
-              size="sm"
-              variant="secondary"
-            >
-              Previous
-            </Button>
-            <Button
-              disabled={!table.getCanNextPage()}
-              onClick={() => table.nextPage()}
-              size="sm"
-              variant="secondary"
-            >
-              Next
-            </Button>
-          </div>
-        </nav>
+      {pageSize ? (
+        <Pager
+          onNext={() => table.nextPage()}
+          onPrevious={() => table.previousPage()}
+          pageCount={pageCount}
+          pageIndex={pagination.pageIndex}
+          pageSize={pagination.pageSize}
+          total={matchingRowCount}
+        />
       ) : null}
     </div>
   );

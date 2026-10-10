@@ -12,6 +12,7 @@ export { cn } from "./class-names";
 export { ConfirmDialog } from "./confirm-dialog";
 export { CopyField } from "./copy-field";
 export { DataGrid } from "./data-grid";
+export { Pager } from "./pager";
 export { DateDisplay, DateTimeField } from "./date-time";
 export {
   formatDateDisplay,
