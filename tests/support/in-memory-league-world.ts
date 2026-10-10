@@ -15,9 +15,11 @@
  *   - `users.findByLeague` → users with a membership of ANY status, as the port documents
  *   - `leagueInvitations.findByEmail` / `ownerInvitations.findPendingByLeagueAndEmail` → PENDING
  *
- * `transaction` stands in for `PrismaMembershipTransaction`: it hands the work these same
+ * `transaction` stands in for `PrismaMembershipTransaction`: it hands the work views of these
  * repositories and, if the work throws, restores every table to what it held when the work
  * began. A test makes a later write throw and asserts that the earlier ones did not stick.
+ * While a transaction is open, a write through the world's own repositories rather than the
+ * views throws, because against Postgres that write would commit even when the work rolls back.
  *
  * The Prisma adapters behind these ports are tested against Postgres in the integration suite.
  */
@@ -262,20 +264,69 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     update: async (id, updates) => ownerInvitations.patch(id, updates),
   };
 
+  const transactionState = { open: 0, delegating: 0 };
+
+  /** Refuses a write made while a transaction is open unless it came through a transaction view. */
+  function outsideTransactionGuard<A extends unknown[], T>(
+    label: string,
+    write: (...args: A) => Promise<T>,
+  ): (...args: A) => Promise<T> {
+    return async (...args) => {
+      if (transactionState.open > 0 && transactionState.delegating === 0) {
+        throw new Error(`${label} wrote outside the open membership transaction`);
+      }
+      return write(...args);
+    };
+  }
+
+  membershipRepo.create = outsideTransactionGuard('memberships.create', membershipRepo.create);
+  membershipRepo.update = outsideTransactionGuard('memberships.update', membershipRepo.update);
+  squadRepo.create = outsideTransactionGuard('squads.create', squadRepo.create);
+  squadRepo.update = outsideTransactionGuard('squads.update', squadRepo.update);
+  squadMembershipRepo.create = outsideTransactionGuard('squadMemberships.create', squadMembershipRepo.create);
+  squadMembershipRepo.update = outsideTransactionGuard('squadMemberships.update', squadMembershipRepo.update);
+  ownerInvitationRepo.create = outsideTransactionGuard('ownerInvitations.create', ownerInvitationRepo.create);
+  ownerInvitationRepo.update = outsideTransactionGuard('ownerInvitations.update', ownerInvitationRepo.update);
+
+  /**
+   * The repository a transaction's work sees. Each call is looked up on the world's repository
+   * when it is made, so a test's `jest.spyOn` on that repository still injects its failure here.
+   */
+  function transactionView<R extends object>(repo: R): R {
+    return new Proxy(repo, {
+      get(target, property) {
+        const value: unknown = Reflect.get(target, property);
+        if (typeof value !== 'function') return value;
+        const method = value as (...args: unknown[]) => Promise<unknown>;
+        return async (...args: unknown[]): Promise<unknown> => {
+          transactionState.delegating += 1;
+          try {
+            return await method.apply(target, args);
+          } finally {
+            transactionState.delegating -= 1;
+          }
+        };
+      },
+    });
+  }
+
   const transaction: MembershipTransaction = {
     run: async (work) => {
       const restores = [users, leagues, memberships, squads, squadMemberships, leagueInvitations, ownerInvitations]
         .map((table) => table.snapshot());
+      transactionState.open += 1;
       try {
         return await work({
-          leagueMemberships: membershipRepo,
-          squads: squadRepo,
-          squadMemberships: squadMembershipRepo,
-          squadOwnerInvitations: ownerInvitationRepo,
+          leagueMemberships: transactionView(membershipRepo),
+          squads: transactionView(squadRepo),
+          squadMemberships: transactionView(squadMembershipRepo),
+          squadOwnerInvitations: transactionView(ownerInvitationRepo),
         });
       } catch (error) {
         for (const restore of restores) restore();
         throw error;
+      } finally {
+        transactionState.open -= 1;
       }
     },
   };

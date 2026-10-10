@@ -81,10 +81,10 @@ export async function revokePendingOwnerInvitations(input: {
     (invitation) =>
       invitation.squadId === input.squadId && invitation.status === SquadOwnerInvitationStatus.PENDING,
   );
-  await Promise.all(
-    pending.map(async (invitation) =>
-      input.ownerInvitationRepo.update(invitation.id, { status: SquadOwnerInvitationStatus.REVOKED })),
-  );
+  // Sequential: callers run this inside a membership transaction, which runs one statement at a time.
+  for (const invitation of pending) {
+    await input.ownerInvitationRepo.update(invitation.id, { status: SquadOwnerInvitationStatus.REVOKED });
+  }
   input.logger?.info({
     action: 'squadOwnerInvitation.revokePendingForSquad.success',
     data: { leagueId: input.leagueId, squadId: input.squadId, revoked: pending.length },
