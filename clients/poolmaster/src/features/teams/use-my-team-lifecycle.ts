@@ -7,9 +7,8 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import type { ActiveTeamDialog } from './my-team-shared';
 
 /**
- * Inactivate and delete for Commissioner tools › Manage team, with the notices they leave
- * behind. The notices
- * belong to the selected team and clear when the selection changes.
+ * Inactivate and delete for Commissioner tools › Manage team. The inactivation notice belongs
+ * to the selected team and clears when the selection changes; delete leaves the page.
  */
 export function useMyTeamLifecycle({
   leagueId,
@@ -29,11 +28,9 @@ export function useMyTeamLifecycle({
 }) {
   const navigate = useNavigate();
   const [teamInactivationNotice, setTeamInactivationNotice] = useState<string | null>(null);
-  const [teamDeletionNotice, setTeamDeletionNotice] = useState<string | null>(null);
 
   useEffect(() => {
     setTeamInactivationNotice(null);
-    setTeamDeletionNotice(null);
   }, [selectedTeam?.id]);
 
   const inactivateTeamMutation = useInvalidatingMutation({
@@ -85,13 +82,9 @@ export function useMyTeamLifecycle({
       if (!response.data?.success) {
         throwApiError(response.error, 'Team deletion response is missing data.');
       }
-
-      return selectedTeam.name;
     },
-    onSuccess: (teamNameDeleted) => {
+    onSuccess: () => {
       setActiveDialog(null);
-      setTeamDeletionNotice(`${teamNameDeleted} was deleted.`);
-      setTeamInactivationNotice(null);
       resetOwnerForms();
       navigate(afterDeletePath);
     },
@@ -103,7 +96,6 @@ export function useMyTeamLifecycle({
 
   return {
     teamInactivationNotice,
-    teamDeletionNotice,
     inactivateTeamMutation,
     deleteTeamMutation,
     isPending: inactivateTeamMutation.isPending || deleteTeamMutation.isPending,

@@ -6,15 +6,12 @@ import type { MyTeamLifecycle } from './use-my-team-lifecycle';
 
 /** The inactivate and delete outcomes. */
 export function MyTeamLifecycleNotices({ lifecycle }: { lifecycle: MyTeamLifecycle }) {
-  const { teamInactivationNotice, teamDeletionNotice, inactivateTeamMutation, deleteTeamMutation } = lifecycle;
+  const { teamInactivationNotice, inactivateTeamMutation, deleteTeamMutation } = lifecycle;
 
   return (
     <>
       {teamInactivationNotice ? (
         <Alert tone="success">{teamInactivationNotice}</Alert>
-      ) : null}
-      {teamDeletionNotice ? (
-        <Alert tone="success">{teamDeletionNotice}</Alert>
       ) : null}
       {inactivateTeamMutation.isError ? (
         <Alert tone="danger">{extractErrorMessage(inactivateTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
