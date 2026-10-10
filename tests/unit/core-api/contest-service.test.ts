@@ -1682,13 +1682,6 @@ describe('ContestService', () => {
         .createEntry('contest-1', 'user-1'))
         .rejects.toMatchObject({ code: 'SQUAD_MEMBERSHIP_REQUIRED' });
     });
-
-    it('getMyEntry returns null, not an error, both for no squad and for an ended squad membership', async () => {
-      await expect(serviceFor({ league: buildMembership(), squad: null }).getMyEntry('contest-1', 'user-1'))
-        .resolves.toBeNull();
-      await expect(serviceFor({ league: buildMembership(), squad: inactiveSquad }).getMyEntry('contest-1', 'user-1'))
-        .resolves.toBeNull();
-    });
   });
 });
 

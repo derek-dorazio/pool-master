@@ -129,13 +129,6 @@ export default tseslint.config(
       // (`${count} entries`). Everything else strict rejects (nullish, boolean, any,
       // objects) stays rejected.
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
-      // The legacy single-entry read is deprecated and still called by the web app and
-      // its own functional tests. Its retirement is #548; until then it is the one
-      // deprecated API allowed.
-      '@typescript-eslint/no-deprecated': [
-        'error',
-        { allow: [{ from: 'file', name: 'getMyContestEntry', path: 'packages/shared/generated/hey-api/sdk.gen.ts' }] },
-      ],
       // Off, not deferred: all 57 findings are `return reply.send(...)` (or `sendError`,
       // which returns the reply) inside a Fastify handler's `try`. FastifyReply is
       // thenable, so the rule asks for `return await reply`, which would route a send

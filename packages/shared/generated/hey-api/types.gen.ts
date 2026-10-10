@@ -7455,63 +7455,6 @@ export type ContestEntryListResponse = {
 };
 
 /**
- * Current-user contest-entry response.
- */
-export type MyContestEntryResponse = {
-    /**
-     * Contest being queried.
-     */
-    contestId: string;
-    /**
-     * Current user entry, or null when the user has not joined the contest.
-     */
-    entry: {
-        id: string;
-        contestId: string;
-        squadId: string;
-        squadName: string;
-        entryNumber: number;
-        name: string;
-        /**
-         * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
-         */
-        status: 'DRAFT' | 'SUBMITTED';
-        tiebreakerValue?: number | null;
-        /**
-         * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
-         */
-        picksCount: number;
-        /**
-         * When the contest entry was created.
-         */
-        createdAt: string;
-        /**
-         * When the contest entry was last updated.
-         */
-        updatedAt: string;
-        /**
-         * The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them.
-         */
-        participants?: Array<{
-            pickId: string;
-            sportEventParticipantId: string;
-            participantId: string;
-            participantName: string;
-            participantStatus?: string | null;
-            /**
-             * The participant's playing role, when known.
-             */
-            role?: string | null;
-            teamAffiliation?: string | null;
-            /**
-             * When the participant was added to the contest entry.
-             */
-            pickedAt: string;
-        }>;
-    } | null;
-};
-
-/**
  * Contest-entry deletion response.
  */
 export type ContestEntryDeletionResponse = {
@@ -13695,45 +13638,6 @@ export type LeaveContestResponses = {
 };
 
 export type LeaveContestResponse = LeaveContestResponses[keyof LeaveContestResponses];
-
-export type GetMyContestEntryData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/entries/me';
-};
-
-export type GetMyContestEntryErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type GetMyContestEntryError = GetMyContestEntryErrors[keyof GetMyContestEntryErrors];
-
-export type GetMyContestEntryResponses = {
-    /**
-     * Current-user contest-entry response.
-     */
-    200: MyContestEntryResponse;
-};
-
-export type GetMyContestEntryResponse = GetMyContestEntryResponses[keyof GetMyContestEntryResponses];
 
 export type EnterContestData = {
     body?: never;

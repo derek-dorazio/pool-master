@@ -468,14 +468,6 @@ describe('ContestService entries — reads', () => {
       .rejects.toBeInstanceOf(ContestEntryNotFoundError);
   });
 
-  it('returns the squad\'s entry from getMyEntry, and null for a member with no team', async () => {
-    const { owner, commissioner, contest, service } = setup();
-    const created = await service.createEntry(contest.id, owner.id);
-
-    await expect(service.getMyEntry(contest.id, owner.id)).resolves.toMatchObject({ id: created.id });
-    await expect(service.getMyEntry(contest.id, commissioner.id)).resolves.toBeNull();
-  });
-
   it('counts submitted entries per contest, leaving unsubmitted drafts out, with zero for a contest nobody entered', async () => {
     const { world, league, owner, rival, contest, service } = setup();
     const empty = world.addContest(league.id);

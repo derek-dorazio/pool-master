@@ -204,26 +204,6 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
     handler: handlers.getGolfLeaderboard,
   });
 
-  fastify.get('/:contestId/entries/me', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Get the current user contest entry',
-      deprecated: true,
-      description:
-        'Deprecated legacy helper. New clients should use listContestEntries and filter entries by squadId/client context; this operation remains for older clients through the next release boundary. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A member with no team gets a null entry.',
-      operationId: 'getMyContestEntry',
-      response: {
-        200: schemaRef('MyContestEntryResponse'),
-        400: schemaRef('ErrorEnvelope'),
-        401: schemaRef('ErrorEnvelope'),
-        403: schemaRef('ErrorEnvelope'),
-        404: schemaRef('ErrorEnvelope'),
-      },
-    },
-    preHandler: requireContestLeagueMember,
-    handler: handlers.getMyEntry,
-  });
-
   fastify.post('/:contestId/entries/me', {
     schema: {
       tags: ['Contests'],

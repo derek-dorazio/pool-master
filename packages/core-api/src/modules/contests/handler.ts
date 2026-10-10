@@ -15,7 +15,6 @@ import {
   toContestEntryDetailResponse,
   toContestEntryListResponse,
   toContestEntryResponse,
-  toMyContestEntryResponse,
   toContestResponse,
   toContestLeaderboardResponse,
 } from '../../mappers/contests.mapper';
@@ -56,7 +55,6 @@ export function createContestHandlers(contestService: ContestService) {
     listEntries,
     getEntry,
     getGolfLeaderboard,
-    getMyEntry,
     createMyEntry,
     deleteMyEntry,
     updateEntry,
@@ -204,31 +202,6 @@ export function createContestHandlers(contestService: ContestService) {
         return sendError(reply, 400, err.code, err.message);
       }
       logger.error({ contestId: request.params.contestId, userId, err }, 'contest golf leaderboard route failed');
-      throw err;
-    }
-  }
-
-  async function getMyEntry(
-    request: FastifyRequest<{ Params: { contestId: string } }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const logger = createRequestContextLogger(request);
-    const userId = request.authUser?.userId as string;
-    logger.debug({ contestId: request.params.contestId, userId }, 'contest my-entry route start');
-    try {
-      const entry = await contestService.getMyEntry(request.params.contestId, userId);
-      logger.info({ contestId: request.params.contestId, userId, hasEntry: entry !== null }, 'contest my-entry route completed');
-      return reply.send(toMyContestEntryResponse(request.params.contestId, entry));
-    } catch (err) {
-      if (err instanceof ContestNotFoundError) {
-        logger.warn({ contestId: request.params.contestId, userId }, 'contest my-entry route missing contest');
-        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
-      }
-      if (err instanceof ContestEntryOperationError) {
-        logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'contest my-entry route rejected');
-        return sendError(reply, 400, err.code, err.message);
-      }
-      logger.error({ contestId: request.params.contestId, userId, err }, 'contest my-entry route failed');
       throw err;
     }
   }
