@@ -1,39 +1,205 @@
+import { ContestStatus } from '@poolmaster/shared/domain';
+import { useQueries } from '@tanstack/react-query';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import type { ContestDto, SportEventDto } from '@/lib/api';
 import {
   buildLeagueAdminContestCreatePath,
   buildLeagueAdminContestPath,
-  buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
 import {
   Chip,
+  DataGrid,
+  DateDisplay,
   EmptyState,
   ErrorState,
   LinkButton,
-  ListCard,
-  ListEmptyRow,
-  ListStack,
   LoadingState,
   PageHeader,
-  Tile,
+  SegmentedControl,
 } from '@/features/shared/ui';
-import { contestStatusLabel, isHistoricalContest } from './contest-status';
-import { useLeagueContext } from '@/features/leagues/use-league-context';
+import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
+import { formatSelectionTypeName } from './contest-rules';
+import { ContestStatusBadge } from './contest-status-badge';
+import { isHistoricalContest } from './contest-status';
+import { sportEventQueryOptions } from './use-contest-schedule';
 import { useLeagueContestsQuery } from './use-league-contests-query';
 
-/** Commissioner tools › Contests: every contest in the league, with Create contest. */
+const CONTESTS_PER_PAGE = 25;
+
+type ContestFilter = 'active' | 'history';
+
+type ContestRow = {
+  contest: ContestDto;
+  event: SportEventDto | null;
+  eventName: string;
+  formatName: string;
+};
+
+/** Not yet open first, then by event start (soonest first); a contest whose event is unknown last. */
+function compareContestRows(left: ContestRow, right: ContestRow) {
+  const leftNotOpen = left.contest.status === ContestStatus.DRAFT ? 0 : 1;
+  const rightNotOpen = right.contest.status === ContestStatus.DRAFT ? 0 : 1;
+  if (leftNotOpen !== rightNotOpen) {
+    return leftNotOpen - rightNotOpen;
+  }
+  const leftStart = left.event ? Date.parse(left.event.startDate) : Number.POSITIVE_INFINITY;
+  const rightStart = right.event ? Date.parse(right.event.startDate) : Number.POSITIVE_INFINITY;
+  return leftStart - rightStart;
+}
+
+/** The finished contests read newest first: the latest event is the one a commissioner looks for. */
+function compareHistoryRows(left: ContestRow, right: ContestRow) {
+  return compareContestRows(right, left);
+}
+
+function EventCell({ contest, event }: { contest: ContestDto; event: SportEventDto | null }) {
+  if (!event) {
+    return <span className="text-muted-foreground">Event unavailable</span>;
+  }
+  const when = contest.status === ContestStatus.OPEN
+    ? 'Entries close'
+    : contest.status === ContestStatus.DRAFT ? 'Starts' : 'Started';
+
+  return (
+    <div>
+      <div>{event.name}</div>
+      <div className="text-xs text-muted-foreground">
+        {when} <DateDisplay className="text-muted-foreground" value={event.startDate} />
+      </div>
+    </div>
+  );
+}
+
+function EntriesCell({ contest, teamCount }: { contest: ContestDto; teamCount: number }) {
+  if (contest.status === ContestStatus.DRAFT) {
+    return <span className="text-muted-foreground">Not open</span>;
+  }
+  const entryCount = contest.entryCount ?? 0;
+  return (
+    <span className="tabular-nums">
+      {entryCount}
+      {contest.status === ContestStatus.OPEN ? <span className="text-muted-foreground"> of {teamCount} teams</span> : null}
+    </span>
+  );
+}
+
+/**
+ * Commissioner tools › Contests: every contest in the league in one table with search, an Active
+ * / History switch and paging, and one action per row naming the next step.
+ */
 export function ManageContestsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
   const { league } = useLeagueContext(leagueCode);
-  const contestsQuery = useLeagueContestsQuery(league?.id ?? '');
+  const leagueId = league?.id ?? '';
+  const contestsQuery = useLeagueContestsQuery(leagueId);
+  const teamsQuery = useLeagueSquadsQuery(leagueId);
+  const [filter, setFilter] = useState<ContestFilter>('active');
+
+  const contests = useMemo(() => contestsQuery.data ?? [], [contestsQuery.data]);
+  const activeContests = useMemo(() => contests.filter((contest) => !isHistoricalContest(contest.status)), [contests]);
+  const historyContests = useMemo(() => contests.filter((contest) => isHistoricalContest(contest.status)), [contests]);
+  const shownContests = filter === 'active' ? activeContests : historyContests;
+
+  // The event's name and start sort and search the table, so every shown contest's event is read,
+  // once per event, through the key every contest page shares.
+  const eventIds = useMemo(
+    () => [...new Set(shownContests.map((contest) => contest.sportEventId).filter((id): id is string => Boolean(id)))],
+    [shownContests],
+  );
+  const eventsById = useQueries({
+    queries: eventIds.map((eventId) => sportEventQueryOptions(eventId)),
+    combine: (results) => {
+      const byId = new Map<string, SportEventDto>();
+      for (const result of results) {
+        if (result.data) {
+          byId.set(result.data.id, result.data);
+        }
+      }
+      return byId;
+    },
+  });
+
+  const rows = useMemo<ContestRow[]>(() => {
+    const built = shownContests.map((contest) => {
+      const event = contest.sportEventId ? eventsById.get(contest.sportEventId) ?? null : null;
+      return {
+        contest,
+        event,
+        eventName: event?.name ?? '',
+        formatName: formatSelectionTypeName(contest.selectionType),
+      };
+    });
+    return built.sort(filter === 'active' ? compareContestRows : compareHistoryRows);
+  }, [eventsById, filter, shownContests]);
+
+  const teamCount = (teamsQuery.data ?? []).filter((team) => team.isActive).length;
+
+  const columns = useMemo<ColumnDef<ContestRow, string>[]>(
+    () => [
+      {
+        id: 'contest',
+        header: 'Contest',
+        accessorFn: (row) => row.contest.name,
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div>
+            <div className="font-semibold">{row.original.contest.name}</div>
+            <div className="text-xs text-muted-foreground">{row.original.formatName}</div>
+          </div>
+        ),
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        enableSorting: false,
+        enableGlobalFilter: false,
+        cell: ({ row }) => <ContestStatusBadge status={row.original.contest.status} />,
+      },
+      {
+        id: 'event',
+        header: 'Event',
+        accessorFn: (row) => row.eventName,
+        enableSorting: false,
+        cell: ({ row }) => <EventCell contest={row.original.contest} event={row.original.event} />,
+      },
+      {
+        id: 'entries',
+        header: 'Entries',
+        enableSorting: false,
+        enableGlobalFilter: false,
+        cell: ({ row }) => <EntriesCell contest={row.original.contest} teamCount={teamCount} />,
+      },
+      {
+        id: 'action',
+        header: '',
+        enableSorting: false,
+        enableGlobalFilter: false,
+        cell: ({ row }) => {
+          const { contest } = row.original;
+          const isNotOpen = contest.status === ContestStatus.DRAFT;
+          return (
+            <LinkButton
+              data-testid={`manage-contests-action-${contest.id}`}
+              size="sm"
+              to={buildLeagueAdminContestPath(leagueCode, contest.id)}
+              variant={isNotOpen ? 'primary' : 'secondary'}
+            >
+              {isNotOpen ? 'Finish setup' : 'Manage'}
+            </LinkButton>
+          );
+        },
+      },
+    ],
+    [leagueCode, teamCount],
+  );
 
   if (!league) {
     return null;
   }
-
-  const contests = contestsQuery.data ?? [];
-  const activeContests = contests.filter((contest) => !isHistoricalContest(contest.status));
-  const historicalContests = contests.filter((contest) => isHistoricalContest(contest.status));
 
   return (
     <section className="space-y-6" data-testid="manage-contests-page">
@@ -50,7 +216,7 @@ export function ManageContestsPage() {
             <Chip tone="inactive">League inactive</Chip>
           )
         }
-        description="Set up new contests and manage the ones already running."
+        description="Members see a contest once you open it to the league."
         title="Contests"
       />
 
@@ -63,7 +229,7 @@ export function ManageContestsPage() {
           action={
             league.isActive ? (
               <LinkButton to={buildLeagueAdminContestCreatePath(league.leagueCode)} variant="secondary">
-                Create first contest
+                Create contest
               </LinkButton>
             ) : null
           }
@@ -72,110 +238,31 @@ export function ManageContestsPage() {
           title="No contests yet"
         />
       ) : (
-        <>
-          <Tile>
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">Active contests</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Contests that are in setup, open, or under way.
-                </p>
-              </div>
-              <Chip tone="neutral">{activeContests.length}</Chip>
-            </div>
-
-            <ListStack className="mt-5">
-              {activeContests.length ? (
-                activeContests.map((contest) => (
-                  <ListCard
-                    actions={
-                      <>
-                        <LinkButton
-                          data-testid={`manage-contests-open-${contest.id}`}
-                          to={buildLeagueContestPath(league.leagueCode, contest.id)}
-                          variant="secondary"
-                        >
-                          Open contest
-                        </LinkButton>
-                        <LinkButton
-                          data-testid={`manage-contests-manage-${contest.id}`}
-                          to={buildLeagueAdminContestPath(league.leagueCode, contest.id)}
-                        >
-                          Manage contest
-                        </LinkButton>
-                      </>
-                    }
-                    data-testid={`manage-contests-row-${contest.id}`}
-                    metadata={`${contest.selectionType} · ${contest.scoringEngine} · ${contestStatusLabel(contest.status)}`}
-                    key={contest.id}
-                    title={contest.name}
-                    trailing={
-                      <>
-                        <div>{contest.entryCount ?? 0} entries</div>
-                        <div>{contest.sport}</div>
-                      </>
-                    }
-                  />
-                ))
-              ) : (
-                <ListEmptyRow>No active contests right now.</ListEmptyRow>
-              )}
-            </ListStack>
-          </Tile>
-
-          <Tile>
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">Historical contests</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Completed contests.
-                </p>
-              </div>
-              <Chip tone="neutral">{historicalContests.length}</Chip>
-            </div>
-
-            <ListStack className="mt-5">
-              {historicalContests.length ? (
-                historicalContests.map((contest) => (
-                  <ListCard
-                    actions={
-                      <>
-                        <LinkButton
-                          data-testid={`manage-contests-open-${contest.id}`}
-                          to={buildLeagueContestPath(league.leagueCode, contest.id)}
-                          variant="secondary"
-                        >
-                          Open contest
-                        </LinkButton>
-                        <LinkButton
-                          data-testid={`manage-contests-manage-${contest.id}`}
-                          to={buildLeagueAdminContestPath(league.leagueCode, contest.id)}
-                          variant="secondary"
-                        >
-                          Manage contest
-                        </LinkButton>
-                      </>
-                    }
-                    data-testid={`manage-contests-row-${contest.id}`}
-                    metadata={`${contest.selectionType} · ${contest.scoringEngine} · ${contestStatusLabel(contest.status)}`}
-                    key={contest.id}
-                    title={contest.name}
-                    trailing={
-                      <>
-                        <div>{contest.entryCount ?? 0} entries</div>
-                        <div>{contest.sport}</div>
-                      </>
-                    }
-                  />
-                ))
-              ) : (
-                <ListEmptyRow>
-                  Historical contests will appear here once this league has completed events.
-                </ListEmptyRow>
-              )}
-            </ListStack>
-          </Tile>
-        </>
+        <div className="grid gap-3">
+          <SegmentedControl
+            aria-label="Contests to show"
+            onChange={(value) => setFilter(value === 'history' ? 'history' : 'active')}
+            options={[
+              { label: `Active · ${activeContests.length}`, testId: 'manage-contests-filter-active', value: 'active' },
+              { label: `History · ${historyContests.length}`, testId: 'manage-contests-filter-history', value: 'history' },
+            ]}
+            value={filter}
+          />
+          <DataGrid
+            columns={columns}
+            data={rows}
+            emptyMessage={shownContests.length
+              ? 'No contest matches.'
+              : filter === 'active' ? 'No contests are in setup, open or live.' : 'No contest has finished yet.'}
+            getRowId={(row) => row.contest.id}
+            key={filter}
+            pageSize={CONTESTS_PER_PAGE}
+            rowTestId={(row) => `manage-contests-row-${row.contest.id}`}
+            search={{ label: 'Find a contest or event', testId: 'manage-contests-search' }}
+            showColumnFilters={false}
+            tableTestId="manage-contests-table"
+          />
+        </div>
       )}
     </section>
   );

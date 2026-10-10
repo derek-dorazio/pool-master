@@ -1,4 +1,4 @@
-import { skipToken, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   useForm,
@@ -9,8 +9,8 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
-import type { SportEventDto, ContestManagementDetailDto, ContestConfigTemplateDto } from '@/lib/api';
-import type { CreateContestRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
+import type { SportEventDto, ContestConfigTemplateDto } from '@/lib/api';
+import type { CreateContestRequest } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
   SelectionType,
@@ -20,16 +20,14 @@ import {
   getTieredRosterSize,
   getValidContestFormatsForTournamentFormat,
 } from '@poolmaster/shared/domain';
-import { createContest, deleteContest, getContestConfiguration, listContestConfigTemplates, listEvents, updateContest, updateContestConfiguration } from '@/lib/api';
+import { createContest, listContestConfigTemplates, listEvents } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
 import {
   buildLeagueAdminContestPath,
   buildLeagueAdminContestsPath,
-  buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
-import { OpenContestAction } from './open-contest-action';
 import {
   Alert,
   Button,
@@ -49,7 +47,6 @@ import {
   ContestSetupSummary,
   ContestTemplatePicker,
   EventReadinessPanel,
-  InheritedTiersPanel,
   NoEligibleEventsAlert,
 } from './contest-configuration-sections';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -57,7 +54,6 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type ManagedContest = ContestManagementDetailDto;
 type ContestConfigTemplate = ContestConfigTemplateDto;
 
 const contestSetupFormSchema = z.object({
@@ -141,10 +137,9 @@ export function CreateContestPage() {
   const logger = getLogger().child({
     feature: 'create-contest-page',
   });
-  const { leagueCode = '', contestId } = useParams<{ leagueCode: string; contestId?: string }>();
+  const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const auth = useAuth();
   const navigate = useNavigate();
-  const isEditMode = Boolean(contestId);
 
   const contestForm = useForm<ContestSetupFormValues>({
     resolver: zodResolver(contestSetupFormSchema),
@@ -170,7 +165,6 @@ export function CreateContestPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const parsedPicksPerTierValue = Number(picksPerTier);
   const parsedCountedScoresValue = Number(countedScores);
-  const [isHydratedFromManagedContest, setIsHydratedFromManagedContest] = useState(false);
 
   const setContestFormValue = useCallback(<Field extends FieldPath<ContestSetupFormValues>>(
     field: Field,
@@ -221,22 +215,6 @@ export function CreateContestPage() {
       ? ContestFormat.ROSTER
       : selectedContestFormats[0] ?? ContestFormat.ROSTER;
 
-  const managedContestQuery = useQuery({
-    queryKey: QueryKeys.managedContests.byLeagueAndContest(league?.id, contestId),
-    queryFn: league && contestId ? async (): Promise<ManagedContest> => {
-      const response = await getContestConfiguration({
-        path: { id: league.id, contestId },
-      });
-
-      if (!response.data?.contest) {
-        throwApiError(response.error, 'Managed contest response is missing data.');
-      }
-
-      return response.data.contest;
-    } : skipToken,
-    retry: false,
-  });
-
   const templatesQuery = useQuery({
     queryKey: QueryKeys.contestConfigTemplates.list({
       sport: selectedEventSport,
@@ -266,9 +244,8 @@ export function CreateContestPage() {
     () => eventsQuery.data?.find((event) => event.id === sportEventId) ?? null,
     [eventsQuery.data, sportEventId],
   );
-  // The roster is derived (#479): the event's tier count times picks per tier. A draft being
-  // edited reads the tiers it inherits; create reads the selected event's count.
-  const tierCount = managedContestQuery.data?.effectiveTiers.length ?? selectedEvent?.tierCount ?? 0;
+  // The roster is derived (#479): the selected event's tier count times picks per tier.
+  const tierCount = selectedEvent?.tierCount ?? 0;
   const rosterSizeLabel =
     tierCount > 0 && Number.isInteger(parsedPicksPerTierValue) && parsedPicksPerTierValue >= 1
       ? String(getTieredRosterSize(tierCount, parsedPicksPerTierValue))
@@ -281,7 +258,7 @@ export function CreateContestPage() {
     && Number.isInteger(parsedCountedScoresValue)
     && parsedCountedScoresValue >= 1
     && (tierCount === 0 || parsedCountedScoresValue <= getTieredRosterSize(tierCount, parsedPicksPerTierValue));
-  const createNeedsConfiguration = !isEditMode && !selectedTemplateId && !configurationComplete;
+  const createNeedsConfiguration = !selectedTemplateId && !configurationComplete;
   // "Scores that count" follows picks per tier: changing it resets the count to the default.
   const changePicksPerTier = useCallback((value: string) => {
     setContestFormValue('picksPerTier', value);
@@ -290,11 +267,10 @@ export function CreateContestPage() {
       setContestFormValue('countedScores', String(getDefaultCountedScores(tierCount, parsed)));
     }
   }, [setContestFormValue, tierCount]);
-  // Create starts "Scores that count" at the default for the chosen event's tiers. A draft being
-  // edited keeps what it saved, and so does a selected template whose picks per tier the form
-  // still holds: the template's own count wins over the formula.
+  // Create starts "Scores that count" at the default for the chosen event's tiers. A selected
+  // template whose picks per tier the form still holds keeps its own count over the formula.
   useEffect(() => {
-    if (isEditMode || tierCount === 0) {
+    if (tierCount === 0) {
       return;
     }
     const parsed = Number(contestForm.getValues('picksPerTier'));
@@ -307,7 +283,7 @@ export function CreateContestPage() {
     if (Number.isInteger(parsed) && parsed >= 1) {
       setContestFormValue('countedScores', String(getDefaultCountedScores(tierCount, parsed)));
     }
-  }, [contestForm, isEditMode, setContestFormValue, templatesQuery.data, tierCount]);
+  }, [contestForm, setContestFormValue, templatesQuery.data, tierCount]);
   const eligibleEvents = useMemo(
     () => eventsQuery.data?.filter((event) => event.contestEligible) ?? [],
     [eventsQuery.data],
@@ -342,37 +318,8 @@ export function CreateContestPage() {
     }
   }, [applyTemplateConfiguration, setContestFormValue, templatesQuery.data]);
 
+  // Create picks the first contest-ready event.
   useEffect(() => {
-    if (!managedContestQuery.data || isHydratedFromManagedContest) {
-      return;
-    }
-
-    const contest = managedContestQuery.data;
-    const configuration = contest.configuration;
-
-    setContestFormValue('contestName', contest.name);
-    setContestFormValue('sportEventId', contest.sportEventId);
-    setContestFormValue('selectedTemplateId', contest.templateId ?? '');
-    setContestFormValue('unlimitedEntries', configuration.maxEntriesPerSquad == null);
-    setContestFormValue(
-      'maxEntriesPerTeam',
-      configuration.maxEntriesPerSquad == null
-        ? '1'
-        : String(configuration.maxEntriesPerSquad),
-    );
-
-    setContestFormValue('picksPerTier', String(configuration.picksPerTier));
-    setContestFormValue('countedScores', String(configuration.countedScores));
-
-    setIsHydratedFromManagedContest(true);
-  }, [isHydratedFromManagedContest, managedContestQuery.data, setContestFormValue]);
-
-  // Create picks the first contest-ready event. A draft keeps the event it was created on: no
-  // update endpoint takes a sport event, so the page never swaps one in.
-  useEffect(() => {
-    if (isEditMode) {
-      return;
-    }
     if (sportEventId && eligibleEvents.some((event) => event.id === sportEventId)) {
       return;
     }
@@ -380,10 +327,10 @@ export function CreateContestPage() {
     if (eligibleEvents.length) {
       setContestFormValue('sportEventId', eligibleEvents[0].id);
     }
-  }, [eligibleEvents, isEditMode, setContestFormValue, sportEventId]);
+  }, [eligibleEvents, setContestFormValue, sportEventId]);
 
   useEffect(() => {
-    if (isEditMode || selectedTemplateId || !visibleTemplates.length) {
+    if (selectedTemplateId || !visibleTemplates.length) {
       return;
     }
 
@@ -394,7 +341,7 @@ export function CreateContestPage() {
     if (defaultTemplate) {
       selectTemplate(defaultTemplate.id);
     }
-  }, [isEditMode, selectTemplate, selectedTemplateId, visibleTemplates]);
+  }, [selectTemplate, selectedTemplateId, visibleTemplates]);
 
   useEffect(() => {
     if (eventsQuery.isError) {
@@ -403,14 +350,13 @@ export function CreateContestPage() {
           action: 'contestCreate.events.failed',
           data: {
             leagueCode,
-            isEditMode,
           },
           err: eventsQuery.error,
         },
         'Contest create page failed to load events',
       );
     }
-  }, [eventsQuery.error, eventsQuery.isError, isEditMode, leagueCode, logger]);
+  }, [eventsQuery.error, eventsQuery.isError, leagueCode, logger]);
 
   useEffect(() => {
     if (!eventsQuery.data) {
@@ -457,7 +403,6 @@ export function CreateContestPage() {
           eligibleEventCount: eligibleEvents.length,
           unavailableEventCount: unavailableEvents.length,
           templateCount: visibleTemplates.length,
-          isEditMode,
         },
       },
       'Contest create page loaded',
@@ -465,7 +410,6 @@ export function CreateContestPage() {
   }, [
     eligibleEvents.length,
     eventsQuery.data,
-    isEditMode,
     leagueCode,
     league,
     logger,
@@ -534,87 +478,56 @@ export function CreateContestPage() {
           : {}),
       };
 
-      if (!contestId) {
-        // A template is an optional first step; the configuration the form holds is always
-        // complete here (validated above), so it is sent either way and, with a template,
-        // replaces the template's.
-        const body: CreateContestRequest = {
-          name: trimmedName,
-          sportEventId: values.sportEventId,
-          contestFormat: ContestFormat.ROSTER,
-          selectionType: SelectionType.TIERED,
-          ...(selectedTemplateForSubmission ? { templateId: selectedTemplateForSubmission.id } : {}),
-          configuration,
-        };
-
-        const response = await createContest({
-          path: { id: league.id },
-          body,
-        });
-
-        if (!response.data?.contest) {
-          throwApiError(response.error, 'Contest creation response is missing data.');
-        }
-
-        return response.data.contest.id;
-      }
-
-      const metadataBody: UpdateContestRequest = {
+      // A template is an optional first step; the configuration the form holds is always
+      // complete here (validated above), so it is sent either way and, with a template,
+      // replaces the template's.
+      const body: CreateContestRequest = {
         name: trimmedName,
+        sportEventId: values.sportEventId,
+        contestFormat: ContestFormat.ROSTER,
+        selectionType: SelectionType.TIERED,
+        ...(selectedTemplateForSubmission ? { templateId: selectedTemplateForSubmission.id } : {}),
+        configuration,
       };
 
-      const metadataResponse = await updateContest({
-        path: { contestId },
-        body: metadataBody as never,
-      });
-      if (metadataResponse.error) {
-        throwApiError(metadataResponse.error);
-      }
-
-      const configurationResponse = await updateContestConfiguration({
-        path: { id: league.id, contestId },
-        body: configuration as never,
+      const response = await createContest({
+        path: { id: league.id },
+        body,
       });
 
-      if (!configurationResponse.data?.contest) {
-        throwApiError(configurationResponse.error, 'Contest update response is missing data.');
+      if (!response.data?.contest) {
+        throwApiError(response.error, 'Contest creation response is missing data.');
       }
 
-      return configurationResponse.data.contest.id;
+      return response.data.contest.id;
     },
     onMutate: (values) => {
       logger.debug(
         {
-          action: isEditMode ? 'contest.save.started' : 'contest.create.started',
+          action: 'contest.create.started',
           data: {
             leagueCode,
-            contestId: contestId ?? null,
             sportEventId: values.sportEventId,
           },
         },
-        isEditMode ? 'Starting contest update flow' : 'Starting contest create flow',
+        'Starting contest create flow',
       );
     },
     onSuccess: (savedContestId: string) => {
       logger.info(
         {
-          action: isEditMode ? 'contest.save.succeeded' : 'contest.create.succeeded',
+          action: 'contest.create.succeeded',
           data: {
             leagueCode,
             contestId: savedContestId,
             sportEventId,
           },
         },
-        isEditMode ? 'Saved contest successfully' : 'Created contest successfully',
+        'Created contest successfully',
       );
-      // A new contest is a draft (#117): the commissioner lands on its setup page, where they can
+      // A new contest is not open yet (#117): the commissioner lands on its page, where they can
       // still edit or delete it and open it to the league when it is ready.
-      navigate(
-        isEditMode
-          ? buildLeagueContestPath(leagueCode, savedContestId)
-          : buildLeagueAdminContestPath(leagueCode, savedContestId),
-        { state: { leagueCode } },
-      );
+      navigate(buildLeagueAdminContestPath(leagueCode, savedContestId), { state: { leagueCode } });
     },
     invalidates: (savedContestId) => [
       QueryKeys.contests.list({ leagueId: league?.id }),
@@ -623,10 +536,9 @@ export function CreateContestPage() {
     ],
     onError: (error) => {
       const payload = {
-        action: isEditMode ? 'contest.save.failed' : 'contest.create.failed',
+        action: 'contest.create.failed',
         data: {
           leagueCode,
-          contestId: contestId ?? null,
           sportEventId,
         },
         err: error,
@@ -637,86 +549,16 @@ export function CreateContestPage() {
       // `error instanceof Error` to keep distinguishing an expected API
       // rejection from a genuine unexpected exception.
       if (!(error instanceof ApiError)) {
-        logger.error(payload, isEditMode ? 'Contest update failed unexpectedly' : 'Contest create failed unexpectedly');
+        logger.error(payload, 'Contest create failed unexpectedly');
       } else {
-        logger.warn(payload, isEditMode ? 'Contest update was rejected' : 'Contest create was rejected');
+        logger.warn(payload, 'Contest create was rejected');
       }
       setFormError(extractErrorMessage(error, {
         codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
-        fallback: isEditMode
-          ? 'We could not save that contest. Please try again.'
-          : 'We could not create that contest. Please try again.',
+        fallback: 'We could not create that contest. Please try again.',
       }));
     },
   });
-
-  const deleteContestMutation = useInvalidatingMutation({
-    mutationFn: async () => {
-      if (!contestId) {
-        throw new Error('Contest id is required to delete a contest.');
-      }
-
-      const response = await deleteContest({
-        path: { contestId },
-      });
-
-      if (response.error) {
-        throwApiError(response.error);
-      }
-    },
-    onMutate: () => {
-      logger.debug(
-        {
-          action: 'contest.delete.started',
-          data: {
-            leagueCode,
-            contestId: contestId ?? null,
-          },
-        },
-        'Starting contest delete flow',
-      );
-    },
-    onSuccess: () => {
-      logger.info(
-        {
-          action: 'contest.delete.succeeded',
-          data: {
-            leagueCode,
-            contestId: contestId ?? null,
-          },
-        },
-        'Deleted contest successfully',
-      );
-      navigate(buildLeagueAdminContestsPath(leagueCode));
-    },
-    invalidates: [QueryKeys.contests.list({ leagueId: league?.id })],
-    onError: (error) => {
-      const payload = {
-        action: 'contest.delete.failed',
-        data: {
-          leagueCode,
-          contestId: contestId ?? null,
-        },
-        err: error,
-      };
-
-      // ApiError wraps every SDK rejection (see throwApiError) so it is
-      // always `instanceof Error`; check for it explicitly rather than
-      // `error instanceof Error` to keep distinguishing an expected API
-      // rejection from a genuine unexpected exception.
-      if (!(error instanceof ApiError)) {
-        logger.error(payload, 'Contest delete failed unexpectedly');
-      } else {
-        logger.warn(payload, 'Contest delete was rejected');
-      }
-      setFormError(extractErrorMessage(error, { fallback: 'We could not delete that contest. Please try again.' }));
-    },
-  });
-
-  const isDraftEditable = !isEditMode || managedContestQuery.data?.status === 'DRAFT';
-
-  const isManagedContestHydrating =
-    isEditMode && Boolean(managedContestQuery.data) && !isHydratedFromManagedContest;
 
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
   if (!league) {
@@ -725,9 +567,7 @@ export function CreateContestPage() {
 
   if (
     eventsQuery.isLoading
-    || managedContestQuery.isLoading
     || templatesQuery.isLoading
-    || isManagedContestHydrating
   ) {
     return (
       <LoadingState
@@ -737,7 +577,7 @@ export function CreateContestPage() {
     );
   }
 
-  if (managedContestQuery.isError || templatesQuery.isError) {
+  if (templatesQuery.isError) {
     return (
       <ErrorState
         body="Try again in a moment."
@@ -750,28 +590,18 @@ export function CreateContestPage() {
   return (
     <section
       className="space-y-6"
-      data-testid={isEditMode ? 'manage-contest-page' : 'create-contest-page'}
+      data-testid="create-contest-page"
     >
       <PageHeader
-        description={isEditMode
-          ? 'Review and update this contest’s settings.'
-          : 'Set up a tiered golf contest for your league.'}
-        title={isEditMode ? 'Manage golf contest' : 'Create a golf contest'}
+        description="Set up a tiered golf contest for your league."
+        title="Create a golf contest"
       />
 
       <SplitContentLayout
         main={(
           <Tile>
           <div className="mt-6 space-y-5">
-            {isEditMode && !isDraftEditable ? (
-              <Alert data-testid="contest-manage-readonly-note">
-                This contest is open to the league, so its settings are locked.
-              </Alert>
-            ) : null}
-
-            <fieldset className="space-y-5" disabled={!isDraftEditable}>
             <ContestTemplatePicker
-              isEditMode={isEditMode}
               onSelectTemplate={selectTemplate}
               selectedTemplateId={selectedTemplateId}
               templates={visibleTemplates}
@@ -790,17 +620,13 @@ export function CreateContestPage() {
             <FormField label="Golf event">
               <Select
                 data-testid="contest-sport-event"
-                disabled={isEditMode}
                 onChange={(event) => {
                   setContestFormValue('sportEventId', event.target.value);
                 }}
                 value={sportEventId}
               >
                 <option value="">Select an event</option>
-                {(isEditMode && selectedEvent && !selectedEvent.contestEligible
-                  ? [selectedEvent, ...eligibleEvents]
-                  : eligibleEvents
-                ).map((event) => (
+                {eligibleEvents.map((event) => (
                   <option key={event.id} value={event.id}>
                     {event.name}
                     {' · '}
@@ -871,16 +697,9 @@ export function CreateContestPage() {
               </FormField>
             </div>
 
-            {isEditMode && managedContestQuery.data ? (
-              // effectiveTiers is a required array in the generated contract;
-              // the ?? [] only guards a transient client/API deploy skew.
-              <InheritedTiersPanel tiers={managedContestQuery.data.effectiveTiers ?? []} />
-            ) : (
-              <Alert>
-                This contest uses the tournament’s tiers and golfer assignments.
-              </Alert>
-            )}
-            </fieldset>
+            <Alert>
+              This contest uses the tournament’s tiers and golfer assignments.
+            </Alert>
 
             {formError ? (
               <Alert
@@ -892,8 +711,7 @@ export function CreateContestPage() {
             ) : null}
 
             <div className="flex flex-wrap items-center gap-3">
-              {isDraftEditable ? (
-                <Button
+              <Button
                   data-testid="create-contest-submit"
                   disabled={
                     saveContestMutation.isPending
@@ -910,27 +728,8 @@ export function CreateContestPage() {
                     )();
                   }}
                 >
-                  {saveContestMutation.isPending
-                    ? (isEditMode ? 'Saving...' : 'Creating...')
-                    : (isEditMode ? 'Save draft changes' : 'Create contest')}
+                  {saveContestMutation.isPending ? 'Creating...' : 'Create contest'}
                 </Button>
-              ) : null}
-              {isEditMode && isDraftEditable && contestId ? (
-                <OpenContestAction contestId={contestId} leagueId={league.id} />
-              ) : null}
-              {isEditMode && isDraftEditable ? (
-                <Button
-                  data-testid="contest-delete"
-                  disabled={deleteContestMutation.isPending}
-                  onClick={() => {
-                    setFormError(null);
-                    void deleteContestMutation.mutateAsync().catch(() => undefined);
-                  }}
-                  variant="danger"
-                >
-                  {deleteContestMutation.isPending ? 'Deleting...' : 'Delete contest'}
-                </Button>
-              ) : null}
               <LinkButton
                 to={buildLeagueAdminContestsPath(league.leagueCode)}
                 variant="secondary"

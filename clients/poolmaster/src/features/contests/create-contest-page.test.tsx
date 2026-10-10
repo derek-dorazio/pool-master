@@ -1,21 +1,16 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { CreateContestPage } from './create-contest-page';
 
 const {
   createContestMock,
-  deleteContestMock,
   getLeagueByCodeMock,
-  getContestConfigurationMock,
   listContestConfigTemplatesMock,
   listEventsMock,
   mockLogger,
-  openContestMock,
-  updateContestMock,
-  updateContestConfigurationMock,
 } = vi.hoisted(() => {
   const logger = {
     debug: vi.fn(),
@@ -30,28 +25,18 @@ const {
 
   return {
     createContestMock: vi.fn(),
-    deleteContestMock: vi.fn(),
     getLeagueByCodeMock: vi.fn(),
-    getContestConfigurationMock: vi.fn(),
     listContestConfigTemplatesMock: vi.fn(),
     listEventsMock: vi.fn(),
     mockLogger: logger,
-    openContestMock: vi.fn(),
-    updateContestMock: vi.fn(),
-    updateContestConfigurationMock: vi.fn(),
   };
 });
 
 bindApiMocks({
   createContest: createContestMock,
-  deleteContest: deleteContestMock,
   getLeagueByCode: getLeagueByCodeMock,
-  getContestConfiguration: getContestConfigurationMock,
   listContestConfigTemplates: listContestConfigTemplatesMock,
   listEvents: listEventsMock,
-  openContest: openContestMock,
-  updateContest: updateContestMock,
-  updateContestConfiguration: updateContestConfigurationMock,
 });
 
 vi.mock('@/features/auth/auth-context', () => ({
@@ -79,11 +64,12 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function renderCreateContestPage() {
-  return renderContestPage('/league/BIGDAWGS/admin/contests/new');
+function AdminContestDestination() {
+  const { contestId } = useParams<{ contestId: string }>();
+  return <div data-testid="admin-contest-destination">{contestId}</div>;
 }
 
-function renderContestPage(initialEntry: string) {
+function renderCreateContestPage() {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -94,43 +80,14 @@ function renderContestPage(initialEntry: string) {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[initialEntry]}>
+      <MemoryRouter initialEntries={['/league/BIGDAWGS/admin/contests/new']}>
         <Routes>
           <Route element={<CreateContestPage />} path="/league/:leagueCode/admin/contests/new" />
-          <Route element={<CreateContestPage />} path="/league/:leagueCode/admin/contests/:contestId" />
-          <Route
-            element={<div data-testid="contest-detail-page" />}
-            path="/league/:leagueCode/contests/:contestId"
-          />
-          <Route
-            element={<div data-testid="admin-contests-destination" />}
-            path="/league/:leagueCode/admin/contests"
-          />
+          <Route element={<AdminContestDestination />} path="/league/:leagueCode/admin/contests/:contestId" />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   );
-}
-
-function buildManagedContest(status: string, overrides: { id?: string } = {}) {
-  const id = overrides.id ?? 'contest-90';
-  return {
-    id,
-    leagueId: 'league-1',
-    sportEventId: 'event-1',
-    name: 'Masters Pick 6',
-    status,
-    createdAt: '2026-04-15T00:00:00.000Z',
-    updatedAt: '2026-04-15T00:00:00.000Z',
-    configuration: {
-      id: `config-${id}`,
-      contestId: id,
-      maxEntriesPerSquad: 1,
-      picksPerTier: 1,
-      countedScores: 4,
-    },
-    effectiveTiers: [],
-  };
 }
 
 function primeCommonMocks() {
@@ -237,14 +194,9 @@ function primeCommonMocks() {
 describe('CreateContestPage', () => {
   afterEach(() => {
     createContestMock.mockReset();
-    deleteContestMock.mockReset();
     getLeagueByCodeMock.mockReset();
-    getContestConfigurationMock.mockReset();
     listContestConfigTemplatesMock.mockReset();
     listEventsMock.mockReset();
-    openContestMock.mockReset();
-    updateContestMock.mockReset();
-    updateContestConfigurationMock.mockReset();
     mockLogger.debug.mockReset();
     mockLogger.info.mockReset();
     mockLogger.warn.mockReset();
@@ -570,44 +522,6 @@ describe('CreateContestPage', () => {
     );
   });
 
-  it('deletes a draft contest from the manage page and returns to the Commissioner tools contest list', async () => {
-    primeCommonMocks();
-    getContestConfigurationMock.mockResolvedValue({
-      data: {
-        contest: {
-          id: 'contest-78',
-          leagueId: 'league-1',
-          sportEventId: 'event-1',
-          name: 'Delete Me',
-          status: 'DRAFT',
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-15T00:00:00.000Z',
-          configuration: {
-            id: 'config-78',
-            contestId: 'contest-78',
-            maxEntriesPerSquad: 1,
-            picksPerTier: 1,
-            countedScores: 4,
-          },
-          effectiveTiers: [],
-        },
-      },
-    });
-    deleteContestMock.mockResolvedValue({ data: undefined });
-
-    renderContestPage('/league/BIGDAWGS/admin/contests/contest-78');
-
-    expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('contest-delete'));
-
-    await waitFor(() =>
-      expect(deleteContestMock).toHaveBeenCalledWith({
-        path: { contestId: 'contest-78' },
-      }),
-    );
-    expect(await screen.findByTestId('admin-contests-destination')).toBeInTheDocument();
-  });
-
   it('shows a no-events-available message when no golf event is contest-ready', async () => {
     primeCommonMocks();
     listEventsMock.mockResolvedValue({
@@ -636,100 +550,12 @@ describe('CreateContestPage', () => {
     expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
   });
 
-  it('hydrates and saves the commissioner managed golf contest payload', async () => {
-    primeCommonMocks();
-    getContestConfigurationMock.mockResolvedValue({
-      data: {
-        contest: {
-          id: 'contest-77',
-          leagueId: 'league-1',
-          sportEventId: 'event-1',
-          name: 'Masters Pick 6',
-          status: 'DRAFT',
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-15T00:00:00.000Z',
-          configuration: {
-            id: 'config-77',
-            contestId: 'contest-77',
-            maxEntriesPerSquad: 2,
-            picksPerTier: 4,
-            countedScores: 4,
-          },
-          effectiveTiers: [
-            {
-              tierKey: 'tier-1',
-              label: 'Tier 1',
-              tierNumber: 1,
-              assignments: [
-                { sportEventParticipantId: 'sep-1', participantId: 'g-1', tierOrderIndex: 1, price: null },
-                { sportEventParticipantId: 'sep-2', participantId: 'g-2', tierOrderIndex: 2, price: null },
-              ],
-            },
-          ],
-        },
-      },
-    });
-    updateContestMock.mockResolvedValue({ data: { contest: { id: 'contest-77' } } });
-    updateContestConfigurationMock.mockResolvedValue({
-      data: {
-        contest: {
-          id: 'contest-77',
-        },
-      },
-    });
-
-    renderContestPage('/league/BIGDAWGS/admin/contests/contest-77');
-
-    expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-name')).toHaveValue('Masters Pick 6');
-
-    // pool-master-41t — manage mode shows the read-only inherited tiers echoed
-    // by the managed-contest response (plans/124 §4.6/§5.3).
-    expect(screen.getByTestId('inherited-tiers-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('inherited-tier-tier-1')).toHaveTextContent(
-      '2 golfers',
-    );
-
-    fireEvent.change(screen.getByTestId('contest-name'), {
-      target: { value: 'Masters Pick 6 Updated' },
-    });
-    fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), {
-      target: { value: '3' },
-    });
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
-
-    await waitFor(() =>
-      expect(updateContestMock).toHaveBeenCalledWith({
-        path: { contestId: 'contest-77' },
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
-        body: expect.objectContaining({
-          name: 'Masters Pick 6 Updated',
-        }),
-      }),
-    );
-
-    await waitFor(() =>
-      expect(updateContestConfigurationMock).toHaveBeenCalledWith({
-        path: { id: 'league-1', contestId: 'contest-77' },
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
-        body: expect.objectContaining({
-          picksPerTier: 4,
-          countedScores: 3,
-        }),
-      }),
-    );
-  });
-
-  // pool-master-41t — in create mode there is no contest yet, so there are no
-  // inherited tiers to echo; the page keeps the plain explanatory note and
-  // never renders the read-only tier panel (plans/124 §4.6/§5.3).
-  it('does not render the inherited tiers panel in create mode', async () => {
+  it('notes that the contest uses the event\'s own tiers', async () => {
     primeCommonMocks();
 
     renderCreateContestPage();
 
     await screen.findByTestId('contest-name');
-    expect(screen.queryByTestId('inherited-tiers-panel')).not.toBeInTheDocument();
     expect(
       screen.getByText(
         /This contest uses the tournament’s tiers and golfer assignments/i,
@@ -737,26 +563,9 @@ describe('CreateContestPage', () => {
     ).toBeInTheDocument();
   });
 
-  // pool-master-41t — a failed managed-contest load surfaces the page-level
-  // error state rather than a half-rendered manage form.
-  it('shows a contest-setup error, not a league error, when the managed contest fails to load', async () => {
-    primeCommonMocks();
-    getContestConfigurationMock.mockResolvedValue({
-      error: { error: { code: 'INTERNAL_ERROR', message: 'Managed contest lookup failed.' } },
-    });
-
-    renderContestPage('/league/BIGDAWGS/admin/contests/contest-err');
-
-    expect(await screen.findByTestId('create-contest-page-error')).toHaveTextContent(
-      "We couldn't load this contest's setup.",
-    );
-    expect(screen.queryByTestId('inherited-tiers-panel')).not.toBeInTheDocument();
-  });
-
-  it('lands the commissioner on the new draft\'s setup page, with "Open to league" offered, after create', async () => {
+  it('lands the commissioner on the new contest\'s page in Commissioner tools after create', async () => {
     primeCommonMocks();
     createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-90' } } });
-    getContestConfigurationMock.mockResolvedValue({ data: { contest: buildManagedContest('DRAFT') } });
 
     renderCreateContestPage();
 
@@ -764,171 +573,6 @@ describe('CreateContestPage', () => {
     fireEvent.change(screen.getByTestId('contest-name'), { target: { value: 'Masters Pick 6' } });
     fireEvent.click(screen.getByTestId('create-contest-submit'));
 
-    expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
-    expect(screen.queryByTestId('contest-detail-page')).not.toBeInTheDocument();
-    expect(screen.getByTestId('contest-open-to-league')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-delete')).toBeInTheDocument();
-  });
-
-  it('opens a draft to the league only after the confirm dialog, then shows the settings as locked', async () => {
-    primeCommonMocks();
-    getContestConfigurationMock
-      .mockResolvedValueOnce({ data: { contest: buildManagedContest('DRAFT') } })
-      .mockResolvedValue({ data: { contest: buildManagedContest('OPEN') } });
-    openContestMock.mockResolvedValue({ data: { contest: buildManagedContest('OPEN') } });
-
-    renderContestPage('/league/BIGDAWGS/admin/contests/contest-90');
-
-    fireEvent.click(await screen.findByTestId('contest-open-to-league'));
-    expect(await screen.findByTestId('contest-open-dialog')).toHaveTextContent(
-      /members will be able to see this contest and enter it/i,
-    );
-    expect(openContestMock).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByTestId('contest-open-confirm'));
-
-    await waitFor(() =>
-      expect(openContestMock).toHaveBeenCalledWith({
-        path: { id: 'league-1', contestId: 'contest-90' },
-      }),
-    );
-    expect(await screen.findByTestId('contest-manage-readonly-note')).toHaveTextContent(
-      'This contest is open to the league, so its settings are locked.',
-    );
-    expect(screen.queryByTestId('create-contest-submit')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contest-delete')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contest-open-to-league')).not.toBeInTheDocument();
-  });
-
-  it('shows the event-started copy in the dialog when opening is refused with CONTEST_EVENT_ALREADY_STARTED', async () => {
-    primeCommonMocks();
-    getContestConfigurationMock.mockResolvedValue({ data: { contest: buildManagedContest('DRAFT') } });
-    openContestMock.mockResolvedValue({
-      error: { error: { code: 'CONTEST_EVENT_ALREADY_STARTED', message: 'server sentence' } },
-    });
-
-    renderContestPage('/league/BIGDAWGS/admin/contests/contest-90');
-
-    fireEvent.click(await screen.findByTestId('contest-open-to-league'));
-    fireEvent.click(await screen.findByTestId('contest-open-confirm'));
-
-    expect(await screen.findByTestId('contest-open-error')).toHaveTextContent(
-      'This contest’s event has already started, so it can no longer be opened. Delete the draft instead.',
-    );
-  });
-
-  // A draft's event is fixed at create: neither update endpoint takes a sport event, so a change
-  // made on the setup page would be dropped without a word.
-  it('shows a draft\'s own event on its setup page and offers no way to change it', async () => {
-    primeCommonMocks();
-    listEventsMock.mockResolvedValue({
-      data: {
-        events: [
-          {
-            id: 'event-1',
-            sport: 'GOLF',
-            name: 'Masters Tournament',
-            status: 'SCHEDULED',
-            startDate: '2026-04-10T12:00:00.000Z',
-            participantCount: 144,
-            readinessStatus: 'CONTEST_ELIGIBLE',
-            readinessReasons: [],
-            contestEligible: true,
-          },
-          {
-            id: 'event-3',
-            sport: 'GOLF',
-            name: 'PGA Championship',
-            status: 'SCHEDULED',
-            startDate: '2026-05-15T12:00:00.000Z',
-            participantCount: 156,
-            readinessStatus: 'CONTEST_ELIGIBLE',
-            readinessReasons: [],
-            contestEligible: true,
-          },
-        ],
-      },
-    });
-    getContestConfigurationMock.mockResolvedValue({
-      data: { contest: { ...buildManagedContest('DRAFT'), sportEventId: 'event-3' } },
-    });
-
-    renderContestPage('/league/BIGDAWGS/admin/contests/contest-90');
-
-    expect(await screen.findByTestId('contest-sport-event')).toHaveValue('event-3');
-    expect(screen.getByTestId('contest-sport-event')).toBeDisabled();
-  });
-
-  it('keeps showing a draft\'s event after it has started, rather than swapping in another event', async () => {
-    primeCommonMocks();
-    listEventsMock.mockResolvedValue({
-      data: {
-        events: [
-          {
-            id: 'event-1',
-            sport: 'GOLF',
-            name: 'Masters Tournament',
-            status: 'SCHEDULED',
-            startDate: '2026-04-10T12:00:00.000Z',
-            participantCount: 144,
-            readinessStatus: 'CONTEST_ELIGIBLE',
-            readinessReasons: [],
-            contestEligible: true,
-          },
-          {
-            id: 'event-2',
-            sport: 'GOLF',
-            name: 'Players Championship',
-            status: 'IN_PROGRESS',
-            startDate: '2026-03-12T12:00:00.000Z',
-            participantCount: 144,
-            readinessStatus: 'EVENT_STARTED',
-            readinessReasons: ['EVENT_STARTED'],
-            contestEligible: false,
-          },
-        ],
-      },
-    });
-    getContestConfigurationMock.mockResolvedValue({
-      data: { contest: { ...buildManagedContest('DRAFT'), sportEventId: 'event-2' } },
-    });
-
-    renderContestPage('/league/BIGDAWGS/admin/contests/contest-90');
-
-    expect(await screen.findByTestId('contest-sport-event')).toHaveValue('event-2');
-    expect(screen.getByText('Already started')).toBeInTheDocument();
-  });
-
-  it('says the contest could not be saved, not created, when a draft edit is refused without a message', async () => {
-    primeCommonMocks();
-    getContestConfigurationMock.mockResolvedValue({ data: { contest: buildManagedContest('DRAFT') } });
-    updateContestMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR' } }, status: 500 });
-
-    renderContestPage('/league/BIGDAWGS/admin/contests/contest-90');
-
-    fireEvent.click(await screen.findByTestId('create-contest-submit'));
-
-    expect(await screen.findByTestId('create-contest-error')).toHaveTextContent(
-      'We could not save that contest. Please try again.',
-    );
-    expect(updateContestConfigurationMock).not.toHaveBeenCalled();
-  });
-
-  it('says the contest could not be deleted, not created, when a delete is refused without a message', async () => {
-    primeCommonMocks();
-    getContestConfigurationMock.mockResolvedValue({ data: { contest: buildManagedContest('DRAFT') } });
-    deleteContestMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR' } }, status: 500 });
-
-    renderContestPage('/league/BIGDAWGS/admin/contests/contest-90');
-
-    fireEvent.click(await screen.findByTestId('contest-delete'));
-
-    expect(await screen.findByTestId('create-contest-error')).toHaveTextContent(
-      'We could not delete that contest. Please try again.',
-    );
-    expect(mockLogger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'contest.delete.failed' }),
-      expect.any(String),
-    );
+    expect(await screen.findByTestId('admin-contest-destination')).toHaveTextContent('contest-90');
   });
 });

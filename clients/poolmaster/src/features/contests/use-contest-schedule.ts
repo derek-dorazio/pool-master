@@ -11,10 +11,10 @@ export type ContestSchedule = {
 type ScheduledContest = Pick<ContestDto, 'sportEventId' | 'startsAt' | 'endsAt'>;
 
 /**
- * The sport event's schedule, read through the event's shared key: the event is cached whole,
- * and contests on the same event share one read.
+ * One sport event, read through the event's shared key: the event is cached whole, and every
+ * contest on the same event shares one read.
  */
-function sportEventScheduleQuery(eventId: string) {
+export function sportEventQueryOptions(eventId: string) {
   return {
     queryKey: QueryKeys.sportEvents.detail(eventId),
     queryFn: async (): Promise<SportEventDto> => {
@@ -24,10 +24,17 @@ function sportEventScheduleQuery(eventId: string) {
       }
       return response.data.event;
     },
-    select: (event: SportEventDto) => ({ startDate: event.startDate, endDate: event.endDate }),
     enabled: eventId !== '',
     retry: false,
     staleTime: 5 * 60_000,
+  };
+}
+
+/** The sport event's schedule, from the event's shared read. */
+function sportEventScheduleQuery(eventId: string) {
+  return {
+    ...sportEventQueryOptions(eventId),
+    select: (event: SportEventDto) => ({ startDate: event.startDate, endDate: event.endDate }),
   };
 }
 

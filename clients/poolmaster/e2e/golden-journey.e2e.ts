@@ -401,7 +401,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         `/api/v1/leagues/${state.leagueId}/contest-management/contests/${state.contestId}/open`,
       );
       expect(opened.contest.status).toBe('OPEN');
-      await expect(page.getByTestId('contest-manage-readonly-note')).toBeVisible();
+      await expect(page.getByTestId('manage-contest-locked')).toBeVisible();
       await expect(page.getByTestId('contest-open-to-league')).toHaveCount(0);
 
       const refused = await putContestConfigurationUnchanged(page, state.leagueId, state.contestId);

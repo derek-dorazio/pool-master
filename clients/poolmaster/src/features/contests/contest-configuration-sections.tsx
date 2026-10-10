@@ -1,7 +1,6 @@
 import type {
   SportEventDto,
   ContestConfigTemplateDto,
-  GolfEffectiveTierDto,
 } from "@/lib/api";
 import {
   Alert,
@@ -14,25 +13,18 @@ import {
 } from "@/features/shared/ui";
 
 type ContestConfigTemplate = ContestConfigTemplateDto;
-type InheritedTier = GolfEffectiveTierDto;
 
 type ContestTemplatePickerProps = {
-  isEditMode: boolean;
   onSelectTemplate: (templateId: string) => void;
   selectedTemplateId: string;
   templates: ContestConfigTemplate[];
 };
 
 export function ContestTemplatePicker({
-  isEditMode,
   onSelectTemplate,
   selectedTemplateId,
   templates,
 }: ContestTemplatePickerProps) {
-  if (isEditMode) {
-    return null;
-  }
-
   return (
     <Tile className="space-y-3" padding="sm" radius="lg" variant="subtle">
       <SectionHeader
@@ -111,57 +103,6 @@ export function ContestSetupSummary({ items }: ContestSetupSummaryProps) {
     <Tile>
       <h3 className="text-xl font-semibold">Current choices</h3>
       <DefinitionList className="mt-4 sm:grid-cols-1" items={items} />
-    </Tile>
-  );
-}
-
-type InheritedTiersPanelProps = {
-  tiers: InheritedTier[];
-};
-
-/**
- * Read-only display of the tier structure a contest inherits from its linked
- * tournament (plans/124 §4.6/§5.3). Tiers are event-owned — never
- * contest-configured — so there is no edit affordance and no mode toggle
- * here; the commissioner only sees what the tournament defines. Fed from
- * ContestManagementResponseSchema.contest.effectiveTiers.
- *
- * Per-golfer `assignments[].price` is carried on the contract for
- * budget-format consumers but is intentionally not surfaced here — this is
- * the tiered-contest view; a budget/price display is plans/128's slice.
- */
-export function InheritedTiersPanel({ tiers }: InheritedTiersPanelProps) {
-  return (
-    <Tile
-      className="space-y-3"
-      data-testid="inherited-tiers-panel"
-      padding="sm"
-      radius="lg"
-      variant="subtle"
-    >
-      <SectionHeader
-        description="This contest uses the tournament’s tiers and golfer assignments."
-        title="Inherited tournament tiers"
-      />
-      {tiers.length === 0 ? (
-        <Alert data-testid="inherited-tiers-empty">
-          This tournament has no tiers defined yet. A root admin sets tiers on the
-          tournament before entries can be drafted.
-        </Alert>
-      ) : (
-        <ListStack data-testid="inherited-tiers-list">
-          {tiers.map((tier) => (
-            <ListCard
-              data-testid={`inherited-tier-${tier.tierKey}`}
-              description={`${tier.assignments.length} golfer${
-                tier.assignments.length === 1 ? "" : "s"
-              }`}
-              key={tier.tierKey}
-              title={`${tier.tierNumber}. ${tier.label}`}
-            />
-          ))}
-        </ListStack>
-      )}
     </Tile>
   );
 }
