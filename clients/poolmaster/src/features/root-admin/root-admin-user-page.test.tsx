@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { UserDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
+import { AuthProvider } from '@/features/auth/auth-provider';
 import { RootAdminManageLayout } from './root-admin-manage-layout';
 import { RootAdminUserPage } from './root-admin-user-page';
 
@@ -12,6 +13,7 @@ const {
   disableUserMock,
   enableUserMock,
   getUserMock,
+  refreshTokenMock,
   resetUserPasswordMock,
   setUserRootAdminMock,
 } = vi.hoisted(() => ({
@@ -19,6 +21,7 @@ const {
   disableUserMock: vi.fn(),
   enableUserMock: vi.fn(),
   getUserMock: vi.fn(),
+  refreshTokenMock: vi.fn(),
   resetUserPasswordMock: vi.fn(),
   setUserRootAdminMock: vi.fn(),
 }));
@@ -28,6 +31,7 @@ bindApiMocks({
   disableUser: disableUserMock,
   enableUser: enableUserMock,
   getUser: getUserMock,
+  refreshToken: refreshTokenMock,
   resetUserPassword: resetUserPasswordMock,
   setUserRootAdmin: setUserRootAdminMock,
 });
@@ -43,14 +47,17 @@ function renderUserPage(initialEntry: string) {
 
   render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[initialEntry]}>
-        <Routes>
-          <Route element={<RootAdminManageLayout />} path="/manage">
-            <Route element={<div data-testid="users-list" />} path="users" />
-            <Route element={<RootAdminUserPage />} path="users/:userId" />
-          </Route>
-        </Routes>
-      </MemoryRouter>
+      <AuthProvider>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <Routes>
+            <Route element={<div data-testid="own-user-page" />} path="/users/:userId" />
+            <Route element={<RootAdminManageLayout />} path="/manage">
+              <Route element={<div data-testid="users-list" />} path="users" />
+              <Route element={<RootAdminUserPage />} path="users/:userId" />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>
     </QueryClientProvider>,
   );
 }
@@ -81,14 +88,22 @@ function buildViewedUser({
   };
 }
 
-/** The user read answers for the primed user and refuses any other id. */
+const SIGNED_IN_ADMIN = { ...buildViewedUser({ id: 'admin-1', isRootAdmin: true }), email: 'admin@example.com' };
+
+/**
+ * The user read answers `me` with the signed-in root admin, the primed user by id, and refuses
+ * any other id.
+ */
 function primeAdminUserDetail(options: Parameters<typeof buildViewedUser>[0] = {}) {
   const user = buildViewedUser(options);
+  refreshTokenMock.mockResolvedValue({ data: null });
   getUserMock.mockImplementation(({ path }: { path: { userId: string } }) =>
     Promise.resolve(
-      path.userId === user.id
-        ? { data: { user } }
-        : { error: { error: { code: 'USER_NOT_FOUND', message: 'User was not found.' } } },
+      path.userId === 'me'
+        ? { data: { user: SIGNED_IN_ADMIN } }
+        : path.userId === user.id
+          ? { data: { user } }
+          : { error: { error: { code: 'USER_NOT_FOUND', message: 'User was not found.' } } },
     ),
   );
 }
@@ -99,6 +114,7 @@ describe('RootAdminUserPage', () => {
     disableUserMock.mockReset();
     enableUserMock.mockReset();
     getUserMock.mockReset();
+    refreshTokenMock.mockReset();
     resetUserPasswordMock.mockReset();
     setUserRootAdminMock.mockReset();
   });
@@ -267,6 +283,15 @@ describe('RootAdminUserPage', () => {
 
     expect(screen.getByTestId('root-admin-user-submit-delete')).toBeDisabled();
     expect(deleteUserMock).not.toHaveBeenCalled();
+  });
+
+  it('sends a root admin who opens their own row in Manage to their own user page, with no admin actions aimed at themselves', async () => {
+    primeAdminUserDetail({ id: 'user-2' });
+
+    renderUserPage('/manage/users/admin-1');
+
+    expect(await screen.findByTestId('own-user-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-user-open-role')).not.toBeInTheDocument();
   });
 
   it('leaves the role unchanged when the role change is cancelled', async () => {
