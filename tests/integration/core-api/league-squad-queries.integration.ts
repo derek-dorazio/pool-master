@@ -4,6 +4,7 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaSquadMembershipRepository,
+  PrismaMembershipTransaction,
   PrismaSquadOwnerInvitationRepository,
   PrismaSquadRepository,
   PrismaUserRepository,
@@ -57,14 +58,15 @@ function leagueService() {
 
 function ownerInvitationService() {
   const prisma = getPrisma();
-  return new SquadOwnerInvitationService(
-    new PrismaSquadOwnerInvitationRepository(prisma),
-    new PrismaLeagueMembershipRepository(prisma),
-    new PrismaSquadRepository(prisma),
-    new PrismaSquadMembershipRepository(prisma),
-    new PrismaUserRepository(prisma),
+  return new SquadOwnerInvitationService({
+    squadOwnerInvitations: new PrismaSquadOwnerInvitationRepository(prisma),
+    leagueMemberships: new PrismaLeagueMembershipRepository(prisma),
+    squads: new PrismaSquadRepository(prisma),
+    squadMemberships: new PrismaSquadMembershipRepository(prisma),
+    users: new PrismaUserRepository(prisma),
     prisma,
-  );
+    membershipTransaction: new PrismaMembershipTransaction(prisma),
+  });
 }
 
 describe('LeagueService.countLeagueActivity', () => {

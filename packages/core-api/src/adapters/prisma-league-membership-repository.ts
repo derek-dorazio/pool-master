@@ -2,7 +2,7 @@
  * Prisma adapter for LeagueMembershipRepository port.
  */
 
-import type { LeagueMembership as PrismaLeagueMembership, PrismaClient } from '@prisma/client';
+import type { LeagueMembership as PrismaLeagueMembership, Prisma, PrismaClient } from '@prisma/client';
 import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
 import type {
   LeagueMembership,
@@ -12,7 +12,7 @@ import type {
 import { LeagueMembershipStatus as MembershipStatus } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueMembershipRepository implements LeagueMembershipRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient | Prisma.TransactionClient) {}
 
   async findByLeague(leagueId: string): Promise<LeagueMembership[]> {
     const rows = await this.prisma.leagueMembership.findMany({

@@ -41,15 +41,16 @@ function leagueWithTwoTeams(): TwoTeamLeague {
   const owner = world.addUser({ firstName: 'Olive', lastName: 'Owner' });
   const { squad: commissionerSquad } = world.addMember({ league, user: commissioner, role: LeagueRole.COMMISSIONER });
   const { squad: ownerSquad } = world.addMember({ league, user: owner });
-  const service = new SquadService(
-    world.squads,
-    world.squadMemberships,
-    world.memberships,
-    world.users,
+  const service = new SquadService({
+    squads: world.squads,
+    squadMemberships: world.squadMemberships,
+    membershipTransaction: world.transaction,
+    leagueMemberships: world.memberships,
+    users: world.users,
     // Only `deleteInactiveSquad` reaches Prisma; these tests stop before its transaction.
-    asPrismaClient({}),
-    world.ownerInvitations,
-  );
+    prisma: asPrismaClient({}),
+    squadOwnerInvitations: world.ownerInvitations,
+  });
   return { world, league, commissioner, commissionerSquad, owner, ownerSquad, service };
 }
 

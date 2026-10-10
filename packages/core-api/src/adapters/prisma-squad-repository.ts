@@ -1,9 +1,9 @@
-import type { PrismaClient, Squad as PrismaSquad } from '@prisma/client';
+import type { Prisma, PrismaClient, Squad as PrismaSquad } from '@prisma/client';
 import type { SquadRepository } from '@poolmaster/shared/db';
 import type { Squad, TeamIconKey } from '@poolmaster/shared/domain';
 
 export class PrismaSquadRepository implements SquadRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient | Prisma.TransactionClient) {}
 
   async findById(id: string): Promise<Squad | null> {
     const row = await this.prisma.squad.findUnique({ where: { id } });

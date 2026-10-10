@@ -23,12 +23,13 @@ import { expectDefined } from '../../support/expect-defined';
  */
 
 function memberService(world: InMemoryLeagueWorld) {
-  return new MemberService(
-    world.memberships,
-    world.squads,
-    world.squadMemberships,
-    world.ownerInvitations,
-  );
+  return new MemberService({
+    leagueMemberships: world.memberships,
+    squads: world.squads,
+    squadMemberships: world.squadMemberships,
+    membershipTransaction: world.transaction,
+    squadOwnerInvitations: world.ownerInvitations,
+  });
 }
 
 function pendingInvitationFor(world: InMemoryLeagueWorld, league: League, squad: Squad, invitedBy: string) {

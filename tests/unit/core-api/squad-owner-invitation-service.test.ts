@@ -21,6 +21,7 @@ import {
   fakeSquadOwnerInvitationRepo,
   fakeSquadRepo,
   fakeUserRepo,
+  passThroughMembershipTransaction,
 } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
 import { mockFn } from '../../support/mock-fn';
@@ -182,14 +183,14 @@ describe('SquadOwnerInvitationService', () => {
     const prisma = createPrisma();
     // #202 step 3.6 — the email lookup goes through `UserRepository.findByEmail`.
     const users = fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue({ id: 'user-2', email: 'member@example.com' }) });
-    const service = new SquadOwnerInvitationService(
-      createInvitationRepo(),
-      membershipRepo,
-      createSquadRepo(),
-      createSquadMembershipRepo(),
+    const service = new SquadOwnerInvitationService(passThroughMembershipTransaction({
+      squadOwnerInvitations: createInvitationRepo(),
+      leagueMemberships: membershipRepo,
+      squads: createSquadRepo(),
+      squadMemberships: createSquadMembershipRepo(),
       users,
-      asPrismaClient(prisma),
-    );
+      prisma: asPrismaClient(prisma),
+    }));
 
     await expect(service.inviteOwner({
       leagueId: 'league-1',
@@ -224,14 +225,14 @@ describe('SquadOwnerInvitationService', () => {
     const prisma = createPrisma();
     // #202 step 3.6 — the email lookup goes through `UserRepository.findByEmail`.
     const users = fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue({ id: 'user-9', email: 'outside@example.com' }) });
-    const service = new SquadOwnerInvitationService(
-      invitationRepo,
-      membershipRepo,
-      createSquadRepo(),
-      squadMembershipRepo,
+    const service = new SquadOwnerInvitationService(passThroughMembershipTransaction({
+      squadOwnerInvitations: invitationRepo,
+      leagueMemberships: membershipRepo,
+      squads: createSquadRepo(),
+      squadMemberships: squadMembershipRepo,
       users,
-      asPrismaClient(prisma),
-    );
+      prisma: asPrismaClient(prisma),
+    }));
 
     const result = await service.inviteOwner({
       leagueId: 'league-1',
@@ -296,14 +297,14 @@ describe('SquadOwnerInvitationService', () => {
       });
       return {
         invitationRepo,
-        service: new SquadOwnerInvitationService(
-          invitationRepo,
-          createMembershipRepo(),
-          createSquadRepo(),
-          createSquadMembershipRepo(),
-          fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue(options.existingUser ?? null) }),
-          asPrismaClient(createPrisma()),
-        ),
+        service: new SquadOwnerInvitationService(passThroughMembershipTransaction({
+          squadOwnerInvitations: invitationRepo,
+          leagueMemberships: createMembershipRepo(),
+          squads: createSquadRepo(),
+          squadMemberships: createSquadMembershipRepo(),
+          users: fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue(options.existingUser ?? null) }),
+          prisma: asPrismaClient(createPrisma()),
+        })),
       };
     }
 
@@ -396,14 +397,14 @@ describe('SquadOwnerInvitationService', () => {
     const membershipRepo = createMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(null),
     });
-    const service = new SquadOwnerInvitationService(
-      invitationRepo,
-      membershipRepo,
-      createSquadRepo(),
-      createSquadMembershipRepo(),
-      fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
-      asPrismaClient(createPrisma()),
-    );
+    const service = new SquadOwnerInvitationService(passThroughMembershipTransaction({
+      squadOwnerInvitations: invitationRepo,
+      leagueMemberships: membershipRepo,
+      squads: createSquadRepo(),
+      squadMemberships: createSquadMembershipRepo(),
+      users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
+      prisma: asPrismaClient(createPrisma()),
+    }));
 
     const result = await service.listInvitationsForViewer('league-1', 'root-admin-1', true);
 
@@ -425,11 +426,11 @@ describe('SquadOwnerInvitationService', () => {
         updatedAt: new Date(),
       }),
     });
-    const service = new SquadOwnerInvitationService(
-      createInvitationRepo(),
-      membershipRepo,
-      createSquadRepo(),
-      createSquadMembershipRepo({
+    const service = new SquadOwnerInvitationService(passThroughMembershipTransaction({
+      squadOwnerInvitations: createInvitationRepo(),
+      leagueMemberships: membershipRepo,
+      squads: createSquadRepo(),
+      squadMemberships: createSquadMembershipRepo({
         findBySquadAndUser: jest.fn().mockResolvedValue({
           id: 'owner-membership',
           squadId: 'squad-1',
@@ -463,9 +464,9 @@ describe('SquadOwnerInvitationService', () => {
           },
         ]),
       }),
-      fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
-      asPrismaClient(createPrisma()),
-    );
+      users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
+      prisma: asPrismaClient(createPrisma()),
+    }));
 
     await expect(service.replaceOwner({
       leagueId: 'league-1',

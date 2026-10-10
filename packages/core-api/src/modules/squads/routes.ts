@@ -9,6 +9,7 @@ import '@poolmaster/shared/dto';
 import {
   PrismaLeagueMembershipRepository,
   PrismaSquadMembershipRepository,
+  PrismaMembershipTransaction,
   PrismaSquadOwnerInvitationRepository,
   PrismaSquadRepository,
   PrismaUserRepository,
@@ -36,24 +37,27 @@ export function squadsModule(fastify: FastifyInstance): void {
   const squadOwnerInvitationRepo = new PrismaSquadOwnerInvitationRepository(prisma);
   const leagueMembershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const userRepo = new PrismaUserRepository(prisma);
-  const service = new SquadService(
-    squadRepo,
-    squadMembershipRepo,
-    leagueMembershipRepo,
-    userRepo,
+  const membershipTransaction = new PrismaMembershipTransaction(prisma);
+  const service = new SquadService({
+    squads: squadRepo,
+    squadMemberships: squadMembershipRepo,
+    leagueMemberships: leagueMembershipRepo,
+    users: userRepo,
     prisma,
-    squadOwnerInvitationRepo,
-    fastify.log,
-  );
+    squadOwnerInvitations: squadOwnerInvitationRepo,
+    membershipTransaction,
+    logger: fastify.log,
+  });
   const handler = createSquadHandlers(service);
-  const ownerInvitationService = new SquadOwnerInvitationService(
-    squadOwnerInvitationRepo,
-    leagueMembershipRepo,
-    squadRepo,
-    squadMembershipRepo,
-    userRepo,
+  const ownerInvitationService = new SquadOwnerInvitationService({
+    squadOwnerInvitations: squadOwnerInvitationRepo,
+    leagueMemberships: leagueMembershipRepo,
+    squads: squadRepo,
+    squadMemberships: squadMembershipRepo,
+    users: userRepo,
     prisma,
-  );
+    membershipTransaction,
+  });
   const ownerInvitationHandler = createSquadOwnerInvitationHandlers(ownerInvitationService);
 
   // #292 — every route here declares its gate (rules/service-rules.md §3 *Route Authorization*).

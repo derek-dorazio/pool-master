@@ -5,6 +5,8 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
+  MembershipRepositories,
+  MembershipTransaction,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
   SquadRepository,
@@ -24,14 +26,25 @@ export interface ChangeRoleInput {
   newRole: LeagueRoleType;
 }
 
+export interface MemberServiceDeps extends MembershipRepositories {
+  membershipTransaction: MembershipTransaction;
+  logger?: FastifyBaseLogger;
+}
+
 export class MemberService {
-  constructor(
-    private readonly membershipRepo: LeagueMembershipRepository,
-    private readonly squadRepo: SquadRepository,
-    private readonly squadMembershipRepo: SquadMembershipRepository,
-    private readonly ownerInvitationRepo: SquadOwnerInvitationRepository,
-    private readonly logger?: FastifyBaseLogger,
-  ) {}
+  private readonly membershipRepo: LeagueMembershipRepository;
+  private readonly squadRepo: SquadRepository;
+  private readonly squadMembershipRepo: SquadMembershipRepository;
+  private readonly ownerInvitationRepo: SquadOwnerInvitationRepository;
+  private readonly logger?: FastifyBaseLogger;
+
+  constructor(deps: MemberServiceDeps) {
+    this.membershipRepo = deps.leagueMemberships;
+    this.squadRepo = deps.squads;
+    this.squadMembershipRepo = deps.squadMemberships;
+    this.ownerInvitationRepo = deps.squadOwnerInvitations;
+    this.logger = deps.logger;
+  }
 
   /** Changes a member's role. */
   async changeRole(input: ChangeRoleInput): Promise<LeagueMembership> {

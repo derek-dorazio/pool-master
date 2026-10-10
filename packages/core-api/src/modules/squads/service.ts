@@ -2,6 +2,8 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
+  MembershipRepositories,
+  MembershipTransaction,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
   SquadRepository,
@@ -42,16 +44,31 @@ interface UpdateSquadInput {
   iconKey?: TeamIconKey;
 }
 
+export interface SquadServiceDeps extends MembershipRepositories {
+  users: UserRepository;
+  prisma: PrismaClient;
+  membershipTransaction: MembershipTransaction;
+  logger?: FastifyBaseLogger;
+}
+
 export class SquadService {
-  constructor(
-    private readonly squadRepo: SquadRepository,
-    private readonly squadMembershipRepo: SquadMembershipRepository,
-    private readonly leagueMembershipRepo: LeagueMembershipRepository,
-    private readonly users: UserRepository,
-    private readonly prisma: PrismaClient,
-    private readonly ownerInvitationRepo: SquadOwnerInvitationRepository,
-    private readonly logger?: FastifyBaseLogger,
-  ) {}
+  private readonly squadRepo: SquadRepository;
+  private readonly squadMembershipRepo: SquadMembershipRepository;
+  private readonly leagueMembershipRepo: LeagueMembershipRepository;
+  private readonly users: UserRepository;
+  private readonly prisma: PrismaClient;
+  private readonly ownerInvitationRepo: SquadOwnerInvitationRepository;
+  private readonly logger?: FastifyBaseLogger;
+
+  constructor(deps: SquadServiceDeps) {
+    this.squadRepo = deps.squads;
+    this.squadMembershipRepo = deps.squadMemberships;
+    this.leagueMembershipRepo = deps.leagueMemberships;
+    this.users = deps.users;
+    this.prisma = deps.prisma;
+    this.ownerInvitationRepo = deps.squadOwnerInvitations;
+    this.logger = deps.logger;
+  }
 
   async listSquads(leagueId: string, userId: string, isRootAdmin = false): Promise<SquadDto[]> {
     this.logger?.debug({

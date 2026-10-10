@@ -14,6 +14,7 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaLeagueInvitationRepository,
   PrismaSquadMembershipRepository,
+  PrismaMembershipTransaction,
   PrismaSquadOwnerInvitationRepository,
   PrismaSquadRepository,
   PrismaUserRepository,
@@ -71,13 +72,14 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
     mailDelivery,
     appBaseUrl,
   });
-  const memberService = new MemberService(
-    membershipRepo,
-    squadRepo,
-    squadMembershipRepo,
-    new PrismaSquadOwnerInvitationRepository(prisma),
-    fastify.log,
-  );
+  const memberService = new MemberService({
+    leagueMemberships: membershipRepo,
+    squads: squadRepo,
+    squadMemberships: squadMembershipRepo,
+    squadOwnerInvitations: new PrismaSquadOwnerInvitationRepository(prisma),
+    membershipTransaction: new PrismaMembershipTransaction(prisma),
+    logger: fastify.log,
+  });
   const memberDirectoryService = new MemberDirectoryService(membershipRepo, userRepo);
   const bulkService = new BulkService(
     leagueRepo,

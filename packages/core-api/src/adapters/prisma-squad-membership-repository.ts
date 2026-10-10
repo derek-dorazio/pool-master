@@ -1,10 +1,10 @@
-import type { PrismaClient, SquadMembership as PrismaSquadMembership } from '@prisma/client';
+import type { Prisma, PrismaClient, SquadMembership as PrismaSquadMembership } from '@prisma/client';
 import type { SquadMembershipRepository } from '@poolmaster/shared/db';
 import type { SquadMembership, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import { SquadMembershipStatus as SharedSquadMembershipStatus } from '@poolmaster/shared/domain';
 
 export class PrismaSquadMembershipRepository implements SquadMembershipRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient | Prisma.TransactionClient) {}
 
   async findBySquad(squadId: string, includeInactive = false): Promise<SquadMembership[]> {
     const rows = await this.prisma.squadMembership.findMany({

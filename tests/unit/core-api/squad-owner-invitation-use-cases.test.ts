@@ -48,14 +48,15 @@ function leagueWithTwoTeams(): League3 {
       findUnique: jest.fn(async ({ where }: { where: { id: string } }) => world.tables.leagues.get(where.id)),
     },
   });
-  const service = new SquadOwnerInvitationService(
-    world.ownerInvitations,
-    world.memberships,
-    world.squads,
-    world.squadMemberships,
-    world.users,
+  const service = new SquadOwnerInvitationService({
+    squadOwnerInvitations: world.ownerInvitations,
+    leagueMemberships: world.memberships,
+    squads: world.squads,
+    squadMemberships: world.squadMemberships,
+    membershipTransaction: world.transaction,
+    users: world.users,
     prisma,
-  );
+  });
   return { world, league, commissioner, commissionerSquad, owner, ownerSquad, service };
 }
 

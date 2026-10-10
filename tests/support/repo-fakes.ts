@@ -58,6 +58,8 @@ import type {
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
+  MembershipRepositories,
+  MembershipTransaction,
   ParticipantContestScoringRuleRepository,
   ParticipantLeagueAffiliationRepository,
   ParticipantProviderMappingRepository,
@@ -176,6 +178,27 @@ export function fakeSquadOwnerInvitationRepo(
     create: echoCreate('squad-owner-invitation'),
     update: echoUpdate(),
     ...overrides,
+  };
+}
+
+/**
+ * A `MembershipTransaction` that runs its work straight against the service's own fakes, for
+ * service tests that assert results rather than atomicity. It commits everything and rolls back
+ * nothing; the in-memory league world's `transaction` is the one that rolls back.
+ */
+export function passThroughMembershipTransaction<D extends MembershipRepositories>(
+  deps: D,
+): D & { membershipTransaction: MembershipTransaction } {
+  return {
+    ...deps,
+    membershipTransaction: {
+      run: async (work) => work({
+        leagueMemberships: deps.leagueMemberships,
+        squads: deps.squads,
+        squadMemberships: deps.squadMemberships,
+        squadOwnerInvitations: deps.squadOwnerInvitations,
+      }),
+    },
   };
 }
 

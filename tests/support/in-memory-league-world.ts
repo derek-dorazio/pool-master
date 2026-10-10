@@ -15,6 +15,10 @@
  *   - `users.findByLeague` → users with a membership of ANY status, as the port documents
  *   - `leagueInvitations.findByEmail` / `ownerInvitations.findPendingByLeagueAndEmail` → PENDING
  *
+ * `transaction` stands in for `PrismaMembershipTransaction`: it hands the work these same
+ * repositories and, if the work throws, restores every table to what it held when the work
+ * began. A test makes a later write throw and asserts that the earlier ones did not stick.
+ *
  * The Prisma adapters behind these ports are tested against Postgres in the integration suite.
  */
 
@@ -22,6 +26,7 @@ import type {
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
+  MembershipTransaction,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
   SquadRepository,
@@ -89,6 +94,15 @@ class Table<T extends DomainEntity> {
   remove(id: string): void {
     this.rows.delete(id);
   }
+
+  /** Rows are replaced on write, never mutated, so a copy of the map is a full snapshot. */
+  snapshot(): () => void {
+    const saved = new Map(this.rows);
+    return () => {
+      this.rows.clear();
+      for (const [id, row] of saved) this.rows.set(id, row);
+    };
+  }
 }
 
 export interface InMemoryLeagueWorld {
@@ -99,6 +113,8 @@ export interface InMemoryLeagueWorld {
   squadMemberships: SquadMembershipRepository;
   leagueInvitations: LeagueInvitationRepository;
   ownerInvitations: SquadOwnerInvitationRepository;
+  /** One all-or-nothing unit over the tables above: a throw inside `run` rolls every table back. */
+  transaction: MembershipTransaction;
   tables: {
     users: Table<User>;
     leagues: Table<League>;
@@ -246,6 +262,24 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     update: async (id, updates) => ownerInvitations.patch(id, updates),
   };
 
+  const transaction: MembershipTransaction = {
+    run: async (work) => {
+      const restores = [users, leagues, memberships, squads, squadMemberships, leagueInvitations, ownerInvitations]
+        .map((table) => table.snapshot());
+      try {
+        return await work({
+          leagueMemberships: membershipRepo,
+          squads: squadRepo,
+          squadMemberships: squadMembershipRepo,
+          squadOwnerInvitations: ownerInvitationRepo,
+        });
+      } catch (error) {
+        for (const restore of restores) restore();
+        throw error;
+      }
+    },
+  };
+
   let userSequence = 0;
   let leagueSequence = 0;
 
@@ -257,6 +291,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     squadMemberships: squadMembershipRepo,
     leagueInvitations: leagueInvitationRepo,
     ownerInvitations: ownerInvitationRepo,
+    transaction,
     tables: { users, leagues, memberships, squads, squadMemberships, leagueInvitations, ownerInvitations },
     addUser(overrides = {}) {
       userSequence += 1;

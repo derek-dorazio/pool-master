@@ -1,4 +1,5 @@
 import type {
+  Prisma,
   PrismaClient,
   SquadOwnerInvitation as PrismaSquadOwnerInvitation,
 } from '@prisma/client';
@@ -12,7 +13,7 @@ import { SquadOwnerInvitationStatus as SharedSquadOwnerInvitationStatus } from '
 export class PrismaSquadOwnerInvitationRepository
   implements SquadOwnerInvitationRepository
 {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient | Prisma.TransactionClient) {}
 
   async findById(id: string): Promise<SquadOwnerInvitation | null> {
     const row = await this.prisma.squadOwnerInvitation.findUnique({ where: { id } });

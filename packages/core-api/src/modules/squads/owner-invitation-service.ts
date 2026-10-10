@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import type {
   LeagueMembershipRepository,
+  MembershipRepositories,
+  MembershipTransaction,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
   SquadRepository,
@@ -41,15 +43,28 @@ interface ReplaceOwnerInput extends InviteOwnerInput {
   targetUserId: string;
 }
 
+export interface SquadOwnerInvitationServiceDeps extends MembershipRepositories {
+  users: UserRepository;
+  prisma: PrismaClient;
+  membershipTransaction: MembershipTransaction;
+}
+
 export class SquadOwnerInvitationService {
-  constructor(
-    private readonly invitationRepo: SquadOwnerInvitationRepository,
-    private readonly membershipRepo: LeagueMembershipRepository,
-    private readonly squadRepo: SquadRepository,
-    private readonly squadMembershipRepo: SquadMembershipRepository,
-    private readonly users: UserRepository,
-    private readonly prisma: PrismaClient,
-  ) {}
+  private readonly invitationRepo: SquadOwnerInvitationRepository;
+  private readonly membershipRepo: LeagueMembershipRepository;
+  private readonly squadRepo: SquadRepository;
+  private readonly squadMembershipRepo: SquadMembershipRepository;
+  private readonly users: UserRepository;
+  private readonly prisma: PrismaClient;
+
+  constructor(deps: SquadOwnerInvitationServiceDeps) {
+    this.invitationRepo = deps.squadOwnerInvitations;
+    this.membershipRepo = deps.leagueMemberships;
+    this.squadRepo = deps.squads;
+    this.squadMembershipRepo = deps.squadMemberships;
+    this.users = deps.users;
+    this.prisma = deps.prisma;
+  }
 
   async listInvitationsForViewer(
     leagueId: string,
