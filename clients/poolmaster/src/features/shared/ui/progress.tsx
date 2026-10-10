@@ -1,29 +1,4 @@
-import type { HTMLAttributes } from "react";
 import { cn } from "./class-names";
-
-type SkeletonProps = HTMLAttributes<HTMLDivElement> & {
-  lines?: number;
-};
-
-export function Skeleton({ className, lines, ...props }: SkeletonProps) {
-  if (lines && lines > 1) {
-    return (
-      <div className={cn("space-y-2", className)} {...props}>
-        {Array.from({ length: lines }).map((_, index) => (
-          <div
-            className="h-4 rounded-full bg-muted"
-            key={index}
-            style={{ width: `${100 - index * 12}%` }}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn("h-4 rounded-full bg-muted", className)} {...props} />
-  );
-}
 
 type ProgressIndicatorProps = {
   className?: string;

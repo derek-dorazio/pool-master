@@ -46,7 +46,3 @@ export function IconAvatar({
     </span>
   );
 }
-
-export function IconBadge(props: IconAvatarProps) {
-  return <IconAvatar size="sm" {...props} />;
-}

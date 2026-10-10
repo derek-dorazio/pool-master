@@ -8,7 +8,6 @@ import {
   FormModal,
   PickerModal,
   ReadOnlyDetailModal,
-  WizardModal,
 } from "./modal-templates";
 
 function StatefulDetailValue({
@@ -222,31 +221,5 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(screen.getByTestId("status-detail-value")).toHaveTextContent(
       "Completed",
     );
-  });
-
-  it("pool-master-3ew.12: renders wizard progress and next-step action", () => {
-    const handleNext = vi.fn();
-
-    render(
-      <WizardModal
-        currentStepIndex={0}
-        onCancel={vi.fn()}
-        onNext={handleNext}
-        onOpenChange={vi.fn()}
-        open
-        steps={[
-          { id: "details", label: "Details" },
-          { id: "review", label: "Review" },
-        ]}
-        title="Create contest"
-      >
-        <p>Contest details</p>
-      </WizardModal>,
-    );
-
-    expect(screen.getByText("1. Details")).toBeInTheDocument();
-    expect(screen.getByText("2. Review")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(handleNext).toHaveBeenCalledTimes(1);
   });
 });

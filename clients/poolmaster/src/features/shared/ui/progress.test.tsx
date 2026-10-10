@@ -1,14 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { ProgressIndicator, Skeleton } from "./progress";
+import { ProgressIndicator } from "./progress";
 
-describe("pool-master-3lo.19: shared Skeleton and ProgressIndicator primitives", () => {
-  it("rule: renders skeleton placeholders without content text", () => {
-    render(<Skeleton aria-label="Loading rows" lines={3} />);
-
-    expect(screen.getByLabelText("Loading rows")).toBeInTheDocument();
-  });
-
+describe("pool-master-3lo.19: shared ProgressIndicator primitive", () => {
   it("rule: renders bounded progress values", () => {
     render(<ProgressIndicator label="Entry completion" max={12} value={18} />);
 
