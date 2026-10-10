@@ -142,12 +142,14 @@ describe('TeamOwnerActionMenu', () => {
     );
   });
 
-  it('points to Team Home instead of offering removal when the owner is the team\'s last one', async () => {
-    renderMenu({ activeOwnerCount: 1 });
+  it('tells a plain owner who is the team\'s last one to use Leave league, and offers no removal', async () => {
+    renderMenu({ activeOwnerCount: 1, canManageLeagueRole: false });
 
     openAction('remove');
 
-    expect(await screen.findByRole('link', { name: 'Open Team Home' })).toBeInTheDocument();
+    expect(await screen.findByText(/use Leave league/)).toBeInTheDocument();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Team Home/)).not.toBeInTheDocument();
     expect(screen.queryByTestId('team-home-owner-actions-confirm-remove-team-1-user-2')).not.toBeInTheDocument();
   });
 
