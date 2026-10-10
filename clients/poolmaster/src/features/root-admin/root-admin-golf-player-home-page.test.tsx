@@ -105,7 +105,10 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
     renderPage();
 
     expect(await screen.findByRole('heading', { name: 'Rory McIlroy', level: 1 })).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-golf-player-identity')).toHaveTextContent('ACTIVE');
+    expect(screen.getByTestId('root-admin-golf-player-identity')).toHaveTextContent('Active');
+    expect(screen.getByTestId('root-admin-golf-player-identity')).not.toHaveTextContent('ACTIVE');
+    expect(screen.getByTestId('root-admin-golf-player-status-row')).toHaveTextContent('Active');
+    expect(screen.getByTestId('root-admin-golf-player-status-row')).not.toHaveTextContent('ACTIVE');
     const details = screen.getByTestId('root-admin-golf-player-details');
     expect(within(details).getByText('NIR')).toBeInTheDocument();
     expect(within(details).getByText('rory-1')).toBeInTheDocument();
@@ -154,6 +157,20 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
       ),
     );
     expect(await screen.findByTestId('root-admin-golf-player-home-page')).toBeInTheDocument();
+  });
+
+  it('names each status in plain words in Edit details, while saving the status value', async () => {
+    getParticipantMock.mockResolvedValue({ data: { participant: player() } });
+    renderPage('/manage/golf/players/p-rory/edit');
+
+    const status = await screen.findByTestId('root-admin-golf-player-edit-status');
+    expect(within(status).getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Active',
+      'Inactive',
+      'Retired',
+      'Suspended',
+    ]);
+    expect(status).toHaveValue('ACTIVE');
   });
 
   it('returns to the player from Edit details\' Cancel without saving', async () => {

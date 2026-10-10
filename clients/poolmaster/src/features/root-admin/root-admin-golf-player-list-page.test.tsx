@@ -98,7 +98,15 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
     expect(screen.getByText('Jon Rahm')).toBeInTheDocument();
     // #236: the mapping count column is gone; the golfer's page reads the mappings itself.
     expect(screen.queryByText('Provider mappings')).not.toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-golf-player-row-p-rory')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-player-row-p-rory')).toHaveTextContent('Active');
+    expect(screen.getByTestId('root-admin-golf-player-row-p-rory')).not.toHaveTextContent('ACTIVE');
+    const statusFilter = screen.getByTestId('root-admin-golf-player-list-status');
+    expect(within(statusFilter).getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Active',
+      'Inactive',
+      'Retired',
+      'Suspended',
+    ]);
     // Default status filter is ACTIVE.
     expect(listParticipantsMock).toHaveBeenCalledWith(
       expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE' } }),
