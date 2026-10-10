@@ -5,6 +5,7 @@ import {
   ensureDefaultSquadForLeagueMember,
 } from '../../../packages/core-api/src/modules/squads/default-squad';
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
+import { expectDefined } from '../../support/expect-defined';
 
 /**
  * Default-team provisioning — what joining a league (or creating one) leaves a member owning.
@@ -110,7 +111,7 @@ describe('Default team provisioning', () => {
     const league = world.addLeague();
     const user = world.addUser();
     const { squad: original } = world.addMember({ league, user });
-    const ownership = world.squadMembershipOf(league.id, user.id)!;
+    const ownership = expectDefined(world.squadMembershipOf(league.id, user.id));
     world.tables.squadMemberships.patch(ownership.id, { status: SquadMembershipStatus.INACTIVE });
     world.tables.squads.patch(original.id, { isActive: false });
 
@@ -128,7 +129,7 @@ describe('Default team provisioning', () => {
     const returning = world.addUser();
     const { squad: team } = world.addMember({ league, user: owner });
     world.addMember({ league, user: returning, squadId: team.id });
-    const ownership = world.squadMembershipOf(league.id, returning.id)!;
+    const ownership = expectDefined(world.squadMembershipOf(league.id, returning.id));
     world.tables.squadMemberships.patch(ownership.id, { status: SquadMembershipStatus.INACTIVE });
 
     const squad = await provision(world, league.id, returning.id);
@@ -147,7 +148,7 @@ describe('Default team provisioning', () => {
     const league = world.addLeague();
     const user = world.addUser({ firstName: 'Ray', lastName: 'Turner' });
     const { squad: original } = world.addMember({ league, user });
-    const ownership = world.squadMembershipOf(league.id, user.id)!;
+    const ownership = expectDefined(world.squadMembershipOf(league.id, user.id));
     world.tables.squadMemberships.patch(ownership.id, { status: SquadMembershipStatus.INACTIVE });
     world.tables.squads.remove(original.id);
 

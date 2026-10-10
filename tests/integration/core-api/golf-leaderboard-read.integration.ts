@@ -11,6 +11,7 @@ import {
 import { ContestLeaderboardResponseSchema, type ErrorEnvelope } from '@poolmaster/shared/dto';
 import { PARTICIPANT_SCORING_DEFINITIONS, Sport } from '@poolmaster/shared/domain';
 import { freshEventEdition } from '../../support/event-edition';
+import { expectDefined } from '../../support/expect-defined';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -229,9 +230,9 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     const roundTwo = rory?.rounds.find((round) => round.roundNumber === 2);
     expect(roundTwo?.golf).toEqual(expect.objectContaining({ scoreToPar: -2, thru: 9 }));
     expect(PARTICIPANT_SCORING_DEFINITIONS[parsed.scoringDefinitionId].formatRound({
-      status: roundTwo!.status,
-      strokes: roundTwo!.golf!.strokes,
-      scoreToPar: roundTwo!.golf!.scoreToPar,
+      status: expectDefined(roundTwo).status,
+      strokes: expectDefined(expectDefined(roundTwo).golf).strokes,
+      scoreToPar: expectDefined(expectDefined(roundTwo).golf).scoreToPar,
     })).toBe('-2');
 
     // #246 — once the contest is COMPLETED the leaderboard answers from the frozen standings,

@@ -30,6 +30,7 @@ import {
   fakeParticipantContestScoringRuleRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
+import { expectDefined } from '../../support/expect-defined';
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
 
@@ -1247,7 +1248,7 @@ describe('ContestManagementService', () => {
       (templateRepo.findById as jest.Mock).mockResolvedValue({ ...template, active: false });
       const { service, contestRepo } = build({ templateRepo });
 
-      await expect(service.createContest({ leagueId: 'league-1' }, { ...CREATE, templateId: template!.id }))
+      await expect(service.createContest({ leagueId: 'league-1' }, { ...CREATE, templateId: expectDefined(template).id }))
         .rejects.toThrow('Contest configuration template not found');
       expect(contestRepo.create).not.toHaveBeenCalled();
     });
@@ -1258,7 +1259,7 @@ describe('ContestManagementService', () => {
       (templateRepo.findById as jest.Mock).mockResolvedValue({ ...template, contestFormat: ContestFormat.SURVIVOR });
       const { service } = build({ templateRepo });
 
-      await expect(service.createContest({ leagueId: 'league-1' }, { ...CREATE, templateId: template!.id }))
+      await expect(service.createContest({ leagueId: 'league-1' }, { ...CREATE, templateId: expectDefined(template).id }))
         .rejects.toThrow('does not match the requested contest type');
     });
 
@@ -1284,12 +1285,12 @@ describe('ContestManagementService', () => {
     it('answers 404 CONTEST_NOT_FOUND changing settings of a contest with no configuration or no contest row', async () => {
       const configurationRepo = createContestConfigurationRepo();
       (configurationRepo.findByContest as jest.Mock).mockResolvedValueOnce(null);
-      await expect(build({ configurationRepo }).service.updateContestConfiguration('contest-1', CREATE.configuration!))
+      await expect(build({ configurationRepo }).service.updateContestConfiguration('contest-1', expectDefined(CREATE.configuration)))
         .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND' });
 
       const contestRepo = createContestRepo();
       (contestRepo.findById as jest.Mock).mockResolvedValue(null);
-      await expect(build({ contestRepo }).service.updateContestConfiguration('contest-1', CREATE.configuration!))
+      await expect(build({ contestRepo }).service.updateContestConfiguration('contest-1', expectDefined(CREATE.configuration)))
         .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND' });
     });
 

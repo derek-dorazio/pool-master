@@ -92,6 +92,7 @@ import type { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { freshEventEdition } from '../../support/event-edition';
 import type { z } from 'zod';
+import { expectDefined } from '../../support/expect-defined';
 
 // The shared package exports the participant response schema but not its inferred type.
 type ParticipantResponse = z.infer<typeof ParticipantResponseSchema>;
@@ -1684,9 +1685,9 @@ describe('Contract verification (root admin)', () => {
       expect(firstRes.statusCode).toBe(201);
       const first = ImportSportEventYearFromProviderResponseSchema.safeParse(firstRes.json());
       expect(first.success).toBe(true);
-      expect(first.data!.created.map((event) => event.externalId)).toEqual([`${tour}-alpha`, `${tour}-bravo`]);
-      expect(first.data!.created.every((event) => event.syncScope === 'SCORES_ONLY')).toBe(true);
-      expect(first.data!.skipped).toEqual([]);
+      expect(expectDefined(first.data).created.map((event) => event.externalId)).toEqual([`${tour}-alpha`, `${tour}-bravo`]);
+      expect(expectDefined(first.data).created.every((event) => event.syncScope === 'SCORES_ONLY')).toBe(true);
+      expect(expectDefined(first.data).skipped).toEqual([]);
 
       const againRes = await importYear();
       expect(againRes.statusCode).toBe(201);

@@ -15,6 +15,7 @@ import {
 } from '../../../packages/core-api/src/modules/squads/owner-invitation-service';
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
 import { asPrismaClient } from '../../support/prisma-double';
+import { expectDefined } from '../../support/expect-defined';
 
 /**
  * Team-owner invitation use cases — invite a co-owner, replace an owner, revoke, preview,
@@ -101,7 +102,7 @@ describe('SquadOwnerInvitationService — inviting a co-owner', () => {
       replacementForUserId: null,
       team: { id: setup.ownerSquad.id, name: setup.ownerSquad.name },
     });
-    const expiresIn = Date.parse(invitation.expiresAt!) - before;
+    const expiresIn = Date.parse(expectDefined(invitation.expiresAt)) - before;
     expect(expiresIn).toBeGreaterThan(7 * DAY_MS - 60 * 60 * 1000 - 60_000);
     expect(expiresIn).toBeLessThan(7 * DAY_MS + 60 * 60 * 1000 + 60_000);
     expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([setup.owner.id]);
@@ -131,7 +132,7 @@ describe('SquadOwnerInvitationService — inviting a co-owner', () => {
     const former = setup.world.addUser({ email: 'former@example.com' });
     const { membership, squad: oldSquad } = setup.world.addMember({ league: setup.league, user: former });
     setup.world.tables.memberships.patch(membership.id, { status: LeagueMembershipStatus.INACTIVE });
-    const oldSquadMembership = setup.world.squadMembershipOf(setup.league.id, former.id)!;
+    const oldSquadMembership = expectDefined(setup.world.squadMembershipOf(setup.league.id, former.id));
     setup.world.tables.squadMemberships.patch(oldSquadMembership.id, { status: SquadMembershipStatus.INACTIVE });
 
     await setup.service.inviteOwner({
@@ -208,7 +209,7 @@ describe('SquadOwnerInvitationService — inviting a co-owner', () => {
 
   it('refuses a member whose own team membership has ended with SQUAD_OWNER_REQUIRED', async () => {
     const setup = leagueWithTwoTeams();
-    const ownerSquadMembership = setup.world.squadMembershipOf(setup.league.id, setup.owner.id)!;
+    const ownerSquadMembership = expectDefined(setup.world.squadMembershipOf(setup.league.id, setup.owner.id));
     setup.world.tables.squadMemberships.patch(ownerSquadMembership.id, { status: SquadMembershipStatus.INACTIVE });
 
     await expect(setup.service.inviteOwner({
@@ -281,7 +282,7 @@ describe('SquadOwnerInvitationService — replacing an owner', () => {
   it('refuses to replace an owner who is the league\'s last commissioner, changing nothing', async () => {
     const setup = leagueWithTwoTeams();
     setup.world.tables.memberships.patch(
-      setup.world.membershipOf(setup.league.id, setup.commissioner.id)!.id,
+      expectDefined(setup.world.membershipOf(setup.league.id, setup.commissioner.id)).id,
       { role: LeagueRole.MEMBER },
     );
     const coCommissioner = setup.world.addUser();

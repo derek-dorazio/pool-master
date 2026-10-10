@@ -219,6 +219,10 @@ type-aware rules hold `tests/**` to this.
   `toHaveBeenNthCalledWith(1, expect.objectContaining({ ... }))`.
 - **A private method under test** is reached as `service['method'](...)`, which TypeScript
   types, not as `(service as any).method(...)`.
+- **A value the test expects to be present** (`result.data`, `rows.find(...)`) is narrowed with
+  `expectDefined(value)` from `tests/support/expect-defined.ts`, not `value!`. It fails at
+  that line with a clear message instead of a `TypeError` further on; ESLint's
+  `no-non-null-assertion` forbids the `!`.
 - Never clear a type error or lint finding with `as X` or `as unknown as T` on a double. That
   makes the double lie about the contract, which is worse than `any` because it is invisible.
 

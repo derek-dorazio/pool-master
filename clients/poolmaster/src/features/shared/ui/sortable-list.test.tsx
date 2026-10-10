@@ -21,7 +21,11 @@ function Harness() {
         items={items}
         onReorder={(orderedIds) =>
           setItems((current) =>
-            orderedIds.map((id) => current.find((item) => item.id === id)!),
+            orderedIds.map((id) => {
+              const item = current.find((candidate) => candidate.id === id);
+              if (!item) throw new Error(`onReorder emitted an unknown id: ${id}`);
+              return item;
+            }),
           )
         }
         renderItem={(item, { dragHandleProps }) => (
