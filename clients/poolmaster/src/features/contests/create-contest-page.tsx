@@ -39,6 +39,7 @@ import {
   formatEntriesPerTeamSentence,
   formatPresetLabel,
   formatSelectionTypeName,
+  pluralize,
   suggestContestName,
 } from './contest-rules';
 import { ContestRulesFields } from './contest-rules-fields';
@@ -46,15 +47,23 @@ import { defaultCountedScoresFor, parseContestRules, toContestRulesValues, type 
 
 const CUSTOM_PRESET = 'custom';
 
+/** The ways of picking the create contract accepts; it widens as new formats are built. */
+type CreatableSelectionType = CreateContestRequest['selectionType'];
+
 /**
  * The ways of picking Create contest offers, one card each. Budget (#93) adds its card here with
  * its own rules fields.
  */
-const FORMAT_CHOICES: Array<{ description: string; selectionType: SelectionType }> = [
+const FORMAT_CHOICES: Array<{ description: string; selectionType: CreatableSelectionType }> = [
   {
     selectionType: SelectionType.TIERED,
     description: "Pick golfers from each of the event's tiers, so the favorites are spread across every entry.",
   },
+];
+
+const creatableSelectionTypes = FORMAT_CHOICES.map((choice) => choice.selectionType) as [
+  CreatableSelectionType,
+  ...CreatableSelectionType[],
 ];
 
 const createContestFormSchema = z.object({
@@ -63,6 +72,7 @@ const createContestFormSchema = z.object({
   maxEntriesPerTeam: z.string(),
   picksPerTier: z.string(),
   selectedTemplateId: z.string(),
+  selectionType: z.enum(creatableSelectionTypes),
   sportEventId: z.string().min(1, 'Choose an event for the contest.'),
   unlimitedEntries: z.boolean(),
 });
@@ -78,10 +88,6 @@ const DEFAULT_RULES: ContestRulesValues = {
 
 function sortEventsBySoonest(events: SportEventDto[]) {
   return [...events].sort((left, right) => Date.parse(left.startDate) - Date.parse(right.startDate));
-}
-
-function pluralize(count: number, singular: string) {
-  return `${count} ${count === 1 ? singular : `${singular}s`}`;
 }
 
 /** One numbered part of the form: 1 Event, 2 Format, 3 Rules, 4 Name. */
@@ -148,15 +154,21 @@ export function CreateContestPage() {
 
   const form = useForm<CreateContestFormValues>({
     resolver: zodResolver(createContestFormSchema),
-    defaultValues: { contestName: '', selectedTemplateId: '', sportEventId: '', ...DEFAULT_RULES },
+    defaultValues: {
+      contestName: '',
+      selectedTemplateId: '',
+      selectionType: SelectionType.TIERED,
+      sportEventId: '',
+      ...DEFAULT_RULES,
+    },
   });
   const values = form.watch();
-  const { contestName, selectedTemplateId, sportEventId } = values;
+  const { contestName, selectedTemplateId, selectionType, sportEventId } = values;
   const [isNameEdited, setIsNameEdited] = useState(false);
   const defaultPresetApplied = useRef(false);
 
   const setFormValues = useCallback((next: Partial<CreateContestFormValues>) => {
-    for (const [field, value] of Object.entries(next) as Array<[keyof CreateContestFormValues, string | boolean]>) {
+    for (const [field, value] of Object.entries(next) as Array<[keyof CreateContestFormValues, CreateContestFormValues[keyof CreateContestFormValues]]>) {
       form.setValue(field, value, { shouldDirty: true });
     }
   }, [form]);
@@ -196,8 +208,8 @@ export function CreateContestPage() {
   const selectedEvent = eligibleEvents.find((event) => event.id === sportEventId) ?? null;
   const tierCount = selectedEvent?.tierCount ?? 0;
   const presets = useMemo(
-    () => (templatesQuery.data ?? []).filter((template) => template.selectionType === SelectionType.TIERED),
-    [templatesQuery.data],
+    () => (templatesQuery.data ?? []).filter((template) => template.selectionType === selectionType),
+    [selectionType, templatesQuery.data],
   );
   const parsedRules = parseContestRules(values, tierCount);
 
@@ -246,7 +258,7 @@ export function CreateContestPage() {
 
   // The name follows the event and the rules until the commissioner types their own.
   const suggestedName = selectedEvent
-    ? suggestContestName(selectedEvent.name, SelectionType.TIERED, parsedRules.configuration, tierCount)
+    ? suggestContestName(selectedEvent.name, selectionType, parsedRules.configuration, tierCount)
     : '';
   useEffect(() => {
     if (!isNameEdited && suggestedName && form.getValues('contestName') !== suggestedName) {
@@ -282,7 +294,7 @@ export function CreateContestPage() {
         name: submitted.contestName.trim(),
         sportEventId: event.id,
         contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.TIERED,
+        selectionType: submitted.selectionType,
         ...(submitted.selectedTemplateId ? { templateId: submitted.selectedTemplateId } : {}),
         configuration: parsed.configuration,
       };
@@ -353,7 +365,7 @@ export function CreateContestPage() {
       : null);
   const presetOptions = [
     ...presets.map((template) => ({
-      label: formatPresetLabel(SelectionType.TIERED, template.configuration, tierCount),
+      label: formatPresetLabel(selectionType, template.configuration, tierCount),
       testId: `contest-template-${template.templateKey}`,
       value: template.id,
     })),
@@ -420,9 +432,9 @@ export function CreateContestPage() {
         <div aria-label="Format" className="grid gap-2 md:grid-cols-2" role="radiogroup">
           {FORMAT_CHOICES.map((choice) => (
             <ChoiceCard
-              isSelected={choice.selectionType === SelectionType.TIERED}
+              isSelected={choice.selectionType === selectionType}
               key={choice.selectionType}
-              onSelect={() => undefined}
+              onSelect={() => setFormValues({ selectedTemplateId: '', selectionType: choice.selectionType })}
               testId={`contest-format-${choice.selectionType}`}
             >
               <span className="min-w-0 flex-1">
@@ -472,12 +484,10 @@ export function CreateContestPage() {
         {selectedEvent && parsedRules.configuration ? (
           <div className="rounded-xl bg-muted/40 px-4 py-3 text-sm" data-testid="contest-members-will-see">
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Members will see</div>
-            {[
-              contestName.trim() || 'Untitled contest',
-              selectedEvent.name,
-              formatContestRules(SelectionType.TIERED, parsedRules.configuration, tierCount),
-              formatEntriesPerTeamSentence(parsedRules.configuration.maxEntriesPerSquad),
-            ].join(' · ')}
+            <div className="font-semibold">{`${contestName.trim() || 'Untitled contest'} · ${selectedEvent.name}`}</div>
+            <div>
+              {`${formatContestRules(selectionType, parsedRules.configuration, tierCount)} ${formatEntriesPerTeamSentence(parsedRules.configuration.maxEntriesPerSquad)}.`}
+            </div>
           </div>
         ) : null}
       </SetupSection>

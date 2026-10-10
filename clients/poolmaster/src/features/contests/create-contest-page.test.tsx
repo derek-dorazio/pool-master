@@ -244,6 +244,12 @@ function submittedBody() {
   return request.body;
 }
 
+/** The soonest event, the default preset and the suggested name are set once the reads land. */
+async function waitForStartingChoices() {
+  await waitFor(() => expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toBeChecked());
+  await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Pick 6'));
+}
+
 describe('Commissioner tools › Contests › Create contest', () => {
   afterEach(() => {
     createContestMock.mockReset();
@@ -261,7 +267,9 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     renderCreateContestPage();
 
-    expect(await screen.findByTestId('contest-event-event-1')).toBeChecked();
+    // The soonest event and the default preset are chosen once the reads land.
+    await waitFor(() => expect(screen.getByTestId('contest-event-event-1')).toBeChecked());
+    await waitFor(() => expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toBeChecked());
     expect(screen.getByTestId('contest-event-event-2')).not.toBeChecked();
     expect(screen.queryByTestId('contest-event-event-3')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-event-event-1')).toHaveTextContent('144 golfers · 6 tiers');
@@ -270,7 +278,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Pick 6, best 4');
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Pick 6'));
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
-      'Masters Tournament Pick 6 · Masters Tournament · Pick 1 golfer from each of 6 tiers. The best 4 scores count. · 1 entry per team',
+      'Masters Tournament Pick 6 · Masters TournamentPick 1 golfer from each of 6 tiers. The best 4 scores count. 1 entry per team.',
     );
     expect(screen.getByTestId('create-contest-submit')).toHaveTextContent('Create contest');
   });
@@ -301,7 +309,8 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     renderCreateContestPage();
 
-    fireEvent.click(await screen.findByTestId('contest-event-event-2'));
+    await waitForStartingChoices();
+    fireEvent.click(screen.getByTestId('contest-event-event-2'));
 
     expect(screen.getByTestId('contest-event-event-2')).toBeChecked();
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('RBC Heritage Pick 5'));
@@ -313,7 +322,8 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     renderCreateContestPage();
 
-    fireEvent.click(await screen.findByTestId('contest-template-golf-tiered-pick-12'));
+    await waitForStartingChoices();
+    fireEvent.click(screen.getByTestId('contest-template-golf-tiered-pick-12'));
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Pick 12'));
 
     fireEvent.change(screen.getByTestId('contest-name'), { target: { value: 'Spring Major' } });
@@ -328,7 +338,8 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     renderCreateContestPage();
 
-    const pick12 = await screen.findByTestId('contest-template-golf-tiered-pick-12');
+    await waitForStartingChoices();
+    const pick12 = screen.getByTestId('contest-template-golf-tiered-pick-12');
     expect(pick12).toHaveTextContent('Pick 12, best 8');
     fireEvent.click(pick12);
 
@@ -351,11 +362,12 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     renderCreateContestPage();
 
-    fireEvent.change(await screen.findByTestId('contest-tiered-counted-scores'), { target: { value: '5' } });
+    await waitForStartingChoices();
+    fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), { target: { value: '5' } });
     fireEvent.click(screen.getByTestId('contest-max-entries-unlimited'));
 
     expect(screen.getByTestId('contest-template-custom')).toBeChecked();
-    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent('The best 5 scores count. · No limit on entries per team');
+    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent('The best 5 scores count. No limit on entries per team.');
     fireEvent.click(screen.getByTestId('create-contest-submit'));
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
@@ -368,7 +380,8 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     renderCreateContestPage();
 
-    expect(await screen.findByText('6 tiers × 1 = 6 golfers per entry')).toBeInTheDocument();
+    await waitForStartingChoices();
+    expect(screen.getByText('6 tiers × 1 = 6 golfers per entry')).toBeInTheDocument();
     fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), { target: { value: '2' } });
 
     expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(8);

@@ -20,7 +20,8 @@ export function formatSelectionTypeName(selectionType: SelectionType) {
 
 type ContestRulesConfiguration = Pick<ContestConfigurationRequest, 'countedScores' | 'picksPerTier'>;
 
-function pluralize(count: number, singular: string, plural = `${singular}s`) {
+/** "1 golfer", "6 golfers": a count with its noun. */
+export function pluralize(count: number, singular: string, plural = `${singular}s`) {
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
