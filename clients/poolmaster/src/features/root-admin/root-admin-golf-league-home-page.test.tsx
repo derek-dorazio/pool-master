@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { RootAdminGolfLeagueEditPage } from './root-admin-golf-league-edit-page';
 import { RootAdminGolfLeagueHomePage } from './root-admin-golf-league-home-page';
 import {
   GOLF_SPORT_FIXTURE,
@@ -13,9 +14,9 @@ import {
   sportLeagueFixture,
 } from './golf-test-fixtures';
 
-// plans/124 §6.3 — /manage/golf/leagues/:leagueId Tour Home (pool-master-qqs):
-// details edit + active toggle + roster grid (inline rank edit, add, remove) +
-// bulk-upload flow.
+// A tour's page, /manage/golf/leagues/:leagueId (pool-master-qqs): heading and details,
+// the Edit details page, the danger zone's active toggle, the roster grid (inline rank
+// edit, add, remove) and the bulk-upload flow.
 
 const {
   listSportLeaguesMock,
@@ -116,17 +117,21 @@ function seed() {
   });
 }
 
-function renderPage(leagueId = 'pga') {
+function renderPage(leagueId = 'pga', subPath = '') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/manage/golf/leagues/${leagueId}`]}>
+      <MemoryRouter initialEntries={[`/manage/golf/leagues/${leagueId}${subPath}`]}>
         <Routes>
           <Route
             element={<RootAdminGolfLeagueHomePage />}
             path="/manage/golf/leagues/:leagueId"
+          />
+          <Route
+            element={<RootAdminGolfLeagueEditPage />}
+            path="/manage/golf/leagues/:leagueId/edit"
           />
         </Routes>
       </MemoryRouter>
@@ -144,11 +149,122 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
     seed();
     renderPage();
 
-    expect(await screen.findByRole('heading', { name: 'PGA Tour' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'PGA Tour', level: 1 })).toBeInTheDocument();
     expect(await screen.findByTestId('root-admin-golf-tour-tournament-row-masters-2026')).toBeInTheDocument();
     expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: 'pga' } }));
     expect(screen.getByText('Rory McIlroy')).toBeInTheDocument();
     expect(screen.getByText('Scottie Scheffler')).toBeInTheDocument();
+  });
+
+  it('shows the tour\'s active state and counts in its heading, and its details with one Edit', async () => {
+    seed();
+    renderPage();
+
+    const identity = await screen.findByTestId('root-admin-golf-league-identity');
+    expect(identity).toHaveTextContent('Active');
+    expect(screen.getByTestId('root-admin-golf-league-counts')).toHaveTextContent(
+      `${league().affiliationCount} golfers · ${league().sportEventCount} tournaments`,
+    );
+    const details = screen.getByTestId('root-admin-golf-league-details');
+    expect(within(details).getByText('PGA')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-league-home-edit')).toHaveAttribute(
+      'href',
+      '/manage/golf/leagues/pga/edit',
+    );
+  });
+
+  it('saves the tour\'s name and match keyword on Edit details and returns to the tour', async () => {
+    seed();
+    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: league({ name: 'PGA TOUR' }) } });
+    renderPage('pga', '/edit');
+
+    const name = await screen.findByTestId('root-admin-golf-league-edit-name');
+    await userEvent.clear(name);
+    await userEvent.type(name, 'PGA TOUR');
+    await userEvent.click(screen.getByTestId('root-admin-golf-league-edit-save'));
+
+    await waitFor(() =>
+      expect(updateSportLeagueMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          path: { sportLeagueId: 'pga' },
+          body: { name: 'PGA TOUR', matchKeyword: 'PGA' },
+        }),
+      ),
+    );
+    expect(await screen.findByTestId('root-admin-golf-league-home-page')).toBeInTheDocument();
+  });
+
+  it('keeps Edit details open with the server\'s reason when saving the tour is refused', async () => {
+    seed();
+    updateSportLeagueMock.mockResolvedValue({
+      error: { error: { code: 'CONFLICT', message: 'A tour with this name already exists.' } },
+      response: { status: 409 },
+    });
+    renderPage('pga', '/edit');
+
+    await userEvent.click(await screen.findByTestId('root-admin-golf-league-edit-save'));
+
+    expect(await screen.findByText('A tour with this name already exists.')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-league-edit-page')).toBeInTheDocument();
+  });
+
+  it('returns to the tour from Edit details\' Cancel without saving', async () => {
+    seed();
+    renderPage('pga', '/edit');
+
+    await userEvent.click(await screen.findByRole('link', { name: 'Cancel' }));
+
+    expect(await screen.findByTestId('root-admin-golf-league-home-page')).toBeInTheDocument();
+    expect(updateSportLeagueMock).not.toHaveBeenCalled();
+  });
+
+  it('deactivates the tour from the danger zone only after the admin confirms', async () => {
+    seed();
+    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: league({ isActive: false }) } });
+    renderPage();
+
+    const dangerZone = await screen.findByTestId('root-admin-golf-league-danger-zone');
+    await userEvent.click(within(dangerZone).getByTestId('root-admin-golf-league-home-toggle-active'));
+    expect(updateSportLeagueMock).not.toHaveBeenCalled();
+    await userEvent.click(await screen.findByTestId('root-admin-golf-league-toggle-active-confirm'));
+
+    await waitFor(() =>
+      expect(updateSportLeagueMock).toHaveBeenCalledWith(
+        expect.objectContaining({ path: { sportLeagueId: 'pga' }, body: { isActive: false } }),
+      ),
+    );
+  });
+
+  it('leaves the tour active when the admin cancels the deactivate confirmation', async () => {
+    seed();
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-golf-league-home-toggle-active'));
+    const dialog = await screen.findByTestId('root-admin-golf-league-toggle-active-dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() =>
+      expect(screen.queryByTestId('root-admin-golf-league-toggle-active-dialog')).not.toBeInTheDocument(),
+    );
+    expect(updateSportLeagueMock).not.toHaveBeenCalled();
+  });
+
+  it('offers Activate tour for an inactive tour and shows the server\'s reason in the dialog when it is refused', async () => {
+    seed();
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [league({ isActive: false })] } });
+    updateSportLeagueMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'The tour store is unavailable.' } },
+      response: { status: 500 },
+    });
+    renderPage();
+
+    const toggle = await screen.findByTestId('root-admin-golf-league-home-toggle-active');
+    expect(toggle).toHaveTextContent('Activate tour');
+    await userEvent.click(toggle);
+    await userEvent.click(await screen.findByTestId('root-admin-golf-league-toggle-active-confirm'));
+
+    const dialog = screen.getByTestId('root-admin-golf-league-toggle-active-dialog');
+    expect(await within(dialog).findByText('The tour store is unavailable.')).toBeInTheDocument();
   });
 
   it('pool-master-qqs shows a not-found state when the tour id is unknown', async () => {

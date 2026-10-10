@@ -108,7 +108,7 @@ const rosterColumns = [
 ];
 
 /**
- * plans/124 §6.3 Tour Home — the roster grid the admin maintains week to week.
+ * A tour's page: the roster grid the admin maintains week to week.
  * Per-row ranking edits collect into a local draft (holding only the
  * edited cells, never seeded from the query — `rules/react-ui-rules.md` "Server
  * Data Form-State Hazard") and save in one call; an "Add golfer" picker and a
@@ -390,7 +390,7 @@ export function GolfLeagueRosterGridCard({
         confirmTestId="root-admin-golf-league-roster-remove-confirm"
         description={
           removeTarget
-            ? `Remove ${removeTarget.participant.name} from this tour's roster. This does not retire the golfer — that is done from Player Home.`
+            ? `Remove ${removeTarget.participant.name} from this tour's roster. This does not retire the golfer; do that from the golfer's own page.`
             : ''
         }
         errorMessage={

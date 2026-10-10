@@ -5,10 +5,11 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { QueryKeys } from '@/lib/query-keys';
+import { RootAdminGolfPlayerEditPage } from './root-admin-golf-player-edit-page';
 import { RootAdminGolfPlayerHomePage } from './root-admin-golf-player-home-page';
 import { participantFixture } from './golf-test-fixtures';
 
-// plans/124 §6.3 — /manage/golf/players/:participantId Player Home (pool-master-rfy).
+// A golfer's page, /manage/golf/players/:participantId, and its Edit details page (pool-master-rfy).
 
 const { getParticipantMock, listParticipantProviderMappingsMock, updateParticipantMock, mockLogger } = vi.hoisted(
   () => {
@@ -67,17 +68,21 @@ const MAPPING = {
   mappedAt: '2026-01-01T00:00:00.000Z',
 };
 
-function renderPage(participantId = 'p-rory') {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
+function renderPage(
+  path = '/manage/golf/players/p-rory',
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/manage/golf/players/${participantId}`]}>
+      <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route
             element={<RootAdminGolfPlayerHomePage />}
             path="/manage/golf/players/:participantId"
+          />
+          <Route
+            element={<RootAdminGolfPlayerEditPage />}
+            path="/manage/golf/players/:participantId/edit"
           />
         </Routes>
       </MemoryRouter>
@@ -95,12 +100,20 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('pool-master-rfy renders the detail list and the read-only provider mappings', async () => {
+  it('pool-master-rfy shows the golfer\'s heading and status, the details with one Edit, and the read-only provider mappings', async () => {
     getParticipantMock.mockResolvedValue({ data: { participant: player() } });
     renderPage();
 
-    expect(await screen.findByRole('heading', { name: 'Rory McIlroy' })).toBeInTheDocument();
-    const mappings = screen.getByTestId('root-admin-golf-player-home-mappings');
+    expect(await screen.findByRole('heading', { name: 'Rory McIlroy', level: 1 })).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-player-identity')).toHaveTextContent('ACTIVE');
+    const details = screen.getByTestId('root-admin-golf-player-details');
+    expect(within(details).getByText('NIR')).toBeInTheDocument();
+    expect(within(details).getByText('rory-1')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-player-home-edit')).toHaveAttribute(
+      'href',
+      '/manage/golf/players/p-rory/edit',
+    );
+    const mappings = await screen.findByTestId('root-admin-golf-player-home-mappings');
     expect(within(mappings).getByText('mock-provider')).toBeInTheDocument();
     expect(within(mappings).getByText('HIGH')).toBeInTheDocument();
     expect(listParticipantProviderMappingsMock).toHaveBeenCalledWith(
@@ -117,7 +130,7 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
     expect(await screen.findByText('No such player')).toBeInTheDocument();
   });
 
-  it('pool-master-rfy edits the player, including a status change', async () => {
+  it('pool-master-rfy edits the player on its own page, including a status change, and returns to the player', async () => {
     getParticipantMock.mockResolvedValue({ data: { participant: player() } });
     updateParticipantMock.mockResolvedValue({
       data: { participant: player({ status: 'RETIRED', nationality: 'IRL' }) },
@@ -126,10 +139,10 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
 
     await userEvent.click(await screen.findByTestId('root-admin-golf-player-home-edit'));
     await userEvent.selectOptions(
-      screen.getByTestId('root-admin-golf-player-home-edit-status'),
+      await screen.findByTestId('root-admin-golf-player-edit-status'),
       'RETIRED',
     );
-    await userEvent.click(screen.getByTestId('root-admin-golf-player-home-edit-save'));
+    await userEvent.click(screen.getByTestId('root-admin-golf-player-edit-save'));
 
     await waitFor(() =>
       expect(updateParticipantMock).toHaveBeenCalledWith(
@@ -140,6 +153,32 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
         }),
       ),
     );
+    expect(await screen.findByTestId('root-admin-golf-player-home-page')).toBeInTheDocument();
+  });
+
+  it('returns to the player from Edit details\' Cancel without saving', async () => {
+    getParticipantMock.mockResolvedValue({ data: { participant: player() } });
+    renderPage('/manage/golf/players/p-rory/edit');
+
+    await screen.findByTestId('root-admin-golf-player-edit-page');
+    await userEvent.click(screen.getByRole('link', { name: 'Cancel' }));
+
+    expect(await screen.findByTestId('root-admin-golf-player-home-page')).toBeInTheDocument();
+    expect(updateParticipantMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the Edit details page open with the server\'s reason when saving the golfer is refused', async () => {
+    getParticipantMock.mockResolvedValue({ data: { participant: player() } });
+    updateParticipantMock.mockResolvedValue({
+      error: { error: { code: 'VALIDATION_ERROR', message: 'Short name is too long.' } },
+      response: { status: 400 },
+    });
+    renderPage('/manage/golf/players/p-rory/edit');
+
+    await userEvent.click(await screen.findByTestId('root-admin-golf-player-edit-save'));
+
+    expect(await screen.findByText('Short name is too long.')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-player-edit-page')).toBeInTheDocument();
   });
 
   it('pool-master-rfy keeps Save enabled on open with no edits, and a no-op save still round-trips', async () => {
@@ -148,7 +187,7 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-golf-player-home-edit'));
-    const save = screen.getByTestId('root-admin-golf-player-home-edit-save');
+    const save = await screen.findByTestId('root-admin-golf-player-edit-save');
     expect(save).toBeEnabled();
     await userEvent.click(save);
 
@@ -165,26 +204,14 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
   it('pool-master-rfy does not clobber an in-progress edit when the player query refetches', async () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     getParticipantMock.mockResolvedValue({ data: { participant: player() } });
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={['/manage/golf/players/p-rory']}>
-          <Routes>
-            <Route
-              element={<RootAdminGolfPlayerHomePage />}
-              path="/manage/golf/players/:participantId"
-            />
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
+    renderPage('/manage/golf/players/p-rory', queryClient);
 
     await userEvent.click(await screen.findByTestId('root-admin-golf-player-home-edit'));
-    const modal = screen.getByTestId('root-admin-golf-player-home-edit-modal');
-    const nameInput = within(modal).getByRole('textbox', { name: 'Name' });
+    const nameInput = await screen.findByTestId('root-admin-golf-player-edit-name');
     await userEvent.clear(nameInput);
     await userEvent.type(nameInput, 'Rory M.');
 
-    // Server refetch with the original (unchanged) data while the modal is open.
+    // A server refetch with changed data while the edit page is open.
     getParticipantMock.mockResolvedValue({
       data: { participant: player({ nationality: 'IRL' }) },
     });

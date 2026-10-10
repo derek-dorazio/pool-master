@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { listEvents, listParticipants, listSportLeagues, listSports } from '@/lib/api';
+import { getParticipant, listEvents, listParticipants, listSportLeagues, listSports } from '@/lib/api';
 import type { ParticipantDto, SportEventDto, SportLeagueDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -98,4 +98,20 @@ export function useGolfPlayersQuery(params: {
 /** The golf sport's id, for creating a golfer. */
 export function useGolfSportQuery() {
   return useQuery(golfSportQueryOptions);
+}
+
+/** One golfer, for the player's page and its edit page. */
+export function useGolfPlayerQuery(participantId: string) {
+  return useQuery({
+    queryKey: QueryKeys.rootAdmin.golf.player(participantId),
+    queryFn: async (): Promise<ParticipantDto> => {
+      const response = await getParticipant({ path: { id: participantId } });
+      if (!response.data?.participant) {
+        throwApiError(response.error, 'Golf player response is missing data.');
+      }
+      return response.data.participant;
+    },
+    enabled: participantId !== '',
+    retry: false,
+  });
 }

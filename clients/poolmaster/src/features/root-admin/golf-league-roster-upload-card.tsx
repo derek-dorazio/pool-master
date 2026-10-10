@@ -36,7 +36,7 @@ function describeRow(row: RosterPreviewRow['row']): string {
 }
 
 /**
- * plans/124 §6.3 Tour Home — bulk paste / upload / preview / apply for the tour
+ * A tour's page: bulk paste / upload / preview / apply for the tour
  * roster's rankings, built on the shared {@link BulkUploadPanel}. The
  * week-to-week ranking maintenance path; per-row edits live in the roster grid.
  */

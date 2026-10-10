@@ -54,6 +54,18 @@ export function buildGolfTournamentPath(eventId: string) {
   return `/manage/golf/tournaments/${eventId}`;
 }
 
+export const GOLF_PLAYER_LIST_PATH = '/manage/golf/players';
+
+export function buildGolfPlayerPath(participantId: string) {
+  return `${GOLF_PLAYER_LIST_PATH}/${participantId}`;
+}
+
+export const GOLF_TOUR_LIST_PATH = '/manage/golf/leagues';
+
+export function buildGolfTourPath(sportLeagueId: string) {
+  return `${GOLF_TOUR_LIST_PATH}/${sportLeagueId}`;
+}
+
 function isAtOrUnder(pathname: string, path: string) {
   return pathname === path || pathname.startsWith(`${path}/`);
 }

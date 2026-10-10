@@ -1,97 +1,24 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { UserRound } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { z } from 'zod';
-import { getParticipant, listParticipantProviderMappings, updateParticipant } from '@/lib/api';
+import { listParticipantProviderMappings } from '@/lib/api';
 import {
   AsyncPage,
-  Button,
-  DefinitionList,
-  FormField,
-  FormModal,
-  Input,
-  Select,
+  IdentityHeading,
+  LinkButton,
+  SettingsRow,
+  SettingsSection,
   StatusBadge,
-  Tile,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
-import { getLogger } from '@/lib/logger';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { ParticipantDto, ParticipantProviderMappingDto, UpdateParticipantData } from '@/lib/api';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import { GOLF_PLAYER_STATUSES, golfPlayerStatusTone } from './golf-admin-utils';
+import type { ParticipantDto, ParticipantProviderMappingDto } from '@/lib/api';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { golfPlayerStatusTone } from './golf-admin-utils';
+import { buildGolfPlayerPath } from './manage-navigation';
+import { useGolfPlayerQuery } from './use-golf-catalog';
 
-const editSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required'),
-  firstName: z.string().trim().optional(),
-  lastName: z.string().trim().optional(),
-  shortName: z.string().trim().optional(),
-  nationality: z.string().trim().optional(),
-  role: z.string().trim().optional(),
-  teamAffiliation: z.string().trim().optional(),
-  externalId: z.string().trim().optional(),
-  status: z.enum(GOLF_PLAYER_STATUSES),
-});
-
-type EditValues = z.infer<typeof editSchema>;
-
-function toDefaults(player: ParticipantDto): EditValues {
-  return {
-    name: player.name,
-    firstName: player.firstName ?? '',
-    lastName: player.lastName ?? '',
-    shortName: player.shortName ?? '',
-    nationality: player.nationality ?? '',
-    role: player.role ?? '',
-    teamAffiliation: player.teamAffiliation ?? '',
-    externalId: player.externalId ?? '',
-    status: player.status,
-  };
-}
-
-function toBody(values: EditValues): UpdateParticipantData['body'] {
-  return {
-    name: values.name,
-    firstName: values.firstName?.trim() ?? '',
-    lastName: values.lastName?.trim() ?? '',
-    shortName: values.shortName?.trim() ?? '',
-    nationality: values.nationality?.trim() ?? '',
-    role: values.role?.trim() ?? '',
-    teamAffiliation: values.teamAffiliation?.trim() ?? '',
-    externalId: values.externalId?.trim() ?? '',
-    status: values.status,
-  };
-}
-
-/**
- * plans/124 §6.3 — /manage/golf/players/:participantId. The canonical player
- * page: an editable detail form (status is a change, never a delete — §4.1) plus
- * a read-only provider-mapping list. #236: the golfer is the shared Participant,
- * and its provider mappings are their own read.
- */
-export function RootAdminGolfPlayerHomePage() {
-  const { participantId = '' } = useParams<{ participantId: string }>();
-  const logger = getLogger().child({
-    feature: 'root-admin-golf-player-home-page',
-  });
-  const [editOpen, setEditOpen] = useState(false);
-
-  const playerQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.player(participantId),
-    queryFn: async (): Promise<ParticipantDto> => {
-      const response = await getParticipant({ path: { id: participantId } });
-      if (!response.data?.participant) {
-        throwApiError(response.error, 'Golf player response is missing data.');
-      }
-      return response.data.participant;
-    },
-    enabled: participantId !== '',
-    retry: false,
-  });
-
+function GolfPlayerMappingsSection({ participantId }: { participantId: string }) {
   const mappingsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.playerMappings(participantId),
     queryFn: async (): Promise<ParticipantProviderMappingDto[]> => {
@@ -101,57 +28,97 @@ export function RootAdminGolfPlayerHomePage() {
       }
       return response.data.providerMappings;
     },
-    enabled: participantId !== '',
     retry: false,
   });
   const providerMappings = mappingsQuery.data ?? [];
 
+  return (
+    <SettingsSection
+      description="How this golfer is matched in each provider’s feed. Read-only."
+      testId="root-admin-golf-player-home-mappings-section"
+      title={`Provider mappings (${providerMappings.length})`}
+    >
+      {mappingsQuery.isError ? (
+        <p className="px-5 py-4 text-sm text-destructive" data-testid="root-admin-golf-player-home-mappings-error">
+          {extractErrorMessage(mappingsQuery.error, {
+            fallback: 'We could not load this golfer’s provider mappings.',
+          })}
+        </p>
+      ) : mappingsQuery.isLoading ? (
+        <p className="px-5 py-4 text-sm text-muted-foreground">Loading provider mappings…</p>
+      ) : providerMappings.length === 0 ? (
+        <p className="px-5 py-4 text-sm text-muted-foreground">No provider mappings recorded.</p>
+      ) : (
+        <ul className="divide-y divide-border" data-testid="root-admin-golf-player-home-mappings">
+          {providerMappings.map((mapping) => (
+            <li className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm" key={mapping.id}>
+              <span className="font-medium text-foreground">{mapping.providerId}</span>
+              <span className="text-muted-foreground">{mapping.externalId}</span>
+              <StatusBadge tone="neutral">{mapping.confidence}</StatusBadge>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SettingsSection>
+  );
+}
+
+function GolfPlayerHome({ player }: { player: ParticipantDto }) {
+  return (
+    <div className="space-y-8">
+      <IdentityHeading
+        icon={<UserRound aria-hidden size={22} />}
+        meta={(
+          <>
+            <StatusBadge tone={golfPlayerStatusTone(player.status)}>{player.status}</StatusBadge>
+            {player.nationality ? <span>{player.nationality}</span> : null}
+          </>
+        )}
+        name={player.name}
+        testId="root-admin-golf-player-identity"
+      />
+
+      <SettingsSection
+        action={(
+          <LinkButton
+            data-testid="root-admin-golf-player-home-edit"
+            size="sm"
+            to={`${buildGolfPlayerPath(player.id)}/edit`}
+            variant="secondary"
+          >
+            Edit
+          </LinkButton>
+        )}
+        testId="root-admin-golf-player-details"
+        title="Details"
+      >
+        <SettingsRow label="First name" value={player.firstName || 'Not set'} />
+        <SettingsRow label="Last name" value={player.lastName || 'Not set'} />
+        <SettingsRow label="Short name" value={player.shortName || 'Not set'} />
+        <SettingsRow label="Nationality" value={player.nationality || 'Not set'} />
+        <SettingsRow label="Role" value={player.role || 'Not set'} />
+        <SettingsRow label="Team affiliation" value={player.teamAffiliation || 'Not set'} />
+        <SettingsRow label="External ID" value={player.externalId || 'Not set'} />
+        <SettingsRow label="Status" testId="root-admin-golf-player-status-row" value={player.status} />
+      </SettingsSection>
+
+      <GolfPlayerMappingsSection participantId={player.id} />
+    </div>
+  );
+}
+
+/**
+ * A golfer's page in Manage: the identity heading, the details with one Edit (status
+ * included: removing a golfer is a status change, never a delete) and the read-only
+ * provider mappings. The golfer is the shared Participant.
+ */
+export function RootAdminGolfPlayerHomePage() {
+  const { participantId = '' } = useParams<{ participantId: string }>();
+  const playerQuery = useGolfPlayerQuery(participantId);
   const player = playerQuery.data;
+
+  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(participantId || undefined, player?.name);
-
-  const form = useForm<EditValues>({
-    resolver: zodResolver(editSchema),
-    defaultValues: player
-      ? toDefaults(player)
-      : {
-          name: '',
-          firstName: '',
-          lastName: '',
-          shortName: '',
-          nationality: '',
-          role: '',
-          teamAffiliation: '',
-          externalId: '',
-          status: 'ACTIVE',
-        },
-    mode: 'onChange',
-  });
-
-  const updateMutation = useInvalidatingMutation({
-    mutationFn: async (values: EditValues) => {
-      const response = await updateParticipant({
-        path: { id: participantId },
-        body: toBody(values),
-      });
-      if (!response.data?.participant) {
-        throwApiError(response.error, 'Golf player update response is missing data.');
-      }
-      return response.data.participant;
-    },
-    invalidates: [
-      QueryKeys.rootAdmin.golf.player(participantId),
-      QueryKeys.rootAdmin.golf.players,
-    ],
-    onSuccess: () => setEditOpen(false),
-    onError: (error) => {
-      logger.warn(
-        { action: 'golf.player.update.failed', err: error },
-        'Golf player update was rejected',
-      );
-    },
-  });
-
-  const submit = form.handleSubmit((values) => updateMutation.mutate(values));
 
   const pageState = playerQuery.isLoading
     ? 'loading'
@@ -172,164 +139,7 @@ export function RootAdminGolfPlayerHomePage() {
       state={pageState}
       testId="root-admin-golf-player-home-page"
     >
-      {player ? (
-        <div className="space-y-6">
-          <Tile>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">{player.name}</h2>
-                <div className="mt-2">
-                  <StatusBadge tone={golfPlayerStatusTone(player.status)}>
-                    {player.status}
-                  </StatusBadge>
-                </div>
-              </div>
-              <Button
-                data-testid="root-admin-golf-player-home-edit"
-                onClick={() => {
-                  form.reset(toDefaults(player));
-                  setEditOpen(true);
-                }}
-                size="sm"
-                variant="secondary"
-              >
-                Edit player
-              </Button>
-            </div>
-
-            <DefinitionList
-              className="mt-4"
-              items={[
-                { id: 'first', label: 'First name', value: player.firstName || 'Not set' },
-                { id: 'last', label: 'Last name', value: player.lastName || 'Not set' },
-                { id: 'short', label: 'Short name', value: player.shortName || 'Not set' },
-                {
-                  id: 'nat',
-                  label: 'Nationality',
-                  value: player.nationality || 'Not set',
-                },
-                { id: 'role', label: 'Role', value: player.role || 'Not set' },
-                {
-                  id: 'team',
-                  label: 'Team affiliation',
-                  value: player.teamAffiliation || 'Not set',
-                },
-                {
-                  id: 'ext',
-                  label: 'External ID',
-                  value: player.externalId || 'Not set',
-                },
-              ]}
-            />
-          </Tile>
-
-          <Tile>
-            <h3 className="text-base font-semibold text-foreground">
-              Provider mappings ({providerMappings.length})
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              How this golfer is matched in each provider&rsquo;s feed. Read-only.
-            </p>
-            {mappingsQuery.isError ? (
-              <p className="mt-3 text-sm text-destructive" data-testid="root-admin-golf-player-home-mappings-error">
-                {extractErrorMessage(mappingsQuery.error, {
-                  fallback: 'We could not load this golfer’s provider mappings.',
-                })}
-              </p>
-            ) : mappingsQuery.isLoading ? (
-              <p className="mt-3 text-sm text-muted-foreground">Loading provider mappings…</p>
-            ) : providerMappings.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">
-                No provider mappings recorded.
-              </p>
-            ) : (
-              <ul
-                className="mt-4 divide-y divide-border rounded-2xl border border-border"
-                data-testid="root-admin-golf-player-home-mappings"
-              >
-                {providerMappings.map((mapping) => (
-                  <li
-                    className="flex flex-wrap items-center gap-3 px-4 py-2 text-sm"
-                    key={mapping.id}
-                  >
-                    <span className="font-medium text-foreground">
-                      {mapping.providerId}
-                    </span>
-                    <span className="text-muted-foreground">{mapping.externalId}</span>
-                    <StatusBadge tone="neutral">{mapping.confidence}</StatusBadge>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Tile>
-
-          <FormModal
-            canSave={form.formState.isValid}
-            error={updateMutation.error}
-            isPending={updateMutation.isPending}
-            onCancel={() => setEditOpen(false)}
-            onOpenChange={(next) => !next && setEditOpen(false)}
-            onSave={() => {
-              void submit();
-            }}
-            open={editOpen}
-            saveLabel="Save player"
-            saveTestId="root-admin-golf-player-home-edit-save"
-            testId="root-admin-golf-player-home-edit-modal"
-            title="Edit golf player"
-          >
-            <form className="space-y-3" onSubmit={(e) => void submit(e)}>
-              <FormField error={form.formState.errors.name?.message} label="Name">
-                <Input {...form.register('name')} />
-              </FormField>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FormField label="First name">
-                  <Input {...form.register('firstName')} />
-                </FormField>
-                <FormField label="Last name">
-                  <Input {...form.register('lastName')} />
-                </FormField>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FormField label="Short name">
-                  <Input {...form.register('shortName')} />
-                </FormField>
-                <FormField label="Nationality">
-                  <Input {...form.register('nationality')} />
-                </FormField>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FormField label="Role">
-                  <Input {...form.register('role')} />
-                </FormField>
-                <FormField label="Team affiliation">
-                  <Input {...form.register('teamAffiliation')} />
-                </FormField>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FormField label="External ID">
-                  <Input {...form.register('externalId')} />
-                </FormField>
-                <FormField
-                  helperText="Removing a golfer is a status change, not a delete."
-                  label="Status"
-                >
-                  <Select
-                    data-testid="root-admin-golf-player-home-edit-status"
-                    {...form.register('status')}
-                  >
-                    {GOLF_PLAYER_STATUSES.map((value) => (
-                      <option key={value} value={value}>
-                        {value}
-                      </option>
-                    ))}
-                  </Select>
-                </FormField>
-              </div>
-            </form>
-          </FormModal>
-        </div>
-      ) : null}
+      {player ? <GolfPlayerHome player={player} /> : null}
     </AsyncPage>
   );
 }

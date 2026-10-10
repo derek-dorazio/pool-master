@@ -6,22 +6,22 @@ import { AsyncPage } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type { ParticipantLeagueAffiliationDto } from '@/lib/api';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import { GolfLeagueDetailsCard } from './golf-league-details-card';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { GolfTourDangerZone, GolfTourDetailsSection, GolfTourHeading } from './golf-league-details-section';
 import { GolfLeagueRosterGridCard } from './golf-league-roster-grid-card';
 import { GolfLeagueRosterUploadCard } from './golf-league-roster-upload-card';
 import { GolfTourCalendarCard } from './golf-tour-calendar-card';
 import { useGolfSportLeaguesQuery } from './use-golf-catalog';
 
 /**
- * plans/124 §6.3 — /manage/golf/leagues/:leagueId "Tour Home". Owns the tour +
- * roster queries and the block layout; details editing, the tournament calendar by event
- * year (plans/147), the roster grid, and the bulk-upload flow are each their own card (the page would otherwise cross the
- * 400-line / 5-mutation decomposition threshold).
+ * /manage/golf/leagues/:leagueId, a tour's page. Owns the tour and roster queries and the
+ * layout: identity heading, details with one Edit, the tournament calendar by event year
+ * (plans/147), the rankings upload, the roster grid, and the danger zone last.
  */
 export function RootAdminGolfLeagueHomePage() {
   const { leagueId = '' } = useParams<{ leagueId: string }>();
 
+  useManagePageOwnsHeading();
   useManageBreadcrumbOverride('leagues', 'Tours');
 
   const leaguesQuery = useGolfSportLeaguesQuery();
@@ -66,8 +66,9 @@ export function RootAdminGolfLeagueHomePage() {
       testId="root-admin-golf-league-home-page"
     >
       {league ? (
-        <div className="space-y-6">
-          <GolfLeagueDetailsCard league={league} />
+        <div className="space-y-8">
+          <GolfTourHeading tour={league} />
+          <GolfTourDetailsSection tour={league} />
           <GolfTourCalendarCard tour={league} />
           <GolfLeagueRosterUploadCard leagueId={league.id} />
           <GolfLeagueRosterGridCard
@@ -82,6 +83,7 @@ export function RootAdminGolfLeagueHomePage() {
             }
             rosterLoading={rosterQuery.isLoading}
           />
+          <GolfTourDangerZone tour={league} />
         </div>
       ) : null}
     </AsyncPage>
