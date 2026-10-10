@@ -22,7 +22,6 @@ import { WelcomePage } from '@/features/leagues/leagues-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminContentConfigurationListPage } from '@/features/root-admin/root-admin-content-configuration-list-page';
 import { RootAdminEventsPage } from '@/features/root-admin/root-admin-events-page';
-import { RootAdminGolfHubPage } from '@/features/root-admin/root-admin-golf-hub-page';
 import { RootAdminGolfLeagueCreatePage } from '@/features/root-admin/root-admin-golf-league-create-page';
 import { RootAdminGolfLeagueEditPage } from '@/features/root-admin/root-admin-golf-league-edit-page';
 import { RootAdminGolfLeagueHomePage } from '@/features/root-admin/root-admin-golf-league-home-page';
@@ -40,13 +39,14 @@ import { RootAdminGolfTournamentTiersPage } from '@/features/root-admin/root-adm
 import { RootAdminGolfTournamentListPage } from '@/features/root-admin/root-admin-golf-tournament-list-page';
 import { RootAdminGolfTournamentScoresPage } from '@/features/root-admin/root-admin-golf-tournament-scores-page';
 import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin-ingestion-schedule-page';
+import { RootAdminMapCompetitorPage } from '@/features/root-admin/root-admin-map-competitor-page';
+import { GOLF_TOURNAMENT_LIST_PATH } from '@/features/root-admin/manage-navigation';
 import { ManageLandingRedirect, RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-manage-leagues-page';
 import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
 import { RootAdminUserPage } from '@/features/root-admin/root-admin-user-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
 import { RootAdminSportOverridesPage } from '@/features/root-admin/root-admin-sport-overrides-page';
-import { RootAdminSyncConfigPage } from '@/features/root-admin/root-admin-sync-config-page';
 import { RootAdminSettingsPage } from '@/features/root-admin/root-admin-settings-page';
 import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
 import { RootAdminUnmappedParticipantsPage } from '@/features/root-admin/root-admin-unmapped-participants-page';
@@ -270,7 +270,7 @@ export const router = createBrowserRouter([
                   },
                   {
                     path: 'golf',
-                    element: <RootAdminGolfHubPage />,
+                    element: <Navigate replace to={GOLF_TOURNAMENT_LIST_PATH} />,
                   },
                   {
                     path: 'golf/leagues',
@@ -361,19 +361,19 @@ export const router = createBrowserRouter([
                     element: <RootAdminUnmappedParticipantsPage />,
                   },
                   {
+                    path: 'sync/unmapped-participants/map',
+                    element: <RootAdminMapCompetitorPage />,
+                  },
+                  {
                     path: 'settings',
                     element: <RootAdminSettingsPage />,
                   },
                   {
-                    path: 'sync-config',
-                    element: <RootAdminSyncConfigPage />,
-                  },
-                  {
-                    path: 'sync-config/ingestion-schedule',
+                    path: 'settings/ingestion-schedule',
                     element: <RootAdminIngestionSchedulePage />,
                   },
                   {
-                    path: 'sync-config/sport-overrides',
+                    path: 'settings/sport-overrides',
                     element: <RootAdminSportOverridesPage />,
                   },
                 ],

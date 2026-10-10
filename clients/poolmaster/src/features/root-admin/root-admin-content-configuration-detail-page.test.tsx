@@ -73,7 +73,7 @@ function seedTemplates() {
   });
 }
 
-function renderPage() {
+function renderPage(templateKey = 'golf-tiered-pick-6') {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -82,7 +82,7 @@ function renderPage() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/content-configuration/golf-tiered-pick-6']}>
+      <MemoryRouter initialEntries={[`/manage/content-configuration/${templateKey}`]}>
         <Routes>
           <Route
             element={<RootAdminContentConfigurationDetailPage />}
@@ -140,5 +140,24 @@ describe('RootAdminContentConfigurationDetailPage', () => {
         }),
       });
     });
+  });
+
+  it('shows the template\'s name as the page\'s one heading, with its state, format and key', async () => {
+    seedTemplates();
+    renderPage();
+
+    const identity = await screen.findByTestId('root-admin-content-configuration-identity');
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(identity).toHaveTextContent('Select one from each tier, 4 count');
+    expect(identity).toHaveTextContent('golf-tiered-pick-6');
+    expect(identity).toHaveTextContent('Default');
+  });
+
+  it('says the template was not found when no template has the key in the address', async () => {
+    seedTemplates();
+    renderPage('no-such-template');
+
+    expect(await screen.findByText('Template not found')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-content-config-save')).not.toBeInTheDocument();
   });
 });

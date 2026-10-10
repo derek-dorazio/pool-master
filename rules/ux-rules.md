@@ -219,7 +219,10 @@ administration area (root admin included), reusing the same shared components.
    Contests, My team, Teams; `LeagueMenu`). Commissioners also see a
    Commissioner tools button at its right end. The league selector stays in the
    app bar. An administration area has its own header with a way back and a side
-   menu (`AdminAreaLayout`) instead of the league menu.
+   menu (`AdminAreaLayout`) instead of the league menu. Each of its pages has one
+   heading: the area titles the page, or an entity's landing page shows its
+   `IdentityHeading`. A page never adds a second header or "Back to" link of its
+   own; the trail leads back up.
 3. **Compact identity, once.** An entity's icon, name and shareable code appear
    once, as a compact heading (`IdentityHeading`) on its landing page. No page
    repeats them as an editable detail panel.

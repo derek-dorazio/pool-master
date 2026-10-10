@@ -22,6 +22,7 @@ import {
   buildGolfPlayerPath,
 } from './manage-navigation';
 import { useGolfPlayersQuery } from './use-golf-catalog';
+import { GolfSectionMenu } from './golf-section-menu';
 
 const columnHelper = createColumnHelper<ParticipantDto>();
 
@@ -69,6 +70,7 @@ export function RootAdminGolfPlayerListPage() {
 
   return (
     <div className="space-y-4">
+      <GolfSectionMenu current="players" />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <FormField className="min-w-[12rem]" label="Status">
           <Select

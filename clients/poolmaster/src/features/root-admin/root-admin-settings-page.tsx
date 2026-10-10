@@ -2,18 +2,19 @@ import { useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { listSettingsGroupHistory, listSettingsGroups, type SettingsGroup } from '@/lib/api';
 import {
-  AdminConfigPage,
+  AsyncPage,
   Button,
   DateDisplay,
-  DefinitionList,
   LinkButton,
-  SectionHeader,
+  SettingsRow,
+  SettingsSection,
   StatusBadge,
-  Tile,
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError, extractErrorMessage } from '@/lib/errors';
 import { EmailSettingsForm } from './root-admin-email-settings-form';
+import { ManagePageIntro } from './manage-page-intro';
+import { SETTINGS_PATH } from './manage-navigation';
 import {
   changedFields,
   summarizeEmail,
@@ -22,9 +23,9 @@ import {
 } from './root-admin-settings-utils';
 
 /**
- * /manage/settings (#450) — one card per settings group: what is in use, whether it is saved or
- * the defaults, who last changed it, and its recent changes. Groups that already have an edit
- * page link to it rather than duplicating its form; Email, which has none, is edited on its card.
+ * /manage/settings (#450) — one settings section per group: what is in use, whether it is saved
+ * or the defaults, who last changed it, and its recent changes. The ingestion schedule edits on
+ * its own pages under Settings; Email is edited in its section.
  */
 export function RootAdminSettingsPage() {
   const settingsQuery = useQuery({
@@ -42,60 +43,64 @@ export function RootAdminSettingsPage() {
   const pageState = settingsQuery.isError ? 'error' : settingsQuery.isLoading ? 'loading' : 'ready';
 
   return (
-    <AdminConfigPage
+    <AsyncPage
       errorBody={extractErrorMessage(settingsQuery.error, { fallback: 'We could not load settings right now.' })}
-      header={{
-        description: 'How the app behaves, changeable without a deploy. A saved change reaches every server within 30 seconds.',
-        title: 'Settings',
-      }}
       loadingBody="Loading settings..."
       state={pageState}
       testId="root-admin-settings-page"
     >
+      <ManagePageIntro>
+        How the app behaves, changeable without a deploy. A saved change reaches every server
+        within 30 seconds.
+      </ManagePageIntro>
       {settingsQuery.data?.map((group) => (
-        <SettingsGroupCard group={group} key={group.key} />
+        <SettingsGroupSection group={group} key={group.key} />
       ))}
-    </AdminConfigPage>
+    </AsyncPage>
   );
 }
 
-function SettingsGroupCard({ group }: { group: SettingsGroup }) {
+function SettingsGroupSection({ group }: { group: SettingsGroup }) {
   const [showHistory, setShowHistory] = useState(false);
   const { summary, actions } = groupContent(group);
 
   return (
-    <Tile className="space-y-5" data-testid={`root-admin-settings-group-${group.key}`}>
-      <SectionHeader
-        actions={(
-          <StatusBadge tone={group.source === 'stored' ? 'info' : 'neutral'}>
-            {group.source === 'stored' ? 'Saved' : 'Defaults'}
-          </StatusBadge>
-        )}
-        description={group.description}
-        title={group.title}
-      />
-      <DefinitionList items={summary.map((item) => ({ id: item.id, label: item.label, value: item.value }))} />
-      {group.key === 'EMAIL_CONFIG' ? <EmailSettingsForm group={group} /> : null}
-      <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
-        {group.updatedAt ? (
-          <>
-            Last changed by {group.updatedBy?.name ?? 'an unknown admin'} on <DateDisplay value={group.updatedAt} />
-          </>
-        ) : 'Never changed: using the defaults.'}
-      </p>
-      <div className="flex flex-wrap gap-3">
-        {actions}
-        <Button
-          data-testid={`root-admin-settings-history-toggle-${group.key}`}
-          onClick={() => setShowHistory((open) => !open)}
-          type="button"
-          variant="secondary"
-        >
-          {showHistory ? 'Hide recent changes' : 'Show recent changes'}
-        </Button>
+    <SettingsSection
+      action={(
+        <StatusBadge tone={group.source === 'stored' ? 'info' : 'neutral'}>
+          {group.source === 'stored' ? 'Saved' : 'Defaults'}
+        </StatusBadge>
+      )}
+      description={group.description}
+      testId={`root-admin-settings-group-${group.key}`}
+      title={group.title}
+    >
+      {summary.map((item) => (
+        <SettingsRow key={item.id} label={item.label} value={item.value} />
+      ))}
+      <div className="space-y-5 px-5 py-4">
+        {group.key === 'EMAIL_CONFIG' ? <EmailSettingsForm group={group} /> : null}
+        <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
+          {group.updatedAt ? (
+            <>
+              Last changed by {group.updatedBy?.name ?? 'an unknown admin'} on <DateDisplay value={group.updatedAt} />
+            </>
+          ) : 'Never changed: using the defaults.'}
+        </p>
+        <div className="flex flex-wrap gap-3">
+          {actions}
+          <Button
+            data-testid={`root-admin-settings-history-toggle-${group.key}`}
+            onClick={() => setShowHistory((open) => !open)}
+            type="button"
+            variant="secondary"
+          >
+            {showHistory ? 'Hide recent changes' : 'Show recent changes'}
+          </Button>
+        </div>
+        {showHistory ? <SettingsHistory groupKey={group.key} /> : null}
       </div>
-      {showHistory ? <SettingsHistory groupKey={group.key} /> : null}
-    </Tile>
+    </SettingsSection>
   );
 }
 
@@ -106,17 +111,17 @@ function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; a
         summary: summarizeIngestionSchedule(group.value),
         actions: (
           <>
-            <LinkButton data-testid="root-admin-settings-edit-INGESTION_SCHEDULE_CONFIG" to="/manage/sync-config/ingestion-schedule">
+            <LinkButton data-testid="root-admin-settings-edit-INGESTION_SCHEDULE_CONFIG" to={`${SETTINGS_PATH}/ingestion-schedule`}>
               Edit ingestion schedule
             </LinkButton>
-            <LinkButton to="/manage/sync-config/sport-overrides" variant="secondary">
+            <LinkButton to={`${SETTINGS_PATH}/sport-overrides`} variant="secondary">
               Sport overrides
             </LinkButton>
           </>
         ),
       };
     case 'EMAIL_CONFIG':
-      // Edited in place: the card carries the form.
+      // Edited in place: the section carries the form.
       return { summary: summarizeEmail(group.value), actions: null };
   }
 }

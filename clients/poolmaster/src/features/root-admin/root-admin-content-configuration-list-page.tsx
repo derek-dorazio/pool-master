@@ -10,6 +10,7 @@ import { getLogger } from '@/lib/logger';
 import type { ContestConfigTemplate } from './content-configuration-utils';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
+import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 
 const columnHelper = createColumnHelper<ContestConfigTemplate>();
 
@@ -127,6 +128,8 @@ export function RootAdminContentConfigurationListPage() {
         },
       })}
       loadingBody="Loading contest templates..."
+      pageSize={MANAGE_LIST_PAGE_SIZE}
+      search={{ label: 'Find a template', testId: 'root-admin-content-config-search' }}
       state={
         templatesQuery.isLoading
           ? 'loading'

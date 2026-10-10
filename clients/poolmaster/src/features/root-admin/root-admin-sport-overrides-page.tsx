@@ -7,7 +7,6 @@ import {
   ErrorState,
   FormField,
   LoadingState,
-  PageHeader,
   Select,
   Tile,
 } from '@/features/shared/ui';
@@ -22,6 +21,7 @@ import {
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { throwApiError, extractErrorMessage } from '@/lib/errors';
+import { ManagePageIntro } from './manage-page-intro';
 
 export function RootAdminSportOverridesPage() {
   const [overrideSport, setOverrideSport] = useState<SyncSport>('GOLF');
@@ -113,7 +113,7 @@ export function RootAdminSportOverridesPage() {
       className="space-y-6"
       data-testid="root-admin-sport-overrides-page"
     >
-      <PageHeader
+      <ManagePageIntro
         actions={(
           <Button
             disabled={resetSportOverrideMutation.isPending}
@@ -126,13 +126,10 @@ export function RootAdminSportOverridesPage() {
               : 'Reset selected sport'}
           </Button>
         )}
-        breadcrumbs={[
-          { href: '/manage/sync-config', label: 'Sync Configuration' },
-          { label: 'Sport Ingestion Overrides' },
-        ]}
-        description="Enable or disable automated feed policies for an individual sport without changing the global cadence for every other sport."
-        title="Sport Ingestion Overrides"
-      />
+      >
+        Enable or disable automated feed policies for an individual sport without changing the
+        global cadence for every other sport.
+      </ManagePageIntro>
 
       <Tile>
         <FormField label="Sport">

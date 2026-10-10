@@ -151,12 +151,6 @@ export function AsyncPage(props: AsyncPageProps) {
   return <TemplatePageShell {...props} />;
 }
 
-export type AdminConfigPageProps = TemplatePageShellProps;
-
-export function AdminConfigPage(props: AdminConfigPageProps) {
-  return <TemplatePageShell {...props} />;
-}
-
 export type ManagementListPageProps<TData> = AsyncPageStateProps & {
   className?: string;
   // TanStack's ColumnDef<TData, TValue> is invariant in TValue, so a heterogeneous column

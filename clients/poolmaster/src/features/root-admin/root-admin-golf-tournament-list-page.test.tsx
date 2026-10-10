@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentListPage } from './root-admin-golf-tournament-list-page';
@@ -24,8 +24,11 @@ function renderPage() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <RootAdminGolfTournamentListPage />
+      <MemoryRouter initialEntries={['/manage/golf/tournaments']}>
+        <Routes>
+          <Route element={<RootAdminGolfTournamentListPage />} path="/manage/golf/tournaments" />
+          <Route element={<div data-testid="golf-players-list" />} path="/manage/golf/players" />
+        </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -34,6 +37,18 @@ function renderPage() {
 describe('pool-master-3dg RootAdminGolfTournamentListPage', () => {
   afterEach(() => {
     listEventsMock.mockReset();
+  });
+
+  it('marks Tournaments in the golf sub-menu and moves to the Players list from it', async () => {
+    listEventsMock.mockResolvedValue({ data: { events: [] } });
+    renderPage();
+
+    const menu = await screen.findByRole('navigation', { name: 'Golf lists' });
+    expect(within(menu).getByRole('radio', { name: 'Tournaments' })).toBeChecked();
+    expect(within(menu).getByRole('radio', { name: 'Tours' })).not.toBeChecked();
+    fireEvent.click(within(menu).getByRole('radio', { name: 'Players' }));
+
+    expect(await screen.findByTestId('golf-players-list')).toBeInTheDocument();
   });
 
   it('pool-master-3dg renders tournaments with a sync badge, derived readiness, and a create link', async () => {

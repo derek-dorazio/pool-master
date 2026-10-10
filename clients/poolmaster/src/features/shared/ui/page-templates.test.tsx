@@ -2,7 +2,6 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
-  AdminConfigPage,
   AsyncPage,
   DataGridPage,
   EntityDetailPage,
@@ -30,9 +29,9 @@ const columns = [
 ];
 
 describe("pool-master-3ew: shared page templates", () => {
-  it("pool-master-3ew.1: renders admin config page chrome and async states", () => {
+  it("pool-master-3ew.1: renders the page header over the loading state instead of the children", () => {
     render(
-      <AdminConfigPage
+      <AsyncPage
         header={{
           title: "Ingestion Schedule",
           description: "Configure ingestion.",
@@ -41,7 +40,7 @@ describe("pool-master-3ew: shared page templates", () => {
         state="loading"
       >
         <p>Loaded settings</p>
-      </AdminConfigPage>,
+      </AsyncPage>,
     );
 
     expect(

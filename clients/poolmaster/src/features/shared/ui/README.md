@@ -15,8 +15,6 @@ The shared UI layer is split into three levels:
 
 Use page templates when a page matches an existing workflow shape:
 
-- `AdminConfigPage` for root-admin configuration screens with shared page
-  chrome, loading, and error states.
 - `ManagementListPage` for admin list screens backed by `DataGrid`.
 - `EntityDetailPage` for profile/entity details with a summary above, details
   on the left and less frequent actions on the right.

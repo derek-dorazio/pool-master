@@ -36,6 +36,7 @@ import {
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { ProviderSyncRunStatus } from '@poolmaster/shared/domain';
+import { MANAGE_LIST_PAGE_SIZE, SYNC_PATH, UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
 type SyncRunEvidenceRow = {
@@ -377,14 +378,14 @@ export function RootAdminSyncDashboardPage() {
           <div className="flex flex-wrap gap-3">
             <LinkButton
               data-testid="root-admin-open-run-event-sync-page"
-              to="/manage/sync/run-event-sync"
+              to={`${SYNC_PATH}/run-event-sync`}
               variant="primary"
             >
               Run event sync
             </LinkButton>
             <LinkButton
               data-testid="root-admin-open-unmapped-participants-page"
-              to="/manage/sync/unmapped-participants"
+              to={UNMAPPED_COMPETITORS_PATH}
               variant="subtle"
             >
               Unmapped competitors
@@ -438,6 +439,7 @@ export function RootAdminSyncDashboardPage() {
             data={recentRuns}
             emptyMessage="No sync runs matched the current filters."
             getRowId={(run) => run.id}
+            pageSize={MANAGE_LIST_PAGE_SIZE}
             rowTestId={(run) => `root-admin-sync-run-${run.id}`}
             tableTestId="root-admin-sync-history-table"
           />
