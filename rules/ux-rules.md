@@ -244,4 +244,5 @@ administration area (root admin included), reusing the same shared components.
    different angles share one header and a segmented sub-menu between them,
    not "Back to" and "View" links on each page. A contest's pages share
    `ContestHeader`: Entries, Leaderboard once picks are revealed, and My entry
-   once the viewer's team has one.
+   once the viewer's team has one. A golf tournament's pages in Manage share
+   `GolfTournamentHeader`: Overview, Field, Tiers and Scores.

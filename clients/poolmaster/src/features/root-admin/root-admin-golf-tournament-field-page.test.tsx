@@ -181,6 +181,15 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
     expect(screen.queryByTestId('root-admin-golf-field-refresh')).not.toBeInTheDocument();
   });
 
+  it('shows the shared tournament header with Field marked in its sub-menu, in place of a back link', async () => {
+    seed();
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-golf-tournament-identity')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-tournament-menu-field')).toBeChecked();
+    expect(screen.queryByTestId('root-admin-golf-field-back')).not.toBeInTheDocument();
+  });
+
   it('pool-master-za4 shows the Load Participant Field action only for a linked tournament', async () => {
     seed({ tournament: { syncScope: 'SCORES_ONLY' }, entries: [] });
     renderPage();
