@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
 import { Button } from '@/features/shared/ui';
-import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
+import { buildLeagueAdminTeamPath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -68,7 +68,6 @@ function OwnerActionDialog({
 export function TeamOwnerActionMenu({
   activeOwnerCount,
   canManageLeagueRole,
-  canRemoveOwner,
   leagueCode,
   leagueId,
   ownerName,
@@ -78,7 +77,6 @@ export function TeamOwnerActionMenu({
 }: {
   activeOwnerCount: number;
   canManageLeagueRole: boolean;
-  canRemoveOwner: boolean;
   leagueCode: string;
   leagueId: string;
   ownerName: string;
@@ -91,7 +89,6 @@ export function TeamOwnerActionMenu({
 
   const canPromote = canManageLeagueRole && ownerRole === 'MEMBER';
   const canDemote = canManageLeagueRole && ownerRole === 'COMMISSIONER';
-  const canOpenMenu = canPromote || canDemote || canRemoveOwner;
   const removeRequiresInactivation = activeOwnerCount <= 1;
   const testPrefix = 'team-home-owner-actions';
 
@@ -144,17 +141,12 @@ export function TeamOwnerActionMenu({
     invalidates: ownerViewKeys,
   });
 
-  if (!canOpenMenu) {
-    return null;
-  }
-
   const roleError = changeRoleMutation.error
     ? extractErrorMessage(changeRoleMutation.error, { fallback: 'We could not update that league role.' })
     : null;
   const removeError = removeOwnerMutation.error
     ? extractErrorMessage(removeOwnerMutation.error, { fallback: 'We could not remove that owner right now.' })
     : null;
-  const teamHomePath = buildLeagueTeamHomePath(leagueCode, teamId);
   const actionIsPending = changeRoleMutation.isPending || removeOwnerMutation.isPending;
 
   return (
@@ -199,19 +191,17 @@ export function TeamOwnerActionMenu({
                 Demote to member
               </Button>
             ) : null}
-            {canRemoveOwner ? (
-              <Button
-                className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
-                data-testid={`${testPrefix}-remove-${teamId}-${ownerUserId}`}
-                onClick={() => {
-                  setActiveAction('remove');
-                  setMenuOpen(false);
-                }}
-                type="button"
-              >
-                Remove owner
-              </Button>
-            ) : null}
+            <Button
+              className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
+              data-testid={`${testPrefix}-remove-${teamId}-${ownerUserId}`}
+              onClick={() => {
+                setActiveAction('remove');
+                setMenuOpen(false);
+              }}
+              type="button"
+            >
+              Remove owner
+            </Button>
           </div>
         ) : null}
       </div>
@@ -280,17 +270,24 @@ export function TeamOwnerActionMenu({
         {activeAction === 'remove' ? (
           <div className="space-y-4">
             {removeRequiresInactivation ? (
-              <>
+              canManageLeagueRole ? (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    This team has only one active owner. To remove them, inactivate the team in its Danger zone on Manage team.
+                  </p>
+                  <Link
+                    className="inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted/40"
+                    onClick={() => setActiveAction(null)}
+                    to={buildLeagueAdminTeamPath(leagueCode, teamId)}
+                  >
+                    Open Manage team
+                  </Link>
+                </>
+              ) : (
                 <p className="text-sm text-muted-foreground">
-                  This team only has one active owner left. Use Team Home to inactivate the team instead of removing the final owner directly.
+                  This team has only one active owner, so they can&apos;t be removed. To step away from the team, use Leave league.
                 </p>
-                <Link
-                  className="inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted/40"
-                  to={teamHomePath}
-                >
-                  Open Team Home
-                </Link>
-              </>
+              )
             ) : (
               <>
                 {/*

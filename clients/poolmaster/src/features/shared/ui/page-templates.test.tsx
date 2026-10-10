@@ -1,14 +1,12 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   AdminConfigPage,
   AsyncPage,
   DataGridPage,
-  DetailWithActionsPage,
   EntityDetailPage,
   FormEditorSection,
-  LifecycleActionSet,
   PublicInviteJoinPage,
 } from "./page-templates";
 import { ApiError } from "@/lib/errors";
@@ -119,24 +117,6 @@ describe("pool-master-3ew: shared page templates", () => {
     expect(screen.queryByTestId("shared-forbidden-state")).not.toBeInTheDocument();
   });
 
-  it("pool-master-3ew.3: composes details beside action menu content", () => {
-    render(
-      <DetailWithActionsPage
-        actions={<button type="button">Invite members</button>}
-        actionsTestId="league-actions"
-        details={<section aria-label="League summary">Mathworks</section>}
-      />,
-    );
-
-    expect(screen.getByLabelText("League summary")).toHaveTextContent(
-      "Mathworks",
-    );
-    expect(screen.getByTestId("league-actions")).toHaveTextContent("Actions");
-    expect(
-      screen.getByRole("button", { name: "Invite members" }),
-    ).toBeInTheDocument();
-  });
-
   it("pool-master-pjr.2: renders entity summary above detail/action content", () => {
     render(
       <EntityDetailPage
@@ -174,42 +154,6 @@ describe("pool-master-3ew: shared page templates", () => {
     expect(screen.getByLabelText("Interval")).toBeInTheDocument();
     expect(screen.getByText("Save failed")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
-  });
-
-  it("pool-master-3ew.5: filters lifecycle actions by current status", () => {
-    const handleActivate = vi.fn();
-
-    render(
-      <LifecycleActionSet
-        actions={[
-          {
-            key: "activate",
-            label: "Activate",
-            onSelect: handleActivate,
-            visibleForStatuses: ["Inactive"],
-          },
-          {
-            key: "inactivate",
-            label: "Inactivate",
-            visibleForStatuses: ["Active"],
-          },
-        ]}
-        currentStatus="Inactive"
-        errorMessage="Lifecycle failed"
-        helperText="Inactive entities can be reactivated or deleted."
-        statusTone="inactive"
-      />,
-    );
-
-    expect(screen.getByText("Inactive")).toBeInTheDocument();
-    expect(screen.getByText("Inactive entities can be reactivated or deleted.")).toBeInTheDocument();
-    expect(screen.getByText("Lifecycle failed")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Inactivate" }),
-    ).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Activate" }));
-    expect(handleActivate).toHaveBeenCalledTimes(1);
   });
 
   it("pool-master-3ew.6: renders public invite/join states in a focused shell", () => {

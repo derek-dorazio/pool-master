@@ -294,7 +294,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
   return (
     <section className="space-y-6" data-testid="root-admin-user-page">
       <PageHeader
-        description="Account actions for this user. League roles are managed on Teams and Owners and Team Home."
+        description="Account actions for this user. League roles are managed in each league's Commissioner tools."
         eyebrow="User"
         title="User account"
       />

@@ -278,36 +278,35 @@ state, stale actions, and unthemeable markup accumulate.
   purposes sharing a page.
 - Sensitive/destructive actions (password change, account delete/inactivate)
   need focused UX with instructions, warnings, and confirmation. A dedicated
-  page is the default way to deliver that focus, but a focused modal on a
-  canonical authority-gated page (see List → Home pattern below) satisfies
-  the same intent and is preferred when the entity already has one canonical
-  page.
+  page is the default way to deliver that focus; a confirmation dialog on the
+  page that owns the action (e.g. the Danger zone on Commissioner tools ›
+  Manage team) satisfies the same intent.
 - This is a first-draft default, not a hard rule; a reviewed product
   requirement can override it, but the burden is on the requirement, not on
   the page.
 
-### List → Home Pages With Authority-Gated Editing
+### Entity Pages: Read-Only View, "My" Page, and Commissioner Tools
 
-- A list page's row destination is the entity's one canonical "Home" page —
-  never a separate View route and a separate Manage/Edit route for the same
-  entity.
-- The Home page toggles between edit and read-only UI using a shared
-  authority hook (e.g. `useTeamAuthority(teamId)` returning
-  `owner | commissioner | viewer`), not by branching the route or the URL.
-- Do not scatter inline `role === 'COMMISSIONER'`-style checks across
-  subcomponents. The authority hook is the single shared primitive; every
-  consumer of that entity's permissions reads through it.
-- Applies to rich, daily-use entity surfaces where users spend time (Team
-  Home, Contest Home, Entry page) and to platform-admin detail pages that
-  reuse the same canonical Home (e.g. a root-admin list linking into the same
-  Team Home).
+- A member-facing list row opens the entity's read-only page (e.g. a team row
+  in Teams opens that team's page). It never shows edit or lifecycle
+  controls, whoever is viewing.
+- The viewer's own entity has its own page that they act on (My team), and
+  editing it is a full page of its own (Edit team), not a modal or an inline
+  toggle. A link to the viewer's own entity's read-only page redirects to the
+  "My" page.
+- Managing any entity on someone else's behalf (Manage team, inactivate,
+  delete) lives on a separate page in Commissioner tools, behind the
+  Commissioner tools route guard. The read-only page may link to it for a
+  commissioner or root admin; it does not embed those controls.
+- Decide what a viewer may do from the league context (`viewer.isMember`,
+  `isCommissioner`, `isRootAdmin`, `mySquadId`) at the page that renders the
+  action. Do not scatter ad hoc role checks across subcomponents; pass the
+  decision down as a prop.
 - Does not apply to quick transactional admin actions on platform-admin list
   pages, where the workflow is search → act → done → next entity. Those use
   modals on the list page instead of a per-entity detail page. Reserve a
   dedicated admin detail page for content that genuinely needs a rich,
   multi-field edit form.
-- When proposing any new list page, plan the per-row destination as the
-  entity's canonical Home page before considering a separate Manage page.
 
 ### URL, Cookie, And Store Ownership
 

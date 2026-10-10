@@ -33,11 +33,12 @@ the page that owns it.
 
 ## Team Context
 
-Team Home is the single canonical page for any team, reached either through
-My Team (the signed-in user's own team) or by clicking a team row from the
-league's team list. Authority (owner, commissioner, viewer) is resolved on
-that one page, not through a separate route — see
-`rules/react-ui-rules.md`'s List → Home pattern.
+My team is the signed-in user's own team, and the only member page where a
+team can be changed: Edit team (name and icon on one page), its owners, and
+Leave league. Every other team has a read-only page, reached from a row of the
+league's Teams directory; a link to the viewer's own team opens My team.
+Commissioners manage any team from Commissioner tools › Teams › Manage team,
+never from the member pages.
 
 ## Contest Context
 

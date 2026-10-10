@@ -5,7 +5,7 @@ import { Chip } from '@/features/shared/ui';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
 
-/** A team's icon and name, linking to its Team Home, marked when inactive. */
+/** A team's icon and name, linking to its team page, marked when inactive. */
 export function TeamNameCell({ leagueCode, team }: { leagueCode: string; team: SquadDto }) {
   const icon = getTeamIconOption(team.iconKey);
   return (

@@ -22,7 +22,6 @@ function renderMenu(overrides: Partial<MenuProps> = {}) {
   const props: MenuProps = {
     activeOwnerCount: 2,
     canManageLeagueRole: true,
-    canRemoveOwner: true,
     leagueCode: 'BIGDAWGS',
     leagueId: 'league-1',
     ownerName: 'Olive Owner',
@@ -73,11 +72,16 @@ describe('TeamOwnerActionMenu', () => {
     removeSquadOwnerMock.mockReset();
   });
 
-  it('renders nothing when the viewer may neither change the owner\'s role nor remove them', () => {
-    const { container } = renderMenu({ canManageLeagueRole: false, canRemoveOwner: false });
+  it('offers a plain owner only Remove owner, with no league role changes', () => {
+    renderMenu({ canManageLeagueRole: false });
 
-    expect(container).toBeEmptyDOMElement();
+    fireEvent.click(screen.getByTestId('team-home-owner-actions-trigger-team-1-user-2'));
+
+    expect(screen.getByTestId('team-home-owner-actions-remove-team-1-user-2')).toBeInTheDocument();
+    expect(screen.queryByTestId('team-home-owner-actions-promote-team-1-user-2')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('team-home-owner-actions-demote-team-1-user-2')).not.toBeInTheDocument();
   });
+
 
   it('offers demotion but not promotion for an owner who is already a commissioner', () => {
     renderMenu({ ownerRole: 'COMMISSIONER' });
@@ -142,12 +146,14 @@ describe('TeamOwnerActionMenu', () => {
     );
   });
 
-  it('points to Team Home instead of offering removal when the owner is the team\'s last one', async () => {
-    renderMenu({ activeOwnerCount: 1 });
+  it('tells a plain owner who is the team\'s last one to use Leave league, and offers no removal', async () => {
+    renderMenu({ activeOwnerCount: 1, canManageLeagueRole: false });
 
     openAction('remove');
 
-    expect(await screen.findByRole('link', { name: 'Open Team Home' })).toBeInTheDocument();
+    expect(await screen.findByText(/use Leave league/)).toBeInTheDocument();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Team Home/)).not.toBeInTheDocument();
     expect(screen.queryByTestId('team-home-owner-actions-confirm-remove-team-1-user-2')).not.toBeInTheDocument();
   });
 

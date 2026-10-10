@@ -5,7 +5,7 @@ The shared UI layer is split into three levels:
 1. **Primitives** own a single reusable control or visual pattern, such as
    `Button`, `Tile`, `Modal`, `DataGrid`, `ActionTile`, and `StatusBadge`.
 2. **Templates** compose primitives into repeated page or modal workflows, such
-   as `ManagementListPage`, `DetailWithActionsPage`, `FormModal`, and
+   as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
    `ConfirmationModal`.
 3. **Feature pages** own product-specific data fetching, mutations, copy, and
    business rules. They should compose primitives and templates instead of
@@ -18,18 +18,16 @@ Use page templates when a page matches an existing workflow shape:
 - `AdminConfigPage` for root-admin configuration screens with shared page
   chrome, loading, and error states.
 - `ManagementListPage` for admin list screens backed by `DataGrid`.
+- `EntityDetailPage` for profile/entity details with a summary above, details
+  on the left and less frequent actions on the right.
+- `FormEditorSection` for repeated editable configuration sections with
+  consistent title, errors, and footer actions.
+- `PublicInviteJoinPage` for public invitation or join surfaces.
 
 `DataGrid` takes an optional `search` (one box matching every text column),
 `pageSize` (rows per page, with a Previous/Next pager once there is more than
 one page) and `showColumnFilters` (on by default). A list that can grow to
 hundreds of rows uses `search` and `pageSize` (`rules/ux-rules.md` §12).
-- `DetailWithActionsPage` for profile/entity details with summary tiles on the
-  left and less frequent actions on the right.
-- `FormEditorSection` for repeated editable configuration sections with
-  consistent title, errors, and footer actions.
-- `LifecycleActionSet` for status-aware activate, inactivate, delete, and leave
-  actions.
-- `PublicInviteJoinPage` for public invitation or join surfaces.
 
 League pages and administration areas use the pieces named in
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
@@ -38,7 +36,7 @@ League pages and administration areas use the pieces named in
 (with `IconPalette` when the form picks an icon).
 
 Feature pages should keep route-specific copy and generated-SDK calls local, but
-they should not duplicate header, grid-shell, detail/actions, lifecycle, or
+they should not duplicate header, grid-shell, detail/actions, or
 public-join layout code when a template fits.
 
 ## Modal Templates
@@ -50,9 +48,6 @@ Use modal templates when the modal follows one of the common workflows:
   exact-match confirmation inputs.
 - `ActionModal` for compact action workflows launched from action menus.
 - `PickerModal` for selecting an item from a constrained list.
-- `IconPickerModal` is the current icon-specific picker specialization; keep
-  icon catalogs domain-owned, and move only generic picker behavior into
-  `PickerModal`.
 - `ReadOnlyDetailModal` for payloads and operational metadata.
 - `WizardModal` for multi-step flows where a modal remains the right
   interaction model.

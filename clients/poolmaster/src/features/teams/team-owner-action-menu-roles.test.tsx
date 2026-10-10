@@ -14,7 +14,6 @@ function renderMenu(overrides: Partial<MenuProps> = {}) {
   const props: MenuProps = {
     activeOwnerCount: 2,
     canManageLeagueRole: true,
-    canRemoveOwner: true,
     leagueCode: 'BIGDAWGS',
     leagueId: 'league-1',
     ownerName: 'Jordan Rivers',
@@ -44,12 +43,6 @@ async function chooseAction(name: string) {
 }
 
 describe('TeamOwnerActionMenu by viewer role', () => {
-  it('renders nothing when the viewer can neither change the owner\'s role nor remove them', () => {
-    renderMenu({ canManageLeagueRole: false, canRemoveOwner: false });
-
-    expect(screen.queryByRole('button', { name: 'Owner actions' })).not.toBeInTheDocument();
-  });
-
   it('offers promote and remove, but not demote, for an owner who is a league member', () => {
     renderMenu({ ownerRole: 'MEMBER' });
 
@@ -166,18 +159,20 @@ describe('TeamOwnerActionMenu by viewer role', () => {
     expect(await dialog.findByText('That owner could not be removed.')).toBeInTheDocument();
   });
 
-  it('does not remove a team\'s only owner directly, and points to Team Home to inactivate the team instead', async () => {
-    renderMenu({ activeOwnerCount: 1 });
+  it('does not remove a team\'s only owner directly, and sends a commissioner to Manage team to inactivate the team', async () => {
+    renderMenu({ activeOwnerCount: 1, canManageLeagueRole: true });
 
     await chooseAction('Remove owner');
     const dialog = within(screen.getByRole('dialog', { name: 'Remove owner' }));
 
-    expect(dialog.getByText(/only has one active owner left/)).toBeInTheDocument();
-    expect(dialog.getByRole('link', { name: 'Open Team Home' })).toHaveAttribute(
+    expect(dialog.getByText(/inactivate the team in its Danger zone/)).toBeInTheDocument();
+    expect(dialog.queryByText(/Team Home/)).not.toBeInTheDocument();
+    expect(dialog.getByRole('link', { name: 'Open Manage team' })).toHaveAttribute(
       'href',
-      '/league/BIGDAWGS/teams/team-1',
+      '/league/BIGDAWGS/admin/teams/team-1',
     );
     expect(dialog.queryByRole('button', { name: 'Remove from team and league' })).not.toBeInTheDocument();
     expect(mockApi.removeSquadOwner).not.toHaveBeenCalled();
   });
+
 });

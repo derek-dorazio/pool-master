@@ -1,13 +1,10 @@
-import { SquadMembershipStatus } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useAuth } from '@/features/auth/auth-context';
 import {
   buildLeagueAdminTeamEditPath,
   buildLeagueAdminTeamsPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
 import {
   Alert,
   Button,
@@ -22,25 +19,22 @@ import {
   SettingsSection,
 } from '@/features/shared/ui';
 import { MyTeamLifecycleDialogs, MyTeamLifecycleNotices } from './my-team-lifecycle';
-import { MyTeamOwnersPanel } from './my-team-owners-panel';
 import type { ActiveTeamDialog } from './my-team-shared';
+import { formatOwnerCount } from './team-directory';
 import { TeamIcon } from './team-icon';
 import { getTeamIconOption } from './team-icon-catalog';
 import { useLeagueSquadsQuery } from './use-league-squads-query';
 import { useMyTeamLifecycle } from './use-my-team-lifecycle';
+import { TeamOwnersSection } from './team-owners-section';
 import { useMyTeamOwners } from './use-my-team-owners';
-import { useTeamOwnerInvitationsQuery } from './use-team-owner-invitations-query';
 
 /** Commissioner tools › Teams › one team: its settings, owners and lifecycle. */
 export function ManageTeamPage() {
   const { leagueCode = '', teamId = '' } = useParams<{ leagueCode: string; teamId: string }>();
-  const auth = useAuth();
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
   const { league, viewer } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
   const teamsQuery = useLeagueSquadsQuery(leagueId);
-  const { membersByUserId } = useLeagueMembersQuery(leagueId);
-  const invitationsQuery = useTeamOwnerInvitationsQuery(leagueId);
   const team = teamsQuery.data?.find((candidate) => candidate.id === teamId) ?? null;
   const teamsPath = buildLeagueAdminTeamsPath(leagueCode);
 
@@ -78,15 +72,13 @@ export function ManageTeamPage() {
   const isInactiveLeague = !league.isActive;
   const isInactiveTeam = !team.isActive;
   const isBusy = owners.isPending || lifecycle.isPending;
-  const activeMembers = (team.members ?? []).filter((member) => member.status === SquadMembershipStatus.ACTIVE);
-  const teamOwnerInvitations = (invitationsQuery.data ?? []).filter((invitation) => invitation.squadId === team.id);
   const iconLabel = getTeamIconOption(team.iconKey).label;
 
   return (
     <section className="space-y-8" data-testid="manage-team-page">
       <IdentityHeading
         icon={<TeamIcon iconKey={team.iconKey} size="md" />}
-        meta={`${activeMembers.length} ${activeMembers.length === 1 ? 'owner' : 'owners'} · ${isInactiveTeam ? 'Inactive' : 'Active'}`}
+        meta={`${formatOwnerCount(team)} · ${isInactiveTeam ? 'Inactive' : 'Active'}`}
         name={team.name}
         testId="manage-team-identity"
       />
@@ -120,35 +112,16 @@ export function ManageTeamPage() {
         <SettingsRow label="Icon" value={iconLabel} />
       </SettingsSection>
 
-      <section className="space-y-3" data-testid="manage-team-owners">
-        <h2 className="text-lg font-semibold text-foreground">Owners</h2>
-        {invitationsQuery.isError ? (
-          <Alert
-            data-testid="manage-team-invitations-error"
-            title="Owner invitations are temporarily unavailable"
-            tone="warning"
-          >
-            Active owners are still shown below, but this team&apos;s pending owner invitations
-            could not be loaded right now.
-          </Alert>
-        ) : null}
-        <MyTeamOwnersPanel
-          activeMembers={activeMembers}
-          canManageAnyTeam
-          canManageSelectedTeam
-          isBusy={isBusy}
-          isInactiveLeague={isInactiveLeague}
-          isInactiveTeam={isInactiveTeam}
-          leagueCode={leagueCode}
-          leagueId={leagueId}
-          leagueMembersByUserId={membersByUserId}
-          notices={null}
-          owners={owners}
-          selectedTeam={team}
-          teamOwnerInvitations={teamOwnerInvitations}
-          viewerUserId={auth.user?.id}
-        />
-      </section>
+      <TeamOwnersSection
+        canManageAnyTeam
+        isBusy={isBusy}
+        isInactiveLeague={isInactiveLeague}
+        leagueCode={leagueCode}
+        leagueId={leagueId}
+        owners={owners}
+        team={team}
+        testId="manage-team-owners"
+      />
 
       <MyTeamLifecycleNotices lifecycle={lifecycle} />
 

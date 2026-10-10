@@ -144,7 +144,7 @@ export function JoinLeaguePage() {
 
             // The join has already happened, so a failed rename must not read as a failed
             // join: the viewer goes into the league, and League Home tells them to rename the
-            // team from Team Home.
+            // team from My team.
             if (!updateResponse.data?.squad) {
               teamSetupFailed = true;
               logger.warn(

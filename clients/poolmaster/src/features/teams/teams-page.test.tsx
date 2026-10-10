@@ -109,7 +109,7 @@ describe('Teams directory', () => {
     expect(await screen.findByTestId('teams-table')).toHaveTextContent('No teams exist for this league yet.');
   });
 
-  it('lists every team with a link to its Team Home, its active owners by name and the date it joined, marking inactive teams', async () => {
+  it('lists every team with a link to its team page, its active owners by name and the date it joined, marking inactive teams', async () => {
     primeMemberViewer();
     listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
       buildLeagueSquad({

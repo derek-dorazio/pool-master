@@ -198,7 +198,7 @@ describe('Commissioner tools › Manage team', () => {
 
     renderAdmin('/league/BIGDAWGS/admin/teams/team-2');
 
-    expect(await screen.findByTestId('manage-team-invitations-error'))
+    expect(await screen.findByTestId('manage-team-owners-invitations-error'))
       .toHaveTextContent('Owner invitations are temporarily unavailable');
     expect(within(screen.getByTestId('manage-team-owners')).getByText('Morgan Member')).toBeInTheDocument();
   });

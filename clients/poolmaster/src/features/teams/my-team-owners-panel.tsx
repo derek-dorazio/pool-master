@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { LeagueRole, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 import type { SquadDto, TeamOwnerInvitationDto } from '@/lib/api';
@@ -13,10 +12,16 @@ import type { MyTeamOwners } from './use-my-team-owners';
 
 type LeagueMembersByUserId = ReturnType<typeof useLeagueMembersQuery>['membersByUserId'];
 
+const OWNER_INVITATION_STATUS_LABELS: Record<SquadOwnerInvitationStatus, string> = {
+  [SquadOwnerInvitationStatus.PENDING]: 'Pending',
+  [SquadOwnerInvitationStatus.ACCEPTED]: 'Accepted',
+  [SquadOwnerInvitationStatus.EXPIRED]: 'Expired',
+  [SquadOwnerInvitationStatus.REVOKED]: 'Revoked',
+};
+
 /** Co-owner invites, the active owner list, pending invites, and replace owner. */
 export function MyTeamOwnersPanel({
   owners,
-  notices,
   selectedTeam,
   activeMembers,
   teamOwnerInvitations,
@@ -28,12 +33,9 @@ export function MyTeamOwnersPanel({
   isInactiveTeam,
   isBusy,
   canManageAnyTeam,
-  canManageSelectedTeam,
 }: {
   owners: MyTeamOwners;
-  /** The lifecycle outcomes, shown under the owner controls. */
-  notices: ReactNode;
-  selectedTeam: SquadDto | null;
+  selectedTeam: SquadDto;
   activeMembers: TeamMember[];
   teamOwnerInvitations: TeamOwnerInvitationDto[];
   leagueMembersByUserId: LeagueMembersByUserId;
@@ -44,7 +46,6 @@ export function MyTeamOwnersPanel({
   isInactiveTeam: boolean;
   isBusy: boolean;
   canManageAnyTeam: boolean;
-  canManageSelectedTeam: boolean;
 }) {
   const {
     coOwnerEmail,
@@ -60,46 +61,40 @@ export function MyTeamOwnersPanel({
 
   return (
     <div className="space-y-5" data-testid="my-team-owners-panel">
-      {selectedTeam ? (
-        <Tile radius="lg">
-          <h4 className="text-sm font-semibold text-foreground">Add co-owner</h4>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Invite another person to co-manage this team. People already in this league can&apos;t be invited.
-          </p>
-          <div className="mt-4 flex gap-3">
-            <Input
-              aria-label="Co-owner email"
-              data-testid="my-team-owner-email"
-              disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
-              onChange={(event) => setCoOwnerEmail(event.target.value)}
-              placeholder="owner@example.com"
-              type="email"
-              value={coOwnerEmail}
-            />
-            <Button
-              data-testid="my-team-owner-invite"
-              disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam || !coOwnerEmail.trim()}
-              onClick={() =>
-                void createOwnerInvitationMutation.mutateAsync(coOwnerEmail.trim()).catch(() => undefined)}
-            >
-              Invite
-            </Button>
-          </div>
-          {createOwnerInvitationMutation.isSuccess ? (
-            <Alert className="mt-3" tone="success">Co-owner invite created.</Alert>
-          ) : null}
-          {createOwnerInvitationMutation.isError ? (
-            <Alert className="mt-3" tone="danger">{extractErrorMessage(createOwnerInvitationMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
-          ) : null}
-        </Tile>
-      ) : null}
+      <Tile radius="lg">
+        <h4 className="text-sm font-semibold text-foreground">Add co-owner</h4>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Invite another person to co-manage this team. People already in this league can&apos;t be invited.
+        </p>
+        <div className="mt-4 flex gap-3">
+          <Input
+            aria-label="Co-owner email"
+            data-testid="my-team-owner-email"
+            disabled={isInactiveLeague || isInactiveTeam || isBusy}
+            onChange={(event) => setCoOwnerEmail(event.target.value)}
+            placeholder="owner@example.com"
+            type="email"
+            value={coOwnerEmail}
+          />
+          <Button
+            data-testid="my-team-owner-invite"
+            disabled={isInactiveLeague || isInactiveTeam || isBusy || !coOwnerEmail.trim()}
+            onClick={() =>
+              void createOwnerInvitationMutation.mutateAsync(coOwnerEmail.trim()).catch(() => undefined)}
+          >
+            Invite
+          </Button>
+        </div>
+        {createOwnerInvitationMutation.isSuccess ? (
+          <Alert className="mt-3" tone="success">Co-owner invite created.</Alert>
+        ) : null}
+        {createOwnerInvitationMutation.isError ? (
+          <Alert className="mt-3" tone="danger">{extractErrorMessage(createOwnerInvitationMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
+        ) : null}
+      </Tile>
 
       <div className="space-y-3">
-        {!selectedTeam ? (
-          <p className="text-sm text-muted-foreground">
-            Create your team first and the active member list will appear here.
-          </p>
-        ) : activeMembers.length === 0 ? (
+        {activeMembers.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             This team does not have any active members yet.
           </p>
@@ -129,13 +124,11 @@ export function MyTeamOwnersPanel({
                     </span>
                   ) : null}
                 </div>
-                <div className="text-sm text-muted-foreground">{member.userId}</div>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <TeamOwnerActionMenu
                   activeOwnerCount={activeMembers.length}
                   canManageLeagueRole={canManageAnyTeam}
-                  canRemoveOwner={canManageSelectedTeam}
                   leagueCode={leagueCode}
                   leagueId={leagueId}
                   ownerName={formatUserName(member.user.firstName, member.user.lastName)}
@@ -146,7 +139,7 @@ export function MyTeamOwnersPanel({
                 {member.userId !== viewerUserId ? (
                   <Button
                     data-testid={`my-team-open-replace-${member.userId}`}
-                    disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
+                    disabled={isInactiveLeague || isInactiveTeam || isBusy}
                     onClick={() => {
                       setReplaceTargetUserId((current) => current === member.userId ? null : member.userId);
                       setReplaceEmail('');
@@ -163,7 +156,7 @@ export function MyTeamOwnersPanel({
         )}
       </div>
 
-      {selectedTeam && teamOwnerInvitations.length ? (
+      {teamOwnerInvitations.length ? (
         <Tile radius="lg">
           <h4 className="text-sm font-semibold text-foreground">Pending owner invites</h4>
           <div className="mt-4 space-y-3">
@@ -177,13 +170,14 @@ export function MyTeamOwnersPanel({
                 <div>
                   <div className="font-medium text-foreground">{invitation.email}</div>
                   <div className="text-sm text-muted-foreground">
-                    {invitation.status} {invitation.replacementForUserId ? '· Replacement invite' : ''}
+                    {OWNER_INVITATION_STATUS_LABELS[invitation.status]}
+                    {invitation.replacementForUserId ? ' · Replacement invite' : ''}
                   </div>
                 </div>
                 {invitation.status === SquadOwnerInvitationStatus.PENDING ? (
                   <Button
                     data-testid={`my-team-revoke-owner-invitation-${invitation.id}`}
-                    disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
+                    disabled={isInactiveLeague || isInactiveTeam || isBusy}
                     onClick={() =>
                       void revokeOwnerInvitationMutation.mutateAsync(invitation.id).catch(() => undefined)}
                     size="sm"
@@ -208,7 +202,7 @@ export function MyTeamOwnersPanel({
             <Input
               aria-label="Replacement owner email"
               data-testid="my-team-replace-email"
-              disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
+              disabled={isInactiveLeague || isInactiveTeam || isBusy}
               onChange={(event) => setReplaceEmail(event.target.value)}
               placeholder="replacement@example.com"
               type="email"
@@ -216,7 +210,7 @@ export function MyTeamOwnersPanel({
             />
             <Button
               data-testid="my-team-replace-submit"
-              disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam || !replaceEmail.trim()}
+              disabled={isInactiveLeague || isInactiveTeam || isBusy || !replaceEmail.trim()}
               onClick={() =>
                 void replaceOwnerMutation.mutateAsync({
                   userId: replaceTargetUserId,
@@ -245,7 +239,6 @@ export function MyTeamOwnersPanel({
       {revokeOwnerInvitationMutation.isError ? (
         <Alert tone="danger">{extractErrorMessage(revokeOwnerInvitationMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
       ) : null}
-      {notices}
     </div>
   );
 }

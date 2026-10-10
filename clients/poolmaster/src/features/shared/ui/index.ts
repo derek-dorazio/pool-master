@@ -40,9 +40,7 @@ export { FormPage } from "./form-page";
 export type { FileInputProps } from "./file-input";
 export { IconAvatar, IconBadge } from "./icon-avatar";
 export { IconPalette } from "./icon-palette";
-export { IconPickerModal } from "./icon-picker-modal";
 export { IdentityHeading } from "./identity-heading";
-export type { IconPickerOption } from "./icon-picker-modal";
 export { ListCard, ListEmptyRow, ListStack } from "./list-card";
 export {
   ResponsiveGridLayout,
@@ -104,11 +102,9 @@ export {
   AsyncPage,
   CollectionPage,
   DataGridPage,
-  DetailWithActionsPage,
   EntityDetailPage,
   FormEditorAction,
   FormEditorSection,
-  LifecycleActionSet,
   ManagementListPage,
   PublicInviteJoinPage,
 } from "./page-templates";
@@ -117,12 +113,9 @@ export type {
   AsyncPageProps,
   CollectionPageProps,
   DataGridPageProps,
-  DetailWithActionsPageProps,
   EntityDetailPageProps,
   FormEditorActionProps,
   FormEditorSectionProps,
-  LifecycleAction,
-  LifecycleActionSetProps,
   ManagementListPageProps,
   PublicInviteJoinPageProps,
 } from "./page-templates";

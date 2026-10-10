@@ -7,7 +7,7 @@ import { throwApiError } from '@/lib/errors';
 /**
  * A league's member roster, indexed by user (#202).
  *
- * Both team surfaces — the teams directory and Team Home — had their own copy of this query
+ * Both team surfaces — the teams directory and the team owners panel — had their own copy of this query
  * and their own byte-identical `new Map(members.map(m => [m.userId, m]))`, for the same
  * purpose: labelling a squad owner with their league role. One copy, one cache entry.
  *
