@@ -7,7 +7,7 @@ import {
 } from 'react-hook-form';
 import { type z } from 'zod';
 import { useEffect, useState, type ReactNode } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import {
   UserPasswordChangeRequestSchema,
   UserPreferencesUpdateRequestSchema,
@@ -38,7 +38,7 @@ import {
   useMutationActionWorkflow,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
-import { RootAdminUserAccountPage } from './root-admin-user-account-page';
+import { buildManageUserPath } from '@/features/root-admin/manage-navigation';
 import { UserAccountSummary } from './user-account-summary';
 import { formatUserName } from './user-name';
 import { buildUserPath, SELF_USER_ID } from './user-routing';
@@ -348,8 +348,9 @@ export function UserPage() {
   }
 
   if (!isSelf) {
+    // A root admin manages other users from Manage, so another user's page sends them there.
     if (user.isRootAdmin) {
-      return <RootAdminUserAccountPage userId={userId} />;
+      return <Navigate replace to={buildManageUserPath(userId)} />;
     }
 
     return (

@@ -152,10 +152,6 @@ describe('RootAdminManageLeaguesPage', () => {
     );
     await screen.findByTestId('root-admin-manage-leagues-link-league-active-1');
 
-    expect(
-      screen.queryByTestId('root-admin-manage-leagues-search'),
-    ).not.toBeInTheDocument();
-
     fireEvent.change(screen.getByTestId('data-grid-filter-name'), {
       target: { value: 'Archive' },
     });
@@ -167,6 +163,24 @@ describe('RootAdminManageLeaguesPage', () => {
       screen.getByTestId('root-admin-manage-leagues-link-league-inactive-1'),
     ).toBeInTheDocument();
     expect(listLeaguesMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('narrows the league list to matching names or codes from the search box', async () => {
+    seedLeagues();
+
+    renderPage();
+
+    await screen.findByTestId('root-admin-manage-leagues-link-league-active-1');
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find a league' }), {
+      target: { value: 'Archive' },
+    });
+
+    expect(
+      screen.queryByTestId('root-admin-manage-leagues-link-league-active-1'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId('root-admin-manage-leagues-link-league-inactive-1'),
+    ).toBeInTheDocument();
   });
 
   it('renders the empty state when no leagues match the current filters', async () => {

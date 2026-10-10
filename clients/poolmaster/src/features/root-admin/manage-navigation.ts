@@ -1,3 +1,5 @@
+import type { NavMenuItem } from '@/features/shared/ui';
+
 export type ManageSectionGroup = 'platform' | 'sports' | 'operations';
 
 export type ManageSectionKey =
@@ -9,90 +11,60 @@ export type ManageSectionKey =
   | 'sync'
   | 'users';
 
-export type ManageSectionDefinition = {
+type ManageSectionDefinition = {
   key: ManageSectionKey;
   group: ManageSectionGroup;
   title: string;
-  description: string;
   to: string;
 };
 
-export const MANAGE_SECTION_GROUP_ORDER: ReadonlyArray<{
-  group: ManageSectionGroup;
-  title: string;
-}> = [
-  { group: 'platform', title: 'Platform' },
-  { group: 'sports', title: 'Sports' },
-  { group: 'operations', title: 'Operations' },
-];
+const MANAGE_SECTION_GROUP_TITLES: Record<ManageSectionGroup, string> = {
+  platform: 'Platform',
+  sports: 'Sports',
+  operations: 'Operations',
+};
 
-export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
-  {
-    key: 'leagues',
-    group: 'platform',
-    title: 'Leagues',
-    description:
-      'Search leagues and open League Home to manage league details, members, and lifecycle actions.',
-    to: '/manage/leagues',
-  },
-  {
-    key: 'users',
-    group: 'platform',
-    title: 'Users',
-    description:
-      'Search user accounts and open user pages for root-admin account actions.',
-    to: '/manage/users',
-  },
-  {
-    key: 'golf',
-    group: 'sports',
-    title: 'Golf',
-    description:
-      'Create and run golf tournaments: field, tiers, workflow, and scores.',
-    to: '/manage/golf',
-  },
+/** The Manage side menu, in order; items of one group sit together under its heading. */
+const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
+  { key: 'leagues', group: 'platform', title: 'Leagues', to: '/manage/leagues' },
+  { key: 'users', group: 'platform', title: 'Users', to: '/manage/users' },
+  { key: 'golf', group: 'sports', title: 'Golf', to: '/manage/golf' },
   {
     key: 'content-configuration',
     group: 'operations',
     title: 'Content Configuration',
-    description:
-      'Manage the contest templates commissioners start from.',
     to: '/manage/content-configuration',
   },
-  {
-    key: 'events',
-    group: 'operations',
-    title: 'Events',
-    description:
-      'Browse events and view their participant fields.',
-    to: '/manage/events',
-  },
-  {
-    key: 'sync',
-    group: 'operations',
-    title: 'Sync',
-    description:
-      'Providers, sync history, and manual sync runs.',
-    to: '/manage/sync',
-  },
-  {
-    key: 'settings',
-    group: 'operations',
-    title: 'Settings',
-    description:
-      'How the app behaves, changeable without a deploy: the ingestion schedule, system email, and who changed them last.',
-    to: '/manage/settings',
-  },
+  { key: 'events', group: 'operations', title: 'Events', to: '/manage/events' },
+  { key: 'sync', group: 'operations', title: 'Sync', to: '/manage/sync' },
+  { key: 'settings', group: 'operations', title: 'Settings', to: '/manage/settings' },
 ];
 
-export function getManageSectionsByGroup(
-  group: ManageSectionGroup,
-): ManageSectionDefinition[] {
-  return MANAGE_SECTION_DEFINITIONS.filter((section) => section.group === group);
+/** Where `/manage` itself lands: the first section of the menu. */
+export const MANAGE_LANDING_PATH = '/manage/leagues';
+
+/** Rows per page on every Manage list (rules/ux-rules.md §12 rule 7). */
+export const MANAGE_LIST_PAGE_SIZE = 25;
+
+export function buildManageUserPath(userId: string) {
+  return `/manage/users/${userId}`;
+}
+
+function isAtOrUnder(pathname: string, path: string) {
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
+
+export function buildManageMenuItems(pathname: string): NavMenuItem[] {
+  return MANAGE_SECTION_DEFINITIONS.map((section) => ({
+    group: MANAGE_SECTION_GROUP_TITLES[section.group],
+    isActive: isAtOrUnder(pathname, section.to),
+    label: section.title,
+    testId: `root-admin-manage-menu-${section.key}`,
+    to: section.to,
+  }));
 }
 
 const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
-  manage: 'Manage',
   'sync-config': 'Sync Configuration',
   'run-event-sync': 'Run Event Sync',
   'unmapped-participants': 'Unmapped Competitors',

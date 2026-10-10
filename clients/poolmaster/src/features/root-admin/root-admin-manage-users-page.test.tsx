@@ -104,7 +104,7 @@ describe('RootAdminManageUsersPage', () => {
     expect(await screen.findByTestId('root-admin-manage-user-row-user-1')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Alex Admin/ })).toHaveAttribute(
       'href',
-      '/users/user-1',
+      '/manage/users/user-1',
     );
     expect(screen.queryByRole('link', { name: 'Open user page' })).not.toBeInTheDocument();
     expect(screen.getByText('Active')).toBeInTheDocument();
@@ -115,7 +115,6 @@ describe('RootAdminManageUsersPage', () => {
     renderManageUsersPage();
 
     await screen.findByTestId('root-admin-manage-user-row-user-1');
-    expect(screen.queryByTestId('root-admin-manage-users-search')).not.toBeInTheDocument();
     // §16 — the MSW harness rebuilds `options` from the real request, so an empty object
     // is the assertion that NO query string was sent: no page, no pageSize.
     expect(adminListUsersMock).toHaveBeenLastCalledWith({});
@@ -129,5 +128,43 @@ describe('RootAdminManageUsersPage', () => {
     expect(screen.queryByTestId('root-admin-manage-user-row-user-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-manage-user-row-user-2')).toBeInTheDocument();
     expect(adminListUsersMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('narrows the user list to matching names or emails from the search box', async () => {
+    renderManageUsersPage();
+
+    await screen.findByTestId('root-admin-manage-user-row-user-1');
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find a user' }), {
+      target: { value: 'jamie@' },
+    });
+
+    expect(screen.queryByTestId('root-admin-manage-user-row-user-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-manage-user-row-user-2')).toBeInTheDocument();
+  });
+
+  it('shows 25 users a page and pages on to the rest', async () => {
+    adminListUsersMock.mockResolvedValue({
+      data: {
+        users: Array.from({ length: 30 }, (_, index) => ({
+          id: `user-${String(index + 1)}`,
+          email: `user${String(index + 1)}@example.com`,
+          username: `user${String(index + 1)}`,
+          firstName: 'Pool',
+          lastName: `Player ${String(index + 1).padStart(2, '0')}`,
+          isRootAdmin: false,
+          isActive: true,
+          createdAt: '2026-04-11T12:00:00.000Z',
+        })),
+      },
+    });
+
+    renderManageUsersPage();
+
+    await screen.findByTestId('root-admin-manage-user-row-user-1');
+    expect(screen.queryByTestId('root-admin-manage-user-row-user-26')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+    expect(await screen.findByTestId('root-admin-manage-user-row-user-26')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-manage-user-row-user-1')).not.toBeInTheDocument();
   });
 });

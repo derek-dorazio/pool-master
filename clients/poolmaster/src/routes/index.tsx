@@ -32,10 +32,10 @@ import { RootAdminGolfTournamentTiersPage } from '@/features/root-admin/root-adm
 import { RootAdminGolfTournamentListPage } from '@/features/root-admin/root-admin-golf-tournament-list-page';
 import { RootAdminGolfTournamentScoresPage } from '@/features/root-admin/root-admin-golf-tournament-scores-page';
 import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin-ingestion-schedule-page';
-import { RootAdminManageHubPage } from '@/features/root-admin/root-admin-manage-hub-page';
-import { RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
+import { ManageLandingRedirect, RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-manage-leagues-page';
 import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
+import { RootAdminUserPage } from '@/features/root-admin/root-admin-user-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
 import { RootAdminSportOverridesPage } from '@/features/root-admin/root-admin-sport-overrides-page';
 import { RootAdminSyncConfigPage } from '@/features/root-admin/root-admin-sync-config-page';
@@ -238,11 +238,11 @@ export const router = createBrowserRouter([
                 children: [
                   {
                     index: true,
-                    element: <RootAdminManageHubPage />,
+                    element: <ManageLandingRedirect />,
                   },
                   {
                     path: 'legacy',
-                    element: <Navigate replace to="/manage" />,
+                    element: <ManageLandingRedirect />,
                   },
                   {
                     path: 'content-configuration',
@@ -307,6 +307,10 @@ export const router = createBrowserRouter([
                   {
                     path: 'users',
                     element: <RootAdminManageUsersPage />,
+                  },
+                  {
+                    path: 'users/:userId',
+                    element: <RootAdminUserPage />,
                   },
                   {
                     path: 'sync',
