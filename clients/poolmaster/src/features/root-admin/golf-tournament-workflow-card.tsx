@@ -4,6 +4,7 @@ import {
   Button,
   Callout,
   ConfirmationModal,
+  LinkButton,
   ListCard,
   StatusBadge,
   Tile,
@@ -19,15 +20,15 @@ import {
   type GolfTournamentStatus,
 } from './golf-admin-utils';
 import { GolfTournamentReleaseAction } from './golf-tournament-release-action';
-import { GolfTournamentRoundsModal } from './golf-tournament-rounds-modal';
 import { GolfTournamentWorkflowRail } from './golf-tournament-workflow-rail';
+import { buildGolfTournamentPath } from './manage-navigation';
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 import { SportEventStatus } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 block 2 — the workflow rail, "Release for contests" while the tournament
  * is a draft (#431), allowed transitions, the automatic-lifecycle toggle, and the round
- * schedule editor.
+ * schedule with a link to its page.
  */
 export function GolfTournamentWorkflowCard({
   eventId,
@@ -46,7 +47,6 @@ export function GolfTournamentWorkflowCard({
   const [transitionTarget, setTransitionTarget] =
     useState<GolfTournamentStatus | null>(null);
   const [autoToggleOpen, setAutoToggleOpen] = useState(false);
-  const [roundsOpen, setRoundsOpen] = useState(false);
 
   const transitionMutation = useInvalidatingMutation({
     mutationFn: async (toStatus: GolfTournamentStatus) => {
@@ -155,15 +155,14 @@ export function GolfTournamentWorkflowCard({
 
       <ListCard
         actions={
-          <Button
+          <LinkButton
             data-testid="root-admin-golf-tournament-rounds-edit"
-            onClick={() => setRoundsOpen(true)}
             size="sm"
-            type="button"
+            to={`${buildGolfTournamentPath(eventId)}/schedule`}
             variant="secondary"
           >
             Edit schedule
-          </Button>
+          </LinkButton>
         }
         className="mt-4"
         description={
@@ -230,14 +229,6 @@ export function GolfTournamentWorkflowCard({
         open={autoToggleOpen}
         testId="root-admin-golf-tournament-auto-modal"
         title="Automatic lifecycle"
-      />
-
-      <GolfTournamentRoundsModal
-        eventId={eventId}
-        key={roundsOpen ? 'rounds-open' : 'rounds-closed'}
-        onClose={() => setRoundsOpen(false)}
-        open={roundsOpen}
-        rounds={rounds}
       />
     </Tile>
   );
