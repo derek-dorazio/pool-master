@@ -173,6 +173,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         '/api/v1/sport-leagues',
       );
       const id = created.sportLeague.id;
+      // The tours list pages at 25 rows, so find the new tour by its run-unique name.
+      await page.getByTestId('root-admin-golf-league-list-search').fill(run.tourName);
       await expect(page.getByTestId(`root-admin-golf-league-row-${id}`)).toBeVisible();
       return id;
     });
@@ -191,6 +193,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         );
         ids.push(created.participant.id);
       }
+      // The players list pages at 25 rows, so narrow it to this run's golfers.
+      await page.getByTestId('root-admin-golf-player-list-search').fill(run.playerNamePrefix);
       for (const id of ids) {
         await expect(page.getByTestId(`root-admin-golf-player-row-${id}`)).toBeVisible();
       }

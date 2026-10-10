@@ -330,7 +330,19 @@ type _GolfPlayerStatusExhaustive =
 const _golfPlayerStatusExhaustive: _GolfPlayerStatusExhaustive = true;
 void _golfPlayerStatusExhaustive;
 
-export function golfPlayerStatusTone(status: string): BadgeToneLite {
+const GOLF_PLAYER_STATUS_LABELS: Record<GolfPlayerStatus, string> = {
+  ACTIVE: 'Active',
+  INACTIVE: 'Inactive',
+  RETIRED: 'Retired',
+  SUSPENDED: 'Suspended',
+};
+
+/** A golfer's status in plain words, for badges, rows and options. */
+export function golfPlayerStatusLabel(status: GolfPlayerStatus): string {
+  return GOLF_PLAYER_STATUS_LABELS[status];
+}
+
+export function golfPlayerStatusTone(status: GolfPlayerStatus): BadgeToneLite {
   if (status === 'ACTIVE') return 'active';
   if (status === 'SUSPENDED') return 'warning';
   return 'inactive';

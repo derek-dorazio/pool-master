@@ -1,13 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { RootAdminGolfPlayerCreatePage } from './root-admin-golf-player-create-page';
 import { RootAdminGolfPlayerListPage } from './root-admin-golf-player-list-page';
 import { GOLF_SPORT_FIXTURE, participantFixture } from './golf-test-fixtures';
 
-// plans/124 §6.3 — /manage/golf/players list (pool-master-rfy).
+// /manage/golf/players and its Add player page, /manage/golf/players/new (pool-master-rfy).
 
 const { listParticipantsMock, listSportsMock, createParticipantMock, mockLogger } = vi.hoisted(
   () => {
@@ -52,7 +53,10 @@ function player(overrides: Parameters<typeof participantFixture>[0] = {}) {
   });
 }
 
-function renderPage({ sportsLoaded = true }: { sportsLoaded?: boolean } = {}) {
+function renderPage({
+  path = '/manage/golf/players',
+  sportsLoaded = true,
+}: { path?: string; sportsLoaded?: boolean } = {}) {
   // #236: golfers are the golf sport's participants, scoped by its id.
   if (sportsLoaded) {
     listSportsMock.mockResolvedValue({ data: { sports: [GOLF_SPORT_FIXTURE] } });
@@ -62,8 +66,12 @@ function renderPage({ sportsLoaded = true }: { sportsLoaded?: boolean } = {}) {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <RootAdminGolfPlayerListPage />
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route element={<RootAdminGolfPlayerListPage />} path="/manage/golf/players" />
+          <Route element={<RootAdminGolfPlayerCreatePage />} path="/manage/golf/players/new" />
+          <Route element={<div data-testid="player-home" />} path="/manage/golf/players/:participantId" />
+        </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -75,7 +83,7 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('pool-master-rfy renders players with status and a row link to Player Home', async () => {
+  it('pool-master-rfy renders players with status and a row link to the golfer\'s page', async () => {
     listParticipantsMock.mockResolvedValue({
       data: {
         participants: [
@@ -88,9 +96,17 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
 
     expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
     expect(screen.getByText('Jon Rahm')).toBeInTheDocument();
-    // #236: the mapping count column is gone; Player Home reads the mappings themselves.
+    // #236: the mapping count column is gone; the golfer's page reads the mappings itself.
     expect(screen.queryByText('Provider mappings')).not.toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-golf-player-row-p-rory')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-player-row-p-rory')).toHaveTextContent('Active');
+    expect(screen.getByTestId('root-admin-golf-player-row-p-rory')).not.toHaveTextContent('ACTIVE');
+    const statusFilter = screen.getByTestId('root-admin-golf-player-list-status');
+    expect(within(statusFilter).getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Active',
+      'Inactive',
+      'Retired',
+      'Suspended',
+    ]);
     // Default status filter is ACTIVE.
     expect(listParticipantsMock).toHaveBeenCalledWith(
       expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE' } }),
@@ -132,7 +148,56 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
     expect(await screen.findByText('Player index offline')).toBeInTheDocument();
   });
 
-  it('pool-master-rfy adds a player through the modal', async () => {
+  it('narrows the players list with the search box and shows 25 golfers a page', async () => {
+    listParticipantsMock.mockResolvedValue({
+      data: {
+        participants: Array.from({ length: 30 }, (_, index) =>
+          player({ id: `p-${index + 1}`, name: `Golfer ${String(index + 1).padStart(2, '0')}` })),
+      },
+    });
+    renderPage();
+
+    expect(await screen.findByText('Golfer 01')).toBeInTheDocument();
+    expect(screen.getByText('Golfer 25')).toBeInTheDocument();
+    expect(screen.queryByText('Golfer 26')).not.toBeInTheDocument();
+
+    await userEvent.type(screen.getByTestId('root-admin-golf-player-list-search'), 'Golfer 3');
+    expect(await screen.findByText('Golfer 30')).toBeInTheDocument();
+    expect(screen.queryByText('Golfer 01')).not.toBeInTheDocument();
+  });
+
+  it('opens Add player as its own page, and Cancel returns to the list without saving', async () => {
+    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
+    renderPage();
+    await screen.findByText('No active golf players.');
+
+    await userEvent.click(screen.getByTestId('root-admin-golf-player-list-new'));
+    expect(await screen.findByTestId('root-admin-golf-player-create-page')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('link', { name: 'Cancel' }));
+
+    expect(await screen.findByTestId('root-admin-golf-player-list-page')).toBeInTheDocument();
+    expect(createParticipantMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the server\'s reason on the Add player page when adding the golfer is refused', async () => {
+    createParticipantMock.mockResolvedValue({
+      error: { error: { code: 'CONFLICT', message: 'A golfer with this external ID already exists.' } },
+      response: { status: 409 },
+    });
+    renderPage({ path: '/manage/golf/players/new' });
+
+    await userEvent.type(
+      await screen.findByTestId('root-admin-golf-player-list-new-name'),
+      'Ludvig Åberg',
+    );
+    await waitFor(() => expect(screen.getByTestId('root-admin-golf-player-list-new-save')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('root-admin-golf-player-list-new-save'));
+
+    expect(await screen.findByText('A golfer with this external ID already exists.')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-player-create-page')).toBeInTheDocument();
+  });
+
+  it('pool-master-rfy adds a player on the Add player page and returns to the list', async () => {
     listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     createParticipantMock.mockResolvedValue({
       data: { participant: player({ id: 'new', name: 'Ludvig Åberg' }) },
@@ -152,6 +217,7 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
         expect.objectContaining({ body: { sportId: 'sport-golf', participantType: 'INDIVIDUAL', name: 'Ludvig Åberg' } }),
       ),
     );
+    expect(await screen.findByTestId('root-admin-golf-player-list-page')).toBeInTheDocument();
   });
 
   it('pool-master-rfy blocks submit until a name is entered', async () => {
@@ -204,8 +270,8 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
       screen.getByTestId('root-admin-golf-player-list-new-name'),
       'Ludvig Åberg',
     );
-    // The form's own onSubmit is not gated by the modal's canSave.
-    fireEvent.submit(screen.getByTestId('root-admin-golf-player-list-new-form'));
+    // A submit by Enter is not gated by the disabled Save button.
+    fireEvent.submit(screen.getByTestId('root-admin-golf-player-create-page'));
 
     expect(
       await screen.findByText(/golf sport is still loading\. Wait a moment and try again\./),
@@ -213,7 +279,7 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
     expect(createParticipantMock).not.toHaveBeenCalled();
   });
 
-  it('explains in the Add player modal, with save disabled, when the golf sport fails to load', async () => {
+  it('explains on the Add player page, with save disabled, when the golf sport fails to load', async () => {
     listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     listSportsMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL', message: 'Sport catalog offline' } },
@@ -227,9 +293,8 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
       'Ludvig Åberg',
     );
 
-    // The page's player list surfaces the same error behind the modal; this is the modal's own.
-    const modal = screen.getByTestId('root-admin-golf-player-list-new-modal');
-    expect(await within(modal).findByText('Sport catalog offline')).toBeInTheDocument();
+    const page = screen.getByTestId('root-admin-golf-player-create-page');
+    expect(await within(page).findByText('Sport catalog offline')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-golf-player-list-new-save')).toBeDisabled();
   });
 });

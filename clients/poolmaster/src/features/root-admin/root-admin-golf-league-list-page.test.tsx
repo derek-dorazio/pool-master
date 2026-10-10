@@ -1,12 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { RootAdminGolfLeagueCreatePage } from './root-admin-golf-league-create-page';
 import { RootAdminGolfLeagueListPage } from './root-admin-golf-league-list-page';
 
-// plans/124 §6.3 — /manage/golf/leagues Tours list (pool-master-qqs).
+// /manage/golf/leagues, the tours list, and its New tour page (pool-master-qqs).
 
 const { listSportLeaguesMock, createSportLeagueMock, mockLogger } = vi.hoisted(
   () => {
@@ -54,14 +55,17 @@ function league(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function renderPage() {
+function renderPage(path = '/manage/golf/leagues') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <RootAdminGolfLeagueListPage />
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route element={<RootAdminGolfLeagueListPage />} path="/manage/golf/leagues" />
+          <Route element={<RootAdminGolfLeagueCreatePage />} path="/manage/golf/leagues/new" />
+        </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -73,7 +77,7 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('pool-master-qqs, plans/147: renders tours with roster and tournament counts, current year, and a row link to Tour Home', async () => {
+  it('pool-master-qqs, plans/147: renders tours with roster and tournament counts, current year, and a row link to the tour\'s page', async () => {
     listSportLeaguesMock.mockResolvedValue({
       data: {
         sportLeagues: [
@@ -118,8 +122,10 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
     expect(await screen.findByText('Tour index offline')).toBeInTheDocument();
   });
 
-  it('pool-master-qqs creates a tour through the New tour modal and refetches', async () => {
-    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [] } });
+  it('pool-master-qqs creates a tour on the New tour page, then returns to the list showing it', async () => {
+    listSportLeaguesMock
+      .mockResolvedValueOnce({ data: { sportLeagues: [] } })
+      .mockResolvedValue({ data: { sportLeagues: [league({ id: 'new', name: 'DP World Tour' })] } });
     createSportLeagueMock.mockResolvedValue({
       data: { sportLeague: league({ id: 'new', name: 'DP World Tour' }) },
     });
@@ -129,7 +135,7 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
 
     await userEvent.click(screen.getByTestId('root-admin-golf-league-list-new'));
     await userEvent.type(
-      screen.getByTestId('root-admin-golf-league-list-new-name'),
+      await screen.findByTestId('root-admin-golf-league-list-new-name'),
       'DP World Tour',
     );
     await userEvent.type(
@@ -143,6 +149,47 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
         expect.objectContaining({ body: { sport: 'GOLF', name: 'DP World Tour', matchKeyword: 'DP World' } }),
       ),
     );
+    expect(await screen.findByTestId('root-admin-golf-league-row-new')).toBeInTheDocument();
+  });
+
+  it('keeps the New tour page open with the server\'s reason when creating the tour is refused', async () => {
+    createSportLeagueMock.mockResolvedValue({
+      error: { error: { code: 'CONFLICT', message: 'A tour with this name already exists.' } },
+      response: { status: 409 },
+    });
+    renderPage('/manage/golf/leagues/new');
+
+    await userEvent.type(
+      await screen.findByTestId('root-admin-golf-league-list-new-name'),
+      'PGA Tour',
+    );
+    await userEvent.click(screen.getByTestId('root-admin-golf-league-list-new-save'));
+
+    expect(await screen.findByText('A tour with this name already exists.')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-league-create-page')).toBeInTheDocument();
+  });
+
+  it('returns to the tours list from New tour\'s Cancel without creating anything', async () => {
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [] } });
+    renderPage('/manage/golf/leagues/new');
+
+    await userEvent.click(await screen.findByRole('link', { name: 'Cancel' }));
+
+    expect(await screen.findByTestId('root-admin-golf-league-list-page')).toBeInTheDocument();
+    expect(createSportLeagueMock).not.toHaveBeenCalled();
+  });
+
+  it('narrows the tours list with the search box', async () => {
+    listSportLeaguesMock.mockResolvedValue({
+      data: { sportLeagues: [league(), league({ id: 'liv', name: 'LIV Golf', matchKeyword: 'LIV' })] },
+    });
+    renderPage();
+    await screen.findByText('PGA Tour');
+
+    await userEvent.type(screen.getByTestId('root-admin-golf-league-list-search'), 'LIV');
+
+    await waitFor(() => expect(screen.queryByText('PGA Tour')).not.toBeInTheDocument());
+    expect(screen.getByText('LIV Golf')).toBeInTheDocument();
   });
 
   it('pool-master-qqs blocks submit until the tour name is entered', async () => {
@@ -151,6 +198,6 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
     await screen.findByText('No golf tours have been created yet.');
 
     await userEvent.click(screen.getByTestId('root-admin-golf-league-list-new'));
-    expect(screen.getByTestId('root-admin-golf-league-list-new-save')).toBeDisabled();
+    expect(await screen.findByTestId('root-admin-golf-league-list-new-save')).toBeDisabled();
   });
 });

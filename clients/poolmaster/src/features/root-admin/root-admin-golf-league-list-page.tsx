@@ -1,83 +1,22 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { createColumnHelper } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { createSportLeague } from '@/lib/api';
-import {
-  Button,
-  DataGridPage,
-  FormField,
-  FormModal,
-  Input,
-  StatusBadge,
-} from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
-import { getLogger } from '@/lib/logger';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { QueryKeys } from '@/lib/query-keys';
+import { useMemo } from 'react';
+import { DataGridPage, LinkButton, StatusBadge } from '@/features/shared/ui';
+import { extractErrorMessage } from '@/lib/errors';
 import type { SportLeagueDto } from '@/lib/api';
 import { useGolfSportLeaguesQuery } from './use-golf-catalog';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
+import { GOLF_TOUR_LIST_PATH, MANAGE_LIST_PAGE_SIZE, buildGolfTourPath } from './manage-navigation';
 
 const columnHelper = createColumnHelper<SportLeagueDto>();
 
-const newTourSchema = z.object({
-  name: z.string().trim().min(1, 'Tour name is required'),
-  matchKeyword: z.string().trim().optional(),
-});
-
-type NewTourValues = z.infer<typeof newTourSchema>;
-
 /**
- * plans/124 §6.3 — /manage/golf/leagues "Tours list". Read-only DataGrid over
- * the golf sport leagues plus a "New tour" FormModal; rows link to Tour Home,
- * following the app-wide list -> Home pattern.
+ * /manage/golf/leagues, the tours list: a searchable, paged grid of the golf sport
+ * leagues, with New tour opening its own page and rows linking to each tour.
  */
 export function RootAdminGolfLeagueListPage() {
   useManageBreadcrumbOverride('leagues', 'Tours');
 
-  const logger = getLogger().child({
-    feature: 'root-admin-golf-league-list-page',
-  });
-  const [createOpen, setCreateOpen] = useState(false);
-
   const leaguesQuery = useGolfSportLeaguesQuery();
-
-  const form = useForm<NewTourValues>({
-    resolver: zodResolver(newTourSchema),
-    defaultValues: { name: '', matchKeyword: '' },
-    mode: 'onChange',
-  });
-
-  const createMutation = useInvalidatingMutation({
-    mutationFn: async (values: NewTourValues) => {
-      const response = await createSportLeague({
-        body: {
-          sport: 'GOLF',
-          name: values.name,
-          ...(values.matchKeyword?.trim()
-            ? { matchKeyword: values.matchKeyword.trim() }
-            : {}),
-        },
-      });
-      if (!response.data?.sportLeague) {
-        throwApiError(response.error, 'Golf tour creation response is missing data.');
-      }
-      return response.data.sportLeague;
-    },
-    invalidates: [QueryKeys.rootAdmin.golf.tours],
-    onSuccess: () => {
-      setCreateOpen(false);
-      form.reset({ name: '', matchKeyword: '' });
-    },
-    onError: (error) => {
-      logger.warn(
-        { action: 'golf.tour.create.failed', err: error },
-        'Golf tour creation was rejected',
-      );
-    },
-  });
 
   const columns = useMemo(
     () => [
@@ -118,15 +57,12 @@ export function RootAdminGolfLeagueListPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button
+        <LinkButton
           data-testid="root-admin-golf-league-list-new"
-          onClick={() => {
-            form.reset({ name: '', matchKeyword: '' });
-            setCreateOpen(true);
-          }}
+          to={`${GOLF_TOUR_LIST_PATH}/new`}
         >
           New tour
-        </Button>
+        </LinkButton>
       </div>
 
       <DataGridPage
@@ -138,9 +74,11 @@ export function RootAdminGolfLeagueListPage() {
         })}
         filterTestIdPrefix="root-admin-golf-league-list-filter"
         getRowId={(league) => league.id}
-        getRowLink={(league) => `/manage/golf/leagues/${league.id}`}
+        getRowLink={(league) => buildGolfTourPath(league.id)}
         loadingBody="Loading golf tours..."
+        pageSize={MANAGE_LIST_PAGE_SIZE}
         rowTestId={(league) => `root-admin-golf-league-row-${league.id}`}
+        search={{ label: 'Find a tour', testId: 'root-admin-golf-league-list-search' }}
         state={
           leaguesQuery.isLoading
             ? 'loading'
@@ -151,45 +89,6 @@ export function RootAdminGolfLeagueListPage() {
         tableTestId="root-admin-golf-league-list-table"
         testId="root-admin-golf-league-list-page"
       />
-
-      <FormModal
-        canSave={form.formState.isValid}
-        error={createMutation.error}
-        isPending={createMutation.isPending}
-        onCancel={() => setCreateOpen(false)}
-        onOpenChange={(next) => !next && setCreateOpen(false)}
-        onSave={() => {
-          void form.handleSubmit((values) => createMutation.mutate(values))();
-        }}
-        open={createOpen}
-        saveLabel="Create tour"
-        saveTestId="root-admin-golf-league-list-new-save"
-        testId="root-admin-golf-league-list-new-modal"
-        title="New golf tour"
-      >
-        <form
-          className="space-y-3"
-          onSubmit={(e) => void form.handleSubmit((values) => createMutation.mutate(values))(e)}
-        >
-          <FormField error={form.formState.errors.name?.message} label="Tour name">
-            <Input
-              data-testid="root-admin-golf-league-list-new-name"
-              placeholder="PGA Tour"
-              {...form.register('name')}
-            />
-          </FormField>
-          <FormField
-            helperText="Optional. A plain catalog-browse filter keyword, e.g. “PGA”."
-            label="Match keyword"
-          >
-            <Input
-              data-testid="root-admin-golf-league-list-new-keyword"
-              placeholder="PGA"
-              {...form.register('matchKeyword')}
-            />
-          </FormField>
-        </form>
-      </FormModal>
     </div>
   );
 }
