@@ -12,6 +12,7 @@ import type {
   ParticipantContestScoringRule,
   SelectionType,
 } from '@poolmaster/shared/domain';
+import { ContestRulesWithEntryLimitSchema, ContestSelectionConfigSchema } from '@poolmaster/shared/domain';
 
 export class PrismaContestConfigurationRepository
   implements ContestConfigurationRepository
@@ -39,15 +40,12 @@ export class PrismaContestConfigurationRepository
         timePerPickSeconds: configuration.timePerPickSeconds,
         autoPickPolicy: configuration.autoPickPolicy,
         tierConfig: configuration.tierConfig as object[] | undefined,
-        budget: configuration.budget,
-        pickCount: configuration.pickCount,
         isExclusive: configuration.isExclusive ?? false,
         picksPerPeriod: configuration.picksPerPeriod,
         roundValues: configuration.roundValues,
         startRound: configuration.startRound,
         minimumEntries: configuration.minimumEntries,
         maxEntriesPerSquad: configuration.maxEntriesPerSquad,
-        rosterSize: configuration.rosterSize,
         totalPrizePoolAmount: configuration.totalPrizePoolAmount,
       },
     });
@@ -83,8 +81,6 @@ export class PrismaContestConfigurationRepository
         ...(updates.tierConfig !== undefined && {
           tierConfig: updates.tierConfig as object[],
         }),
-        ...(updates.budget !== undefined && { budget: updates.budget }),
-        ...(updates.pickCount !== undefined && { pickCount: updates.pickCount }),
         ...(updates.isExclusive !== undefined && {
           isExclusive: updates.isExclusive,
         }),
@@ -103,7 +99,6 @@ export class PrismaContestConfigurationRepository
         ...(updates.maxEntriesPerSquad !== undefined && {
           maxEntriesPerSquad: updates.maxEntriesPerSquad,
         }),
-        ...(updates.rosterSize !== undefined && { rosterSize: updates.rosterSize }),
         ...(updates.totalPrizePoolAmount !== undefined && {
           totalPrizePoolAmount: updates.totalPrizePoolAmount,
         }),
@@ -217,15 +212,12 @@ function mapContestConfiguration(row: {
   timePerPickSeconds: number | null;
   autoPickPolicy: AutoPickPolicy | null;
   tierConfig: unknown;
-  budget: number | null;
-  pickCount: number | null;
   isExclusive: boolean;
   picksPerPeriod: number | null;
   roundValues: unknown;
   startRound: string | null;
   minimumEntries: number | null;
   maxEntriesPerSquad: number | null;
-  rosterSize: number | null;
   totalPrizePoolAmount: number | null;
   createdAt: Date;
   updatedAt: Date;
@@ -236,20 +228,19 @@ function mapContestConfiguration(row: {
     templateId: row.templateId ?? undefined,
     templateVersion: row.templateVersion ?? undefined,
     selectionType: row.selectionType,
-    configJson: row.configJson as ContestConfiguration['configJson'],
+    // Parsed, not cast: the rules decide what an entry may pick, so a row that breaks them
+    // fails loudly here rather than downstream (#93).
+    configJson: row.configJson === null ? undefined : ContestSelectionConfigSchema.parse(row.configJson),
     rounds: row.rounds ?? undefined,
     timePerPickSeconds: row.timePerPickSeconds ?? undefined,
     autoPickPolicy: row.autoPickPolicy ?? undefined,
     tierConfig: (row.tierConfig as ContestConfiguration['tierConfig']) ?? undefined,
-    budget: row.budget ?? undefined,
-    pickCount: row.pickCount ?? undefined,
     isExclusive: row.isExclusive,
     picksPerPeriod: row.picksPerPeriod ?? undefined,
     roundValues: (row.roundValues as number[]) ?? undefined,
     startRound: row.startRound ?? undefined,
     minimumEntries: row.minimumEntries ?? undefined,
     maxEntriesPerSquad: row.maxEntriesPerSquad ?? undefined,
-    rosterSize: row.rosterSize ?? undefined,
     totalPrizePoolAmount: row.totalPrizePoolAmount ?? undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -285,7 +276,7 @@ function mapContestConfigTemplate(row: {
     sortOrder: row.sortOrder,
     isDefault: row.isDefault,
     active: row.active,
-    configJson: row.configJson as ContestConfigTemplate['configJson'],
+    configJson: ContestRulesWithEntryLimitSchema.parse(row.configJson),
     schemaVersion: row.schemaVersion,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

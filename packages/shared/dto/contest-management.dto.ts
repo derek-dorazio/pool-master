@@ -1,12 +1,15 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
+  BudgetContestConfigSchema,
+  ContestRulesWithEntryLimitSchema,
   ContestStatus,
   ContestFormat,
   GolfCategoryKey,
   GolfCutRuleType,
   SelectionType,
   Sport,
+  TieredContestRulesSchema,
 } from '@poolmaster/shared/domain';
 
 const sportValues = Object.values(Sport) as [Sport, ...Sport[]];
@@ -58,28 +61,23 @@ export const GolfCategoryDefinitionSchema = z.object({
 export type GolfCategoryDefinitionDto = z.infer<typeof GolfCategoryDefinitionSchema>;
 
 /**
- * Shrunk per plans/124 §4.6/§4.6a: tiers/price are event-owned data resolved
- * via SportEventTierService.getEffectiveTiersForSportEvent, never a per-contest
- * override, so tierSource/tierGeneration/tiers drop; cutRule/playoffHandling/
- * displayScoring/tiebreaker each locked to exactly one possible value with
- * zero real reads downstream, dropped as dead configuration.
+ * The rules a commissioner sends when creating a contest or changing its rules, and a template
+ * presets (#93): one shape per selection type, whose `selectionType` must match the contest's. A
+ * budget contest's salary cap is not part of it: the contest takes its event's.
  */
-export const GolfTieredContestConfigurationSchema = z.object({
-  maxEntriesPerSquad: nullablePositiveIntSchema,
-  picksPerTier: z.number().int().min(1).describe("How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."),
-  countedScores: z.number().int().min(1).describe("How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."),
-}).describe('Golf tiered contest configuration for pick-X, count-best-Y roster contests.');
-export type GolfTieredContestConfigurationRequest = z.infer<
-  typeof GolfTieredContestConfigurationSchema
->;
-
-// How an entry picks is the contest's `selectionType`, not a second discriminant in this
-// payload (plans/145 slice 3, Q4). A selection type with a different configuration shape
-// gets its own schema when it is built (category picks: plans/127, #99).
-export const ContestConfigurationRequestSchema = GolfTieredContestConfigurationSchema.describe('Approved commissioner-managed contest configuration payload for golf-first contest creation.');
+export const ContestConfigurationRequestSchema = ContestRulesWithEntryLimitSchema.describe('Contest rules and entries-per-team limit, one shape per selection type. `selectionType` must match the contest\'s.');
 export type ContestConfigurationRequest = z.infer<
   typeof ContestConfigurationRequestSchema
 >;
+
+/** Error code for budget rules on an event whose field was never priced (#93). */
+export const CONTEST_EVENT_NOT_PRICED = 'CONTEST_EVENT_NOT_PRICED';
+
+/**
+ * Error code for budget rules nobody could enter (#93): the event's cheapest roster of that size
+ * costs more than its salary cap, or the event has fewer priced golfers than the roster holds.
+ */
+export const CONTEST_BUDGET_UNFILLABLE = 'CONTEST_BUDGET_UNFILLABLE';
 
 /**
  * Error code for a configuration edit on a contest that is no longer DRAFT (#117). Opening a
@@ -96,13 +94,16 @@ export const CONTEST_NOT_DRAFT = 'CONTEST_NOT_DRAFT';
  */
 export const CONTEST_EVENT_ALREADY_STARTED = 'CONTEST_EVENT_ALREADY_STARTED';
 
-export const GolfTieredContestConfigurationDtoSchema =
-  GolfTieredContestConfigurationSchema.extend({
-    id: z.string().describe('Contest-configuration identifier.'),
-    contestId: z.string().describe('Contest that owns the configuration.'),
-  });
+const persistedConfigurationFields = {
+  id: z.string().describe('Contest-configuration identifier.'),
+  contestId: z.string().describe('Contest that owns the configuration.'),
+  maxEntriesPerSquad: nullablePositiveIntSchema,
+};
 
-export const ContestConfigurationDtoSchema = GolfTieredContestConfigurationDtoSchema.describe('Persisted commissioner-managed golf contest configuration.');
+export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType', [
+  TieredContestRulesSchema.extend(persistedConfigurationFields),
+  BudgetContestConfigSchema.extend(persistedConfigurationFields),
+]).describe('Persisted commissioner-managed contest rules, one shape per selection type.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 
 export const ContestConfigTemplateDtoSchema = z.object({

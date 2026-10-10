@@ -6,6 +6,7 @@ import type {
 import { sendError } from '../../core/error-handler';
 import {
   ContestConfigTemplateNotFoundError,
+  ContestConfigTemplateRulesMismatchError,
   type ContestConfigTemplateService,
 } from './service';
 
@@ -43,6 +44,9 @@ export function createContestConfigTemplateHandlers(
     } catch (error) {
       if (error instanceof ContestConfigTemplateNotFoundError) {
         return sendError(reply, 404, 'CONTEST_CONFIG_TEMPLATE_NOT_FOUND', error.message);
+      }
+      if (error instanceof ContestConfigTemplateRulesMismatchError) {
+        return sendError(reply, 422, 'CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH', error.message);
       }
 
       throw error;

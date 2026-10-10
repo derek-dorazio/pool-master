@@ -1,5 +1,8 @@
-import { getDefaultCountedScores, getTieredRosterSize } from '@poolmaster/shared/domain';
+import { SelectionType, getDefaultCountedScores, getTieredRosterSize } from '@poolmaster/shared/domain';
 import type { ContestConfigurationRequest } from '@poolmaster/shared/dto';
+
+/** The tiered arm of a contest's rules: the only one these fields edit so far. */
+export type TieredContestConfiguration = Extract<ContestConfigurationRequest, { selectionType: typeof SelectionType.TIERED }>;
 
 /** The rules fields as the form holds them: text from the inputs, and the No limit box. */
 export type ContestRulesValues = {
@@ -22,7 +25,7 @@ function parseWholeNumber(value: string) {
 export function parseContestRules(
   values: ContestRulesValues,
   tierCount: number,
-): { configuration: ContestConfigurationRequest; error: null } | { configuration: null; error: string } {
+): { configuration: TieredContestConfiguration; error: null } | { configuration: null; error: string } {
   const picksPerTier = parseWholeNumber(values.picksPerTier);
   if (picksPerTier === null) {
     return { configuration: null, error: 'Picks per tier must be a positive whole number.' };
@@ -40,17 +43,17 @@ export function parseContestRules(
   }
 
   if (values.unlimitedEntries) {
-    return { configuration: { picksPerTier, countedScores }, error: null };
+    return { configuration: { selectionType: SelectionType.TIERED, picksPerTier, countedScores }, error: null };
   }
   const maxEntriesPerSquad = parseWholeNumber(values.maxEntriesPerTeam);
   if (maxEntriesPerSquad === null) {
     return { configuration: null, error: 'Entries per team must be a positive whole number.' };
   }
-  return { configuration: { picksPerTier, countedScores, maxEntriesPerSquad }, error: null };
+  return { configuration: { selectionType: SelectionType.TIERED, picksPerTier, countedScores, maxEntriesPerSquad }, error: null };
 }
 
 /** The form's starting values for a saved configuration. */
-export function toContestRulesValues(configuration: ContestConfigurationRequest): ContestRulesValues {
+export function toContestRulesValues(configuration: TieredContestConfiguration): ContestRulesValues {
   return {
     countedScores: String(configuration.countedScores),
     maxEntriesPerTeam: configuration.maxEntriesPerSquad == null ? '1' : String(configuration.maxEntriesPerSquad),

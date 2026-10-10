@@ -286,7 +286,7 @@ describe('Commissioner tools › Contests › one contest › Edit', () => {
   it('saves the name and rules together, then returns to the contest page', async () => {
     primeMocks({
       managedContest: buildManagedContest({
-        configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 2, picksPerTier: 1, countedScores: 4 },
+        configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 2, selectionType: 'TIERED', picksPerTier: 1, countedScores: 4 },
       }),
     });
     updateContestMock.mockResolvedValue(apiSuccess({ contest: buildContest({ name: 'Masters Best Four' }) }));
@@ -305,7 +305,7 @@ describe('Commissioner tools › Contests › one contest › Edit', () => {
     await waitFor(() => expect(updateContestConfigurationMock).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { id: 'league-1', contestId: 'contest-1' },
-        body: { picksPerTier: 1, countedScores: 3 },
+        body: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 3 },
       }),
     ));
     expect(updateContestMock).toHaveBeenCalledWith(

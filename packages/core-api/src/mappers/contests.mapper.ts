@@ -23,7 +23,7 @@ import {
   type ContestFormat,
   type ParticipantScoringDefinitionId,
   type ScoringEngine,
-  type SelectionType,
+  SelectionType,
 } from '@poolmaster/shared/domain';
 import type { ContestCountingRule, ParticipantScore } from '../modules/contests/contest-leaderboard-calculator';
 import type { SportEventParticipantView } from '../modules/events/sport-event-participant-service';
@@ -155,13 +155,19 @@ function toContestConfigurationDetailDto(
       ? (contestConfiguration.maxEntriesPerSquad ?? null)
       : (contestConfiguration.maxEntriesPerSquad ?? 1);
 
-  if (isManagedConfiguration && contestConfiguration.configJson) {
-    // Only the typed settings: rows saved before #416 also hold a lock time and an entry cap.
-    return {
-      picksPerTier: contestConfiguration.configJson.picksPerTier,
-      countedScores: contestConfiguration.configJson.countedScores,
-      maxEntriesPerSquad,
-    };
+  if (contestConfiguration.configJson) {
+    const rules = contestConfiguration.configJson;
+    switch (rules.selectionType) {
+      case SelectionType.TIERED:
+        return { picksPerTier: rules.picksPerTier, countedScores: rules.countedScores, maxEntriesPerSquad };
+      case SelectionType.BUDGET_PICK:
+        return {
+          rosterSize: rules.rosterSize,
+          salaryCap: rules.salaryCap,
+          countedScores: rules.countedScores,
+          maxEntriesPerSquad,
+        };
+    }
   }
 
   return {
@@ -175,11 +181,8 @@ function toContestConfigurationDetailDto(
       picksFromTier: tier.picksFromTier ?? tier.pickCount,
       participantIds: tier.participantIds ?? [],
     })),
-    budget: contestConfiguration.budget,
-    pickCount: contestConfiguration.pickCount,
     isExclusive: contestConfiguration.isExclusive,
     picksPerPeriod: contestConfiguration.picksPerPeriod,
-    rosterSize: contestConfiguration.rosterSize,
     roundValues: contestConfiguration.roundValues,
     startRound: contestConfiguration.startRound,
     maxEntriesPerSquad,

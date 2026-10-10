@@ -235,7 +235,7 @@ describe('SDK Functional: system emails', () => {
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         templateId: template?.id as string,
-        configuration: { maxEntriesPerSquad: 1, picksPerTier: 1, countedScores: 1 },
+        configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
       },
     });
     expect(created.response.status).toBe(201);

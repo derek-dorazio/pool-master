@@ -26,6 +26,14 @@ export class ContestConfigTemplateNotFoundError extends Error {
   }
 }
 
+/** A template's rules must be its own selection type's shape (#93). */
+export class ContestConfigTemplateRulesMismatchError extends Error {
+  constructor(templateSelectionType: string, rulesSelectionType: string) {
+    super(`This template is ${templateSelectionType}, so its configuration must be ${templateSelectionType} rules, not ${rulesSelectionType}.`);
+    this.name = 'ContestConfigTemplateRulesMismatchError';
+  }
+}
+
 /**
  * `ContestConfigTemplate` is global under A11: any signed-in user reads it, only a root admin
  * writes it. One read for the commissioner's create flow and the root-admin screens alike.
@@ -71,6 +79,14 @@ export class ContestConfigTemplateService {
     const existing = await this.repository.findById(templateId);
     if (!existing) {
       throw new ContestConfigTemplateNotFoundError(templateId);
+    }
+    if (input.configuration && input.configuration.selectionType !== existing.selectionType) {
+      this.logger.warn({
+        templateId,
+        templateSelectionType: existing.selectionType,
+        rulesSelectionType: input.configuration.selectionType,
+      }, 'contest template admin update refused for rules of another selection type');
+      throw new ContestConfigTemplateRulesMismatchError(existing.selectionType, input.configuration.selectionType);
     }
 
     // Only an active template can be the default: deactivating one takes its default off, and

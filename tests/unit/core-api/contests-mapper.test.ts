@@ -1,34 +1,33 @@
 import { toContestResponse } from '../../../packages/core-api/src/mappers/contests.mapper';
-import { SelectionType, type ContestConfiguration } from '@poolmaster/shared/domain';
+import { SelectionType, type ContestConfiguration, type ContestSelectionConfig } from '@poolmaster/shared/domain';
 import { buildContest } from '../../factories';
 
 describe('toContestResponse', () => {
-  it('returns only the typed settings of a configuration saved with extra keys, taking the entry cap from its column', () => {
-    // A row written before #416 kept the whole request in configJson, a lock time and a stale
-    // entry cap included.
-    const legacyConfigJson = {
-      picksPerTier: 1,
-      countedScores: 4,
-      rosterSize: 6,
-      locksAt: '2026-04-10T12:00:00.000Z',
-      maxEntriesPerSquad: 9,
-    };
-    const configuration: ContestConfiguration = {
-      id: 'config-1',
-      contestId: 'contest-1',
-      selectionType: SelectionType.TIERED,
-      configJson: legacyConfigJson,
-      maxEntriesPerSquad: 1,
-      createdAt: new Date('2026-04-01T00:00:00.000Z'),
-      updatedAt: new Date('2026-04-01T00:00:00.000Z'),
-    };
+  const configuration = (configJson: ContestSelectionConfig): ContestConfiguration => ({
+    id: 'config-1',
+    contestId: 'contest-1',
+    selectionType: configJson.selectionType,
+    configJson,
+    maxEntriesPerSquad: 1,
+    createdAt: new Date('2026-04-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-04-01T00:00:00.000Z'),
+  });
 
-    const response = toContestResponse(buildContest({ id: 'contest-1' }), configuration);
+  it('returns a tiered contest\'s picks per tier and counted scores, taking the entry cap from its column', () => {
+    const response = toContestResponse(
+      buildContest({ id: 'contest-1' }),
+      configuration({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }),
+    );
 
-    expect(response.contestConfiguration).toEqual({
-      picksPerTier: 1,
-      countedScores: 4,
-      maxEntriesPerSquad: 1,
-    });
+    expect(response.contestConfiguration).toEqual({ picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 });
+  });
+
+  it('returns a budget contest\'s roster size, salary cap and counted scores', () => {
+    const response = toContestResponse(
+      buildContest({ id: 'contest-1', selectionType: SelectionType.BUDGET_PICK }),
+      configuration({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, salaryCap: 50_000, countedScores: 4 }),
+    );
+
+    expect(response.contestConfiguration).toEqual({ rosterSize: 6, salaryCap: 50_000, countedScores: 4, maxEntriesPerSquad: 1 });
   });
 });

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
+import { SelectionType } from '@poolmaster/shared/domain';
 import { listContestConfigTemplates, updateContestConfigTemplate, type ContestConfigTemplateDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import { LayoutTemplate } from 'lucide-react';
@@ -19,7 +20,7 @@ import {
   cloneContestTemplate,
   toPositiveNumber,
   type ContestConfigTemplate,
-  updateTieredTemplateConfiguration,
+  updateTemplateRules,
 } from './content-configuration-utils';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -233,22 +234,36 @@ export function RootAdminContentConfigurationDetailPage() {
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <FormField label="Picks per tier">
-                  <Input
-                    data-testid="root-admin-content-config-picks-per-tier"
-                    onChange={(event) => updateDraft((current) =>
-                      updateTieredTemplateConfiguration(current, {
-                        picksPerTier: toPositiveNumber(event.target.value),
-                      }))}
-                    type="number"
-                    value={draft.configuration.picksPerTier}
-                  />
-                </FormField>
+                {draft.configuration.selectionType === SelectionType.BUDGET_PICK ? (
+                  <FormField helperText="Every budget contest's salary cap is its tournament's." label="Golfers per entry">
+                    <Input
+                      data-testid="root-admin-content-config-roster-size"
+                      onChange={(event) => updateDraft((current) =>
+                        updateTemplateRules(current, {
+                          rosterSize: toPositiveNumber(event.target.value),
+                        }))}
+                      type="number"
+                      value={draft.configuration.rosterSize}
+                    />
+                  </FormField>
+                ) : (
+                  <FormField label="Picks per tier">
+                    <Input
+                      data-testid="root-admin-content-config-picks-per-tier"
+                      onChange={(event) => updateDraft((current) =>
+                        updateTemplateRules(current, {
+                          picksPerTier: toPositiveNumber(event.target.value),
+                        }))}
+                      type="number"
+                      value={draft.configuration.picksPerTier}
+                    />
+                  </FormField>
+                )}
                 <FormField label="Scores that count">
                   <Input
                     data-testid="root-admin-content-config-counted-scores"
                     onChange={(event) => updateDraft((current) =>
-                      updateTieredTemplateConfiguration(current, {
+                      updateTemplateRules(current, {
                         countedScores: toPositiveNumber(event.target.value),
                       }))}
                     type="number"
@@ -256,7 +271,7 @@ export function RootAdminContentConfigurationDetailPage() {
                   />
                 </FormField>
                 <p className="md:col-span-2 text-sm text-muted-foreground">
-                  Tier structure and golfer assignments are set per tournament, not per template —
+                  Tiers, prices and golfer assignments are set per tournament, not per template —
                   see the tournament&apos;s Tiers page.
                 </p>
               </div>

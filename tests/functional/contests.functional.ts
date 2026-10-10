@@ -31,6 +31,7 @@ import {
 } from './setup';
 import { randomUUID } from 'node:crypto';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
+import { expectDefined } from '../support/expect-defined';
 
 const createdSportIds: string[] = [];
 const createdParticipantIds: string[] = [];
@@ -288,12 +289,11 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(createResponse.data?.contest.id).toBeTruthy();
     expect(createResponse.data?.contest.status).toBe(ContestStatus.DRAFT);
     expect(createResponse.data?.contest.selectionType).toBe(SelectionType.TIERED);
-    expect(createResponse.data?.contestConfiguration?.picksPerTier).toBe(
-      defaultTemplate?.configuration.picksPerTier,
-    );
-    expect(createResponse.data?.contestConfiguration?.countedScores).toBe(
-      defaultTemplate?.configuration.countedScores,
-    );
+    const templateRules = expectDefined(defaultTemplate).configuration;
+    expect(createResponse.data?.contestConfiguration).toMatchObject({
+      picksPerTier: templateRules.selectionType === SelectionType.TIERED ? templateRules.picksPerTier : undefined,
+      countedScores: templateRules.countedScores,
+    });
 
     const contestId = createResponse.data?.contest.id as string;
     const configurationResponse = await getContestConfiguration({
@@ -387,6 +387,7 @@ describe('SDK Functional: Contests and Entries', () => {
         templateId: defaultTemplate?.id as string,
         configuration: {
           maxEntriesPerSquad: 3,
+          selectionType: SelectionType.TIERED,
           picksPerTier: 1,
           countedScores: 1,
         },
@@ -1100,7 +1101,7 @@ describe('SDK Functional: Contests and Entries', () => {
       scoringEngine: ScoringEngine.STROKE_PLAY,
       configuration: {
         rounds: 1,
-        configJson: { picksPerTier: 1, countedScores: 1 },
+        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
         tierConfig: [
           {
             tierId: 'tier-1',

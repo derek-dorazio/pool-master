@@ -19,7 +19,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
-import { ParticipantType, Sport } from '@poolmaster/shared/domain';
+import { ParticipantType, SelectionType, Sport } from '@poolmaster/shared/domain';
 import type {
   ContestEntryResponse,
   ContestResponse,
@@ -107,6 +107,7 @@ describe('RosterPick CRUD integration', () => {
         selectionType: 'TIERED',
         configuration: {
           maxEntriesPerSquad: 1,
+          selectionType: SelectionType.TIERED,
           picksPerTier: 1,
           countedScores: 1,
         },

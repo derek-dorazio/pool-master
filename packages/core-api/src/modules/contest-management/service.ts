@@ -13,23 +13,31 @@ import type {
   GolfEffectiveTierDto,
 } from '@poolmaster/shared/dto';
 import {
+  CONTEST_BUDGET_UNFILLABLE,
   CONTEST_CONFIGURATION_LOCKED,
   CONTEST_CONFIGURATION_REQUIRED,
+  CONTEST_EVENT_NOT_PRICED,
   CONTEST_EVENT_ALREADY_STARTED,
   CONTEST_NOT_DRAFT,
 } from '@poolmaster/shared/dto';
 import type {
+  BudgetContestConfig,
+  BudgetContestRules,
   ContestConfigTemplate,
   ContestConfiguration,
-  GolfContestConfig,
+  ContestRules,
+  ContestSelectionConfig,
   SportEventStatus,
+  TieredContestRules,
   TournamentFormat,
 } from '@poolmaster/shared/domain';
 import {
   ContestFormat,
   ContestStatus,
   ScoringEngine,
+  SelectionType,
   Sport,
+  canFillBudgetRoster,
   getTieredRosterSize,
   isContestFormatValidForTournamentFormat,
 } from '@poolmaster/shared/domain';
@@ -50,12 +58,16 @@ export interface ContestCreateSportEventState {
   tournamentFormat: TournamentFormat;
   participantCount: number | null;
   loadedParticipantCount: number;
+  /** The salary cap the event's field was priced against, or null when it never was (#93). */
+  salaryCap: number | null;
 }
 
 export interface ContestCreateSportEventReader {
   findById(
     sportEventId: string,
   ): Promise<ContestCreateSportEventState | null>;
+  /** The prices of the event's active golfers, in whole dollars; unpriced golfers are left out. */
+  findActiveFieldPrices(sportEventId: string): Promise<number[]>;
 }
 
 function createNoopLogger(): LifecycleLogger {
@@ -122,8 +134,9 @@ export class ContestManagementService {
       );
     }
     this.assertContestCreationSupported(sportEvent, input.contestFormat);
-    await this.assertTierConfigurationFitsTierCount(input.sportEventId, resolvedConfiguration.configuration);
     const { selectionType } = input;
+    assertRulesMatchSelectionType(resolvedConfiguration.configuration, selectionType);
+    const configJson = await this.resolveContestRules(input.sportEventId, resolvedConfiguration.configuration);
     const contest = await this.contestRepo.create({
       leagueId: context.leagueId,
       sportEventId: input.sportEventId,
@@ -141,7 +154,7 @@ export class ContestManagementService {
       templateId: resolvedConfiguration.template?.id,
       templateVersion: resolvedConfiguration.template?.schemaVersion,
       selectionType,
-      configJson: toStoredGolfConfig(resolvedConfiguration.configuration),
+      configJson,
       maxEntriesPerSquad:
         resolvedConfiguration.configuration.maxEntriesPerSquad === null
           ? null
@@ -259,10 +272,11 @@ export class ContestManagementService {
         409,
       );
     }
-    await this.assertTierConfigurationFitsSportEvent(contest.sportEventId, input);
+    assertRulesMatchSelectionType(input, configuration.selectionType);
+    const configJson = await this.resolveContestRules(contest.sportEventId, input);
 
     await this.contestConfigurationRepo.update(configuration.id, {
-      configJson: toStoredGolfConfig(input),
+      configJson,
       maxEntriesPerSquad:
         input.maxEntriesPerSquad === null ? null : input.maxEntriesPerSquad,
       isExclusive: false,
@@ -317,10 +331,9 @@ export class ContestManagementService {
     }
 
     await this.assertSportEventNotStarted(contestId, contest.sportEventId);
-    await this.assertTierConfigurationFitsSportEvent(
-      contest.sportEventId,
-      ensureTypedConfiguration(configuration),
-    );
+    // The event may have changed since the rules were saved: its tiers, or which golfers are
+    // still in the field. Rules nobody could enter are refused here too.
+    await this.resolveContestRules(contest.sportEventId, ensureTypedConfiguration(configuration));
 
     // Compare-and-set: of two presses racing, only one moves the contest.
     const opened = await this.contestRepo.transitionStatus(contestId, {
@@ -437,25 +450,45 @@ export class ContestManagementService {
     return sportEvent;
   }
 
-  private async assertTierConfigurationFitsSportEvent(
+  /**
+   * The rules a contest stores, checked against its event (#93): one arm per selection type.
+   * Create, rules changes and opening all come through here, so each holds the same rules.
+   */
+  private async resolveContestRules(
     sportEventId: string | undefined,
-    configuration: ContestConfigurationRequest,
-  ): Promise<void> {
+    rules: ContestRules,
+  ): Promise<ContestSelectionConfig> {
+    const sportEvent = await this.findRulesSportEvent(sportEventId);
+    switch (rules.selectionType) {
+      case SelectionType.TIERED:
+        await this.assertTieredRulesFitTierCount(sportEventId, rules);
+        return {
+          selectionType: rules.selectionType,
+          picksPerTier: rules.picksPerTier,
+          countedScores: rules.countedScores,
+        };
+      case SelectionType.BUDGET_PICK:
+        return this.resolveBudgetRules(sportEventId, sportEvent, rules);
+    }
+  }
+
+  private async findRulesSportEvent(
+    sportEventId: string | undefined,
+  ): Promise<ContestCreateSportEventState | null> {
     if (!this.sportEventReader || !sportEventId) {
-      return;
+      return null;
     }
 
     const sportEvent = await this.sportEventReader.findById(sportEventId);
     if (!sportEvent) {
-      this.logger.warn({ sportEventId }, 'contest management tier validation missing sport event');
+      this.logger.warn({ sportEventId }, 'contest management rules validation missing sport event');
       throw new ContestManagementError(
         'Selected sporting event was not found.',
         'SPORT_EVENT_NOT_FOUND',
         404,
       );
     }
-
-    await this.assertTierConfigurationFitsTierCount(sportEventId, configuration);
+    return sportEvent;
   }
 
   /**
@@ -464,9 +497,9 @@ export class ContestManagementService {
    * event never run through admin tier setup) — same "nothing to validate
    * against" behavior the old participantCount-based check had.
    */
-  private async assertTierConfigurationFitsTierCount(
-    sportEventId: string | null | undefined,
-    configuration: ContestConfigurationRequest,
+  private async assertTieredRulesFitTierCount(
+    sportEventId: string | undefined,
+    rules: TieredContestRules,
   ): Promise<void> {
     if (!sportEventId) {
       return;
@@ -475,7 +508,54 @@ export class ContestManagementService {
     if (tiers.length === 0) {
       return;
     }
-    assertCountedScoresFitRoster(configuration, tiers.length);
+    assertCountedScoresFitRoster(rules, tiers.length);
+  }
+
+  /**
+   * Budget rules take the event's salary cap, so the event must have been priced, and the
+   * cheapest roster of `rosterSize` active golfers must fit under it: a contest nobody could
+   * submit an entry to is refused here, not discovered by its members.
+   */
+  private async resolveBudgetRules(
+    sportEventId: string | undefined,
+    sportEvent: ContestCreateSportEventState | null,
+    rules: BudgetContestRules,
+  ): Promise<BudgetContestConfig> {
+    if (rules.countedScores > rules.rosterSize) {
+      throw new ContestManagementError(
+        `countedScores (${rules.countedScores}) cannot exceed the roster of ${rules.rosterSize}.`,
+        'CONTEST_BUDGET_FIELD_OUT_OF_RANGE',
+      );
+    }
+    if (!sportEventId || !sportEvent || sportEvent.salaryCap === null || !this.sportEventReader) {
+      this.logger.warn({ sportEventId: sportEventId ?? null }, 'contest management budget rules refused for an unpriced event');
+      throw new ContestManagementError(
+        'This event\'s golfers have no prices, so it can\'t run a budget contest.',
+        CONTEST_EVENT_NOT_PRICED,
+        409,
+      );
+    }
+    const { salaryCap } = sportEvent;
+    const prices = await this.sportEventReader.findActiveFieldPrices(sportEventId);
+    if (!canFillBudgetRoster(prices, rules.rosterSize, salaryCap)) {
+      this.logger.warn({
+        sportEventId,
+        rosterSize: rules.rosterSize,
+        salaryCap,
+        pricedGolferCount: prices.length,
+      }, 'contest management budget rules refused for a roster nobody could afford');
+      throw new ContestManagementError(
+        `No ${rules.rosterSize} golfers in this event's field fit under its $${salaryCap.toLocaleString('en-US')} salary cap. Pick a smaller roster.`,
+        CONTEST_BUDGET_UNFILLABLE,
+        409,
+      );
+    }
+    return {
+      selectionType: rules.selectionType,
+      rosterSize: rules.rosterSize,
+      salaryCap,
+      countedScores: rules.countedScores,
+    };
   }
 }
 
@@ -505,7 +585,7 @@ export class ContestManagementError extends Error {
  * countedScores doesn't exceed that roster.
  */
 function assertCountedScoresFitRoster(
-  configuration: ContestConfigurationRequest,
+  configuration: TieredContestRules,
   tierCount: number,
 ): void {
   const rosterSize = getTieredRosterSize(tierCount, configuration.picksPerTier);
@@ -513,6 +593,19 @@ function assertCountedScoresFitRoster(
     throw new ContestManagementError(
       `countedScores (${configuration.countedScores}) cannot exceed the roster of ${rosterSize} (${tierCount} tier(s) × ${configuration.picksPerTier} pick(s) per tier).`,
       'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+    );
+  }
+}
+
+/**
+ * A contest's rules are its own selection type's shape: tiered rules on a budget contest would
+ * be read as nonsense by every engine downstream.
+ */
+function assertRulesMatchSelectionType(rules: ContestRules, selectionType: SelectionType): void {
+  if (rules.selectionType !== selectionType) {
+    throw new ContestManagementError(
+      `This contest is ${selectionType}, so its rules must be ${selectionType} rules, not ${rules.selectionType}.`,
+      'CONTEST_RULES_SELECTION_TYPE_MISMATCH',
     );
   }
 }
@@ -546,7 +639,7 @@ async function syncDerivedScoring(
  * caller relies on the row existing — it just carries no config now.
  */
 function buildParticipantScoringConfig(
-  _configuration: GolfContestConfig,
+  _configuration: ContestSelectionConfig,
 ): Record<string, unknown> {
   return {};
 }
@@ -566,7 +659,7 @@ function buildContestManagementDetail(
     contestId: string;
     templateId?: string | null;
     templateVersion?: number | null;
-    configJson?: GolfContestConfig;
+    configJson?: ContestSelectionConfig;
     maxEntriesPerSquad?: number | null;
   },
   effectiveTiers: GolfEffectiveTierDto[],
@@ -595,30 +688,18 @@ function buildContestManagementDetail(
 }
 
 /**
- * The part of a configuration request that configJson stores: GolfContestConfig's own fields.
- * The entry cap has its own column, so a copy here could only drift from it. Rows saved before
- * #416 kept the whole request, a lock time included, and reading through this drops those keys.
- */
-function toStoredGolfConfig(configuration: GolfContestConfig): GolfContestConfig {
-  return {
-    picksPerTier: configuration.picksPerTier,
-    countedScores: configuration.countedScores,
-  };
-}
-
-/**
- * A configuration's typed golf settings. Every tiered configuration carries them: the one create
- * writes them, and #479's migration wrote them for rows saved before configJson existed.
+ * A configuration's typed rules. Every tiered and budget configuration carries them: the one
+ * create writes them, and #479's and #93's migrations wrote them for older rows.
  */
 function ensureTypedConfiguration(configuration: {
-  configJson?: GolfContestConfig;
+  configJson?: ContestSelectionConfig;
   maxEntriesPerSquad?: number | null;
-}): GolfContestConfig & {
-  maxEntriesPerSquad?: number | null;
+}): ContestSelectionConfig & {
+  maxEntriesPerSquad: number | null;
 } {
   if (configuration.configJson) {
     return {
-      ...toStoredGolfConfig(configuration.configJson),
+      ...configuration.configJson,
       maxEntriesPerSquad: configuration.maxEntriesPerSquad ?? null,
     };
   }
@@ -666,6 +747,6 @@ async function resolveCreateConfiguration(
 
   return {
     template,
-    configuration: input.configuration ?? (template.configJson as ContestConfigurationRequest),
+    configuration: input.configuration ?? template.configJson,
   };
 }

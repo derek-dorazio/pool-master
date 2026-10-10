@@ -17,12 +17,13 @@ describe('contest-management dto schemas', () => {
       selectionType: 'TIERED',
       configuration: {
         maxEntriesPerSquad: 3,
+        selectionType: 'TIERED',
         picksPerTier: 1,
         countedScores: 4,
       },
     });
 
-    expect(parsed.configuration?.picksPerTier).toBe(1);
+    expect(parsed.configuration).toMatchObject({ selectionType: 'TIERED', picksPerTier: 1 });
     expect(parsed.templateId).toBeUndefined();
   });
 
@@ -64,16 +65,32 @@ describe('contest-management dto schemas', () => {
     ]);
   });
 
-  it('refuses a selection type other than TIERED', () => {
+  it('refuses a selection type that has no typed rules yet', () => {
     expect(
       CreateContestRequestSchema.safeParse({
-        name: 'Budget',
+        name: 'Pick em',
         sportEventId: '11111111-1111-1111-1111-111111111111',
         contestFormat: 'ROSTER',
-        selectionType: 'BUDGET_PICK',
+        selectionType: 'PICK_EM',
         templateId: '11111111-1111-4111-8111-111111111111',
       }).success,
     ).toBe(false);
+  });
+
+  it('accepts budget rules of a roster size and counted scores, dropping a salary cap the commissioner may not set', () => {
+    const parsed = ContestConfigurationRequestSchema.parse({
+      selectionType: 'BUDGET_PICK',
+      rosterSize: 6,
+      countedScores: 4,
+      salaryCap: 1_000_000,
+    });
+
+    expect(parsed).toEqual({ selectionType: 'BUDGET_PICK', rosterSize: 6, countedScores: 4 });
+  });
+
+  it('refuses a budget roster above twelve golfers', () => {
+    expect(ContestConfigurationRequestSchema.safeParse({ selectionType: 'BUDGET_PICK', rosterSize: 13, countedScores: 4 }).success)
+      .toBe(false);
   });
 
   it('accepts template list query params and template dto payloads', () => {
@@ -97,6 +114,7 @@ describe('contest-management dto schemas', () => {
       schemaVersion: 1,
       configuration: {
         maxEntriesPerSquad: 1,
+        selectionType: 'TIERED',
         picksPerTier: 1,
         countedScores: 4,
         tierSource: 'ODDS',
@@ -141,6 +159,7 @@ describe('contest-management dto schemas', () => {
           id: 'config-1',
           contestId: 'contest-1',
           maxEntriesPerSquad: 1,
+          selectionType: 'TIERED',
           picksPerTier: 1,
           countedScores: 4,
         },
@@ -181,6 +200,7 @@ describe('contest-management dto schemas', () => {
             id: 'config-1',
             contestId: 'contest-1',
             maxEntriesPerSquad: 1,
+            selectionType: 'TIERED',
             picksPerTier: 1,
             countedScores: 4,
           },

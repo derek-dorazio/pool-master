@@ -23,7 +23,7 @@ import type {
   ErrorEnvelope,
   LeagueContextResponse,
 } from '@poolmaster/shared/dto';
-import { ContestStatus, Sport } from '@poolmaster/shared/domain';
+import { ContestStatus, Sport, SelectionType} from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 import { freshEventEdition } from '../../support/event-edition';
 
@@ -206,6 +206,7 @@ describe('Contest management integration', () => {
         selectionType: 'TIERED',
         configuration: {
           maxEntriesPerSquad: 3,
+          selectionType: SelectionType.TIERED,
           picksPerTier: 1,
           countedScores: 4,
         },
@@ -237,8 +238,7 @@ describe('Contest management integration', () => {
     expect(getRes.statusCode).toBe(200);
     const managedContest = getRes.json<ContestManagementResponse>().contest;
     expect(managedContest.id).toBe(contestId);
-    expect(managedContest.configuration.picksPerTier).toBe(1);
-    expect(managedContest.configuration.countedScores).toBe(4);
+    expect(managedContest.configuration).toMatchObject({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 });
 
     // #117 — a draft takes no entries, not even its commissioner's.
     const draftEntryRes = await getApp().inject({
@@ -256,6 +256,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         maxEntriesPerSquad: null,
+        selectionType: SelectionType.TIERED,
         picksPerTier: 1,
         countedScores: 5,
       },
@@ -263,8 +264,7 @@ describe('Contest management integration', () => {
 
     expect(updateRes.statusCode).toBe(200);
     const updatedContest = updateRes.json<ContestManagementResponse>().contest;
-    expect(updatedContest.configuration.picksPerTier).toBe(1);
-    expect(updatedContest.configuration.countedScores).toBe(5);
+    expect(updatedContest.configuration).toMatchObject({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 5 });
     expect(updatedContest.configuration.maxEntriesPerSquad).toBeNull();
 
     const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
@@ -318,6 +318,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         maxEntriesPerSquad: null,
+        selectionType: SelectionType.TIERED,
         picksPerTier: 1,
         countedScores: 4,
       },
@@ -374,8 +375,9 @@ describe('Contest management integration', () => {
     expect(createRes.statusCode).toBe(201);
     const createdContest = createRes.json<ContestResponse>().contest;
     expect(createdContest.status).toBe(ContestStatus.DRAFT);
+    expect(defaultTemplate.configuration.selectionType).toBe(SelectionType.TIERED);
     expect(createRes.json<ContestResponse>().contestConfiguration?.picksPerTier).toBe(
-      defaultTemplate.configuration.picksPerTier,
+      defaultTemplate.configuration.selectionType === SelectionType.TIERED ? defaultTemplate.configuration.picksPerTier : undefined,
     );
 
     const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
@@ -426,7 +428,25 @@ describe('Contest management integration', () => {
   });
 
   // #245 — a selection type with no typed configuration yet is refused at the schema.
-  it('refuses a selection type other than TIERED', async () => {
+  it('refuses a selection type other than TIERED or BUDGET_PICK with 400', async () => {
+    const createRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: ownerHeaders,
+      payload: {
+        name: 'Pick Em Create',
+        sportEventId,
+        contestFormat: 'ROSTER',
+        selectionType: 'PICK_EM',
+        configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
+      },
+    });
+
+    expect(createRes.statusCode).toBe(400);
+    expect(ErrorEnvelopeSchema.safeParse(createRes.json()).success).toBe(true);
+  });
+
+  it('refuses a budget contest whose rules are tiered with 422 CONTEST_RULES_SELECTION_TYPE_MISMATCH', async () => {
     const createRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.contests(leagueId),
@@ -436,12 +456,30 @@ describe('Contest management integration', () => {
         sportEventId,
         contestFormat: 'ROSTER',
         selectionType: 'BUDGET_PICK',
-        configuration: { picksPerTier: 1, countedScores: 4 },
+        configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
       },
     });
 
-    expect(createRes.statusCode).toBe(400);
-    expect(ErrorEnvelopeSchema.safeParse(createRes.json()).success).toBe(true);
+    expect(createRes.statusCode).toBe(422);
+    expect(createRes.json<ErrorEnvelope>().error.code).toBe('CONTEST_RULES_SELECTION_TYPE_MISMATCH');
+  });
+
+  it('refuses a budget contest on an event with no prices with 409 CONTEST_EVENT_NOT_PRICED', async () => {
+    const createRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: ownerHeaders,
+      payload: {
+        name: 'Unpriced Budget Create',
+        sportEventId,
+        contestFormat: 'ROSTER',
+        selectionType: 'BUDGET_PICK',
+        configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 },
+      },
+    });
+
+    expect(createRes.statusCode).toBe(409);
+    expect(createRes.json<ErrorEnvelope>().error.code).toBe('CONTEST_EVENT_NOT_PRICED');
   });
 
   // #245 — template plus configuration: the template is provenance, the configuration is whole.
@@ -468,6 +506,7 @@ describe('Contest management integration', () => {
         selectionType: 'TIERED',
         templateId: defaultTemplate.id,
         configuration: {
+          selectionType: SelectionType.TIERED,
           picksPerTier: 1,
           countedScores: 3,
         },
@@ -480,6 +519,7 @@ describe('Contest management integration', () => {
     });
     expect(configuration.templateId).toBe(defaultTemplate.id);
     expect(configuration.configJson).toEqual({
+      selectionType: SelectionType.TIERED,
       picksPerTier: 1,
       countedScores: 3,
     });
@@ -498,7 +538,7 @@ describe('Contest management integration', () => {
           sportEventId,
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
-          configuration: { picksPerTier: 1, countedScores: 4 },
+          configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
         },
       });
       expect(createRes.statusCode).toBe(201);

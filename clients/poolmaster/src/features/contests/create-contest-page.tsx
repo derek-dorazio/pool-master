@@ -207,8 +207,14 @@ export function CreateContestPage() {
   );
   const selectedEvent = eligibleEvents.find((event) => event.id === sportEventId) ?? null;
   const tierCount = selectedEvent?.tierCount ?? 0;
+  // The format's presets. The rules fields hold tiered rules, so a preset is offered when its
+  // rules are tiered too.
   const presets = useMemo(
-    () => (templatesQuery.data ?? []).filter((template) => template.selectionType === selectionType),
+    () => (templatesQuery.data ?? []).flatMap((template) => (
+      template.selectionType === selectionType && template.configuration.selectionType === SelectionType.TIERED
+        ? [{ ...template, configuration: template.configuration }]
+        : []
+    )),
     [selectionType, templatesQuery.data],
   );
   const parsedRules = parseContestRules(values, tierCount);
@@ -365,7 +371,7 @@ export function CreateContestPage() {
       : null);
   const presetOptions = [
     ...presets.map((template) => ({
-      label: formatPresetLabel(selectionType, template.configuration, tierCount),
+      label: formatPresetLabel(template.configuration, tierCount),
       testId: `contest-template-${template.templateKey}`,
       value: template.id,
     })),
@@ -486,7 +492,7 @@ export function CreateContestPage() {
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Members will see</div>
             <div className="font-semibold">{`${contestName.trim() || 'Untitled contest'} · ${selectedEvent.name}`}</div>
             <div>
-              {`${formatContestRules(selectionType, parsedRules.configuration, tierCount)} ${formatEntriesPerTeamSentence(parsedRules.configuration.maxEntriesPerSquad)}.`}
+              {`${formatContestRules(parsedRules.configuration, tierCount)} ${formatEntriesPerTeamSentence(parsedRules.configuration.maxEntriesPerSquad)}.`}
             </div>
           </div>
         ) : null}

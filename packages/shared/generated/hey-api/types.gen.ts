@@ -2610,21 +2610,36 @@ export type TeamOwnerInvitationPreviewResponse = {
 };
 
 /**
- * Approved commissioner-managed contest configuration payload for golf-first contest creation.
+ * Contest rules and entries-per-team limit, one shape per selection type. `selectionType` must match the contest's.
  */
 export type ContestConfigurationRequest = {
-    /**
-     * Maximum entries a Team may create. Null means unlimited.
-     */
-    maxEntriesPerSquad?: number | null;
+    selectionType: 'TIERED';
     /**
      * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
      */
     picksPerTier: number;
     /**
-     * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+     * How many golfer scores count toward the entry total, best first. At most the roster size.
      */
     countedScores: number;
+    /**
+     * Maximum entries a Team may create. Null means unlimited.
+     */
+    maxEntriesPerSquad?: number | null;
+} | {
+    selectionType: 'BUDGET_PICK';
+    /**
+     * How many golfers an entry picks, from anywhere in the field.
+     */
+    rosterSize: number;
+    /**
+     * How many golfer scores count toward the entry total, best first. At most the roster size.
+     */
+    countedScores: number;
+    /**
+     * Maximum entries a Team may create. Null means unlimited.
+     */
+    maxEntriesPerSquad?: number | null;
 };
 
 /**
@@ -2691,16 +2706,13 @@ export type ContestManagementDetailDto = {
      * Current commissioner-managed contest configuration.
      */
     configuration: {
-        /**
-         * Maximum entries a Team may create. Null means unlimited.
-         */
-        maxEntriesPerSquad?: number | null;
+        selectionType: 'TIERED';
         /**
          * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
          */
         picksPerTier: number;
         /**
-         * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
          */
         countedScores: number;
         /**
@@ -2711,6 +2723,36 @@ export type ContestManagementDetailDto = {
          * Contest that owns the configuration.
          */
         contestId: string;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+    } | {
+        selectionType: 'BUDGET_PICK';
+        /**
+         * How many golfers an entry picks, from anywhere in the field.
+         */
+        rosterSize: number;
+        /**
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
+         */
+        countedScores: number;
+        /**
+         * Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more.
+         */
+        salaryCap: number;
+        /**
+         * Contest-configuration identifier.
+         */
+        id: string;
+        /**
+         * Contest that owns the configuration.
+         */
+        contestId: string;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
     };
     /**
      * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
@@ -2824,18 +2866,33 @@ export type ContestConfigTemplateDto = {
      * Seeded configuration payload copied into a contest instance when the template is chosen.
      */
     configuration: {
-        /**
-         * Maximum entries a Team may create. Null means unlimited.
-         */
-        maxEntriesPerSquad?: number | null;
+        selectionType: 'TIERED';
         /**
          * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
          */
         picksPerTier: number;
         /**
-         * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
          */
         countedScores: number;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+    } | {
+        selectionType: 'BUDGET_PICK';
+        /**
+         * How many golfers an entry picks, from anywhere in the field.
+         */
+        rosterSize: number;
+        /**
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
+         */
+        countedScores: number;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
     };
 };
 
@@ -2868,16 +2925,13 @@ export type ContestManagementResponse = {
          * Current commissioner-managed contest configuration.
          */
         configuration: {
-            /**
-             * Maximum entries a Team may create. Null means unlimited.
-             */
-            maxEntriesPerSquad?: number | null;
+            selectionType: 'TIERED';
             /**
              * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
              */
             picksPerTier: number;
             /**
-             * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+             * How many golfer scores count toward the entry total, best first. At most the roster size.
              */
             countedScores: number;
             /**
@@ -2888,6 +2942,36 @@ export type ContestManagementResponse = {
              * Contest that owns the configuration.
              */
             contestId: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
+        } | {
+            selectionType: 'BUDGET_PICK';
+            /**
+             * How many golfers an entry picks, from anywhere in the field.
+             */
+            rosterSize: number;
+            /**
+             * How many golfer scores count toward the entry total, best first. At most the roster size.
+             */
+            countedScores: number;
+            /**
+             * Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more.
+             */
+            salaryCap: number;
+            /**
+             * Contest-configuration identifier.
+             */
+            id: string;
+            /**
+             * Contest that owns the configuration.
+             */
+            contestId: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
         };
         /**
          * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
@@ -3025,18 +3109,33 @@ export type ContestConfigTemplateListResponse = {
          * Seeded configuration payload copied into a contest instance when the template is chosen.
          */
         configuration: {
-            /**
-             * Maximum entries a Team may create. Null means unlimited.
-             */
-            maxEntriesPerSquad?: number | null;
+            selectionType: 'TIERED';
             /**
              * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
              */
             picksPerTier: number;
             /**
-             * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+             * How many golfer scores count toward the entry total, best first. At most the roster size.
              */
             countedScores: number;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
+        } | {
+            selectionType: 'BUDGET_PICK';
+            /**
+             * How many golfers an entry picks, from anywhere in the field.
+             */
+            rosterSize: number;
+            /**
+             * How many golfer scores count toward the entry total, best first. At most the roster size.
+             */
+            countedScores: number;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
         };
     }>;
 };
@@ -3069,18 +3168,33 @@ export type UpdateContestConfigTemplateRequest = {
      * Updated persisted configuration payload copied into future contests when this template is selected.
      */
     configuration?: {
-        /**
-         * Maximum entries a Team may create. Null means unlimited.
-         */
-        maxEntriesPerSquad?: number | null;
+        selectionType: 'TIERED';
         /**
          * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
          */
         picksPerTier: number;
         /**
-         * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
          */
         countedScores: number;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+    } | {
+        selectionType: 'BUDGET_PICK';
+        /**
+         * How many golfers an entry picks, from anywhere in the field.
+         */
+        rosterSize: number;
+        /**
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
+         */
+        countedScores: number;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
     };
 };
 
@@ -3144,18 +3258,33 @@ export type ContestConfigTemplateResponse = {
          * Seeded configuration payload copied into a contest instance when the template is chosen.
          */
         configuration: {
-            /**
-             * Maximum entries a Team may create. Null means unlimited.
-             */
-            maxEntriesPerSquad?: number | null;
+            selectionType: 'TIERED';
             /**
              * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
              */
             picksPerTier: number;
             /**
-             * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+             * How many golfer scores count toward the entry total, best first. At most the roster size.
              */
             countedScores: number;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
+        } | {
+            selectionType: 'BUDGET_PICK';
+            /**
+             * How many golfers an entry picks, from anywhere in the field.
+             */
+            rosterSize: number;
+            /**
+             * How many golfer scores count toward the entry total, best first. At most the roster size.
+             */
+            countedScores: number;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
         };
     };
 };
@@ -6473,9 +6602,6 @@ export type ContestCrudConfigurationRequest = {
          */
         participantIds: Array<string>;
     }>;
-    budget?: number;
-    rosterSize?: number;
-    pickCount?: number;
     picksPerPeriod?: number;
     roundValues?: Array<number>;
     startRound?: string;
@@ -6503,9 +6629,9 @@ export type CreateContestRequest = {
      */
     contestFormat: 'ROSTER';
     /**
-     * How an entry picks. Tiered only until another selection type has a typed configuration (budget #93, category #99); it must match the template's selection type when a template is named.
+     * How an entry picks: the selection types with typed rules. It must match the template's selection type when a template is named, and the configuration's.
      */
-    selectionType: 'TIERED';
+    selectionType: 'TIERED' | 'BUDGET_PICK';
     /**
      * Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.
      */
@@ -6514,18 +6640,33 @@ export type CreateContestRequest = {
      * The contest configuration. With a template, replaces the template's configuration; without one, is the configuration.
      */
     configuration?: {
-        /**
-         * Maximum entries a Team may create. Null means unlimited.
-         */
-        maxEntriesPerSquad?: number | null;
+        selectionType: 'TIERED';
         /**
          * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
          */
         picksPerTier: number;
         /**
-         * How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier.
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
          */
         countedScores: number;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+    } | {
+        selectionType: 'BUDGET_PICK';
+        /**
+         * How many golfers an entry picks, from anywhere in the field.
+         */
+        rosterSize: number;
+        /**
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
+         */
+        countedScores: number;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
     };
 };
 
@@ -7280,9 +7421,6 @@ export type ContestConfigurationDetailDto = {
          */
         participantIds: Array<string>;
     }>;
-    budget?: number;
-    rosterSize?: number;
-    pickCount?: number;
     picksPerPeriod?: number;
     roundValues?: Array<number>;
     startRound?: string;
@@ -7296,9 +7434,17 @@ export type ContestConfigurationDetailDto = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * How many golfers an entry picks from each of the event's tiers in managed tiered golf contests.
+     * Tiered contests: how many golfers an entry picks from each of the event's tiers.
      */
     picksPerTier?: number;
+    /**
+     * Budget contests: how many golfers an entry picks.
+     */
+    rosterSize?: number;
+    /**
+     * Budget contests: whole dollars an entry's picks may cost at most; the event's cap.
+     */
+    salaryCap?: number;
     /**
      * How many roster scores count toward the entry total in managed golf contests.
      */
@@ -7382,9 +7528,6 @@ export type ContestResponse = {
              */
             participantIds: Array<string>;
         }>;
-        budget?: number;
-        rosterSize?: number;
-        pickCount?: number;
         picksPerPeriod?: number;
         roundValues?: Array<number>;
         startRound?: string;
@@ -7398,9 +7541,17 @@ export type ContestResponse = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * How many golfers an entry picks from each of the event's tiers in managed tiered golf contests.
+         * Tiered contests: how many golfers an entry picks from each of the event's tiers.
          */
         picksPerTier?: number;
+        /**
+         * Budget contests: how many golfers an entry picks.
+         */
+        rosterSize?: number;
+        /**
+         * Budget contests: whole dollars an entry's picks may cost at most; the event's cap.
+         */
+        salaryCap?: number;
         /**
          * How many roster scores count toward the entry total in managed golf contests.
          */
@@ -7686,9 +7837,10 @@ export type SelectionStateResponse = {
     contestConfiguration?: {
         isExclusive: boolean;
         rounds?: number;
-        pickCount?: number;
+        /**
+         * How many picks a full roster holds.
+         */
         rosterSize?: number;
-        budget?: number;
         timePerPickSeconds?: number;
         picksPerPeriod?: number;
         roundValues?: Array<number>;
@@ -7858,9 +8010,10 @@ export type SelectionPickResponse = {
     contestConfiguration?: {
         isExclusive: boolean;
         rounds?: number;
-        pickCount?: number;
+        /**
+         * How many picks a full roster holds.
+         */
         rosterSize?: number;
-        budget?: number;
         timePerPickSeconds?: number;
         picksPerPeriod?: number;
         roundValues?: Array<number>;
@@ -14380,6 +14533,10 @@ export type UpdateContestConfigTemplateErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type UpdateContestConfigTemplateError = UpdateContestConfigTemplateErrors[keyof UpdateContestConfigTemplateErrors];

@@ -88,17 +88,17 @@ describe('selection engine registry', () => {
 });
 
 describe('tiered selection engine — roster size', () => {
-  it('adds up the roster from the tiers, ignoring the configured roster size', () => {
+  it('adds up the roster from the tiers', () => {
     const tiers = [
       tier({ tierNumber: 1, picksFromTier: 2 }),
       tier({ tierId: 'tier-2', tierNumber: 2, picksFromTier: 3 }),
     ];
 
-    expect(tieredSelectionEngine.rosterSize({ configuration: configuration({ rosterSize: 99 }), tiers })).toBe(5);
+    expect(tieredSelectionEngine.rosterSize({ configuration: configuration(), tiers })).toBe(5);
   });
 
   it('gives a contest with no tiers a roster of 0, which SELECTION_CONFIG_INVALID rests on', () => {
-    expect(tieredSelectionEngine.rosterSize({ configuration: configuration({ rosterSize: 6 }), tiers: [] })).toBe(0);
+    expect(tieredSelectionEngine.rosterSize({ configuration: configuration(), tiers: [] })).toBe(0);
   });
 });
 
@@ -229,8 +229,11 @@ describe('budget-pick selection engine', () => {
   const budgetRequest = (overrides: Partial<SelectionRequest> = {}) =>
     request({ participant: participant('a', null), tiers: [], rosterSize: 2, ...overrides });
 
-  it('reads the roster size off the configuration, and 0 when it carries none', () => {
-    expect(budgetPickSelectionEngine.rosterSize({ configuration: configuration({ rosterSize: 6 }), tiers: [] })).toBe(6);
+  it('reads the roster size off the contest\'s budget rules, and 0 when it carries none', () => {
+    expect(budgetPickSelectionEngine.rosterSize({
+      configuration: configuration({ configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, salaryCap: 50_000, countedScores: 4 } }),
+      tiers: [],
+    })).toBe(6);
     expect(budgetPickSelectionEngine.rosterSize({ configuration: configuration(), tiers: [] })).toBe(0);
     expect(budgetPickSelectionEngine.rosterSize({ configuration: null, tiers: TIERS })).toBe(0);
   });

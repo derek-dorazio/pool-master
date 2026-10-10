@@ -3,6 +3,7 @@ export * from './unvalidated';
 export * from './contest-validity';
 export * from './tiered-roster';
 export * from './budget-pricing';
+export * from './contest-rules';
 export * from './sport-event-lifecycle';
 export * from './providers';
 export * from './sport-catalog-types';
@@ -23,9 +24,7 @@ export type {
 export type {
   ContestConfigTemplate,
   ContestConfiguration,
-  GolfContestConfig,
   GolfContestTierDefinition,
-  GolfTieredContestConfig,
   PersistedGolfContestTierDefinition,
   ParticipantContestScoringRule,
   SportEvent,
