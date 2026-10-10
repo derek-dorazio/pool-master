@@ -1135,7 +1135,7 @@ export type DeleteLeagueRequest = {
 };
 
 /**
- * Commissioner request payload for editing league details while the league remains active.
+ * Commissioner request payload for editing league details while the league remains active. Name, description and icon are replaced together, so a save either applies all three or none.
  */
 export type UpdateLeagueDetailsRequest = {
     /**
@@ -1146,14 +1146,8 @@ export type UpdateLeagueDetailsRequest = {
      * Optional updated commissioner-facing league description. Omit or send an empty value to clear it.
      */
     description?: string;
-};
-
-/**
- * Commissioner request payload for selecting a built-in league icon.
- */
-export type UpdateLeagueIconRequest = {
     /**
-     * Selected built-in league icon from the curated PoolMaster icon catalog.
+     * Built-in league icon from the curated PoolMaster icon catalog. Send the current icon to keep it.
      */
     iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
 };
@@ -12055,37 +12049,6 @@ export type UpdateLeagueDetailsResponses = {
 };
 
 export type UpdateLeagueDetailsResponse = UpdateLeagueDetailsResponses[keyof UpdateLeagueDetailsResponses];
-
-export type UpdateLeagueIconData = {
-    body: UpdateLeagueIconRequest;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/icon';
-};
-
-export type UpdateLeagueIconErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type UpdateLeagueIconError = UpdateLeagueIconErrors[keyof UpdateLeagueIconErrors];
-
-export type UpdateLeagueIconResponses = {
-    /**
-     * Single-league response.
-     */
-    200: LeagueResponse;
-};
-
-export type UpdateLeagueIconResponse = UpdateLeagueIconResponses[keyof UpdateLeagueIconResponses];
 
 export type InactivateLeagueData = {
     body?: never;

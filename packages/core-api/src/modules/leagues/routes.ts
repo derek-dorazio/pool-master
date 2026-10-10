@@ -166,7 +166,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
       tags: ['Leagues'],
       summary: 'Update league details',
       description:
-        'Allows a commissioner to edit the active league detail fields that are currently product truth: name and description. League code remains immutable after creation.',
+        'Allows a commissioner to edit an active league\'s name, description and built-in icon in one request, so the change applies whole or not at all. League code remains immutable after creation.',
       operationId: 'updateLeagueDetails',
       body: schemaRef('UpdateLeagueDetailsRequest'),
       response: {
@@ -177,24 +177,6 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
     },
     preHandler: requireCommissioner(membershipRepo),
     handler: league.updateLeagueDetails,
-  });
-
-  fastify.put('/:id/icon', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Update league icon',
-      description:
-        'Allows a commissioner to select a built-in league icon from the curated PoolMaster icon catalog. Custom uploads remain out of scope for this slice.',
-      operationId: 'updateLeagueIcon',
-      body: schemaRef('UpdateLeagueIconRequest'),
-      response: {
-        200: schemaRef('LeagueResponse'),
-        400: schemaRef('ErrorEnvelope'),
-        404: schemaRef('ErrorEnvelope'),
-      },
-    },
-    preHandler: requireCommissioner(membershipRepo),
-    handler: league.updateLeagueIcon,
   });
 
   fastify.post('/:id/inactivate', {

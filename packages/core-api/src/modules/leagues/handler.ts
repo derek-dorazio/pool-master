@@ -8,7 +8,7 @@ import { toLeagueDto } from '../../mappers/leagues.mapper';
 import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
 import { toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { sendError } from '../../core/error-handler';
-import type { CreateLeagueInput, LeagueService } from './service';
+import type { CreateLeagueInput, LeagueService, UpdateLeagueDetailsInput } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
 import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { League, LeagueMembership } from '@poolmaster/shared/domain';
@@ -32,7 +32,6 @@ export function createLeagueHandlers(
     getLeague,
     getLeagueByCode,
     updateLeagueDetails,
-    updateLeagueIcon,
     inactivateLeague,
     activateLeague,
     deleteLeague,
@@ -390,7 +389,7 @@ export function createLeagueHandlers(
   async function updateLeagueDetails(
     request: FastifyRequest<{
       Params: { id: string };
-      Body: { name: string; description?: string };
+      Body: UpdateLeagueDetailsInput;
     }>,
     reply: FastifyReply,
   ): Promise<void> {
@@ -421,48 +420,6 @@ export function createLeagueHandlers(
           action: 'leagueRoute.updateDetails.invalid',
           data: { leagueId: request.params.id, errorCode: err.code },
         }, 'Rejected league detail update');
-        return sendError(reply, err.statusCode, err.code, err.message);
-      }
-      throw err;
-    }
-  }
-
-  async function updateLeagueIcon(
-    request: FastifyRequest<{
-      Params: { id: string };
-      Body: { iconKey: string };
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const logger = request.contextLogger ?? request.log;
-    logger.debug({
-      action: 'leagueRoute.updateIcon.enter',
-      data: { leagueId: request.params.id, iconKey: request.body.iconKey },
-    }, 'Handling update league icon request');
-    try {
-      const league = await leagueService.updateLeagueIcon(request.params.id, {
-        iconKey: request.body.iconKey as never,
-      });
-      logger.info({
-        action: 'leagueRoute.updateIcon.success',
-        data: { leagueId: request.params.id, iconKey: request.body.iconKey },
-      }, 'Updated league icon');
-      return reply.send({
-        league: toLeagueDto(league),
-      });
-    } catch (err) {
-      if (err instanceof LeagueNotFoundError) {
-        logger.warn({
-          action: 'leagueRoute.updateIcon.notFound',
-          data: { leagueId: request.params.id },
-        }, 'Cannot update icon for missing league');
-        return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
-      }
-      if (err instanceof LeagueOperationError) {
-        logger.warn({
-          action: 'leagueRoute.updateIcon.invalid',
-          data: { leagueId: request.params.id, errorCode: err.code },
-        }, 'Rejected league icon update');
         return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;

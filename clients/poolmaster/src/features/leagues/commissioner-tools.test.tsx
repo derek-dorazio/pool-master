@@ -23,7 +23,6 @@ import {
   listLeagueSquadsData,
   listLeaguesData,
   updateLeagueDetailsData,
-  updateLeagueIconData,
 } from './test/fixtures';
 
 const activateLeagueMock = vi.fn();
@@ -35,7 +34,6 @@ const listLeagueMembersMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const refreshTokenMock = vi.fn();
 const updateLeagueDetailsMock = vi.fn();
-const updateLeagueIconMock = vi.fn();
 
 bindApiMocks({
   activateLeague: activateLeagueMock,
@@ -47,7 +45,6 @@ bindApiMocks({
   listLeagueSquads: listLeagueSquadsMock,
   refreshToken: refreshTokenMock,
   updateLeagueDetails: updateLeagueDetailsMock,
-  updateLeagueIcon: updateLeagueIconMock,
 });
 
 function renderCommissionerTools(path = '/league/BIGDAWGS/admin') {
@@ -116,7 +113,7 @@ afterEach(() => {
   for (const mock of [
     activateLeagueMock, deleteLeagueMock, getCurrentUserMock, getLeagueByCodeMock,
     inactivateLeagueMock, listLeagueMembersMock, listLeagueSquadsMock, refreshTokenMock,
-    updateLeagueDetailsMock, updateLeagueIconMock,
+    updateLeagueDetailsMock,
   ]) {
     mock.mockReset();
   }
@@ -311,13 +308,9 @@ describe('League settings', () => {
 });
 
 describe('Edit league', () => {
-  it('saves name, description and icon with one Save and returns to League settings', async () => {
+  it('saves name, description and icon in one request and returns to League settings', async () => {
     primeMocks();
     updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({
-      name: 'Bigger Dawgs',
-      description: 'Updated description',
-    }))));
-    updateLeagueIconMock.mockResolvedValue(apiSuccess(updateLeagueIconData(buildLeague({
       name: 'Bigger Dawgs',
       description: 'Updated description',
       iconKey: 'GOLF_FLAG',
@@ -338,13 +331,10 @@ describe('Edit league', () => {
 
     const general = within(await screen.findByTestId('league-settings-general'));
     expect(await general.findByText('Bigger Dawgs')).toBeInTheDocument();
+    expect(updateLeagueDetailsMock).toHaveBeenCalledTimes(1);
     expect(updateLeagueDetailsMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { id: 'league-1' },
-      body: { name: 'Bigger Dawgs', description: 'Updated description' },
-    }));
-    expect(updateLeagueIconMock).toHaveBeenCalledWith(expect.objectContaining({
-      path: { id: 'league-1' },
-      body: { iconKey: 'GOLF_FLAG' },
+      body: { name: 'Bigger Dawgs', description: 'Updated description', iconKey: 'GOLF_FLAG' },
     }));
     // The league selector reads the leagues list, which is updated from the save, not refetched.
     expect(queryClient.getQueryData(QueryKeys.leagues.list)).toMatchObject({
@@ -352,7 +342,7 @@ describe('Edit league', () => {
     });
   });
 
-  it('leaves the icon alone when only the name changes', async () => {
+  it('sends the current icon unchanged when only the name changes', async () => {
     primeMocks();
     updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({ name: 'Bigger Dawgs' }))));
 
@@ -362,7 +352,9 @@ describe('Edit league', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save league' }));
 
     expect(await screen.findByTestId('league-settings-page')).toBeInTheDocument();
-    expect(updateLeagueIconMock).not.toHaveBeenCalled();
+    expect(updateLeagueDetailsMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { name: 'Bigger Dawgs', description: 'A test league', iconKey: 'TROPHY' },
+    }));
   });
 
   it('sends no description when it is emptied, which the contract treats as clearing it', async () => {
@@ -375,7 +367,7 @@ describe('Edit league', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save league' }));
 
     await waitFor(() => expect(updateLeagueDetailsMock).toHaveBeenCalledWith(expect.objectContaining({
-      body: { name: 'Big Dawgs' },
+      body: { name: 'Big Dawgs', iconKey: 'TROPHY' },
     })));
   });
 
