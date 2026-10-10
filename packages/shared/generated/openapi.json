@@ -5538,33 +5538,82 @@
         "description": "Public preview payload for a team-owner invitation."
       },
       "ContestConfigurationRequest": {
-        "type": "object",
-        "properties": {
-          "maxEntriesPerSquad": {
-            "type": [
-              "integer",
-              "null"
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "selectionType": {
+                "type": "string",
+                "enum": [
+                  "TIERED"
+                ]
+              },
+              "picksPerTier": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
+              },
+              "countedScores": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+              },
+              "maxEntriesPerSquad": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "description": "Maximum entries a Team may create. Null means unlimited."
+              }
+            },
+            "required": [
+              "selectionType",
+              "picksPerTier",
+              "countedScores"
             ],
-            "minimum": 1,
-            "description": "Maximum entries a Team may create. Null means unlimited."
+            "additionalProperties": false,
+            "description": "Tiered rules: pick the same number of golfers from every tier of the event."
           },
-          "picksPerTier": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
-          },
-          "countedScores": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
+          {
+            "type": "object",
+            "properties": {
+              "selectionType": {
+                "type": "string",
+                "enum": [
+                  "BUDGET_PICK"
+                ]
+              },
+              "rosterSize": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 12,
+                "description": "How many golfers an entry picks, from anywhere in the field."
+              },
+              "countedScores": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+              },
+              "maxEntriesPerSquad": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "description": "Maximum entries a Team may create. Null means unlimited."
+              }
+            },
+            "required": [
+              "selectionType",
+              "rosterSize",
+              "countedScores"
+            ],
+            "additionalProperties": false,
+            "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
           }
-        },
-        "required": [
-          "picksPerTier",
-          "countedScores"
         ],
-        "additionalProperties": false,
-        "description": "Approved commissioner-managed contest configuration payload for golf-first contest creation."
+        "description": "Contest rules and entries-per-team limit, one shape per selection type. `selectionType` must match the contest's."
       },
       "GolfEffectiveTierDto": {
         "type": "object",
@@ -5659,42 +5708,108 @@
             ]
           },
           "configuration": {
-            "type": "object",
-            "properties": {
-              "maxEntriesPerSquad": {
-                "type": [
-                  "integer",
-                  "null"
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "TIERED"
+                    ]
+                  },
+                  "picksPerTier": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "Contest-configuration identifier."
+                  },
+                  "contestId": {
+                    "type": "string",
+                    "description": "Contest that owns the configuration."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "picksPerTier",
+                  "countedScores",
+                  "id",
+                  "contestId"
                 ],
-                "minimum": 1,
-                "description": "Maximum entries a Team may create. Null means unlimited."
+                "additionalProperties": false,
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
               },
-              "picksPerTier": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
-              },
-              "countedScores": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
-              },
-              "id": {
-                "type": "string",
-                "description": "Contest-configuration identifier."
-              },
-              "contestId": {
-                "type": "string",
-                "description": "Contest that owns the configuration."
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "BUDGET_PICK"
+                    ]
+                  },
+                  "rosterSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12,
+                    "description": "How many golfers an entry picks, from anywhere in the field."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "salaryCap": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10000000,
+                    "description": "Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "Contest-configuration identifier."
+                  },
+                  "contestId": {
+                    "type": "string",
+                    "description": "Contest that owns the configuration."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "rosterSize",
+                  "countedScores",
+                  "salaryCap",
+                  "id",
+                  "contestId"
+                ],
+                "additionalProperties": false,
+                "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
               }
-            },
-            "required": [
-              "picksPerTier",
-              "countedScores",
-              "id",
-              "contestId"
             ],
-            "additionalProperties": false,
             "description": "Current commissioner-managed contest configuration."
           },
           "effectiveTiers": {
@@ -5892,32 +6007,81 @@
             "description": "Version of the configuration schema metadata expected by the template."
           },
           "configuration": {
-            "type": "object",
-            "properties": {
-              "maxEntriesPerSquad": {
-                "type": [
-                  "integer",
-                  "null"
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "TIERED"
+                    ]
+                  },
+                  "picksPerTier": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "picksPerTier",
+                  "countedScores"
                 ],
-                "minimum": 1,
-                "description": "Maximum entries a Team may create. Null means unlimited."
+                "additionalProperties": false,
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
               },
-              "picksPerTier": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
-              },
-              "countedScores": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "BUDGET_PICK"
+                    ]
+                  },
+                  "rosterSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12,
+                    "description": "How many golfers an entry picks, from anywhere in the field."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "rosterSize",
+                  "countedScores"
+                ],
+                "additionalProperties": false,
+                "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
               }
-            },
-            "required": [
-              "picksPerTier",
-              "countedScores"
             ],
-            "additionalProperties": false,
             "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
           }
         },
@@ -5970,42 +6134,108 @@
                 ]
               },
               "configuration": {
-                "type": "object",
-                "properties": {
-                  "maxEntriesPerSquad": {
-                    "type": [
-                      "integer",
-                      "null"
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "TIERED"
+                        ]
+                      },
+                      "picksPerTier": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
+                      },
+                      "countedScores": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                      },
+                      "id": {
+                        "type": "string",
+                        "description": "Contest-configuration identifier."
+                      },
+                      "contestId": {
+                        "type": "string",
+                        "description": "Contest that owns the configuration."
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      }
+                    },
+                    "required": [
+                      "selectionType",
+                      "picksPerTier",
+                      "countedScores",
+                      "id",
+                      "contestId"
                     ],
-                    "minimum": 1,
-                    "description": "Maximum entries a Team may create. Null means unlimited."
+                    "additionalProperties": false,
+                    "description": "Tiered rules: pick the same number of golfers from every tier of the event."
                   },
-                  "picksPerTier": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
-                  },
-                  "countedScores": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
-                  },
-                  "id": {
-                    "type": "string",
-                    "description": "Contest-configuration identifier."
-                  },
-                  "contestId": {
-                    "type": "string",
-                    "description": "Contest that owns the configuration."
+                  {
+                    "type": "object",
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "BUDGET_PICK"
+                        ]
+                      },
+                      "rosterSize": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 12,
+                        "description": "How many golfers an entry picks, from anywhere in the field."
+                      },
+                      "countedScores": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                      },
+                      "salaryCap": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000000,
+                        "description": "Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more."
+                      },
+                      "id": {
+                        "type": "string",
+                        "description": "Contest-configuration identifier."
+                      },
+                      "contestId": {
+                        "type": "string",
+                        "description": "Contest that owns the configuration."
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      }
+                    },
+                    "required": [
+                      "selectionType",
+                      "rosterSize",
+                      "countedScores",
+                      "salaryCap",
+                      "id",
+                      "contestId"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
                   }
-                },
-                "required": [
-                  "picksPerTier",
-                  "countedScores",
-                  "id",
-                  "contestId"
                 ],
-                "additionalProperties": false,
                 "description": "Current commissioner-managed contest configuration."
               },
               "effectiveTiers": {
@@ -6261,32 +6491,81 @@
                   "description": "Version of the configuration schema metadata expected by the template."
                 },
                 "configuration": {
-                  "type": "object",
-                  "properties": {
-                    "maxEntriesPerSquad": {
-                      "type": [
-                        "integer",
-                        "null"
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "selectionType": {
+                          "type": "string",
+                          "enum": [
+                            "TIERED"
+                          ]
+                        },
+                        "picksPerTier": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
+                        },
+                        "countedScores": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                        },
+                        "maxEntriesPerSquad": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "description": "Maximum entries a Team may create. Null means unlimited."
+                        }
+                      },
+                      "required": [
+                        "selectionType",
+                        "picksPerTier",
+                        "countedScores"
                       ],
-                      "minimum": 1,
-                      "description": "Maximum entries a Team may create. Null means unlimited."
+                      "additionalProperties": false,
+                      "description": "Tiered rules: pick the same number of golfers from every tier of the event."
                     },
-                    "picksPerTier": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
-                    },
-                    "countedScores": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
+                    {
+                      "type": "object",
+                      "properties": {
+                        "selectionType": {
+                          "type": "string",
+                          "enum": [
+                            "BUDGET_PICK"
+                          ]
+                        },
+                        "rosterSize": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 12,
+                          "description": "How many golfers an entry picks, from anywhere in the field."
+                        },
+                        "countedScores": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                        },
+                        "maxEntriesPerSquad": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "description": "Maximum entries a Team may create. Null means unlimited."
+                        }
+                      },
+                      "required": [
+                        "selectionType",
+                        "rosterSize",
+                        "countedScores"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
                     }
-                  },
-                  "required": [
-                    "picksPerTier",
-                    "countedScores"
                   ],
-                  "additionalProperties": false,
                   "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
                 }
               },
@@ -6345,32 +6624,81 @@
             "description": "Whether commissioners can select this template in future create flows."
           },
           "configuration": {
-            "type": "object",
-            "properties": {
-              "maxEntriesPerSquad": {
-                "type": [
-                  "integer",
-                  "null"
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "TIERED"
+                    ]
+                  },
+                  "picksPerTier": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "picksPerTier",
+                  "countedScores"
                 ],
-                "minimum": 1,
-                "description": "Maximum entries a Team may create. Null means unlimited."
+                "additionalProperties": false,
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
               },
-              "picksPerTier": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
-              },
-              "countedScores": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "BUDGET_PICK"
+                    ]
+                  },
+                  "rosterSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12,
+                    "description": "How many golfers an entry picks, from anywhere in the field."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "rosterSize",
+                  "countedScores"
+                ],
+                "additionalProperties": false,
+                "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
               }
-            },
-            "required": [
-              "picksPerTier",
-              "countedScores"
             ],
-            "additionalProperties": false,
             "description": "Updated persisted configuration payload copied into future contests when this template is selected."
           }
         },
@@ -6467,32 +6795,81 @@
                 "description": "Version of the configuration schema metadata expected by the template."
               },
               "configuration": {
-                "type": "object",
-                "properties": {
-                  "maxEntriesPerSquad": {
-                    "type": [
-                      "integer",
-                      "null"
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "TIERED"
+                        ]
+                      },
+                      "picksPerTier": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
+                      },
+                      "countedScores": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      }
+                    },
+                    "required": [
+                      "selectionType",
+                      "picksPerTier",
+                      "countedScores"
                     ],
-                    "minimum": 1,
-                    "description": "Maximum entries a Team may create. Null means unlimited."
+                    "additionalProperties": false,
+                    "description": "Tiered rules: pick the same number of golfers from every tier of the event."
                   },
-                  "picksPerTier": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
-                  },
-                  "countedScores": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
+                  {
+                    "type": "object",
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "BUDGET_PICK"
+                        ]
+                      },
+                      "rosterSize": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 12,
+                        "description": "How many golfers an entry picks, from anywhere in the field."
+                      },
+                      "countedScores": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      }
+                    },
+                    "required": [
+                      "selectionType",
+                      "rosterSize",
+                      "countedScores"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
                   }
-                },
-                "required": [
-                  "picksPerTier",
-                  "countedScores"
                 ],
-                "additionalProperties": false,
                 "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
               }
             },
@@ -13033,15 +13410,6 @@
               "description": "Tier definition used in contest create and update flows."
             }
           },
-          "budget": {
-            "type": "number"
-          },
-          "rosterSize": {
-            "type": "integer"
-          },
-          "pickCount": {
-            "type": "integer"
-          },
           "picksPerPeriod": {
             "type": "integer"
           },
@@ -13097,9 +13465,10 @@
           "selectionType": {
             "type": "string",
             "enum": [
-              "TIERED"
+              "TIERED",
+              "BUDGET_PICK"
             ],
-            "description": "How an entry picks. Tiered only until another selection type has a typed configuration (budget #93, category #99); it must match the template's selection type when a template is named."
+            "description": "How an entry picks: the selection types with typed rules. It must match the template's selection type when a template is named, and the configuration's."
           },
           "templateId": {
             "type": "string",
@@ -13107,32 +13476,81 @@
             "description": "Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create."
           },
           "configuration": {
-            "type": "object",
-            "properties": {
-              "maxEntriesPerSquad": {
-                "type": [
-                  "integer",
-                  "null"
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "TIERED"
+                    ]
+                  },
+                  "picksPerTier": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "picksPerTier",
+                  "countedScores"
                 ],
-                "minimum": 1,
-                "description": "Maximum entries a Team may create. Null means unlimited."
+                "additionalProperties": false,
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
               },
-              "picksPerTier": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
-              },
-              "countedScores": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How many golfer scores count toward the Team total. At most the event's tier count times picksPerTier."
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "BUDGET_PICK"
+                    ]
+                  },
+                  "rosterSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12,
+                    "description": "How many golfers an entry picks, from anywhere in the field."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "rosterSize",
+                  "countedScores"
+                ],
+                "additionalProperties": false,
+                "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
               }
-            },
-            "required": [
-              "picksPerTier",
-              "countedScores"
             ],
-            "additionalProperties": false,
             "description": "The contest configuration. With a template, replaces the template's configuration; without one, is the configuration."
           }
         },
@@ -14696,15 +15114,6 @@
               "description": "Tier definition used in contest create and update flows."
             }
           },
-          "budget": {
-            "type": "number"
-          },
-          "rosterSize": {
-            "type": "integer"
-          },
-          "pickCount": {
-            "type": "integer"
-          },
           "picksPerPeriod": {
             "type": "integer"
           },
@@ -14742,7 +15151,15 @@
           },
           "picksPerTier": {
             "type": "integer",
-            "description": "How many golfers an entry picks from each of the event's tiers in managed tiered golf contests."
+            "description": "Tiered contests: how many golfers an entry picks from each of the event's tiers."
+          },
+          "rosterSize": {
+            "type": "integer",
+            "description": "Budget contests: how many golfers an entry picks."
+          },
+          "salaryCap": {
+            "type": "integer",
+            "description": "Budget contests: whole dollars an entry's picks may cost at most; the event's cap."
           },
           "countedScores": {
             "type": "integer",
@@ -14957,15 +15374,6 @@
                   "description": "Tier definition used in contest create and update flows."
                 }
               },
-              "budget": {
-                "type": "number"
-              },
-              "rosterSize": {
-                "type": "integer"
-              },
-              "pickCount": {
-                "type": "integer"
-              },
               "picksPerPeriod": {
                 "type": "integer"
               },
@@ -15003,7 +15411,15 @@
               },
               "picksPerTier": {
                 "type": "integer",
-                "description": "How many golfers an entry picks from each of the event's tiers in managed tiered golf contests."
+                "description": "Tiered contests: how many golfers an entry picks from each of the event's tiers."
+              },
+              "rosterSize": {
+                "type": "integer",
+                "description": "Budget contests: how many golfers an entry picks."
+              },
+              "salaryCap": {
+                "type": "integer",
+                "description": "Budget contests: whole dollars an entry's picks may cost at most; the event's cap."
               },
               "countedScores": {
                 "type": "integer",
@@ -15683,14 +16099,9 @@
               "rounds": {
                 "type": "number"
               },
-              "pickCount": {
-                "type": "number"
-              },
               "rosterSize": {
-                "type": "number"
-              },
-              "budget": {
-                "type": "number"
+                "type": "number",
+                "description": "How many picks a full roster holds."
               },
               "timePerPickSeconds": {
                 "type": "number"
@@ -16317,14 +16728,9 @@
               "rounds": {
                 "type": "number"
               },
-              "pickCount": {
-                "type": "number"
-              },
               "rosterSize": {
-                "type": "number"
-              },
-              "budget": {
-                "type": "number"
+                "type": "number",
+                "description": "How many picks a full roster holds."
               },
               "timePerPickSeconds": {
                 "type": "number"
@@ -29335,7 +29741,7 @@
         "tags": [
           "Contest Config Templates"
         ],
-        "description": "Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration.",
+        "description": "Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template's own selection type's rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise).",
         "requestBody": {
           "required": true,
           "content": {
@@ -29398,6 +29804,16 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

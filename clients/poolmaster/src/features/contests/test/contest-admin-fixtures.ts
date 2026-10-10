@@ -92,6 +92,7 @@ export function buildManagedContest(
       id: `config-${id}`,
       contestId: id,
       maxEntriesPerSquad: 1,
+      selectionType: 'TIERED',
       picksPerTier: 1,
       countedScores: 4,
     },

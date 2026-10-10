@@ -29,10 +29,8 @@ import type {
 } from '../modules/selections/types';
 
 /**
- * The configuration subset a selection-room client needs. `rosterSize` prefers the room's computed
- * size and falls back through the configuration's own roster size, pick count and round count —
- * a chain of `||` rather than `??`, so a stored zero falls through to the next candidate the
- * same way a null does.
+ * The configuration subset a selection-room client needs. `rosterSize` is the room's, computed by
+ * the contest's selection engine; a room that cannot take picks has none.
  */
 export function toSelectionContestConfigurationDto(
   configuration: ContestConfiguration | null,
@@ -43,14 +41,7 @@ export function toSelectionContestConfigurationDto(
   return {
     isExclusive: configuration.isExclusive ?? false,
     rounds: configuration.rounds ?? undefined,
-    pickCount: configuration.pickCount ?? undefined,
-    rosterSize:
-      rosterSize
-      || configuration.rosterSize
-      || configuration.pickCount
-      || configuration.rounds
-      || undefined,
-    budget: configuration.budget ?? undefined,
+    rosterSize: rosterSize > 0 ? rosterSize : undefined,
     timePerPickSeconds: configuration.timePerPickSeconds ?? undefined,
     picksPerPeriod: configuration.picksPerPeriod ?? undefined,
     roundValues: configuration.roundValues ?? undefined,

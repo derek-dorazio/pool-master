@@ -133,7 +133,7 @@ function buildWorld(options: WorldOptions = {}) {
     contestId: CONTEST_ID,
     selectionType: SelectionType.TIERED,
     isExclusive: options.isExclusive ?? false,
-    configJson: { picksPerTier: PICKS_PER_TIER, countedScores: 3 },
+    configJson: { selectionType: SelectionType.TIERED, picksPerTier: PICKS_PER_TIER, countedScores: 3 },
     ...TIMESTAMPS,
   } as ContestConfiguration;
   const entries = [entry(ENTRY_A, SQUAD_A, -8), entry(ENTRY_B, SQUAD_B, -12)];

@@ -75,8 +75,6 @@ export async function loadContestScoringConfiguration(
   const rules = await deps.scoringRules.findByContestConfiguration(configuration.id);
   return {
     configJson: configuration.configJson ?? null,
-    rosterSize: configuration.rosterSize ?? null,
-    pickCount: configuration.pickCount ?? null,
     rounds: configuration.rounds ?? null,
     participantScoringRules: rules.map((rule) => ({
       participantScoringDefinitionId: rule.participantScoringDefinitionId,

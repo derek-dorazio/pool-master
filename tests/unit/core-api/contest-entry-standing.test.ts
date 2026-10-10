@@ -2,53 +2,11 @@ import {
   applySettledContestStandings,
   buildContestEntryStanding,
   rankContestEntryStandings,
-  resolveContestCountingRule,
   type ContestLeaderboardEntryInput,
   type ParticipantScore,
 } from '../../../packages/core-api/src/modules/contests/contest-leaderboard-calculator';
 
-// An entry's standing is its best N picks' scores summed. These pin the counting rule's source,
-// which picks count, which are dropped, what an unscored pick does, and how entries rank and tie.
-
-describe('contest counting rule', () => {
-  const configuration = (overrides: { configJson?: unknown; rosterSize?: number | null; pickCount?: number | null }) => ({
-    configJson: {},
-    rosterSize: null,
-    pickCount: null,
-    rounds: 4,
-    participantScoringRules: [],
-    ...overrides,
-  });
-
-  it('counts the configuration\'s countedScores ahead of its roster size and pick count', () => {
-    expect(resolveContestCountingRule(configuration({ configJson: { countedScores: 4 }, rosterSize: 6, pickCount: 6 })))
-      .toEqual({ type: 'BEST_N_GOLFERS', count: 4 });
-  });
-
-  it('falls back to the roster size, then the pick count, when countedScores is absent', () => {
-    expect(resolveContestCountingRule(configuration({ rosterSize: 5, pickCount: 6 }))).toEqual({ type: 'BEST_N_GOLFERS', count: 5 });
-    expect(resolveContestCountingRule(configuration({ pickCount: 6 }))).toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
-  });
-
-  it('ignores a countedScores that is not a positive whole number and falls back to the roster size', () => {
-    for (const countedScores of [0, -2, 2.5, '4', null]) {
-      expect(resolveContestCountingRule(configuration({ configJson: { countedScores }, rosterSize: 6 })))
-        .toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
-    }
-  });
-
-  it('ignores a configJson that is an array or not an object', () => {
-    expect(resolveContestCountingRule(configuration({ configJson: [{ countedScores: 2 }], rosterSize: 6 })))
-      .toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
-    expect(resolveContestCountingRule(configuration({ configJson: 'countedScores=2', rosterSize: 6 })))
-      .toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
-  });
-
-  it('has no counting rule when nothing configures a positive count, or there is no configuration', () => {
-    expect(resolveContestCountingRule(configuration({ rosterSize: 0, pickCount: null }))).toBeNull();
-    expect(resolveContestCountingRule(null)).toBeNull();
-  });
-});
+// An entry's standing is its best N picks' scores summed. These pin which picks count, which are dropped, what an unscored pick does, and how entries rank and tie.
 
 describe('contest entry standing — best N of the entry\'s picks', () => {
   const pickedAt = new Date('2026-04-01T12:00:00.000Z');

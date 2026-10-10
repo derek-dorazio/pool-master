@@ -1314,11 +1314,8 @@ async function readManagedContest(page: Page, leagueId: string, contestId: strin
 type ManagedContestRead = {
   contest: {
     status: string;
-    configuration: {
-      maxEntriesPerSquad?: number | null;
-      picksPerTier: number;
-      countedScores: number;
-    };
+    /** The stored rules, one shape per selection type (#93), with the configuration's ids. */
+    configuration: { id: string; contestId: string } & Record<string, unknown>;
   };
 };
 
@@ -1341,16 +1338,13 @@ async function putContestConfigurationUnchanged(
   contestId: string,
 ): Promise<{ status: number; errorCode: string | null }> {
   const { contest } = await readManagedContest(page, leagueId, contestId);
-  const { maxEntriesPerSquad, picksPerTier, countedScores } = contest.configuration;
+  // The rules as they are stored, less the configuration's own ids: the same rules sent back.
+  const { id: _id, contestId: _contestId, ...rules } = contest.configuration;
   const response = await page.request.put(
     `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}/configuration`,
     {
       headers: { 'x-csrf-token': await readCsrfToken(page) },
-      data: {
-        ...(maxEntriesPerSquad === undefined ? {} : { maxEntriesPerSquad }),
-        picksPerTier,
-        countedScores,
-      },
+      data: rules,
     },
   );
   const body = (await response.json()) as { error?: { code?: string } };

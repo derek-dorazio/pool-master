@@ -1,4 +1,9 @@
-import { ContestEntryStatus, PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
+import {
+  ContestEntryStatus,
+  PARTICIPANT_SCORING_DEFINITIONS,
+  SelectionType,
+  type ContestSelectionConfig,
+} from '@poolmaster/shared/domain';
 import {
   applySettledContestStandings,
   buildContestEntryStanding,
@@ -10,9 +15,7 @@ import {
 
 describe('contest scoring definition', () => {
   const configuration = (rules: Array<{ participantScoringDefinitionId: string; sortOrder: number; active: boolean }>) => ({
-    configJson: {},
-    rosterSize: 3,
-    pickCount: 3,
+    configJson: null,
     rounds: 4,
     participantScoringRules: rules,
   });
@@ -131,29 +134,24 @@ describe('settled contest standings', () => {
 });
 
 describe('contest counting rule', () => {
-  const config = (configJson: unknown, rosterSize: number | null = null, pickCount: number | null = null) => ({
+  const config = (configJson: ContestSelectionConfig | null) => ({
     configJson,
-    rosterSize,
-    pickCount,
     rounds: null,
     participantScoringRules: [],
   });
 
-  it('counts the configuration\'s countedScores, falling back to rosterSize, then pickCount', () => {
-    expect(resolveContestCountingRule(config({ countedScores: 4 }, 6, 6))).toEqual({ type: 'BEST_N_GOLFERS', count: 4 });
-    expect(resolveContestCountingRule(config({}, 5, 6))).toEqual({ type: 'BEST_N_GOLFERS', count: 5 });
-    expect(resolveContestCountingRule(config(null, null, 3))).toEqual({ type: 'BEST_N_GOLFERS', count: 3 });
+  it('counts the best countedScores golfers of a tiered contest', () => {
+    expect(resolveContestCountingRule(config({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 })))
+      .toEqual({ type: 'BEST_N_GOLFERS', count: 4 });
   });
 
-  it('ignores a countedScores that is not a positive whole number, and a configJson that is a list', () => {
-    expect(resolveContestCountingRule(config({ countedScores: 0 }, 6))).toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
-    expect(resolveContestCountingRule(config({ countedScores: 2.5 }, 6))).toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
-    expect(resolveContestCountingRule(config({ countedScores: '4' }, 6))).toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
-    expect(resolveContestCountingRule(config([{ countedScores: 4 }], 6))).toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
+  it('counts the best countedScores golfers of a budget contest, the same as a tiered one', () => {
+    expect(resolveContestCountingRule(config({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, salaryCap: 50_000, countedScores: 6 })))
+      .toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
   });
 
-  it('has no counting rule when nothing says how many scores count, or there is no configuration', () => {
-    expect(resolveContestCountingRule(config({}, null, null))).toBeNull();
+  it('has no counting rule when the configuration has no rules, or there is no configuration', () => {
+    expect(resolveContestCountingRule(config(null))).toBeNull();
     expect(resolveContestCountingRule(null)).toBeNull();
   });
 });

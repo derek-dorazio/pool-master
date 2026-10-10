@@ -23,17 +23,15 @@ describe('toSelectionContestConfigurationDto', () => {
     expect(toSelectionContestConfigurationDto(null, [], 0)).toBeNull();
   });
 
-  it('reports the room\'s computed roster size over the stored one, and lists the tiers without their golfers', () => {
-    const dto = toSelectionContestConfigurationDto(configuration({ rosterSize: 12, isExclusive: true }), [TIER], 2);
+  it('reports the room\'s computed roster size, and lists the tiers without their golfers', () => {
+    const dto = toSelectionContestConfigurationDto(configuration({ isExclusive: true }), [TIER], 2);
 
     expect(dto).toMatchObject({ rosterSize: 2, isExclusive: true });
     expect(dto?.tierConfig).toEqual([{ tierId: 'tier-1', tierName: 'Tier 1', tierNumber: 1, picksFromTier: 2 }]);
   });
 
-  it('falls back to the stored roster size, then pick count, then rounds when the room computed none', () => {
-    expect(toSelectionContestConfigurationDto(configuration({ rosterSize: 4 }), [], 0)?.rosterSize).toBe(4);
-    expect(toSelectionContestConfigurationDto(configuration({ pickCount: 5 }), [], 0)?.rosterSize).toBe(5);
-    expect(toSelectionContestConfigurationDto(configuration({ rounds: 3 }), [], 0)?.rosterSize).toBe(3);
+  it('sends no roster size for a room that cannot take picks, whatever else the configuration holds', () => {
+    expect(toSelectionContestConfigurationDto(configuration({ rounds: 3 }), [], 0)?.rosterSize).toBeUndefined();
   });
 
   it('sends absent fields as undefined, an unset exclusivity as false, and no tier list for a tierless room', () => {
@@ -42,9 +40,7 @@ describe('toSelectionContestConfigurationDto', () => {
     expect(dto).toEqual({
       isExclusive: false,
       rounds: undefined,
-      pickCount: undefined,
       rosterSize: undefined,
-      budget: undefined,
       timePerPickSeconds: undefined,
       picksPerPeriod: undefined,
       roundValues: undefined,

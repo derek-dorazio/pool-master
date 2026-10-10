@@ -1,7 +1,7 @@
 import { createLeague, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
-import type { ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
+import type { ContestSelectionConfig, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
 import {
   createAuthenticatedClient,
   createFunctionalEmail,
@@ -213,9 +213,8 @@ export async function buildLeagueWithCommissioner(overrides?: {
 /**
  * A contest row with no sporting event, written straight to the database. #245 retired the
  * event-less create that used to make these through the API; the one create now needs a
- * contest-ready event and makes tiered contests only. Tests whose subject is entries, visibility
- * or selection state rather than creation — and budget/snake contests, which nothing can create yet
- * (#93) — seed the rows create and "Open to league" leave behind: an OPEN contest members can
+ * contest-ready event. Tests whose subject is entries, visibility or selection state rather
+ * than creation — and contests on no event, such as these budget and snake ones — seed the rows create and "Open to league" leave behind: an OPEN contest members can
  * see and enter, and a configuration defaulting to one entry per team. `status: 'DRAFT'` seeds
  * the commissioner-only draft create itself writes (#117).
  */
@@ -227,17 +226,14 @@ export async function seedContestFixture(leagueId: string, options: {
   configuration?: {
     rounds?: number;
     timePerPickSeconds?: number;
-    budget?: number;
-    pickCount?: number;
-    rosterSize?: number;
     maxEntriesPerSquad?: number;
     isExclusive?: boolean;
     tierConfig?: unknown[];
     /**
-     * A tiered contest's typed settings (#479). The selection room reads picksPerTier from here:
-     * without it a tiered room has a roster of 0 and refuses every pick as unconfigured.
+     * The contest's typed rules (#479, #93). The selection room reads the roster from here:
+     * without them a room has a roster of 0 and refuses every pick as unconfigured.
      */
-    configJson?: { picksPerTier: number; countedScores: number };
+    configJson?: ContestSelectionConfig;
   };
 }): Promise<{ contestId: string }> {
   const prisma = getFunctionalPrisma();

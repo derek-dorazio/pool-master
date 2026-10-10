@@ -8,9 +8,11 @@ import {
   TournamentFormat,
 } from '@poolmaster/shared/domain';
 import {
+  CONTEST_BUDGET_UNFILLABLE,
   CONTEST_CONFIGURATION_LOCKED,
   CONTEST_CONFIGURATION_REQUIRED,
   CONTEST_EVENT_ALREADY_STARTED,
+  CONTEST_EVENT_NOT_PRICED,
   CONTEST_NOT_DRAFT,
   type CreateContestRequest,
 } from '@poolmaster/shared/dto';
@@ -72,6 +74,7 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
     selectionType: 'TIERED',
     configJson: {
       maxEntriesPerSquad: 1,
+      selectionType: SelectionType.TIERED,
       picksPerTier: 1,
       countedScores: 4,
     },
@@ -124,6 +127,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
     active: true,
     configJson: {
       maxEntriesPerSquad: 1,
+      selectionType: SelectionType.TIERED,
       picksPerTier: 1,
       countedScores: 4,
     },
@@ -207,10 +211,14 @@ function createSportEventReader(overrides?: Partial<{
   tournamentFormat: TournamentFormat;
   participantCount: number | null;
   loadedParticipantCount: number;
+  salaryCap: number | null;
+  activeFieldPrices: number[];
 }>): {
   findById: jest.Mock;
+  findActiveFieldPrices: jest.Mock;
 } {
   return {
+    findActiveFieldPrices: jest.fn().mockResolvedValue(overrides?.activeFieldPrices ?? []),
     findById: jest.fn().mockResolvedValue({
       id: '11111111-1111-1111-1111-111111111111',
       status: overrides?.status ?? SportEventStatus.SCHEDULED,
@@ -220,6 +228,7 @@ function createSportEventReader(overrides?: Partial<{
         overrides?.tournamentFormat ?? TournamentFormat.STROKE_PLAY_TOURNAMENT,
       participantCount: overrides?.participantCount ?? 72,
       loadedParticipantCount: overrides?.loadedParticipantCount ?? 72,
+      salaryCap: overrides?.salaryCap ?? null,
     }),
   };
 }
@@ -259,6 +268,7 @@ describe('ContestManagementService', () => {
         selectionType: 'TIERED',
         configuration: {
           maxEntriesPerSquad: 3,
+          selectionType: SelectionType.TIERED,
           picksPerTier: 1,
           countedScores: 4,
         },
@@ -280,7 +290,7 @@ describe('ContestManagementService', () => {
         templateId: undefined,
         selectionType: 'TIERED',
         // configJson holds only GolfContestConfig's own fields; the entry cap has its column (#416).
-        configJson: { picksPerTier: 1, countedScores: 4 },
+        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
         maxEntriesPerSquad: 3,
       }),
     );
@@ -329,6 +339,7 @@ describe('ContestManagementService', () => {
           selectionType: 'TIERED',
           configuration: {
             maxEntriesPerSquad: 3,
+            selectionType: SelectionType.TIERED,
             picksPerTier: 2,
             countedScores: 5,
           },
@@ -367,6 +378,7 @@ describe('ContestManagementService', () => {
           selectionType: 'TIERED',
           configuration: {
             maxEntriesPerSquad: 3,
+            selectionType: SelectionType.TIERED,
             picksPerTier: 2,
             countedScores: 4,
           },
@@ -374,7 +386,7 @@ describe('ContestManagementService', () => {
       ),
     ).resolves.toBe('contest-1');
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ configJson: { picksPerTier: 2, countedScores: 4 } }),
+      expect.objectContaining({ configJson: { selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 4 } }),
     );
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
       expect.not.objectContaining({ rosterSize: expect.anything() }),
@@ -406,6 +418,7 @@ describe('ContestManagementService', () => {
           selectionType: 'TIERED',
           configuration: {
             maxEntriesPerSquad: 3,
+            selectionType: SelectionType.TIERED,
             picksPerTier: 1,
             countedScores: 4,
             tierSource: 'ODDS',
@@ -465,6 +478,7 @@ describe('ContestManagementService', () => {
           selectionType: 'TIERED',
           configuration: {
             maxEntriesPerSquad: 3,
+            selectionType: SelectionType.TIERED,
             picksPerTier: 1,
             countedScores: 4,
             tierSource: 'ODDS',
@@ -524,6 +538,7 @@ describe('ContestManagementService', () => {
           selectionType: 'TIERED',
           configuration: {
             maxEntriesPerSquad: 3,
+            selectionType: SelectionType.TIERED,
             picksPerTier: 1,
             countedScores: 4,
           },
@@ -557,7 +572,7 @@ describe('ContestManagementService', () => {
 
     (contestCoreRepo.findById as jest.Mock).mockResolvedValueOnce({ ...contest, status });
     await expect(
-      service.updateContestConfiguration('contest-1', { picksPerTier: 1, countedScores: 5 }),
+      service.updateContestConfiguration('contest-1', { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 5 }),
     ).rejects.toMatchObject({ code: CONTEST_CONFIGURATION_LOCKED, statusCode: 409 });
     expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
   });
@@ -700,6 +715,7 @@ describe('ContestManagementService', () => {
 
     const result = await service.updateContestConfiguration('contest-1', {
       maxEntriesPerSquad: 2,
+      selectionType: SelectionType.TIERED,
       picksPerTier: 2,
       countedScores: 5,
     });
@@ -708,6 +724,7 @@ describe('ContestManagementService', () => {
     // column, so a JSON copy could only drift from it (#416).
     const storedConfigJson = {
       countedScores: 5,
+      selectionType: SelectionType.TIERED,
       picksPerTier: 2,
     };
     // #245 — an update never rewrites selectionType: it is fixed at create, and the
@@ -721,8 +738,7 @@ describe('ContestManagementService', () => {
     expect(participantContestScoringRuleRepo.delete).toHaveBeenCalledWith(
       'rule-old',
     );
-    expect(result.configuration.picksPerTier).toBe(2);
-    expect(result.configuration.countedScores).toBe(5);
+    expect(result.configuration).toMatchObject({ selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 5 });
     // pool-master-41t — the refreshed detail carries the read-only
     // effectiveTiers echo (plans/124 §5.3).
     expect(result.effectiveTiers).toEqual([]);
@@ -746,6 +762,7 @@ describe('ContestManagementService', () => {
     await expect(
       service.updateContestConfiguration('contest-1', {
         maxEntriesPerSquad: 2,
+        selectionType: SelectionType.TIERED,
         picksPerTier: 1,
         countedScores: 3,
       }),
@@ -773,15 +790,16 @@ describe('ContestManagementService', () => {
 
     const result = await service.updateContestConfiguration('contest-1', {
       maxEntriesPerSquad: 2,
+      selectionType: SelectionType.TIERED,
       picksPerTier: 3,
       countedScores: 6,
     });
 
     expect(contestConfigurationRepo.update).toHaveBeenCalledWith(
       'config-1',
-      expect.objectContaining({ configJson: { picksPerTier: 3, countedScores: 6 } }),
+      expect.objectContaining({ configJson: { selectionType: SelectionType.TIERED, picksPerTier: 3, countedScores: 6 } }),
     );
-    expect(result.configuration).toMatchObject({ picksPerTier: 3, countedScores: 6 });
+    expect(result.configuration).toMatchObject({ selectionType: SelectionType.TIERED, picksPerTier: 3, countedScores: 6 });
   });
 
   it('returns contest management detail by contest id', async () => {
@@ -804,44 +822,6 @@ describe('ContestManagementService', () => {
     // effectiveTiers echo (plans/124 §5.3); empty here because this event
     // has no tiers defined.
     expect(result.effectiveTiers).toEqual([]);
-  });
-
-  it('reads only the typed settings from a configuration saved with extra keys, taking the entry cap from its column', async () => {
-    const contestConfigurationRepo = createContestConfigurationRepo();
-    const stored = await contestConfigurationRepo.findByContest('contest-1');
-    // A row written before #416 kept the whole request in configJson, a lock time and a
-    // stale entry cap included.
-    const legacyConfigJson = {
-      picksPerTier: 1,
-      countedScores: 4,
-      rosterSize: 6,
-      locksAt: '2026-04-10T12:00:00.000Z',
-      maxEntriesPerSquad: 9,
-    };
-    contestConfigurationRepo.findByContest = jest.fn().mockResolvedValue({
-      ...stored,
-      configJson: legacyConfigJson,
-      maxEntriesPerSquad: 1,
-    });
-    const service = new ContestManagementService(
-      createContestRepo(),
-      createContestConfigTemplateRepo(),
-      contestConfigurationRepo,
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader(),
-    );
-
-    const result = await service.getContest('contest-1');
-
-    expect(result.configuration).toEqual({
-      id: 'config-1',
-      contestId: 'contest-1',
-      picksPerTier: 1,
-      countedScores: 4,
-      maxEntriesPerSquad: 1,
-    });
   });
 
   it('pool-master-41t echoes the linked event\'s effective tiers read-only on the management detail', async () => {
@@ -930,7 +910,7 @@ describe('ContestManagementService', () => {
     // With no configuration supplied, the template's configuration is the contest's.
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        configJson: { picksPerTier: 1, countedScores: 4 },
+        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
         maxEntriesPerSquad: 1,
       }),
     );
@@ -961,6 +941,7 @@ describe('ContestManagementService', () => {
         selectionType: 'TIERED',
         templateId: '11111111-1111-4111-8111-111111111111',
         configuration: {
+          selectionType: SelectionType.TIERED,
           picksPerTier: 2,
           countedScores: 8,
         },
@@ -973,7 +954,7 @@ describe('ContestManagementService', () => {
     expect(createInput.templateId).toBe('11111111-1111-4111-8111-111111111111');
     expect(createInput.templateVersion).toBe(1);
     // Replaced whole, not merged: the template's maxEntriesPerSquad does not survive.
-    expect(createInput.configJson).toEqual({ picksPerTier: 2, countedScores: 8 });
+    expect(createInput.configJson).toEqual({ selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 8 });
   });
 
   // #245 — neither a template nor a configuration: the service holds the rule even without the
@@ -1125,6 +1106,7 @@ describe('ContestManagementService', () => {
         selectionType: 'TIERED',
         configuration: {
           maxEntriesPerSquad: 3,
+          selectionType: SelectionType.TIERED,
           picksPerTier: 1,
           countedScores: 4,
         },
@@ -1176,6 +1158,7 @@ describe('ContestManagementService', () => {
         selectionType: 'TIERED',
         configuration: {
           maxEntriesPerSquad: 3,
+          selectionType: SelectionType.TIERED,
           picksPerTier: 1,
           countedScores: 4,
         },
@@ -1191,7 +1174,7 @@ describe('ContestManagementService', () => {
       sportEventId: EVENT_ID,
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
-      configuration: { maxEntriesPerSquad: 1, picksPerTier: 1, countedScores: 4 },
+      configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
     };
 
     function build(options: {
@@ -1277,7 +1260,7 @@ describe('ContestManagementService', () => {
       (contestRepo.findById as jest.Mock).mockResolvedValue({ ...contest, status: ContestStatus.OPEN });
       const { service, configurationRepo } = build({ contestRepo });
 
-      await expect(service.updateContestConfiguration('contest-1', { maxEntriesPerSquad: 2, picksPerTier: 1, countedScores: 3 }))
+      await expect(service.updateContestConfiguration('contest-1', { maxEntriesPerSquad: 2, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 3 }))
         .rejects.toMatchObject({ code: CONTEST_CONFIGURATION_LOCKED, statusCode: 409 });
       expect(configurationRepo.update).not.toHaveBeenCalled();
     });
@@ -1343,3 +1326,107 @@ describe('ContestManagementService', () => {
   });
 });
 
+
+describe('ContestManagementService budget rules (#93)', () => {
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(CONTEST_MANAGEMENT_TEST_NOW);
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  const budgetRequest = (configuration: { rosterSize: number; countedScores: number }): CreateContestRequest => ({
+    name: 'Masters Budget',
+    sportEventId: '11111111-1111-1111-1111-111111111111',
+    contestFormat: 'ROSTER',
+    selectionType: SelectionType.BUDGET_PICK,
+    configuration: { selectionType: SelectionType.BUDGET_PICK, maxEntriesPerSquad: 1, ...configuration },
+  });
+
+  function budgetService(reader: ReturnType<typeof createSportEventReader>) {
+    const contestCoreRepo = createContestRepo();
+    const contestConfigurationRepo = createContestConfigurationRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      contestConfigurationRepo,
+      createParticipantScoringRuleRepo(),
+      createSportEventTierServiceStub(),
+      undefined,
+      reader,
+    );
+    return { contestCoreRepo, contestConfigurationRepo, service };
+  }
+
+  it('creates a budget contest with the event\'s salary cap stored beside the commissioner\'s rules', async () => {
+    const { contestConfigurationRepo, service } = budgetService(createSportEventReader({
+      salaryCap: 50_000,
+      activeFieldPrices: [12_000, 9_400, 7_700, 6_400, 6_000, 6_000, 6_000],
+    }));
+
+    await service.createContest({ leagueId: 'league-1' }, budgetRequest({ rosterSize: 6, countedScores: 4 }));
+
+    expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      selectionType: SelectionType.BUDGET_PICK,
+      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, salaryCap: 50_000, countedScores: 4 },
+      maxEntriesPerSquad: 1,
+    }));
+  });
+
+  it('refuses budget rules on an event whose field was never priced with 409 CONTEST_EVENT_NOT_PRICED, writing nothing', async () => {
+    const { contestCoreRepo, service } = budgetService(createSportEventReader({ salaryCap: null }));
+
+    await expect(service.createContest({ leagueId: 'league-1' }, budgetRequest({ rosterSize: 6, countedScores: 6 })))
+      .rejects.toMatchObject({ code: CONTEST_EVENT_NOT_PRICED, statusCode: 409 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['the cheapest roster costs more than the cap', [40, 40, 30, 20], 3],
+    ['the field has fewer priced golfers than the roster holds', [10, 10], 3],
+  ])('refuses a budget roster nobody could afford when %s, with 409 CONTEST_BUDGET_UNFILLABLE', async (_case, prices, rosterSize) => {
+    const { contestCoreRepo, service } = budgetService(createSportEventReader({ salaryCap: 80, activeFieldPrices: prices }));
+
+    await expect(service.createContest({ leagueId: 'league-1' }, budgetRequest({ rosterSize, countedScores: 1 })))
+      .rejects.toMatchObject({ code: CONTEST_BUDGET_UNFILLABLE, statusCode: 409 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('accepts a roster whose cheapest golfers fit the cap to the cent', async () => {
+    const { contestConfigurationRepo, service } = budgetService(createSportEventReader({
+      salaryCap: 100,
+      activeFieldPrices: [33.34, 33.33, 33.33],
+    }));
+
+    await service.createContest({ leagueId: 'league-1' }, budgetRequest({ rosterSize: 3, countedScores: 3 }));
+
+    expect(contestConfigurationRepo.create).toHaveBeenCalled();
+  });
+
+  it('refuses more counted scores than the roster holds with 422 CONTEST_BUDGET_FIELD_OUT_OF_RANGE', async () => {
+    const { contestCoreRepo, service } = budgetService(createSportEventReader({ salaryCap: 50_000, activeFieldPrices: [1, 1, 1, 1, 1, 1] }));
+
+    await expect(service.createContest({ leagueId: 'league-1' }, budgetRequest({ rosterSize: 4, countedScores: 5 })))
+      .rejects.toMatchObject({ code: 'CONTEST_BUDGET_FIELD_OUT_OF_RANGE', statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses rules of another selection type than the contest\'s, on create and on update', async () => {
+    const { contestCoreRepo, contestConfigurationRepo, service } = budgetService(createSportEventReader({
+      salaryCap: 50_000,
+      activeFieldPrices: [1, 1, 1, 1, 1, 1],
+    }));
+
+    await expect(service.createContest({ leagueId: 'league-1' }, { ...budgetRequest({ rosterSize: 6, countedScores: 6 }), selectionType: SelectionType.TIERED }))
+      .rejects.toMatchObject({ code: 'CONTEST_RULES_SELECTION_TYPE_MISMATCH', statusCode: 422 });
+    // The stored contest is tiered: budget rules cannot replace its rules.
+    await expect(service.updateContestConfiguration('contest-1', {
+      selectionType: SelectionType.BUDGET_PICK,
+      rosterSize: 6,
+      countedScores: 6,
+    })).rejects.toMatchObject({ code: 'CONTEST_RULES_SELECTION_TYPE_MISMATCH', statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+    expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
+  });
+});

@@ -54,6 +54,7 @@ function buildTemplate() {
     active: true,
     schemaVersion: 1,
     configuration: {
+      selectionType: 'TIERED',
       picksPerTier: 1,
       countedScores: 4,
     },
@@ -134,9 +135,41 @@ describe('RootAdminContentConfigurationDetailPage', () => {
           name: 'Updated template name',
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
           configuration: expect.objectContaining({
+            selectionType: 'TIERED',
             picksPerTier: 2,
             countedScores: 8,
           }),
+        }),
+      });
+    });
+  });
+
+  it('edits a budget template\'s golfers per entry and scores that count, with no picks per tier', async () => {
+    const budgetTemplate = {
+      ...buildTemplate(),
+      id: '33333333-3333-4333-8333-333333333333',
+      selectionType: 'BUDGET_PICK',
+      templateKey: 'golf-budget-pick-6-best-4',
+      name: 'Pick 6 under the cap, 4 count',
+      isDefault: false,
+      configuration: { selectionType: 'BUDGET_PICK', rosterSize: 6, countedScores: 4 },
+    };
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [budgetTemplate] } });
+    updateContestConfigTemplateMock.mockResolvedValue({ data: { template: budgetTemplate } });
+    renderPage('golf-budget-pick-6-best-4');
+
+    expect(await screen.findByTestId('root-admin-content-config-roster-size')).toHaveValue(6);
+    expect(screen.queryByTestId('root-admin-content-config-picks-per-tier')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('root-admin-content-config-roster-size'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('root-admin-content-config-counted-scores'), { target: { value: '5' } });
+    fireEvent.click(screen.getByTestId('root-admin-content-config-save'));
+
+    await waitFor(() => {
+      expect(updateContestConfigTemplateMock).toHaveBeenCalledWith({
+        path: { templateId: '33333333-3333-4333-8333-333333333333' },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
+        body: expect.objectContaining({
+          configuration: { selectionType: 'BUDGET_PICK', rosterSize: 8, countedScores: 5 },
         }),
       });
     });

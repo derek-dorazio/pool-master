@@ -1,4 +1,4 @@
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
@@ -29,7 +29,12 @@ import {
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { formatSelectionTypeName } from './contest-rules';
 import { ContestRulesFields } from './contest-rules-fields';
-import { parseContestRules, toContestRulesValues, type ContestRulesValues } from './contest-rules-form';
+import {
+  parseContestRules,
+  toContestRulesValues,
+  type ContestRulesValues,
+  type TieredContestConfiguration,
+} from './contest-rules-form';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useLeagueContestsQuery } from './use-league-contests-query';
 import { useManagedContestQuery } from './use-managed-contest-query';
@@ -65,12 +70,14 @@ function FixedValue({ children, label }: { children: string; label: string }) {
  * (rules/react-ui-rules.md §5).
  */
 function EditContestForm({
+  configuration,
   contest,
   event,
   leagueCode,
   leagueId,
   managedContest,
 }: {
+  configuration: TieredContestConfiguration;
   contest: ContestDto;
   event: SportEventDto;
   leagueCode: string;
@@ -84,7 +91,7 @@ function EditContestForm({
   const [rulesError, setRulesError] = useState<string | null>(null);
   const form = useForm<EditContestFormValues>({
     resolver: zodResolver(editContestFormSchema),
-    defaultValues: { contestName: contest.name, ...toContestRulesValues(managedContest.configuration) },
+    defaultValues: { contestName: contest.name, ...toContestRulesValues(configuration) },
   });
   const values = form.watch();
 
@@ -219,9 +226,16 @@ export function EditContestPage() {
   if (!contest || !managedContest || !event || contest.status !== ContestStatus.DRAFT || !league.isActive) {
     return <Navigate replace to={contestPath} />;
   }
+  // The rules fields edit tiered rules only so far; a budget contest's arrive with its Create
+  // contest card (#93).
+  const { configuration } = managedContest;
+  if (configuration.selectionType !== SelectionType.TIERED) {
+    return <Navigate replace to={contestPath} />;
+  }
 
   return (
     <EditContestForm
+      configuration={configuration}
       contest={contest}
       event={event}
       key={contest.id}
