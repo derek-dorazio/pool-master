@@ -1682,7 +1682,6 @@ describe('ContestService', () => {
         .createEntry('contest-1', 'user-1'))
         .rejects.toMatchObject({ code: 'SQUAD_MEMBERSHIP_REQUIRED' });
     });
-
   });
 });
 

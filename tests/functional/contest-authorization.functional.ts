@@ -245,5 +245,4 @@ describe('SDK Functional: contest reads and entry access (#291)', () => {
       { status: 403, code: 'LEAGUE_MEMBERSHIP_REQUIRED' },
     );
   });
-
 });
