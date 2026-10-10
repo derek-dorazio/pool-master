@@ -10,6 +10,7 @@ import type {
   ContestEntry,
   ContestEntryStatus,
   SelectionStatus,
+  SelectionType,
   SquadMembership,
 } from '@poolmaster/shared/domain';
 
@@ -148,17 +149,64 @@ export interface SelectionView {
   currentEntryName: string | null;
   canCurrentUserSubmit: boolean;
   isComplete: boolean;
+  /** The viewed entry's lineup as its engine summarises it; null without an entry or a summary. */
+  lineupSummary: LineupSummary | null;
 }
 
 /**
  * Why a lineup cannot be submitted yet (#481): how many picks it holds against the roster, and
  * which tiers are short of their picks (empty for a budget-pick roster, which has no tiers).
+ * What `ENTRY_LINEUP_INCOMPLETE` reports.
  */
 export interface LineupShortfall {
   pickCount: number;
   rosterSize: number;
   shortTierNames: string[];
 }
+
+/** The kinds of thing that stop a lineup being submitted. */
+export const LineupIssueKind = {
+  /** The lineup does not hold exactly the roster's picks, or the roster has no places. */
+  ROSTER_SHORT: 'ROSTER_SHORT',
+  /** Tiers still owed picks (tiered). */
+  TIER_SHORT: 'TIER_SHORT',
+  /** The picks cost more than the salary cap (budget, #93). */
+  OVER_BUDGET: 'OVER_BUDGET',
+} as const;
+export type LineupIssueKind = (typeof LineupIssueKind)[keyof typeof LineupIssueKind];
+
+/** One thing that stops a lineup being submitted. Money is in dollars, summed in cents. */
+export type LineupIssue =
+  | { kind: typeof LineupIssueKind.ROSTER_SHORT; pickCount: number; rosterSize: number }
+  | { kind: typeof LineupIssueKind.TIER_SHORT; tierNames: string[] }
+  | { kind: typeof LineupIssueKind.OVER_BUDGET; spent: number; salaryCap: number };
+
+/** A group of the field as an engine lists it, before the room marks the viewed entry's picks. */
+export interface FieldGroup {
+  groupId: string;
+  groupName: string;
+  groupNumber: number;
+  picksFromGroup: number;
+  participants: SelectionParticipant[];
+}
+
+/**
+ * The viewed budget lineup's spend (#93), in dollars summed in cents. `cheapestFill` is what
+ * the cheapest available golfers not on the entry would cost to fill its open places, null
+ * when the field cannot fill them; the page warns with it and never blocks a pick.
+ */
+export interface BudgetLineupSummary {
+  selectionType: typeof SelectionType.BUDGET_PICK;
+  salaryCap: number;
+  spent: number;
+  remaining: number;
+  isOverBudget: boolean;
+  openSlots: number;
+  cheapestFill: number | null;
+}
+
+/** What the room says about the viewed lineup beyond its picks, one shape per selection type. */
+export type LineupSummary = BudgetLineupSummary;
 
 /**
  * What submitting a selection did. `toggled-off` removed a pick and inserted nothing;

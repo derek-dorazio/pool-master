@@ -110,13 +110,6 @@ export const selectionErrors = {
       400,
     ),
 
-  duplicatePick: (participantId: string) =>
-    new SelectionError(
-      `SportEventParticipant ${participantId} is already on this entry`,
-      'DUPLICATE_PICK',
-      400,
-    ),
-
   participantAlreadyTaken: (participantId: string) =>
     new SelectionError(
       `SportEventParticipant ${participantId} is already selected by another entry`,
@@ -135,6 +128,14 @@ export const selectionErrors = {
     new SelectionError(
       `Tier ${tier} is not configured for contest ${contestId}`,
       'TIER_NOT_FOUND',
+      400,
+    ),
+
+  /** A budget pick must be spent against the cap, so a golfer with no price cannot be picked (#93). */
+  priceMissing: (participantId: string) =>
+    new SelectionError(
+      `SportEventParticipant ${participantId} has no price, so it cannot be picked in a budget contest`,
+      'PRICE_MISSING',
       400,
     ),
 
@@ -174,4 +175,19 @@ export const selectionErrors = {
       'ENTRY_LINEUP_INCOMPLETE',
       409,
     ),
+
+  /**
+   * A budget entry is submitted only when its picks cost no more than the salary cap (#93).
+   * Picks are never refused for the budget; only submitting is.
+   */
+  overBudget: (entryId: string, spent: number, salaryCap: number) =>
+    new SelectionError(
+      `Entry ${entryId} cannot be submitted while its picks cost ${formatDollars(spent)}, over the ${formatDollars(salaryCap)} salary cap`,
+      'ENTRY_OVER_BUDGET',
+      409,
+    ),
 } as const;
+
+function formatDollars(amount: number): string {
+  return `$${amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+}

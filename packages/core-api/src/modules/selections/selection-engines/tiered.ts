@@ -12,7 +12,7 @@ import { SelectionType } from '@poolmaster/shared/domain';
 import { findTierByLabel } from '../selection-rules';
 import type { SelectionTierConfig } from '../types';
 import {
-  lineupShortfall,
+  completenessIssues,
   SelectionOutcomeKind,
   SelectionRejectCode,
   type EntryPick,
@@ -97,8 +97,8 @@ export const tieredSelectionEngine: SelectionEngine = {
    * check still runs on its own, because a pick on a golfer later moved out of every tier
    * counts towards the roster yet fills no tier.
    */
-  findShortfall: ({ rosterSize, tiers, picks }) =>
-    lineupShortfall({
+  findLineupIssues: ({ rosterSize, tiers, picks }) =>
+    completenessIssues({
       rosterSize,
       pickCount: picks.length,
       shortTierNames: tiers
@@ -109,6 +109,26 @@ export const tieredSelectionEngine: SelectionEngine = {
         })
         .map((tier) => tier.tierName),
     }),
+
+  /** One group per tier, in tier order, each listing the tier's golfers that are on the field. */
+  groupField: ({ tiers, participants }) => {
+    const participantByParticipantId = new Map(
+      participants.map((participant) => [participant.participantId, participant]),
+    );
+    return tiers.map((tier) => ({
+      groupId: tier.tierId,
+      groupName: tier.tierName,
+      groupNumber: tier.tierNumber,
+      picksFromGroup: tier.picksFromTier,
+      participants: tier.participantIds.flatMap((participantId) => {
+        const participant = participantByParticipantId.get(participantId);
+        return participant ? [participant] : [];
+      }),
+    }));
+  },
+
+  /** A tiered lineup has nothing to report beyond its picks, which the groups already mark. */
+  summarizeLineup: () => null,
 
   /** A tiered pick's round is its tier, which is why the history groups by tier. */
   historyRound: ({ tierNumber, entryPickIndex }) => tierNumber ?? entryPickIndex,

@@ -73,14 +73,15 @@ import {
   type SelectionEngine,
   type SelectionRejection,
 } from './selection-engines/selection-engine';
-import type {
-  SelectionContext,
-  SelectionEntry,
-  PickHistoryRow,
-  SelectionView,
-  SelectionGroup,
-  LineupShortfall,
-  SubmitSelectionResult,
+import {
+  LineupIssueKind,
+  type LineupIssue,
+  type SelectionContext,
+  type SelectionEntry,
+  type PickHistoryRow,
+  type SelectionView,
+  type SelectionGroup,
+  type SubmitSelectionResult,
 } from './types';
 
 export interface SelectionServiceDeps {
@@ -350,13 +351,24 @@ export class SelectionService {
     const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers: context.tiers });
     if (rosterSize <= 0) throw selectionErrors.selectionConfigInvalid(contestId);
 
-    const shortfall = await this.findEntryShortfall(context, engine, entryId, rosterSize);
-    if (shortfall) {
+    const { issues, pickCount } = await this.findEntryIssues(context, engine, entryId, rosterSize);
+    // An incomplete lineup is the first thing to fix, so it is reported ahead of the budget.
+    const tierShort = issues.find((issue) => issue.kind === LineupIssueKind.TIER_SHORT);
+    if (tierShort || issues.some((issue) => issue.kind === LineupIssueKind.ROSTER_SHORT)) {
+      const shortfall = { pickCount, rosterSize, shortTierNames: tierShort?.tierNames ?? [] };
       this.deps.logger?.warn(
         { action: 'selection.submitEntry.incomplete', data: { contestId, entryId, ...shortfall } },
         'Refused to submit an entry with an incomplete lineup',
       );
       throw selectionErrors.lineupIncomplete(entryId, shortfall);
+    }
+    const overBudget = issues.find((issue) => issue.kind === LineupIssueKind.OVER_BUDGET);
+    if (overBudget) {
+      this.deps.logger?.warn(
+        { action: 'selection.submitEntry.overBudget', data: { contestId, entryId, spent: overBudget.spent, salaryCap: overBudget.salaryCap } },
+        'Refused to submit an entry whose picks cost more than the salary cap',
+      );
+      throw selectionErrors.overBudget(entryId, overBudget.spent, overBudget.salaryCap);
     }
 
     let submittedContext = context;
@@ -373,25 +385,34 @@ export class SelectionService {
     return this.buildRoomView({ context: submittedContext, engine, selectedEntryId: entryId, actorUserId });
   }
 
-  /** The entry's lineup shortfall as of now, read fresh so it sees the latest pick write. */
-  private async findEntryShortfall(
+  /** What stops the entry's lineup being submitted as of now, read fresh so it sees the latest pick write. */
+  private async findEntryIssues(
     context: SelectionContext,
     engine: SelectionEngine,
     entryId: string,
     rosterSize: number,
-  ): Promise<LineupShortfall | null> {
+  ): Promise<{ issues: LineupIssue[]; pickCount: number }> {
     const picks = await this.deps.picks.findByEntriesWithParticipant([entryId]);
-    return engine.findShortfall({
-      rosterSize,
-      tiers: context.tiers,
-      picks: picks.map((pick) => ({ participantId: pick.participant.participantId })),
-    });
+    const priceBySportEventParticipantId = buildPriceLookup(context);
+    return {
+      pickCount: picks.length,
+      issues: engine.findLineupIssues({
+        configuration: context.configuration,
+        rosterSize,
+        tiers: context.tiers,
+        picks: picks.map((pick) => ({
+          participantId: pick.participant.participantId,
+          price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
+        })),
+      }),
+    };
   }
 
   /**
-   * After a pick change on a submitted entry: a lineup left short goes back to DRAFT (#481), so
-   * it stops counting until its owner fills it and submits again. A swap within a full tier
-   * keeps the lineup complete and the entry submitted.
+   * After a pick change on a submitted entry: a lineup it could no longer be submitted with goes
+   * back to DRAFT (#481), so it stops counting until its owner fixes it and submits again. That
+   * is a lineup left short, or a budget lineup a swap took over the cap (#93). A swap within a
+   * full tier, or one that stays under the cap, keeps the entry submitted.
    */
   private async returnToDraftIfShort(
     context: SelectionContext,
@@ -400,16 +421,16 @@ export class SelectionService {
     rosterSize: number,
   ): Promise<SelectionContext> {
     if (entry.status !== ContestEntryStatus.SUBMITTED) return context;
-    const shortfall = await this.findEntryShortfall(context, engine, entry.id, rosterSize);
-    if (!shortfall) return context;
+    const { issues } = await this.findEntryIssues(context, engine, entry.id, rosterSize);
+    if (issues.length === 0) return context;
 
     const reverted = await this.deps.entries.update(entry.id, { status: ContestEntryStatus.DRAFT });
     this.deps.logger?.info(
       {
         action: 'selection.submitSelection.returnedToDraft',
-        data: { contestId: context.contest.id, entryId: entry.id, ...shortfall },
+        data: { contestId: context.contest.id, entryId: entry.id, issues: issues.map((issue) => issue.kind) },
       },
-      'A pick change left a submitted lineup short; the entry is a draft again',
+      'A pick change left a submitted lineup unsubmittable; the entry is a draft again',
     );
     return withEntry(context, reverted);
   }
@@ -501,12 +522,7 @@ export class SelectionService {
     const entryUserIdMap = buildEntryUserIdMap(contestEntries, context.squadMemberships);
     const contestEntryById = new Map(contestEntries.map((entry) => [entry.id, entry]));
     const tierByParticipantId = buildTierByParticipantId(tiers);
-    const priceBySportEventParticipantId = new Map(
-      context.selectionParticipants.map((participant) => [
-        participant.sportEventParticipantId,
-        participant.price,
-      ]),
-    );
+    const priceBySportEventParticipantId = buildPriceLookup(context);
 
     // While the contest takes entries (DRAFT, OPEN) a team sees only its own picks, the rule
     // the contest's entry reads follow (`contestPicksRevealed`). The actor's teams are every
@@ -557,6 +573,7 @@ export class SelectionService {
     const selectedSportEventParticipantIds = new Set(
       selectedEntryPicks.map((pick) => pick.sportEventParticipantId),
     );
+    const availableSportEventParticipantIds = this.buildAvailableParticipantIds(context, picks);
 
     const isComplete =
       rosterSize > 0
@@ -588,8 +605,8 @@ export class SelectionService {
         priceBySportEventParticipantId,
         engine,
       }),
-      selectionGroups: this.buildSelectionGroups(context, selectedSportEventParticipantIds),
-      availableSportEventParticipantIds: this.buildAvailableParticipantIds(context, picks),
+      selectionGroups: this.buildSelectionGroups(context, engine, rosterSize, selectedSportEventParticipantIds),
+      availableSportEventParticipantIds: [...availableSportEventParticipantIds],
       myEntryId,
       selectedEntryId: resolvedSelectedEntryId,
       selectedEntryName: selectedEntry?.name ?? null,
@@ -604,6 +621,20 @@ export class SelectionService {
       currentEntryName: canCurrentUserSubmit ? entryNameById(entries, myEntryId) : null,
       canCurrentUserSubmit,
       isComplete,
+      lineupSummary: resolvedSelectedEntryId
+        ? engine.summarizeLineup({
+          configuration,
+          rosterSize,
+          tiers,
+          picks: selectedEntryPicks.map((pick) => ({
+            participantId: pick.participant.participantId,
+            price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
+          })),
+          openField: context.selectionParticipants.filter((participant) =>
+            availableSportEventParticipantIds.has(participant.sportEventParticipantId)
+            && !selectedSportEventParticipantIds.has(participant.sportEventParticipantId)),
+        })
+        : null,
     };
   }
 
@@ -658,30 +689,22 @@ export class SelectionService {
     });
   }
 
-  /** Each tier with its selectable field rows, and which of them the viewed entry holds. */
+  /** The field as the engine groups it, with which rows the viewed entry holds. */
   private buildSelectionGroups(
     context: SelectionContext,
+    engine: SelectionEngine,
+    rosterSize: number,
     selectedSportEventParticipantIds: ReadonlySet<string>,
   ): SelectionGroup[] {
-    const participantByParticipantId = new Map(
-      context.selectionParticipants.map((participant) => [participant.participantId, participant]),
-    );
-
-    return context.tiers.map((tier) => ({
-      groupId: tier.tierId,
-      groupName: tier.tierName,
-      groupNumber: tier.tierNumber,
-      picksFromGroup: tier.picksFromTier,
-      participants: tier.participantIds
-        .flatMap((participantId) => {
-          const participant = participantByParticipantId.get(participantId);
-          return participant ? [participant] : [];
-        })
-        .map((participant) => ({
+    return engine
+      .groupField({ tiers: context.tiers, participants: context.selectionParticipants, rosterSize })
+      .map((group) => ({
+        ...group,
+        participants: group.participants.map((participant) => ({
           ...participant,
           isSelected: selectedSportEventParticipantIds.has(participant.sportEventParticipantId),
         })),
-    }));
+      }));
   }
 
   /**
@@ -691,22 +714,29 @@ export class SelectionService {
   private buildAvailableParticipantIds(
     context: SelectionContext,
     picks: readonly ContestEntryPickWithParticipant[],
-  ): string[] {
+  ): Set<string> {
     const takenSportEventParticipantIds = context.configuration?.isExclusive
       ? new Set(picks.map((pick) => pick.sportEventParticipantId))
       : null;
 
-    return context.selectionParticipants.flatMap((participant) => {
+    return new Set(context.selectionParticipants.flatMap((participant) => {
       if (!participant.isAvailable) return [];
       if (takenSportEventParticipantIds?.has(participant.sportEventParticipantId)) return [];
       return [participant.sportEventParticipantId];
-    });
+    }));
   }
 }
 
-/** The shape an engine reasons over: a pick's id and whom it points at. */
+/** The shape an engine reasons over: a pick's id, whom it points at, and its place. */
 function toEntryPick(pick: ContestEntryPickWithParticipant): EntryPick {
-  return { id: pick.id, participantId: pick.participant.participantId };
+  return { id: pick.id, participantId: pick.participant.participantId, lineupSlot: pick.lineupSlot };
+}
+
+/** Each field row's price in dollars, by its `sportEventParticipantId`. */
+function buildPriceLookup(context: SelectionContext): ReadonlyMap<string, number | undefined> {
+  return new Map(
+    context.selectionParticipants.map((participant) => [participant.sportEventParticipantId, participant.price]),
+  );
 }
 
 /** The contract error an engine's rejection answers with; one case per reject code. */
@@ -715,10 +745,10 @@ function rejectionError(
   request: { contestId: string; entryId: string; participantId: string; rosterSize: number },
 ): SelectionError {
   switch (rejection.code) {
-    case SelectionRejectCode.DUPLICATE_PICK:
-      return selectionErrors.duplicatePick(request.participantId);
     case SelectionRejectCode.ENTRY_COMPLETE:
       return selectionErrors.entryComplete(request.entryId, request.rosterSize);
+    case SelectionRejectCode.PRICE_MISSING:
+      return selectionErrors.priceMissing(request.participantId);
     case SelectionRejectCode.TIER_MISSING:
       return selectionErrors.tierMissing(request.participantId);
     case SelectionRejectCode.TIER_NOT_FOUND:

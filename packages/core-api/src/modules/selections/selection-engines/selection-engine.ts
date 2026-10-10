@@ -5,8 +5,8 @@
  * same way: auth and entry ownership, the pick window, participant-in-event, availability,
  * exclusivity across entries, persistence through `ContestEntryPickService`, and the room it
  * answers with. An engine supplies only the rules that vary by type: how many picks a roster
- * holds, what a selection does to an entry, when a lineup is complete, and which round a pick
- * shows in.
+ * holds, what a selection does to an entry, what stops a lineup being submitted, how the room
+ * lists the field, what the room says about the viewed lineup, and which round a pick shows in.
  *
  * **Exclusivity is not an engine concern.** It is driven by `ContestConfiguration.isExclusive`
  * and applies the same way to every type, so it stays in the shared handler; an engine never
@@ -19,7 +19,8 @@
  */
 
 import type { ContestConfiguration, SelectionType } from '@poolmaster/shared/domain';
-import type { SelectionTierConfig, LineupShortfall, SelectionParticipant } from '../types';
+import type { FieldGroup, LineupIssue, LineupSummary, SelectionTierConfig, SelectionParticipant } from '../types';
+import { LineupIssueKind } from '../types';
 
 /** What a selection does to the entry. */
 export const SelectionOutcomeKind = {
@@ -39,8 +40,8 @@ export type SelectionOutcomeKind = (typeof SelectionOutcomeKind)[keyof typeof Se
  * handler answers with, so the published codes do not change.
  */
 export const SelectionRejectCode = {
-  /** The participant is already on the entry, in a type with no unselect gesture. */
-  DUPLICATE_PICK: 'DUPLICATE_PICK',
+  /** A budget selection of a participant with no price to spend against the cap (#93). */
+  PRICE_MISSING: 'PRICE_MISSING',
   /** The roster is full and the selection displaces nothing. */
   ENTRY_COMPLETE: 'ENTRY_COMPLETE',
   /** A tiered selection of a participant with no tier. */
@@ -51,8 +52,8 @@ export const SelectionRejectCode = {
 export type SelectionRejectCode = (typeof SelectionRejectCode)[keyof typeof SelectionRejectCode];
 
 export type SelectionRejection =
-  | { kind: typeof SelectionOutcomeKind.REJECT; code: typeof SelectionRejectCode.DUPLICATE_PICK }
   | { kind: typeof SelectionOutcomeKind.REJECT; code: typeof SelectionRejectCode.ENTRY_COMPLETE }
+  | { kind: typeof SelectionOutcomeKind.REJECT; code: typeof SelectionRejectCode.PRICE_MISSING }
   | { kind: typeof SelectionOutcomeKind.REJECT; code: typeof SelectionRejectCode.TIER_MISSING }
   | {
     kind: typeof SelectionOutcomeKind.REJECT;
@@ -66,11 +67,20 @@ export type SelectionOutcome =
   | { kind: typeof SelectionOutcomeKind.TOGGLE_OFF; pickId: string }
   | SelectionRejection;
 
-/** One of the entry's picks as an engine reasons over it: its id and whom it points at. */
+/** One of the entry's picks as an engine reasons over it: its id, whom it points at, and its place. */
 export interface EntryPick {
   id: string;
   /** The canonical participant, which is what tiers list. */
   participantId: string;
+  /** The place in the lineup the pick was stored with, when it has one. */
+  lineupSlot?: number;
+}
+
+/** A pick as lineup checks read it: whom it points at, and the golfer's price in dollars. */
+export interface LineupPick {
+  participantId: string;
+  /** Undefined only for a golfer with no price, which a budget room never lets an entry pick. */
+  price?: number;
 }
 
 /** Everything an engine needs to decide one selection on one entry. */
@@ -83,6 +93,15 @@ export interface SelectionRequest {
   existingPicks: readonly EntryPick[];
   tiers: readonly SelectionTierConfig[];
   rosterSize: number;
+}
+
+/** What an engine needs to judge a lineup: the contest's rules, its tiers and the entry's picks. */
+export interface LineupInput {
+  configuration: ContestConfiguration | null;
+  rosterSize: number;
+  tiers: readonly SelectionTierConfig[];
+  /** The entry's picks. */
+  picks: readonly LineupPick[];
 }
 
 export interface SelectionEngine {
@@ -102,13 +121,27 @@ export interface SelectionEngine {
    */
   evaluate(request: SelectionRequest): SelectionOutcome;
 
-  /** Why the lineup cannot be submitted yet, or null when it is complete (#481). */
-  findShortfall(input: {
-    rosterSize: number;
+  /**
+   * Everything that stops the lineup being submitted, empty when it may be (#481, #93). The
+   * handler refuses a submit on any issue and sends a submitted entry back to draft when a pick
+   * change leaves one.
+   */
+  findLineupIssues(input: LineupInput): LineupIssue[];
+
+  /** How the room lists the field: the groups an entry picks from, in display order. */
+  groupField(input: {
     tiers: readonly SelectionTierConfig[];
-    /** The entry's picks, each with the canonical participant it points at. */
-    picks: readonly { participantId: string }[];
-  }): LineupShortfall | null;
+    participants: readonly SelectionParticipant[];
+    rosterSize: number;
+  }): FieldGroup[];
+
+  /**
+   * What the room tells the viewer about the viewed lineup beyond its picks, or null when the
+   * type has nothing to say. `openField` is the golfers this entry could still add (available,
+   * not taken by another entry in an exclusive contest, and not already on it), for what the
+   * open places could cost.
+   */
+  summarizeLineup(input: LineupInput & { openField: readonly SelectionParticipant[] }): LineupSummary | null;
 
   /**
    * The round a pick shows in within the room's history. `tierNumber` is the tier the pick's
@@ -119,15 +152,21 @@ export interface SelectionEngine {
 }
 
 /**
- * The shortfall every engine reports in the same shape: none only when the roster has places,
- * the lineup fills exactly that many, and no tier is short.
+ * The completeness issues every engine reports the same way: the roster is short unless it has
+ * places and the lineup fills exactly that many, and each tier still owed picks is named.
  */
-export function lineupShortfall(input: {
+export function completenessIssues(input: {
   rosterSize: number;
   pickCount: number;
-  shortTierNames: string[];
-}): LineupShortfall | null {
+  shortTierNames: readonly string[];
+}): LineupIssue[] {
   const { rosterSize, pickCount, shortTierNames } = input;
-  if (rosterSize > 0 && pickCount === rosterSize && shortTierNames.length === 0) return null;
-  return { pickCount, rosterSize, shortTierNames };
+  const issues: LineupIssue[] = [];
+  if (rosterSize <= 0 || pickCount !== rosterSize) {
+    issues.push({ kind: LineupIssueKind.ROSTER_SHORT, pickCount, rosterSize });
+  }
+  if (shortTierNames.length > 0) {
+    issues.push({ kind: LineupIssueKind.TIER_SHORT, tierNames: [...shortTierNames] });
+  }
+  return issues;
 }

@@ -12,9 +12,10 @@ import {
   resolveTieredPlacement,
   tieredSelectionEngine,
 } from '../../../packages/core-api/src/modules/selections/selection-engines/tiered';
-import type {
-  SelectionTierConfig,
-  SelectionParticipant,
+import {
+  LineupIssueKind,
+  type SelectionTierConfig,
+  type SelectionParticipant,
 } from '../../../packages/core-api/src/modules/selections/types';
 
 // The selection engines (#198), called directly. Each is pure: these tests hand it a request
@@ -190,31 +191,59 @@ describe('tiered selection engine — resolveTieredPlacement', () => {
   });
 });
 
-describe('tiered selection engine — findShortfall decides whether an entry may be submitted', () => {
+describe('tiered selection engine — findLineupIssues decides whether an entry may be submitted', () => {
   const held = (...ids: string[]) => ids.map((participantId) => ({ participantId }));
+  const issues = (rosterSize: number, tiers: SelectionTierConfig[], lineup: { participantId: string }[]) =>
+    tieredSelectionEngine.findLineupIssues({ configuration: null, rosterSize, tiers, picks: lineup });
 
-  it('finds no shortfall when the lineup holds exactly each tier\'s picks', () => {
-    expect(tieredSelectionEngine.findShortfall({ rosterSize: 3, tiers: TIERS, picks: held('a', 'b', 'd') })).toBeNull();
+  it('finds no issue when the lineup holds exactly each tier\'s picks', () => {
+    expect(issues(3, TIERS, held('a', 'b', 'd'))).toEqual([]);
   });
 
-  it('names every tier still short of its picks, with the picks held against the roster', () => {
-    expect(tieredSelectionEngine.findShortfall({ rosterSize: 3, tiers: TIERS, picks: held('a') }))
-      .toEqual({ pickCount: 1, rosterSize: 3, shortTierNames: ['Tier 1', 'Tier 2'] });
+  it('reports the roster short and names every tier still short of its picks', () => {
+    expect(issues(3, TIERS, held('a'))).toEqual([
+      { kind: LineupIssueKind.ROSTER_SHORT, pickCount: 1, rosterSize: 3 },
+      { kind: LineupIssueKind.TIER_SHORT, tierNames: ['Tier 1', 'Tier 2'] },
+    ]);
   });
 
   it('refuses a lineup with the full pick count but the wrong spread across tiers', () => {
-    expect(tieredSelectionEngine.findShortfall({ rosterSize: 3, tiers: TIERS, picks: held('a', 'b', 'c') }))
-      .toEqual({ pickCount: 3, rosterSize: 3, shortTierNames: ['Tier 1', 'Tier 2'] });
+    expect(issues(3, TIERS, held('a', 'b', 'c'))).toEqual([
+      { kind: LineupIssueKind.TIER_SHORT, tierNames: ['Tier 1', 'Tier 2'] },
+    ]);
   });
 
   it('refuses a lineup whose extra pick sits on a golfer outside every tier', () => {
-    expect(tieredSelectionEngine.findShortfall({ rosterSize: 3, tiers: TIERS, picks: held('a', 'b', 'untiered') }))
-      .toEqual({ pickCount: 3, rosterSize: 3, shortTierNames: ['Tier 2'] });
+    expect(issues(3, TIERS, held('a', 'b', 'untiered'))).toEqual([
+      { kind: LineupIssueKind.TIER_SHORT, tierNames: ['Tier 2'] },
+    ]);
   });
 
   it('never finds a lineup complete when the roster has no places', () => {
-    expect(tieredSelectionEngine.findShortfall({ rosterSize: 0, tiers: [], picks: [] }))
-      .toEqual({ pickCount: 0, rosterSize: 0, shortTierNames: [] });
+    expect(issues(0, [], [])).toEqual([{ kind: LineupIssueKind.ROSTER_SHORT, pickCount: 0, rosterSize: 0 }]);
+  });
+});
+
+describe('tiered selection engine — groupField and summarizeLineup', () => {
+  it('lists one group per tier with the tier\'s golfers on the field, leaving out one not on it', () => {
+    const groups = tieredSelectionEngine.groupField({
+      tiers: TIERS,
+      participants: [participant('a', 'Tier 1'), participant('d', 'Tier 2')],
+      rosterSize: 3,
+    });
+
+    expect(groups.map((group) => [group.groupName, group.picksFromGroup, group.participants.map((row) => row.participantId)]))
+      .toEqual([['Tier 1', 2, ['a']], ['Tier 2', 1, ['d']]]);
+  });
+
+  it('has no lineup summary', () => {
+    expect(tieredSelectionEngine.summarizeLineup({
+      configuration: null,
+      rosterSize: 3,
+      tiers: TIERS,
+      picks: [],
+      openField: [],
+    })).toBeNull();
   });
 });
 
@@ -226,8 +255,18 @@ describe('tiered selection engine — historyRound', () => {
 });
 
 describe('budget-pick selection engine', () => {
+  const pricedParticipant = (participantId: string, price: number | undefined, isAvailable = true): SelectionParticipant => ({
+    ...participant(participantId, null),
+    price,
+    isAvailable,
+  });
   const budgetRequest = (overrides: Partial<SelectionRequest> = {}) =>
-    request({ participant: participant('a', null), tiers: [], rosterSize: 2, ...overrides });
+    request({ participant: pricedParticipant('a', 9_000), tiers: [], rosterSize: 2, ...overrides });
+  const budgetConfiguration = (salaryCap: number) =>
+    configuration({
+      selectionType: SelectionType.BUDGET_PICK,
+      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap, countedScores: 2 },
+    });
 
   it('reads the roster size off the contest\'s budget rules, and 0 when it carries none', () => {
     expect(budgetPickSelectionEngine.rosterSize({
@@ -238,18 +277,30 @@ describe('budget-pick selection engine', () => {
     expect(budgetPickSelectionEngine.rosterSize({ configuration: null, tiers: TIERS })).toBe(0);
   });
 
-  it('accepts a pick into the next round while the roster has room, whatever tier the golfer sits in', () => {
-    expect(budgetPickSelectionEngine.evaluate(budgetRequest({ existingPicks: picks('z') })))
+  it('accepts a pick into the next free place while the roster has room, whatever tier the golfer sits in', () => {
+    expect(budgetPickSelectionEngine.evaluate(budgetRequest({ existingPicks: [{ id: 'pick-z', participantId: 'z', lineupSlot: 1 }] })))
       .toEqual({ kind: SelectionOutcomeKind.ACCEPT, lineupSlot: 2 });
   });
 
-  it('rejects re-selecting a participant the entry holds as DUPLICATE_PICK, never toggling it off', () => {
+  it('reuses the place a removed pick left, so two picks never share one', () => {
+    expect(budgetPickSelectionEngine.evaluate(budgetRequest({
+      rosterSize: 3,
+      existingPicks: [{ id: 'pick-y', participantId: 'y', lineupSlot: 2 }, { id: 'pick-z', participantId: 'z', lineupSlot: 3 }],
+    }))).toEqual({ kind: SelectionOutcomeKind.ACCEPT, lineupSlot: 1 });
+  });
+
+  it('toggles off a participant the entry holds, which is how a full budget roster makes room', () => {
     expect(
       budgetPickSelectionEngine.evaluate(budgetRequest({
         heldPick: { id: 'pick-a', participantId: 'a' },
-        existingPicks: picks('a'),
+        existingPicks: picks('a', 'z'),
       })),
-    ).toEqual({ kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.DUPLICATE_PICK });
+    ).toEqual({ kind: SelectionOutcomeKind.TOGGLE_OFF, pickId: 'pick-a' });
+  });
+
+  it('rejects a golfer with no price as PRICE_MISSING, since a pick must be spent against the cap', () => {
+    expect(budgetPickSelectionEngine.evaluate(budgetRequest({ participant: pricedParticipant('a', undefined) })))
+      .toEqual({ kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.PRICE_MISSING });
   });
 
   it('rejects ENTRY_COMPLETE once the roster is full, replacing nothing', () => {
@@ -257,12 +308,106 @@ describe('budget-pick selection engine', () => {
       .toEqual({ kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.ENTRY_COMPLETE });
   });
 
-  it('judges a lineup by its pick count alone', () => {
-    const held = (...ids: string[]) => ids.map((participantId) => ({ participantId }));
+  it('never rejects a pick for the budget: a pick that takes the entry over the cap is accepted', () => {
+    expect(budgetPickSelectionEngine.evaluate(budgetRequest({
+      participant: pricedParticipant('a', 1_000_000),
+      existingPicks: [],
+    }))).toEqual({ kind: SelectionOutcomeKind.ACCEPT, lineupSlot: 1 });
+  });
 
-    expect(budgetPickSelectionEngine.findShortfall({ rosterSize: 2, tiers: TIERS, picks: held('a', 'z') })).toBeNull();
-    expect(budgetPickSelectionEngine.findShortfall({ rosterSize: 2, tiers: TIERS, picks: held('a') }))
-      .toEqual({ pickCount: 1, rosterSize: 2, shortTierNames: [] });
+  describe('findLineupIssues', () => {
+    const issues = (salaryCap: number, ...prices: number[]) =>
+      budgetPickSelectionEngine.findLineupIssues({
+        configuration: budgetConfiguration(salaryCap),
+        rosterSize: 2,
+        tiers: TIERS,
+        picks: prices.map((price, index) => ({ participantId: `p${index}`, price })),
+      });
+
+    it('finds none for a full roster costing exactly the cap', () => {
+      expect(issues(100, 60, 40)).toEqual([]);
+    });
+
+    it('reports a full roster a cent over the cap as over budget, summing in cents', () => {
+      expect(issues(100, 60.01, 40)).toEqual([{ kind: LineupIssueKind.OVER_BUDGET, spent: 100.01, salaryCap: 100 }]);
+    });
+
+    it('sums thirds of a dollar without float drift', () => {
+      expect(issues(66.67, 33.34, 33.33)).toEqual([]);
+    });
+
+    it('reports a short roster by count, and over budget alongside it when it already costs too much', () => {
+      expect(issues(100, 40)).toEqual([{ kind: LineupIssueKind.ROSTER_SHORT, pickCount: 1, rosterSize: 2 }]);
+      expect(issues(100, 140)).toEqual([
+        { kind: LineupIssueKind.ROSTER_SHORT, pickCount: 1, rosterSize: 2 },
+        { kind: LineupIssueKind.OVER_BUDGET, spent: 140, salaryCap: 100 },
+      ]);
+    });
+  });
+
+  it('lists the whole field as one group, dearest first, unpriced last, ties by name', () => {
+    const [group, ...others] = budgetPickSelectionEngine.groupField({
+      tiers: TIERS,
+      participants: [
+        pricedParticipant('c', 6_000),
+        pricedParticipant('a', undefined),
+        pricedParticipant('b', 12_000),
+        pricedParticipant('d', 6_000),
+      ],
+      rosterSize: 6,
+    });
+
+    expect(others).toEqual([]);
+    expect(group).toMatchObject({ groupName: 'Field', picksFromGroup: 6 });
+    expect(group?.participants.map((row) => row.participantId)).toEqual(['b', 'c', 'd', 'a']);
+  });
+
+  describe('summarizeLineup', () => {
+    // What the entry could still add; the room has already dropped held, taken and withdrawn rows.
+    const openField = [
+      pricedParticipant('cheap', 10),
+      pricedParticipant('mid', 20),
+      pricedParticipant('unpriced', undefined),
+      pricedParticipant('dear', 90),
+    ];
+    const summarize = (salaryCap: number, rosterSize: number, heldPrices: number[]) =>
+      budgetPickSelectionEngine.summarizeLineup({
+        configuration: budgetConfiguration(salaryCap),
+        rosterSize,
+        tiers: [],
+        picks: heldPrices.map((price) => ({ participantId: 'held', price })),
+        openField,
+      });
+
+    it('reports spend, what is left, and what the cheapest priced golfers the entry could add cost to fill its open places', () => {
+      expect(summarize(100, 3, [50])).toEqual({
+        selectionType: SelectionType.BUDGET_PICK,
+        salaryCap: 100,
+        spent: 50,
+        remaining: 50,
+        isOverBudget: false,
+        openSlots: 2,
+        cheapestFill: 30,
+      });
+    });
+
+    it('goes negative and flags over budget once the picks cost more than the cap', () => {
+      expect(summarize(40, 1, [50])).toMatchObject({ remaining: -10, isOverBudget: true, openSlots: 0, cheapestFill: 0 });
+    });
+
+    it('has no cheapest fill when the priced golfers the entry could add cannot fill the open places', () => {
+      expect(summarize(1_000, 6, [50])).toMatchObject({ openSlots: 5, cheapestFill: null });
+    });
+
+    it('has no summary for a contest without budget rules', () => {
+      expect(budgetPickSelectionEngine.summarizeLineup({
+        configuration: configuration(),
+        rosterSize: 2,
+        tiers: [],
+        picks: [],
+        openField,
+      })).toBeNull();
+    });
   });
 
   it('shows a pick in the round of its place in the entry, ignoring tiers', () => {

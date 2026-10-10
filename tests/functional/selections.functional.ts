@@ -5,6 +5,7 @@ import {
   generateInviteLink,
   getSelectionState,
   openContest,
+  submitContestEntry,
   submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
@@ -210,10 +211,11 @@ async function seedUnsupportedSelectionTypeFixture() {
 }
 
 /**
- * A budget-pick room with two entries and two priced golfers. Exclusive by default; pass
- * `isExclusive: false` for the room where both entries may hold the same golfer.
+ * A budget-pick room with two entries and two priced golfers ($3,200 and $5,100). Exclusive by
+ * default; pass `isExclusive: false` for the room where both entries may hold the same golfer,
+ * and a roster size or cap to test the budget.
  */
-async function seedBudgetPickFixture(options: { isExclusive?: boolean } = {}) {
+async function seedBudgetPickFixture(options: { isExclusive?: boolean; rosterSize?: number; salaryCap?: number } = {}) {
   const { commissioner, league } = await buildLeagueWithCommissioner({
     displayName: 'Budget Commissioner',
     leagueName: 'Budget Functional League',
@@ -252,7 +254,12 @@ async function seedBudgetPickFixture(options: { isExclusive?: boolean } = {}) {
     selectionType: SelectionType.BUDGET_PICK,
     scoringEngine: ScoringEngine.STROKE_PLAY,
     configuration: {
-      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 1, salaryCap: 8000, countedScores: 1 },
+      configJson: {
+        selectionType: SelectionType.BUDGET_PICK,
+        rosterSize: options.rosterSize ?? 1,
+        salaryCap: options.salaryCap ?? 8000,
+        countedScores: 1,
+      },
       isExclusive: options.isExclusive ?? true,
     },
   });
@@ -770,7 +777,7 @@ describe('SDK Functional: Roster Selection', () => {
     expect(afterPickStateResponse.data?.availableParticipantIds).not.toContain(fixture.firstEventParticipantId);
     expect(afterPickStateResponse.data?.availableParticipantIds).toContain(fixture.secondEventParticipantId);
 
-    const duplicatePickResponse = await submitContestSelection({
+    const takenPickResponse = await submitContestSelection({
       client: fixture.challenger.client,
       path: {
         contestId: fixture.contestId,
@@ -781,10 +788,83 @@ describe('SDK Functional: Roster Selection', () => {
       },
     });
 
-    expectFunctionalError(duplicatePickResponse, {
+    expectFunctionalError(takenPickResponse, {
       status: 400,
       code: 'PARTICIPANT_ALREADY_TAKEN',
     });
+  });
+
+  // #93: the cap never refuses a pick; it refuses the submit, and the room shows the spend.
+  it.each([
+    { salaryCap: 8000, expectSubmitted: false },
+    { salaryCap: 8300, expectSubmitted: true },
+  ])('lets a budget entry pick both golfers ($8,300) under a $$salaryCap cap, and submits it only when it fits', async ({ salaryCap, expectSubmitted }) => {
+    const fixture = await seedBudgetPickFixture({ isExclusive: false, rosterSize: 2, salaryCap });
+    const pickFor = (participantId: string) => submitContestSelection({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.commissionerEntryId, participantId },
+    });
+
+    expect((await pickFor(fixture.secondEventParticipantId)).response.status).toBe(200);
+    const fullRoom = await pickFor(fixture.firstEventParticipantId);
+    expect(fullRoom.response.status).toBe(200);
+    expect(fullRoom.data?.lineupSummary).toEqual({
+      selectionType: SelectionType.BUDGET_PICK,
+      salaryCap,
+      spent: 8300,
+      remaining: salaryCap - 8300,
+      isOverBudget: !expectSubmitted,
+      openSlots: 0,
+      cheapestFill: 0,
+    });
+
+    const submitted = await submitContestEntry({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId },
+    });
+
+    if (expectSubmitted) {
+      expect(submitted.response.status).toBe(200);
+      expect(submitted.data?.entries.find((entry) => entry.id === fixture.commissionerEntryId)?.status).toBe('SUBMITTED');
+    } else {
+      expectFunctionalError(submitted, { status: 409, code: 'ENTRY_OVER_BUDGET' });
+      await expect(getFunctionalPrisma().contestEntry.findUniqueOrThrow({ where: { id: fixture.commissionerEntryId } }))
+        .resolves.toMatchObject({ status: 'DRAFT' });
+    }
+  });
+
+  // #93: a full budget roster takes a new golfer only after one comes off, so a swap is unselect
+  // then pick. The unselect leaves the submitted entry short, which sends it back to DRAFT, and
+  // the dearer golfer leaves it over the cap, so it cannot count again until it fits.
+  it('sends a submitted budget entry back to DRAFT when it swaps to a golfer over the cap, and refuses to resubmit it', async () => {
+    const fixture = await seedBudgetPickFixture({ isExclusive: false, rosterSize: 1, salaryCap: 4000 });
+    const pickFor = (participantId: string) => submitContestSelection({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.commissionerEntryId, participantId },
+    });
+    const submit = () => submitContestEntry({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId },
+    });
+    const entryStatus = async () => (await getFunctionalPrisma().contestEntry.findUniqueOrThrow({
+      where: { id: fixture.commissionerEntryId },
+    })).status;
+
+    expect((await pickFor(fixture.firstEventParticipantId)).response.status).toBe(200);
+    expect((await submit()).response.status).toBe(200);
+    expect(await entryStatus()).toBe('SUBMITTED');
+
+    expect((await pickFor(fixture.firstEventParticipantId)).response.status).toBe(200);
+    const overCapRoom = await pickFor(fixture.secondEventParticipantId);
+    expect(overCapRoom.response.status).toBe(200);
+    expect(overCapRoom.data?.lineupSummary).toMatchObject({ spent: 5100, isOverBudget: true, openSlots: 0 });
+    expect(overCapRoom.data?.entries?.find((entry) => entry.id === fixture.commissionerEntryId)?.status).toBe('DRAFT');
+    expect(await entryStatus()).toBe('DRAFT');
+
+    expectFunctionalError(await submit(), { status: 409, code: 'ENTRY_OVER_BUDGET' });
+    expect(await entryStatus()).toBe('DRAFT');
   });
 
   it('reads a tiered room, submits a selection, and returns updated tiered state', async () => {
