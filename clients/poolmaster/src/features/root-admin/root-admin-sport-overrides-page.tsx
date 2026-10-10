@@ -17,7 +17,7 @@ import {
   INGESTION_POLICY_FIELDS,
   type IngestionPolicyKey,
   type IngestionScheduleConfig,
-} from './root-admin-sync-config-utils';
+} from './ingestion-settings-utils';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { throwApiError, extractErrorMessage } from '@/lib/errors';

@@ -17,7 +17,7 @@ import {
   toPositiveNumber,
   type IngestionPolicyKey,
   type IngestionScheduleConfig,
-} from './root-admin-sync-config-utils';
+} from './ingestion-settings-utils';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
