@@ -1,6 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
-import { ActionList, ActionTile } from "./action-list";
 import { Button, type ButtonProps } from "./button";
 import { cn } from "./class-names";
 import { DataGrid } from "./data-grid";
@@ -8,7 +7,6 @@ import { DetailsActionsLayout } from "./details-actions-layout";
 import { PageHeader } from "./page-header";
 import { ServerErrorBar } from "./server-error";
 import { EmptyState, ErrorState, LoadingState } from "./state";
-import { StatusBadge } from "./status-badge";
 import { Tile } from "./tile";
 
 type TemplateState = "ready" | "loading" | "error" | "empty" | "forbidden";
@@ -235,7 +233,7 @@ export function ManagementListPage<TData>(props: ManagementListPageProps<TData>)
   return <DataGridPage {...props} />;
 }
 
-export type DetailWithActionsPageProps = AsyncPageStateProps & {
+export type EntityDetailPageProps = AsyncPageStateProps & {
   actions: ReactNode;
   actionsClassName?: string;
   actionsListClassName?: string;
@@ -246,12 +244,9 @@ export type DetailWithActionsPageProps = AsyncPageStateProps & {
   detailsClassName?: string;
   header?: HeaderConfig;
   layoutClassName?: string;
-  testId?: string;
-};
-
-export type EntityDetailPageProps = DetailWithActionsPageProps & {
   summary?: ReactNode;
   summaryClassName?: string;
+  testId?: string;
 };
 
 export function EntityDetailPage({
@@ -282,10 +277,6 @@ export function EntityDetailPage({
       />
     </TemplatePageShell>
   );
-}
-
-export function DetailWithActionsPage(props: DetailWithActionsPageProps) {
-  return <EntityDetailPage {...props} />;
 }
 
 export type FormEditorSectionProps = {
@@ -331,84 +322,6 @@ export function FormEditorSection({
 
       {footer ? (
         <div className="mt-5 flex flex-wrap justify-end gap-3">{footer}</div>
-      ) : null}
-    </Tile>
-  );
-}
-
-export type LifecycleAction = {
-  description?: ReactNode;
-  disabled?: boolean;
-  key: string;
-  label: ReactNode;
-  onSelect?: () => void;
-  pending?: boolean;
-  pendingLabel?: ReactNode;
-  testId?: string;
-  tone?: "default" | "danger" | "primary";
-  trailing?: ReactNode;
-  visibleForStatuses?: readonly string[];
-};
-
-export type LifecycleActionSetProps = {
-  actions: readonly LifecycleAction[];
-  className?: string;
-  currentStatus: string;
-  errorMessage?: ReactNode;
-  helperText?: ReactNode;
-  statusTone?: "active" | "inactive" | "info" | "neutral" | "warning" | "danger";
-  testId?: string;
-  title?: ReactNode;
-};
-
-export function LifecycleActionSet({
-  actions,
-  className,
-  currentStatus,
-  errorMessage,
-  helperText,
-  statusTone = "neutral",
-  testId,
-  title = "Lifecycle",
-}: LifecycleActionSetProps) {
-  const visibleActions = actions.filter((action) => {
-    if (!action.visibleForStatuses?.length) {
-      return true;
-    }
-
-    return action.visibleForStatuses.includes(currentStatus);
-  });
-
-  return (
-    <Tile className={className} data-testid={testId}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-        <StatusBadge tone={statusTone}>{currentStatus}</StatusBadge>
-      </div>
-
-      {helperText ? (
-        <div className="mt-3 text-sm text-muted-foreground">{helperText}</div>
-      ) : null}
-
-      <ActionList className="mt-5">
-        {visibleActions.map((action) => (
-          <ActionTile
-            data-testid={action.testId}
-            description={action.description}
-            disabled={action.disabled || action.pending}
-            key={action.key}
-            label={action.pending ? action.pendingLabel ?? action.label : action.label}
-            onClick={action.onSelect}
-            tone={action.tone}
-            trailing={action.trailing}
-          />
-        ))}
-      </ActionList>
-
-      {errorMessage ? (
-        <p className="mt-4 text-sm font-medium text-destructive">
-          {errorMessage}
-        </p>
       ) : null}
     </Tile>
   );

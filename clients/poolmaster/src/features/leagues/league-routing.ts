@@ -13,6 +13,10 @@ export function buildLeagueTeamPath(leagueCode: string) {
   return `/league/${leagueCode}/team`;
 }
 
+export function buildLeagueTeamEditPath(leagueCode: string) {
+  return `/league/${leagueCode}/team/edit`;
+}
+
 export function buildLeagueTeamHomePath(leagueCode: string, teamId: string) {
   return `/league/${leagueCode}/teams/${teamId}`;
 }

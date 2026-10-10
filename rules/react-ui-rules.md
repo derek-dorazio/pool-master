@@ -297,10 +297,9 @@ state, stale actions, and unthemeable markup accumulate.
 - Do not scatter inline `role === 'COMMISSIONER'`-style checks across
   subcomponents. The authority hook is the single shared primitive; every
   consumer of that entity's permissions reads through it.
-- Applies to rich, daily-use entity surfaces where users spend time (Team
-  Home, Contest Home, Entry page) and to platform-admin detail pages that
-  reuse the same canonical Home (e.g. a root-admin list linking into the same
-  Team Home).
+- Applies to rich, daily-use entity surfaces where users spend time (My
+  team, Contest Home, Entry page) and to admin detail pages (e.g. a
+  Commissioner tools list linking into Manage team).
 - Does not apply to quick transactional admin actions on platform-admin list
   pages, where the workflow is search → act → done → next entity. Those use
   modals on the list page instead of a per-entity detail page. Reserve a

@@ -288,7 +288,7 @@ describe('LeagueInvitations', () => {
   });
 });
 
-describe('Inviting members from Teams and Owners', () => {
+describe('Inviting members from Commissioner tools › Invites', () => {
   afterEach(() => {
     generateInviteLinkMock.mockReset();
     listLeagueInvitationsMock.mockReset();

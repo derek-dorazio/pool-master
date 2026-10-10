@@ -24,15 +24,16 @@ import { registerFreshUser } from './helpers/user-session';
  * league and users through the API in `afterAll`, whatever the outcome.
  *
  * Where each action lives, as found by running it:
- * - rename, icon and co-owner invitation: the owner's My Team page;
+ * - rename and icon: My team › Edit team (`/league/:code/team/edit`), saved together;
+ * - co-owner invitation: the Owners section of My team;
  * - invitations: Commissioner tools › Invites (`/league/:code/admin/invites`);
  * - inactivate: Commissioner tools › Teams › Manage team (`/league/:code/admin/teams/:id`).
  *   Only a commissioner or root admin may inactivate (#219);
  * - delete: root admin only, and only once the squad is inactive. The server answers a
- *   commissioner with 403, so the root admin deletes it from the squad's Team Home.
+ *   commissioner with 403, so the root admin deletes it from Commissioner tools › Manage team.
  */
 
-const RENAMED_ICON = { key: 'HELMET_BOLT_MIDNIGHT', label: 'Helmet Bolt Midnight' } as const;
+const RENAMED_ICON_KEY = 'HELMET_BOLT_MIDNIGHT';
 
 test.use({ actionTimeout: 20_000 });
 
@@ -169,40 +170,28 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
       squadId = mine?.id ?? '';
     });
 
-    await test.step('the owner renames the squad, and the new name shows on My Team and the squad list', async () => {
+    await test.step('the owner renames the squad and changes its icon in one save, and the new name shows on My team and the Teams directory', async () => {
       await owner.goto(`/league/${run.leagueCode}/team`);
-      await expect(owner.getByTestId('my-team-details-tile')).toContainText(run.squadName);
-      await owner.getByTestId('my-team-open-name').click();
-      await owner.getByTestId('my-team-name').fill(run.renamedSquadName);
-      const renamed = await submitAndRead<{ squad: { id: string; name: string } }>(
+      await expect(owner.getByTestId('my-team-identity')).toContainText(run.squadName);
+      await owner.getByTestId('my-team-edit').click();
+      await owner.getByTestId('edit-team-name').fill(run.renamedSquadName);
+      await owner.getByTestId(`team-icon-${RENAMED_ICON_KEY}`).click();
+      const updated = await submitAndRead<{ squad: { name: string; iconKey: string } }>(
         owner,
-        'my-team-save',
+        'edit-team-save',
         'PATCH',
         `/api/v1/leagues/${leagueId}/squads/${squadId}`,
       );
-      expect(renamed.squad.name).toBe(run.renamedSquadName);
-      await expect(owner.getByTestId('my-team-details-tile')).toContainText(run.renamedSquadName);
+      expect(updated.squad.name).toBe(run.renamedSquadName);
+      expect(updated.squad.iconKey).toBe(RENAMED_ICON_KEY);
+      await expect(owner.getByTestId('my-team-identity')).toContainText(run.renamedSquadName);
 
       await owner.goto(`/league/${run.leagueCode}/teams`);
       await expect(owner.getByTestId(`league-team-home-link-${squadId}`)).toHaveText(run.renamedSquadName);
-    });
-
-    await test.step(`the owner changes the icon to ${RENAMED_ICON.label}`, async () => {
       await owner.goto(`/league/${run.leagueCode}/team`);
-      await owner.getByTestId('my-team-change-icon').click();
-      await owner.getByTestId(`my-team-icon-${RENAMED_ICON.key}`).click();
-      const updated = await submitAndRead<{ squad: { iconKey: string } }>(
-        owner,
-        'my-team-save-icon',
-        'PATCH',
-        `/api/v1/leagues/${leagueId}/squads/${squadId}`,
-      );
-      expect(updated.squad.iconKey).toBe(RENAMED_ICON.key);
-      await expect(owner.getByTestId('my-team-current-icon-label')).toHaveText(RENAMED_ICON.label);
     });
 
     await test.step('the owner invites a co-owner by an address with no account, and gets a pending invite code', async () => {
-      await owner.getByTestId('my-team-open-owners').click();
       await owner.getByTestId('my-team-owner-email').fill(run.coOwner.email);
       // The code is read from the response, never from an email: the same rule as the league
       // join link, since there is no inbox the suite can read.
@@ -237,11 +226,10 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
       expect(registered.user.email).toBe(run.coOwner.email);
 
       await expect(coOwner).toHaveURL(new RegExp(`/league/${run.leagueCode}/team$`));
-      const details = coOwner.getByTestId('my-team-details-tile');
-      await expect(details).toContainText(run.renamedSquadName);
-      await expect(details).toContainText(run.coOwner.lastName);
-      await expect(details).toContainText(run.member.lastName);
-      await expect(coOwner.getByTestId('my-team-current-icon-label')).toHaveText(RENAMED_ICON.label);
+      await expect(coOwner.getByTestId('my-team-identity')).toContainText(run.renamedSquadName);
+      const owners = coOwner.getByTestId('my-team-owners');
+      await expect(owners).toContainText(run.coOwner.lastName);
+      await expect(owners).toContainText(run.member.lastName);
     });
 
     await test.step('the commissioner inactivates the squad from Commissioner tools', async () => {
@@ -258,17 +246,14 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
 
       await commissioner.goto(`/league/${run.leagueCode}/teams`);
       await expect(commissioner.getByTestId(`league-team-${squadId}`)).toContainText('Inactive');
-
-      await commissioner.getByTestId(`league-team-home-link-${squadId}`).click();
-      await expect(commissioner.getByTestId('my-team-lifecycle-status')).toHaveText('Inactive');
     });
 
     await test.step('the root admin deletes the inactive squad, and it is gone from the league', async () => {
       const rootAdmin = await newRolePage();
       await adminSignIn(rootAdmin, credentials);
-      await rootAdmin.goto(`/league/${run.leagueCode}/teams/${squadId}`);
-      await expect(rootAdmin.getByTestId('my-team-lifecycle-status')).toHaveText('Inactive');
-      await rootAdmin.getByTestId('my-team-delete').click();
+      await rootAdmin.goto(`/league/${run.leagueCode}/admin/teams/${squadId}`);
+      await expect(rootAdmin.getByTestId('manage-team-inactive')).toBeVisible();
+      await rootAdmin.getByTestId('manage-team-delete').click();
       await submitAndRead(
         rootAdmin,
         'my-team-confirm-delete',
@@ -276,9 +261,9 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
         `/api/v1/leagues/${leagueId}/squads/${squadId}`,
       );
 
-      // Deleting returns the root admin to the league, and the squad list no longer shows it.
+      // Deleting returns the root admin to the team list, and the directory no longer shows it.
       // The squad is this run's own, so its absence is a fact about it and nothing else.
-      await expect(rootAdmin.getByTestId('league-home')).toBeVisible();
+      await expect(rootAdmin.getByTestId('admin-teams-page')).toBeVisible();
       await rootAdmin.goto(`/league/${run.leagueCode}/teams`);
       // A positive anchor first, so the absence is never read off a list that has not loaded:
       // the directory has settled once its table shows.

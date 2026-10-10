@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type SquadDto, deleteLeagueSquad, inactivateLeagueSquad } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
-import { buildLeaguePath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import type { ActiveTeamDialog } from './my-team-shared';
 
 /**
- * Inactivate and delete for the My Team page, with the notices they leave behind. The notices
+ * Inactivate and delete for Commissioner tools › Manage team, with the notices they leave
+ * behind. The notices
  * belong to the selected team and clear when the selection changes.
  */
 export function useMyTeamLifecycle({
@@ -17,15 +17,15 @@ export function useMyTeamLifecycle({
   selectedTeam,
   setActiveDialog,
   resetOwnerForms,
-  afterDeletePath = buildLeaguePath(leagueCode),
+  afterDeletePath,
 }: {
   leagueId: string;
   leagueCode: string;
   selectedTeam: SquadDto | null;
   setActiveDialog: (dialog: ActiveTeamDialog) => void;
   resetOwnerForms: () => void;
-  /** Where a deleted team's page goes; the league by default. */
-  afterDeletePath?: string;
+  /** Where the page goes once its team is deleted. */
+  afterDeletePath: string;
 }) {
   const navigate = useNavigate();
   const [teamInactivationNotice, setTeamInactivationNotice] = useState<string | null>(null);

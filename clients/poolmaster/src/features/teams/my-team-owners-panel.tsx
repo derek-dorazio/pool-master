@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { LeagueRole, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 import type { SquadDto, TeamOwnerInvitationDto } from '@/lib/api';
@@ -16,7 +15,6 @@ type LeagueMembersByUserId = ReturnType<typeof useLeagueMembersQuery>['membersBy
 /** Co-owner invites, the active owner list, pending invites, and replace owner. */
 export function MyTeamOwnersPanel({
   owners,
-  notices,
   selectedTeam,
   activeMembers,
   teamOwnerInvitations,
@@ -31,8 +29,6 @@ export function MyTeamOwnersPanel({
   canManageSelectedTeam,
 }: {
   owners: MyTeamOwners;
-  /** The lifecycle outcomes, shown under the owner controls. */
-  notices: ReactNode;
   selectedTeam: SquadDto | null;
   activeMembers: TeamMember[];
   teamOwnerInvitations: TeamOwnerInvitationDto[];
@@ -245,7 +241,6 @@ export function MyTeamOwnersPanel({
       {revokeOwnerInvitationMutation.isError ? (
         <Alert tone="danger">{extractErrorMessage(revokeOwnerInvitationMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
       ) : null}
-      {notices}
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SquadDto } from '@/lib/api';
-import { MyTeamLifecycleActions, MyTeamLifecycleDialogs, MyTeamLifecycleNotices } from './my-team-lifecycle';
+import { MyTeamLifecycleDialogs, MyTeamLifecycleNotices } from './my-team-lifecycle';
 import type { ActiveTeamDialog } from './my-team-shared';
 import { useMyTeamLifecycle } from './use-my-team-lifecycle';
 
@@ -35,15 +35,13 @@ function buildTeam(overrides: Partial<SquadDto> = {}): SquadDto {
 
 interface HarnessProps {
   team: SquadDto;
-  isInactiveLeague?: boolean;
-  canInactivate?: boolean;
-  canDelete?: boolean;
 }
 
-/** The lifecycle tile, its notices and its dialogs, wired the way the My Team page wires them. */
-function LifecycleHarness({ team, isInactiveLeague = false, canInactivate = true, canDelete = false }: HarnessProps) {
+/** The lifecycle notices and dialogs, opened by stand-ins for the page's own buttons. */
+function LifecycleHarness({ team }: HarnessProps) {
   const [activeDialog, setActiveDialog] = useState<ActiveTeamDialog>(null);
   const lifecycle = useMyTeamLifecycle({
+    afterDeletePath: '/league/BIGDAWGS',
     leagueId: 'league-1',
     leagueCode: 'BIGDAWGS',
     selectedTeam: team,
@@ -53,15 +51,8 @@ function LifecycleHarness({ team, isInactiveLeague = false, canInactivate = true
 
   return (
     <>
-      <MyTeamLifecycleActions
-        canDeleteSelectedTeam={canDelete}
-        canInactivateSelectedTeam={canInactivate}
-        isBusy={lifecycle.isPending}
-        isInactiveLeague={isInactiveLeague}
-        isInactiveTeam={!team.isActive}
-        lifecycle={lifecycle}
-        setActiveDialog={setActiveDialog}
-      />
+      <button data-testid="open-inactivate" onClick={() => setActiveDialog('inactivate')} type="button">Inactivate</button>
+      <button data-testid="open-delete" onClick={() => setActiveDialog('delete')} type="button">Delete</button>
       <MyTeamLifecycleNotices lifecycle={lifecycle} />
       <MyTeamLifecycleDialogs
         activeDialog={activeDialog}
@@ -93,34 +84,17 @@ function invalidatedKeys(spy: ReturnType<typeof renderLifecycle>['invalidateSpy'
   return spy.mock.calls.map(([filters]) => (filters as { queryKey?: unknown } | undefined)?.queryKey);
 }
 
-describe('My Team lifecycle', () => {
+describe('Team lifecycle dialogs', () => {
   beforeEach(() => {
     inactivateLeagueSquadMock.mockReset();
     deleteLeagueSquadMock.mockReset();
-  });
-
-  it('offers inactivation for an active team and hides deletion until the team is inactive', () => {
-    renderLifecycle({ team: buildTeam(), canDelete: true });
-
-    expect(screen.getByTestId('my-team-inactivate')).toBeEnabled();
-    expect(screen.queryByTestId('my-team-delete')).not.toBeInTheDocument();
-  });
-
-  it('disables inactivation in an inactive league', () => {
-    renderLifecycle({ team: buildTeam(), isInactiveLeague: true });
-    expect(screen.getByTestId('my-team-inactivate')).toBeDisabled();
-  });
-
-  it('disables inactivation for a viewer who may not end the team', () => {
-    renderLifecycle({ team: buildTeam(), canInactivate: false });
-    expect(screen.getByTestId('my-team-inactivate')).toBeDisabled();
   });
 
   it('inactivates the team, closes the dialog, says what happened and refreshes the league\'s roster and context', async () => {
     inactivateLeagueSquadMock.mockResolvedValue({ data: { squad: buildTeam({ isActive: false }) } });
     const { invalidateSpy } = renderLifecycle({ team: buildTeam() });
 
-    fireEvent.click(screen.getByTestId('my-team-inactivate'));
+    fireEvent.click(screen.getByTestId('open-inactivate'));
     fireEvent.click(await screen.findByTestId('my-team-confirm-inactivate'));
 
     expect(await screen.findByText(/Birdie Hunters is now inactive/)).toBeInTheDocument();
@@ -148,7 +122,7 @@ describe('My Team lifecycle', () => {
     });
     renderLifecycle({ team: buildTeam() });
 
-    fireEvent.click(screen.getByTestId('my-team-inactivate'));
+    fireEvent.click(screen.getByTestId('open-inactivate'));
     fireEvent.click(await screen.findByTestId('my-team-confirm-inactivate'));
 
     expect(await screen.findByText(/Appoint another active commissioner/)).toBeInTheDocument();
@@ -162,10 +136,9 @@ describe('My Team lifecycle', () => {
 
   it('deletes an inactive team and returns to the league page', async () => {
     deleteLeagueSquadMock.mockResolvedValue({ data: { success: true } });
-    renderLifecycle({ team: buildTeam({ isActive: false }), canDelete: true });
+    renderLifecycle({ team: buildTeam({ isActive: false }) });
 
-    expect(screen.queryByTestId('my-team-inactivate')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('my-team-delete'));
+    fireEvent.click(screen.getByTestId('open-delete'));
     fireEvent.click(await screen.findByTestId('my-team-confirm-delete'));
 
     expect(await screen.findByTestId('league-route-destination')).toBeInTheDocument();
@@ -176,9 +149,9 @@ describe('My Team lifecycle', () => {
     deleteLeagueSquadMock.mockResolvedValue({
       error: { error: { code: 'SQUAD_DELETE_REQUIRES_INACTIVE', message: 'Team must already be inactive before it can be permanently deleted.' } },
     });
-    renderLifecycle({ team: buildTeam({ isActive: false }), canDelete: true });
+    renderLifecycle({ team: buildTeam({ isActive: false }) });
 
-    fireEvent.click(screen.getByTestId('my-team-delete'));
+    fireEvent.click(screen.getByTestId('open-delete'));
     fireEvent.click(await screen.findByTestId('my-team-confirm-delete'));
 
     expect(await screen.findByText('Team must already be inactive before it can be permanently deleted.')).toBeInTheDocument();
@@ -189,9 +162,9 @@ describe('My Team lifecycle', () => {
     deleteLeagueSquadMock.mockResolvedValue({
       error: { error: { code: 'SQUAD_DELETE_REQUIRES_INACTIVE', message: 'Team must already be inactive before it can be permanently deleted.' } },
     });
-    renderLifecycle({ team: buildTeam({ isActive: false }), canDelete: true });
+    renderLifecycle({ team: buildTeam({ isActive: false }) });
 
-    fireEvent.click(screen.getByTestId('my-team-delete'));
+    fireEvent.click(screen.getByTestId('open-delete'));
     fireEvent.click(await screen.findByTestId('my-team-confirm-delete'));
     await screen.findByText('Team must already be inactive before it can be permanently deleted.');
 
@@ -204,7 +177,7 @@ describe('My Team lifecycle', () => {
   it('closes the inactivate dialog on Escape without inactivating', async () => {
     renderLifecycle({ team: buildTeam() });
 
-    fireEvent.click(screen.getByTestId('my-team-inactivate'));
+    fireEvent.click(screen.getByTestId('open-inactivate'));
     fireEvent.keyDown(await screen.findByTestId('my-team-inactivate-dialog'), { key: 'Escape' });
 
     await waitFor(() => expect(screen.queryByTestId('my-team-inactivate-dialog')).not.toBeInTheDocument());

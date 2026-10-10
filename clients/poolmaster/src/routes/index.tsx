@@ -42,10 +42,11 @@ import { RootAdminSyncConfigPage } from '@/features/root-admin/root-admin-sync-c
 import { RootAdminSettingsPage } from '@/features/root-admin/root-admin-settings-page';
 import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
 import { RootAdminUnmappedParticipantsPage } from '@/features/root-admin/root-admin-unmapped-participants-page';
-import { CanonicalTeamHomeRoute } from '@/features/teams/canonical-team-home-route';
 import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamHistoryPage } from '@/features/teams/my-team-history-page';
+import { MyTeamEditPage } from '@/features/teams/my-team-edit-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
+import { TeamPage } from '@/features/teams/team-page';
 import { TeamsPage } from '@/features/teams/teams-page';
 import { AdminEditTeamPage } from '@/features/teams/admin-edit-team-page';
 import { InvitesPage } from '@/features/teams/invites-page';
@@ -168,8 +169,12 @@ export const router = createBrowserRouter([
             element: <MyTeamPage />,
           },
           {
+            path: 'league/:leagueCode/team/edit',
+            element: <MyTeamEditPage />,
+          },
+          {
             path: 'league/:leagueCode/teams/:teamId',
-            element: <CanonicalTeamHomeRoute />,
+            element: <TeamPage />,
           },
           {
             // pool-master-dxd.13 — MyEntriesPage was folded into the per-contest
