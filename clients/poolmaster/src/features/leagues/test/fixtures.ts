@@ -300,12 +300,6 @@ export function updateLeagueDetailsData(
   return { league };
 }
 
-export function updateLeagueIconData(
-  league: LeagueDto,
-): LeagueResponse {
-  return { league };
-}
-
 export function inactivateLeagueData(
   league: LeagueDto,
 ): LeagueResponse {

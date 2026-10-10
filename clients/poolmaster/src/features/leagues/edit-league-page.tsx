@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { LeagueIconKey } from '@poolmaster/shared/domain';
-import { updateLeagueDetails, updateLeagueIcon, type LeagueDto } from '@/lib/api';
+import { updateLeagueDetails, type LeagueDto } from '@/lib/api';
 import {
   FormField,
   FormPage,
@@ -64,29 +64,20 @@ function EditLeagueForm({ league }: { league: LeagueDto }) {
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (values: EditLeagueFormValues) => {
-      // An empty description is left out, which the contract reads as clearing it.
-      const detailsResponse = await updateLeagueDetails({
+      // One request carries all three fields, so a save never lands half-applied. An empty
+      // description is left out, which the contract reads as clearing it.
+      const response = await updateLeagueDetails({
         path: { id: league.id },
         body: {
           name: values.name,
           ...(values.description ? { description: values.description } : {}),
+          iconKey: values.iconKey,
         },
       });
-      if (!detailsResponse.data?.league) {
-        throwApiError(detailsResponse.error, 'League details update response is missing data.');
+      if (!response.data?.league) {
+        throwApiError(response.error, 'League update response is missing data.');
       }
-      if (values.iconKey === detailsResponse.data.league.iconKey) {
-        return detailsResponse.data.league;
-      }
-
-      const iconResponse = await updateLeagueIcon({
-        path: { id: league.id },
-        body: { iconKey: values.iconKey },
-      });
-      if (!iconResponse.data?.league) {
-        throwApiError(iconResponse.error, 'League icon update response is missing data.');
-      }
-      return iconResponse.data.league;
+      return response.data.league;
     },
     onSuccess: (updated) => {
       syncLeagueCaches(queryClient, updated);

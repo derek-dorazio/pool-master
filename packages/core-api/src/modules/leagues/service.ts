@@ -29,9 +29,6 @@ export interface CreateLeagueInput {
 export interface UpdateLeagueDetailsInput {
   name: string;
   description?: string;
-}
-
-export interface UpdateLeagueIconInput {
   iconKey: LeagueIconKey;
 }
 
@@ -339,6 +336,7 @@ export class LeagueService {
       data: {
         leagueId,
         hasDescription: updates.description !== undefined,
+        iconKey: updates.iconKey,
       },
     }, 'Updating league details');
     const league = await this.deps.leagues.findById(leagueId);
@@ -361,57 +359,18 @@ export class LeagueService {
       );
     }
 
-    // The details PUT replaces both fields: an omitted or blank description clears it, as the
-    // request contract documents. `undefined` here would mean "leave it", so clearing is `null`.
+    // The details PUT replaces name, description and icon in one write, so a save never lands
+    // half-applied. An omitted or blank description clears it, as the request contract
+    // documents. `undefined` here would mean "leave it", so clearing is `null`.
     const updatedLeague = await this.deps.leagues.update(leagueId, {
       name: updates.name,
       description: updates.description?.trim() || null,
+      iconKey: updates.iconKey,
     });
     this.logger?.info({
       action: 'league.updateDetails.success',
       data: { leagueId },
     }, 'Updated league details');
-    return updatedLeague;
-  }
-
-  async updateLeagueIcon(leagueId: string, updates: UpdateLeagueIconInput): Promise<League> {
-    this.logger?.debug({
-      action: 'league.updateIcon.enter',
-      data: {
-        leagueId,
-        iconKey: updates.iconKey,
-      },
-    }, 'Updating league icon');
-    const league = await this.deps.leagues.findById(leagueId);
-    if (!league) {
-      this.logger?.warn({
-        action: 'league.updateIcon.notFound',
-        data: { leagueId },
-      }, 'Cannot update icon for missing league');
-      throw new LeagueNotFoundError(leagueId);
-    }
-
-    if (!league.isActive) {
-      this.logger?.warn({
-        action: 'league.updateIcon.readOnlyInactive',
-        data: { leagueId },
-      }, 'Rejected icon update for inactive league');
-      throw new LeagueOperationError(
-        'Inactive leagues are read-only outside lifecycle actions',
-        'LEAGUE_ICON_READ_ONLY_WHEN_INACTIVE',
-      );
-    }
-
-    const updatedLeague = await this.deps.leagues.update(leagueId, {
-      iconKey: updates.iconKey,
-    });
-    this.logger?.info({
-      action: 'league.updateIcon.success',
-      data: {
-        leagueId,
-        iconKey: updates.iconKey,
-      },
-    }, 'Updated league icon');
     return updatedLeague;
   }
 

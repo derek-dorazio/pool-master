@@ -415,29 +415,6 @@ describe('Contract verification (web)', () => {
       payload: {
         name: 'Edited League',
         description: 'Edited description',
-      },
-    });
-
-    expect(updateRes.statusCode).toBe(200);
-    expect(LeagueResponseSchema.safeParse(updateRes.json()).success).toBe(true);
-  });
-
-  it('league icon update route matches LeagueResponseSchema', async () => {
-    const owner = await createTestUser({ displayName: 'Contract League Icon Editor' });
-
-    const leagueRes = await getApp().inject({
-      method: 'POST',
-      url: API_ROUTES.leagues.create,
-      headers: owner.headers,
-      payload: buildCreateLeaguePayload('Icon League'),
-    });
-    const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
-
-    const updateRes = await getApp().inject({
-      method: 'PUT',
-      url: API_ROUTES.leagues.icon(leagueId),
-      headers: owner.headers,
-      payload: {
         iconKey: 'SOCCER_BALL',
       },
     });

@@ -215,7 +215,6 @@ describe('LeagueService — lifecycle', () => {
     ['inactivateLeague', (service: LeagueService) => service.inactivateLeague('missing')],
     ['activateLeague', (service: LeagueService) => service.activateLeague('missing')],
     ['updateLeagueDetails', (service: LeagueService) => service.updateLeagueDetails('missing', { name: 'x', iconKey: LeagueIconKey.TROPHY })],
-    ['updateLeagueIcon', (service: LeagueService) => service.updateLeagueIcon('missing', { iconKey: LeagueIconKey.TROPHY })],
     ['deleteInactiveLeague', (service: LeagueService) => service.deleteInactiveLeague('missing', 'X')],
   ])('%s on an unknown league throws LeagueNotFoundError naming the league', async (_name, act) => {
     const attempt = act(serviceFor(inMemoryLeagueWorld()));

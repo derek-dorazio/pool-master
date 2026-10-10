@@ -534,48 +534,6 @@ describe('LeagueService', () => {
     });
   });
 
-  describe('updateLeagueIcon', () => {
-    it('updates the built-in icon for an active league', async () => {
-      const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(buildLeague({
-          id: 'league-1',
-          isActive: true,
-        })),
-      });
-      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo(), users: fakeUserRepo() });
-
-      await service.updateLeagueIcon('league-1', {
-        iconKey: LeagueIconKey.SOCCER_BALL,
-      });
-
-      expect(leagueRepo.update).toHaveBeenCalledWith(
-        'league-1',
-        expect.objectContaining({
-          iconKey: LeagueIconKey.SOCCER_BALL,
-        }),
-      );
-    });
-
-    it('rejects icon updates once a league is inactive', async () => {
-      const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(buildLeague({
-          id: 'league-1',
-          isActive: false,
-        })),
-      });
-      const service = new LeagueService({ leagues: leagueRepo, memberships: createMockMembershipRepo(), users: fakeUserRepo() });
-
-      await expect(
-        service.updateLeagueIcon('league-1', {
-          iconKey: LeagueIconKey.SOCCER_BALL,
-        }),
-      ).rejects.toMatchObject({
-        code: 'LEAGUE_ICON_READ_ONLY_WHEN_INACTIVE',
-        statusCode: 400,
-      });
-    });
-  });
-
   describe('deleteInactiveLeague', () => {
     it('rejects deleting an active league', async () => {
       const leagueRepo = createMockLeagueRepo({

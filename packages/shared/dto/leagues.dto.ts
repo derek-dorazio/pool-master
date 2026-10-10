@@ -14,6 +14,30 @@ import { DateTimeSchema, EmailInputSchema } from './common.dto';
 import { SquadMembershipDtoSchema } from './squads.dto';
 import { UserDtoSchema } from './users.dto';
 
+/** The curated league icon catalog, shared by the league response and the details update. */
+const LeagueIconKeySchema = z.enum([
+  LeagueIconKey.GOLF_FLAG,
+  LeagueIconKey.GOLF_BALL,
+  LeagueIconKey.FOOTBALL,
+  LeagueIconKey.FOOTBALL_HELMET,
+  LeagueIconKey.BASKETBALL,
+  LeagueIconKey.BASKETBALL_HOOP,
+  LeagueIconKey.CHECKERED_FLAG,
+  LeagueIconKey.RACING_WHEEL,
+  LeagueIconKey.TENNIS_BALL,
+  LeagueIconKey.TENNIS_RACKET,
+  LeagueIconKey.HORSESHOE,
+  LeagueIconKey.SOCCER_BALL,
+  LeagueIconKey.HOCKEY_STICK,
+  LeagueIconKey.HOCKEY_PUCK,
+  LeagueIconKey.BASEBALL,
+  LeagueIconKey.BASEBALL_BAT,
+  LeagueIconKey.FIGHT_GLOVE,
+  LeagueIconKey.TROPHY,
+  LeagueIconKey.WHISTLE,
+  LeagueIconKey.STOPWATCH,
+]);
+
 // --- Requests ---
 
 export const CreateLeagueRequestSchema = z.object({
@@ -47,36 +71,10 @@ export const UpdateLeagueDetailsRequestSchema = z.object({
     .max(500)
     .optional()
     .describe('Optional updated commissioner-facing league description. Omit or send an empty value to clear it.'),
-}).describe('Commissioner request payload for editing league details while the league remains active.');
+  iconKey: LeagueIconKeySchema
+    .describe('Built-in league icon from the curated PoolMaster icon catalog. Send the current icon to keep it.'),
+}).describe('Commissioner request payload for editing league details while the league remains active. Name, description and icon are replaced together, so a save either applies all three or none.');
 export type UpdateLeagueDetailsRequest = z.infer<typeof UpdateLeagueDetailsRequestSchema>;
-
-export const UpdateLeagueIconRequestSchema = z.object({
-  iconKey: z
-    .enum([
-      LeagueIconKey.GOLF_FLAG,
-      LeagueIconKey.GOLF_BALL,
-      LeagueIconKey.FOOTBALL,
-      LeagueIconKey.FOOTBALL_HELMET,
-      LeagueIconKey.BASKETBALL,
-      LeagueIconKey.BASKETBALL_HOOP,
-      LeagueIconKey.CHECKERED_FLAG,
-      LeagueIconKey.RACING_WHEEL,
-      LeagueIconKey.TENNIS_BALL,
-      LeagueIconKey.TENNIS_RACKET,
-      LeagueIconKey.HORSESHOE,
-      LeagueIconKey.SOCCER_BALL,
-      LeagueIconKey.HOCKEY_STICK,
-      LeagueIconKey.HOCKEY_PUCK,
-      LeagueIconKey.BASEBALL,
-      LeagueIconKey.BASEBALL_BAT,
-      LeagueIconKey.FIGHT_GLOVE,
-      LeagueIconKey.TROPHY,
-      LeagueIconKey.WHISTLE,
-      LeagueIconKey.STOPWATCH,
-    ])
-    .describe('Selected built-in league icon from the curated PoolMaster icon catalog.'),
-}).describe('Commissioner request payload for selecting a built-in league icon.');
-export type UpdateLeagueIconRequest = z.infer<typeof UpdateLeagueIconRequestSchema>;
 
 export const SendLeagueInvitationsRequestSchema = z.object({
   emails: z.array(EmailInputSchema).min(1).max(50).describe('Email recipients to invite into the league.'),
@@ -146,29 +144,7 @@ export const LeagueDtoSchema = z.object({
   name: z.string().describe('Primary display name for the league.'),
   description: z.string().nullable().optional().describe('Optional short league description.'),
   isActive: z.boolean().describe('Whether the league is currently active for normal write interactions.'),
-  iconKey: z
-    .enum([
-      LeagueIconKey.GOLF_FLAG,
-      LeagueIconKey.GOLF_BALL,
-      LeagueIconKey.FOOTBALL,
-      LeagueIconKey.FOOTBALL_HELMET,
-      LeagueIconKey.BASKETBALL,
-      LeagueIconKey.BASKETBALL_HOOP,
-      LeagueIconKey.CHECKERED_FLAG,
-      LeagueIconKey.RACING_WHEEL,
-      LeagueIconKey.TENNIS_BALL,
-      LeagueIconKey.TENNIS_RACKET,
-      LeagueIconKey.HORSESHOE,
-      LeagueIconKey.SOCCER_BALL,
-      LeagueIconKey.HOCKEY_STICK,
-      LeagueIconKey.HOCKEY_PUCK,
-      LeagueIconKey.BASEBALL,
-      LeagueIconKey.BASEBALL_BAT,
-      LeagueIconKey.FIGHT_GLOVE,
-      LeagueIconKey.TROPHY,
-      LeagueIconKey.WHISTLE,
-      LeagueIconKey.STOPWATCH,
-    ])
+  iconKey: LeagueIconKeySchema
     .describe('Selected built-in league icon key from the curated PoolMaster icon catalog.'),
   memberCount: z.number().describe('Current number of memberships in the league.'),
   activeContestCount: z.number().describe('Number of currently active contests associated with the league.'),
@@ -377,7 +353,6 @@ export type LeagueBulkOperationResponse = z.infer<typeof LeagueBulkOperationResp
 registerSchema('CreateLeagueRequest', CreateLeagueRequestSchema);
 registerSchema('DeleteLeagueRequest', DeleteLeagueRequestSchema);
 registerSchema('UpdateLeagueDetailsRequest', UpdateLeagueDetailsRequestSchema);
-registerSchema('UpdateLeagueIconRequest', UpdateLeagueIconRequestSchema);
 registerSchema('SendLeagueInvitationsRequest', SendLeagueInvitationsRequestSchema);
 registerSchema('GenerateInviteLinkRequest', GenerateInviteLinkRequestSchema);
 registerSchema('ChangeLeagueMemberRoleRequest', ChangeLeagueMemberRoleRequestSchema);
