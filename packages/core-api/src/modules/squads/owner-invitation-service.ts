@@ -110,25 +110,29 @@ export class SquadOwnerInvitationService {
     const existingUser = await this.findUserByEmail(normalizedEmail);
     await this.rejectIfCurrentLeagueMember(input.leagueId, existingUser?.id);
 
-    const invitation = await this.invitationRepo.create({
-      leagueId: input.leagueId,
-      squadId: input.squadId,
-      email: normalizedEmail,
-      inviteCode: generateInviteCode(),
-      status: SharedSquadOwnerInvitationStatus.PENDING,
-      invitedBy: input.actorUserId,
-      expiresAt: buildDefaultExpiry(),
-    });
+    // One transaction, so a failure part way never leaves an existing account back in the league
+    // with no team, or seated on the team while the invitation is still pending.
+    const invitation = await this.membershipTransaction.run(async (repos) => {
+      const created = await repos.squadOwnerInvitations.create({
+        leagueId: input.leagueId,
+        squadId: input.squadId,
+        email: normalizedEmail,
+        inviteCode: generateInviteCode(),
+        status: SharedSquadOwnerInvitationStatus.PENDING,
+        invitedBy: input.actorUserId,
+        expiresAt: buildDefaultExpiry(),
+      });
 
-    if (existingUser) {
-      await this.provisionOwnerOnSquad(this.directRepos(), input.leagueId, input.squadId, existingUser.id);
-      const accepted = await this.invitationRepo.update(invitation.id, {
+      if (!existingUser) {
+        return created;
+      }
+      await this.provisionOwnerOnSquad(repos, input.leagueId, input.squadId, existingUser.id);
+      return repos.squadOwnerInvitations.update(created.id, {
         status: SharedSquadOwnerInvitationStatus.ACCEPTED,
         acceptedAt: new Date(),
         acceptedBy: existingUser.id,
       });
-      return this.mapInvitationDto(accepted);
-    }
+    });
 
     return this.mapInvitationDto(invitation);
   }
@@ -375,12 +379,14 @@ export class SquadOwnerInvitationService {
         'SQUAD_OWNER_INVITATION_EMAIL_MISMATCH',
       );
     }
-    await this.provisionOwnerOnSquad(this.directRepos(), invitation.leagueId, invitation.squadId, userId);
-
-    const accepted = await this.invitationRepo.update(invitation.id, {
-      status: SharedSquadOwnerInvitationStatus.ACCEPTED,
-      acceptedAt: new Date(),
-      acceptedBy: userId,
+    // One transaction, so the user is seated on the team exactly when the invitation is accepted.
+    const accepted = await this.membershipTransaction.run(async (repos) => {
+      await this.provisionOwnerOnSquad(repos, invitation.leagueId, invitation.squadId, userId);
+      return repos.squadOwnerInvitations.update(invitation.id, {
+        status: SharedSquadOwnerInvitationStatus.ACCEPTED,
+        acceptedAt: new Date(),
+        acceptedBy: userId,
+      });
     });
     return this.mapInvitationDto(accepted);
   }
@@ -510,16 +516,6 @@ export class SquadOwnerInvitationService {
         'SQUAD_OWNER_INVITATION_LEAGUE_MEMBER_CONFLICT',
       );
     }
-  }
-
-  /** The service's own repositories, outside any transaction. */
-  private directRepos(): MembershipRepositories {
-    return {
-      leagueMemberships: this.membershipRepo,
-      squads: this.squadRepo,
-      squadMemberships: this.squadMembershipRepo,
-      squadOwnerInvitations: this.invitationRepo,
-    };
   }
 
   private async provisionOwnerOnSquad(
