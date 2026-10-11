@@ -397,7 +397,7 @@ export function createCreateContestHandler(
     // failure left for zod is the refine: neither a template nor a configuration.
     const parsed = CreateContestRequestSchema.safeParse(request.body);
     if (!parsed.success) {
-      const [issue] = parsed.error.issues;
+      const issue = parsed.error.issues.at(0);
       const isPairingRule = issue?.code === 'custom';
       logger.warn({ leagueId: request.params.id, isPairingRule }, 'contest create route rejected');
       return sendError(

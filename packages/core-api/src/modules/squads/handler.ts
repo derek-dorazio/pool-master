@@ -77,15 +77,15 @@ export function createSquadHandlers(service: SquadService) {
         data: {
           leagueId: request.params.id,
           userId: request.authUser?.userId ?? null,
-          hasName: Boolean(request.body?.name?.trim()),
-          iconKey: request.body?.iconKey ?? null,
+          hasName: Boolean(request.body.name?.trim()),
+          iconKey: request.body.iconKey ?? null,
         },
       }, 'Handling create squad request');
       try {
         const userId = requireAuthUser(request).userId;
         const squad = await service.createSquad(request.params.id, userId, {
-          name: request.body?.name,
-          iconKey: request.body?.iconKey as TeamIconKey | undefined,
+          name: request.body.name,
+          iconKey: request.body.iconKey as TeamIconKey | undefined,
         });
         logger.info({
           action: 'squadRoute.create.success',
@@ -113,8 +113,8 @@ export function createSquadHandlers(service: SquadService) {
           squadId: request.params.squadId,
           userId: request.authUser?.userId ?? null,
           updates: {
-            hasName: request.body?.name !== undefined,
-            hasIconKey: request.body?.iconKey !== undefined,
+            hasName: request.body.name !== undefined,
+            hasIconKey: request.body.iconKey !== undefined,
           },
         },
       }, 'Handling update squad request');
@@ -125,8 +125,8 @@ export function createSquadHandlers(service: SquadService) {
           request.params.squadId,
           userId,
           {
-            name: request.body?.name,
-            iconKey: request.body?.iconKey as TeamIconKey | undefined,
+            name: request.body.name,
+            iconKey: request.body.iconKey as TeamIconKey | undefined,
           },
           request.authUser?.isRootAdmin === true,
         );

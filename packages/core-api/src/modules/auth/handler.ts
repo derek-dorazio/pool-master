@@ -232,8 +232,7 @@ export function createAuthHandlers(authService: AuthService) {
 }
 
 function extractEmailDomain(email: string): string | null {
-  const [, domain] = email.trim().toLowerCase().split('@');
-  return domain ?? null;
+  return email.trim().toLowerCase().split('@').at(1) ?? null;
 }
 
 function inferIdentifierType(identifier: string): 'email' | 'username' {

@@ -72,7 +72,7 @@ export class ClientLogService {
 
   ingestBatch(params: {
     batch: ClientLogBatch;
-    ip: string | null;
+    ip: string;
     requestLogger: ClientLogEmitter;
     /**
      * Session and user identity for the whole batch, read by the handler from the
@@ -148,7 +148,7 @@ export class ClientLogService {
     }
   }
 
-  private assertRateLimit(ip: string | null): void {
+  private assertRateLimit(ip: string): void {
     if (!ip) {
       return;
     }

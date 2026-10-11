@@ -78,7 +78,7 @@ export function golferRoundScore(golfer: GolfSeedGolfer, roundNumber: number, ro
   thru: number;
   status: RoundStatus;
 } | null {
-  const strokes = golfer.rounds[roundNumber - 1];
+  const strokes = golfer.rounds.at(roundNumber - 1);
   if (strokes === undefined) return null;
   const isLast = roundNumber === golfer.rounds.length;
   if (isLast && golfer.finish === 'WD') {

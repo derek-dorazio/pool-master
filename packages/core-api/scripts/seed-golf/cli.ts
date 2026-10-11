@@ -47,7 +47,9 @@ async function main(): Promise<void> {
     if (signedIn && Date.now() - signedIn.at < SIGN_IN_AGAIN_AFTER_MS) return signedIn.client;
     const login = await loginUser({ client: createClient(createConfig({ baseUrl })), body: { identifier, password } });
     if (!login.data) {
-      throw new Error(`Sign-in as ${identifier} failed (HTTP ${login.response?.status ?? 'none'}).`);
+      // Typed as always present, but hey-api leaves it undefined when the fetch itself throws.
+      const status = (login.response as Response | undefined)?.status ?? 'none';
+      throw new Error(`Sign-in as ${identifier} failed (HTTP ${status}).`);
     }
     if (!login.data.user.isRootAdmin) throw new Error(`${identifier} is not a root admin.`);
     const { accessToken } = login.data.tokens;

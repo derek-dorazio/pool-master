@@ -10,7 +10,8 @@ export interface ProviderBinding {
 
 export interface ProviderBindingsConfig {
   readonly defaultProviderId?: string;
-  readonly providers: Record<string, ProviderBinding>;
+  // Partial: the default provider id comes from a separate env var, so a lookup can miss.
+  readonly providers: Partial<Record<string, ProviderBinding>>;
 }
 
 interface ProviderBindingsEnvelope {
@@ -19,7 +20,7 @@ interface ProviderBindingsEnvelope {
 
 type ProviderFactory = (binding: ProviderBinding, env: NodeJS.ProcessEnv) => SportDataProvider;
 
-const providerFactories: Readonly<Record<string, ProviderFactory>> = {
+const providerFactories: Readonly<Partial<Record<string, ProviderFactory>>> = {
   'mock-contest-feed': (binding) => {
     if (!binding.baseUrl) {
       throw new Error('Provider "mock-contest-feed" requires a baseUrl binding.');

@@ -41,7 +41,7 @@ export function createSelectionHandlers(service: SelectionService): SelectionHan
   async function getSelectionState(request: SelectionStateRequest): Promise<SelectionStateResponse> {
     const view = await service.getSelectionState({
       contestId: request.params.contestId,
-      selectedEntryId: request.query?.entryId,
+      selectedEntryId: request.query.entryId,
       actorUserId: request.authUser?.userId,
       actorIsRootAdmin: request.authUser?.isRootAdmin === true,
     });

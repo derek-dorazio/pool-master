@@ -40,7 +40,7 @@ export class EventLifecycleScheduler {
     this.timer = setInterval(() => {
       void this.runSweep();
     }, SWEEP_INTERVAL_MS);
-    this.timer.unref?.();
+    this.timer.unref();
     this.logger?.info('Event lifecycle scheduler started');
   }
 

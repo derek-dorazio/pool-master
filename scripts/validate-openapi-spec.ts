@@ -16,14 +16,14 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 interface OpenAPISpec {
-  paths: Record<string, Record<string, {
+  paths: Record<string, Partial<Record<string, {
     operationId?: string;
     summary?: string;
     tags?: string[];
     responses?: Record<string, {
       content?: Record<string, unknown>;
     }>;
-  }>>;
+  }>>>;
 }
 
 // Routes consumed by clients/web and clients/admin that MUST have complete schemas.

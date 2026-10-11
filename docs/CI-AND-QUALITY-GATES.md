@@ -486,9 +486,10 @@ The base preset is `typescript-eslint`'s `strictTypeChecked` (#525). At its
 own options it measured 1,254 findings; `eslint.config.js` records, rule by
 rule, the overrides that made it adoptable. Two option changes removed most of
 them: arrow shorthand is allowed to return a void call, and numbers are allowed
-in template literals. Three rules are off. `return-await` is off because Fastify's
+in template literals. Two rules are off, and one is on per area. `return-await` is off because Fastify's
 reply is thenable, and `no-dynamic-delete` is off because every finding is a real
-dictionary. `no-unnecessary-condition` (#550) is deferred to its own ticket. The
+dictionary. `no-unnecessary-condition` (#550) is on for packages and scripts and
+is being turned on for the web app and tests as their findings are cleared. The
 comment beside each says why. `no-non-null-assertion` is on (#549): production code
 narrows with a real check, and tests use `expectDefined` from
 `tests/support/expect-defined.ts`. Lint time is

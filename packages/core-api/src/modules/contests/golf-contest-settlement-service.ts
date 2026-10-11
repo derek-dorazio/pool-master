@@ -180,7 +180,8 @@ function resolveContestStandingAsOf(
   const latest = participants
     .map((participant) => participant.asOf)
     .filter((asOf): asOf is Date => asOf !== null)
-    .sort((left, right) => right.getTime() - left.getTime())[0];
+    .sort((left, right) => right.getTime() - left.getTime())
+    .at(0);
   return latest ?? fallback;
 }
 
