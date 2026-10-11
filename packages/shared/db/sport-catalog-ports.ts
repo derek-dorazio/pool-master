@@ -103,6 +103,8 @@ export interface SportEventProviderSummary {
 
 export interface SportEventRepository {
   findById(id: string): Promise<SportEvent | null>;
+  /** The events with these ids, in no particular order; an unknown id is left out. */
+  findByIds(ids: readonly string[]): Promise<SportEvent[]>;
   /** The event a provider knows by this identity, if one is linked to it. */
   findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null>;
   /** Ordered by start date, then name. */

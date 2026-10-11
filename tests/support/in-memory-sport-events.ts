@@ -242,6 +242,7 @@ export class InMemorySportEvents {
     const count = (ids: readonly string[], of: (id: string) => number) => new Map(ids.map((id) => [id, of(id)]));
     return {
       findById: async (id) => this.events.find((row) => row.id === id) ?? null,
+      findByIds: async (ids) => this.events.filter((row) => ids.includes(row.id)),
       findByProviderRef: async (providerId, externalId) => this.events.find((row) => row.providerId === providerId && row.externalId === externalId) ?? null,
       findAll: async (filters) => this.events.filter((row) => (
         (filters.sport === undefined || row.sport === filters.sport)

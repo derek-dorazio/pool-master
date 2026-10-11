@@ -14,6 +14,7 @@ import {
   UserResponseSchema,
   AuthResponseSchema,
   ContestConfigTemplateListResponseSchema,
+  ContestListResponseSchema,
   ContestManagementResponseSchema,
   ContestResponseSchema,
   SelectionStateResponseSchema,
@@ -619,6 +620,20 @@ describe('Contract verification (web)', () => {
     const openParsed = ContestManagementResponseSchema.safeParse(openRes.json());
     expect(openParsed.success).toBe(true);
     expect(openParsed.data?.contest.status).toBe('OPEN');
+
+    // The league's contest list carries each contest's event name and start (#577).
+    const listRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+    expect(listRes.statusCode).toBe(200);
+    const listParsed = ContestListResponseSchema.safeParse(listRes.json());
+    expect(listParsed.success).toBe(true);
+    expect(listParsed.data?.contests.find((contest) => contest.id === contestId)?.sportEvent).toEqual({
+      name: sportEvent.name,
+      startDate: sportEvent.startDate.toISOString(),
+    });
   });
 
   it('account lifecycle routes match their shared response DTOs', async () => {

@@ -88,6 +88,12 @@ export type UpdateContestEntryRequest = z.infer<typeof UpdateContestEntryRequest
 
 // --- Response Sub-schemas ---
 
+export const ContestEventSummaryDtoSchema = z.object({
+  name: z.string().describe('The sport event\'s name.'),
+  startDate: z.string().datetime().describe('The sport event\'s scheduled start, which is also when entries close.'),
+}).describe('The sport event a listed contest runs on: enough to name, sort and search it without reading the event.');
+export type ContestEventSummaryDto = z.infer<typeof ContestEventSummaryDtoSchema>;
+
 export const ContestDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -119,6 +125,7 @@ export const ContestDtoSchema = z.object({
   sportEventId: z.string().nullable().optional(),
   sport: z.string().nullable().optional(),
   entryCount: z.number().optional().describe('Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.'),
+  sportEvent: ContestEventSummaryDtoSchema.nullable().optional().describe('The sport event\'s name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself.'),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
   isExclusive: z.boolean().describe('Whether a participant may be picked by only one entry in the contest.'),
@@ -333,6 +340,7 @@ registerSchema('ContestCrudConfigurationRequest', ContestCrudConfigurationReques
 registerSchema('CreateContestRequest', CreateContestRequestSchema);
 registerSchema('UpdateContestRequest', UpdateContestRequestSchema);
 registerSchema('UpdateContestEntryRequest', UpdateContestEntryRequestSchema);
+registerSchema('ContestEventSummaryDto', ContestEventSummaryDtoSchema);
 registerSchema('ContestDto', ContestDtoSchema);
 registerSchema('ContestEntryDto', ContestEntryDtoSchema);
 registerSchema('ContestEntryPickDto', ContestEntryPickDtoSchema);

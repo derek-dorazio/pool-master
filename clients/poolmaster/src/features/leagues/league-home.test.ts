@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import type { ContestDto, ContestLeaderboardResponse } from '@/lib/api';
-import type { ContestSchedule } from '@/features/contests/use-contest-schedule';
 import { buildTopStandings, countdownUntil, pickUpNextContest } from './league-home';
 
 type LeaderboardEntry = ContestLeaderboardResponse['entries'][number];
@@ -20,8 +19,9 @@ function contestFixture(overrides: Partial<ContestDto> & { id: string }): Contes
   };
 }
 
-function schedule(startsAt: string): ContestSchedule {
-  return { startsAt, endsAt: null };
+/** A listed contest whose event starts at `startDate`, as the contest list carries it. */
+function onEvent(id: string, startDate: string, overrides: Partial<ContestDto> = {}): ContestDto {
+  return contestFixture({ id, sportEvent: { name: `Event ${id}`, startDate }, ...overrides });
 }
 
 function entryFixture(index: number, overrides: Partial<LeaderboardEntry> = {}): LeaderboardEntry {
@@ -60,44 +60,39 @@ function entries(count: number): LeaderboardEntry[] {
 
 describe('pickUpNextContest', () => {
   it('picks the open contest whose entries close soonest', () => {
-    const later = contestFixture({ id: 'later' });
-    const sooner = contestFixture({ id: 'sooner' });
+    const later = onEvent('later', '2026-05-10T12:00:00.000Z');
+    const sooner = onEvent('sooner', '2026-05-03T12:00:00.000Z');
 
-    const result = pickUpNextContest(
-      [later, sooner],
-      [schedule('2026-05-10T12:00:00.000Z'), schedule('2026-05-03T12:00:00.000Z')],
-      NOW,
-    );
+    const result = pickUpNextContest([later, sooner], NOW);
 
     expect(result).toEqual({ contest: sooner, closesAt: '2026-05-03T12:00:00.000Z' });
   });
 
-  it('skips an open contest whose entry cutoff has already passed', () => {
-    const closed = contestFixture({ id: 'closed' });
-    const upcoming = contestFixture({ id: 'upcoming' });
+  it('closes entries at the contest\'s own start once it is set, ahead of its event\'s scheduled start', () => {
+    const restamped = { ...onEvent('restamped', '2026-05-03T12:00:00.000Z'), startsAt: '2026-05-08T12:00:00.000Z' };
+    const other = onEvent('other', '2026-05-05T12:00:00.000Z');
 
-    const result = pickUpNextContest(
-      [closed, upcoming],
-      [schedule('2026-04-30T12:00:00.000Z'), schedule('2026-05-05T12:00:00.000Z')],
-      NOW,
-    );
+    const result = pickUpNextContest([restamped, other], NOW);
+
+    expect(result).toEqual({ contest: other, closesAt: '2026-05-05T12:00:00.000Z' });
+  });
+
+  it('skips an open contest whose entry cutoff has already passed', () => {
+    const closed = onEvent('closed', '2026-04-30T12:00:00.000Z');
+    const upcoming = onEvent('upcoming', '2026-05-05T12:00:00.000Z');
+
+    const result = pickUpNextContest([closed, upcoming], NOW);
 
     expect(result?.contest.id).toBe('upcoming');
   });
 
   it('skips contests that are not open, even when their cutoff is soonest', () => {
-    const draft = contestFixture({ id: 'draft', status: 'DRAFT' });
-    const active = contestFixture({ id: 'active', status: 'ACTIVE' });
-    const completed = contestFixture({ id: 'completed', status: 'COMPLETED' });
-    const open = contestFixture({ id: 'open' });
-
     const result = pickUpNextContest(
-      [draft, active, completed, open],
       [
-        schedule('2026-05-02T12:00:00.000Z'),
-        schedule('2026-05-02T12:00:00.000Z'),
-        schedule('2026-05-02T12:00:00.000Z'),
-        schedule('2026-05-09T12:00:00.000Z'),
+        onEvent('draft', '2026-05-02T12:00:00.000Z', { status: 'DRAFT' }),
+        onEvent('active', '2026-05-02T12:00:00.000Z', { status: 'ACTIVE' }),
+        onEvent('completed', '2026-05-02T12:00:00.000Z', { status: 'COMPLETED' }),
+        onEvent('open', '2026-05-09T12:00:00.000Z'),
       ],
       NOW,
     );
@@ -106,10 +101,10 @@ describe('pickUpNextContest', () => {
   });
 
   it('skips an open contest with no known cutoff', () => {
-    const unscheduled = contestFixture({ id: 'unscheduled' });
-    const scheduled = contestFixture({ id: 'scheduled' });
+    const unscheduled = contestFixture({ id: 'unscheduled', sportEvent: null });
+    const scheduled = onEvent('scheduled', '2026-05-09T12:00:00.000Z');
 
-    const result = pickUpNextContest([unscheduled, scheduled], [null, schedule('2026-05-09T12:00:00.000Z')], NOW);
+    const result = pickUpNextContest([unscheduled, scheduled], NOW);
 
     expect(result?.contest.id).toBe('scheduled');
   });
@@ -117,11 +112,10 @@ describe('pickUpNextContest', () => {
   it('returns null when no contest is open with a future cutoff', () => {
     const result = pickUpNextContest(
       [
-        contestFixture({ id: 'unscheduled' }),
-        contestFixture({ id: 'past' }),
-        contestFixture({ id: 'live', status: 'ACTIVE' }),
+        contestFixture({ id: 'unscheduled', sportEvent: null }),
+        onEvent('past', '2026-04-01T12:00:00.000Z'),
+        onEvent('live', '2026-05-09T12:00:00.000Z', { status: 'ACTIVE' }),
       ],
-      [null, schedule('2026-04-01T12:00:00.000Z'), schedule('2026-05-09T12:00:00.000Z')],
       NOW,
     );
 
@@ -129,7 +123,7 @@ describe('pickUpNextContest', () => {
   });
 
   it('returns null when there are no contests', () => {
-    expect(pickUpNextContest([], [], NOW)).toBeNull();
+    expect(pickUpNextContest([], NOW)).toBeNull();
   });
 });
 

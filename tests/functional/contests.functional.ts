@@ -553,6 +553,7 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(listedContest).toBeDefined();
     expect(listedContest?.name).toBe('Functional Contest');
     expect(listedContest?.status).toBe('DRAFT');
+    expect(listedContest?.sportEvent).toBeNull();
 
     const detailResponse = await getContest({
       client: commissioner.client,

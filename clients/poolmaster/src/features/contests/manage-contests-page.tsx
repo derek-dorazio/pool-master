@@ -1,9 +1,8 @@
 import { ContestStatus } from '@poolmaster/shared/domain';
-import { useQueries } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import type { ContestDto, SportEventDto } from '@/lib/api';
+import type { ContestDto, ContestEventSummaryDto } from '@/lib/api';
 import {
   buildLeagueAdminContestCreatePath,
   buildLeagueAdminContestPath,
@@ -24,7 +23,6 @@ import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { formatSelectionTypeName } from './contest-rules';
 import { ContestStatusBadge } from './contest-status-badge';
 import { isHistoricalContest } from './contest-status';
-import { sportEventQueryOptions } from './use-contest-schedule';
 import { useLeagueContestsQuery } from './use-league-contests-query';
 
 const CONTESTS_PER_PAGE = 25;
@@ -33,7 +31,7 @@ type ContestFilter = 'active' | 'history';
 
 type ContestRow = {
   contest: ContestDto;
-  event: SportEventDto | null;
+  event: ContestEventSummaryDto | null;
   eventName: string;
   formatName: string;
 };
@@ -55,9 +53,9 @@ function compareHistoryRows(left: ContestRow, right: ContestRow) {
   return compareContestRows(right, left);
 }
 
-function EventCell({ contest, event }: { contest: ContestDto; event: SportEventDto | null }) {
+function EventCell({ contest, event }: { contest: ContestDto; event: ContestEventSummaryDto | null }) {
   if (!event) {
-    return <span className="text-muted-foreground">Event unavailable</span>;
+    return <span className="text-muted-foreground">No event</span>;
   }
   const when = contest.status === ContestStatus.OPEN
     ? 'Entries close'
@@ -104,30 +102,10 @@ export function ManageContestsPage() {
   const historyContests = useMemo(() => contests.filter((contest) => isHistoricalContest(contest.status)), [contests]);
   const shownContests = filter === 'active' ? activeContests : historyContests;
 
-  // The event's name and start sort and search the table, so every shown contest's event is read,
-  // once per event, through the key every contest page shares.
-  const eventIds = useMemo(
-    () => [...new Set(shownContests.map((contest) => contest.sportEventId).filter((id): id is string => Boolean(id)))],
-    [shownContests],
-  );
-  // The table waits for every read to settle, so no row reorders or says its event is
-  // unavailable while its read is still in flight; a failed read shows as "Event unavailable".
-  const { eventsById, eventsLoading } = useQueries({
-    queries: eventIds.map((eventId) => sportEventQueryOptions(eventId)),
-    combine: (results) => {
-      const byId = new Map<string, SportEventDto>();
-      for (const result of results) {
-        if (result.data) {
-          byId.set(result.data.id, result.data);
-        }
-      }
-      return { eventsById: byId, eventsLoading: results.some((result) => result.isPending) };
-    },
-  });
-
+  // The event's name and start sort and search the table; the contest list carries them (#577).
   const rows = useMemo<ContestRow[]>(() => {
     const built = shownContests.map((contest) => {
-      const event = contest.sportEventId ? eventsById.get(contest.sportEventId) ?? null : null;
+      const event = contest.sportEvent ?? null;
       return {
         contest,
         event,
@@ -136,7 +114,7 @@ export function ManageContestsPage() {
       };
     });
     return built.sort(filter === 'active' ? compareContestRows : compareHistoryRows);
-  }, [eventsById, filter, shownContests]);
+  }, [filter, shownContests]);
 
   const teamCount = (teamsQuery.data ?? []).filter((team) => team.isActive).length;
 
@@ -222,7 +200,7 @@ export function ManageContestsPage() {
         title="Contests"
       />
 
-      {contestsQuery.isLoading || eventsLoading ? (
+      {contestsQuery.isLoading ? (
         <LoadingState body="Loading contests..." />
       ) : contestsQuery.isError ? (
         <ErrorState body="We couldn't load contests for this league." />

@@ -17,7 +17,6 @@ import {
 } from './test/fixtures';
 
 const getCurrentUserMock = vi.fn();
-const getEventMock = vi.fn();
 const getGolfContestLeaderboardMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const listContestEntriesMock = vi.fn();
@@ -27,7 +26,6 @@ const refreshTokenMock = vi.fn();
 
 bindApiMocks({
   getUser: getCurrentUserMock,
-  getEvent: getEventMock,
   getGolfContestLeaderboard: getGolfContestLeaderboardMock,
   getLeagueByCode: getLeagueByCodeMock,
   listContestEntries: listContestEntriesMock,
@@ -161,20 +159,22 @@ function primeMocks({
       squadMembership: hasTeam ? buildLeagueSquadMember() : null,
     },
   )));
-  listContestsMock.mockResolvedValue(apiSuccess({ contests }));
+  // The contest list carries each contest's event start, which is when its entries close.
+  listContestsMock.mockResolvedValue(apiSuccess({
+    contests: contests.map((listed) => ({
+      ...listed,
+      sportEvent: {
+        name: `Event ${listed.sportEventId}`,
+        startDate: eventStarts[listed.sportEventId] ?? '2026-05-01T12:00:00.000Z',
+      },
+    })),
+  }));
   listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData(
     hasTeam ? [buildLeagueSquad({ members: [buildLeagueSquadMember()] })] : [],
   )));
   listContestEntriesMock.mockImplementation(({ path }: { path: { contestId: string } }) =>
     entryList(path.contestId, entriesByContest[path.contestId] ?? []),
   );
-  getEventMock.mockImplementation(({ path }: { path: { eventId: string } }) => apiSuccess({
-    event: {
-      id: path.eventId,
-      startDate: eventStarts[path.eventId] ?? '2026-05-01T12:00:00.000Z',
-      endDate: null,
-    },
-  }));
 }
 
 beforeEach(() => {
@@ -185,7 +185,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   for (const mock of [
-    getCurrentUserMock, getEventMock, getGolfContestLeaderboardMock, getLeagueByCodeMock,
+    getCurrentUserMock, getGolfContestLeaderboardMock, getLeagueByCodeMock,
     listContestEntriesMock, listContestsMock, listLeagueSquadsMock, refreshTokenMock,
   ]) {
     mock.mockReset();

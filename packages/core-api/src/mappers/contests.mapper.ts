@@ -3,6 +3,7 @@
  */
 import type {
   ContestDto,
+  ContestEventSummaryDto,
   ContestResponse,
   ContestConfigurationDetailDto,
   ContestListResponse,
@@ -109,9 +110,19 @@ export interface ContestLeaderboardModel {
   asOf: Date | null;
 }
 
+/** What a contest list shows of the contest's sport event. */
+export interface ContestEventSummaryRow {
+  name: string;
+  startDate: Date;
+}
+
+function toContestEventSummaryDto(event: ContestEventSummaryRow): ContestEventSummaryDto {
+  return { name: event.name, startDate: event.startDate.toISOString() };
+}
+
 export function toContestDto(
   contest: ContestRow,
-  opts?: { entryCount?: number },
+  opts?: { entryCount?: number; sportEvent?: ContestEventSummaryRow | null },
 ): ContestDto {
   return {
     id: contest.id,
@@ -124,6 +135,9 @@ export function toContestDto(
     sportEventId: contest.sportEventId ?? null,
     sport: contest.sport ?? null,
     entryCount: opts?.entryCount,
+    ...(opts?.sportEvent !== undefined && {
+      sportEvent: opts.sportEvent ? toContestEventSummaryDto(opts.sportEvent) : null,
+    }),
     startsAt: contest.startsAt?.toISOString() ?? null,
     endsAt: contest.endsAt?.toISOString() ?? null,
     isExclusive: contest.isExclusive,
@@ -189,14 +203,17 @@ function toContestConfigurationDetailDto(
   };
 }
 
+/** Each listed contest with its entry count and its event's name and start (#577). */
 export function toContestListResponse(
   contests: ContestRow[],
-  entryCounts?: Map<string, number>,
+  entryCounts: ReadonlyMap<string, number>,
+  eventsById: ReadonlyMap<string, ContestEventSummaryRow>,
 ): ContestListResponse {
   return {
     contests: contests.map((c) =>
       toContestDto(c, {
-        entryCount: entryCounts?.get(c.id),
+        entryCount: entryCounts.get(c.id),
+        sportEvent: c.sportEventId ? eventsById.get(c.sportEventId) ?? null : null,
       }),
     ),
   };
