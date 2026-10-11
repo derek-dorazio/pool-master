@@ -1296,6 +1296,26 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
     expect(screen.getByTestId('contest-entry-submit')).toBeDisabled();
   });
 
+  it('counts the golfers still to pick in the singular when one place is left', async () => {
+    primeBudgetMocks(['sep-2']);
+
+    renderContestEntryPage();
+
+    expect(await screen.findByText('1 golfer still to pick')).toBeInTheDocument();
+    expect(screen.queryByText('1 golfers still to pick')).not.toBeInTheDocument();
+  });
+
+  it('shows a dash, not Hidden, on the Spent tile when the picks are visible but the server sent no spend', async () => {
+    primeBudgetMocks(['sep-2']);
+    getSelectionStateMock.mockResolvedValue({ data: { ...budgetState(['sep-2']), lineupSummary: null } });
+
+    renderContestEntryPage();
+
+    expect(await screen.findByText('Spent')).toBeInTheDocument();
+    expect(screen.getByText('—')).toBeInTheDocument();
+    expect(screen.queryByText('Hidden')).not.toBeInTheDocument();
+  });
+
   it('removes a picked golfer when their chip is tapped', async () => {
     primeBudgetMocks(['sep-1', 'sep-2']);
     submitContestSelectionMock.mockResolvedValue({ data: budgetState(['sep-1']) });
