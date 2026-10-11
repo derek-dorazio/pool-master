@@ -264,7 +264,7 @@ export class ContestService {
   async updateContest(
     contestId: string,
     updates: UpdateContestInput,
-  ): Promise<Contest> {
+  ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration | null }> {
     this.logger.debug({ contestId, updates }, 'contest update start');
     const contest = await this.deps.contests.findById(contestId);
     if (!contest) {
@@ -279,8 +279,9 @@ export class ContestService {
       );
     }
     const updatedContest = await this.deps.contests.update(contestId, updates as Partial<Contest>);
+    const contestConfiguration = await this.deps.configurations.findByContest(contestId);
     this.logger.info({ contestId }, 'contest update completed');
-    return updatedContest;
+    return { contest: updatedContest, contestConfiguration };
   }
 
   /** Deletes a contest. Only allowed when status is DRAFT. */

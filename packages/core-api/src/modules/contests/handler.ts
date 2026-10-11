@@ -329,7 +329,7 @@ export function createContestHandlers(contestService: ContestService) {
     logger.debug({ contestId: request.params.contestId }, 'contest update route start');
     try {
       const body = UpdateContestBodySchema.parse(request.body);
-      const contest = await contestService.updateContest(
+      const updated = await contestService.updateContest(
         request.params.contestId,
         {
           name: body.name,
@@ -339,7 +339,7 @@ export function createContestHandlers(contestService: ContestService) {
         },
       );
       logger.info({ contestId: request.params.contestId }, 'contest update route completed');
-      return reply.send(toContestResponse(contest, null));
+      return reply.send(toContestResponse(updated.contest, updated.contestConfiguration));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         logger.warn({ contestId: request.params.contestId }, 'contest update route missing contest');
