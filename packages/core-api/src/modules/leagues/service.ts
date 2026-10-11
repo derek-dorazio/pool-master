@@ -18,6 +18,7 @@ import type {
 } from '@poolmaster/shared/domain';
 import { ContestStatus, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export interface CreateLeagueInput {
   createdBy: string;
@@ -518,7 +519,7 @@ export class LeagueService {
 }
 
 export class LeagueNotFoundError extends Error {
-  readonly code = 'LEAGUE_NOT_FOUND';
+  readonly code: ApiErrorCode = 'LEAGUE_NOT_FOUND';
   readonly statusCode = 404;
 
   constructor(leagueId: string) {
@@ -528,7 +529,7 @@ export class LeagueNotFoundError extends Error {
 }
 
 export class LeagueCodeConflictError extends Error {
-  code = 'LEAGUE_CODE_CONFLICT';
+  code: ApiErrorCode = 'LEAGUE_CODE_CONFLICT';
   statusCode = 409;
 
   constructor(leagueCode: string) {
@@ -539,9 +540,9 @@ export class LeagueCodeConflictError extends Error {
 
 export class LeagueOperationError extends Error {
   statusCode = 400;
-  code: string;
+  code: ApiErrorCode;
 
-  constructor(reason: string, code = 'LEAGUE_OPERATION_INVALID', statusCode = 400) {
+  constructor(reason: string, code: ApiErrorCode = 'LEAGUE_OPERATION_INVALID', statusCode = 400) {
     super(reason);
     this.name = 'LeagueOperationError';
     this.code = code;

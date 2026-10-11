@@ -435,6 +435,13 @@ than generic `Error` values when the error is expected and client-visible.
 
 Rules:
 
+- Every code the API sends is listed once in `API_ERROR_CODES`
+  (`packages/shared/dto/api-error-codes.ts`), and typed as `ApiErrorCode`. Error classes'
+  `code` fields and `sendError` take only listed codes, so a new code is added to the list in
+  the same change, and a code that stops being sent is removed from it (a unit test fails while
+  a listed code appears nowhere in the server source). The web keys its error copy by
+  `ApiErrorCode` (`ErrorCodeMessages` in `clients/poolmaster/src/lib/errors.ts`), so copy for a
+  removed or misspelled code fails typecheck.
 - Expected application failures must carry a stable error code, HTTP status,
   safe user-facing message, and optional structured details at the point the
   error is created.

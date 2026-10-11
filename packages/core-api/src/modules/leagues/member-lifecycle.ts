@@ -6,6 +6,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import { deactivateSquadMembershipForLeagueMember } from '../squads/owner-membership';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 interface InactivateLeagueMemberUnitInput {
   leagueId: string;
@@ -108,7 +109,7 @@ export async function requireAnotherActiveCommissioner(input: {
 
 /** Thrown when an operation would leave a league with no active commissioner. */
 export class LastCommissionerError extends Error {
-  readonly code = 'LEAGUE_LAST_COMMISSIONER_REQUIRED';
+  readonly code: ApiErrorCode = 'LEAGUE_LAST_COMMISSIONER_REQUIRED';
 
   constructor() {
     super('Appoint another active commissioner before removing or demoting the last commissioner.');

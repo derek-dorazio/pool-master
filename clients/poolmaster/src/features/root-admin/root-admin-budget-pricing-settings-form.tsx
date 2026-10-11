@@ -8,7 +8,7 @@ import { updateSettingsGroup, type BudgetPricingConfig, type SettingsGroup } fro
 import { Alert, Button, FormField, Input } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { ApiError, throwApiError, extractErrorMessage } from '@/lib/errors';
+import { hasErrorCode, throwApiError, extractErrorMessage } from '@/lib/errors';
 
 type BudgetPricingSettingsGroup = Extract<SettingsGroup, { key: 'BUDGET_PRICING_CONFIG' }>;
 
@@ -74,7 +74,7 @@ export function BudgetPricingSettingsForm({ group }: { group: BudgetPricingSetti
     invalidates: [QueryKeys.rootAdmin.settings],
   });
 
-  const conflicted = saveMutation.error instanceof ApiError && saveMutation.error.code === 'SETTINGS_CONFLICT';
+  const conflicted = hasErrorCode(saveMutation.error, 'SETTINGS_CONFLICT');
 
   async function loadLatest() {
     await queryClient.refetchQueries({ queryKey: QueryKeys.rootAdmin.settings, exact: true });

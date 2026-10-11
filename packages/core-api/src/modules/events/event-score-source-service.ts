@@ -29,11 +29,12 @@ import {
   type LiveSimulationStatus,
   type SportEvent as ProviderCatalogSportEvent,
 } from '../ingestion/core/provider-interface';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export class EventScoreSourceError extends Error {
   constructor(
     message: string,
-    readonly code: string,
+    readonly code: ApiErrorCode,
     readonly statusCode: number,
   ) {
     super(message);

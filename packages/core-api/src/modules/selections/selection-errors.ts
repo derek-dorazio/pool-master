@@ -10,11 +10,12 @@
  */
 
 import type { LineupShortfall } from './types';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export class SelectionError extends Error {
   constructor(
     message: string,
-    readonly code: string,
+    readonly code: ApiErrorCode,
     readonly statusCode: number,
   ) {
     super(message);

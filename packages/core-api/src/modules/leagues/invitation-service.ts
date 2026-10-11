@@ -25,6 +25,7 @@ import {
   renderSystemEmailTemplate,
   type MailDeliveryProvider,
 } from '../email';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export interface SendInvitationsInput {
   leagueId: string;
@@ -747,7 +748,7 @@ function buildLeagueUrl(appBaseUrl: string, leagueCode: string): string {
 }
 
 export class InvitationNotFoundError extends Error {
-  readonly code = 'LEAGUE_INVITATION_NOT_FOUND';
+  readonly code: ApiErrorCode = 'LEAGUE_INVITATION_NOT_FOUND';
   readonly statusCode = 404;
 
   constructor(code: string) {
@@ -757,16 +758,16 @@ export class InvitationNotFoundError extends Error {
 }
 
 export class InvitationInvalidError extends Error {
-  code: string;
+  code: ApiErrorCode;
 
-  constructor(reason: string, code = 'LEAGUE_INVITATION_INVALID') {
+  constructor(reason: string, code: ApiErrorCode = 'LEAGUE_INVITATION_INVALID') {
     super(reason);
     this.name = 'InvitationInvalidError';
     this.code = code;
   }
 }
 
-function mapInvitationStatusCode(status: InvitationStatus): string {
+function mapInvitationStatusCode(status: InvitationStatus): ApiErrorCode {
   switch (status) {
     case InvitationStatus.ACCEPTED:
       return 'LEAGUE_INVITATION_ALREADY_ACCEPTED';

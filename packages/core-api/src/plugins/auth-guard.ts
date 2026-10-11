@@ -16,6 +16,7 @@ import {
   readAccessCookie,
   readCsrfCookie,
 } from '../core/session-cookies';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,7 +49,7 @@ export function requireAuthUser(request: FastifyRequest): AuthUser {
   if (!request.authUser) {
     throw Object.assign(new Error('Authenticated session required'), {
       statusCode: 401,
-      code: 'AUTH_SESSION_REQUIRED',
+      code: 'AUTH_SESSION_REQUIRED' satisfies ApiErrorCode,
     });
   }
   return request.authUser;

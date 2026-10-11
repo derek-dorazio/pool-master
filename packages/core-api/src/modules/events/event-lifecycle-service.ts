@@ -37,6 +37,7 @@ import {
   type ContestStartedEntrySummary,
   type MailDeliveryProvider,
 } from '../email';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export interface CompletedSportEventSettlement {
   settleCompletedSportEvent(
@@ -67,7 +68,7 @@ export interface SportEventStatusTransitionResult {
 export class EventLifecycleError extends Error {
   constructor(
     message: string,
-    readonly code: string = 'SPORT_EVENT_INVALID_TRANSITION',
+    readonly code: ApiErrorCode = 'SPORT_EVENT_INVALID_TRANSITION',
     readonly statusCode: number = 422,
   ) {
     super(message);

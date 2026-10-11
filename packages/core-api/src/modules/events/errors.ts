@@ -3,10 +3,11 @@
  * field, its tiers and valuations. Each carries its contract code and HTTP status, so a
  * handler maps any of them the same way.
  */
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 export class SportEventError extends Error {
   constructor(
     message: string,
-    readonly code: string,
+    readonly code: ApiErrorCode,
     readonly statusCode: number,
   ) {
     super(message);

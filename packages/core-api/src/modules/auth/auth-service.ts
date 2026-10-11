@@ -22,6 +22,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
 import { AuthProvider, type User } from '@poolmaster/shared/domain';
 import { readJwtSecret } from '../../core/config';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,7 +51,7 @@ const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 export class AuthError extends Error {
   constructor(
     message: string,
-    public readonly code: string,
+    public readonly code: ApiErrorCode,
     public readonly statusCode: number = 401,
   ) {
     super(message);

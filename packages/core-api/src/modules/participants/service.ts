@@ -14,6 +14,7 @@ import type {
   InjuryStatus, ParticipantType
 } from '@poolmaster/shared/domain';
 import { InjuryStatusCode, MappingConfidence, ParticipantStatus } from '@poolmaster/shared/domain';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 // --- Input DTOs ---
 
@@ -226,7 +227,7 @@ export class ParticipantService {
 }
 
 export class ParticipantNotFoundError extends Error {
-  readonly code = 'PARTICIPANT_NOT_FOUND';
+  readonly code: ApiErrorCode = 'PARTICIPANT_NOT_FOUND';
   readonly statusCode = 404;
 
   constructor(participantId: string) {

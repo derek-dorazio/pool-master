@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ErrorEnvelope } from '@poolmaster/shared/dto/errors.dto';
 import { buildRequestLogBindings } from './logger';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 /**
  * What the handler receives: Fastify's own errors carry `code`, `statusCode` and `validation`, and
@@ -22,7 +23,8 @@ function inferErrorCode(error: ErrorLike, statusCode: number): string {
     return error.code;
   }
 
-  return statusCode >= 500 ? 'INTERNAL_ERROR' : 'BAD_REQUEST';
+  const fallback: ApiErrorCode = statusCode >= 500 ? 'INTERNAL_ERROR' : 'BAD_REQUEST';
+  return fallback;
 }
 
 export function createErrorEnvelope(
@@ -52,7 +54,7 @@ export function createErrorEnvelopeFromError(error: ErrorLike): ErrorEnvelope {
 export function sendError(
   reply: FastifyReply,
   statusCode: number,
-  code: string,
+  code: ApiErrorCode,
   message: string,
   details?: unknown,
 ) {

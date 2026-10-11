@@ -18,4 +18,5 @@ export * from './live-score.dto';
 export * from './client-logs.dto';
 export * from './version.dto';
 export * from './errors.dto';
+export * from './api-error-codes';
 export { zodToJsonSchema } from './json-schema';

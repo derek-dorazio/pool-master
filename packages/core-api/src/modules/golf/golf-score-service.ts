@@ -18,7 +18,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { GolfRoundUpdate } from '@poolmaster/shared/dto';
+import type { GolfRoundUpdate, ApiErrorCode } from '@poolmaster/shared/dto';
 import type {
   GolfRoundWrite,
   ParticipantProviderMappingRepository,
@@ -45,7 +45,7 @@ import { matchAmong, resolveParticipantRow, type ParticipantRowResolution } from
 export class GolfScoreError extends Error {
   constructor(
     message: string,
-    readonly code: string,
+    readonly code: ApiErrorCode,
     readonly statusCode: number,
   ) {
     super(message);

@@ -40,7 +40,7 @@ import {
   SquadMembershipStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
 } from '@poolmaster/shared/domain';
-import type { ContestEntryDto } from '@poolmaster/shared/dto';
+import type { ContestEntryDto, ApiErrorCode } from '@poolmaster/shared/dto';
 import {
   toContestEntryDto,
   type ContestEntryParticipantRow,
@@ -1049,7 +1049,7 @@ export class ContestService {
 }
 
 export class ContestNotFoundError extends Error {
-  readonly code = 'CONTEST_NOT_FOUND';
+  readonly code: ApiErrorCode = 'CONTEST_NOT_FOUND';
   readonly statusCode = 404;
 
   constructor(contestId: string) {
@@ -1059,9 +1059,9 @@ export class ContestNotFoundError extends Error {
 }
 
 export class ContestOperationError extends Error {
-  code: string;
+  code: ApiErrorCode;
 
-  constructor(reason: string, code = 'CONTEST_OPERATION_INVALID') {
+  constructor(reason: string, code: ApiErrorCode = 'CONTEST_OPERATION_INVALID') {
     super(reason);
     this.name = 'ContestOperationError';
     this.code = code;
@@ -1069,9 +1069,9 @@ export class ContestOperationError extends Error {
 }
 
 export class ContestEntryOperationError extends Error {
-  code: string;
+  code: ApiErrorCode;
 
-  constructor(reason: string, code = 'CONTEST_ENTRY_OPERATION_INVALID') {
+  constructor(reason: string, code: ApiErrorCode = 'CONTEST_ENTRY_OPERATION_INVALID') {
     super(reason);
     this.name = 'ContestEntryOperationError';
     this.code = code;
@@ -1083,9 +1083,9 @@ export class ContestEntryOperationError extends Error {
  * active squad to act for. Routes answer 403, the same status the league pre-checks use.
  */
 export class ContestEntryAccessError extends Error {
-  code: string;
+  code: ApiErrorCode;
 
-  constructor(reason: string, code: string) {
+  constructor(reason: string, code: ApiErrorCode) {
     super(reason);
     this.name = 'ContestEntryAccessError';
     this.code = code;
@@ -1093,7 +1093,7 @@ export class ContestEntryAccessError extends Error {
 }
 
 export class ContestEntryNotFoundError extends Error {
-  readonly code = 'CONTEST_ENTRY_NOT_FOUND';
+  readonly code: ApiErrorCode = 'CONTEST_ENTRY_NOT_FOUND';
   readonly statusCode = 404;
 
   constructor(contestId: string, squadId: string) {

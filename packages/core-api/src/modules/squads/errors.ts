@@ -6,11 +6,12 @@
  * depend on nothing in the module, so they are the right half to lift out: everything can
  * import them and they import nothing back.
  */
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export class SquadOperationError extends Error {
-  code: string;
+  code: ApiErrorCode;
 
-  constructor(message: string, code = 'SQUAD_OPERATION_INVALID') {
+  constructor(message: string, code: ApiErrorCode = 'SQUAD_OPERATION_INVALID') {
     super(message);
     this.name = 'SquadOperationError';
     this.code = code;
@@ -18,7 +19,7 @@ export class SquadOperationError extends Error {
 }
 
 export class SquadNotFoundError extends Error {
-  readonly code = 'SQUAD_NOT_FOUND';
+  readonly code: ApiErrorCode = 'SQUAD_NOT_FOUND';
   readonly statusCode = 404;
 
   constructor(message: string) {

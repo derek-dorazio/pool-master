@@ -1,6 +1,7 @@
+import { isApiErrorCode, type ApiErrorCode } from '@poolmaster/shared/dto';
 import { ApiError } from '@/lib/errors';
 
-const LEAGUE_ACCESS_ERROR_CODES: ReadonlySet<string> = new Set([
+const LEAGUE_ACCESS_ERROR_CODES: ReadonlySet<ApiErrorCode> = new Set<ApiErrorCode>([
   'LEAGUE_MEMBERSHIP_REQUIRED',
   'LEAGUE_MEMBERSHIP_INACTIVE',
 ]);
@@ -8,6 +9,7 @@ const LEAGUE_ACCESS_ERROR_CODES: ReadonlySet<string> = new Set([
 export function isLeagueAccessError(error: Error | null | undefined) {
   return error instanceof ApiError
     && error.code !== undefined
+    && isApiErrorCode(error.code)
     && LEAGUE_ACCESS_ERROR_CODES.has(error.code);
 }
 
