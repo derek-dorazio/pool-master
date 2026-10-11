@@ -99,7 +99,9 @@ export class IngestionConfigService {
     }, 'Loading per-sport ingestion config');
 
     const baseConfig = this.current();
-    const override = baseConfig.perSportOverrides?.[sport];
+    // Widened to Partial: a sport with no override is a miss, which the record type hides.
+    const overrides: Partial<Record<string, IngestionScheduleConfigOverride>> = baseConfig.perSportOverrides;
+    const override = overrides[sport];
     if (!override) {
       this.logger?.info({
         action: 'adminIngestionConfig.getPerSport.globalFallback',

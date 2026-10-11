@@ -35,7 +35,7 @@ export interface RequestLogBindings {
   isRootAdmin: boolean;
   clientTraceId: string | null;
   clientRequestId: string | null;
-  ip: string | null;
+  ip: string;
   method: string;
   route: string;
 }
@@ -51,9 +51,7 @@ function resolveLogLevel(): string {
 }
 
 function resolveRoute(request: FastifyRequest): string {
-  return request.routeOptions?.url
-    ?? request.url.split('?')[0]
-    ?? request.url;
+  return request.routeOptions.url ?? request.url.split('?', 1).join('');
 }
 
 export function createFastifyLoggerOptions(
@@ -89,7 +87,7 @@ export function createFastifyLoggerOptions(
 // into this same CloudWatch log group.
 export function buildRequestLogBindings(request: FastifyRequest): RequestLogBindings {
   const authUser = request.authUser;
-  const headers = request.headers ?? {};
+  const headers = request.headers;
 
   return {
     reqId: request.id,
@@ -98,7 +96,7 @@ export function buildRequestLogBindings(request: FastifyRequest): RequestLogBind
     isRootAdmin: authUser?.isRootAdmin === true,
     clientTraceId: headers['x-client-trace-id']?.toString() ?? null,
     clientRequestId: headers['x-client-request-id']?.toString() ?? null,
-    ip: request.ip ?? null,
+    ip: request.ip,
     method: request.method,
     route: resolveRoute(request),
   };

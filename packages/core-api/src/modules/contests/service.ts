@@ -317,7 +317,7 @@ export class ContestService {
     const myEntries = squadId
       ? entries.filter((entry) => entry.squadId === squadId)
       : [];
-    const myEntry = myEntries[0] ?? null;
+    const myEntry = myEntries.at(0) ?? null;
     const orderedEntries = [
       ...myEntries,
       ...entries.filter((entry) => entry.squadId !== squadId),
@@ -705,7 +705,7 @@ export class ContestService {
       submittedAt: entry.updatedAt,
       // The tiebreaker is a predicted winning score relative to par. Submit does not require
       // one, so a lineup submitted without it says so.
-      tiebreaker: entry.tiebreakerValue === null || entry.tiebreakerValue === undefined
+      tiebreaker: entry.tiebreakerValue === null
         ? 'None'
         : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(entry.tiebreakerValue),
       tiers: await this.buildEntryTierSelectionsForEmail(entry),

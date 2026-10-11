@@ -868,9 +868,11 @@ function withTiedLeaders(context: GolfLiveBuildContext, contestants: readonly Li
     return contestants;
   }
 
-  const [leader, runnerUp] = contestants
+  const finishers = contestants
     .filter((contestant) => contestant.rounds.length === 4 && contestant.rounds.every((round) => round.status === 'COMPLETED'))
     .sort((left, right) => scoreLiveGolfContestant(left) - scoreLiveGolfContestant(right) || left.name.localeCompare(right.name));
+  const leader = finishers.at(0);
+  const runnerUp = finishers.at(1);
   if (!leader || !runnerUp) {
     return contestants;
   }

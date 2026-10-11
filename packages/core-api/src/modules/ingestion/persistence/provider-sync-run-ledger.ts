@@ -110,7 +110,7 @@ export class ProviderSyncRunLedger {
 
     try {
       const result = await run();
-      const job = Array.isArray(result) ? result[0] : result;
+      const job = Array.isArray(result) ? result.at(0) : result;
       if (!job) {
         throw new Error('Sync execution completed without an ingestion job result.');
       }

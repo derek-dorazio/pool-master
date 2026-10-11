@@ -138,8 +138,8 @@ export default tseslint.config(
       // operation — `process.env`, an OpenAPI schema node rewritten in place, and
       // `Record`-typed React state. The rule's alternative, a `Map`, fits none of them.
       '@typescript-eslint/no-dynamic-delete': 'off',
-      // Deferred to its own ticket, too large for this slice: 167 unnecessary conditions
-      // are #550. (`no-non-null-assertion` is on through the preset since #549; tests
+      // On per area while #550 clears its findings; see the override below the shared
+      // blocks. (`no-non-null-assertion` is on through the preset since #549; tests
       // narrow with `expectDefined` from `tests/support/expect-defined.ts` instead.)
       '@typescript-eslint/no-unnecessary-condition': 'off',
 
@@ -406,6 +406,13 @@ export default tseslint.config(
     files: ['packages/*/src/**/*.ts'],
     plugins: { poolmaster },
     rules: { 'poolmaster/no-node-env-reads': 'error' },
+  },
+  {
+    // #550: a check the types say can never matter is either dead code or a sign the type
+    // is wrong. On for the packages and scripts, whose findings are cleared; the web app
+    // and tests follow.
+    files: ['packages/**/*.ts', 'scripts/**/*.{ts,mts}'],
+    rules: { '@typescript-eslint/no-unnecessary-condition': 'error' },
   },
 
   // ---------------------------------------------------------------------------

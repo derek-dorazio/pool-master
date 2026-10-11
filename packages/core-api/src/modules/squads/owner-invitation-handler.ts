@@ -188,7 +188,7 @@ export function createSquadOwnerInvitationHandlers(
       return reply.status(201).send(toAuthResponse(registered.user, registered.tokens));
     } catch (error) {
       if (error instanceof AuthError) {
-        return sendError(reply, error.statusCode ?? 400, error.code, error.message);
+        return sendError(reply, error.statusCode, error.code, error.message);
       }
       return handleOwnerInvitationError(reply, error);
     }

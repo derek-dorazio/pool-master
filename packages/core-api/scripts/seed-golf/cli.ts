@@ -47,7 +47,7 @@ async function main(): Promise<void> {
     if (signedIn && Date.now() - signedIn.at < SIGN_IN_AGAIN_AFTER_MS) return signedIn.client;
     const login = await loginUser({ client: createClient(createConfig({ baseUrl })), body: { identifier, password } });
     if (!login.data) {
-      throw new Error(`Sign-in as ${identifier} failed (HTTP ${login.response?.status ?? 'none'}).`);
+      throw new Error(`Sign-in as ${identifier} failed (HTTP ${login.response.status}).`);
     }
     if (!login.data.user.isRootAdmin) throw new Error(`${identifier} is not a root admin.`);
     const { accessToken } = login.data.tokens;

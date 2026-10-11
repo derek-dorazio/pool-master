@@ -180,7 +180,7 @@ export class GolfScoreService {
         continue;
       }
       if (round.strokes === null) {
-        logger?.debug?.(
+        logger?.debug(
           { action: 'liveScore.golf.nullStrokesSkipped', data: { providerId, externalId: round.participantExternalId, round: round.round } },
           'Skipping golf round update — provider does not expose per-round strokes',
         );

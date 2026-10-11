@@ -97,7 +97,8 @@ export function resolveContestScoringDefinition(
 ): ContestScoringResolution {
   const rule = [...(configuration?.participantScoringRules ?? [])]
     .filter((candidate) => candidate.active)
-    .sort((left, right) => left.sortOrder - right.sortOrder)[0];
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .at(0);
   if (!rule) {
     return { ok: false, reason: 'RULE_MISSING' };
   }

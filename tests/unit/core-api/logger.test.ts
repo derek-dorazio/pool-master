@@ -78,6 +78,7 @@ describe('core-api logging foundation', () => {
         method: 'GET',
         url: '/api/v1/leagues/missing',
         ip: '127.0.0.1',
+        headers: {},
         routeOptions: { url: '/api/v1/leagues/:id' },
         log: { warn, error },
       } as unknown as FastifyRequest;
@@ -111,6 +112,7 @@ describe('core-api logging foundation', () => {
         method: 'POST',
         url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
         ip: '127.0.0.1',
+        headers: {},
         routeOptions: { url: '/api/v1/ingestion/sports/:sport/events/:eventId/sync' },
         contextLogger: { warn, error },
         log: { warn: jest.fn(), error: jest.fn() },

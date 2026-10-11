@@ -20,7 +20,7 @@ export function createClientLogHandlers(service: ClientLogService) {
 
       service.ingestBatch({
         batch: request.body,
-        ip: request.ip ?? null,
+        ip: request.ip,
         requestLogger: logger,
         // #206 — identity comes from the verified JWT on THIS request, never from the
         // batch. This route is public so pre-login failures can still be reported, but

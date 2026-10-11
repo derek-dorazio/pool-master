@@ -113,10 +113,10 @@ export function rewriteNullableToOpenApi31(node: unknown): void {
     Object.assign(node, base);
     if (typeof outerDescription === 'string') node.description = outerDescription;
 
-    if (node.type === undefined && !('anyOf' in node)) {
+    if (isUntypedWrapper(node)) {
       // base was itself a wrapper — re-run, then fall back to an anyOf null branch
       rewriteNullableToOpenApi31(node);
-      if (node.type === undefined && !('anyOf' in node)) wrapWithNullBranch(node);
+      if (isUntypedWrapper(node)) wrapWithNullBranch(node);
     } else {
       addNullToType(node);
       addNullToEnum(node);
@@ -138,6 +138,11 @@ export function rewriteNullableToOpenApi31(node: unknown): void {
  * Move every non-`description` key of `node` into an inner schema and replace
  * `node`'s body with `anyOf: [ <inner>, { type: "null" } ]`.
  */
+/** A function, not an inline test, so a re-check after rewriting `node` is not narrowed away. */
+function isUntypedWrapper(node: JsonRecord): boolean {
+  return node.type === undefined && !('anyOf' in node);
+}
+
 function wrapWithNullBranch(node: JsonRecord): void {
   const description = node.description;
   const inner: JsonRecord = {};

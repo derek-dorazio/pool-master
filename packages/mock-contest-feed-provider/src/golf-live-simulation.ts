@@ -241,7 +241,7 @@ export function simulateGolfLiveScores(input: {
     const field = teeOrder(eventSeed, round, golfers.filter((golfer) => golfer.active));
     const lastSlot = Math.max(1, field.length - 1);
     let everyoneFinished = true;
-    field.forEach((golfer, slot) => {
+    for (const [slot, golfer] of field.entries()) {
       const teeMs = startMs + (slot / lastSlot) * roundMs * teeWindowShare;
       const played = playRound({ eventSeed, golfer, round, teeMs, holeMs, nowMs });
       if (!played || played.status === 'IN_PROGRESS') {
@@ -251,7 +251,7 @@ export function simulateGolfLiveScores(input: {
         golfer.rounds.push(played);
         if (played.status === 'DNF') golfer.active = false;
       }
-    });
+    }
 
     if (!everyoneFinished) {
       break;

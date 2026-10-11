@@ -47,7 +47,7 @@ export async function ensureDefaultSquadForLeagueMember(
 
   const user = await input.users.findById(input.userId);
 
-  if (!user?.firstName || !user?.lastName) {
+  if (!user?.firstName || !user.lastName) {
     input.logger?.warn({
       action: 'squad.ensureDefault.userNameMissing',
       data: { leagueId: input.leagueId, userId: input.userId },

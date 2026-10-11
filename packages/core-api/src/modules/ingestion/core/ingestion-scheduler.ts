@@ -21,7 +21,6 @@ import type {
   EventSyncFeed,
   IngestionFeedType,
   NormalizedSyncRequest,
-  NormalizedEventSyncScope,
   SyncOrchestratorRequest,
   SyncRequestSource,
 } from './sync-orchestrator';
@@ -210,6 +209,10 @@ export class IngestionScheduler {
     this.logger?.info('Ingestion scheduler stopped');
   }
 
+  private isRunning(): boolean {
+    return this.running;
+  }
+
   /** Runs a one-off event sync for explicit feed types. */
   async runEventSync(request: EventSyncRequest): Promise<IngestionJobRecord[]> {
     const jobs: IngestionJobRecord[] = [];
@@ -377,7 +380,7 @@ export class IngestionScheduler {
         eventId,
         feeds: ['EVENTPARTICIPANTS'],
       });
-      const scope = assertScheduledEventScope(normalized);
+      const { scope } = normalized;
       await this.executeScheduledSyncRun(normalized, () =>
         this.runEventFieldSync(scope.sport, scope.eventId, scope.providerOptions),
       );
@@ -428,7 +431,7 @@ export class IngestionScheduler {
         eventId,
         feeds: [feed],
       });
-      const scope = assertScheduledEventScope(normalized);
+      const { scope } = normalized;
       try {
         await this.executeScheduledSyncRun(normalized, () =>
           this.pollLiveScores(scope.sport, scope.eventId, scope.providerOptions),
@@ -444,7 +447,7 @@ export class IngestionScheduler {
     eventId: string;
     feeds: readonly EventSyncFeed[];
   }): NormalizedSyncRequest {
-    const normalized = this.syncOrchestrator.normalizeRequest({
+    return this.syncOrchestrator.normalizeRequest({
       source: SCHEDULED_SYNC_SOURCE,
       actor: SCHEDULED_SYNC_ACTOR,
       scope: {
@@ -454,12 +457,6 @@ export class IngestionScheduler {
         feeds: input.feeds,
       },
     } satisfies SyncOrchestratorRequest);
-
-    if (normalized.scope.type !== 'EVENT') {
-      throw new Error('Scheduled event sync normalization returned a sport scope.');
-    }
-
-    return normalized;
   }
 
   private async executeScheduledSyncRun(
@@ -473,12 +470,13 @@ export class IngestionScheduler {
 
     const provider = this.registry.getProvider(normalizedRequest.scope.sport);
     const providerId = provider?.providerId ?? 'none';
-    const [syncRun] = await syncRunLedger.createSubmissions({
+    const syncRuns = await syncRunLedger.createSubmissions({
       normalizedRequest,
       providerId,
       submittedAt: this.getNow(),
       runType: 'SCHEDULED_EVENT_SYNC',
     });
+    const syncRun = syncRuns.at(0);
 
     if (!syncRun) {
       throw new Error('Scheduled sync ledger did not create a provider sync run.');
@@ -604,7 +602,7 @@ export class IngestionScheduler {
 
     this.logger?.info({
       ...toJobLogPayload(job),
-      durationMs: job.completedAt && job.startedAt
+      durationMs: job.startedAt
         ? job.completedAt.getTime() - job.startedAt.getTime()
         : null,
     }, 'Ingestion job completed');
@@ -629,7 +627,9 @@ export class IngestionScheduler {
       }
 
       const delayMs = await this.safeResolveDelayMs(resolveDelayMs);
-      if (!this.running) {
+      // Read through a method: `stop()` can clear the flag during the await above, which
+      // narrowing on the property cannot see.
+      if (!this.isRunning()) {
         return;
       }
 
@@ -764,13 +764,6 @@ function createFailedJob(
     errorLog: [{ error, at: new Date() }],
     warnings: [],
   };
-}
-
-function assertScheduledEventScope(normalized: NormalizedSyncRequest): NormalizedEventSyncScope {
-  if (normalized.scope.type !== 'EVENT') {
-    throw new Error('Scheduled event sync normalization returned a sport scope.');
-  }
-  return normalized.scope;
 }
 
 function buildProviderEventSyncOptions(

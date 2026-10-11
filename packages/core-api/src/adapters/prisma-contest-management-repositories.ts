@@ -237,7 +237,7 @@ function mapContestConfiguration(row: {
     tierConfig: (row.tierConfig as ContestConfiguration['tierConfig']) ?? undefined,
     isExclusive: row.isExclusive,
     picksPerPeriod: row.picksPerPeriod ?? undefined,
-    roundValues: (row.roundValues as number[]) ?? undefined,
+    roundValues: (row.roundValues as number[] | null) ?? undefined,
     startRound: row.startRound ?? undefined,
     minimumEntries: row.minimumEntries ?? undefined,
     maxEntriesPerSquad: row.maxEntriesPerSquad ?? undefined,
