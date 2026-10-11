@@ -4,44 +4,19 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
-  AutoPickPolicy,
+  BudgetContestConfigSchema,
   ContestEntryStatus,
   ContestStatus,
   ContestFormat,
   ParticipantScoringDefinitionIdSchema,
   ScoringEngine,
   SelectionType,
+  TieredContestRulesSchema,
 } from '@poolmaster/shared/domain';
 import { ContestConfigurationRequestSchema } from './contest-management.dto';
 import { SportEventParticipantDtoSchema } from './events.dto';
 
 // --- Requests ---
-
-export const TierDefinitionRequestSchema = z.object({
-  tierId: z.string().describe('Stable tier identifier.'),
-  tierName: z.string().describe('Tier label shown in commissioner and draft UI.'),
-  tierNumber: z.number().int().describe('Tier order number.'),
-  picksFromTier: z.number().int().describe('How many picks each entry must make from the tier.'),
-  rankingRange: z.tuple([z.number(), z.number()]).optional().describe('Optional ranking range that produced the tier.'),
-  priceRange: z.tuple([z.number(), z.number()]).optional().describe('Optional pricing range that produced the tier.'),
-  maxParticipants: z.number().int().optional().describe('Optional cap on how many participants can live in the tier.'),
-  participantIds: z.array(z.string()).describe('Participants assigned to the tier.'),
-}).describe('Tier definition used in contest create and update flows.');
-
-export const ContestCrudConfigurationRequestSchema = z.object({
-  rounds: z.number().int().optional(),
-  timePerPickSeconds: z.number().int().optional(),
-  autoPickPolicy: z.nativeEnum(AutoPickPolicy).optional(),
-  tierConfig: z.array(TierDefinitionRequestSchema).optional(),
-  picksPerPeriod: z.number().int().optional(),
-  roundValues: z.array(z.number()).optional(),
-  startRound: z.string().optional(),
-  isExclusive: z.boolean().optional(),
-  bestBallN: z.number().int().optional(),
-  missedCutPenalty: z.number().optional(),
-  captainSlot: z.boolean().optional(),
-  captainMultiplier: z.number().optional(),
-}).describe('Contest-configuration payload used by contest create and update endpoints.');
 
 /** 400 error code when a create request names neither a template nor a configuration. */
 export const CONTEST_CONFIGURATION_REQUIRED = 'CONTEST_CONFIGURATION_REQUIRED';
@@ -263,29 +238,27 @@ export type ContestLeaderboardResponse = z.infer<typeof ContestLeaderboardRespon
 
 // --- Responses ---
 
-const nullablePositiveIntSchema = z
-  .number()
-  .int()
-  .min(1)
-  .nullable()
-  .optional()
-  .describe('Maximum entries a Team may create. Null means unlimited.');
+const contestDetailEntryLimitFields = {
+  maxEntriesPerSquad: z.number().int().min(1).nullable().describe('Maximum entries a Team may create. Null means unlimited.'),
+};
 
-export const ContestConfigurationDetailDtoSchema = ContestCrudConfigurationRequestSchema.extend({
-  maxEntriesPerSquad: nullablePositiveIntSchema,
-  picksPerTier: z.number().int().optional().describe("Tiered contests: how many golfers an entry picks from each of the event's tiers."),
-  rosterSize: z.number().int().optional().describe('Budget contests: how many golfers an entry picks.'),
-  salaryCap: z.number().int().optional().describe('Budget contests: whole dollars an entry\'s picks may cost at most; the event\'s cap.'),
-  countedScores: z.number().int().optional().describe('How many roster scores count toward the entry total in managed golf contests.'),
-}).describe(
-  'Typed contest configuration returned by contest detail endpoints. Use this shape for client-side entry-cap and contest-behavior decisions instead of treating contestConfiguration as an untyped blob.',
+/**
+ * A contest's rules as the contest detail read returns them (#589): the same one-shape-per-
+ * selection-type union the managed configuration read returns, told apart by `selectionType`, so
+ * a client narrows on it instead of guessing which optional fields apply.
+ */
+export const ContestConfigurationDetailDtoSchema = z.discriminatedUnion('selectionType', [
+  TieredContestRulesSchema.extend(contestDetailEntryLimitFields),
+  BudgetContestConfigSchema.extend(contestDetailEntryLimitFields),
+]).describe(
+  'Contest rules returned by contest detail endpoints, one shape per selection type, with the entries-per-team limit.',
 );
 export type ContestConfigurationDetailDto = z.infer<typeof ContestConfigurationDetailDtoSchema>;
 
 export const ContestResponseSchema = z.object({
   contest: ContestDtoSchema,
-  contestConfiguration: ContestConfigurationDetailDtoSchema.nullable().optional().describe(
-    'Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces.',
+  contestConfiguration: ContestConfigurationDetailDtoSchema.nullable().describe(
+    'The contest\'s rules. Null when the contest has none: only tiered and budget contests carry rules.',
   ),
 }).describe('Single-contest response.');
 export type ContestResponse = z.infer<typeof ContestResponseSchema>;
@@ -328,8 +301,6 @@ export type ContestEntryDeletionResponse = z.infer<typeof ContestEntryDeletionRe
 // --- Published contract (#192) -------------------------------------------------
 // Each name becomes `components.schemas.<name>` and an importable generated type.
 // The frontend imports these; it must not re-derive a shape from a response map.
-registerSchema('TierDefinitionRequest', TierDefinitionRequestSchema);
-registerSchema('ContestCrudConfigurationRequest', ContestCrudConfigurationRequestSchema);
 registerSchema('CreateContestRequest', CreateContestRequestSchema);
 registerSchema('UpdateContestRequest', UpdateContestRequestSchema);
 registerSchema('UpdateContestEntryRequest', UpdateContestEntryRequestSchema);

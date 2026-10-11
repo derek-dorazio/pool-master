@@ -1033,8 +1033,8 @@ export class ContestService {
       return 1;
     }
 
-    // A managed configuration (one with a typed configJson) treats a missing limit as
-    // unlimited; an untyped one as a single entry. Same rule as toContestConfigurationDetailDto.
+    // A configuration with typed rules treats a missing limit as unlimited, as the contest detail
+    // read reports it; one without rules (no tiered or budget selection) as a single entry.
     if (!configuration.configJson) {
       return configuration.maxEntriesPerSquad ?? 1;
     }

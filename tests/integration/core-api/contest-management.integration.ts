@@ -376,9 +376,10 @@ describe('Contest management integration', () => {
     const createdContest = createRes.json<ContestResponse>().contest;
     expect(createdContest.status).toBe(ContestStatus.DRAFT);
     expect(defaultTemplate.configuration.selectionType).toBe(SelectionType.TIERED);
-    expect(createRes.json<ContestResponse>().contestConfiguration?.picksPerTier).toBe(
-      defaultTemplate.configuration.selectionType === SelectionType.TIERED ? defaultTemplate.configuration.picksPerTier : undefined,
-    );
+    expect(createRes.json<ContestResponse>().contestConfiguration).toMatchObject({
+      selectionType: SelectionType.TIERED,
+      picksPerTier: defaultTemplate.configuration.selectionType === SelectionType.TIERED ? defaultTemplate.configuration.picksPerTier : undefined,
+    });
 
     const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId: createdContest.id },

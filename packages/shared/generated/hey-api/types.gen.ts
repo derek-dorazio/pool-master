@@ -6512,107 +6512,6 @@ export type SportEventParticipantUploadPreviewResponse = {
 };
 
 /**
- * Tier definition used in contest create and update flows.
- */
-export type TierDefinitionRequest = {
-    /**
-     * Stable tier identifier.
-     */
-    tierId: string;
-    /**
-     * Tier label shown in commissioner and draft UI.
-     */
-    tierName: string;
-    /**
-     * Tier order number.
-     */
-    tierNumber: number;
-    /**
-     * How many picks each entry must make from the tier.
-     */
-    picksFromTier: number;
-    /**
-     * Optional ranking range that produced the tier.
-     */
-    rankingRange?: [
-        unknown,
-        unknown
-    ];
-    /**
-     * Optional pricing range that produced the tier.
-     */
-    priceRange?: [
-        unknown,
-        unknown
-    ];
-    /**
-     * Optional cap on how many participants can live in the tier.
-     */
-    maxParticipants?: number;
-    /**
-     * Participants assigned to the tier.
-     */
-    participantIds: Array<string>;
-};
-
-/**
- * Contest-configuration payload used by contest create and update endpoints.
- */
-export type ContestCrudConfigurationRequest = {
-    rounds?: number;
-    timePerPickSeconds?: number;
-    autoPickPolicy?: 'QUEUE_THEN_BEST' | 'BEST_AVAILABLE' | 'RANDOM';
-    tierConfig?: Array<{
-        /**
-         * Stable tier identifier.
-         */
-        tierId: string;
-        /**
-         * Tier label shown in commissioner and draft UI.
-         */
-        tierName: string;
-        /**
-         * Tier order number.
-         */
-        tierNumber: number;
-        /**
-         * How many picks each entry must make from the tier.
-         */
-        picksFromTier: number;
-        /**
-         * Optional ranking range that produced the tier.
-         */
-        rankingRange?: [
-            unknown,
-            unknown
-        ];
-        /**
-         * Optional pricing range that produced the tier.
-         */
-        priceRange?: [
-            unknown,
-            unknown
-        ];
-        /**
-         * Optional cap on how many participants can live in the tier.
-         */
-        maxParticipants?: number;
-        /**
-         * Participants assigned to the tier.
-         */
-        participantIds: Array<string>;
-    }>;
-    picksPerPeriod?: number;
-    roundValues?: Array<number>;
-    startRound?: string;
-    isExclusive?: boolean;
-    bestBallN?: number;
-    missedCutPenalty?: number;
-    captainSlot?: boolean;
-    captainMultiplier?: number;
-};
-
-/**
  * Request payload for creating a contest.
  */
 export type CreateContestRequest = {
@@ -7375,80 +7274,40 @@ export type ContestLeaderboardResponse = {
 };
 
 /**
- * Typed contest configuration returned by contest detail endpoints. Use this shape for client-side entry-cap and contest-behavior decisions instead of treating contestConfiguration as an untyped blob.
+ * Contest rules returned by contest detail endpoints, one shape per selection type, with the entries-per-team limit.
  */
 export type ContestConfigurationDetailDto = {
-    rounds?: number;
-    timePerPickSeconds?: number;
-    autoPickPolicy?: 'QUEUE_THEN_BEST' | 'BEST_AVAILABLE' | 'RANDOM';
-    tierConfig?: Array<{
-        /**
-         * Stable tier identifier.
-         */
-        tierId: string;
-        /**
-         * Tier label shown in commissioner and draft UI.
-         */
-        tierName: string;
-        /**
-         * Tier order number.
-         */
-        tierNumber: number;
-        /**
-         * How many picks each entry must make from the tier.
-         */
-        picksFromTier: number;
-        /**
-         * Optional ranking range that produced the tier.
-         */
-        rankingRange?: [
-            unknown,
-            unknown
-        ];
-        /**
-         * Optional pricing range that produced the tier.
-         */
-        priceRange?: [
-            unknown,
-            unknown
-        ];
-        /**
-         * Optional cap on how many participants can live in the tier.
-         */
-        maxParticipants?: number;
-        /**
-         * Participants assigned to the tier.
-         */
-        participantIds: Array<string>;
-    }>;
-    picksPerPeriod?: number;
-    roundValues?: Array<number>;
-    startRound?: string;
-    isExclusive?: boolean;
-    bestBallN?: number;
-    missedCutPenalty?: number;
-    captainSlot?: boolean;
-    captainMultiplier?: number;
+    selectionType: 'TIERED';
+    /**
+     * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
+     */
+    picksPerTier: number;
+    /**
+     * How many golfer scores count toward the entry total, best first. At most the roster size.
+     */
+    countedScores: number;
     /**
      * Maximum entries a Team may create. Null means unlimited.
      */
-    maxEntriesPerSquad?: number | null;
+    maxEntriesPerSquad: number | null;
+} | {
+    selectionType: 'BUDGET_PICK';
     /**
-     * Tiered contests: how many golfers an entry picks from each of the event's tiers.
+     * How many golfers an entry picks, from anywhere in the field.
      */
-    picksPerTier?: number;
+    rosterSize: number;
     /**
-     * Budget contests: how many golfers an entry picks.
+     * How many golfer scores count toward the entry total, best first. At most the roster size.
      */
-    rosterSize?: number;
+    countedScores: number;
     /**
-     * Budget contests: whole dollars an entry's picks may cost at most; the event's cap.
+     * Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more.
      */
-    salaryCap?: number;
+    salaryCap: number;
     /**
-     * How many roster scores count toward the entry total in managed golf contests.
+     * Maximum entries a Team may create. Null means unlimited.
      */
-    countedScores?: number;
+    maxEntriesPerSquad: number | null;
 };
 
 /**
@@ -7482,80 +7341,40 @@ export type ContestResponse = {
         updatedAt?: string;
     };
     /**
-     * Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces.
+     * The contest's rules. Null when the contest has none: only tiered and budget contests carry rules.
      */
-    contestConfiguration?: {
-        rounds?: number;
-        timePerPickSeconds?: number;
-        autoPickPolicy?: 'QUEUE_THEN_BEST' | 'BEST_AVAILABLE' | 'RANDOM';
-        tierConfig?: Array<{
-            /**
-             * Stable tier identifier.
-             */
-            tierId: string;
-            /**
-             * Tier label shown in commissioner and draft UI.
-             */
-            tierName: string;
-            /**
-             * Tier order number.
-             */
-            tierNumber: number;
-            /**
-             * How many picks each entry must make from the tier.
-             */
-            picksFromTier: number;
-            /**
-             * Optional ranking range that produced the tier.
-             */
-            rankingRange?: [
-                unknown,
-                unknown
-            ];
-            /**
-             * Optional pricing range that produced the tier.
-             */
-            priceRange?: [
-                unknown,
-                unknown
-            ];
-            /**
-             * Optional cap on how many participants can live in the tier.
-             */
-            maxParticipants?: number;
-            /**
-             * Participants assigned to the tier.
-             */
-            participantIds: Array<string>;
-        }>;
-        picksPerPeriod?: number;
-        roundValues?: Array<number>;
-        startRound?: string;
-        isExclusive?: boolean;
-        bestBallN?: number;
-        missedCutPenalty?: number;
-        captainSlot?: boolean;
-        captainMultiplier?: number;
+    contestConfiguration: {
+        selectionType: 'TIERED';
+        /**
+         * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
+         */
+        picksPerTier: number;
+        /**
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
+         */
+        countedScores: number;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
-        maxEntriesPerSquad?: number | null;
+        maxEntriesPerSquad: number | null;
+    } | null | {
+        selectionType: 'BUDGET_PICK';
         /**
-         * Tiered contests: how many golfers an entry picks from each of the event's tiers.
+         * How many golfers an entry picks, from anywhere in the field.
          */
-        picksPerTier?: number;
+        rosterSize: number;
         /**
-         * Budget contests: how many golfers an entry picks.
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
          */
-        rosterSize?: number;
+        countedScores: number;
         /**
-         * Budget contests: whole dollars an entry's picks may cost at most; the event's cap.
+         * Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more.
          */
-        salaryCap?: number;
+        salaryCap: number;
         /**
-         * How many roster scores count toward the entry total in managed golf contests.
+         * Maximum entries a Team may create. Null means unlimited.
          */
-        countedScores?: number;
+        maxEntriesPerSquad: number | null;
     } | null;
 };
 

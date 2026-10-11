@@ -607,6 +607,7 @@ describe('Contract verification (web)', () => {
     expect(res.statusCode).toBe(201);
     const parsed = ContestResponseSchema.safeParse(res.json());
     expect(parsed.success).toBe(true);
+    expect(parsed.data?.contestConfiguration?.selectionType).toBe(SelectionType.TIERED);
 
     // openContest (#117) answers with the commissioner's contest read, now OPEN.
     const contestId = res.json<ContestResponse>().contest.id;

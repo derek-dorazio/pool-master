@@ -290,9 +290,11 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(createResponse.data?.contest.status).toBe(ContestStatus.DRAFT);
     expect(createResponse.data?.contest.selectionType).toBe(SelectionType.TIERED);
     const templateRules = expectDefined(defaultTemplate).configuration;
-    expect(createResponse.data?.contestConfiguration).toMatchObject({
-      picksPerTier: templateRules.selectionType === SelectionType.TIERED ? templateRules.picksPerTier : undefined,
+    expect(createResponse.data?.contestConfiguration).toEqual({
+      selectionType: templateRules.selectionType,
+      ...(templateRules.selectionType === SelectionType.TIERED && { picksPerTier: templateRules.picksPerTier }),
       countedScores: templateRules.countedScores,
+      maxEntriesPerSquad: templateRules.maxEntriesPerSquad ?? null,
     });
 
     const contestId = createResponse.data?.contest.id as string;
