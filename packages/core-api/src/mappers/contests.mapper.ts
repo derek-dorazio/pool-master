@@ -5,7 +5,6 @@ import type {
   ContestDto,
   ContestEventSummaryDto,
   ContestResponse,
-  ContestConfigurationDetailDto,
   ContestListResponse,
   ContestEntryDto,
   ContestEntryParticipantDetailDto,
@@ -17,7 +16,6 @@ import type {
 import {
   Sport,
   type Contest,
-  type ContestConfiguration,
   type ContestEntry,
   type ContestEntryStatus,
   type ContestStatus,
@@ -146,31 +144,8 @@ export function toContestDto(
   };
 }
 
-export function toContestResponse(
-  contest: ContestRow,
-  contestConfiguration?: ContestConfiguration | null,
-): ContestResponse {
-  return {
-    contest: toContestDto(contest),
-    contestConfiguration: toContestConfigurationDetailDto(contestConfiguration),
-  };
-}
-
-/**
- * A contest's rules for the detail read (#589). Only tiered and budget contests carry rules; any
- * other configuration has none to return. A missing entries-per-team limit means unlimited.
- */
-function toContestConfigurationDetailDto(
-  contestConfiguration?: ContestConfiguration | null,
-): ContestConfigurationDetailDto | null {
-  if (!contestConfiguration?.configJson) {
-    return null;
-  }
-
-  return {
-    ...contestConfiguration.configJson,
-    maxEntriesPerSquad: contestConfiguration.maxEntriesPerSquad ?? null,
-  };
+export function toContestResponse(contest: ContestRow): ContestResponse {
+  return { contest: toContestDto(contest) };
 }
 
 /** Each listed contest with its entry count and its event's name and start (#577). */

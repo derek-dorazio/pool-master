@@ -1021,7 +1021,6 @@ describe('SDK Functional: Roster Selection', () => {
     });
     expect(created.response.status).toBe(201);
     const contestId = created.data?.contest.id as string;
-    expect(created.data?.contestConfiguration).toMatchObject({ selectionType: SelectionType.TIERED, picksPerTier: 2 });
 
     const opened = await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
     expect(opened.response.status).toBe(200);

@@ -4,14 +4,12 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
-  BudgetContestConfigSchema,
   ContestEntryStatus,
   ContestStatus,
   ContestFormat,
   ParticipantScoringDefinitionIdSchema,
   ScoringEngine,
   SelectionType,
-  TieredContestRulesSchema,
 } from '@poolmaster/shared/domain';
 import { ContestConfigurationRequestSchema } from './contest-management.dto';
 import { SportEventParticipantDtoSchema } from './events.dto';
@@ -245,29 +243,9 @@ export type ContestLeaderboardResponse = z.infer<typeof ContestLeaderboardRespon
 
 // --- Responses ---
 
-const contestDetailEntryLimitFields = {
-  maxEntriesPerSquad: z.number().int().min(1).nullable().describe('Maximum entries a Team may create. Null means unlimited.'),
-};
-
-/**
- * A contest's rules as the contest detail read returns them (#589): the same one-shape-per-
- * selection-type union the managed configuration read returns, told apart by `selectionType`, so
- * a client narrows on it instead of guessing which optional fields apply.
- */
-export const ContestConfigurationDetailDtoSchema = z.discriminatedUnion('selectionType', [
-  TieredContestRulesSchema.extend(contestDetailEntryLimitFields),
-  BudgetContestConfigSchema.extend(contestDetailEntryLimitFields),
-]).describe(
-  'Contest rules returned by contest detail endpoints, one shape per selection type, with the entries-per-team limit.',
-);
-export type ContestConfigurationDetailDto = z.infer<typeof ContestConfigurationDetailDtoSchema>;
-
 export const ContestResponseSchema = z.object({
   contest: ContestDtoSchema,
-  contestConfiguration: ContestConfigurationDetailDtoSchema.nullable().describe(
-    'The contest\'s rules. Null when the contest has none: only tiered and budget contests carry rules.',
-  ),
-}).describe('Single-contest response.');
+}).describe('Single-contest response. A contest\'s rules are on the contest-management read (commissioners) and the selection-state read (entries).');
 export type ContestResponse = z.infer<typeof ContestResponseSchema>;
 
 export const ContestListResponseSchema = z.object({
@@ -323,7 +301,6 @@ registerSchema('ContestEntryGolfStandingDto', ContestEntryGolfStandingDtoSchema)
 registerSchema('ContestEntryStandingDto', ContestEntryStandingDtoSchema);
 registerSchema('ContestCountingRuleDto', ContestCountingRuleDtoSchema);
 registerSchema('ContestLeaderboardResponse', ContestLeaderboardResponseSchema);
-registerSchema('ContestConfigurationDetailDto', ContestConfigurationDetailDtoSchema);
 registerSchema('ContestResponse', ContestResponseSchema);
 registerSchema('ContestListResponse', ContestListResponseSchema);
 registerSchema('ContestEntryResponse', ContestEntryResponseSchema);

@@ -14879,93 +14879,6 @@
         "additionalProperties": false,
         "description": "Member-facing contest leaderboard. Live, entry standings are computed from the event's standings; once the contest is COMPLETED they are the standings frozen at settlement."
       },
-      "ContestConfigurationDetailDto": {
-        "anyOf": [
-          {
-            "type": "object",
-            "properties": {
-              "selectionType": {
-                "type": "string",
-                "enum": [
-                  "TIERED"
-                ]
-              },
-              "picksPerTier": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
-              },
-              "countedScores": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
-              },
-              "maxEntriesPerSquad": {
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": 1,
-                "description": "Maximum entries a Team may create. Null means unlimited."
-              }
-            },
-            "required": [
-              "selectionType",
-              "picksPerTier",
-              "countedScores",
-              "maxEntriesPerSquad"
-            ],
-            "additionalProperties": false,
-            "description": "Tiered rules: pick the same number of golfers from every tier of the event."
-          },
-          {
-            "type": "object",
-            "properties": {
-              "selectionType": {
-                "type": "string",
-                "enum": [
-                  "BUDGET_PICK"
-                ]
-              },
-              "rosterSize": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 12,
-                "description": "How many golfers an entry picks, from anywhere in the field."
-              },
-              "countedScores": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
-              },
-              "salaryCap": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 10000000,
-                "description": "Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more."
-              },
-              "maxEntriesPerSquad": {
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": 1,
-                "description": "Maximum entries a Team may create. Null means unlimited."
-              }
-            },
-            "required": [
-              "selectionType",
-              "rosterSize",
-              "countedScores",
-              "salaryCap",
-              "maxEntriesPerSquad"
-            ],
-            "additionalProperties": false,
-            "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
-          }
-        ],
-        "description": "Contest rules returned by contest detail endpoints, one shape per selection type, with the entries-per-team limit."
-      },
       "ContestResponse": {
         "type": "object",
         "properties": {
@@ -15101,107 +15014,13 @@
             ],
             "additionalProperties": false,
             "description": "A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields)."
-          },
-          "contestConfiguration": {
-            "description": "The contest's rules. Null when the contest has none: only tiered and budget contests carry rules.",
-            "anyOf": [
-              {
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "properties": {
-                  "selectionType": {
-                    "type": "string",
-                    "enum": [
-                      "TIERED"
-                    ]
-                  },
-                  "picksPerTier": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
-                  },
-                  "countedScores": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
-                  },
-                  "maxEntriesPerSquad": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": 1,
-                    "description": "Maximum entries a Team may create. Null means unlimited."
-                  }
-                },
-                "required": [
-                  "selectionType",
-                  "picksPerTier",
-                  "countedScores",
-                  "maxEntriesPerSquad"
-                ],
-                "additionalProperties": false,
-                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
-              },
-              {
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "properties": {
-                  "selectionType": {
-                    "type": "string",
-                    "enum": [
-                      "BUDGET_PICK"
-                    ]
-                  },
-                  "rosterSize": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 12,
-                    "description": "How many golfers an entry picks, from anywhere in the field."
-                  },
-                  "countedScores": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
-                  },
-                  "salaryCap": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 10000000,
-                    "description": "Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more."
-                  },
-                  "maxEntriesPerSquad": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": 1,
-                    "description": "Maximum entries a Team may create. Null means unlimited."
-                  }
-                },
-                "required": [
-                  "selectionType",
-                  "rosterSize",
-                  "countedScores",
-                  "salaryCap",
-                  "maxEntriesPerSquad"
-                ],
-                "additionalProperties": false,
-                "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
-              }
-            ]
           }
         },
         "required": [
-          "contest",
-          "contestConfiguration"
+          "contest"
         ],
         "additionalProperties": false,
-        "description": "Single-contest response."
+        "description": "Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries)."
       },
       "ContestListResponse": {
         "type": "object",
@@ -28566,7 +28385,7 @@
         ],
         "responses": {
           "201": {
-            "description": "Single-contest response.",
+            "description": "Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28938,7 +28757,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Single-contest response.",
+            "description": "Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29008,7 +28827,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Single-contest response.",
+            "description": "Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries).",
             "content": {
               "application/json": {
                 "schema": {

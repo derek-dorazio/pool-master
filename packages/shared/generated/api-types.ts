@@ -7811,29 +7811,7 @@ export interface components {
              */
             asOf: string | null;
         };
-        /** @description Contest rules returned by contest detail endpoints, one shape per selection type, with the entries-per-team limit. */
-        ContestConfigurationDetailDto: {
-            /** @enum {string} */
-            selectionType: "TIERED";
-            /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
-            picksPerTier: number;
-            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-            countedScores: number;
-            /** @description Maximum entries a Team may create. Null means unlimited. */
-            maxEntriesPerSquad: number | null;
-        } | {
-            /** @enum {string} */
-            selectionType: "BUDGET_PICK";
-            /** @description How many golfers an entry picks, from anywhere in the field. */
-            rosterSize: number;
-            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-            countedScores: number;
-            /** @description Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more. */
-            salaryCap: number;
-            /** @description Maximum entries a Team may create. Null means unlimited. */
-            maxEntriesPerSquad: number | null;
-        };
-        /** @description Single-contest response. */
+        /** @description Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries). */
         ContestResponse: {
             /** @description A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields). */
             contest: {
@@ -7873,28 +7851,6 @@ export interface components {
                 /** Format: date-time */
                 updatedAt?: string;
             };
-            /** @description The contest's rules. Null when the contest has none: only tiered and budget contests carry rules. */
-            contestConfiguration: ({
-                /** @enum {string} */
-                selectionType: "TIERED";
-                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
-                picksPerTier: number;
-                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                countedScores: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
-                maxEntriesPerSquad: number | null;
-            } | null) | ({
-                /** @enum {string} */
-                selectionType: "BUDGET_PICK";
-                /** @description How many golfers an entry picks, from anywhere in the field. */
-                rosterSize: number;
-                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                countedScores: number;
-                /** @description Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more. */
-                salaryCap: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
-                maxEntriesPerSquad: number | null;
-            } | null);
         };
         /** @description Contest-list response. */
         ContestListResponse: {
@@ -13829,7 +13785,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Single-contest response. */
+            /** @description Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries). */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -14113,7 +14069,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Single-contest response. */
+            /** @description Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries). */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -14166,7 +14122,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Single-contest response. */
+            /** @description Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries). */
             200: {
                 headers: {
                     [name: string]: unknown;

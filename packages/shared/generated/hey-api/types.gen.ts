@@ -7301,44 +7301,7 @@ export type ContestLeaderboardResponse = {
 };
 
 /**
- * Contest rules returned by contest detail endpoints, one shape per selection type, with the entries-per-team limit.
- */
-export type ContestConfigurationDetailDto = {
-    selectionType: 'TIERED';
-    /**
-     * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
-     */
-    picksPerTier: number;
-    /**
-     * How many golfer scores count toward the entry total, best first. At most the roster size.
-     */
-    countedScores: number;
-    /**
-     * Maximum entries a Team may create. Null means unlimited.
-     */
-    maxEntriesPerSquad: number | null;
-} | {
-    selectionType: 'BUDGET_PICK';
-    /**
-     * How many golfers an entry picks, from anywhere in the field.
-     */
-    rosterSize: number;
-    /**
-     * How many golfer scores count toward the entry total, best first. At most the roster size.
-     */
-    countedScores: number;
-    /**
-     * Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more.
-     */
-    salaryCap: number;
-    /**
-     * Maximum entries a Team may create. Null means unlimited.
-     */
-    maxEntriesPerSquad: number | null;
-};
-
-/**
- * Single-contest response.
+ * Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries).
  */
 export type ContestResponse = {
     /**
@@ -7380,42 +7343,6 @@ export type ContestResponse = {
         createdAt?: string;
         updatedAt?: string;
     };
-    /**
-     * The contest's rules. Null when the contest has none: only tiered and budget contests carry rules.
-     */
-    contestConfiguration: {
-        selectionType: 'TIERED';
-        /**
-         * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
-         */
-        picksPerTier: number;
-        /**
-         * How many golfer scores count toward the entry total, best first. At most the roster size.
-         */
-        countedScores: number;
-        /**
-         * Maximum entries a Team may create. Null means unlimited.
-         */
-        maxEntriesPerSquad: number | null;
-    } | null | {
-        selectionType: 'BUDGET_PICK';
-        /**
-         * How many golfers an entry picks, from anywhere in the field.
-         */
-        rosterSize: number;
-        /**
-         * How many golfer scores count toward the entry total, best first. At most the roster size.
-         */
-        countedScores: number;
-        /**
-         * Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more.
-         */
-        salaryCap: number;
-        /**
-         * Maximum entries a Team may create. Null means unlimited.
-         */
-        maxEntriesPerSquad: number | null;
-    } | null;
 };
 
 /**
@@ -13936,7 +13863,7 @@ export type CreateContestError = CreateContestErrors[keyof CreateContestErrors];
 
 export type CreateContestResponses = {
     /**
-     * Single-contest response.
+     * Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries).
      */
     201: ContestResponse;
 };
@@ -14146,7 +14073,7 @@ export type GetContestError = GetContestErrors[keyof GetContestErrors];
 
 export type GetContestResponses = {
     /**
-     * Single-contest response.
+     * Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries).
      */
     200: ContestResponse;
 };
@@ -14185,7 +14112,7 @@ export type UpdateContestError = UpdateContestErrors[keyof UpdateContestErrors];
 
 export type UpdateContestResponses = {
     /**
-     * Single-contest response.
+     * Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries).
      */
     200: ContestResponse;
 };

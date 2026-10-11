@@ -218,8 +218,6 @@ describe('Contest management integration', () => {
     contestId = createdContest.id;
     expect(createdContest.status).toBe(ContestStatus.DRAFT);
     expect(createdContest.sportEventId).toBe(sportEventId);
-    // #245 — create answers with the canonical contest read, as every contest route does.
-    expect(createRes.json<ContestResponse>().contestConfiguration?.countedScores).toBe(4);
 
     const createdConfiguration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId },
@@ -376,49 +374,16 @@ describe('Contest management integration', () => {
     const createdContest = createRes.json<ContestResponse>().contest;
     expect(createdContest.status).toBe(ContestStatus.DRAFT);
     expect(defaultTemplate.configuration.selectionType).toBe(SelectionType.TIERED);
-    expect(createRes.json<ContestResponse>().contestConfiguration).toMatchObject({
-      selectionType: SelectionType.TIERED,
-      picksPerTier: defaultTemplate.configuration.selectionType === SelectionType.TIERED ? defaultTemplate.configuration.picksPerTier : undefined,
-    });
 
     const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId: createdContest.id },
     });
+    expect(configuration.configJson).toMatchObject({
+      selectionType: SelectionType.TIERED,
+      picksPerTier: defaultTemplate.configuration.selectionType === SelectionType.TIERED ? defaultTemplate.configuration.picksPerTier : undefined,
+    });
     expect(configuration.templateId).toBe(defaultTemplate.id);
     expect(configuration.templateVersion).toBe(1);
-  });
-
-  it('answers a draft contest\'s metadata edit with the contest\'s rules, not null', async () => {
-    const createRes = await getApp().inject({
-      method: 'POST',
-      url: API_ROUTES.leagues.contests(leagueId),
-      headers: ownerHeaders,
-      payload: {
-        name: 'Rename Me Contest',
-        sportEventId,
-        contestFormat: 'ROSTER',
-        selectionType: 'TIERED',
-        configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 2 },
-      },
-    });
-    expect(createRes.statusCode).toBe(201);
-    const contestId = createRes.json<ContestResponse>().contest.id;
-
-    const updateRes = await getApp().inject({
-      method: 'PUT',
-      url: API_ROUTES.contests.detail(contestId),
-      headers: ownerHeaders,
-      payload: { name: 'Renamed Contest' },
-    });
-
-    expect(updateRes.statusCode).toBe(200);
-    expect(updateRes.json<ContestResponse>().contest.name).toBe('Renamed Contest');
-    expect(updateRes.json<ContestResponse>().contestConfiguration).toEqual({
-      selectionType: SelectionType.TIERED,
-      picksPerTier: 1,
-      countedScores: 4,
-      maxEntriesPerSquad: 2,
-    });
   });
 
   it('rejects unsupported legacy contest-management payloads', async () => {
