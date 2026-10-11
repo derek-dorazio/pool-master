@@ -22,6 +22,7 @@ import {
 import type {
   TeamOwnerInvitationDto,
   TeamOwnerInvitationPreviewResponse,
+  ApiErrorCode,
 } from '@poolmaster/shared/dto';
 import {
   inactivateLeagueMemberUnit,
@@ -627,7 +628,7 @@ function generateInviteCode(): string {
   return randomUUID().replace(/-/g, '').slice(0, 12);
 }
 
-function mapInvitationStatusCode(status: SquadOwnerInvitationStatus): string {
+function mapInvitationStatusCode(status: SquadOwnerInvitationStatus): ApiErrorCode {
   switch (status) {
     case SharedSquadOwnerInvitationStatus.ACCEPTED:
       return 'SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED';
@@ -643,9 +644,9 @@ function mapInvitationStatusCode(status: SquadOwnerInvitationStatus): string {
 export class SquadOwnerInvitationNotFoundError extends Error {}
 
 export class SquadOwnerInvitationOperationError extends Error {
-  code: string;
+  code: ApiErrorCode;
 
-  constructor(message: string, code = 'SQUAD_OWNER_INVITATION_INVALID') {
+  constructor(message: string, code: ApiErrorCode = 'SQUAD_OWNER_INVITATION_INVALID') {
     super(message);
     this.code = code;
   }

@@ -1,5 +1,5 @@
 import type { FastifyBaseLogger } from 'fastify';
-import type { ClientLogBatch } from '@poolmaster/shared/dto';
+import type { ClientLogBatch, ApiErrorCode } from '@poolmaster/shared/dto';
 
 /**
  * Per-process, per-IP, per-minute. **Not a fleet-wide ceiling** — the window below lives in an
@@ -24,7 +24,7 @@ const DEFAULT_RATE_LIMIT_PER_MINUTE = 60;
 const DEFAULT_MAX_BATCH_BYTES = 64 * 1024;
 
 export class ClientLogBatchTooLargeError extends Error {
-  readonly code = 'CLIENT_LOG_BATCH_TOO_LARGE';
+  readonly code: ApiErrorCode = 'CLIENT_LOG_BATCH_TOO_LARGE';
   readonly statusCode = 413;
 
   constructor(message = 'Client log batch is too large') {
@@ -34,7 +34,7 @@ export class ClientLogBatchTooLargeError extends Error {
 }
 
 export class ClientLogRateLimitError extends Error {
-  readonly code = 'CLIENT_LOG_RATE_LIMITED';
+  readonly code: ApiErrorCode = 'CLIENT_LOG_RATE_LIMITED';
   readonly statusCode = 429;
 
   constructor(message = 'Client log rate limit exceeded') {

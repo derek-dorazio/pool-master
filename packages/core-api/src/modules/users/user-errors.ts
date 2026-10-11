@@ -6,10 +6,11 @@
  * `AccountLifecycleError`, declared inside `account/service.ts`, which is the wrong home for
  * an error the admin caller raises too.
  */
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 export class UserOperationError extends Error {
   constructor(
     message: string,
-    public readonly code: string,
+    public readonly code: ApiErrorCode,
     public readonly statusCode: number,
   ) {
     super(message);

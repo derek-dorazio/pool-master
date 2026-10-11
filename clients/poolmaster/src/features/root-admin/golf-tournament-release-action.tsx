@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { releaseEvent } from '@/lib/api';
 import { Button, Callout, ConfirmationModal } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { describeGolfReleaseBlockers } from './golf-admin-utils';
 import type { SportEventDto } from '@/lib/api';
 
-const RELEASE_CODE_MESSAGES: Record<string, string> = {
+const RELEASE_CODE_MESSAGES: ErrorCodeMessages = {
   SPORT_EVENT_NOT_DRAFT: 'This tournament has already been released.',
   SPORT_EVENT_ALREADY_STARTED: 'This tournament has already started, so it can no longer be released.',
   SPORT_EVENT_NOT_READY: 'This tournament is not ready yet: load its field, put every active golfer in a tier and assign prices.',

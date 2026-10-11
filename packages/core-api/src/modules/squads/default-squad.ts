@@ -3,6 +3,7 @@ import type { Squad } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import { SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
 import { resolveAvailableDefaultSquadName } from './squad-name';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 interface EnsureDefaultSquadForLeagueMemberInput {
   leagueId: string;
@@ -135,9 +136,9 @@ export async function ensureDefaultSquadForLeagueMember(
 }
 
 export class DefaultSquadProvisioningError extends Error {
-  code: string;
+  code: ApiErrorCode;
 
-  constructor(message: string, code = 'SQUAD_PROVISIONING_FAILED') {
+  constructor(message: string, code: ApiErrorCode = 'SQUAD_PROVISIONING_FAILED') {
     super(message);
     this.name = 'DefaultSquadProvisioningError';
     this.code = code;

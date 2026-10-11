@@ -400,9 +400,9 @@ describe('EventScoreSourceService.getLiveSimulation', () => {
 
 describe('EventScoreSourceError', () => {
   it('pool-master-753 carries message/code/statusCode', () => {
-    const error = new EventScoreSourceError('boom', 'SOME_CODE', 422);
+    const error = new EventScoreSourceError('boom', 'PROVIDER_NOT_FOUND', 422);
     expect(error.message).toBe('boom');
-    expect(error.code).toBe('SOME_CODE');
+    expect(error.code).toBe('PROVIDER_NOT_FOUND');
     expect(error.statusCode).toBe(422);
     expect(error.name).toBe('EventScoreSourceError');
   });

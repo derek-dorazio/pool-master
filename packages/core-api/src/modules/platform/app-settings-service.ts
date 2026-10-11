@@ -13,6 +13,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { PlatformRuntimeConfigRepository } from '@poolmaster/shared/db';
 import type { PlatformRuntimeConfig } from '@poolmaster/shared/domain';
 import type { SettingsEnvironment, SettingsGroup } from './settings-group';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export const SETTINGS_REFRESH_INTERVAL_MS = 30_000;
 
@@ -39,7 +40,7 @@ export interface SaveSettingsOptions {
 
 export class SettingsConflictError extends Error {
   readonly statusCode = 409;
-  readonly code = 'SETTINGS_CONFLICT';
+  readonly code: ApiErrorCode = 'SETTINGS_CONFLICT';
 
   constructor(key: string) {
     super(`Settings group ${key} was changed by someone else; reload and try again.`);
@@ -49,7 +50,7 @@ export class SettingsConflictError extends Error {
 
 export class SettingsValidationError extends Error {
   readonly statusCode = 400;
-  readonly code = 'SETTINGS_INVALID';
+  readonly code: ApiErrorCode = 'SETTINGS_INVALID';
 
   /** The Zod issues; the error handler sends a 400's `validation` as the envelope's `details`. */
   constructor(key: string, readonly validation: unknown) {

@@ -1,11 +1,12 @@
 import { CONTEST_BUDGET_UNFILLABLE, CONTEST_EVENT_NOT_PRICED } from '@poolmaster/shared/dto';
+import type { ErrorCodeMessages } from '@/lib/errors';
 
 /**
  * Copy for the refusals Create contest, a settings save and "Open to league" can meet (#117,
  * #93), so all three say the same thing. The codes are the contract; the server's own sentences
  * are a fallback for anything not listed.
  */
-export const CONTEST_RELEASE_CODE_MESSAGES: Record<string, string> = {
+export const CONTEST_RELEASE_CODE_MESSAGES: ErrorCodeMessages = {
   CONTEST_NOT_DRAFT: 'This contest is already open to the league.',
   CONTEST_EVENT_ALREADY_STARTED:
     'This contest’s event has already started, so it can no longer be opened. Delete the draft instead.',

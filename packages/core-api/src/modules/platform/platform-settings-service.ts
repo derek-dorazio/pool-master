@@ -13,6 +13,7 @@ import { SETTINGS_HISTORY_LIMIT } from '@poolmaster/shared/dto/settings.dto';
 import { formatUserFullName } from '../../core/user-name';
 import type { AppSettingsService, SettingsState } from './app-settings-service';
 import type { SettingsGroup } from './settings-group';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export interface SettingsActorView {
   id: string;
@@ -32,7 +33,7 @@ export interface SettingsChangeView {
 
 export class SettingsGroupNotFoundError extends Error {
   readonly statusCode = 404;
-  readonly code = 'SETTINGS_GROUP_NOT_FOUND';
+  readonly code: ApiErrorCode = 'SETTINGS_GROUP_NOT_FOUND';
 
   constructor(key: string) {
     super(`There is no settings group ${key}.`);
@@ -42,7 +43,7 @@ export class SettingsGroupNotFoundError extends Error {
 
 export class SettingsKeyMismatchError extends Error {
   readonly statusCode = 400;
-  readonly code = 'SETTINGS_KEY_MISMATCH';
+  readonly code: ApiErrorCode = 'SETTINGS_KEY_MISMATCH';
 
   constructor(pathKey: string, bodyKey: string) {
     super(`The request body is for ${bodyKey} but the path names ${pathKey}.`);

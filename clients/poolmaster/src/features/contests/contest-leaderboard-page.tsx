@@ -5,7 +5,7 @@ import {
   getContest,
   type ContestDto,
 } from '@/lib/api';
-import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
@@ -46,7 +46,7 @@ import { useContestLeaderboardQuery } from './use-contest-leaderboard';
  * so there is no separate final mode to render.
  */
 
-const LEADERBOARD_ERROR_MESSAGES: Record<string, string> = {
+const LEADERBOARD_ERROR_MESSAGES: ErrorCodeMessages = {
   CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN:
     'Scores appear once picks are revealed. Until then, the contest board shows who has entered.',
   LEAGUE_MEMBERSHIP_REQUIRED: 'Only members of this league can see its contest leaderboards.',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError, extractErrorMessage, isErrorEnvelope, throwApiError } from './errors';
+import { ApiError, extractErrorMessage, isErrorEnvelope, throwApiError, type ErrorCodeMessages } from './errors';
 
 function caught(run: () => never): Error {
   try {
@@ -62,6 +62,15 @@ describe('extractErrorMessage', () => {
   it('returns the backend message for an ApiError whose code is not mapped', () => {
     const err = new ApiError({ error: { code: 'OTHER', message: 'Backend says no.' } });
     expect(extractErrorMessage(err, { codeMessages: { EVENT_YEAR_NOT_EMPTY: 'x' } })).toBe('Backend says no.');
+  });
+
+  it('refuses at typecheck copy keyed by a code the API never sends, such as a misspelled one', () => {
+    const messages: ErrorCodeMessages = {
+      // @ts-expect-error -- a misspelling of EVENT_YEAR_NOT_EMPTY is not one of the API's error codes
+      EVENT_YEAR_NOT_EMTPY: 'This tour already has tournaments in 2027.',
+    };
+    const err = new ApiError({ error: { code: 'EVENT_YEAR_NOT_EMPTY', message: 'Year has events.' } });
+    expect(extractErrorMessage(err, { codeMessages: messages })).toBe('Year has events.');
   });
 
   it('returns the caller fallback, not the throw site diagnostic, for an ApiError built from a non-envelope payload', () => {

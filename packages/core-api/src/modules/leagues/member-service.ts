@@ -15,6 +15,7 @@ import {
   requireAnotherActiveCommissioner,
 } from './member-lifecycle';
 import { revokePendingOwnerInvitations } from '../squads/owner-membership';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export interface ChangeRoleInput {
   leagueId: string;
@@ -173,7 +174,7 @@ export class MemberService {
 }
 
 export class MemberNotFoundError extends Error {
-  readonly code = 'LEAGUE_MEMBER_NOT_FOUND';
+  readonly code: ApiErrorCode = 'LEAGUE_MEMBER_NOT_FOUND';
   readonly statusCode = 404;
 
   constructor(userId: string, leagueId: string) {
@@ -183,9 +184,9 @@ export class MemberNotFoundError extends Error {
 }
 
 export class MemberOperationError extends Error {
-  code: string;
+  code: ApiErrorCode;
 
-  constructor(reason: string, code = 'LEAGUE_MEMBER_OPERATION_INVALID') {
+  constructor(reason: string, code: ApiErrorCode = 'LEAGUE_MEMBER_OPERATION_INVALID') {
     super(reason);
     this.name = 'MemberOperationError';
     this.code = code;

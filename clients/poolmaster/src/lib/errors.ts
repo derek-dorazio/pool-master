@@ -1,4 +1,4 @@
-import { ErrorEnvelopeSchema, type ErrorEnvelope } from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema, isApiErrorCode, type ApiErrorCode, type ErrorEnvelope } from '@poolmaster/shared/dto';
 
 /**
  * Shared user-facing error-message extraction for SDK / mutation responses.
@@ -15,11 +15,18 @@ export function isErrorEnvelope(value: unknown): value is ErrorEnvelope {
   return ErrorEnvelopeSchema.safeParse(value).success;
 }
 
+/** Product copy for some of the API's error codes. */
+export type ErrorCodeMessages = Partial<Record<ApiErrorCode, string>>;
+
 export type ExtractErrorMessageOptions = {
   /** Message to show when the error has no usable text. */
   fallback?: string;
-  /** Map of backend error codes to user-facing copy (per-feature special cases). */
-  codeMessages?: Record<string, string>;
+  /**
+   * User-facing copy for particular backend error codes (per-feature special cases). Keyed by
+   * the API's own code list, so a code the API no longer sends, or a misspelled one, fails
+   * typecheck instead of silently never matching.
+   */
+  codeMessages?: ErrorCodeMessages;
 };
 
 /**
@@ -40,8 +47,9 @@ export function extractErrorMessage(
 
   if (error instanceof ApiError) {
     const codeMessages = options?.codeMessages;
-    if (codeMessages && error.code !== undefined && Object.hasOwn(codeMessages, error.code)) {
-      return codeMessages[error.code];
+    const codeMessage = error.code !== undefined && isApiErrorCode(error.code) ? codeMessages?.[error.code] : undefined;
+    if (codeMessage !== undefined) {
+      return codeMessage;
     }
     return error.hasOwnMessage ? error.message : fallback;
   }

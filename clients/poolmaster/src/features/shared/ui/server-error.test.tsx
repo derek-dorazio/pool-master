@@ -29,12 +29,12 @@ describe("ServerErrorBar", () => {
     render(
       <ServerErrorBar
         codeMessages={{
-          SYNC_PROVIDER_TIMEOUT: "The provider did not respond. Try again soon.",
+          SPORT_EVENT_SYNC_SCOPE_RESTRICTED: "The provider did not respond. Try again soon.",
         }}
         error={
           new ApiError({
             error: {
-              code: "SYNC_PROVIDER_TIMEOUT",
+              code: "SPORT_EVENT_SYNC_SCOPE_RESTRICTED",
               message: "provider request exceeded 5000ms",
             },
           })

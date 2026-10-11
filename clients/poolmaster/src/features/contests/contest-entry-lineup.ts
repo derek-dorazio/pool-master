@@ -2,6 +2,7 @@ import { SelectionType, toCents } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@/lib/api';
 import { formatDollars } from '@/features/shared/ui';
 import type { SelectionGroup } from './contest-entry-selection';
+import type { ErrorCodeMessages } from '@/lib/errors';
 
 type SelectionState = SelectionStateResponse;
 type BudgetLineupSummary = NonNullable<SelectionState['lineupSummary']>;
@@ -145,7 +146,7 @@ export const LINEUP_RULES: Record<EnterableSelectionType, LineupRules> = {
  * Copy for the pick and submit refusals the entry page can meet. The codes are the contract;
  * the server's own sentences are a fallback for anything not listed.
  */
-export const CONTEST_ENTRY_CODE_MESSAGES: Record<string, string> = {
+export const CONTEST_ENTRY_CODE_MESSAGES: ErrorCodeMessages = {
   ENTRY_OVER_BUDGET: 'Your golfers cost more than the salary cap. Remove a golfer to get under it, then submit.',
   PRICE_MISSING: 'This golfer has no price yet, so they can’t be picked.',
 };

@@ -11,6 +11,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { InvitationStatus, InviteType } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 // --- CSV Member Import (08-029) ---
 
@@ -94,9 +95,9 @@ export interface TeamReassignmentInput {
 }
 
 export class BulkOperationError extends Error {
-  code: string;
+  code: ApiErrorCode;
 
-  constructor(reason: string, code = 'LEAGUE_BULK_OPERATION_INVALID') {
+  constructor(reason: string, code: ApiErrorCode = 'LEAGUE_BULK_OPERATION_INVALID') {
     super(reason);
     this.name = 'BulkOperationError';
     this.code = code;

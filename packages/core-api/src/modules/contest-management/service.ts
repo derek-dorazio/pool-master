@@ -11,6 +11,7 @@ import type {
   ContestConfigurationRequest,
   CreateContestRequest,
   GolfEffectiveTierDto,
+  ApiErrorCode,
 } from '@poolmaster/shared/dto';
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
@@ -572,7 +573,7 @@ function contestNotDraftError(): ContestManagementError {
 export class ContestManagementError extends Error {
   constructor(
     message: string,
-    readonly code: string = 'CONTEST_CONFIGURATION_INVALID',
+    readonly code: ApiErrorCode = 'CONTEST_CONFIGURATION_INVALID',
     readonly statusCode: number = 422,
   ) {
     super(message);
