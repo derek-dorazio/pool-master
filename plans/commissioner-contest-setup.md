@@ -86,7 +86,7 @@ of the raw enums.
 
 ## Budget (#93)
 
-Slice 3 of `plans/93-budget-selection.md` adds a **Budget** format card to section 2 of Create
+Slice 3 of the #93 plan (deleted when #93 closed; `git show e7ca324:plans/93-budget-selection.md`) added a **Budget** format card to section 2 of Create
 contest, a budget arm to `ContestRulesFields` (golfers per entry, scores that count, salary cap
 read-only from the event's pricing) and to `formatContestRules`. The contest page needs nothing
 else. These tickets build the slots; they do not add budget.

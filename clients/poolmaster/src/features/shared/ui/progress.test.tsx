@@ -11,4 +11,14 @@ describe("pool-master-3lo.19: shared ProgressIndicator primitive", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("100%")).toBeInTheDocument();
   });
+
+  it("draws the bar in the destructive color only for the danger tone, as for spend past a cap", () => {
+    const { rerender } = render(<ProgressIndicator label="Spent" max={100} value={50} />);
+    const bar = () => screen.getByRole("progressbar", { name: "Spent" });
+    expect(bar()).toContainHTML("bg-primary");
+    expect(bar()).not.toContainHTML("bg-destructive");
+
+    rerender(<ProgressIndicator label="Spent" max={100} tone="danger" value={120} />);
+    expect(bar()).toContainHTML("bg-destructive");
+  });
 });

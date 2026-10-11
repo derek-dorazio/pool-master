@@ -58,7 +58,22 @@ type JourneyState = {
   joinUrl?: string;
   memberId?: string;
   entryId?: string;
+  /** #93 — the budget contest act 2 opens beside the tiered one, and the member's entry in it. */
+  budgetContestId?: string;
+  budgetEntryId?: string;
 };
+
+/**
+ * #93 — the budget contest's prices. Auto-pricing puts golfers with no seed at the curve's
+ * floor, so act 1 raises the first two by hand: three of the six now cost more than the $50,000
+ * cap ($30,000 + $20,000 + a floor price), and swapping the $20,000 golfer for another floor
+ * golfer fits under it. Field entry index → price.
+ */
+const BUDGET_PRICES: ReadonlyArray<{ index: number; price: number }> = [
+  { index: 0, price: 30_000 },
+  { index: 1, price: 20_000 },
+];
+const BUDGET_ROSTER_SIZE = 3;
 
 // Serial: one worker runs the acts in order and shares this module's state between them. A retry
 // re-runs the whole file in a fresh worker, which re-imports the module and so starts clean.
@@ -310,6 +325,18 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('root-admin-golf-tiers-pricing')).toContainText('Priced with');
     });
 
+    await test.step('raise two golfers\' prices in the Field grid, so a budget roster can go over the cap', async () => {
+      const fieldEntryIds = journey?.fieldEntryIds ?? [];
+      await page.goto(`/manage/golf/tournaments/${eventId}/field`);
+      for (const { index, price } of BUDGET_PRICES) {
+        await page.getByTestId(`root-admin-golf-field-price-${fieldEntryIds[index]}`).fill(String(price));
+      }
+      await submitAndRead(page, 'root-admin-golf-field-save', 'PATCH', `/api/v1/events/${eventId}/participants`);
+      for (const { index, price } of BUDGET_PRICES) {
+        await expect(page.getByTestId(`root-admin-golf-field-price-${fieldEntryIds[index]}`)).toHaveValue(String(price));
+      }
+    });
+
     // #431 — a new tournament is a draft commissioners can't see. Act 2 can only create a
     // contest on one that is released, has a field, and has not started (`contestEligible`).
     const firstFieldEntryId = journey.fieldEntryIds[0];
@@ -337,7 +364,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     });
   });
 
-  test('act 2: a new commissioner creates a league and a draft contest on the catalog, opens it to the league, then hands out a join link', async ({ page }) => {
+  test('act 2: a new commissioner creates a league, a tiered and a budget contest on the catalog, opens them to the league, then hands out a join link', async ({ page }) => {
     test.setTimeout(120_000);
     const state = requireJourney();
     const { run } = state;
@@ -442,6 +469,38 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId(`league-contest-${state.contestId}`)).toContainText(run.contestName);
     });
 
+    await test.step('create a budget contest on the same tournament, three golfers under its $50,000 cap, and open it', async () => {
+      await page.goto(`/league/${run.leagueCode}/admin/contests/new`);
+      await expect(page.getByTestId('create-contest-page')).toBeVisible();
+      const eventChoice = page.getByTestId(`contest-event-${state.eventId}`);
+      await eventChoice.click();
+      await expect(eventChoice).toBeChecked();
+      await page.getByTestId('contest-format-BUDGET_PICK').click();
+      await expect(page.getByTestId('contest-budget-salary-cap')).toContainText('$50,000 salary cap');
+      await page.getByTestId('contest-name').fill(`E2E Budget ${run.runId}`);
+      await page.getByTestId('contest-budget-roster-size').fill(String(BUDGET_ROSTER_SIZE));
+      await page.getByTestId('contest-budget-counted-scores').fill(String(BUDGET_ROSTER_SIZE));
+      const created = await submitAndRead<{ contest: { id: string; selectionType: string } }>(
+        page,
+        'create-contest-submit',
+        'POST',
+        `/api/v1/leagues/${state.leagueId}/contests`,
+      );
+      expect(created.contest.selectionType).toBe('BUDGET_PICK');
+      state.budgetContestId = created.contest.id;
+
+      await expect(page.getByTestId('manage-contest-page')).toBeVisible();
+      await expect(page.getByTestId('manage-contest-rules')).toContainText('$50,000 salary cap');
+      await page.getByTestId('contest-open-to-league').click();
+      const opened = await submitAndRead<{ contest: { status: string } }>(
+        page,
+        'contest-open-confirm',
+        'POST',
+        `/api/v1/leagues/${state.leagueId}/contest-management/contests/${state.budgetContestId}/open`,
+      );
+      expect(opened.contest.status).toBe('OPEN');
+    });
+
     await test.step('edit the league description', async () => {
       const description = `Edited by the commissioner, run ${run.runId}`;
       // Commissioner tools, reached from the league menu, holds the league's settings.
@@ -482,7 +541,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     });
   });
 
-  test('act 3: a new member joins by the link, builds a six-tier entry and submits it', async ({ page }) => {
+  test('act 3: a new member joins by the link, submits a six-tier entry, and a budget entry once a swap brings it under the cap', async ({ page }) => {
     test.setTimeout(120_000);
     const state = requireJourney();
     const { run } = state;
@@ -583,6 +642,43 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId(`contest-board-entry-${state.entryId}`)).toContainText(name);
     });
 
+    await test.step('enter the budget contest: three golfers over the cap cannot be submitted, a swap under it can', async () => {
+      const budgetContestId = state.budgetContestId;
+      const [dearest, dear, floorA, floorB] = state.fieldEntryIds;
+      await page.goto(`/league/${run.leagueCode}/contests/${budgetContestId}`);
+      const created = await submitAndRead<{ entry: { id: string } }>(
+        page,
+        'contest-board-create-entry',
+        'POST',
+        `/api/v1/contests/${budgetContestId}/entries/me`,
+      );
+      state.budgetEntryId = created.entry.id;
+      await expect(page.getByTestId('contest-entry-budget-builder')).toBeVisible();
+
+      for (const fieldEntryId of [dearest, dear, floorA]) {
+        await submitAndRead(page, `contest-entry-participant-${fieldEntryId}`, 'POST', `/api/v1/selections/${budgetContestId}/pick`);
+        await expect(page.getByTestId(`contest-entry-selected-${fieldEntryId}`)).toBeVisible();
+      }
+      // Over the cap the page says so and Submit stays disabled, whatever the tiebreaker.
+      await expect(page.getByTestId('contest-entry-over-budget')).toBeVisible();
+      await page.getByTestId('contest-entry-tiebreaker-select').selectOption({ index: 1 });
+      await expect(page.getByTestId('contest-entry-submit-blocked')).toContainText('over the $50,000 salary cap');
+      await expect(page.getByTestId('contest-entry-submit')).toBeDisabled();
+
+      // The swap: tap the $20,000 golfer off, then add a floor-priced one.
+      await submitAndRead(page, `contest-entry-selected-${dear}`, 'POST', `/api/v1/selections/${budgetContestId}/pick`);
+      await submitAndRead(page, `contest-entry-participant-${floorB}`, 'POST', `/api/v1/selections/${budgetContestId}/pick`);
+      await expect(page.getByTestId('contest-entry-over-budget')).toHaveCount(0);
+      await page.getByTestId('contest-entry-tiebreaker-select').selectOption({ index: 1 });
+      await submitAndRead(
+        page,
+        'contest-entry-submit',
+        'POST',
+        `/api/v1/selections/${budgetContestId}/entries/${state.budgetEntryId}/submit`,
+      );
+      await expect(page.getByTestId(`contest-board-entry-${state.budgetEntryId}`)).toBeVisible();
+    });
+
     await test.step('change a preference on the account page', async () => {
       await page.goto('/my-account');
       await expect(page.getByTestId('user-page')).toBeVisible();
@@ -672,6 +768,14 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
     await expect(leaderboardTab.getByTestId('contest-leaderboard-error-CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN'))
       .toHaveCount(0);
     await leaderboardTab.close();
+  });
+
+  await test.step('the member\'s budget entry is on its contest\'s leaderboard', async () => {
+    const tab = await openLeaderboardTab(page, run.leagueCode, state.budgetContestId);
+    await expect(tab.getByTestId(`contest-leaderboard-entry-${state.budgetEntryId}`))
+      .toBeVisible({ timeout: LIVE_PAGE_TIMEOUT_MS });
+    await tab.close();
+    await page.bringToFront();
   });
 
   await test.step('the member\'s picks are revealed on the board and the leaderboard carries a score', async () => {
