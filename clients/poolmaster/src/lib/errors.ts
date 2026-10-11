@@ -15,6 +15,18 @@ export function isErrorEnvelope(value: unknown): value is ErrorEnvelope {
   return ErrorEnvelopeSchema.safeParse(value).success;
 }
 
+/**
+ * Whether an error carries a particular API error code: an `ApiError`, or a raw SDK error
+ * payload that is the backend envelope. The code is typed by the API's own list, so a check
+ * for a code the API no longer sends fails typecheck instead of silently never matching.
+ */
+export function hasErrorCode(error: unknown, code: ApiErrorCode): boolean {
+  if (error instanceof ApiError) {
+    return error.code === code;
+  }
+  return isErrorEnvelope(error) && error.error.code === code;
+}
+
 /** Product copy for some of the API's error codes. */
 export type ErrorCodeMessages = Partial<Record<ApiErrorCode, string>>;
 

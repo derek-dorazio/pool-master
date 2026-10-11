@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getEventLiveSimulation, listProviders, startEventLiveSimulation } from '@/lib/api';
 import { Button, formatDateTimeDisplay } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -46,7 +46,7 @@ export function GolfTournamentLiveSimulation({ tournament }: { tournament: Sport
     queryKey: QueryKeys.rootAdmin.golf.liveSimulation(tournament.id),
     queryFn: async () => {
       const response = await getEventLiveSimulation({ path: { eventId: tournament.id } });
-      if (response.error?.error?.code === 'LIVE_SIMULATION_NOT_RUNNING') {
+      if (hasErrorCode(response.error, 'LIVE_SIMULATION_NOT_RUNNING')) {
         return null;
       }
       if (!response.data) {

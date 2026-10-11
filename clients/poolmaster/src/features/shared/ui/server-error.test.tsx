@@ -29,13 +29,13 @@ describe("ServerErrorBar", () => {
     render(
       <ServerErrorBar
         codeMessages={{
-          SPORT_EVENT_SYNC_SCOPE_RESTRICTED: "The provider did not respond. Try again soon.",
+          SPORT_EVENT_SYNC_SCOPE_RESTRICTED: "This event is not set up to sync live scores.",
         }}
         error={
           new ApiError({
             error: {
               code: "SPORT_EVENT_SYNC_SCOPE_RESTRICTED",
-              message: "provider request exceeded 5000ms",
+              message: "Event evt-1 has syncScope FIELD_ONLY, which does not allow: EVENTLIVESCORES",
             },
           })
         }
@@ -45,8 +45,8 @@ describe("ServerErrorBar", () => {
     );
 
     expect(screen.getByRole("alert")).toHaveTextContent("Sync failed");
-    expect(screen.getByText("The provider did not respond. Try again soon.")).toBeInTheDocument();
-    expect(screen.queryByText("provider request exceeded 5000ms")).not.toBeInTheDocument();
+    expect(screen.getByText("This event is not set up to sync live scores.")).toBeInTheDocument();
+    expect(screen.queryByText("Event evt-1 has syncScope FIELD_ONLY, which does not allow: EVENTLIVESCORES")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(onRetry).toHaveBeenCalledTimes(1);

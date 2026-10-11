@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError, extractErrorMessage, isErrorEnvelope, throwApiError, type ErrorCodeMessages } from './errors';
+import { ApiError, extractErrorMessage, hasErrorCode, isErrorEnvelope, throwApiError, type ErrorCodeMessages } from './errors';
 
 function caught(run: () => never): Error {
   try {
@@ -86,6 +86,26 @@ describe('extractErrorMessage', () => {
   it('returns the fallback, or the generic default, for null and undefined', () => {
     expect(extractErrorMessage(null, { fallback: 'Try later.' })).toBe('Try later.');
     expect(extractErrorMessage(undefined)).toBe('Something went wrong. Please try again.');
+  });
+});
+
+describe('hasErrorCode', () => {
+  it('matches the code on an ApiError and on a raw backend error envelope', () => {
+    const envelope = { error: { code: 'SETTINGS_CONFLICT', message: 'Settings changed.' } };
+    expect(hasErrorCode(new ApiError(envelope), 'SETTINGS_CONFLICT')).toBe(true);
+    expect(hasErrorCode(envelope, 'SETTINGS_CONFLICT')).toBe(true);
+  });
+
+  it('does not match a different code, a plain Error, or a payload that is not an envelope', () => {
+    const envelope = { error: { code: 'SETTINGS_CONFLICT', message: 'Settings changed.' } };
+    expect(hasErrorCode(new ApiError(envelope), 'LIVE_SIMULATION_NOT_RUNNING')).toBe(false);
+    expect(hasErrorCode(new Error('SETTINGS_CONFLICT'), 'SETTINGS_CONFLICT')).toBe(false);
+    expect(hasErrorCode(undefined, 'SETTINGS_CONFLICT')).toBe(false);
+  });
+
+  it('refuses at typecheck a code the API never sends, such as a misspelled one', () => {
+    // @ts-expect-error -- not one of the API's error codes
+    expect(hasErrorCode(new Error('x'), 'SETTINGS_CONFLICTED')).toBe(false);
   });
 });
 

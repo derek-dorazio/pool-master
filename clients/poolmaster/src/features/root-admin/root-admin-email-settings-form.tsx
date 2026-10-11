@@ -8,7 +8,7 @@ import { updateSettingsGroup, type EmailConfig, type SettingsGroup } from '@/lib
 import { Alert, Button, Checkbox, FormField, Input } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { ApiError, throwApiError, extractErrorMessage } from '@/lib/errors';
+import { hasErrorCode, throwApiError, extractErrorMessage } from '@/lib/errors';
 import { EMAIL_TEMPLATE_LABELS } from './root-admin-settings-utils';
 
 type EmailSettingsGroup = Extract<SettingsGroup, { key: 'EMAIL_CONFIG' }>;
@@ -58,7 +58,7 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
     invalidates: [QueryKeys.rootAdmin.settings],
   });
 
-  const conflicted = saveMutation.error instanceof ApiError && saveMutation.error.code === 'SETTINGS_CONFLICT';
+  const conflicted = hasErrorCode(saveMutation.error, 'SETTINGS_CONFLICT');
 
   // A 409 refetches nothing (invalidation runs on success only), so the `group` prop is still
   // the version that conflicted: fetch the settings again and start the draft from that.
