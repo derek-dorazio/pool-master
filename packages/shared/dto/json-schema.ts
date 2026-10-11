@@ -91,13 +91,6 @@ function resolveLocalRefs(node: unknown, root: Record<string, unknown>): unknown
 }
 
 /**
- * A reused sub-schema made nullable converts to `{ allOf: [<ref>], nullable: true }`. Once the
- * ref is inlined, that `allOf` of one says nothing its member does not, but it leaves `nullable`
- * on a node with no `type`, which Ajv refuses when Fastify's serializer validates an `anyOf`
- * branch against the response schema. Folding the one member into its parent keeps the meaning
- * and gives `nullable` its `type` back.
- */
-/**
  * A nullable union converts to `{ anyOf: [...], nullable: true }`: `nullable` on a node with no
  * `type`, which Ajv refuses when Fastify builds the response serializer, failing the request
  * with a 500. Moving `nullable` onto each member, which has its own `type`, says the same thing.
@@ -115,6 +108,13 @@ function distributeNullableOverAnyOf(node: Record<string, unknown>): Record<stri
   };
 }
 
+/**
+ * A reused sub-schema made nullable converts to `{ allOf: [<ref>], nullable: true }`. Once the
+ * ref is inlined, that `allOf` of one says nothing its member does not, but it leaves `nullable`
+ * on a node with no `type`, which Ajv refuses when Fastify's serializer validates an `anyOf`
+ * branch against the response schema. Folding the one member into its parent keeps the meaning
+ * and gives `nullable` its `type` back.
+ */
 function collapseSingleAllOf(node: Record<string, unknown>): Record<string, unknown> {
   const { allOf, ...rest } = node;
   if (!Array.isArray(allOf) || allOf.length !== 1) return node;
