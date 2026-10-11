@@ -128,6 +128,23 @@ describe('SquadOwnerInvitationService — inviting a co-owner', () => {
     expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([setup.owner.id, pat.id].sort());
   });
 
+  it('leaves an existing account out of the league and records no invitation when seating them on the team fails part way', async () => {
+    const setup = leagueWithTwoTeams();
+    const pat = setup.world.addUser({ email: 'pat@example.com' });
+    jest.spyOn(setup.world.squadMemberships, 'create').mockRejectedValue(new Error('database unavailable'));
+
+    await expect(setup.service.inviteOwner({
+      leagueId: setup.league.id,
+      squadId: setup.ownerSquad.id,
+      actorUserId: setup.owner.id,
+      email: 'pat@example.com',
+    })).rejects.toThrow('database unavailable');
+
+    expect(setup.world.membershipOf(setup.league.id, pat.id)).toBeNull();
+    expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([setup.owner.id]);
+    expect(setup.world.tables.ownerInvitations.where(() => true)).toEqual([]);
+  });
+
   it('brings a removed member back as co-owner of the inviting team, moving them off their old team', async () => {
     const setup = leagueWithTwoTeams();
     const former = setup.world.addUser({ email: 'former@example.com' });
@@ -555,6 +572,20 @@ describe('SquadOwnerInvitationService — preview, registration and acceptance',
       status: LeagueMembershipStatus.ACTIVE,
     });
     expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([setup.owner.id, newcomer.id].sort());
+  });
+
+  it('leaves the accepting user out of the league and off the team, with the invitation still pending, when marking it accepted fails', async () => {
+    const setup = leagueWithTwoTeams();
+    const invitation = seedOwnerInvitation(setup);
+    const newcomer = setup.world.addUser({ email: 'newcomer@example.com' });
+    jest.spyOn(setup.world.ownerInvitations, 'update').mockRejectedValue(new Error('database unavailable'));
+
+    await expect(setup.service.acceptInvitation(invitation.inviteCode, newcomer.id))
+      .rejects.toThrow('database unavailable');
+
+    expect(setup.world.membershipOf(setup.league.id, newcomer.id)).toBeNull();
+    expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([setup.owner.id]);
+    expect(setup.world.tables.ownerInvitations.get(invitation.id)?.status).toBe(SquadOwnerInvitationStatus.PENDING);
   });
 
   it('refuses acceptance by someone already in the league, leaving the invitation pending', async () => {
