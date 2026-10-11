@@ -409,6 +409,52 @@ Question:
 - **Q3.8** Whole-lineup lock at first kickoff for a first version, or per-player locks from the
   start? Recommendation: whole-lineup lock first.
 
+### 3.7 International sports (added 2026-10-11 on Derek's question)
+
+Outside the US, the office pool is usually a **sweepstake**: everyone draws a team or a player
+from a hat, and whoever holds the winner takes the pot. Prediction games (Superbru, ESPN
+footytips) are the other big habit. Most international events map onto shapes this doc already
+covers, so the deciding question is pool demand, not fit.
+
+| Sport | Big tournaments | Shape in our terms | Signs of pool use |
+|---|---|---|---|
+| **Rugby union** | Rugby World Cup 2027 (Australia, 1 Oct - 13 Nov 2027; 24 teams in 6 pools, then a new round of 16; draw 3 Dec 2026). Six Nations every Feb-Mar | World Cup = soccer shape (pools, then knockout). Six Nations = round robin, weekly pick'em only | Strong. Superbru runs rugby predictors with ~20k-40k players per competition and private pools "for office sweepstakes"; World Cup sweepstakes are routine in UK, Ireland, Australia, NZ, South Africa (inferred, common practice) |
+| **Cricket** | Men's ODI World Cup 2027 (South Africa, Zimbabwe, Namibia; Oct-Nov 2027, two groups of six then a "Super 7" round robin, then semis and final). T20 World Cup every two years. IPL every Mar-May | World Cup = groups plus a round-robin stage, awkward for advancement scoring. IPL = a season with a 4-team playoff | Very large but mostly paid fantasy: Dream11 (India) is the ICC's official fantasy game with 100M+ users. That is the DFS shape (section 3.6), not office pools |
+| **Australian rules (AFL)** | Season Mar-Sep; Finals series of 8 teams; Grand Final late September | Weekly "tipping" = pick'em (doesn't fit yet, section 3.5). Finals = small knockout (fits the foundation) | Huge: footy tipping is Australia's office pool; ESPN footytips reported ~870k players in one national competition (older figure). Rugby league (NRL) tipping is the same |
+| **Table tennis** | World Championships (singles draws of 128), WTT Champions and Finals, Olympics | Tennis shape (knockout of individuals) | Weak. Only hobby forum prediction threads found; big in China, Japan, Germany, but no evidence of pool sites or sweepstakes |
+| **Darts** | PDC World Championship, 128 players, mid-December to early January (2026/27 edition: 11 Dec - 3 Jan) | Tennis shape | Good in the UK and Ireland (sweepstakes at Christmas, inferred); bookmakers price every player, so odds-based tiers work |
+| **Snooker** | World Championship, 32 players, late April to early May (Sheffield) | Tennis shape | Moderate in the UK; similar sweepstake culture to darts (inferred) |
+| **Ice hockey** | IIHF World Championship (May, 16 teams), Olympic tournament (2030) | Soccer shape (groups, then knockout) | Moderate in Canada and Europe (inferred) |
+
+**What this means for the plan:**
+
+- **Knockouts of individuals (darts, snooker, table tennis)** need nothing beyond the tennis work.
+  Darts is the best of these: a big field, deep odds, a holiday-season event, and a real
+  sweepstake habit.
+- **Team tournaments (Rugby World Cup, cricket World Cup, ice hockey)** follow soccer: knockout
+  rounds work on the foundation; group stages need the match entity (Q1.1). The Rugby World Cup
+  2027 is the strongest international team event in reach, and its 24 teams are seeded 1-24 by
+  World Rugby ranking, which gives tiers for free.
+- **Weekly tipping (AFL, NRL, Super Rugby, Six Nations)** is the largest international pool habit
+  but needs pick'em (section 3.5), the same work as weekly NFL.
+- **A random-draw selection type** would match the sweepstake directly: the commissioner (or the
+  app) deals the field out to entries at random, one or more each. It is cheap (no picking UI)
+  and would suit the World Cups, the Grand National and Melbourne Cup, and darts. This is a new
+  idea worth weighing against tiered for international leagues.
+- **Going international** also means currencies in budget prices, date and time formats (the
+  user settings already carry date and time format), and kickoff times in other time zones.
+  None of this blocks a first event.
+
+Questions:
+
+- **Q3.9** Is an international audience a goal, or should international events be added only
+  where US users care (Rugby World Cup, darts)? Recommendation: US first; add the Rugby World Cup
+  2027 and the PDC darts as events once the foundation exists, since they cost only data.
+- **Q3.10** Should a random-draw (sweepstake) selection type go on the list? Recommendation: yes,
+  as a small ticket after the knockout foundation; it fits every event in this doc.
+- **Q3.11** Cricket's World Cup format (a round-robin "Super 7" stage) does not suit advancement
+  scoring. Skip cricket unless a league asks? Recommendation: skip for now.
+
 ## 4. Pool sites already covering each sport
 
 | Sport | Who covers it today |
@@ -421,6 +467,7 @@ Question:
 | NFL | ESPN, Yahoo, CBS (pick'em, survivor, fantasy); OfficePoolStop, RunYourPool, OfficeFootballPool (pick'em, confidence, survivor, squares) |
 | NASCAR / auto racing | PoolTracker, OfficeFootballPool, NASCAR Fantasy |
 | Horse racing | OfficePoolStop Kentucky Derby prop pool; mostly paper sweepstakes and draw-a-horse pools |
+| Rugby, cricket, AFL (international) | Superbru (rugby, cricket, soccer predictors with private pools), ESPN footytips (AFL, NRL), Dream11 (cricket fantasy) |
 | Cycling, marathons, triathlons | Official fantasy games (for example Tour de France fantasy); almost no office-pool hosts |
 
 ---
@@ -436,7 +483,8 @@ Question:
 4. Finish-position scoring with odds-based tiers and prices: horse racing (Triple Crown, Breeders'
    Cup) and auto racing (Daytona 500, Indy 500), then cycling, marathons and triathlons as data.
 5. NFL playoff pool on the knockout foundation (January).
-6. Later: match entity, soccer knockout pools, bracket pick'em, then weekly NFL pick'em and survivor.
+6. Random-draw (sweepstake) selection type, after the foundation (Q3.10).
+7. Later: match entity, soccer knockout pools, bracket pick'em, then weekly NFL pick'em and survivor.
 
 Question:
 
@@ -447,6 +495,14 @@ Question:
 ---
 
 ## Sources
+
+- Rugby World Cup 2027 format and dates: https://www.rugbyworldcup.com/es/news/1017765/rugby-world-cup-2027-all-you-need-to-know-about-the-draw-format-pools-and-dates , https://www.rugby.com.au/news/rugby-world-cup-2027-new-format-changes-24-teams-20231024
+- Superbru games and private pools: https://www.superbru.com
+- ESPN footytips: https://www.bandt.com.au/espn-celebrates-25-years-of-footy-tipping-as-new-afl-nrl-season-kicks-off/ , https://standard.net.au/story/8678224/warrnambool-mans-afl-tipping-success-sees-chance-to-win-50k
+- Dream11 and the ICC: https://www.dreamsports.group/media-and-blog/dream11-becomes-the-exclusive-official-fantasy-game-partner-for-icc
+- ICC Men's Cricket World Cup 2027 schedule and format: https://www.icc-cricket.com/news/fixture-schedule-announced-for-icc-men-s-cricket-world-cup-2027 , https://www.icc-cricket.com/news/new-icc-men-s-cricket-world-cup-format-explained
+- PDC World Darts Championship 2026/27: https://www.skysports.com/darts/news/12040/13570429/world-darts-championship-2026-27-dates-confirmed-for-alexandra-palace-with-sunday-final-in-great-hall-for-first-time
+- Table tennis prediction contests (forum only): https://pingskills.com/table-tennis-forum/pingskills---pick-the-world-championships-winners
 
 - ESPN press room, 2026 Tournament Challenge record (26.6M brackets): https://espnpressroom.com/us/press-releases/2026/03/26-6-million-brackets-espn-tournament-challenge-sets-new-record-for-fourth-consecutive-year/
 - AGA 2025 March Madness estimate (45M bettors, $3.1B): https://cheddar.com/media/american-gaming-association-says-45-million-americans-to-wager-3-1-billion-on-march-madness
