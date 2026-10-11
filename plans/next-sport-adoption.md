@@ -80,22 +80,61 @@ Read from the code on `main` (2026-10-10), not from plans.
 One slice of work that tennis, March Madness and soccer knockouts all need:
 
 1. A `KNOCKOUT_ADVANCEMENT` participant scoring definition, `HIGHER_IS_BETTER`, with a
-   configurable points-per-round table (for example 1, 2, 4, 8, 16, 32), plus optional seed
-   bonus variants (see section 3).
-2. A knockout extension on the field member: rounds won and round reached (alongside the golf
-   extension, same 1:1 pattern).
+   configurable points-per-round table (for example 1, 2, 4, 8, 16, 32) and an optional seed
+   bonus (see *Knockout scoring rules* below).
+2. A match entity (`SportEventMatch`: round, two sides, winner) plus, if useful for fast reads,
+   a knockout extension on the field member with rounds won and round reached (same 1:1
+   pattern as golf).
 3. An admin results screen: per round, mark the winner of each pairing (or mark losers out).
    A March Madness event is 67 games; a Slam singles draw is 127 matches per draw.
 4. A cross-sport counting rule (`BEST_N` instead of `BEST_N_GOLFERS`) and a settlement path that
    is not golf's.
 5. Sport-aware labels for the picker, leaderboard and event screens.
 
+#### Knockout scoring rules (Derek, 2026-10-11)
+
+Two rules from March Madness pools. Both are **scoring rules**: settings on the knockout
+scoring definition a contest uses, not selection rules and not contest formats. They apply to
+any event that runs in rounds (round values) and any event with seeds (seed bonus): tennis
+draws, the NFL and NBA playoffs, soccer and rugby knockouts, darts.
+
+1. **Round values.** Each win is worth the value of the round it was won in, set per round:
+   for example 1, 2, 4, 8, 16, 32 (doubling), or flat 1s. A team that wins the title in a
+   64-team field earns 1+2+4+8+16+32 = 63.
+2. **Seed bonus.** When a higher-numbered (worse) seed beats a lower-numbered (better) seed,
+   the winner earns the seed difference on top of the round value: a 12 seed beating a 5 seed
+   in round 1 earns 1 + (12 - 5) = 8. No bonus when the better seed wins or seeds are equal
+   (two 1 seeds in the Final Four).
+
+How they fit:
+
+- Both live in the contest's typed scoring configuration (a round-value table and a
+  seed-bonus switch, perhaps with a multiplier), so a commissioner picks the flavour per
+  contest, and contest templates ship presets ("Doubling", "Doubling + seed bonus", "Flat").
+- A pick's score is the sum over its wins of `roundValue[round] + seedBonus(win)`; the entry
+  sums its counting picks as today. Ranking stays `HIGHER_IS_BETTER`.
+- The seed comes from `SportEventParticipant.seedNumber`, which already exists, as it stood at
+  the event's release (seeds do not change mid-event).
+- The bonus needs the loser's seed, so wins must be recorded as matches (Q1.1).
+- The same two rules can score pick'em and bracket pick'em games (#607): a correct pick earns
+  the round value plus the upset bonus.
+
+Questions:
+
+- **Q1.3** Unseeded participants (tennis has 32 seeds in a 128 draw): no bonus when either side
+  is unseeded, or treat unseeded as seed 33? Recommendation: no bonus involving unseeded
+  players; for tennis, offer a ranking-based bonus later if wanted.
+- **Q1.4** Should the seed bonus have a multiplier or a cap (some pools cap it, or count it
+  only from round 2 on)? Recommendation: a multiplier setting defaulting to 1, no cap in the
+  first version.
+
 Questions for this section:
 
 - **Q1.1** Do we want a real match entity now (`SportEventMatch`: round, bracket slot, two
-  sides, winner, score), or only per-participant advancement for the first launch? My
-  recommendation: advancement only for the January/March launches; add matches when bracket
-  pick'em or soccer group stages are built.
+  sides, winner, score), or only per-participant advancement for the first launch?
+  *Updated 2026-10-11:* the seed bonus below needs to know **who each win was against**, which
+  per-participant advancement cannot record. Recommendation is now: build the match entity as
+  part of the foundation. The pick'em epic (#607) needs the same table, so it is built once.
 - **Q1.2** Should unused catalog enums (`PICK_EM`, `FIGHT_RESULT`, `CUMULATIVE`, extra `Sport`
   values such as `UFC`, `MLB`) be deleted now under the dead-code goal, and re-added only when a
   sport is actually built?
