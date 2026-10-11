@@ -190,6 +190,14 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return row ? toSportEvent(row) : null;
   }
 
+  async findByIds(ids: readonly string[]): Promise<SportEvent[]> {
+    if (!ids.length) {
+      return [];
+    }
+    const rows = await this.prisma.sportEvent.findMany({ where: { id: { in: [...ids] } }, include: SPORT_EVENT_INCLUDE });
+    return rows.map(toSportEvent);
+  }
+
   async findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null> {
     const row = await this.prisma.sportEvent.findFirst({ where: { providerId, externalId }, include: SPORT_EVENT_INCLUDE });
     return row ? toSportEvent(row) : null;

@@ -27,6 +27,7 @@ import type {
   ContestConfiguration,
   LeagueMembership,
   PersistedGolfContestTierDefinition,
+  SportEvent,
   SquadMembership,
   Unvalidated,
 } from '@poolmaster/shared/domain';
@@ -226,6 +227,13 @@ export class ContestService {
     const membership = await this.deps.memberships.findByLeagueAndUser(leagueId, viewer.userId);
     return membership?.status === LeagueMembershipStatus.ACTIVE
       && membership.role === LeagueRole.COMMISSIONER;
+  }
+
+  /** The listed contests' sport events, by id, read once each (#577). */
+  async findEventsForContests(contests: readonly Contest[]): Promise<Map<string, SportEvent>> {
+    const eventIds = [...new Set(contests.flatMap((contest) => contest.sportEventId ?? []))];
+    const events = await this.deps.sportEvents.findByIds(eventIds);
+    return new Map(events.map((event) => [event.id, event]));
   }
 
   /** Submitted entries only: a draft is not an entry until its owner submits it (#481). */

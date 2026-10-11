@@ -270,6 +270,16 @@ describe('SportEvent core repositories', () => {
     expect(await events.countParticipants([later.id, earlier.id])).toEqual(new Map([[later.id, 1], [earlier.id, 0]]));
   });
 
+  it('reads several events by id in one query, leaving out an unknown id, and reads none for no ids', async () => {
+    const first = await createEvent('first');
+    const second = await createEvent('second');
+    await createEvent('unasked');
+    const events = new PrismaSportEventRepository(getPrisma());
+
+    expect((await events.findByIds([first.id, second.id, randomUUID()])).map((row) => row.name).sort()).toEqual(['Catalog first', 'Catalog second']);
+    await expect(events.findByIds([])).resolves.toEqual([]);
+  });
+
   it('summarizes each provider\'s scheduled and in-progress events and its latest change, with zeros for a provider with none', async () => {
     const live = await createEvent('live', { status: 'IN_PROGRESS' });
     await createEvent('scheduled', { status: 'SCHEDULED' });

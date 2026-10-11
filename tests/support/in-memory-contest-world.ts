@@ -494,6 +494,7 @@ export class InMemoryContestWorld {
   sportEventRepo(): SportEventRepository {
     return fakeSportEventRepo({
       findById: async (id) => this.sportEvents.get(id) ?? null,
+      findByIds: async (ids) => ids.flatMap((id) => this.sportEvents.get(id) ?? []),
       countParticipants: async (ids) =>
         new Map(ids.map((id) => [id, this.fieldSizes.get(id) ?? 0])),
     });

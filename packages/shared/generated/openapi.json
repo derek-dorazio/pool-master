@@ -13421,6 +13421,26 @@
         "additionalProperties": false,
         "description": "Request payload for updating a contest entry while the contest is still joinable."
       },
+      "ContestEventSummaryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The sport event's name."
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The sport event's scheduled start, which is also when entries close."
+          }
+        },
+        "required": [
+          "name",
+          "startDate"
+        ],
+        "additionalProperties": false,
+        "description": "The sport event a listed contest runs on: enough to name, sort and search it without reading the event."
+      },
       "ContestDto": {
         "type": "object",
         "properties": {
@@ -13490,6 +13510,29 @@
           "entryCount": {
             "type": "number",
             "description": "Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read."
+          },
+          "sportEvent": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The sport event's name."
+              },
+              "startDate": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The sport event's scheduled start, which is also when entries close."
+              }
+            },
+            "required": [
+              "name",
+              "startDate"
+            ],
+            "additionalProperties": false,
+            "description": "The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself."
           },
           "startsAt": {
             "type": [
@@ -14996,6 +15039,29 @@
                 "type": "number",
                 "description": "Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read."
               },
+              "sportEvent": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The sport event's name."
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "The sport event's scheduled start, which is also when entries close."
+                  }
+                },
+                "required": [
+                  "name",
+                  "startDate"
+                ],
+                "additionalProperties": false,
+                "description": "The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself."
+              },
               "startsAt": {
                 "type": [
                   "string",
@@ -15211,6 +15277,29 @@
                 "entryCount": {
                   "type": "number",
                   "description": "Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read."
+                },
+                "sportEvent": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "The sport event's name."
+                    },
+                    "startDate": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "The sport event's scheduled start, which is also when entries close."
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "startDate"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself."
                 },
                 "startsAt": {
                   "type": [
@@ -28404,7 +28493,7 @@
         "tags": [
           "Contests"
         ],
-        "description": "Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Each contest carries its entry count and its sport event's name and start, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
           {
             "schema": {

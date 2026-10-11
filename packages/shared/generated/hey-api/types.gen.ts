@@ -6597,6 +6597,20 @@ export type UpdateContestEntryRequest = {
 };
 
 /**
+ * The sport event a listed contest runs on: enough to name, sort and search it without reading the event.
+ */
+export type ContestEventSummaryDto = {
+    /**
+     * The sport event's name.
+     */
+    name: string;
+    /**
+     * The sport event's scheduled start, which is also when entries close.
+     */
+    startDate: string;
+};
+
+/**
  * A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields).
  */
 export type ContestDto = {
@@ -6613,6 +6627,19 @@ export type ContestDto = {
      * Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.
      */
     entryCount?: number;
+    /**
+     * The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself.
+     */
+    sportEvent?: {
+        /**
+         * The sport event's name.
+         */
+        name: string;
+        /**
+         * The sport event's scheduled start, which is also when entries close.
+         */
+        startDate: string;
+    } | null;
     startsAt?: string | null;
     endsAt?: string | null;
     /**
@@ -7331,6 +7358,19 @@ export type ContestResponse = {
          * Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.
          */
         entryCount?: number;
+        /**
+         * The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself.
+         */
+        sportEvent?: {
+            /**
+             * The sport event's name.
+             */
+            name: string;
+            /**
+             * The sport event's scheduled start, which is also when entries close.
+             */
+            startDate: string;
+        } | null;
         startsAt?: string | null;
         endsAt?: string | null;
         /**
@@ -7396,6 +7436,19 @@ export type ContestListResponse = {
          * Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.
          */
         entryCount?: number;
+        /**
+         * The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself.
+         */
+        sportEvent?: {
+            /**
+             * The sport event's name.
+             */
+            name: string;
+            /**
+             * The sport event's scheduled start, which is also when entries close.
+             */
+            startDate: string;
+        } | null;
         startsAt?: string | null;
         endsAt?: string | null;
         /**

@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getEvent, type ContestDto, type SportEventDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -63,10 +63,10 @@ export function useContestSchedule(contest: ScheduledContest | undefined): Conte
   return resolveSchedule(contest, eventQuery.data);
 }
 
-/** `useContestSchedule` for a list of contests, in the same order. */
-export function useContestSchedules(contests: readonly ScheduledContest[]): Array<ContestSchedule | null> {
-  return useQueries({
-    queries: contests.map((contest) => sportEventScheduleQuery(contest.sportEventId ?? '')),
-    combine: (results) => results.map((result, index) => resolveSchedule(contests[index], result.data)),
-  });
+/**
+ * When a listed contest starts: its own `startsAt` once set, else its event's start, which the
+ * contest list carries (#577), so a list never reads its events one by one.
+ */
+export function listedContestStartsAt(contest: Pick<ContestDto, 'startsAt' | 'sportEvent'>): string | null {
+  return contest.startsAt ?? contest.sportEvent?.startDate ?? null;
 }

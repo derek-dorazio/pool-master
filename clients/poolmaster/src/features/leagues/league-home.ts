@@ -6,7 +6,7 @@ import { ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestLeaderboardResponse } from '@/lib/api';
 import { buildLeaderboardView } from '@/features/contests/contest-leaderboard';
 import { areContestEntriesOpen } from '@/features/contests/contest-status';
-import type { ContestSchedule } from '@/features/contests/use-contest-schedule';
+import { listedContestStartsAt } from '@/features/contests/use-contest-schedule';
 
 export type UpNextContest = {
   contest: ContestDto;
@@ -17,11 +17,10 @@ export type UpNextContest = {
 /** The open contest whose entries close soonest. A contest with no known cutoff comes last. */
 export function pickUpNextContest(
   contests: readonly ContestDto[],
-  schedules: ReadonlyArray<ContestSchedule | null>,
   now: Date,
 ): UpNextContest | null {
-  const candidates = contests.flatMap((contest, index) => {
-    const startsAt = schedules[index]?.startsAt ?? null;
+  const candidates = contests.flatMap((contest) => {
+    const startsAt = listedContestStartsAt(contest);
     if (contest.status !== ContestStatus.OPEN || !areContestEntriesOpen(contest.status, startsAt, now)) {
       return [];
     }
