@@ -64,14 +64,18 @@ type JourneyState = {
 };
 
 /**
- * #93 — the budget contest's prices. Auto-pricing puts golfers with no seed at the curve's
- * floor, so act 1 raises the first two by hand: three of the six now cost more than the $50,000
- * cap ($30,000 + $20,000 + a floor price), and swapping the $20,000 golfer for another floor
- * golfer fits under it. Field entry index → price.
+ * #93 — the budget contest's prices. Auto-pricing spreads a field with no seeds along the curve
+ * in field-entry id order, so which golfer gets which curve price changes from run to run: the
+ * dearest two come to $20,500 ($12,000 + $8,500), which with $30,000 is over the $50,000 cap.
+ * Act 1 sets by hand the four golfers act 3 picks: three of them cost more than the cap
+ * ($30,000 + $20,000 + $6,000), and swapping the $20,000 golfer for the other $6,000 golfer fits
+ * under it ($42,000). Field entry index → price.
  */
 const BUDGET_PRICES: ReadonlyArray<{ index: number; price: number }> = [
   { index: 0, price: 30_000 },
   { index: 1, price: 20_000 },
+  { index: 2, price: 6_000 },
+  { index: 3, price: 6_000 },
 ];
 const BUDGET_ROSTER_SIZE = 3;
 
@@ -325,7 +329,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('root-admin-golf-tiers-pricing')).toContainText('Priced with');
     });
 
-    await test.step('raise two golfers\' prices in the Field grid, so a budget roster can go over the cap', async () => {
+    await test.step('set four golfers\' prices in the Field grid, so a budget roster can go over the cap and a swap brings it under', async () => {
       const fieldEntryIds = journey?.fieldEntryIds ?? [];
       await page.goto(`/manage/golf/tournaments/${eventId}/field`);
       for (const { index, price } of BUDGET_PRICES) {
@@ -665,7 +669,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('contest-entry-submit-blocked')).toContainText('over the $50,000 salary cap');
       await expect(page.getByTestId('contest-entry-submit')).toBeDisabled();
 
-      // The swap: tap the $20,000 golfer off, then add a floor-priced one.
+      // The swap: tap the $20,000 golfer off, then add the other $6,000 one.
       await submitAndRead(page, `contest-entry-selected-${dear}`, 'POST', `/api/v1/selections/${budgetContestId}/pick`);
       await submitAndRead(page, `contest-entry-participant-${floorB}`, 'POST', `/api/v1/selections/${budgetContestId}/pick`);
       await expect(page.getByTestId('contest-entry-over-budget')).toHaveCount(0);
