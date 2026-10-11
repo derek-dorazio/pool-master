@@ -88,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     attemptedRefreshRef.current = true;
     let cancelled = false;
+    const isCancelled = () => cancelled;
 
     logger.warn(
       {
@@ -116,7 +117,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const meResult = await meQuery.refetch();
-        if (cancelled) {
+        // Read through a function: the cleanup can set the flag during the await above,
+        // which narrowing on the variable cannot see.
+        if (isCancelled()) {
           return;
         }
 

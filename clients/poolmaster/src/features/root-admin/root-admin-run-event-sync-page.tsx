@@ -112,7 +112,7 @@ export function RootAdminRunEventSyncPage() {
 
   useEffect(() => {
     if (!supportedSyncSports.includes(eventSyncSport)) {
-      const fallbackSport = supportedSyncSports[0];
+      const fallbackSport = supportedSyncSports.at(0);
       if (fallbackSport) {
         setEventSyncSport(fallbackSport);
       }

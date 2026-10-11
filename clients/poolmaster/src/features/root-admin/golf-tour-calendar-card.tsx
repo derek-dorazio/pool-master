@@ -22,9 +22,9 @@ export function GolfTourCalendarCard({ tour }: { tour: SportLeagueDto }) {
   );
   // Default: the tour's current year, else its latest year with tournaments, else this one.
   // Computed during render so a refetch can't clobber an explicit pick.
-  const eventYear = selectedYear ?? tour.currentEventYear ?? yearsWithEvents[0] ?? new Date().getFullYear();
+  const eventYear = selectedYear ?? tour.currentEventYear ?? yearsWithEvents.at(0) ?? new Date().getFullYear();
   const years = useMemo(
-    () => [...new Set([...yearsWithEvents, eventYear, (yearsWithEvents[0] ?? eventYear) + 1])].sort((a, b) => b - a),
+    () => [...new Set([...yearsWithEvents, eventYear, (yearsWithEvents.at(0) ?? eventYear) + 1])].sort((a, b) => b - a),
     [yearsWithEvents, eventYear],
   );
   const yearTournaments = useMemo(

@@ -409,9 +409,9 @@ export default tseslint.config(
   },
   {
     // #550: a check the types say can never matter is either dead code or a sign the type
-    // is wrong. On for the packages and scripts, whose findings are cleared; the web app
-    // and tests follow.
-    files: ['packages/**/*.ts', 'scripts/**/*.{ts,mts}'],
+    // is wrong. On for the packages, scripts and web app, whose findings are cleared; the
+    // tests follow.
+    files: ['packages/**/*.ts', 'scripts/**/*.{ts,mts}', 'clients/poolmaster/src/**/*.{ts,tsx}', 'clients/poolmaster/*.config.ts'],
     rules: { '@typescript-eslint/no-unnecessary-condition': 'error' },
   },
 

@@ -97,12 +97,12 @@ export function golfFieldCellInvalid(
 
 /** How many draft numeric cells across the field currently hold an invalid value. */
 export function golfFieldInvalidCount(
-  draft: Record<string, GolfFieldRowDraft>,
+  draft: Partial<Record<string, GolfFieldRowDraft>>,
 ): number {
   let count = 0;
   for (const rowDraft of Object.values(draft)) {
     for (const key of GOLF_FIELD_NUMERIC_KEYS) {
-      const raw = rowDraft[key];
+      const raw = rowDraft?.[key];
       if (raw !== undefined && golfFieldCellInvalid(raw, key)) {
         count += 1;
       }
@@ -160,7 +160,7 @@ export function buildGolfFieldPatch(
 /** All non-null patches for the current draft, in field order. */
 export function buildGolfFieldPatches(
   entries: readonly GolfFieldEntry[],
-  draft: Record<string, GolfFieldRowDraft>,
+  draft: Partial<Record<string, GolfFieldRowDraft>>,
 ): GolfFieldPatch[] {
   const patches: GolfFieldPatch[] = [];
   for (const entry of entries) {

@@ -191,7 +191,7 @@ export function RootAdminSyncDashboardPage() {
       running,
       failed,
       completed,
-      lastStartedAt: recentRuns[0]?.startedAt ?? recentRuns[0]?.createdAt ?? null,
+      lastStartedAt: recentRuns.at(0)?.startedAt ?? recentRuns.at(0)?.createdAt ?? null,
     };
   }, [recentRuns]);
   const payloadStats = payloadRun ? buildStatsSummary(payloadRun.payload) : [];
@@ -563,7 +563,7 @@ export function RootAdminSyncDashboardPage() {
         }
         onCancel={() => setPayloadRun(null)}
         onCopy={() => {
-          if (payloadRun && navigator.clipboard) {
+          if (payloadRun) {
             void navigator.clipboard.writeText(formatJsonPayload(payloadRun.payload));
           }
         }}
@@ -585,7 +585,7 @@ export function RootAdminSyncDashboardPage() {
         }
         onCancel={() => setJsonPayload(null)}
         onCopy={() => {
-          if (jsonPayload && navigator.clipboard) {
+          if (jsonPayload) {
             void navigator.clipboard.writeText(formatJsonPayload(jsonPayload.payload));
           }
         }}
