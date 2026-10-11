@@ -250,6 +250,29 @@ Question:
 - **Olympics:** multi-sport and multi-event; too broad for this model as a whole (single Olympic
   races such as the marathon fit section 2.5).
 
+### 2.7 Bowling, cornhole and other bar and lawn games (added 2026-10-11 on Derek's question)
+
+These have real pro tours and TV slots, but small audiences and almost no pool culture. They fit
+the existing shapes, so the cost is only data; the question is whether anyone would play.
+
+| Game | Pro events | Shape in our terms | Signs of following or pool use |
+|---|---|---|---|
+| **Bowling (PBA Tour)** | ~10 televised events a year on The CW (from 2026); PBA World Championship, Tournament of Champions, U.S. Open | Qualifying then a stepladder final: a field ranked by finish, so finishing-order scoring (section 2.2) | 2026 PBA World Championship drew ~1M viewers on CBS. BowlingLife already runs a season fantasy game where managers pick **five tier players plus a wildcard per event**, which is our tiered format exactly |
+| **Disc golf (DGPT)** | Disc Golf Pro Tour, ~25 events, plus majors | **Stroke play, scored to par, exactly like golf.** Could run on the current golf scoring with no new scoring work | Growing niche with streaming coverage (inferred); fantasy games exist among fans (inferred, not verified) |
+| **Cornhole (ACL)** | ACL World Championships (late July, Rock Hill SC) on ESPN networks; ~9 ESPN events a year | Singles and doubles brackets: tennis shape; doubles pairs would be a "team" participant | ESPN coverage is real but no ratings or pool or betting activity found |
+| **Darts** | Covered in section 3.7 | Tennis shape | The strongest of this group: UK sweepstakes, deep odds |
+| **Pool / billiards** | World Pool Championship (128-player knockout); Mosconi Cup (USA v Europe, teams) | Tennis shape (Worlds); Mosconi Cup is a team match, no field | Small; mostly UK and Europe |
+| **Pickleball** | PPA Tour, Major League Pickleball | Tennis shape (singles and doubles draws) | Fast-growing to play, but a small TV audience and no pool culture found |
+
+**Takeaway:** disc golf is the surprise: it is golf's scoring model with a different ball, so it
+could be the cheapest second sport of all. Bowling has the clearest evidence that tiered picking
+appeals to its fans. The rest are "add as data if a league asks".
+
+Question:
+
+- **Q2.10** Worth a small experiment with disc golf, since it reuses golf scoring outright?
+  Recommendation: only if a league asks; it is a niche audience, but the cost is close to zero.
+
 ---
 
 ## 3. Group 2: tournaments of teams
@@ -450,8 +473,9 @@ Questions:
 - **Q3.9** Is an international audience a goal, or should international events be added only
   where US users care (Rugby World Cup, darts)? Recommendation: US first; add the Rugby World Cup
   2027 and the PDC darts as events once the foundation exists, since they cost only data.
-- **Q3.10** Should a random-draw (sweepstake) selection type go on the list? Recommendation: yes,
-  as a small ticket after the knockout foundation; it fits every event in this doc.
+- **Q3.10** Should a random-draw (sweepstake) selection type go on the list? Decided 2026-10-11:
+  filed as #601, which has the table of where sweepstakes are actually used. It works on golf
+  today, so it does not need to wait for the knockout foundation.
 - **Q3.11** Cricket's World Cup format (a round-robin "Super 7" stage) does not suit advancement
   scoring. Skip cricket unless a league asks? Recommendation: skip for now.
 
@@ -483,7 +507,7 @@ Questions:
 4. Finish-position scoring with odds-based tiers and prices: horse racing (Triple Crown, Breeders'
    Cup) and auto racing (Daytona 500, Indy 500), then cycling, marathons and triathlons as data.
 5. NFL playoff pool on the knockout foundation (January).
-6. Random-draw (sweepstake) selection type, after the foundation (Q3.10).
+6. Random-draw (sweepstake) selection type: filed as #601; works on golf now.
 7. Later: match entity, soccer knockout pools, bracket pick'em, then weekly NFL pick'em and survivor.
 
 Question:
@@ -495,6 +519,9 @@ Question:
 ---
 
 ## Sources
+
+- PBA viewership and the BowlingLife tiered fantasy game: https://11thframe.com/news/article/16851/2026-PBA-World-Championship-drew-solid-viewership-of-1-million , https://bowlinglife.eu/fantasy/rules
+- ACL World Championships on ESPN: https://www.sportsvideo.org/?p=175062
 
 - Rugby World Cup 2027 format and dates: https://www.rugbyworldcup.com/es/news/1017765/rugby-world-cup-2027-all-you-need-to-know-about-the-draw-format-pools-and-dates , https://www.rugby.com.au/news/rugby-world-cup-2027-new-format-changes-24-teams-20231024
 - Superbru games and private pools: https://www.superbru.com
