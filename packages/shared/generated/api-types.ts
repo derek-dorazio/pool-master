@@ -7237,70 +7237,6 @@ export interface components {
                 unchanged: number;
             };
         };
-        /** @description Tier definition used in contest create and update flows. */
-        TierDefinitionRequest: {
-            /** @description Stable tier identifier. */
-            tierId: string;
-            /** @description Tier label shown in commissioner and draft UI. */
-            tierName: string;
-            /** @description Tier order number. */
-            tierNumber: number;
-            /** @description How many picks each entry must make from the tier. */
-            picksFromTier: number;
-            /** @description Optional ranking range that produced the tier. */
-            rankingRange?: [
-                number,
-                number
-            ];
-            /** @description Optional pricing range that produced the tier. */
-            priceRange?: [
-                number,
-                number
-            ];
-            /** @description Optional cap on how many participants can live in the tier. */
-            maxParticipants?: number;
-            /** @description Participants assigned to the tier. */
-            participantIds: string[];
-        };
-        /** @description Contest-configuration payload used by contest create and update endpoints. */
-        ContestCrudConfigurationRequest: {
-            rounds?: number;
-            timePerPickSeconds?: number;
-            /** @enum {string} */
-            autoPickPolicy?: "QUEUE_THEN_BEST" | "BEST_AVAILABLE" | "RANDOM";
-            tierConfig?: {
-                /** @description Stable tier identifier. */
-                tierId: string;
-                /** @description Tier label shown in commissioner and draft UI. */
-                tierName: string;
-                /** @description Tier order number. */
-                tierNumber: number;
-                /** @description How many picks each entry must make from the tier. */
-                picksFromTier: number;
-                /** @description Optional ranking range that produced the tier. */
-                rankingRange?: [
-                    number,
-                    number
-                ];
-                /** @description Optional pricing range that produced the tier. */
-                priceRange?: [
-                    number,
-                    number
-                ];
-                /** @description Optional cap on how many participants can live in the tier. */
-                maxParticipants?: number;
-                /** @description Participants assigned to the tier. */
-                participantIds: string[];
-            }[];
-            picksPerPeriod?: number;
-            roundValues?: number[];
-            startRound?: string;
-            isExclusive?: boolean;
-            bestBallN?: number;
-            missedCutPenalty?: number;
-            captainSlot?: boolean;
-            captainMultiplier?: number;
-        };
         /** @description Request payload for creating a contest. */
         CreateContestRequest: {
             /** @description Contest name shown to commissioners and members. */
@@ -7875,56 +7811,7 @@ export interface components {
              */
             asOf: string | null;
         };
-        /** @description Typed contest configuration returned by contest detail endpoints. Use this shape for client-side entry-cap and contest-behavior decisions instead of treating contestConfiguration as an untyped blob. */
-        ContestConfigurationDetailDto: {
-            rounds?: number;
-            timePerPickSeconds?: number;
-            /** @enum {string} */
-            autoPickPolicy?: "QUEUE_THEN_BEST" | "BEST_AVAILABLE" | "RANDOM";
-            tierConfig?: {
-                /** @description Stable tier identifier. */
-                tierId: string;
-                /** @description Tier label shown in commissioner and draft UI. */
-                tierName: string;
-                /** @description Tier order number. */
-                tierNumber: number;
-                /** @description How many picks each entry must make from the tier. */
-                picksFromTier: number;
-                /** @description Optional ranking range that produced the tier. */
-                rankingRange?: [
-                    number,
-                    number
-                ];
-                /** @description Optional pricing range that produced the tier. */
-                priceRange?: [
-                    number,
-                    number
-                ];
-                /** @description Optional cap on how many participants can live in the tier. */
-                maxParticipants?: number;
-                /** @description Participants assigned to the tier. */
-                participantIds: string[];
-            }[];
-            picksPerPeriod?: number;
-            roundValues?: number[];
-            startRound?: string;
-            isExclusive?: boolean;
-            bestBallN?: number;
-            missedCutPenalty?: number;
-            captainSlot?: boolean;
-            captainMultiplier?: number;
-            /** @description Maximum entries a Team may create. Null means unlimited. */
-            maxEntriesPerSquad?: number | null;
-            /** @description Tiered contests: how many golfers an entry picks from each of the event's tiers. */
-            picksPerTier?: number;
-            /** @description Budget contests: how many golfers an entry picks. */
-            rosterSize?: number;
-            /** @description Budget contests: whole dollars an entry's picks may cost at most; the event's cap. */
-            salaryCap?: number;
-            /** @description How many roster scores count toward the entry total in managed golf contests. */
-            countedScores?: number;
-        };
-        /** @description Single-contest response. */
+        /** @description Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries). */
         ContestResponse: {
             /** @description A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields). */
             contest: {
@@ -7964,55 +7851,6 @@ export interface components {
                 /** Format: date-time */
                 updatedAt?: string;
             };
-            /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-            contestConfiguration?: {
-                rounds?: number;
-                timePerPickSeconds?: number;
-                /** @enum {string} */
-                autoPickPolicy?: "QUEUE_THEN_BEST" | "BEST_AVAILABLE" | "RANDOM";
-                tierConfig?: {
-                    /** @description Stable tier identifier. */
-                    tierId: string;
-                    /** @description Tier label shown in commissioner and draft UI. */
-                    tierName: string;
-                    /** @description Tier order number. */
-                    tierNumber: number;
-                    /** @description How many picks each entry must make from the tier. */
-                    picksFromTier: number;
-                    /** @description Optional ranking range that produced the tier. */
-                    rankingRange?: [
-                        number,
-                        number
-                    ];
-                    /** @description Optional pricing range that produced the tier. */
-                    priceRange?: [
-                        number,
-                        number
-                    ];
-                    /** @description Optional cap on how many participants can live in the tier. */
-                    maxParticipants?: number;
-                    /** @description Participants assigned to the tier. */
-                    participantIds: string[];
-                }[];
-                picksPerPeriod?: number;
-                roundValues?: number[];
-                startRound?: string;
-                isExclusive?: boolean;
-                bestBallN?: number;
-                missedCutPenalty?: number;
-                captainSlot?: boolean;
-                captainMultiplier?: number;
-                /** @description Maximum entries a Team may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description Tiered contests: how many golfers an entry picks from each of the event's tiers. */
-                picksPerTier?: number;
-                /** @description Budget contests: how many golfers an entry picks. */
-                rosterSize?: number;
-                /** @description Budget contests: whole dollars an entry's picks may cost at most; the event's cap. */
-                salaryCap?: number;
-                /** @description How many roster scores count toward the entry total in managed golf contests. */
-                countedScores?: number;
-            } | null;
         };
         /** @description Contest-list response. */
         ContestListResponse: {
@@ -13947,7 +13785,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Single-contest response. */
+            /** @description Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries). */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -14231,7 +14069,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Single-contest response. */
+            /** @description Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries). */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -14284,7 +14122,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Single-contest response. */
+            /** @description Single-contest response. A contest's rules are on the contest-management read (commissioners) and the selection-state read (entries). */
             200: {
                 headers: {
                     [name: string]: unknown;

@@ -509,23 +509,18 @@ describe('ContestService', () => {
   });
 
   describe('getContest', () => {
-    it('returns contest with selection config', async () => {
+    it('returns the contest', async () => {
       const contest = buildContest({ id: 'c-1' });
       const contestRepo = createMockContestRepo({
         findById: jest.fn().mockResolvedValue(contest),
       });
-      const configRepo = createMockContestConfigurationRepo({
-        findByContest: jest.fn().mockResolvedValue({ id: 'cfg-1', contestId: 'c-1' }),
-      });
       const service = buildService({
         contests: contestRepo,
-        configurations: configRepo,
+        configurations: createMockContestConfigurationRepo(),
         memberships: createMockMembershipRepo(),
       });
       const result = await service.getContest('c-1');
-      expect(result).not.toBeNull();
-      expect(expectDefined(result).contest.id).toBe('c-1');
-      expect(expectDefined(result).contestConfiguration).toBeDefined();
+      expect(expectDefined(result).id).toBe('c-1');
     });
 
     it('returns null for missing contest', async () => {

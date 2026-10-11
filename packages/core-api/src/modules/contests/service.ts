@@ -24,7 +24,6 @@ import type {
 import type {
   Contest,
   ContestEntry,
-  ContestConfiguration,
   LeagueMembership,
   PersistedGolfContestTierDefinition,
   SportEvent,
@@ -187,7 +186,7 @@ export class ContestService {
   async getContest(
     contestId: string,
     viewer?: ContestViewer,
-  ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration | null } | null> {
+  ): Promise<Contest | null> {
     this.logger.debug({ contestId }, 'contest get start');
     const contest = await this.deps.contests.findById(contestId);
     if (!contest) {
@@ -202,12 +201,8 @@ export class ContestService {
       this.logger.warn({ contestId, userId: viewer.userId }, 'contest get hid a draft contest from a member');
       return null;
     }
-    const contestConfiguration = await this.deps.configurations.findByContest(contestId);
-    this.logger.info({
-      contestId,
-      hasConfiguration: contestConfiguration !== null,
-    }, 'contest get completed');
-    return { contest, contestConfiguration };
+    this.logger.info({ contestId }, 'contest get completed');
+    return contest;
   }
 
   /** The league's contests the viewer can see: DRAFT contests only for its commissioners (#117). */
@@ -1041,8 +1036,8 @@ export class ContestService {
       return 1;
     }
 
-    // A managed configuration (one with a typed configJson) treats a missing limit as
-    // unlimited; an untyped one as a single entry. Same rule as toContestConfigurationDetailDto.
+    // A configuration with typed rules treats a missing limit as unlimited; one without rules (no
+    // tiered or budget selection) as a single entry.
     if (!configuration.configJson) {
       return configuration.maxEntriesPerSquad ?? 1;
     }

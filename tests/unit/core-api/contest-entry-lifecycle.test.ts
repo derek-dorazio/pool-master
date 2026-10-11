@@ -512,7 +512,7 @@ describe('ContestService — draft visibility and contest edits', () => {
     expect(adminList.map((contest) => contest.id)).toContain(draft.id);
     await expect(service.getContest(draft.id, { userId: owner.id, isRootAdmin: false })).resolves.toBeNull();
     await expect(service.getContest(draft.id, { userId: commissioner.id, isRootAdmin: false }))
-      .resolves.toMatchObject({ contest: { id: draft.id } });
+      .resolves.toMatchObject({ id: draft.id });
   });
 
   it('hides a draft contest from a commissioner who has left the league', async () => {

@@ -289,11 +289,6 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(createResponse.data?.contest.id).toBeTruthy();
     expect(createResponse.data?.contest.status).toBe(ContestStatus.DRAFT);
     expect(createResponse.data?.contest.selectionType).toBe(SelectionType.TIERED);
-    const templateRules = expectDefined(defaultTemplate).configuration;
-    expect(createResponse.data?.contestConfiguration).toMatchObject({
-      picksPerTier: templateRules.selectionType === SelectionType.TIERED ? templateRules.picksPerTier : undefined,
-      countedScores: templateRules.countedScores,
-    });
 
     const contestId = createResponse.data?.contest.id as string;
     const configurationResponse = await getContestConfiguration({
@@ -306,6 +301,11 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expect(configurationResponse.data?.contest.id).toBe(contestId);
     expect(configurationResponse.data?.contest.templateId).toBe(defaultTemplate?.id);
+    const templateRules = expectDefined(defaultTemplate).configuration;
+    expect(configurationResponse.data?.contest.configuration).toMatchObject({
+      selectionType: templateRules.selectionType,
+      countedScores: templateRules.countedScores,
+    });
     expect(configurationResponse.data?.contest.sportEventId).toBe(
       importedEvent.sportEventId,
     );

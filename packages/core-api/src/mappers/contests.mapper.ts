@@ -5,7 +5,6 @@ import type {
   ContestDto,
   ContestEventSummaryDto,
   ContestResponse,
-  ContestConfigurationDetailDto,
   ContestListResponse,
   ContestEntryDto,
   ContestEntryParticipantDetailDto,
@@ -17,14 +16,13 @@ import type {
 import {
   Sport,
   type Contest,
-  type ContestConfiguration,
   type ContestEntry,
   type ContestEntryStatus,
   type ContestStatus,
   type ContestFormat,
   type ParticipantScoringDefinitionId,
   type ScoringEngine,
-  SelectionType,
+  type SelectionType,
 } from '@poolmaster/shared/domain';
 import type { ContestCountingRule, ParticipantScore } from '../modules/contests/contest-leaderboard-calculator';
 import type { SportEventParticipantView } from '../modules/events/sport-event-participant-service';
@@ -146,61 +144,8 @@ export function toContestDto(
   };
 }
 
-export function toContestResponse(
-  contest: ContestRow,
-  contestConfiguration?: ContestConfiguration | null,
-): ContestResponse {
-  return {
-    contest: toContestDto(contest),
-    contestConfiguration: toContestConfigurationDetailDto(contestConfiguration),
-  };
-}
-
-function toContestConfigurationDetailDto(
-  contestConfiguration?: ContestConfiguration | null,
-): ContestConfigurationDetailDto | null {
-  if (!contestConfiguration) {
-    return null;
-  }
-
-  const isManagedConfiguration = Boolean(contestConfiguration.configJson);
-  const maxEntriesPerSquad =
-    isManagedConfiguration
-      ? (contestConfiguration.maxEntriesPerSquad ?? null)
-      : (contestConfiguration.maxEntriesPerSquad ?? 1);
-
-  if (contestConfiguration.configJson) {
-    const rules = contestConfiguration.configJson;
-    switch (rules.selectionType) {
-      case SelectionType.TIERED:
-        return { picksPerTier: rules.picksPerTier, countedScores: rules.countedScores, maxEntriesPerSquad };
-      case SelectionType.BUDGET_PICK:
-        return {
-          rosterSize: rules.rosterSize,
-          salaryCap: rules.salaryCap,
-          countedScores: rules.countedScores,
-          maxEntriesPerSquad,
-        };
-    }
-  }
-
-  return {
-    rounds: contestConfiguration.rounds,
-    timePerPickSeconds: contestConfiguration.timePerPickSeconds,
-    autoPickPolicy: contestConfiguration.autoPickPolicy,
-    tierConfig: contestConfiguration.tierConfig?.map((tier, index) => ({
-      tierId: tier.tierId ?? tier.tierKey,
-      tierName: tier.tierName ?? tier.label,
-      tierNumber: tier.tierNumber ?? index + 1,
-      picksFromTier: tier.picksFromTier ?? tier.pickCount,
-      participantIds: tier.participantIds ?? [],
-    })),
-    isExclusive: contestConfiguration.isExclusive,
-    picksPerPeriod: contestConfiguration.picksPerPeriod,
-    roundValues: contestConfiguration.roundValues,
-    startRound: contestConfiguration.startRound,
-    maxEntriesPerSquad,
-  };
+export function toContestResponse(contest: ContestRow): ContestResponse {
+  return { contest: toContestDto(contest) };
 }
 
 /** Each listed contest with its entry count and its event's name and start (#577). */

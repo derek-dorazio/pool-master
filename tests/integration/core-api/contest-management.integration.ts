@@ -218,8 +218,6 @@ describe('Contest management integration', () => {
     contestId = createdContest.id;
     expect(createdContest.status).toBe(ContestStatus.DRAFT);
     expect(createdContest.sportEventId).toBe(sportEventId);
-    // #245 — create answers with the canonical contest read, as every contest route does.
-    expect(createRes.json<ContestResponse>().contestConfiguration?.countedScores).toBe(4);
 
     const createdConfiguration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId },
@@ -376,12 +374,13 @@ describe('Contest management integration', () => {
     const createdContest = createRes.json<ContestResponse>().contest;
     expect(createdContest.status).toBe(ContestStatus.DRAFT);
     expect(defaultTemplate.configuration.selectionType).toBe(SelectionType.TIERED);
-    expect(createRes.json<ContestResponse>().contestConfiguration?.picksPerTier).toBe(
-      defaultTemplate.configuration.selectionType === SelectionType.TIERED ? defaultTemplate.configuration.picksPerTier : undefined,
-    );
 
     const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId: createdContest.id },
+    });
+    expect(configuration.configJson).toMatchObject({
+      selectionType: SelectionType.TIERED,
+      picksPerTier: defaultTemplate.configuration.selectionType === SelectionType.TIERED ? defaultTemplate.configuration.picksPerTier : undefined,
     });
     expect(configuration.templateId).toBe(defaultTemplate.id);
     expect(configuration.templateVersion).toBe(1);
