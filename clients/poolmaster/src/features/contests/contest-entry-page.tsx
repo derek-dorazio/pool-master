@@ -61,6 +61,10 @@ const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
 const formatTiebreaker = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format;
 const HIDDEN_PICKS_HELPER = 'Hidden until the contest locks';
 
+function formatGolfersStillToPick(count: number): string {
+  return `${count} ${count === 1 ? 'golfer' : 'golfers'} still to pick`;
+}
+
 // The entry page says what an open contest means for this entry; every other status reads as it
 // does on every contest page.
 function getContestPhaseLabel(contest: ContestDto, entriesOpen: boolean) {
@@ -655,7 +659,7 @@ export function ContestEntryPage() {
             <MetricTile
               helperText={picksHidden ? HIDDEN_PICKS_HELPER : lineupSummary ? `Of the ${formatDollars(lineupSummary.salaryCap)} salary cap` : 'Salary cap'}
               label="Spent"
-              value={picksHidden || !lineupSummary ? 'Hidden' : formatDollars(lineupSummary.spent)}
+              value={picksHidden ? 'Hidden' : lineupSummary ? formatDollars(lineupSummary.spent) : '—'}
             />
           ) : (
             <MetricTile
@@ -695,7 +699,7 @@ export function ContestEntryPage() {
                 : isEditable
                 ? nextIncompleteGroupId
                   ? isBudget
-                    ? `${completionStats.requiredSelections - completionStats.totalSelections} golfers still to pick`
+                    ? formatGolfersStillToPick(completionStats.requiredSelections - completionStats.totalSelections)
                     : `Next focus: ${selectionGroups.find((group) => group.groupId === nextIncompleteGroupId)?.groupName ?? 'Open tier'}`
                   : 'Lineup is fully selected'
                 : 'Entry editing is closed'

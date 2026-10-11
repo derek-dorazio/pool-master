@@ -2,7 +2,7 @@
  * The budget-pick selection engine (#198, #93): pick a roster of a set size whose prices fit
  * under the event's salary cap.
  *
- * The budget never blocks a pick (Derek, plans/93 §2): an entry may go over the cap while it
+ * The budget never blocks a pick (decided on #93): an entry may go over the cap while it
  * shuffles its roster, and only submitting is refused while it is over. So re-selecting a
  * golfer the entry holds **toggles it off**, the one way to make room, and a full roster is
  * complete: nothing is displaced. A golfer with no price cannot be picked, since a pick must be
