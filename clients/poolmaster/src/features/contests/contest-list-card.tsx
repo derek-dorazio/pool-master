@@ -2,7 +2,7 @@ import type { ContestDto } from '@/lib/api';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { DateDisplay, ListCard } from '@/features/shared/ui';
 import { ContestStatusBadge } from './contest-status-badge';
-import { useContestSchedule } from './use-contest-schedule';
+import { listedContestStartsAt } from './use-contest-schedule';
 
 export function ContestListCard({
   contest,
@@ -13,7 +13,7 @@ export function ContestListCard({
   leagueCode: string;
   testId: string;
 }) {
-  const startsAt = useContestSchedule(contest)?.startsAt;
+  const startsAt = listedContestStartsAt(contest);
 
   return (
     <ListCard

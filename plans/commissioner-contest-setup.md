@@ -68,9 +68,8 @@ the same rules sentence instead of `selectionType · scoringEngine · sport`.
 ## Data
 
 No backend change.
-- Contest list: `ContestDto` (status, selectionType, entryCount, sportEventId). Event name and
-  start come from the shared event cache (`QueryKeys.sportEvents.detail`, as
-  `use-contest-schedule.ts` does), fetched for the rows on the visible page only. Team count
+- Contest list: `ContestDto` (status, selectionType, entryCount, sportEvent). Since #577 the
+  list carries each contest's event name and start, so the table reads no events. Team count
   from `useLeagueSquadsQuery`.
 - The list shows the format name, not the full rules: `ContestDto` has no configuration, and
   adding it is not worth a contract change. The rules sentence is on the contest page, from

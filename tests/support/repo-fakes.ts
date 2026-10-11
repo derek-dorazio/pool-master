@@ -267,6 +267,7 @@ export function fakeParticipantLeagueAffiliationRepo(
 export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}): SportEventRepository {
   return {
     findById: one(),
+    findByIds: many(),
     findByProviderRef: one(),
     findAll: many(),
     create: echoCreate('sport-event'),

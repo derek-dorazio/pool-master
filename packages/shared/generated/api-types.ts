@@ -1014,7 +1014,7 @@ export interface paths {
         };
         /**
          * List contests for a league
-         * @description Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Each contest carries its entry count and its sport event's name and start, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["listContests"];
         put?: never;
@@ -7363,6 +7363,16 @@ export interface components {
             /** @description Optional tiebreaker prediction saved on the contest entry. */
             tiebreakerValue?: number | null;
         };
+        /** @description The sport event a listed contest runs on: enough to name, sort and search it without reading the event. */
+        ContestEventSummaryDto: {
+            /** @description The sport event's name. */
+            name: string;
+            /**
+             * Format: date-time
+             * @description The sport event's scheduled start, which is also when entries close.
+             */
+            startDate: string;
+        };
         /** @description A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields). */
         ContestDto: {
             id: string;
@@ -7380,6 +7390,16 @@ export interface components {
             sport?: string | null;
             /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
             entryCount?: number;
+            /** @description The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself. */
+            sportEvent?: {
+                /** @description The sport event's name. */
+                name: string;
+                /**
+                 * Format: date-time
+                 * @description The sport event's scheduled start, which is also when entries close.
+                 */
+                startDate: string;
+            } | null;
             /** Format: date-time */
             startsAt?: string | null;
             /** Format: date-time */
@@ -7923,6 +7943,16 @@ export interface components {
                 sport?: string | null;
                 /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
                 entryCount?: number;
+                /** @description The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself. */
+                sportEvent?: {
+                    /** @description The sport event's name. */
+                    name: string;
+                    /**
+                     * Format: date-time
+                     * @description The sport event's scheduled start, which is also when entries close.
+                     */
+                    startDate: string;
+                } | null;
                 /** Format: date-time */
                 startsAt?: string | null;
                 /** Format: date-time */
@@ -8002,6 +8032,16 @@ export interface components {
                 sport?: string | null;
                 /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
                 entryCount?: number;
+                /** @description The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself. */
+                sportEvent?: {
+                    /** @description The sport event's name. */
+                    name: string;
+                    /**
+                     * Format: date-time
+                     * @description The sport event's scheduled start, which is also when entries close.
+                     */
+                    startDate: string;
+                } | null;
                 /** Format: date-time */
                 startsAt?: string | null;
                 /** Format: date-time */

@@ -722,7 +722,7 @@ export const registerWithTeamOwnerInvitation = <ThrowOnError extends boolean = f
 /**
  * List contests for a league
  *
- * Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+ * Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Each contest carries its entry count and its sport event's name and start, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
  */
 export const listContests = <ThrowOnError extends boolean = false>(options: Options<ListContestsData, ThrowOnError>) => (options.client ?? client).get<ListContestsResponses, ListContestsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

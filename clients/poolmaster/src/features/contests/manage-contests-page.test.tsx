@@ -16,6 +16,7 @@ import {
 } from '@/features/leagues/test/fixtures';
 import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
 import { ManageContestsPage } from './manage-contests-page';
+import type { ContestDto, SportEventDto } from '@/lib/api';
 import { buildContest, buildSportEvent } from './test/contest-admin-fixtures';
 
 const getCurrentUserMock = vi.fn();
@@ -62,6 +63,11 @@ const masters = buildSportEvent({ id: 'event-1', name: 'The Masters', startDate:
 const heritage = buildSportEvent({ id: 'event-2', name: 'RBC Heritage', startDate: '2099-04-16T12:00:00.000Z' });
 const players = buildSportEvent({ id: 'event-3', name: 'The Players', startDate: '2099-03-12T12:00:00.000Z' });
 
+/** A listed contest on `event`: the contest list carries the event's name and start. */
+function onEvent(event: SportEventDto): Pick<ContestDto, 'sportEventId' | 'sportEvent'> {
+  return { sportEventId: event.id, sportEvent: { name: event.name, startDate: event.startDate } };
+}
+
 function primeCommonMocks({
   isRootAdmin = false,
   leagueActive = true,
@@ -82,10 +88,6 @@ function primeCommonMocks({
     buildLeagueSquad({ id: 'team-2', name: 'Second Team' }),
     buildLeagueSquad({ id: 'team-3', name: 'Retired Rockets', isActive: false }),
   ])));
-  getEventMock.mockImplementation(({ path }: { path: { eventId: string } }) => {
-    const event = [masters, heritage, players].find((candidate) => candidate.id === path.eventId);
-    return event ? apiSuccess({ event }) : { error: { error: { code: 'NOT_FOUND', message: 'No event' } }, status: 404 };
-  });
 }
 
 function rowOrder() {
@@ -106,8 +108,8 @@ describe('ManageContestsPage', () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue(apiSuccess({
       contests: [
-        buildContest({ id: 'contest-1', name: 'Masters One-and-Done', status: 'DRAFT', sportEventId: 'event-1' }),
-        buildContest({ id: 'contest-2', name: 'Heritage Tiers', status: 'OPEN', sportEventId: 'event-2', entryCount: 1 }),
+        buildContest({ id: 'contest-1', name: 'Masters One-and-Done', status: 'DRAFT', ...onEvent(masters) }),
+        buildContest({ id: 'contest-2', name: 'Heritage Tiers', status: 'OPEN', ...onEvent(heritage), entryCount: 1 }),
       ],
     }));
 
@@ -134,10 +136,10 @@ describe('ManageContestsPage', () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue(apiSuccess({
       contests: [
-        buildContest({ id: 'open-heritage', status: 'OPEN', sportEventId: 'event-2' }),
-        buildContest({ id: 'live-players', status: 'ACTIVE', sportEventId: 'event-3' }),
-        buildContest({ id: 'draft-heritage', status: 'DRAFT', sportEventId: 'event-2' }),
-        buildContest({ id: 'draft-masters', status: 'DRAFT', sportEventId: 'event-1' }),
+        buildContest({ id: 'open-heritage', status: 'OPEN', ...onEvent(heritage) }),
+        buildContest({ id: 'live-players', status: 'ACTIVE', ...onEvent(players) }),
+        buildContest({ id: 'draft-heritage', status: 'DRAFT', ...onEvent(heritage) }),
+        buildContest({ id: 'draft-masters', status: 'DRAFT', ...onEvent(masters) }),
       ],
     }));
 
@@ -152,57 +154,42 @@ describe('ManageContestsPage', () => {
     ]));
   });
 
-  it('waits for the contests\' events before listing them, so no row says its event is unavailable or moves while events load', async () => {
+  it('lists contests from the contest list alone, without reading each contest\'s event', async () => {
     primeCommonMocks();
-    let releaseEvents: () => void = () => undefined;
-    const eventsLoaded = new Promise<void>((resolve) => {
-      releaseEvents = resolve;
-    });
-    getEventMock.mockImplementation(async ({ path }: { path: { eventId: string } }) => {
-      await eventsLoaded;
-      const event = [masters, heritage].find((candidate) => candidate.id === path.eventId);
-      return apiSuccess({ event });
-    });
     listContestsMock.mockResolvedValue(apiSuccess({
       contests: [
-        buildContest({ id: 'draft-heritage', status: 'DRAFT', sportEventId: 'event-2' }),
-        buildContest({ id: 'draft-masters', status: 'DRAFT', sportEventId: 'event-1' }),
+        buildContest({ id: 'draft-heritage', status: 'DRAFT', ...onEvent(heritage) }),
+        buildContest({ id: 'final-players', status: 'COMPLETED', ...onEvent(players) }),
       ],
     }));
 
     renderManageContestsPage();
 
-    expect(await screen.findByText('Loading contests...')).toBeInTheDocument();
-    await waitFor(() => expect(getEventMock).toHaveBeenCalledTimes(2));
-    expect(screen.queryByTestId('manage-contests-row-draft-heritage')).not.toBeInTheDocument();
-    expect(screen.queryByText('Event unavailable')).not.toBeInTheDocument();
-
-    releaseEvents();
-
-    await screen.findByTestId('manage-contests-row-draft-masters');
-    expect(rowOrder()).toEqual(['manage-contests-row-draft-masters', 'manage-contests-row-draft-heritage']);
-    expect(screen.queryByText('Event unavailable')).not.toBeInTheDocument();
+    expect(await within(await screen.findByTestId('manage-contests-row-draft-heritage')).findByText('RBC Heritage')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('manage-contests-filter-history'));
+    expect(await within(await screen.findByTestId('manage-contests-row-final-players')).findByText('The Players')).toBeInTheDocument();
+    expect(getEventMock).not.toHaveBeenCalled();
   });
 
-  it('says a contest\'s event is unavailable when its event cannot be read, and still lists the contest', async () => {
+  it('says a contest has no event when the list carries none, and still lists the contest', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue(apiSuccess({
-      contests: [buildContest({ id: 'contest-lost', name: 'Lost Event Pool', sportEventId: 'event-missing' })],
+      contests: [buildContest({ id: 'contest-bare', name: 'Bare Pool', sportEventId: null, sportEvent: null })],
     }));
 
     renderManageContestsPage();
 
-    const row = within(await screen.findByTestId('manage-contests-row-contest-lost'));
-    expect(await row.findByText('Event unavailable')).toBeInTheDocument();
-    expect(row.getByText('Lost Event Pool')).toBeInTheDocument();
+    const row = within(await screen.findByTestId('manage-contests-row-contest-bare'));
+    expect(row.getByText('No event')).toBeInTheDocument();
+    expect(row.getByText('Bare Pool')).toBeInTheDocument();
   });
 
   it('keeps finished contests under History, with each switch counting its contests', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue(apiSuccess({
       contests: [
-        buildContest({ id: 'contest-open', name: 'Heritage Tiers', status: 'OPEN', sportEventId: 'event-2' }),
-        buildContest({ id: 'contest-final', name: 'Players Pick 6', status: 'COMPLETED', sportEventId: 'event-3' }),
+        buildContest({ id: 'contest-open', name: 'Heritage Tiers', status: 'OPEN', ...onEvent(heritage) }),
+        buildContest({ id: 'contest-final', name: 'Players Pick 6', status: 'COMPLETED', ...onEvent(players) }),
       ],
     }));
 
@@ -223,8 +210,8 @@ describe('ManageContestsPage', () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue(apiSuccess({
       contests: [
-        buildContest({ id: 'contest-1', name: 'Spring Major', sportEventId: 'event-1' }),
-        buildContest({ id: 'contest-2', name: 'Heritage Tiers', sportEventId: 'event-2' }),
+        buildContest({ id: 'contest-1', name: 'Spring Major', ...onEvent(masters) }),
+        buildContest({ id: 'contest-2', name: 'Heritage Tiers', ...onEvent(heritage) }),
       ],
     }));
 

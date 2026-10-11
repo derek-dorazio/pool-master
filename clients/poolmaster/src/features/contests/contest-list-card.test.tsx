@@ -44,15 +44,27 @@ describe('ContestListCard', () => {
     expect(screen.getByText('Open for entries')).toHaveClass('[color:var(--status-active-text)]');
   });
 
-  it('shows when the contest starts, from its sport event\'s schedule', async () => {
-    getEventMock.mockResolvedValue({
-      data: { event: { id: 'event-1', startDate: '2026-04-09T12:00:00.000Z', endDate: null } },
+  it('shows when the contest starts, from the event start the contest list carries, without reading the event', () => {
+    renderCard('OPEN', {
+      sportEventId: 'event-1',
+      sportEvent: { name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z' },
     });
 
-    renderCard('OPEN', { sportEventId: 'event-1' });
-
-    expect(await screen.findByTestId('contest-card-starts')).toHaveTextContent(
+    expect(screen.getByTestId('contest-card-starts')).toHaveTextContent(
       `Starts ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date('2026-04-09T12:00:00.000Z'))}`,
+    );
+    expect(getEventMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the contest\'s own start once it is set, ahead of its event\'s scheduled start', () => {
+    renderCard('ACTIVE', {
+      sportEventId: 'event-1',
+      startsAt: '2026-04-10T08:00:00.000Z',
+      sportEvent: { name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z' },
+    });
+
+    expect(screen.getByTestId('contest-card-starts')).toHaveTextContent(
+      `Starts ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date('2026-04-10T08:00:00.000Z'))}`,
     );
   });
 

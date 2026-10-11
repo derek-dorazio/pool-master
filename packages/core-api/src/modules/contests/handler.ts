@@ -69,13 +69,16 @@ export function createContestHandlers(contestService: ContestService) {
     const logger = createRequestContextLogger(request);
     logger.debug({ leagueId: request.params.id }, 'contest list route start');
     const contests = await contestService.listByLeague(request.params.id, readContestViewer(request));
-    const entryCounts = await contestService.countEntriesByContest(contests.map((contest) => contest.id));
+    const [entryCounts, eventsById] = await Promise.all([
+      contestService.countEntriesByContest(contests.map((contest) => contest.id)),
+      contestService.findEventsForContests(contests),
+    ]);
     logger.info({
       leagueId: request.params.id,
       contestCount: contests.length,
       entryCount: Array.from(entryCounts.values()).reduce((sum, count) => sum + count, 0),
     }, 'contest list route completed');
-    return toContestListResponse(contests, entryCounts);
+    return toContestListResponse(contests, entryCounts, eventsById);
   }
 
   async function getContest(

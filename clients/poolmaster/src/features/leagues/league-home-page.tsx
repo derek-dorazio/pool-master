@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import { useMyContestEntries } from '@/features/contests/use-contest-entries';
-import { useContestSchedules } from '@/features/contests/use-contest-schedule';
 import { useLeagueContestsQuery } from '@/features/contests/use-league-contests-query';
 import {
   Alert,
@@ -83,7 +82,6 @@ export function LeagueHomePage() {
     ),
     [contestsQuery.data],
   );
-  const schedules = useContestSchedules(currentContests);
   const myEntries = useMyContestEntries(
     currentContests.map((contest) => contest.id),
     viewer.mySquadId,
@@ -94,7 +92,7 @@ export function LeagueHomePage() {
     return leagueContext.element;
   }
 
-  const upNext = pickUpNextContest(currentContests, schedules, now);
+  const upNext = pickUpNextContest(currentContests, now);
   const otherContests = currentContests.filter((contest) => contest.id !== upNext?.contest.id);
   const liveContest = currentContests.find(
     (contest) => contest.status === ContestStatus.ACTIVE
