@@ -60,19 +60,109 @@ Questions:
 
 ---
 
-## 2. Formats to support
+## 2. Every contest style
 
-| Format | An entry's picks per round | Scoring | Extra rules |
+*Expanded 2026-10-11 on Derek's request: every contest style in one catalog, with survivor
+and bracket shown as special cases of pick'em.*
+
+Every office pool is one of three kinds, decided by **what an entry holds**:
+
+1. **Roster pools:** the entry holds **participants** (golfers, teams, horses) and scores
+   what they do. This is everything Poolmaster runs today.
+2. **Prediction pools (pick'em):** the entry holds **predictions about games** and scores
+   whether they came true. This epic.
+3. **Assignment pools:** nobody chooses; the entry is **dealt** participants or numbers.
+
+The kind sets the selection engine. The sport's scoring family sets how participants score
+in a roster pool (stroke play, knockout advancement, finish position, stat accumulation), and
+the match-result family scores predictions.
+
+### 2.1 Roster styles
+
+| Style | How an entry picks | Exclusive? | Status | Scores with |
+|---|---|---|---|---|
+| **Tiered** | One or more from each tier | No | Built | Any scoring family |
+| **Budget (salary cap)** | Any participants within a cap | No | Built (#93) | Any |
+| **Snake draft** | Turn by turn, each participant to one entry | Yes | Planned (#199) | Any |
+| **Category** | One from each category (for example "a former major winner") | No | Planned (#99) | Any |
+| **Open selection** | Any N participants from the field | No | Catalog only | Any |
+| **Random draw (sweepstake)** | Dealt at random (see assignment pools) | Yes | Ticket #601 | Any |
+| **Auction (Calcutta)** | Participants auctioned; the buyer owns them | Yes | Idea only | Usually knockout; payouts are outside Poolmaster |
+| **DFS (positions + cap)** | Budget plus position slots (QB, RB, FLEX...) | No | Idea (`next-sport-adoption.md` §3.6) | Stat accumulation |
+| **One-and-done (season)** | One participant per event across a season, each used once | No | Idea | Any; needs multi-event contests |
+
+Roster scoring options are scoring rules on the contest, not styles: best N of M counting,
+**round values and seed bonus** for knockout events (`next-sport-adoption.md` §1), finish
+points for races, the 80-stroke rule for golf.
+
+### 2.2 Prediction (pick'em) styles
+
+All of these share one engine family: the entry predicts outcomes of matches, and each
+prediction scores on its own.
+
+| Style | What an entry predicts | Scoring | Lock | Notes |
+|---|---|---|---|---|
+| **Straight-up** | The winner of each game | 1 per correct pick | Per game, at kickoff | Ties: 0, half, or 1 (setting) |
+| **Against the spread** | A side against a published line | 1 per pick that covers | Per game | Pushes: 0 or half; lines published per round |
+| **Confidence** | Winners, each given a distinct weight 1..N | The weight of each correct pick | Per game | Weights are a permutation of 1..N for the round |
+| **Tipping** (AFL, NRL) | Winners, plus the margin of one game | 1 per correct tip | Per game | Margin error breaks ties; missed tips default (away team or none) |
+| **Score predictor** (soccer) | Home and away score | e.g. 5 for the outcome, 10 for the exact score | Per game | A draw is a valid outcome |
+| **Pick N games** (college football) | Winners of N games chosen from the week's slate | 1 per correct pick, often ATS | Per game | The commissioner or the entry chooses which games |
+| **Series pick'em** (NBA, NHL, MLB playoffs) | Series winner and number of games | Points for winner, bonus for games | Per series, at game 1 | A series is a match with a best-of-N |
+| **Survivor** | **One team per round** | Alive or out | Per game | Special case below |
+| **Bracket** | **Every game of a knockout event, before it starts** | Round values, optional upset bonus | Whole bracket, at the first game | Special case below |
+| **Finishing order** (races) | The top N finishers in order | Points per correct position | Per race | The catalog's `PREDICT_TOP_N`; like an exacta or trifecta |
+
+#### Survivor: pick'em with three rule changes
+
+Survivor (also called eliminator or knockout pool) is straight-up pick'em with:
+
+1. **One pick per round** instead of one per game; the entry chooses which game.
+2. **Each team at most once per season** for that entry.
+3. **Elimination instead of points:** a loss (or a tie, by setting) knocks the entry out;
+   optional strikes allow 1-3 losses first. Standings rank alive entries first, then by rounds
+   survived. `Contest.scoringStopsOnElimination` already carries this meaning.
+
+Variants: two picks per round late in the season, buybacks, survivor on a knockout event
+(March Madness: one team per day, never the same team twice).
+
+#### Bracket: pick'em with every round picked up front
+
+A bracket is straight-up pick'em on a knockout event, with three rule changes:
+
+1. **All rounds are picked before the event starts**, including games whose teams are not
+   known yet. A later-round pick is "this team wins slot X", which only counts if that team
+   gets there.
+2. **One lock for the whole bracket** at the first game, instead of per game.
+3. **Scoring by round value**, usually doubling (1, 2, 4, 8, 16, 32), with the optional upset
+   bonus from the knockout scoring rules. The tiebreaker is the predicted total points of the
+   final.
+
+Variants: a **second-chance bracket** that starts at a later round (the Sweet 16), which the
+existing `ContestConfiguration.startRound` column was meant for; seed-multiplier and flat
+scoring as presets.
+
+What bracket adds to the model: matches must exist as **bracket slots before their teams are
+known** (a slot, the two slots that feed it, sides filled in as earlier games finish). So
+`SportEventMatch` needs a slot number and "fed by" links, and nullable sides until they are
+decided. Building that into the match entity from the start keeps bracket a variant instead of
+a rebuild.
+
+### 2.3 Assignment styles
+
+| Style | What happens | Fit | Notes |
 |---|---|---|---|
-| Straight-up pick'em | One winner per game | 1 per correct pick | Ties: configurable (0, half, or 1) |
-| Against the spread (ATS) | One side per game, against a published line | 1 per pick that covers | Pushes: configurable (0 or half); lines lock at a set time |
-| Confidence | One winner per game, each given a distinct weight 1..N | The weight of each correct pick | Weights must be a permutation of 1..N for the round |
-| Survivor | **One team per round** | Alive or out | Each team used at most once per season; out on a loss (or a tie, configurable); optional strikes |
-| Tipping (AFL/NRL) | One winner per game, plus a margin on one game | 1 per correct tip | Margin error breaks ties; missed tips default (away team, or none) |
-| Score predictor (soccer) | Home and away score per game | e.g. 5 for the right outcome, 10 for the exact score | Draw is a valid outcome |
+| **Random draw (sweepstake)** | The field is dealt out at random | Ticket #601; works on golf now | See #601 for where it is used |
+| **Squares** (Super Bowl, also NCAA final) | Entries claim or are dealt cells of a 10x10 grid; the last digits of each team's score at each quarter pick the winning cell | Separate small engine on a single match | One of the most common US office pools for the Super Bowl; scoring is per quarter, not per game outcome |
+| **Prop pool** | Commissioner-written questions (first scorer, coin toss, winning horse) with set answers | Out of scope | Needs free-form questions and manual grading; OfficePoolStop runs these |
 
-All formats share **season standings** (sum over rounds) and **round standings** (weekly
-winners). A pool can also run on a single round (one week only).
+Questions:
+
+- **Q2.1** Are squares worth a small ticket for the Super Bowl (February 2027)? Recommendation:
+  yes as a later small ticket; it needs only one match with quarter scores, but it is not
+  pick'em, so it stays out of this epic's first slices.
+- **Q2.2** Prop pools: out of scope? Recommendation: yes; free-form questions are a different
+  product.
 
 ---
 
@@ -133,8 +223,9 @@ winners). A pool can also run on a single round (one week only).
 6. **Round standings.** `ContestEntryRoundStanding` (entry, round, points, position, tiebreaker
    value) for weekly winners, beside the season `ContestEntryStanding`. Per-round tiebreakers
    (AFL margin on game 1, NFL Monday night total points) live here or on the match pick.
-7. **New selection types.** `PICK_EM` (with straight-up, ATS, confidence and tipping as
-   configuration of one engine) and `SURVIVOR`. Both values exist in the catalog today but
+7. **New selection types.** `PICK_EM` (with straight-up, ATS, confidence, tipping, score
+   predictor and pick-N as configuration of one engine), `SURVIVOR` and `BRACKET`, all three
+   match-pick engines. `PICK_EM`, `SURVIVOR` and `BRACKET_PICK_EM` exist in the catalog today but
    #605 deletes unbuilt values, so they come back with this work. Configuration goes into the
    typed `ContestSelectionConfig` union, keyed by selection type, like budget and tiered.
 
@@ -204,7 +295,10 @@ Question:
    Monday night tiebreaker, settlement per round and at season end.
 5. **Survivor:** `SURVIVOR` engine (one team a round, once a season, out on a loss, strikes).
 6. **Spreads:** lines per match, "Publish lines" admin action, ATS scoring with pushes.
-7. **Later:** AFL/NRL tipping (margin tiebreaker, away default, draws), soccer predictors
+7. **Bracket:** bracket slots on the match entity, the `BRACKET` engine, whole-bracket lock,
+   round values and upset bonus, second-chance brackets. Target March Madness 2028.
+8. **Later:** series pick'em, squares, AFL/NRL tipping (margin tiebreaker, away default, draws),
+   soccer predictors
    (exact scores, draws), college football "pick N games".
 
 Question:
