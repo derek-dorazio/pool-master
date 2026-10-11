@@ -13,7 +13,7 @@ here blocks on an answer.
 |---|---|---|---|---|
 | 1 | **March Madness "pick teams" pool** (tiered by seed, or budget) | Teams | Biggest office-pool event in the US by far; reuses the tiered and budget selection engines as they are; only ~67 games to score | Selection Sunday, mid-March 2027 |
 | 2 | **Tennis Grand Slams** (men's and women's singles) | Individuals | Closest fit to the golf pool shape (a field of individuals, seeds as tiers, rankings as prices); 4 Slams x 2 draws a year; almost no pool-site competition | Australian Open, January 2027 (a good pilot before March) |
-| 3 | **Auto racing** (NASCAR, Indy 500, F1) and the **Kentucky Derby** | Individuals (not a tournament, but a field) | Structurally the easiest fit after golf: one field, one finishing order, position scoring | Daytona 500 (Feb 2027), Kentucky Derby (May 2027) |
+| 3 | **Races with a finishing order:** horse racing (Triple Crown, Breeders' Cup), auto racing (Daytona 500, Indy 500, NASCAR), then cycling, marathons, triathlons | Individuals (not a tournament, but a field) | Structurally the easiest fit after golf: one field, one finishing order; odds set tiers and prices | Daytona 500 (Feb 2027), Kentucky Derby (May 1, 2027) |
 | 4 | **Soccer knockout tournaments** (Champions League, Women's World Cup 2027, Euro 2028, World Cup 2030) | Teams | Large and growing US following and good cheap data, but group stages and draws need more model work, and the biggest event (2026 World Cup) just ended | UCL knockouts Feb 2027; Women's World Cup June 2027 |
 | 5 | **March Madness full bracket pick'em** | Teams | The format most people know, but a new selection type and a crowded market of free giants (ESPN, CBS, Yahoo) | March 2028 realistically |
 
@@ -134,11 +134,31 @@ Questions:
 - **Q2.3** Grand Slams only, or also the bigger ATP/WTA 1000 events (Indian Wells, Miami)?
   Recommendation: Slams only to start.
 
-### 2.2 Auto racing and horse racing — rank 3
+### 2.2 Races with a finishing order: the shared approach — rank 3
 
-Not tournaments, but they match the golf shape even more closely: one event, one field of
-individuals, one finishing order. `POSITION` scoring is already in the catalog and the
-`TIME_TRIAL_RACE` format already allows roster contests.
+Auto racing, horse racing, cycling, marathons and triathlons are not tournaments, but they match
+the golf shape even more closely: one event, one field of individuals, one finishing order. They
+share one build, separate from knockout advancement:
+
+- **Odds set tiers and prices.** The event-level tiers and the budget pricing curve already accept
+  `AUTO_ODDS` valuations, so a field ordered by odds to win gets tiers and prices the same way a
+  golf field does. Where a sport has thin betting markets, ranking or `MANUAL` valuations fill
+  in.
+- **Finish-position scoring.** A `FINISH_POSITION` participant scoring definition: points by
+  finishing place, or sum of places (lower is better). Did-not-finish and scratched map onto the
+  existing `WITHDRAWN` / `ELIMINATED` states, and the leaderboard needs a fixed score for them
+  (like golf's 80-stroke rule).
+- **Results entry.** A finishing order typed in by an admin; feasible for every sport here
+  because only the order (or the top N) matters.
+- **Multi-day events** (stage races, the Breeders' Cup weekend) map onto `SportEventRound` the way
+  golf rounds do.
+- `POSITION` scoring and the `TIME_TRIAL_RACE` format are already catalog entries; `HORSE_RACING`
+  is already a `Sport`. Cycling, running and triathlon would be new `Sport` values.
+
+This ranks below tennis because it does not help any team sport, but it opens the most new
+events per unit of work.
+
+### 2.3 Auto racing
 
 - **NASCAR:** 36 Cup races a year plus the Daytona 500; established pool culture (PoolTracker
   season and playoff pools, OfficeFootballPool, NASCAR's own fantasy game). A ~40-car field fits
@@ -147,12 +167,6 @@ individuals, one finishing order. `POSITION` scoring is already in the catalog a
 - **F1:** global following, but US viewing is in flux: Apple took exclusive US rights in 2026 and
   third-party household data shows sharp drops after the first races. Lower priority for a
   US office-pool product.
-- **Kentucky Derby:** a classic office pool (OfficePoolStop runs a Derby prop pool), but it is
-  two minutes long with ~20 horses; there is little "live leaderboard" to follow. A cheap add-on
-  once position scoring exists.
-- **Scoring needed:** a `FINISH_POSITION` definition (points by finish, or sum of positions,
-  lower is better). Simpler than advancement, but it does not help any of the team sports, which
-  is why it ranks below tennis.
 
 Questions:
 
@@ -162,13 +176,79 @@ Questions:
 - **Q2.5** Season-long contests (sum across many events) are not modelled (a contest runs on one
   event). Out of scope for now?
 
-### 2.3 Considered and not recommended
+### 2.4 Horse racing (added 2026-10-11 on Derek's request)
+
+Its own sport (`HORSE_RACING` already exists). The fit is the best of the racing group for
+pricing: every race has a published morning line and live pari-mutuel odds, so odds-based tiers
+and prices are exact. Fields are small (usually 8 to 20 runners), so a pick-one-per-tier entry
+would use 3 or 4 tiers.
+
+**The big races, each an event** (usual calendar slots; confirm dates when setting events up):
+
+| Race | Usual timing | Field | Notes |
+|---|---|---|---|
+| Pegasus World Cup | late January | ~12 | Season opener for US dirt racing |
+| Dubai World Cup | late March | ~12-14 | Richest race card in the world |
+| Grand National (UK) | April | up to 34 | Huge UK office-pool tradition (sweepstakes) |
+| **Kentucky Derby** | first Saturday in May (May 1, 2027) | up to 20 | The biggest US office-pool race; Triple Crown leg 1 |
+| **Preakness Stakes** | two weeks after the Derby | ~8-14 | Triple Crown leg 2 |
+| **Belmont Stakes** | early June | ~8-12 | Triple Crown leg 3 |
+| Royal Ascot (UK) | mid-June, five days | many races | A meeting, not one race |
+| Prix de l'Arc de Triomphe | first Sunday in October | ~15-20 | Europe's top race |
+| **Breeders' Cup** | early November, two days | 14 races | The Classic is the headline race |
+| Melbourne Cup | first Tuesday in November | 24 | "The race that stops a nation" |
+
+- **Single races** (Derby, Preakness, Belmont, Grand National, Melbourne Cup) are one event with
+  one field, the simplest case. The race lasts minutes, so the "live leaderboard" is the result;
+  the pool's interest is in the build-up and the picks.
+- **A Triple Crown contest** (best picks across all three legs) would need a contest spanning
+  three events, which is the same season-long gap as Q2.5.
+- **Race cards** (Breeders' Cup, Royal Ascot, Derby day undercard) are several races with
+  different fields. Each race could be its own event, or one event with a round per race, but the
+  field is per race, which the model does not have today.
+
+Questions:
+
+- **Q2.6** Start with the Triple Crown races as three separate events, plus the Breeders' Cup
+  Classic as a single race? Recommendation: yes; leave full race cards and Triple Crown
+  combined contests until multi-event contests exist.
+- **Q2.7** Include the UK and international races (Grand National, Melbourne Cup, Arc) from the
+  start? Recommendation: add them as events when there is a league asking; they cost only data.
+- **Q2.8** Late scratches are common. A scratched horse shows as withdrawn; should the entry get a
+  free replacement pick before post time, or take a fixed last-place score? Recommendation: allow
+  a replacement until post time, as most Derby pools do.
+
+### 2.5 Cycling, marathons and triathlons (added 2026-10-11 on Derek's request)
+
+Smaller US followings and few office pools today, but the same odds-and-finishing-order approach
+handles them with no extra build beyond adding the sport and its events.
+
+- **Cycling.** Grand Tours: Tour de France (July), Giro d'Italia (May), Vuelta a España (late
+  August to September), each 21 stages with ~175 riders. Stages map onto `SportEventRound`; score
+  on final overall (GC) position, or on stage finishes for a livelier leaderboard. One-day
+  "Monuments" (Milan-San Remo, Tour of Flanders, Paris-Roubaix, Liège-Bastogne-Liège, Il Lombardia)
+  are single races. Betting markets for the Tour are deep, so odds pricing works.
+- **Marathons.** The World Marathon Majors: Tokyo (March), Boston (April), London (April), Sydney
+  (late August or September), Berlin (September), Chicago (October), New York (November). Elite
+  fields of ~20-40 per race, men's and women's as two events (like tennis draws). Odds exist for
+  the biggest races but are thin; ranking or manual prices fill in.
+- **Triathlons.** Ironman World Championship (autumn), the T100 series, and the Olympics (2028).
+  Odds are sparse, so valuations would be mostly ranking or manual.
+
+Question:
+
+- **Q2.9** Add these sports only when a league asks, or seed the marquee events (Tour de France,
+  Boston, New York, Ironman World Championship) up front? Recommendation: after horse racing,
+  seed the Tour de France and the Boston and New York marathons; the rest on request.
+
+### 2.6 Considered and not recommended
 
 - **UFC / boxing:** a card of separate fights, not a field; needs pick'em per fight
   (`FIGHT_RESULT`). Different product.
-- **Cycling (Tour de France), darts, snooker, bowling, pickleball:** real tournaments of
-  individuals, but small US followings and almost no office-pool demand.
-- **Olympics:** multi-sport and multi-event; too broad for this model.
+- **Darts, snooker, bowling, pickleball:** real tournaments of individuals, but small US
+  followings and almost no office-pool demand.
+- **Olympics:** multi-sport and multi-event; too broad for this model as a whole (single Olympic
+  races such as the marathon fit section 2.5).
 
 ---
 
@@ -339,7 +419,9 @@ Question:
 | Tennis | PoolTracker (Wimbledon, US Open brackets); little else |
 | Soccer | FIFA predictor, Fox/ESPN bracket games, Office World Cup (Google Chat), RunYourPool, OfficePoolStop (Premier League pick'em) |
 | NFL | ESPN, Yahoo, CBS (pick'em, survivor, fantasy); OfficePoolStop, RunYourPool, OfficeFootballPool (pick'em, confidence, survivor, squares) |
-| NASCAR / racing | PoolTracker, OfficeFootballPool, NASCAR Fantasy; OfficePoolStop Kentucky Derby prop pool |
+| NASCAR / auto racing | PoolTracker, OfficeFootballPool, NASCAR Fantasy |
+| Horse racing | OfficePoolStop Kentucky Derby prop pool; mostly paper sweepstakes and draw-a-horse pools |
+| Cycling, marathons, triathlons | Official fantasy games (for example Tour de France fantasy); almost no office-pool hosts |
 
 ---
 
@@ -351,7 +433,8 @@ Question:
    2027 event set up as the pilot.
 3. March Madness team pool: team roster seeding, seed-line tiers, scoring config templates, men's
    and women's 2027 events.
-4. Finish-position scoring for racing (Daytona 500, Indy 500, Kentucky Derby).
+4. Finish-position scoring with odds-based tiers and prices: horse racing (Triple Crown, Breeders'
+   Cup) and auto racing (Daytona 500, Indy 500), then cycling, marathons and triathlons as data.
 5. NFL playoff pool on the knockout foundation (January).
 6. Later: match entity, soccer knockout pools, bracket pick'em, then weekly NFL pick'em and survivor.
 
