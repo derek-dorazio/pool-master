@@ -199,7 +199,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
 
     const response = await getApp().inject({
       method: 'GET',
-      url: `/api/v1/contests/${contest.id}/golf/leaderboard`,
+      url: `/api/v1/contests/${contest.id}/leaderboard`,
       headers: owner.headers,
     });
 
@@ -256,7 +256,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     }
     const settledResponse = await getApp().inject({
       method: 'GET',
-      url: `/api/v1/contests/${contest.id}/golf/leaderboard`,
+      url: `/api/v1/contests/${contest.id}/leaderboard`,
       headers: owner.headers,
     });
     expect(settledResponse.statusCode).toBe(200);
@@ -275,11 +275,11 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     });
     const noRuleResponse = await getApp().inject({
       method: 'GET',
-      url: `/api/v1/contests/${contest.id}/golf/leaderboard`,
+      url: `/api/v1/contests/${contest.id}/leaderboard`,
       headers: owner.headers,
     });
     expect(noRuleResponse.statusCode).toBe(400);
-    expect(noRuleResponse.json<ErrorEnvelope>().error.code).toBe('CONTEST_GOLF_LEADERBOARD_SCORING_RULE_MISSING');
+    expect(noRuleResponse.json<ErrorEnvelope>().error.code).toBe('CONTEST_LEADERBOARD_SCORING_RULE_MISSING');
   });
 });
 

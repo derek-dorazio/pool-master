@@ -20,7 +20,7 @@ import {
 } from '../../adapters';
 import type { MailDeliveryProvider } from '../email';
 import { createSportEventParticipantService, createSportEventTierService } from '../events/wiring';
-import { GolfContestSettlementService } from './golf-contest-settlement-service';
+import { ContestSettlementService } from './contest-settlement-service';
 import type { ContestLeaderboardReadDeps } from './contest-leaderboard-reads';
 import { ContestService } from './service';
 
@@ -56,11 +56,11 @@ export function createContestService(
   });
 }
 
-export function createGolfContestSettlementService(
+export function createContestSettlementService(
   prisma: PrismaClient,
   logger?: FastifyBaseLogger,
-): GolfContestSettlementService {
-  return new GolfContestSettlementService({
+): ContestSettlementService {
+  return new ContestSettlementService({
     ...createContestLeaderboardReadDeps(prisma, logger),
     sportEvents: new PrismaSportEventRepository(prisma),
     contests: new PrismaContestRepository(prisma),

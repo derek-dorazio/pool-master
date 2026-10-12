@@ -353,30 +353,30 @@ export class ContestService {
     return { entry, picksRevealed };
   }
 
-  async getGolfLeaderboard(
+  async getLeaderboard(
     contestId: string,
     requesterUserId: string,
   ): Promise<ContestLeaderboardModel> {
     const context = await this.getEntryContext(contestId, requesterUserId, 'read');
     if (!contestPicksRevealed(context.contest.status)) {
       throw new ContestOperationError(
-        'Golf leaderboard is not available until contest picks are revealed.',
-        'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN',
+        'The leaderboard is not available until contest picks are revealed.',
+        'CONTEST_LEADERBOARD_PICKS_HIDDEN',
       );
     }
 
     const { contest } = context;
     if (!contest.sportEventId) {
       throw new ContestOperationError(
-        'Golf leaderboard requires a contest sport event.',
-        'CONTEST_GOLF_LEADERBOARD_EVENT_REQUIRED',
+        'The leaderboard requires a contest sport event.',
+        'CONTEST_LEADERBOARD_EVENT_REQUIRED',
       );
     }
     const sportEvent = await this.deps.sportEvents.findById(contest.sportEventId);
     if (!sportEvent) {
       throw new ContestOperationError(
-        'Golf leaderboard requires a contest sport event.',
-        'CONTEST_GOLF_LEADERBOARD_EVENT_REQUIRED',
+        'The leaderboard requires a contest sport event.',
+        'CONTEST_LEADERBOARD_EVENT_REQUIRED',
       );
     }
 
@@ -384,20 +384,20 @@ export class ContestService {
     const countingRule = resolveContestCountingRule(configuration);
     if (!countingRule) {
       throw new ContestOperationError(
-        'Golf leaderboard requires a contest configuration with countedScores.',
-        'CONTEST_GOLF_LEADERBOARD_COUNTING_RULE_MISSING',
+        'The leaderboard requires a contest configuration with countedScores.',
+        'CONTEST_LEADERBOARD_COUNTING_RULE_MISSING',
       );
     }
     const scoring = resolveContestScoringDefinition(configuration);
     if (!scoring.ok) {
       throw scoring.reason === 'RULE_MISSING'
         ? new ContestOperationError(
-          'Golf leaderboard requires the contest configuration to carry a participant scoring rule.',
-          'CONTEST_GOLF_LEADERBOARD_SCORING_RULE_MISSING',
+          'The leaderboard requires the contest configuration to carry a participant scoring rule.',
+          'CONTEST_LEADERBOARD_SCORING_RULE_MISSING',
         )
         : new ContestOperationError(
-          'Golf leaderboard requires a participant scoring rule with a known scoring definition.',
-          'CONTEST_GOLF_LEADERBOARD_SCORING_DEFINITION_UNKNOWN',
+          'The leaderboard requires a participant scoring rule with a known scoring definition.',
+          'CONTEST_LEADERBOARD_SCORING_DEFINITION_UNKNOWN',
         );
     }
     const { id: scoringDefinitionId, definition: scoringDefinition } = scoring;
@@ -427,7 +427,7 @@ export class ContestService {
           sportEventId: sportEvent.id,
           sport: sportEvent.sport,
           scoringDefinitionId,
-          countingRule: { type: 'BEST_N_GOLFERS', count: standings[0].countingPickLimit },
+          countingRule: { type: 'BEST_N', count: standings[0].countingPickLimit },
           participants: field,
           entries: applySettledContestStandings(
             rankedEntries,

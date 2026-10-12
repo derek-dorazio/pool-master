@@ -91,7 +91,7 @@ function responseFixture(
     contestId: 'contest-1',
     sportEventId: 'event-1',
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-    countingRule: { type: 'BEST_N_GOLFERS', count: 2 },
+    countingRule: { type: 'BEST_N', count: 2 },
     participants: [],
     entries: [],
     asOf: null,

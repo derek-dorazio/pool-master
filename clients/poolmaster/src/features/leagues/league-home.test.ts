@@ -45,7 +45,7 @@ function leaderboardFixture(entries: LeaderboardEntry[]): ContestLeaderboardResp
     contestId: 'contest-1',
     sportEventId: 'event-1',
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-    countingRule: { type: 'BEST_N_GOLFERS', count: 4 },
+    countingRule: { type: 'BEST_N', count: 4 },
     participants: [],
     entries,
     asOf: null,

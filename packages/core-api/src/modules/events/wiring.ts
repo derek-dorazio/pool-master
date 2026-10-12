@@ -133,7 +133,7 @@ export function createEventLifecycleService(
     logger?: FastifyBaseLogger;
     mailDelivery?: MailDeliveryProvider;
     appBaseUrl?: string;
-    golfContestSettlement?: CompletedSportEventSettlement;
+    contestSettlement?: CompletedSportEventSettlement;
   } = {},
 ): EventLifecycleService {
   return new EventLifecycleService(
@@ -149,6 +149,6 @@ export function createEventLifecycleService(
     options.logger,
     options.mailDelivery,
     options.appBaseUrl,
-    options.golfContestSettlement,
+    options.contestSettlement,
   );
 }

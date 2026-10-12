@@ -17,7 +17,7 @@ import {
 } from './test/fixtures';
 
 const getCurrentUserMock = vi.fn();
-const getGolfContestLeaderboardMock = vi.fn();
+const getContestLeaderboardMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
@@ -26,7 +26,7 @@ const refreshTokenMock = vi.fn();
 
 bindApiMocks({
   getUser: getCurrentUserMock,
-  getGolfContestLeaderboard: getGolfContestLeaderboardMock,
+  getContestLeaderboard: getContestLeaderboardMock,
   getLeagueByCode: getLeagueByCodeMock,
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,
@@ -183,7 +183,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   for (const mock of [
-    getCurrentUserMock, getGolfContestLeaderboardMock, getLeagueByCodeMock,
+    getCurrentUserMock, getContestLeaderboardMock, getLeagueByCodeMock,
     listContestEntriesMock, listContestsMock, listLeagueSquadsMock, refreshTokenMock,
   ]) {
     mock.mockReset();
@@ -300,11 +300,11 @@ describe('League Home', () => {
       contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE')],
       entriesByContest: { 'live-1': [entry('live-1', 'team-1')] },
     });
-    getGolfContestLeaderboardMock.mockResolvedValue(apiSuccess({
+    getContestLeaderboardMock.mockResolvedValue(apiSuccess({
       contestId: 'live-1',
       sportEventId: 'event-live-1',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-      countingRule: { type: 'BEST_N_GOLFERS', count: 4 },
+      countingRule: { type: 'BEST_N', count: 4 },
       participants: [],
       asOf: null,
       entries: [
@@ -340,7 +340,7 @@ describe('League Home', () => {
 
     expect(await within(await screen.findByTestId('league-home-other-contests')).findByText('Your team has not entered')).toBeInTheDocument();
     expect(screen.queryByTestId('league-home-live-standings')).not.toBeInTheDocument();
-    expect(getGolfContestLeaderboardMock).not.toHaveBeenCalled();
+    expect(getContestLeaderboardMock).not.toHaveBeenCalled();
   });
 
   it('shows the member\'s team with its owners and a link to My team', async () => {

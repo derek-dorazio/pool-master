@@ -142,12 +142,12 @@ describe('contest counting rule', () => {
 
   it('counts the best countedScores golfers of a tiered contest', () => {
     expect(resolveContestCountingRule(config({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 })))
-      .toEqual({ type: 'BEST_N_GOLFERS', count: 4 });
+      .toEqual({ type: 'BEST_N', count: 4 });
   });
 
   it('counts the best countedScores golfers of a budget contest, the same as a tiered one', () => {
     expect(resolveContestCountingRule(config({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, salaryCap: 50_000, countedScores: 6 })))
-      .toEqual({ type: 'BEST_N_GOLFERS', count: 6 });
+      .toEqual({ type: 'BEST_N', count: 6 });
   });
 
   it('has no counting rule when the configuration has no rules, or there is no configuration', () => {
@@ -175,7 +175,7 @@ describe('an entry\'s standing from its picks', () => {
       slot: pick.slot ?? null,
     })),
   });
-  const best = (count: number) => ({ type: 'BEST_N_GOLFERS' as const, count });
+  const best = (count: number) => ({ type: 'BEST_N' as const, count });
 
   it('sums the best N scores, lowest first when lower is better, and marks the rest dropped', () => {
     const field = scores([['a', 'Ace', -8], ['b', 'Bea', 2], ['c', 'Cal', -3], ['d', 'Dee', 5]]);

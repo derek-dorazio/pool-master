@@ -3,7 +3,7 @@ import type {
   ContestDto,
   ContestEntryDto,
   ContestManagementDetailDto,
-  GolfEffectiveTierDto,
+  EffectiveTierDto,
   SportEventDto,
 } from '@/lib/api';
 
@@ -61,7 +61,7 @@ export function buildContest(overrides: Partial<ContestDto> = {}): ContestDto {
   };
 }
 
-export function buildTier(tierNumber: number, golferCount: number): GolfEffectiveTierDto {
+export function buildTier(tierNumber: number, golferCount: number): EffectiveTierDto {
   return {
     tierKey: `tier-${tierNumber}`,
     label: `Tier ${tierNumber}`,

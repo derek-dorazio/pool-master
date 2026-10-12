@@ -58,7 +58,7 @@ import { EventLifecycleScheduler } from './modules/events/event-lifecycle-schedu
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
-import { createGolfContestSettlementService } from './modules/contests/wiring';
+import { createContestSettlementService } from './modules/contests/wiring';
 import {
   EMAIL_SETTINGS,
   SettingsAwareMailDeliveryProvider,
@@ -90,12 +90,12 @@ export function buildApp() {
     app.log,
   );
   const appBaseUrl = readApplicationBaseUrl(process.env);
-  const golfContestSettlement = createGolfContestSettlementService(prisma, app.log);
+  const contestSettlement = createContestSettlementService(prisma, app.log);
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: app.log,
     mailDelivery,
     appBaseUrl,
-    golfContestSettlement,
+    contestSettlement,
   });
   const ingestionPersistence = new IngestionPersistence(prisma, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler(

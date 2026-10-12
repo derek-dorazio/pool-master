@@ -482,19 +482,19 @@ describe('ContestService entries — reads', () => {
     await expect(service.countEntriesByContest([])).resolves.toEqual(new Map());
   });
 
-  it('refuses the golf leaderboard with CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN while picks are still hidden', async () => {
+  it('refuses the contest leaderboard with CONTEST_LEADERBOARD_PICKS_HIDDEN while picks are still hidden', async () => {
     const { owner, contest, service } = setup();
 
-    await expect(service.getGolfLeaderboard(contest.id, owner.id)).rejects.toMatchObject({
-      code: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN',
+    await expect(service.getLeaderboard(contest.id, owner.id)).rejects.toMatchObject({
+      code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN',
     });
   });
 
-  it('refuses the golf leaderboard with CONTEST_GOLF_LEADERBOARD_EVENT_REQUIRED for a contest with no event', async () => {
+  it('refuses the contest leaderboard with CONTEST_LEADERBOARD_EVENT_REQUIRED for a contest with no event', async () => {
     const { world, owner, contest, service } = setup();
     world.contests.set(contest.id, { ...contest, status: ContestStatus.ACTIVE });
 
-    await expect(service.getGolfLeaderboard(contest.id, owner.id)).rejects.toBeInstanceOf(ContestOperationError);
+    await expect(service.getLeaderboard(contest.id, owner.id)).rejects.toBeInstanceOf(ContestOperationError);
   });
 });
 

@@ -136,7 +136,7 @@ export const ContestEntryParticipantDetailDtoSchema = z.object({
   role: z.string().nullable().optional().describe('The participant\'s playing role, when known.'),
   teamAffiliation: z.string().nullable().optional(),
   pickedAt: z.string().datetime().describe('When the participant was added to the contest entry.'),
-}).describe('Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint.');
+}).describe('Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint.');
 export type ContestEntryParticipantDetailDto = z.infer<typeof ContestEntryParticipantDetailDtoSchema>;
 
 export const ContestEntryDtoSchema = z.object({
@@ -203,7 +203,7 @@ export const ContestEntryStandingDtoSchema = z.object({
 export type ContestEntryStandingDto = z.infer<typeof ContestEntryStandingDtoSchema>;
 
 export const ContestCountingRuleDtoSchema = z.object({
-  type: z.literal('BEST_N_GOLFERS').describe('Sum the best N picks\' totals for each entry.'),
+  type: z.literal('BEST_N').describe('Sum the best N picks\' totals for each entry.'),
   count: z.number().int().min(1).describe('N: how many picks count toward each entry\'s total.'),
 }).describe('How an entry\'s picks combine into its total.');
 export type ContestCountingRuleDto = z.infer<typeof ContestCountingRuleDtoSchema>;

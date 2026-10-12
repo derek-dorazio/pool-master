@@ -62,8 +62,9 @@ Read from the code on `main` (2026-10-10), not from plans.
 
 - Results are stored only in golf extension tables (`SportEventParticipantGolfRound`,
   `...GolfStanding`, `ContestEntryGolfStanding`). Each new scoring style needs its own extension.
-- The leaderboard calculator's counting rule is `BEST_N_GOLFERS` and reads `GolfContestConfig`
-  (`contest-leaderboard-calculator.ts`); settlement is `golf-contest-settlement-service.ts`.
+- The leaderboard calculator reads `GolfContestConfig` (`contest-leaderboard-calculator.ts`).
+  Its counting rule (`BEST_N`) and settlement (`contest-settlement-service.ts`) carry
+  sport-neutral names since #604.
 - There is **no match entity**: nothing records "A played B in round 2 and won". Advancement
   scoring can live without it (a per-participant "rounds won" is enough), but bracket pick'em
   and soccer group tables cannot.
@@ -87,8 +88,8 @@ One slice of work that tennis, March Madness and soccer knockouts all need:
    pattern as golf).
 3. An admin results screen: per round, mark the winner of each pairing (or mark losers out).
    A March Madness event is 67 games; a Slam singles draw is 127 matches per draw.
-4. A cross-sport counting rule (`BEST_N` instead of `BEST_N_GOLFERS`) and a settlement path that
-   is not golf's.
+4. A settlement path that is not golf's. The counting rule and settlement service already
+   have sport-neutral names (#604).
 5. Sport-aware labels for the picker, leaderboard and event screens.
 
 #### Knockout scoring rules (Derek, 2026-10-11)

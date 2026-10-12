@@ -18,7 +18,7 @@ import * as contestLeaderboard from './contest-leaderboard';
 const {
   getContestMock,
   getCurrentUserMock,
-  getGolfContestLeaderboardMock,
+  getContestLeaderboardMock,
   getLeagueMock,
   listContestEntriesMock,
   mockLogger,
@@ -38,7 +38,7 @@ const {
   return {
     getContestMock: vi.fn(),
     getCurrentUserMock: vi.fn(),
-    getGolfContestLeaderboardMock: vi.fn(),
+    getContestLeaderboardMock: vi.fn(),
     getLeagueMock: vi.fn(),
     listContestEntriesMock: vi.fn(),
     mockLogger: logger,
@@ -49,7 +49,7 @@ const {
 bindApiMocks({
   getContest: getContestMock,
   getUser: getCurrentUserMock,
-  getGolfContestLeaderboard: getGolfContestLeaderboardMock,
+  getContestLeaderboard: getContestLeaderboardMock,
   getLeague: getLeagueMock,
   listContestEntries: listContestEntriesMock,
   refreshToken: refreshTokenMock,
@@ -190,7 +190,7 @@ function leaderboardResponse(entryTotalScoreToPar = -5) {
       contestId: 'contest-1',
       sportEventId: 'event-1',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-      countingRule: { type: 'BEST_N_GOLFERS', count: 1 },
+      countingRule: { type: 'BEST_N', count: 1 },
       participants: [
         participant({
           id: 'sep-1',
@@ -318,7 +318,7 @@ function primeMocks(opts?: {
   myEntryIds?: string[];
 }) {
   getContestMock.mockReset();
-  getGolfContestLeaderboardMock.mockReset();
+  getContestLeaderboardMock.mockReset();
   getContestMock.mockResolvedValue(contestResponse(opts?.contestStatus ?? 'ACTIVE'));
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
@@ -337,14 +337,14 @@ function primeMocks(opts?: {
   }));
 
   if (opts?.leaderboardError) {
-    getGolfContestLeaderboardMock.mockResolvedValue({
+    getContestLeaderboardMock.mockResolvedValue({
       error: { error: opts.leaderboardError },
       response: { status: 400 },
     });
     return;
   }
 
-  getGolfContestLeaderboardMock.mockResolvedValue(
+  getContestLeaderboardMock.mockResolvedValue(
     opts?.leaderboard ? { data: opts.leaderboard } : leaderboardResponse(),
   );
 }
@@ -463,10 +463,10 @@ describe('ContestLeaderboardPage', () => {
       primeMocks({ contestStatus: 'ACTIVE' });
       renderLeaderboard();
       fireEvent.click(await screen.findByTestId('contest-leaderboard-entry-toggle-entry-1'));
-      const callsBefore = getGolfContestLeaderboardMock.mock.calls.length;
+      const callsBefore = getContestLeaderboardMock.mock.calls.length;
 
       await vi.advanceTimersByTimeAsync(30_000);
-      expect(getGolfContestLeaderboardMock.mock.calls.length).toBeGreaterThan(callsBefore);
+      expect(getContestLeaderboardMock.mock.calls.length).toBeGreaterThan(callsBefore);
       expect(screen.queryByTestId('contest-leaderboard-pick-entry-1-pick-1')).not.toBeInTheDocument();
     } finally {
       vi.useRealTimers();
@@ -567,7 +567,7 @@ describe('ContestLeaderboardPage', () => {
         contestId: 'contest-1',
         sportEventId: 'event-1',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-        countingRule: { type: 'BEST_N_GOLFERS', count: 1 },
+        countingRule: { type: 'BEST_N', count: 1 },
         participants: [participant({
           id: 'sep-1',
           name: 'Rory McIlroy',
@@ -590,7 +590,7 @@ describe('ContestLeaderboardPage', () => {
         contestId: 'contest-1',
         sportEventId: 'event-1',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-        countingRule: { type: 'BEST_N_GOLFERS', count: 1 },
+        countingRule: { type: 'BEST_N', count: 1 },
         participants: [],
         entries: [],
         asOf: null,
@@ -606,7 +606,7 @@ describe('ContestLeaderboardPage', () => {
   it('explains that picks are not revealed yet instead of showing a bare failure', async () => {
     primeMocks({
       leaderboardError: {
-        code: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN',
+        code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN',
         message: 'Picks are hidden.',
       },
     });
@@ -675,18 +675,18 @@ describe('ContestLeaderboardPage', () => {
       primeMocks({ contestStatus: 'ACTIVE' });
       const { unmount } = renderLeaderboard();
       await screen.findByTestId('contest-leaderboard-position-entry-1');
-      const liveCallsBefore = getGolfContestLeaderboardMock.mock.calls.length;
+      const liveCallsBefore = getContestLeaderboardMock.mock.calls.length;
       await vi.advanceTimersByTimeAsync(30_000);
-      expect(getGolfContestLeaderboardMock.mock.calls.length).toBeGreaterThan(liveCallsBefore);
+      expect(getContestLeaderboardMock.mock.calls.length).toBeGreaterThan(liveCallsBefore);
       unmount();
 
       primeMocks({ contestStatus: 'COMPLETED' });
-      getGolfContestLeaderboardMock.mockClear();
+      getContestLeaderboardMock.mockClear();
       renderLeaderboard();
       await screen.findByTestId('contest-leaderboard-position-entry-1');
-      const settledCallsBefore = getGolfContestLeaderboardMock.mock.calls.length;
+      const settledCallsBefore = getContestLeaderboardMock.mock.calls.length;
       await vi.advanceTimersByTimeAsync(30_000);
-      expect(getGolfContestLeaderboardMock.mock.calls.length).toBe(settledCallsBefore);
+      expect(getContestLeaderboardMock.mock.calls.length).toBe(settledCallsBefore);
     } finally {
       vi.useRealTimers();
     }
@@ -701,15 +701,15 @@ describe('ContestLeaderboardPage', () => {
       getContestMock.mockResolvedValueOnce(contestResponse('OPEN'));
       renderLeaderboard();
       await screen.findByText('Birdie Hunters Entry 1');
-      const callsWhileOpen = getGolfContestLeaderboardMock.mock.calls.length;
+      const callsWhileOpen = getContestLeaderboardMock.mock.calls.length;
 
       // The contest read that sees ACTIVE reads the leaderboard straight away, not one interval on.
       await vi.advanceTimersByTimeAsync(30_000);
-      const callsOnceLive = getGolfContestLeaderboardMock.mock.calls.length;
+      const callsOnceLive = getContestLeaderboardMock.mock.calls.length;
       expect(callsOnceLive).toBeGreaterThan(callsWhileOpen);
 
       await vi.advanceTimersByTimeAsync(30_000);
-      expect(getGolfContestLeaderboardMock.mock.calls.length).toBeGreaterThan(callsOnceLive);
+      expect(getContestLeaderboardMock.mock.calls.length).toBeGreaterThan(callsOnceLive);
     } finally {
       vi.useRealTimers();
     }
@@ -722,9 +722,9 @@ describe('ContestLeaderboardPage', () => {
     try {
       primeMocks({ contestStatus: 'ACTIVE' });
       getContestMock.mockResolvedValueOnce(contestResponse('OPEN'));
-      getGolfContestLeaderboardMock.mockResolvedValueOnce({
+      getContestLeaderboardMock.mockResolvedValueOnce({
         error: {
-          error: { code: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN', message: 'Picks are hidden.' },
+          error: { code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN', message: 'Picks are hidden.' },
         },
         response: { status: 400 },
       });
@@ -752,10 +752,10 @@ describe('ContestLeaderboardPage', () => {
       await vi.advanceTimersByTimeAsync(30_000);
       expect(await screen.findByText(/Entry standings are frozen at settlement/)).toBeInTheDocument();
 
-      const leaderboardCallsOnceSettled = getGolfContestLeaderboardMock.mock.calls.length;
+      const leaderboardCallsOnceSettled = getContestLeaderboardMock.mock.calls.length;
       const contestCallsOnceSettled = getContestMock.mock.calls.length;
       await vi.advanceTimersByTimeAsync(90_000);
-      expect(getGolfContestLeaderboardMock.mock.calls.length).toBe(leaderboardCallsOnceSettled);
+      expect(getContestLeaderboardMock.mock.calls.length).toBe(leaderboardCallsOnceSettled);
       expect(getContestMock.mock.calls.length).toBe(contestCallsOnceSettled);
     } finally {
       vi.useRealTimers();
@@ -773,7 +773,7 @@ describe('ContestLeaderboardPage', () => {
       const settlesAt = Date.now() + 45_000;
       getContestMock.mockImplementation(() =>
         Promise.resolve(contestResponse(Date.now() >= settlesAt ? 'COMPLETED' : 'ACTIVE')));
-      getGolfContestLeaderboardMock.mockImplementation(() =>
+      getContestLeaderboardMock.mockImplementation(() =>
         Promise.resolve(leaderboardResponse(Date.now() >= settlesAt ? -12 : -4)));
       renderLeaderboard();
       expect(await screen.findByText('Birdie Hunters Entry 1')).toBeInTheDocument();
@@ -886,9 +886,9 @@ describe('ContestLeaderboardPage', () => {
 
   it('shows a server failure with no refusal code under the generic error, and logs it', async () => {
     getContestMock.mockReset();
-    getGolfContestLeaderboardMock.mockReset();
+    getContestLeaderboardMock.mockReset();
     getContestMock.mockResolvedValue(contestResponse('ACTIVE'));
-    getGolfContestLeaderboardMock.mockResolvedValue({ error: undefined, response: { status: 500 } });
+    getContestLeaderboardMock.mockResolvedValue({ error: undefined, response: { status: 500 } });
 
     renderLeaderboard();
 
@@ -901,11 +901,11 @@ describe('ContestLeaderboardPage', () => {
   });
 
   it('puts the refusal code in the error\'s test id, so a refusal can be told apart from a failure', async () => {
-    primeMocks({ leaderboardError: { code: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN', message: 'Picks are hidden.' } });
+    primeMocks({ leaderboardError: { code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN', message: 'Picks are hidden.' } });
 
     renderLeaderboard();
 
-    expect(await screen.findByTestId('contest-leaderboard-error-CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN')).toBeInTheDocument();
+    expect(await screen.findByTestId('contest-leaderboard-error-CONTEST_LEADERBOARD_PICKS_HIDDEN')).toBeInTheDocument();
   });
 
   it('says the contest could not load when the contest read fails even though the leaderboard loaded', async () => {

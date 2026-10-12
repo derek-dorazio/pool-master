@@ -17,7 +17,7 @@ import {
   getContest,
   getContestEntry,
   getSelectionState,
-  getGolfContestLeaderboard,
+  getContestLeaderboard,
   leaveContest,
   listContestEntries,
   listContests,
@@ -165,7 +165,7 @@ describe('SDK Functional: contest reads and entry access (#291)', () => {
     const reads = {
       listContestEntries: await listContestEntries({ client: outsider.client, path: { contestId } }),
       getContestEntry: await getContestEntry({ client: outsider.client, path: { contestId, entryId } }),
-      getGolfContestLeaderboard: await getGolfContestLeaderboard({ client: outsider.client, path: { contestId } }),
+      getContestLeaderboard: await getContestLeaderboard({ client: outsider.client, path: { contestId } }),
       getSelectionState: await getSelectionState({ client: outsider.client, path: { contestId } }),
       listContests: await listContests({ client: outsider.client, path: { id: league.id } }),
     };
@@ -174,7 +174,7 @@ describe('SDK Functional: contest reads and entry access (#291)', () => {
       .toEqual({
         listContestEntries: 403,
         getContestEntry: 403,
-        getGolfContestLeaderboard: 403,
+        getContestLeaderboard: 403,
         getSelectionState: 403,
         listContests: 403,
       });
@@ -191,10 +191,10 @@ describe('SDK Functional: contest reads and entry access (#291)', () => {
     expect((await listContestEntries({ client: member.client, path: { contestId } })).response.status).toBe(200);
     expect((await getContestEntry({ client: member.client, path: { contestId, entryId } })).response.status).toBe(200);
     expect((await listContests({ client: member.client, path: { id: league.id } })).response.status).toBe(200);
-    // Past the gate, the golf leaderboard refuses a DRAFT contest on its own terms: 400, not 403.
+    // Past the gate, the contest leaderboard refuses a DRAFT contest on its own terms: 400, not 403.
     expectFunctionalError(
-      await getGolfContestLeaderboard({ client: member.client, path: { contestId } }),
-      { status: 400, code: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN' },
+      await getContestLeaderboard({ client: member.client, path: { contestId } }),
+      { status: 400, code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN' },
     );
   });
 

@@ -44,31 +44,31 @@ const NOT_SETTLED: readonly ContestStatus[] = [ContestStatus.COMPLETED, ContestS
 /** Every status settlement may complete a contest from. */
 const SETTLEABLE = Object.values(ContestStatus).filter((status) => !NOT_SETTLED.includes(status));
 
-export interface GolfContestSettlementSummary {
+export interface ContestSettlementSummary {
   sportEventId: string;
   contestsSettled: number;
   contestsCompleted: number;
   standingsUpserted: number;
 }
 
-export interface GolfContestSettlementDeps extends ContestLeaderboardReadDeps {
+export interface ContestSettlementDeps extends ContestLeaderboardReadDeps {
   sportEvents: SportEventRepository;
   contests: ContestRepository;
   standings: ContestEntryStandingRepository;
   logger?: LifecycleLogger;
 }
 
-export class GolfContestSettlementService {
+export class ContestSettlementService {
   private readonly logger: LifecycleLogger;
 
-  constructor(private readonly deps: GolfContestSettlementDeps) {
+  constructor(private readonly deps: ContestSettlementDeps) {
     this.logger = deps.logger ?? createNoopLogger();
   }
 
   async settleCompletedSportEvent(
     sportEventId: string,
     input?: { completedAt?: Date },
-  ): Promise<GolfContestSettlementSummary> {
+  ): Promise<ContestSettlementSummary> {
     const sportEvent = await this.deps.sportEvents.findById(sportEventId);
     if (!sportEvent || sportEvent.status !== SportEventStatus.COMPLETED) {
       return {
@@ -103,7 +103,7 @@ export class GolfContestSettlementService {
         this.logger.error({
           contestId: contest.id,
           sportEventId,
-        }, 'Skipped Golf contest settlement because contest has no counting rule');
+        }, 'Skipped contest settlement because contest has no counting rule');
         continue;
       }
       const scoring = resolveContestScoringDefinition(configuration);
@@ -117,7 +117,7 @@ export class GolfContestSettlementService {
           contestId: contest.id,
           sportEventId,
           reason: scoring.reason,
-        }, 'Skipped Golf contest settlement because its participant scoring rule is missing or names an unknown scoring definition');
+        }, 'Skipped contest settlement because its participant scoring rule is missing or names an unknown scoring definition');
         continue;
       }
       const scoringDefinition = scoring.definition;
@@ -162,7 +162,7 @@ export class GolfContestSettlementService {
       contestsSettled,
       contestsCompleted,
       standingsUpserted,
-    }, 'Golf contest settlement completed from completed sport event');
+    }, 'Contest settlement completed from completed sport event');
 
     return {
       sportEventId,

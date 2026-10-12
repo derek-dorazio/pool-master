@@ -1,4 +1,4 @@
-import type { ContestConfigTemplateDto, GolfEffectiveTierDto } from '@poolmaster/shared/dto';
+import type { ContestConfigTemplateDto, EffectiveTierDto } from '@poolmaster/shared/dto';
 import type { ContestConfigTemplate } from '@poolmaster/shared/domain';
 import type { SportEventTierGroup } from '../modules/events/sport-event-tier-service';
 
@@ -29,9 +29,9 @@ export function mapContestConfigTemplateDto(
  * mapper does — the commissioner surface is read-only where the root-admin
  * one is editable, but both read through getEffectiveTiersForSportEvent.
  */
-export function toGolfEffectiveTierDtoList(
+export function toEffectiveTierDtoList(
   tiers: SportEventTierGroup[],
-): GolfEffectiveTierDto[] {
+): EffectiveTierDto[] {
   return tiers.map((tier) => ({
     tierKey: tier.tierKey,
     label: tier.label,

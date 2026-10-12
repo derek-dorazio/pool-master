@@ -2645,7 +2645,7 @@ export type ContestConfigurationRequest = {
 /**
  * One inherited event tier and its golfer assignments.
  */
-export type GolfEffectiveTierDto = {
+export type EffectiveTierDto = {
     /**
      * Stable per-event tier key.
      */
@@ -6738,7 +6738,7 @@ export type ContestEntryPickDto = {
 };
 
 /**
- * Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint.
+ * Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint.
  */
 export type ContestEntryParticipantDetailDto = {
     pickId: string;
@@ -6930,7 +6930,7 @@ export type ContestCountingRuleDto = {
     /**
      * Sum the best N picks' totals for each entry.
      */
-    type: 'BEST_N_GOLFERS';
+    type: 'BEST_N';
     /**
      * N: how many picks count toward each entry's total.
      */
@@ -6960,7 +6960,7 @@ export type ContestLeaderboardResponse = {
         /**
          * Sum the best N picks' totals for each entry.
          */
-        type: 'BEST_N_GOLFERS';
+        type: 'BEST_N';
         /**
          * N: how many picks count toward each entry's total.
          */
@@ -14033,18 +14033,18 @@ export type UpdateContestEntryResponses = {
 
 export type UpdateContestEntryResponse = UpdateContestEntryResponses[keyof UpdateContestEntryResponses];
 
-export type GetGolfContestLeaderboardData = {
+export type GetContestLeaderboardData = {
     body?: never;
     path: {
         contestId: string;
     };
     query?: never;
-    url: '/api/v1/contests/{contestId}/golf/leaderboard';
+    url: '/api/v1/contests/{contestId}/leaderboard';
 };
 
-export type GetGolfContestLeaderboardErrors = {
+export type GetContestLeaderboardErrors = {
     /**
-     * CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).
+     * CONTEST_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).
      */
     400: ErrorEnvelope;
     /**
@@ -14061,16 +14061,16 @@ export type GetGolfContestLeaderboardErrors = {
     404: ErrorEnvelope;
 };
 
-export type GetGolfContestLeaderboardError = GetGolfContestLeaderboardErrors[keyof GetGolfContestLeaderboardErrors];
+export type GetContestLeaderboardError = GetContestLeaderboardErrors[keyof GetContestLeaderboardErrors];
 
-export type GetGolfContestLeaderboardResponses = {
+export type GetContestLeaderboardResponses = {
     /**
      * Member-facing contest leaderboard. Live, entry standings are computed from the event's standings; once the contest is COMPLETED they are the standings frozen at settlement.
      */
     200: ContestLeaderboardResponse;
 };
 
-export type GetGolfContestLeaderboardResponse = GetGolfContestLeaderboardResponses[keyof GetGolfContestLeaderboardResponses];
+export type GetContestLeaderboardResponse = GetContestLeaderboardResponses[keyof GetContestLeaderboardResponses];
 
 export type LeaveContestData = {
     body?: never;

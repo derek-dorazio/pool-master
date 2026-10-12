@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ContestStatus } from '@poolmaster/shared/domain';
-import { getGolfContestLeaderboard, type ContestLeaderboardResponse } from '@/lib/api';
+import { getContestLeaderboard, type ContestLeaderboardResponse } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { CONTEST_POLL_INTERVAL_MS, shouldPollContestEntries } from './contest-status';
@@ -17,7 +17,7 @@ export function useContestLeaderboardQuery(
   return useQuery({
     queryKey: QueryKeys.contests.leaderboard(contestId),
     queryFn: async (): Promise<ContestLeaderboardResponse> => {
-      const response = await getGolfContestLeaderboard({ path: { contestId } });
+      const response = await getContestLeaderboard({ path: { contestId } });
 
       if (!response.data) {
         throwApiError(response.error, 'Contest leaderboard response is missing data.');

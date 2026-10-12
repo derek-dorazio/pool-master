@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Lock, Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { deleteContest, type GolfEffectiveTierDto } from '@/lib/api';
+import { deleteContest, type EffectiveTierDto } from '@/lib/api';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -47,7 +47,7 @@ function FixedNote() {
 }
 
 /** The event's tiers, Tier 1 on top, one per row with its golfer count. */
-function ContestTiersSection({ eventName, tiers }: { eventName: string; tiers: GolfEffectiveTierDto[] }) {
+function ContestTiersSection({ eventName, tiers }: { eventName: string; tiers: EffectiveTierDto[] }) {
   const sortedTiers = [...tiers].sort((left, right) => left.tierNumber - right.tierNumber);
 
   return (

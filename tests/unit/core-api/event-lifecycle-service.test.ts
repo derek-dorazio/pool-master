@@ -221,14 +221,14 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-g1z treats a same-status call as a no-op, never rejecting it', async () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.COMPLETED, endDate: new Date('2026-05-31T22:00:00.000Z') });
     const contests = contestDeps();
-    const golfContestSettlement = { settleCompletedSportEvent: jest.fn().mockResolvedValue(undefined) };
+    const contestSettlement = { settleCompletedSportEvent: jest.fn().mockResolvedValue(undefined) };
     const service = new EventLifecycleService(
       contests,
       sportEvents,
       fakeLogger(),
       undefined,
       'http://localhost:5173',
-      golfContestSettlement,
+      contestSettlement,
     );
 
     await expect(
