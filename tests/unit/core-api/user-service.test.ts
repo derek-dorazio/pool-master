@@ -392,7 +392,7 @@ describe('the root-admin role', () => {
     );
 
     await expect(service.setRootAdmin(rootAdmin, 'user-1', false))
-      .rejects.toMatchObject({ code: 'LAST_ROOT_ADMIN', statusCode: 409 });
+      .rejects.toMatchObject({ code: 'ACCOUNT_LAST_ROOT_ADMIN', statusCode: 409 });
   });
 
   it('treats an unchanged role as a no-op that never counts the root admins', async () => {

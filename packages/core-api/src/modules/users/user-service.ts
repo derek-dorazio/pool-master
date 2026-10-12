@@ -440,7 +440,7 @@ export class UserService {
       }, 'Rejected removal of the last root admin');
       throw new UserOperationError(
         'Cannot remove the last remaining root admin.',
-        'LAST_ROOT_ADMIN',
+        'ACCOUNT_LAST_ROOT_ADMIN',
         409,
       );
     }

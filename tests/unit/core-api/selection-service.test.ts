@@ -462,11 +462,11 @@ describe('#324 SelectionService.submitSelection — the guards, in order', () =>
     expect(createPick).not.toHaveBeenCalled();
   });
 
-  it('answers 404 ENTRY_NOT_FOUND for an entry outside the contest', async () => {
+  it('answers 404 CONTEST_ENTRY_NOT_FOUND for an entry outside the contest', async () => {
     const { service, createPick } = setup();
 
     await expect(service.submitSelection(submit({ entryId: 'entry-nope' }))).rejects.toMatchObject({
-      code: 'ENTRY_NOT_FOUND',
+      code: 'CONTEST_ENTRY_NOT_FOUND',
       statusCode: 404,
       message: `Entry entry-nope was not found for contest ${CONTEST_ID}`,
     });
@@ -936,11 +936,11 @@ describe('SelectionService.submitEntry — an entry counts only once its owner s
     expect(deps.entries.update).not.toHaveBeenCalled();
   });
 
-  it('refuses 404 ENTRY_NOT_FOUND, 401 AUTH_SESSION_REQUIRED and 403 ENTRY_ACCESS_DENIED in that order', async () => {
+  it('refuses 404 CONTEST_ENTRY_NOT_FOUND, 401 AUTH_SESSION_REQUIRED and 403 ENTRY_ACCESS_DENIED in that order', async () => {
     const { service } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
 
     await expect(service.submitEntry(submitEntryInput({ entryId: 'missing', actorUserId: undefined })))
-      .rejects.toMatchObject({ code: 'ENTRY_NOT_FOUND', statusCode: 404 });
+      .rejects.toMatchObject({ code: 'CONTEST_ENTRY_NOT_FOUND', statusCode: 404 });
     await expect(service.submitEntry(submitEntryInput({ actorUserId: undefined })))
       .rejects.toMatchObject({ code: 'AUTH_SESSION_REQUIRED', statusCode: 401 });
     await expect(service.submitEntry(submitEntryInput({ actorUserId: 'someone-else' })))

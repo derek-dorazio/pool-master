@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ErrorEnvelope } from '@poolmaster/shared/dto/errors.dto';
 import { buildRequestLogBindings } from './logger';
-import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import { isApiErrorCode, type ApiErrorCode } from '@poolmaster/shared/dto';
 
 /**
  * What the handler receives: Fastify's own errors carry `code`, `statusCode` and `validation`, and
@@ -18,8 +18,13 @@ function inferStatusCode(error: ErrorLike): number {
   return typeof error.statusCode === 'number' ? error.statusCode : 500;
 }
 
+/**
+ * The code a client sees: a listed `ApiErrorCode`, or Fastify's own `FST_ERR_*` code as it is.
+ * Any other runtime code (a Prisma `P2002`, a Node `ECONNREFUSED`) is an internal detail, so it
+ * becomes `INTERNAL_ERROR` on a 5xx and `BAD_REQUEST` on a 4xx; the log still carries the error.
+ */
 function inferErrorCode(error: ErrorLike, statusCode: number): string {
-  if (typeof error.code === 'string' && error.code.length > 0) {
+  if (error.code !== undefined && (isApiErrorCode(error.code) || error.code.startsWith('FST_ERR_'))) {
     return error.code;
   }
 
