@@ -85,6 +85,9 @@ export const CONTEST_BUDGET_FIELD_OUT_OF_RANGE = 'CONTEST_BUDGET_FIELD_OUT_OF_RA
 /** Error code for rules of another selection type than the contest's (#93). */
 export const CONTEST_RULES_SELECTION_TYPE_MISMATCH = 'CONTEST_RULES_SELECTION_TYPE_MISMATCH';
 
+/** Error code for a selection type the event's sport does not offer (#602). */
+export const CONTEST_SELECTION_TYPE_NOT_ALLOWED = 'CONTEST_SELECTION_TYPE_NOT_ALLOWED';
+
 /**
  * Error code for a configuration edit on a contest that is no longer DRAFT (#117). Opening a
  * contest to its league locks its configuration for good: members enter against those rules.

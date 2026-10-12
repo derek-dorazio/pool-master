@@ -775,7 +775,7 @@ function mapInvitationStatusCode(status: InvitationStatus): ApiErrorCode {
       return 'LEAGUE_INVITATION_REVOKED';
     case InvitationStatus.EXPIRED:
       return 'LEAGUE_INVITATION_EXPIRED';
-    default:
+    case InvitationStatus.PENDING:
       return 'LEAGUE_INVITATION_INVALID';
   }
 }

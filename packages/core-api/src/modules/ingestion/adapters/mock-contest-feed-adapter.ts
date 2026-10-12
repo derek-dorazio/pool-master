@@ -423,15 +423,15 @@ function withMockEventState(path: string, options?: ProviderEventSyncOptions): s
  * the value to a real `Sport` would cross-contaminate (e.g. routing
  * a team-tournament event into NCAA basketball).
  */
+const DOMAIN_SPORT_BY_MOCK_SPORT: Readonly<Record<SupportedMockSport, Sport | null>> = {
+  GOLF: Sport.GOLF,
+  TENNIS: null,
+  NCAA_BASKETBALL: null,
+  TEAM_TOURNAMENT: null,
+};
+
 function toDomainSport(sport: SupportedMockSport): Sport | null {
-  switch (sport) {
-    case 'GOLF':
-      return Sport.GOLF;
-    case 'TENNIS':
-    case 'NCAA_BASKETBALL':
-    case 'TEAM_TOURNAMENT':
-      return null;
-  }
+  return DOMAIN_SPORT_BY_MOCK_SPORT[sport];
 }
 
 /**
@@ -451,6 +451,7 @@ function toParticipantInactiveReason(
     case 'cut':
     case 'eliminated':
       return ParticipantInactiveReason.ELIMINATED;
+    case undefined:
     default:
       return undefined;
   }
@@ -536,15 +537,12 @@ function toSportEvent(
   };
 }
 
+/** The field, with the odds feed's view of each contestant laid over it. */
 function resolveParticipants(detail: EventDetailResponse): ContestantRecord[] {
-  if (detail.sport === Sport.GOLF) {
-    return mergeContestantView(
-      detail.event.field.contestants,
-      detail.event.feeds.odds.contestants,
-    );
-  }
-
-  return detail.event.field.contestants;
+  return mergeContestantView(
+    detail.event.field.contestants,
+    detail.event.feeds.odds.contestants,
+  );
 }
 
 function mapEventStatus(

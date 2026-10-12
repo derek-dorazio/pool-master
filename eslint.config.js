@@ -157,6 +157,14 @@ export default tseslint.config(
       '@typescript-eslint/prefer-string-starts-ends-with': 'error',
       '@typescript-eslint/require-array-sort-compare': 'error',
 
+      // #602 — a `switch` over a union or enum must name every member, or end in
+      // `default: assertNever(x)`. A plain `default` would let a new sport, scoring family or
+      // live-score category fall through silently.
+      '@typescript-eslint/switch-exhaustiveness-check': ['error', {
+        considerDefaultExhaustiveForUnions: false,
+        requireDefaultForNonUnion: false,
+      }],
+
       // #162 — a type-only import that is not marked `import type` is emitted as a real
       // import by the transpiler. Under `isolatedModules` that is how a build ends up with a
       // runtime dependency on a module it only needed types from, and how a circular import
@@ -406,6 +414,26 @@ export default tseslint.config(
         allow: ['LOG_LEVEL'],
       }],
     },
+  },
+  {
+    // Sport-specific behaviour lives in the sport registry or a scoring family (#602,
+    // rules/architecture-rules.md §4 *Sport extension*). Those folders are where the
+    // difference belongs, so they are exempt; tests compare sports freely in fakes and
+    // assertions.
+    files: ['packages/*/src/**/*.ts', 'packages/shared/**/*.ts', 'packages/core-api/scripts/**/*.ts',
+            'clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'packages/shared/domain/sports/**',
+      'packages/core-api/src/modules/scoring-families/**',
+      'packages/shared/generated/**',
+      'packages/shared/dist/**',
+      // A stand-in for an external provider: its sports are the provider's own strings.
+      'packages/mock-contest-feed-provider/**',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-sport-branching': 'error' },
   },
   {
     // Which environment this is comes from POOLMASTER_ENVIRONMENT via readAppEnv(); NODE_ENV

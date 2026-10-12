@@ -1002,7 +1002,7 @@ describe('ContestManagementService', () => {
     };
 
     function build(options: {
-      reader?: ReturnType<typeof createSportEventReader> | undefined;
+      reader?: ReturnType<typeof createSportEventReader>;
       contestRepo?: ContestRepository;
       configurationRepo?: ContestConfigurationRepository;
       templateRepo?: ContestConfigTemplateRepository;
@@ -1016,7 +1016,7 @@ describe('ContestManagementService', () => {
         createParticipantScoringRuleRepo(),
         createSportEventTierServiceStub(),
         undefined,
-        'reader' in options ? options.reader : createSportEventReader(),
+        options.reader ?? createSportEventReader(),
         () => CONTEST_MANAGEMENT_TEST_NOW,
       );
       return { service, contestRepo, configurationRepo };
@@ -1091,16 +1091,22 @@ describe('ContestManagementService', () => {
         .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND' });
     });
 
-    it('answers 404 opening a draft whose event is gone, and opens without an event check when no reader is wired', async () => {
+    it('refuses a settings change on a contest with no sport event, with 404 SPORT_EVENT_NOT_FOUND and nothing stored', async () => {
+      const contestRepo = createContestRepo();
+      const contest = await contestRepo.findById('contest-1');
+      (contestRepo.findById as jest.Mock).mockResolvedValue({ ...contest, sportEventId: undefined });
+      const { service, configurationRepo } = build({ contestRepo });
+
+      await expect(service.updateContestConfiguration('contest-1', expectDefined(CREATE.configuration)))
+        .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_FOUND', statusCode: 404 });
+      expect(configurationRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('answers 404 opening a draft whose event is gone', async () => {
       const reader = createSportEventReader();
       reader.findById.mockResolvedValue(null);
       await expect(build({ reader }).service.openContest('league-1', 'contest-1'))
         .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_FOUND', statusCode: 404 });
-
-      const contestRepo = createContestRepo();
-      (contestRepo.transitionStatus as jest.Mock).mockResolvedValue(true);
-      await expect(build({ contestRepo, reader: undefined }).service.openContest('league-1', 'contest-1'))
-        .resolves.toMatchObject({ id: 'contest-1' });
     });
 
     it('answers 404 opening a draft with no configuration', async () => {

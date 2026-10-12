@@ -21,6 +21,7 @@ import noBareEnumLiterals from '../no-bare-enum-literals.mjs';
 import noInlineThemeStyles from '../no-inline-theme-styles.mjs';
 import noMockedApi from '../no-mocked-api.mjs';
 import noNodeEnvReads from '../no-node-env-reads.mjs';
+import noSportBranching from '../no-sport-branching.mjs';
 import noRawThemeColors from '../no-raw-theme-colors.mjs';
 import noUnawaitedSendError from '../no-unawaited-send-error.mjs';
 
@@ -549,5 +550,25 @@ ruleTester.run('no-unawaited-send-error', noUnawaitedSendError, {
       code: 'async function gate(reply) { sendError(reply, 403, "X", "x"), log(); }',
       errors: [{ messageId: 'unawaitedSendError' }],
     },
+  ],
+});
+
+ruleTester.run('no-sport-branching', noSportBranching, {
+  valid: [
+    // Comparing two sport values is a lookup, not a branch on one sport.
+    'const same = event.sport === row.sport;',
+    // Naming a sport as an argument is not a comparison.
+    'const golf = findSportRow(rows, Sport.GOLF);',
+    // Other fields compared to literals are other rules' business.
+    "const live = result.category === 'GOLF';",
+    'switch (event.status) { case Status.OPEN: break; }',
+  ],
+  invalid: [
+    { code: 'if (event.sport === Sport.GOLF) {}', errors: [{ messageId: 'sportBranch' }] },
+    { code: 'if (Sport.GOLF !== sport) {}', errors: [{ messageId: 'sportBranch' }] },
+    { code: "if (event.sport !== 'GOLF') {}", errors: [{ messageId: 'sportBranch' }] },
+    { code: "const isGolf = 'GOLF' == sport;", errors: [{ messageId: 'sportBranch' }] },
+    { code: 'switch (event.sport) { default: break; }', errors: [{ messageId: 'sportBranch' }] },
+    { code: 'switch (kind) { case Sport.GOLF: break; }', errors: [{ messageId: 'sportBranch' }] },
   ],
 });

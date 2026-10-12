@@ -22,6 +22,7 @@ import {
   CONTEST_EVENT_ALREADY_STARTED,
   CONTEST_NOT_DRAFT,
   CONTEST_RULES_SELECTION_TYPE_MISMATCH,
+  CONTEST_SELECTION_TYPE_NOT_ALLOWED,
 } from '@poolmaster/shared/dto';
 import type {
   BudgetContestConfig,
@@ -30,6 +31,7 @@ import type {
   ContestConfiguration,
   ContestRules,
   ContestSelectionConfig,
+  ParticipantScoringDefinitionId,
   SportEventStatus,
   TieredContestRules,
   TournamentFormat,
@@ -39,6 +41,8 @@ import {
   ContestStatus,
   SelectionType,
   canFillBudgetRoster,
+  getSportDefinition,
+  sportAllowsSelectionType,
   getTieredRosterSize,
   isContestFormatValidForTournamentFormat,
 } from '@poolmaster/shared/domain';
@@ -90,7 +94,7 @@ export class ContestManagementService {
     private readonly participantContestScoringRuleRepo: ParticipantContestScoringRuleRepository,
     private readonly sportEventTierService: SportEventTierService,
     private readonly logger: LifecycleLogger = createNoopLogger(),
-    private readonly sportEventReader?: ContestCreateSportEventReader,
+    private readonly sportEventReader: ContestCreateSportEventReader,
     private readonly now: () => Date = () => new Date(),
   ) {}
 
@@ -117,8 +121,7 @@ export class ContestManagementService {
     );
     const sportEvent = await this.assertSportEventContestEligible(input.sportEventId);
     if (
-      sportEvent
-      && !isContestFormatValidForTournamentFormat(
+      !isContestFormatValidForTournamentFormat(
         sportEvent.tournamentFormat,
         input.contestFormat,
       )
@@ -136,7 +139,10 @@ export class ContestManagementService {
     }
     const { selectionType } = input;
     assertRulesMatchSelectionType(resolvedConfiguration.configuration, selectionType);
-    const configJson = await this.resolveContestRules(input.sportEventId, resolvedConfiguration.configuration);
+    const { configJson, scoringDefinitionId } = await this.resolveContestRules(
+      input.sportEventId,
+      resolvedConfiguration.configuration,
+    );
     const contest = await this.contestRepo.create({
       leagueId: context.leagueId,
       sportEventId: input.sportEventId,
@@ -162,6 +168,7 @@ export class ContestManagementService {
 
     await syncDerivedScoring(
       configuration,
+      scoringDefinitionId,
       this.participantContestScoringRuleRepo,
     );
 
@@ -252,7 +259,7 @@ export class ContestManagementService {
       );
     }
     assertRulesMatchSelectionType(input, configuration.selectionType);
-    const configJson = await this.resolveContestRules(contest.sportEventId, input);
+    const { configJson, scoringDefinitionId } = await this.resolveContestRules(contest.sportEventId, input);
 
     await this.contestConfigurationRepo.update(configuration.id, {
       configJson,
@@ -269,6 +276,7 @@ export class ContestManagementService {
 
     await syncDerivedScoring(
       refreshedConfiguration,
+      scoringDefinitionId,
       this.participantContestScoringRuleRepo,
     );
 
@@ -339,7 +347,7 @@ export class ContestManagementService {
     contestId: string,
     sportEventId: string | undefined,
   ): Promise<void> {
-    if (!this.sportEventReader || !sportEventId) {
+    if (!sportEventId) {
       return;
     }
     const sportEvent = await this.sportEventReader.findById(sportEventId);
@@ -368,11 +376,7 @@ export class ContestManagementService {
 
   private async assertSportEventContestEligible(
     sportEventId: string,
-  ): Promise<ContestCreateSportEventState | null> {
-    if (!this.sportEventReader) {
-      return null;
-    }
-
+  ): Promise<ContestCreateSportEventState> {
     const sportEvent = await this.sportEventReader.findById(sportEventId);
     if (!sportEvent) {
       this.logger.warn({ sportEventId }, 'contest management create contest missing sport event');
@@ -429,32 +433,59 @@ export class ContestManagementService {
   }
 
   /**
-   * The rules a contest stores, checked against its event (#93): one arm per selection type.
-   * Create, rules changes and opening all come through here, so each holds the same rules.
+   * The rules a contest stores, checked against its event (#93) and its sport's definition
+   * (#602): one arm per selection type. Create, rules changes and opening all come through
+   * here, so each holds the same rules. Also answers which scoring definition the contest
+   * ranks by: its sport's default.
    */
   private async resolveContestRules(
     sportEventId: string | undefined,
     rules: ContestRules,
-  ): Promise<ContestSelectionConfig> {
+  ): Promise<{ configJson: ContestSelectionConfig; scoringDefinitionId: ParticipantScoringDefinitionId }> {
     const sportEvent = await this.findRulesSportEvent(sportEventId);
+    const definition = getSportDefinition(sportEvent.sport);
+    if (!sportAllowsSelectionType(definition, rules.selectionType)) {
+      this.logger.warn({
+        sportEventId: sportEvent.id,
+        sport: sportEvent.sport,
+        selectionType: rules.selectionType,
+      }, 'contest management rules refused for a selection type the sport does not offer');
+      throw new ContestManagementError(
+        `A ${sportEvent.sport} contest can't use ${rules.selectionType} selection.`,
+        CONTEST_SELECTION_TYPE_NOT_ALLOWED,
+      );
+    }
+    const [scoringDefinitionId] = definition.scoringDefinitions;
     switch (rules.selectionType) {
       case SelectionType.TIERED:
-        await this.assertTieredRulesFitTierCount(sportEventId, rules);
+        await this.assertTieredRulesFitTierCount(sportEvent.id, rules);
         return {
-          selectionType: rules.selectionType,
-          picksPerTier: rules.picksPerTier,
-          countedScores: rules.countedScores,
+          configJson: {
+            selectionType: rules.selectionType,
+            picksPerTier: rules.picksPerTier,
+            countedScores: rules.countedScores,
+          },
+          scoringDefinitionId,
         };
       case SelectionType.BUDGET_PICK:
-        return this.resolveBudgetRules(sportEventId, sportEvent, rules);
+        return {
+          configJson: await this.resolveBudgetRules(sportEvent, rules),
+          scoringDefinitionId,
+        };
     }
   }
 
+  /** A contest's rules are checked against its event, so a contest with none has no rules to keep. */
   private async findRulesSportEvent(
     sportEventId: string | undefined,
-  ): Promise<ContestCreateSportEventState | null> {
-    if (!this.sportEventReader || !sportEventId) {
-      return null;
+  ): Promise<ContestCreateSportEventState> {
+    if (!sportEventId) {
+      this.logger.warn({ sportEventId: null }, 'contest management rules validation for a contest with no sport event');
+      throw new ContestManagementError(
+        'This contest has no sporting event.',
+        'SPORT_EVENT_NOT_FOUND',
+        404,
+      );
     }
 
     const sportEvent = await this.sportEventReader.findById(sportEventId);
@@ -476,12 +507,9 @@ export class ContestManagementService {
    * against" behavior the old participantCount-based check had.
    */
   private async assertTieredRulesFitTierCount(
-    sportEventId: string | undefined,
+    sportEventId: string,
     rules: TieredContestRules,
   ): Promise<void> {
-    if (!sportEventId) {
-      return;
-    }
     const tiers = await this.sportEventTierService.getEffectiveTiersForSportEvent(sportEventId);
     if (tiers.length === 0) {
       return;
@@ -495,18 +523,18 @@ export class ContestManagementService {
    * submit an entry to is refused here, not discovered by its members.
    */
   private async resolveBudgetRules(
-    sportEventId: string | undefined,
-    sportEvent: ContestCreateSportEventState | null,
+    sportEvent: ContestCreateSportEventState,
     rules: BudgetContestRules,
   ): Promise<BudgetContestConfig> {
+    const sportEventId = sportEvent.id;
     if (rules.countedScores > rules.rosterSize) {
       throw new ContestManagementError(
         `countedScores (${rules.countedScores}) cannot exceed the roster of ${rules.rosterSize}.`,
         CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
       );
     }
-    if (!sportEventId || !sportEvent || sportEvent.salaryCap === null || !this.sportEventReader) {
-      this.logger.warn({ sportEventId: sportEventId ?? null }, 'contest management budget rules refused for an unpriced event');
+    if (sportEvent.salaryCap === null) {
+      this.logger.warn({ sportEventId }, 'contest management budget rules refused for an unpriced event');
       throw new ContestManagementError(
         'This event\'s golfers have no prices, so it can\'t run a budget contest.',
         CONTEST_EVENT_NOT_PRICED,
@@ -590,6 +618,7 @@ function assertRulesMatchSelectionType(rules: ContestRules, selectionType: Selec
 
 async function syncDerivedScoring(
   configuration: ContestConfiguration,
+  scoringDefinitionId: ParticipantScoringDefinitionId,
   participantRuleRepo: ParticipantContestScoringRuleRepository,
 ): Promise<void> {
   const typedConfiguration = ensureTypedConfiguration(configuration);
@@ -601,7 +630,7 @@ async function syncDerivedScoring(
 
   await participantRuleRepo.create({
     contestConfigurationId: configuration.id,
-    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+    participantScoringDefinitionId: scoringDefinitionId,
     sortOrder: 1,
     config: buildParticipantScoringConfig(typedConfiguration),
     active: true,

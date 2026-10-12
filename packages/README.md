@@ -96,6 +96,7 @@ Polls configured sports data providers, upserts normalized event data, and store
 | Layer | Files | Purpose |
 |-------|-------|---------|
 | `domain/` | `enums.ts`, `types.ts`, `contest-scoring.ts`, `contest-management-types.ts` | Domain interfaces, enum types, and the participant scoring definitions (direction, unit, format) |
+| `domain/sports/` | `registry.ts`, `golf.ts` | The sport registry: one `SportDefinition` per sport (scoring family, selection types, vocabulary, round labels). See `rules/architecture-rules.md` §4 *Sport extension* |
 | `db/` | `ports.ts` | 25+ repository port interfaces (hexagonal architecture) |
 | `utils/` | `id.ts` | `generateId()` via `crypto.randomUUID()` |
 

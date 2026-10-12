@@ -636,7 +636,7 @@ function mapInvitationStatusCode(status: SquadOwnerInvitationStatus): ApiErrorCo
       return 'SQUAD_OWNER_INVITATION_REVOKED';
     case SharedSquadOwnerInvitationStatus.EXPIRED:
       return 'SQUAD_OWNER_INVITATION_EXPIRED';
-    default:
+    case SharedSquadOwnerInvitationStatus.PENDING:
       return 'SQUAD_OWNER_INVITATION_INVALID';
   }
 }
