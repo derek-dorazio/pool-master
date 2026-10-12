@@ -319,6 +319,15 @@ ruleTester.run('no-disabled-tests', noDisabledTests, {
       code: "it.failing('t', () => {});",
       errors: [{ messageId: 'disabledTest' }],
     },
+    // Playwright's own skip, in the e2e suites since #616.
+    {
+      code: "test.fixme('t', async () => {});",
+      errors: [{ messageId: 'disabledTest', data: { form: 'test.fixme' } }],
+    },
+    {
+      code: "test.describe.fixme('suite', () => {});",
+      errors: [{ messageId: 'disabledTest' }],
+    },
     {
       code: "xit('t', () => {});",
       errors: [{ messageId: 'disabledTest', data: { form: 'xit' } }],

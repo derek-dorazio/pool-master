@@ -263,6 +263,7 @@ test and note the gap in the slice's closing comment, where a human reads it.
 - `it.todo(...)`, `test.todo(...)`
 - `it.fails(...)`, `test.fails(...)` (Vitest expected-failure marker)
 - `it.failing(...)` (Jest equivalent)
+- `test.fixme(...)`, `test.describe.fixme(...)` (Playwright's skip)
 - Test files renamed to `.skip.test.ts` or moved into a `skipped/` directory to evade discovery
 - `pending(...)` calls inside a test body
 - Hand-rolled early-`return` from a test body that bypasses assertions
