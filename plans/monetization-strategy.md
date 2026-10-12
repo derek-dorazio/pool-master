@@ -2,7 +2,7 @@
 
 **Tracking issue:** #581
 
-Written 2026-10-10 for Derek's review. Open questions sit under the section they belong to,
+Written 2026-10-10 for Derek's review; sports and pool styles added 2026-10-12. Open questions sit under the section they belong to,
 each with a recommendation. Research and strategy only: no implementation is
 scheduled. **Taking payments is out of scope** throughout: this document covers what to sell
 and how the app would know a league or contest has it, not how money is collected.
@@ -18,12 +18,18 @@ and how the app would know a league or contest has it, not how money is collecte
   2. **League membership** (annual): Premium, Pro and Platinum. Each raises the cap for every
      contest in the league, opens the other selection types, and adds features that make the
      league stickier year over year: history, automated reminders, live standings updates.
+- Two more ways to package it (added 2026-10-12, Derek's ideas): by **how many sports** a
+  league plays (free plays one, paid tiers play them all), and by **pool style**, office
+  pool, pick'em or DFS-style, each sold almost as its own product with light branding, and
+  Platinum getting all of them. See *Sports and pool styles*.
 - Charge for **scale, depth and automation**. Keep the core loop free: invite, pick, watch the
   leaderboard, see who won. A league that cannot get started never pays.
 - The commissioner is the buyer in every model we found. Never charge a member to join.
 - Fitting it into the system is small, as Derek expected: one plan level on the league, one
   list of unlocks on the contest, one function that turns those into entitlements, and checks
-  at three places that already exist. History and notifications are the real work, and they
+  at three places that already exist. Sports and pool styles use the same function: a
+  contest option is offered only when it is built (the sport registry), released by the root
+  admin, and covered by the league's plan or the contest's unlocks (see *Enablement*). History and notifications are the real work, and they
   are features, not plumbing.
 
 ## What other sites charge
@@ -111,7 +117,9 @@ A starting point to react to, not a decision. Names follow Derek's message.
 | | Free | Premium | Pro | Platinum |
 |---|---|---|---|---|
 | Entries per contest | 20 | 100 | 200 | Unlimited |
-| Selection types | Tiered | All | All | All |
+| Sports | 1 | All | All | All |
+| Pool styles (office pool, pick'em, DFS-style) | 1 | 1 | 2 | All |
+| Selection types | Tiered | All in its styles | All in its styles | All |
 | Core loop: invites, picks, live leaderboard, results | ✓ | ✓ | ✓ | ✓ |
 | Results of this season's contests | ✓ | ✓ | ✓ | ✓ |
 | History: list of every past contest and its results | | ✓ | ✓ | ✓ |
@@ -195,6 +203,82 @@ Derek asked whether the cap belongs on squads per league or entries per contest.
    "maximum entries" on contest settings, never above the plan's cap.
 7. **Can the cap be raised after the contest opens?** Recommended: yes, any time until picks
    close; it can never be lowered below the entries already made.
+
+## Sports and pool styles
+
+Two more vectors from Derek (2026-10-12). Both narrow *what a league can run*, where the cap
+narrows *how big* it can run. Both reuse the same plan level, the same unlocks and the same
+entitlements function as the rest of this document.
+
+### Vector: number of sports
+
+A free league plays **one sport**. Paid tiers play **every sport** that is built. Golf is
+the only built sport today; the next candidates are tennis, March Madness and NFL pick'em
+(`plans/next-sport-adoption.md`, `plans/pickem-pools.md`).
+
+- **How a league "has" a sport**: the league picks its sports in league settings. A free
+  league picks one; creating a contest on an event of another sport shows that sport locked
+  with an upgrade note.
+- **Per-contest unlock**: a free league can pay once to run one contest in a second sport,
+  the same way it can buy a bigger cap. This matters most for March Madness: it is the
+  biggest office-pool event of the year, and a golf league that hits a locked wall there
+  instead of a small one-off price is the league most likely to leave.
+- **Market note**: in the sites we looked at, sport is not what is charged for. RunYourPool
+  prices per entry across 11 sports. Charging by sport count is a differentiator but also a
+  risk: it puts a wall in front of growth. The per-contest unlock is what softens it.
+
+#### Open questions: number of sports
+
+1. **One sport free, all sports on every paid tier?** Recommended: yes. A middle step (say
+   three sports on Premium) adds a number to explain for little gain while we have few
+   sports.
+2. **Can a free league switch its one sport?** Recommended: yes, between contests (no open
+   contest on the old sport); its past results stay visible under the usual history rules.
+3. **What counts as "in use"?** Recommended: the league's chosen sports in settings, not the
+   sports of its past contests, so history never counts against a league.
+4. **Offer a per-contest sport unlock?** Recommended: yes, priced like the cap bands (around
+   $10), so a free league can run its one March Madness pool.
+5. **Does a new sport launch open to everyone first?** Recommended: yes, every league gets a
+   new sport free for its first season, then it follows the plan. Early users are the
+   feedback loop.
+
+### Vector: pool style as a product line
+
+Derek's idea: the kinds of pool are different enough to feel like different sites, each with
+its own light branding, and Platinum gets all of them. Three styles:
+
+| Style | What it feels like | Contest formats and selection types (today's enums) | Sports |
+|---|---|---|---|
+| **Office pool** | One tournament, pick a lineup, watch a leaderboard; the classic golf or March Madness pool | `ROSTER` with `TIERED`, later `SNAKE_DRAFT` and category | Golf, tennis, March Madness team pools, races |
+| **Pick'em** | A season of weekly game picks: straight-up, against the spread, confidence, survivor | `PICKEM_CONFIDENCE`, `SURVIVOR`, `BRACKET_PICK_EM`, `PICK_EM` | NFL, college football, AFL, soccer, March Madness brackets |
+| **DFS-style** | Salary cap lineups, many entries, ownership percentages, fast single-event contests | `ROSTER` with `BUDGET_PICK`, `OPEN_SELECTION` | Golf first, then any sport with prices |
+
+- **One app, three faces**: a league has a style (or several on Platinum). The style sets the
+  accent colour, the league home page's emphasis (a leaderboard for office pools, this week's
+  games for pick'em, the salary cap and ownership for DFS), default wording, and which
+  contest formats Create contest offers first. The domain and the code stay one product.
+  Separate domains or app names per style are a marketing choice that can come later on top.
+- **Conflict with the earlier unlock**: budget selection was a $5 per-contest unlock above. In
+  this model budget belongs to DFS-style, so an office pool league buying budget for one
+  contest is the same per-contest unlock, just named as "a DFS-style contest".
+- **Pricing shape**: Free gets one style (office pool by default), Premium the full selection
+  types within its one style, Pro two styles, Platinum all.
+
+#### Open questions: pool styles
+
+1. **Three styles, as above?** Recommended: yes; budget sits in DFS-style, tiered and snake
+   in office pool.
+2. **Can a league change its style?** Recommended: yes, any time; the style changes what it
+   can create next, never contests it already has.
+3. **Is the style chosen when the league is created?** Recommended: yes, as the first
+   question of league creation, defaulting to office pool, because it sets the look from
+   the first screen.
+4. **How strong is the branding difference?** Recommended: light: accent colour, home page
+   emphasis and wording. Different logos or domains only if marketing asks later.
+5. **What does a Platinum league with all styles look like?** Recommended: the commissioner
+   picks the league's main style for its look; contests of every style are available.
+6. **Does a member see the style?** Recommended: only through the look; no style label or
+   plan badge for members.
 
 ## Premium features worth paying for
 
@@ -361,6 +445,50 @@ enums.
 4. **What happens to an existing league when this ships?** Recommended: every existing league
    starts on a free Platinum grant for a set period, so nothing it already uses disappears.
 
+### Enablement: sports, pool styles and selection types
+
+Derek's requirement: enablement logic and indicators that turn any combination of sports and
+contest types on and off. Three gates, each owned by one place, checked in order:
+
+1. **Built**: the sport registry (#602, `SportDefinition` in the project's sport extension
+   architecture plan) lists which sports exist and which selection types each sport allows.
+   A sport or selection type that is not in the registry does not exist for anyone. Code.
+2. **Released**: a root admin switch in app settings, per sport and per pool style, for
+   rollout: off, on for chosen leagues only (beta), or on for everyone. Lets a new sport ship
+   dark and open for one test league first. Data.
+3. **Entitled**: the league's plan and the contest's unlocks, through the entitlements
+   function above. Data.
+
+An option is offered when all three pass. The entitlements function grows to return, besides
+the cap and features, the league's allowed `SupportedSport` set and `PoolStyle` set, and for a
+contest the allowed (sport, contest format, selection type) combinations: the registry's list
+for the sport, narrowed to the league's styles, narrowed to what the plan and unlocks cover.
+
+- **Typed throughout**: `PoolStyle` is an enum; each style is a `PoolStyleDefinition` in the
+  shared package (formats, selection types, accent token, wording), registered the same way as
+  `SportDefinition`, so the web app and the API read one source.
+- **Indicators**: every option the app lists (a sport, a style, a format card on Create
+  contest) carries a typed availability: `AVAILABLE`, `LOCKED_BY_PLAN` (shown with a lock and
+  an upgrade note), or hidden when not built or not released. The reason is an enum, so the
+  page decides how to show it and never works it out itself.
+- **One gate, no branching elsewhere**: as with sports, nothing outside the entitlements
+  function compares plans or tiers. A lint rule like the proposed `no-sport-branching` can ban
+  comparisons against `LeaguePlan` values elsewhere.
+- **Where the checks go**: the same places as above. Contest creation checks the event's sport
+  and the chosen format and selection type; league settings checks the sport and style
+  choices; the league home page reads the style for its look.
+
+#### Open questions: enablement
+
+1. **Is the release switch per sport and per style, with a per-league beta list?**
+   Recommended: yes, in one new app settings group.
+2. **Do selection types also get a release switch?** Recommended: no; a selection type ships
+   with the sport or style that uses it, so the sport and style switches cover it.
+3. **Shown locked or hidden?** Recommended: built and released but not entitled is shown
+   locked with an upgrade note; not built or not released is hidden.
+4. **What does a contest keep when its league loses an entitlement?** Recommended: the same
+   as the cap: everything is frozen when the contest opens, so it runs to the end.
+
 ### What does not exist yet
 
 - **Scheduled notifications**: email today is invite and system mail only. Reminders need a
@@ -370,6 +498,9 @@ enums.
 - **History pages**: the frozen results exist; the pages and aggregations do not. A "season"
   needs a definition (the event's year is the simple answer). One epic, possibly two with
   dashboards.
+- **Sport and style plumbing**: the sport registry (#602) is a prerequisite for the sport
+  gate; pool styles need their definitions, a league style setting and the look per style.
+  Each is a small slice after the plan model.
 - **Locked-state UI**: upgrade notes on locked formats, the entry counter, a plan badge on
   league settings. Small, rides with the slices above.
 
