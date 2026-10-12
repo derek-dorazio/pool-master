@@ -23,12 +23,34 @@ describe('global error handler envelopes', () => {
     });
   });
 
-  it('an error with no code or status reaches the client as INTERNAL_ERROR, whatever its class name', () => {
+  it('an error with no code or status reaches the client as INTERNAL_ERROR with the generic message, whatever its class name', () => {
     const renamed = Object.assign(new Error('boom'), { name: 'LeagueNotFoundError' });
 
     expect(createErrorEnvelopeFromError(renamed)).toEqual({
-      error: { code: 'INTERNAL_ERROR', message: 'boom' },
+      error: { code: 'INTERNAL_ERROR', message: 'Something went wrong. Please try again.' },
     });
+  });
+
+  it.each([
+    ['a Prisma message naming a table', Object.assign(new Error('Unique constraint failed on the fields: (`email`) in table `users`'), { code: 'P2002' })],
+    ['a connection error naming a host', Object.assign(new Error('connect ECONNREFUSED db.internal:5432'), { code: 'ECONNREFUSED' })],
+    ['a Fastify error on a 5xx', Object.assign(new Error('Reply was already sent'), { code: 'FST_ERR_REP_ALREADY_SENT', statusCode: 500 })],
+  ])('%s never reaches the client: an unhandled 5xx sends the generic message', (_label, error) => {
+    expect(createErrorEnvelopeFromError(error).error.message).toBe('Something went wrong. Please try again.');
+  });
+
+  it('keeps the authored message of a 5xx thrown with a listed code', () => {
+    const unavailable = Object.assign(new Error('League deletion is not configured correctly'), { code: 'LEAGUE_DELETE_UNAVAILABLE', statusCode: 500 });
+
+    expect(createErrorEnvelopeFromError(unavailable)).toEqual({
+      error: { code: 'LEAGUE_DELETE_UNAVAILABLE', message: 'League deletion is not configured correctly' },
+    });
+  });
+
+  it('keeps the message of a 4xx with an unlisted code, since a 4xx describes the request, not the server', () => {
+    const conflict = Object.assign(new Error('nope'), { code: 'SOMETHING_UNLISTED', statusCode: 409 });
+
+    expect(createErrorEnvelopeFromError(conflict).error.message).toBe('nope');
   });
 
   it.each([
