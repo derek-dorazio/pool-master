@@ -3,7 +3,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { BudgetPricingProfileSchema, Sport } from '@poolmaster/shared/domain';
+import { BudgetPricingProfileSchema, Sport, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 
 const SportSchema = z.nativeEnum(Sport);
 
@@ -29,7 +29,7 @@ export const IngestionFeedSchedulePolicyPatchSchema = IngestionFeedSchedulePolic
 export type IngestionFeedSchedulePolicyPatch = z.infer<typeof IngestionFeedSchedulePolicyPatchSchema>;
 
 export const IngestionScheduleConfigBodySchema = z.object({
-  scheduledSports: z.array(SportSchema).min(1).default([Sport.GOLF]).describe(
+  scheduledSports: z.array(SportSchema).min(1).default([...SUPPORTED_SPORTS]).describe(
     'Sports that scheduled ingestion is allowed to run automatically.',
   ),
   healthCheck: IngestionFeedSchedulePolicySchema.describe(

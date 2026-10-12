@@ -1,4 +1,4 @@
-import { Sport } from '../enums';
+import { Sport, type SelectionType } from '../enums';
 import { golfSportDefinition } from './golf';
 import type { SportDefinition } from './sport-definition';
 
@@ -16,4 +16,9 @@ export const SUPPORTED_SPORTS: readonly Sport[] = Object.values(Sport);
 
 export function getSportDefinition(sport: Sport): SportDefinition {
   return SPORT_DEFINITIONS[sport];
+}
+
+/** Whether a commissioner may run a contest of this selection type in the definition's sport. */
+export function sportAllowsSelectionType(definition: SportDefinition, selectionType: SelectionType): boolean {
+  return definition.selectionTypes.includes(selectionType);
 }

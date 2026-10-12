@@ -26959,7 +26959,7 @@
             }
           },
           "422": {
-            "description": "The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).",
+            "description": "The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27249,7 +27249,7 @@
             }
           },
           "422": {
-            "description": "CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event's tiers; edit the draft first. CONTEST_RULES_SELECTION_TYPE_MISMATCH or CONTEST_BUDGET_FIELD_OUT_OF_RANGE — stored rules that break their selection type's checks.",
+            "description": "CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event's tiers; edit the draft first. CONTEST_RULES_SELECTION_TYPE_MISMATCH or CONTEST_BUDGET_FIELD_OUT_OF_RANGE — stored rules that break their selection type's checks. CONTEST_SELECTION_TYPE_NOT_ALLOWED — the event's sport no longer offers the contest's selection type.",
             "content": {
               "application/json": {
                 "schema": {

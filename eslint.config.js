@@ -425,7 +425,6 @@ export default tseslint.config(
     ignores: [
       'packages/shared/domain/sports/**',
       'packages/core-api/src/modules/scoring-families/**',
-      'clients/poolmaster/src/features/shared/sports/**',
       'packages/shared/generated/**',
       'packages/shared/dist/**',
       // A stand-in for an external provider: its sports are the provider's own strings.

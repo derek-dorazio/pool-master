@@ -88,7 +88,7 @@ export function contestManagementModule(
         },
         422: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event\'s tiers; edit the draft first. CONTEST_RULES_SELECTION_TYPE_MISMATCH or CONTEST_BUDGET_FIELD_OUT_OF_RANGE — stored rules that break their selection type\'s checks.',
+          description: 'CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event\'s tiers; edit the draft first. CONTEST_RULES_SELECTION_TYPE_MISMATCH or CONTEST_BUDGET_FIELD_OUT_OF_RANGE — stored rules that break their selection type\'s checks. CONTEST_SELECTION_TYPE_NOT_ALLOWED — the event\'s sport no longer offers the contest\'s selection type.',
         },
       },
     },

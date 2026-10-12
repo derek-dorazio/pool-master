@@ -2,10 +2,13 @@ import {
   PARTICIPANT_SCORING_DEFINITIONS,
   SPORT_DEFINITIONS,
   ScoringFamily,
+  SelectionType,
   Sport,
+  type SportDefinition,
   getDefaultTournamentFormatForSport,
   getSportDefinition,
   getValidContestFormatsForTournamentFormat,
+  sportAllowsSelectionType,
 } from '@poolmaster/shared/domain';
 import { getSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
 
@@ -65,5 +68,14 @@ describe('sport registry', () => {
     expect(golf.roundLabel(2, 4)).toBe('Round 2');
     expect(golf.vocabulary.eliminated).toBe('Cut');
     expect(golf.scoringFamily).toBe(ScoringFamily.STROKE_PLAY);
+  });
+});
+
+describe('sportAllowsSelectionType', () => {
+  it('refuses a selection type the sport definition does not list, and allows one it does', () => {
+    const tieredOnly: SportDefinition = { ...getSportDefinition(Sport.GOLF), selectionTypes: [SelectionType.TIERED] };
+
+    expect(sportAllowsSelectionType(tieredOnly, SelectionType.BUDGET_PICK)).toBe(false);
+    expect(sportAllowsSelectionType(tieredOnly, SelectionType.TIERED)).toBe(true);
   });
 });

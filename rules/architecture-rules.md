@@ -247,7 +247,8 @@ filling them in rather than by finding guards scattered through the code:
 - **The sport's scoring family** holds what is behaviour: how results are stored, scored and
   shown. Several sports share a family (golf is stroke play; tennis and March Madness are
   knockout advancement; races are finish position), and each family owns one set of result
-  extension tables beside the cross-sport event core. Never one table set per sport.
+  extension tables beside the cross-sport event core. Never one table set per sport. Each
+  family's backend module lives in its own folder under `packages/core-api/src/modules/scoring-families/`.
 
 The rules that keep it that way:
 
