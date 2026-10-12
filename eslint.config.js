@@ -347,7 +347,8 @@ export default tseslint.config(
   },
   {
     // Test files across every workspace, matching the scanner's walk roots
-    // (tests/, packages/, clients/poolmaster/src/). The rule also fires on the
+    // (tests/, packages/, clients/poolmaster/src/), plus the Playwright suites in
+    // clients/poolmaster/e2e/ since they joined lint (#616). The rule also fires on the
     // file path itself, so a parked `*.skip.test.ts` is caught by being linted
     // at all -- which is why the glob covers those names too.
     files: [
@@ -355,6 +356,7 @@ export default tseslint.config(
       'packages/**/*.{test,spec}.{ts,tsx}',
       'packages/**/__tests__/**/*.{ts,tsx}',
       'clients/poolmaster/src/**/*.{test,spec}.{ts,tsx}',
+      'clients/poolmaster/e2e/**/*.ts',
       '**/*.skip.{test,spec}.{ts,tsx}',
       '**/skipped/**/*.{ts,tsx}',
     ],
