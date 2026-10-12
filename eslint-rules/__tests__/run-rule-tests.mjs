@@ -297,6 +297,8 @@ ruleTester.run('no-disabled-tests', noDisabledTests, {
     // `.skip` on something that is not a test runner is unrelated.
     "obj.skip('not a runner');",
     "lodash.pending();",
+    // Reading the TestInfo is not skipping the test.
+    "test('t', async ({ page }, testInfo) => { void testInfo.project.use.baseURL; });",
   ],
   invalid: [
     {
@@ -327,6 +329,28 @@ ruleTester.run('no-disabled-tests', noDisabledTests, {
     {
       code: "test.describe.fixme('suite', () => {});",
       errors: [{ messageId: 'disabledTest' }],
+    },
+    // Playwright's expected-failure marker, its `it.fails` (#634).
+    {
+      code: "test.fail('t', async () => {});",
+      errors: [{ messageId: 'disabledTest', data: { form: 'test.fail' } }],
+    },
+    {
+      code: "test('t', async () => { test.fail(); });",
+      errors: [{ messageId: 'disabledTest', data: { form: 'test.fail' } }],
+    },
+    // The same three on the TestInfo a test receives (#634).
+    {
+      code: "test('t', async ({ page }, testInfo) => { testInfo.skip(); });",
+      errors: [{ messageId: 'disabledTest', data: { form: 'testInfo.skip' } }],
+    },
+    {
+      code: "test('t', async ({ page }, testInfo) => { testInfo.fixme(true, 'why'); });",
+      errors: [{ messageId: 'disabledTest', data: { form: 'testInfo.fixme' } }],
+    },
+    {
+      code: "test('t', async ({ page }, testInfo) => { testInfo.fail(); });",
+      errors: [{ messageId: 'disabledTest', data: { form: 'testInfo.fail' } }],
     },
     {
       code: "xit('t', () => {});",
