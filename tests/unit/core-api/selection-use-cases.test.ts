@@ -28,7 +28,7 @@ import {
 //
 // selection-service.test.ts pins each guard and outcome one submission at a time over canned
 // reads. These tests walk a member through a sequence — fill a roster, swap within a full
-// tier, unselect, compete for an exclusive golfer — with picks that the writes really add and
+// tier, unselect, share a golfer across entries — with picks that the writes really add and
 // remove, and assert the room each step leaves behind rather than which port was called.
 // The fakes mirror the adapters' filters: squad memberships are ACTIVE-only, as
 // `PrismaSquadMembershipRepository.findBySquads` is by default, and picks come back in pick
@@ -353,7 +353,7 @@ describe('Tiered selection — a member building an entry', () => {
     expect(world.held(ENTRY_A)).toEqual(['a']);
   });
 
-  it('lets two entries in a non-exclusive contest hold the same golfer', async () => {
+  it('lets two entries hold the same golfer', async () => {
     const world = buildWorld();
 
     await world.pickFor(ENTRY_A, 'a');
@@ -418,18 +418,6 @@ describe('Tiered selection — withdrawn golfers', () => {
 
     expect(result.outcome).toBe('toggled-off');
     expect(later.held(ENTRY_A)).toEqual(['a']);
-  });
-});
-
-describe('Tiered selection — a golfer is open to every entry', () => {
-  it('lets a second entry pick a golfer the first entry already holds', async () => {
-    const world = buildWorld();
-    await world.pickFor(ENTRY_A, 'a');
-
-    await world.pickFor(ENTRY_B, 'a');
-
-    expect(world.held(ENTRY_A)).toEqual(['a']);
-    expect(world.held(ENTRY_B)).toEqual(['a']);
   });
 });
 
