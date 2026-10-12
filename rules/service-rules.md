@@ -442,6 +442,10 @@ Rules:
   a listed code appears nowhere in the server source). The web keys its error copy by
   `ApiErrorCode` (`ErrorCodeMessages` in `clients/poolmaster/src/lib/errors.ts`), so copy for a
   removed or misspelled code fails typecheck.
+- The global error handler sends only listed codes. A thrown error whose `code` is in
+  `API_ERROR_CODES`, or is one of Fastify's own `FST_ERR_*` codes, reaches the client as it is;
+  any other runtime code (a Prisma `P2002`, a Node `ECONNREFUSED`) becomes `INTERNAL_ERROR` on a
+  5xx and `BAD_REQUEST` on a 4xx, and only the log keeps the original.
 - Expected application failures must carry a stable error code, HTTP status,
   safe user-facing message, and optional structured details at the point the
   error is created.
