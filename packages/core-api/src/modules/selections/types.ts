@@ -139,13 +139,6 @@ export interface SelectionView {
   selectedEntryId: string | null;
   selectedEntryName: string | null;
   tiebreakerValue: number | null;
-  currentPickNumber: number;
-  currentRound: number;
-  totalPicks: number;
-  totalRounds: number;
-  currentEntryId: string | null;
-  currentEntryName: string | null;
-  canCurrentUserSubmit: boolean;
   isComplete: boolean;
   /** The viewed entry's lineup as its engine summarises it; null without an entry or a summary. */
   lineupSummary: LineupSummary | null;

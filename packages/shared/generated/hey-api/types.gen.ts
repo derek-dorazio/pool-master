@@ -7631,20 +7631,10 @@ export type SelectionStateResponse = {
     contestId: string;
     contestName: string;
     selectionType: 'TIERED' | 'BUDGET_PICK';
-    isTurnBased: boolean;
     isCommissioner?: boolean;
     rosterSize: number;
     status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
-    currentPickNumber: number;
-    currentRound: number;
-    totalPicks: number;
-    totalRounds: number;
-    currentEntryId: string | null;
-    currentEntryName: string | null;
     myEntryId: string | null;
-    isMyPick: boolean;
-    timePerPickSeconds: number;
-    currentTurnStartedAt: string | null;
     entries: Array<{
         /**
          * Entry identifier.
@@ -7658,10 +7648,6 @@ export type SelectionStateResponse = {
          * Entry display name.
          */
         name: string;
-        /**
-         * Whether the entry currently has the active turn.
-         */
-        isOnClock: boolean;
         /**
          * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
          */
@@ -7722,55 +7708,6 @@ export type SelectionStateResponse = {
         }>;
     }>;
     isComplete: boolean;
-    pickEmEvents?: Array<{
-        id: string;
-        eventId: string | null;
-        period: number;
-        matchupIndex: number;
-        homeParticipantId: string | null;
-        homeParticipantName: string | null;
-        awayParticipantId: string | null;
-        awayParticipantName: string | null;
-        eventTime: string | null;
-        deadline: string | null;
-        isLocked: boolean;
-        myPickParticipantId: string | null;
-        confidenceWeight: number | null;
-        /**
-         * Optional label used for compact pick-em presentation.
-         */
-        label: string | null;
-    }>;
-    /**
-     * Bracket pick data when relevant to the selection.
-     */
-    bracketMatchups?: Array<{
-        id: string;
-        roundNumber: number;
-        matchNumber: number;
-        label: string | null;
-        isLocked: boolean;
-        /**
-         * Minimal team identity used in bracket pick-em selection payloads.
-         */
-        topTeam: {
-            id: string;
-            name: string;
-            seed: number | null;
-        } | null;
-        /**
-         * Minimal team identity used in bracket pick-em selection payloads.
-         */
-        bottomTeam: {
-            id: string;
-            name: string;
-            seed: number | null;
-        } | null;
-        /**
-         * Winning team identifier when the matchup has been decided.
-         */
-        winnerId: string | null;
-    }>;
     /**
      * The viewed entry's lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none.
      */
@@ -7810,20 +7747,10 @@ export type SelectionPickResponse = {
     contestId: string;
     contestName: string;
     selectionType: 'TIERED' | 'BUDGET_PICK';
-    isTurnBased: boolean;
     isCommissioner?: boolean;
     rosterSize: number;
     status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
-    currentPickNumber: number;
-    currentRound: number;
-    totalPicks: number;
-    totalRounds: number;
-    currentEntryId: string | null;
-    currentEntryName: string | null;
     myEntryId: string | null;
-    isMyPick: boolean;
-    timePerPickSeconds: number;
-    currentTurnStartedAt: string | null;
     entries: Array<{
         /**
          * Entry identifier.
@@ -7837,10 +7764,6 @@ export type SelectionPickResponse = {
          * Entry display name.
          */
         name: string;
-        /**
-         * Whether the entry currently has the active turn.
-         */
-        isOnClock: boolean;
         /**
          * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
          */
@@ -7901,55 +7824,6 @@ export type SelectionPickResponse = {
         }>;
     }>;
     isComplete: boolean;
-    pickEmEvents?: Array<{
-        id: string;
-        eventId: string | null;
-        period: number;
-        matchupIndex: number;
-        homeParticipantId: string | null;
-        homeParticipantName: string | null;
-        awayParticipantId: string | null;
-        awayParticipantName: string | null;
-        eventTime: string | null;
-        deadline: string | null;
-        isLocked: boolean;
-        myPickParticipantId: string | null;
-        confidenceWeight: number | null;
-        /**
-         * Optional label used for compact pick-em presentation.
-         */
-        label: string | null;
-    }>;
-    /**
-     * Bracket pick data when relevant to the selection.
-     */
-    bracketMatchups?: Array<{
-        id: string;
-        roundNumber: number;
-        matchNumber: number;
-        label: string | null;
-        isLocked: boolean;
-        /**
-         * Minimal team identity used in bracket pick-em selection payloads.
-         */
-        topTeam: {
-            id: string;
-            name: string;
-            seed: number | null;
-        } | null;
-        /**
-         * Minimal team identity used in bracket pick-em selection payloads.
-         */
-        bottomTeam: {
-            id: string;
-            name: string;
-            seed: number | null;
-        } | null;
-        /**
-         * Winning team identifier when the matchup has been decided.
-         */
-        winnerId: string | null;
-    }>;
     /**
      * The viewed entry's lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none.
      */

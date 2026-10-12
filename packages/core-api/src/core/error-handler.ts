@@ -32,6 +32,20 @@ function inferErrorCode(error: ErrorLike, statusCode: number): string {
   return fallback;
 }
 
+/**
+ * What a client reads for a 5xx without a listed code. The thrown message is an internal detail
+ * (a Prisma message naming a table, a connection error naming a host), so it stays in the log.
+ */
+const UNHANDLED_ERROR_MESSAGE = 'Something went wrong. Please try again.';
+
+/** The message a client sees: the error's own, except on a 5xx that carries no listed code. */
+function inferErrorMessage(error: ErrorLike, statusCode: number): string {
+  if (statusCode >= 500 && (error.code === undefined || !isApiErrorCode(error.code))) {
+    return UNHANDLED_ERROR_MESSAGE;
+  }
+  return error.message;
+}
+
 export function createErrorEnvelope(
   code: string,
   message: string,
@@ -51,7 +65,7 @@ export function createErrorEnvelopeFromError(error: ErrorLike): ErrorEnvelope {
   const details = statusCode === 400 ? error.validation : undefined;
   return createErrorEnvelope(
     inferErrorCode(error, statusCode),
-    error.message,
+    inferErrorMessage(error, statusCode),
     details,
   );
 }
