@@ -7289,8 +7289,6 @@ export interface components {
             startsAt?: string;
             /** Format: date-time */
             endsAt?: string;
-            /** @description Whether the contest should continue to enforce exclusive picks. */
-            isExclusive?: boolean;
         };
         /** @description Request payload for updating a contest entry while the contest is still joinable. */
         UpdateContestEntryRequest: {
@@ -7340,8 +7338,6 @@ export interface components {
             startsAt?: string | null;
             /** Format: date-time */
             endsAt?: string | null;
-            /** @description Whether a participant may be picked by only one entry in the contest. */
-            isExclusive: boolean;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -7844,8 +7840,6 @@ export interface components {
                 startsAt?: string | null;
                 /** Format: date-time */
                 endsAt?: string | null;
-                /** @description Whether a participant may be picked by only one entry in the contest. */
-                isExclusive: boolean;
                 /** Format: date-time */
                 createdAt?: string;
                 /** Format: date-time */
@@ -7884,8 +7878,6 @@ export interface components {
                 startsAt?: string | null;
                 /** Format: date-time */
                 endsAt?: string | null;
-                /** @description Whether a participant may be picked by only one entry in the contest. */
-                isExclusive: boolean;
                 /** Format: date-time */
                 createdAt?: string;
                 /** Format: date-time */
@@ -8096,24 +8088,6 @@ export interface components {
             isTurnBased: boolean;
             isCommissioner?: boolean;
             rosterSize: number;
-            /** @description Contest-configuration subset required by selection-room clients. */
-            contestConfiguration?: {
-                isExclusive: boolean;
-                rounds?: number;
-                /** @description How many picks a full roster holds. */
-                rosterSize?: number;
-                timePerPickSeconds?: number;
-                picksPerPeriod?: number;
-                roundValues?: number[];
-                startRound?: string;
-                /** @description Tier configuration when the contest uses tiered selection. */
-                tierConfig?: {
-                    tierId: string;
-                    tierName: string;
-                    tierNumber: number;
-                    picksFromTier: number;
-                }[];
-            } | null;
             /** @enum {string} */
             status: "PENDING" | "LIVE" | "PAUSED" | "COMPLETE";
             currentPickNumber: number;
@@ -8260,24 +8234,6 @@ export interface components {
             isTurnBased: boolean;
             isCommissioner?: boolean;
             rosterSize: number;
-            /** @description Contest-configuration subset required by selection-room clients. */
-            contestConfiguration?: {
-                isExclusive: boolean;
-                rounds?: number;
-                /** @description How many picks a full roster holds. */
-                rosterSize?: number;
-                timePerPickSeconds?: number;
-                picksPerPeriod?: number;
-                roundValues?: number[];
-                startRound?: string;
-                /** @description Tier configuration when the contest uses tiered selection. */
-                tierConfig?: {
-                    tierId: string;
-                    tierName: string;
-                    tierNumber: number;
-                    picksFromTier: number;
-                }[];
-            } | null;
             /** @enum {string} */
             status: "PENDING" | "LIVE" | "PAUSED" | "COMPLETE";
             currentPickNumber: number;

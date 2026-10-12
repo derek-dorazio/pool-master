@@ -24,8 +24,6 @@ export type {
 export type {
   ContestConfigTemplate,
   ContestConfiguration,
-  GolfContestTierDefinition,
-  PersistedGolfContestTierDefinition,
   ParticipantContestScoringRule,
   SportEvent,
   SportEventReadinessReason,

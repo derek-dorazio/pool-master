@@ -219,14 +219,6 @@ describe('Contest management integration', () => {
     expect(createdContest.status).toBe(ContestStatus.DRAFT);
     expect(createdContest.sportEventId).toBe(sportEventId);
 
-    const createdConfiguration = await getPrisma().contestConfiguration.findUniqueOrThrow({
-      where: { contestId },
-    });
-    // Tiers are event-owned now (plans/124 §4.6) — a tiered contest no
-    // longer persists its own tierConfig snapshot; SportEventTierService is the
-    // one path to a contest's effective tiers.
-    expect(createdConfiguration.tierConfig).toBeNull();
-
     const getRes = await getApp().inject({
       method: 'GET',
       url: API_ROUTES.contestManagement.detail(leagueId, contestId),

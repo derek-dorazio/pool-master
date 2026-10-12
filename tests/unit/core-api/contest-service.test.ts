@@ -1263,87 +1263,6 @@ describe('ContestService', () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
-        name: 'Masters Pick 2',
-        status: ContestStatus.OPEN,
-      });
-      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
-      const mailDelivery = {
-        providerName: 'smtp' as const,
-        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
-      };
-      const service = buildService({
-        contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
-        configurations: createMockContestConfigurationRepo({
-          findByContest: jest.fn().mockResolvedValue({
-            tierConfig: [
-              {
-                tierId: 'tier-a',
-                tierName: 'Tier A',
-                tierNumber: 1,
-                picksFromTier: 1,
-                participantIds: ['participant-1'],
-              },
-              {
-                tierId: 'tier-b',
-                tierName: 'Tier B',
-                tierNumber: 2,
-                picksFromTier: 1,
-                participantIds: ['participant-2'],
-              },
-            ],
-          }),
-        }),
-        leagues: fakeLeagueRepo({
-          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
-        }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
-        memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
-        squads: createMockSquadRepo(),
-        squadMemberships: createMockSquadMembershipRepo({
-          findByLeagueAndUser: jest.fn().mockResolvedValue(ACTIVE_SQUAD_MEMBERSHIP),
-        }),
-        entries: createMockEntryRepo({
-          findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
-          findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(271)),
-        }),
-        picks: fakeContestEntryPickRepo({
-          countByEntries: jest.fn().mockResolvedValue(new Map([['entry-1', 2]])),
-          findByEntriesWithParticipant: jest.fn().mockResolvedValue([
-            buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
-            buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:01:00.000Z'),
-          ]),
-        }),
-        mailDelivery: mailDelivery,
-        appBaseUrl: 'https://app.primetimecommissioner.com',
-      });
-
-      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1');
-
-      expect(mailDelivery.send).toHaveBeenCalledTimes(1);
-      expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
-        to: 'derek@example.com',
-        subject: 'Entry submitted: Masters Pick 2',
-        metadata: {
-          templateKey: 'CONTEST_ENTRY_COMPLETED',
-          leagueId: 'league-1',
-          contestId: 'contest-1',
-          entryId: 'entry-1',
-        },
-      }));
-      const sentMessage = mailDelivery.send.mock.calls[0][0];
-      expect(sentMessage.text).toContain('Tier A: Rory McIlroy');
-      expect(sentMessage.text).toContain('Tier B: Tommy Fleetwood');
-      expect(sentMessage.text).toContain('Tiebreaker: +271');
-      expect(sentMessage.text).toContain(
-        'Review entry: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1/entries/entry-1',
-      );
-      expect(sentMessage.html).toContain('Prime Time Commissioner');
-    });
-
-    it('falls back to SportEventTierService for the email tier grouping when the contest has no typed tierConfig', async () => {
-      const contest = buildContest({
-        id: 'contest-1',
-        leagueId: 'league-1',
         sportEventId: 'event-1',
         name: 'Masters Pick 2',
         status: ContestStatus.OPEN,
@@ -1363,9 +1282,6 @@ describe('ContestService', () => {
       };
       const service = buildService({
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
-        configurations: createMockContestConfigurationRepo({
-          findByContest: jest.fn().mockResolvedValue({}),
-        }),
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
         }),
@@ -1394,9 +1310,25 @@ describe('ContestService', () => {
       await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1');
 
       expect(tiers.getEffectiveValuationsForSportEvent).toHaveBeenCalledWith('event-1');
+      expect(mailDelivery.send).toHaveBeenCalledTimes(1);
+      expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
+        to: 'derek@example.com',
+        subject: 'Entry submitted: Masters Pick 2',
+        metadata: {
+          templateKey: 'CONTEST_ENTRY_COMPLETED',
+          leagueId: 'league-1',
+          contestId: 'contest-1',
+          entryId: 'entry-1',
+        },
+      }));
       const sentMessage = mailDelivery.send.mock.calls[0][0];
       expect(sentMessage.text).toContain('Tier A: Rory McIlroy');
       expect(sentMessage.text).toContain('Tier B: Tommy Fleetwood');
+      expect(sentMessage.text).toContain('Tiebreaker: +271');
+      expect(sentMessage.text).toContain(
+        'Review entry: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1/entries/entry-1',
+      );
+      expect(sentMessage.html).toContain('Prime Time Commissioner');
     });
 
     it('resolves rather than throwing when confirmation delivery fails, so the submit it follows still succeeds', async () => {
@@ -1417,11 +1349,7 @@ describe('ContestService', () => {
       };
       const service = buildService({
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
-        configurations: createMockContestConfigurationRepo({
-          findByContest: jest.fn().mockResolvedValue({
-            tierConfig: [{ tierName: 'Tier A', tierNumber: 1, picksFromTier: 1, participantIds: ['participant-1'] }],
-          }),
-        }),
+        configurations: createMockContestConfigurationRepo(),
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
         }),
@@ -1464,11 +1392,7 @@ describe('ContestService', () => {
       };
       const service = buildService({
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
-        configurations: createMockContestConfigurationRepo({
-          findByContest: jest.fn().mockResolvedValue({
-            tierConfig: [{ tierName: 'Tier A', tierNumber: 1, picksFromTier: 1, participantIds: ['participant-1'] }],
-          }),
-        }),
+        configurations: createMockContestConfigurationRepo(),
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
         }),

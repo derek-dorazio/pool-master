@@ -224,11 +224,7 @@ export async function seedContestFixture(leagueId: string, options: {
   scoringEngine: ScoringEngine;
   status?: 'DRAFT' | 'OPEN';
   configuration?: {
-    rounds?: number;
-    timePerPickSeconds?: number;
     maxEntriesPerSquad?: number;
-    isExclusive?: boolean;
-    tierConfig?: unknown[];
     /**
      * The contest's typed rules (#479, #93). The selection room reads the roster from here:
      * without them a room has a roster of 0 and refuses every pick as unconfigured.
@@ -247,14 +243,12 @@ export async function seedContestFixture(leagueId: string, options: {
       scoringEngine: options.scoringEngine,
     },
   });
-  const { tierConfig, ...configuration } = options.configuration ?? {};
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
       selectionType: options.selectionType,
       maxEntriesPerSquad: 1,
-      ...configuration,
-      ...(tierConfig !== undefined && { tierConfig: tierConfig as object[] }),
+      ...options.configuration,
     },
   });
   return { contestId: contest.id };

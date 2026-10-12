@@ -54,7 +54,6 @@ function createContestRepo(): ContestRepository {
     }),
     create: mockFn<ContestRepository['create']>(async (contest) => ({
       id: 'contest-1',
-      isExclusive: false,
       scoringStopsOnElimination: false,
       ...contest,
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -83,15 +82,6 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
     maxEntriesPerSquad: 1,
     rosterSize: 6,
     pickCount: 1,
-    tierConfig: [
-      {
-        tierKey: 'A',
-        label: 'Tier A',
-        pickCount: 1,
-        startPosition: 1,
-        endPosition: 10,
-      },
-    ],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -294,14 +284,6 @@ describe('ContestManagementService', () => {
         // configJson holds only GolfContestConfig's own fields; the entry cap has its column (#416).
         configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
         maxEntriesPerSquad: 3,
-      }),
-    );
-    // pool-master-p15 — tiers are event-owned now (plans/124 §4.6); contest
-    // creation no longer computes or persists a per-contest tierConfig
-    // snapshot, so the create call carries no tierConfig key at all.
-    expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
-      expect.not.objectContaining({
-        tierConfig: expect.anything(),
       }),
     );
     // pool-master-piv — cutRule/playoffHandling/displayScoring/tiebreaker
@@ -734,7 +716,6 @@ describe('ContestManagementService', () => {
     expect(contestConfigurationRepo.update).toHaveBeenCalledWith('config-1', {
       configJson: storedConfigJson,
       maxEntriesPerSquad: 2,
-      isExclusive: false,
     });
     expect(participantContestScoringRuleRepo.delete).toHaveBeenCalledWith(
       'rule-old',

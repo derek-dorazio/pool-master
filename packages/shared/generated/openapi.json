@@ -13389,10 +13389,6 @@
           "endsAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "isExclusive": {
-            "type": "boolean",
-            "description": "Whether the contest should continue to enforce exclusive picks."
           }
         },
         "additionalProperties": false,
@@ -13548,10 +13544,6 @@
             ],
             "format": "date-time"
           },
-          "isExclusive": {
-            "type": "boolean",
-            "description": "Whether a participant may be picked by only one entry in the contest."
-          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -13568,8 +13560,7 @@
           "contestFormat",
           "selectionType",
           "scoringEngine",
-          "leagueId",
-          "isExclusive"
+          "leagueId"
         ],
         "additionalProperties": false,
         "description": "A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields)."
@@ -14989,10 +14980,6 @@
                 ],
                 "format": "date-time"
               },
-              "isExclusive": {
-                "type": "boolean",
-                "description": "Whether a participant may be picked by only one entry in the contest."
-              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time"
@@ -15009,8 +14996,7 @@
               "contestFormat",
               "selectionType",
               "scoringEngine",
-              "leagueId",
-              "isExclusive"
+              "leagueId"
             ],
             "additionalProperties": false,
             "description": "A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields)."
@@ -15134,10 +15120,6 @@
                   ],
                   "format": "date-time"
                 },
-                "isExclusive": {
-                  "type": "boolean",
-                  "description": "Whether a participant may be picked by only one entry in the contest."
-                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time"
@@ -15154,8 +15136,7 @@
                 "contestFormat",
                 "selectionType",
                 "scoringEngine",
-                "leagueId",
-                "isExclusive"
+                "leagueId"
               ],
               "additionalProperties": false,
               "description": "A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields)."
@@ -15744,73 +15725,6 @@
           },
           "rosterSize": {
             "type": "number"
-          },
-          "contestConfiguration": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "isExclusive": {
-                "type": "boolean"
-              },
-              "rounds": {
-                "type": "number"
-              },
-              "rosterSize": {
-                "type": "number",
-                "description": "How many picks a full roster holds."
-              },
-              "timePerPickSeconds": {
-                "type": "number"
-              },
-              "picksPerPeriod": {
-                "type": "number"
-              },
-              "roundValues": {
-                "type": "array",
-                "items": {
-                  "type": "number"
-                }
-              },
-              "startRound": {
-                "type": "string"
-              },
-              "tierConfig": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "tierId": {
-                      "type": "string"
-                    },
-                    "tierName": {
-                      "type": "string"
-                    },
-                    "tierNumber": {
-                      "type": "number"
-                    },
-                    "picksFromTier": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "tierId",
-                    "tierName",
-                    "tierNumber",
-                    "picksFromTier"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Tier definition displayed within a selection room."
-                },
-                "description": "Tier configuration when the contest uses tiered selection."
-              }
-            },
-            "required": [
-              "isExclusive"
-            ],
-            "additionalProperties": false,
-            "description": "Contest-configuration subset required by selection-room clients."
           },
           "status": {
             "type": "string",
@@ -16425,73 +16339,6 @@
           },
           "rosterSize": {
             "type": "number"
-          },
-          "contestConfiguration": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "isExclusive": {
-                "type": "boolean"
-              },
-              "rounds": {
-                "type": "number"
-              },
-              "rosterSize": {
-                "type": "number",
-                "description": "How many picks a full roster holds."
-              },
-              "timePerPickSeconds": {
-                "type": "number"
-              },
-              "picksPerPeriod": {
-                "type": "number"
-              },
-              "roundValues": {
-                "type": "array",
-                "items": {
-                  "type": "number"
-                }
-              },
-              "startRound": {
-                "type": "string"
-              },
-              "tierConfig": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "tierId": {
-                      "type": "string"
-                    },
-                    "tierName": {
-                      "type": "string"
-                    },
-                    "tierNumber": {
-                      "type": "number"
-                    },
-                    "picksFromTier": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "tierId",
-                    "tierName",
-                    "tierNumber",
-                    "picksFromTier"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Tier definition displayed within a selection room."
-                },
-                "description": "Tier configuration when the contest uses tiered selection."
-              }
-            },
-            "required": [
-              "isExclusive"
-            ],
-            "additionalProperties": false,
-            "description": "Contest-configuration subset required by selection-room clients."
           },
           "status": {
             "type": "string",

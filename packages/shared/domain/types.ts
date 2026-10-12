@@ -203,7 +203,6 @@ export interface Contest extends DomainEntity {
   selectionType: SelectionType;
   scoringEngine: ScoringEngine;
   sport?: Sport;
-  isExclusive: boolean;
 
   // Timing
   startsAt?: Date;

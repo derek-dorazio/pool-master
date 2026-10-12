@@ -583,15 +583,6 @@ export const WeekDay = {
 } as const;
 export type WeekDay = (typeof WeekDay)[keyof typeof WeekDay];
 
-// --- Snake draft ---
-
-export const AutoPickPolicy = {
-  QUEUE_THEN_BEST: 'QUEUE_THEN_BEST',
-  BEST_AVAILABLE: 'BEST_AVAILABLE',
-  RANDOM: 'RANDOM',
-} as const;
-export type AutoPickPolicy = (typeof AutoPickPolicy)[keyof typeof AutoPickPolicy];
-
 // --- Tier Assignment ---
 
 export const TierAssignmentMode = {

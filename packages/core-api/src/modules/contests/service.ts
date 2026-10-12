@@ -25,10 +25,8 @@ import type {
   Contest,
   ContestEntry,
   LeagueMembership,
-  PersistedGolfContestTierDefinition,
   SportEvent,
   SquadMembership,
-  Unvalidated,
 } from '@poolmaster/shared/domain';
 import {
   ContestEntryStatus,
@@ -77,7 +75,6 @@ export interface UpdateContestInput {
   name?: string;
   startsAt?: Date;
   endsAt?: Date;
-  isExclusive?: boolean;
 }
 
 interface ContestEntryReceiptData {
@@ -94,9 +91,6 @@ interface ContestEntryReceiptData {
     leagueId: string;
     name: string;
     sportEventId: string | null;
-    configuration: {
-      tierConfig: unknown;
-    } | null;
     league: {
       name: string;
       leagueCode: string;
@@ -112,14 +106,6 @@ interface ContestEntryReceiptData {
       };
     };
   }>;
-}
-
-interface EmailTierDefinition {
-  tierId: string;
-  tierName: string;
-  tierNumber: number;
-  picksFromTier: number;
-  participantIds: string[];
 }
 
 interface EmailRecipientUser {
@@ -745,13 +731,7 @@ export class ContestService {
     }
   }
 
-  /**
-   * Resolves each pick's tier label through SportEventTierService (plans/124
-   * §4.6b) rather than the dropped legacy SportEventParticipant.valuations
-   * table — the one remaining fallback path for entries whose contest has
-   * no typed tierConfig (only the legacy contests/routes.ts create path
-   * ever populates tierConfig).
-   */
+  /** Groups the entry's picks by the tier label SportEventTierService resolves for each golfer. */
   private async buildEntryTierSelectionsForEmail(
     entry: ContestEntryReceiptData,
   ): Promise<ContestEntryCompletedTierSelection[]> {
@@ -778,8 +758,7 @@ export class ContestService {
     if (!contest) {
       return null;
     }
-    const [configuration, league, picks] = await Promise.all([
-      this.deps.configurations.findByContest(contest.id),
+    const [league, picks] = await Promise.all([
       this.deps.leagues.findById(contest.leagueId),
       this.deps.picks.findByEntriesWithParticipant([entry.id]),
     ]);
@@ -798,11 +777,6 @@ export class ContestService {
         leagueId: contest.leagueId,
         name: contest.name,
         sportEventId: contest.sportEventId ?? null,
-        configuration: configuration
-          ? {
-            tierConfig: configuration.tierConfig ?? null,
-          }
-          : null,
         league: { name: league.name, leagueCode: league.leagueCode },
       },
       picks: picks.map((pick) => ({
@@ -1127,48 +1101,6 @@ function buildEntryTierSelections(
   entry: ContestEntryReceiptData,
   tierLabelBySportEventParticipantId: Map<string, string>,
 ): ContestEntryCompletedTierSelection[] {
-  const tierDefinitions = readEmailTierDefinitions(entry.contest.configuration?.tierConfig);
-  if (tierDefinitions.length > 0) {
-    const picksByParticipantId = new Map<string, string[]>();
-    const assignedPickIds = new Set<string>();
-    for (const pick of entry.picks) {
-      const participantName = pick.sportEventParticipant.participant.name;
-      const participantIds = [
-        pick.sportEventParticipant.id,
-        pick.sportEventParticipant.participant.id,
-      ];
-      for (const participantId of participantIds) {
-        const existing = picksByParticipantId.get(participantId) ?? [];
-        existing.push(participantName);
-        picksByParticipantId.set(participantId, existing);
-      }
-    }
-
-    const selections = tierDefinitions.map((tier) => {
-      const participantNames: string[] = [];
-      for (const participantId of tier.participantIds) {
-        participantNames.push(...(picksByParticipantId.get(participantId) ?? []));
-      }
-      for (const pick of entry.picks) {
-        if (participantNames.includes(pick.sportEventParticipant.participant.name)) {
-          assignedPickIds.add(pick.sportEventParticipant.id);
-        }
-      }
-      return {
-        tierName: tier.tierName,
-        participantNames,
-      };
-    });
-
-    const unassigned = entry.picks
-      .filter((pick) => !assignedPickIds.has(pick.sportEventParticipant.id))
-      .map((pick) => pick.sportEventParticipant.participant.name);
-    if (unassigned.length > 0) {
-      selections.push({ tierName: 'Other selections', participantNames: unassigned });
-    }
-    return selections.filter((selection) => selection.participantNames.length > 0);
-  }
-
   const groups = new Map<string, string[]>();
   for (const pick of entry.picks) {
     const tierName = tierLabelBySportEventParticipantId.get(pick.sportEventParticipant.id) ?? 'Selections';
@@ -1180,26 +1112,6 @@ function buildEntryTierSelections(
     tierName,
     participantNames,
   }));
-}
-
-function readEmailTierDefinitions(tierConfig: unknown): EmailTierDefinition[] {
-  if (!Array.isArray(tierConfig)) return [];
-  return tierConfig
-    .map((tier, index) => {
-      const record = tier as Unvalidated<PersistedGolfContestTierDefinition>;
-      return {
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string -- reading legacy/untrusted stored JSON config; the fallback chain is the safety net, not the type.
-        tierId: String(record.tierId ?? record.tierName ?? `tier-${index + 1}`),
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string -- reading legacy/untrusted stored JSON config; the fallback chain is the safety net, not the type.
-        tierName: String(record.tierName ?? record.tierId ?? `Tier ${index + 1}`),
-        tierNumber: Number(record.tierNumber ?? index + 1),
-        picksFromTier: Number(record.picksFromTier ?? record.pickCount ?? 1),
-        participantIds: Array.isArray(record.participantIds)
-          ? record.participantIds.map((value) => String(value))
-          : [],
-      };
-    })
-    .sort((left, right) => left.tierNumber - right.tierNumber);
 }
 
 function formatUserName(user: EmailRecipientUser): string {

@@ -103,7 +103,6 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.SNAKE_DRAFT,
     scoringEngine: ScoringEngine.STROKE_PLAY,
-    isExclusive: false,
     scoringStopsOnElimination: false,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),

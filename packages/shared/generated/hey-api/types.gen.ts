@@ -6576,10 +6576,6 @@ export type UpdateContestRequest = {
     name?: string;
     startsAt?: string;
     endsAt?: string;
-    /**
-     * Whether the contest should continue to enforce exclusive picks.
-     */
-    isExclusive?: boolean;
 };
 
 /**
@@ -6642,10 +6638,6 @@ export type ContestDto = {
     } | null;
     startsAt?: string | null;
     endsAt?: string | null;
-    /**
-     * Whether a participant may be picked by only one entry in the contest.
-     */
-    isExclusive: boolean;
     createdAt?: string;
     updatedAt?: string;
 };
@@ -7336,10 +7328,6 @@ export type ContestResponse = {
         } | null;
         startsAt?: string | null;
         endsAt?: string | null;
-        /**
-         * Whether a participant may be picked by only one entry in the contest.
-         */
-        isExclusive: boolean;
         createdAt?: string;
         updatedAt?: string;
     };
@@ -7378,10 +7366,6 @@ export type ContestListResponse = {
         } | null;
         startsAt?: string | null;
         endsAt?: string | null;
-        /**
-         * Whether a participant may be picked by only one entry in the contest.
-         */
-        isExclusive: boolean;
         createdAt?: string;
         updatedAt?: string;
     }>;
@@ -7661,30 +7645,6 @@ export type SelectionStateResponse = {
     isTurnBased: boolean;
     isCommissioner?: boolean;
     rosterSize: number;
-    /**
-     * Contest-configuration subset required by selection-room clients.
-     */
-    contestConfiguration?: {
-        isExclusive: boolean;
-        rounds?: number;
-        /**
-         * How many picks a full roster holds.
-         */
-        rosterSize?: number;
-        timePerPickSeconds?: number;
-        picksPerPeriod?: number;
-        roundValues?: Array<number>;
-        startRound?: string;
-        /**
-         * Tier configuration when the contest uses tiered selection.
-         */
-        tierConfig?: Array<{
-            tierId: string;
-            tierName: string;
-            tierNumber: number;
-            picksFromTier: number;
-        }>;
-    } | null;
     status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
     currentPickNumber: number;
     currentRound: number;
@@ -7864,30 +7824,6 @@ export type SelectionPickResponse = {
     isTurnBased: boolean;
     isCommissioner?: boolean;
     rosterSize: number;
-    /**
-     * Contest-configuration subset required by selection-room clients.
-     */
-    contestConfiguration?: {
-        isExclusive: boolean;
-        rounds?: number;
-        /**
-         * How many picks a full roster holds.
-         */
-        rosterSize?: number;
-        timePerPickSeconds?: number;
-        picksPerPeriod?: number;
-        roundValues?: Array<number>;
-        startRound?: string;
-        /**
-         * Tier configuration when the contest uses tiered selection.
-         */
-        tierConfig?: Array<{
-            tierId: string;
-            tierName: string;
-            tierNumber: number;
-            picksFromTier: number;
-        }>;
-    } | null;
     status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
     currentPickNumber: number;
     currentRound: number;

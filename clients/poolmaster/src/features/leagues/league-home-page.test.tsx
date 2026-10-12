@@ -89,7 +89,6 @@ function contest(id: string, name: string, status: ContestStatus, sportEventId =
     sportEventId,
     sport: 'GOLF',
     entryCount: 4,
-    isExclusive: false,
   };
 }
 

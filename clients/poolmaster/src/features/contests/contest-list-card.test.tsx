@@ -21,7 +21,6 @@ function renderCard(status: ContestDto['status'], overrides: Partial<ContestDto>
     leagueId: 'league-1',
     sport: 'GOLF',
     entryCount: 3,
-    isExclusive: false,
     ...overrides,
   };
 

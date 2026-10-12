@@ -179,7 +179,6 @@ export class InMemoryContestWorld {
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.TIERED,
       scoringEngine: ScoringEngine.STROKE_PLAY,
-      isExclusive: false,
       scoringStopsOnElimination: false,
       createdAt: T0,
       updatedAt: T0,
@@ -398,10 +397,6 @@ export class InMemoryContestWorld {
         }
         return counts;
       },
-      findByContestAndParticipant: async (contestId, sportEventParticipantId) =>
-        ordered().filter((pick) =>
-          pick.sportEventParticipantId === sportEventParticipantId
-          && this.entries.get(pick.entryId)?.contestId === contestId),
       countByContest: async (contestId) =>
         [...this.picks.values()].filter((pick) =>
           this.entries.get(pick.entryId)?.contestId === contestId).length,

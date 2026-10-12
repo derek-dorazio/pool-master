@@ -60,7 +60,6 @@ const TIERS = [
 
 interface WorldOptions {
   status?: Contest['status'];
-  isExclusive?: boolean;
   /** Field rows to mark withdrawn, by golfer letter. */
   withdrawn?: string[];
   squadMemberships?: SquadMembership[];
@@ -124,7 +123,6 @@ function buildWorld(options: WorldOptions = {}) {
     contestFormat: 'ROSTER',
     selectionType: SelectionType.TIERED,
     scoringEngine: 'STROKE_PLAY',
-    isExclusive: false,
     scoringStopsOnElimination: false,
     ...TIMESTAMPS,
   } as Contest;
@@ -132,7 +130,6 @@ function buildWorld(options: WorldOptions = {}) {
     id: 'config-1',
     contestId: CONTEST_ID,
     selectionType: SelectionType.TIERED,
-    isExclusive: options.isExclusive ?? false,
     configJson: { selectionType: SelectionType.TIERED, picksPerTier: PICKS_PER_TIER, countedScores: 3 },
     ...TIMESTAMPS,
   } as ContestConfiguration;
@@ -222,8 +219,6 @@ function buildWorld(options: WorldOptions = {}) {
     picks: fakeContestEntryPickRepo({
       findByEntriesWithParticipant: async (entryIds: readonly string[]) =>
         picks.filter((pick) => entryIds.includes(pick.entryId)),
-      findByContestAndParticipant: async (_contestId: string, sportEventParticipantId: string) =>
-        picks.filter((pick) => pick.sportEventParticipantId === sportEventParticipantId),
       countByContest: async () => picks.length,
     }),
     pickWrites: {
@@ -426,33 +421,15 @@ describe('Tiered selection — withdrawn golfers', () => {
   });
 });
 
-describe('Tiered selection — exclusive contests', () => {
-  it('refuses a golfer another entry holds, and frees them for everyone once that entry unselects them', async () => {
-    const world = buildWorld({ isExclusive: true });
+describe('Tiered selection — a golfer is open to every entry', () => {
+  it('lets a second entry pick a golfer the first entry already holds', async () => {
+    const world = buildWorld();
     await world.pickFor(ENTRY_A, 'a');
 
-    await expect(world.pickFor(ENTRY_B, 'a')).rejects.toMatchObject({
-      code: 'PARTICIPANT_ALREADY_TAKEN',
-      statusCode: 400,
-    });
-    const roomForBob = await world.service.getSelectionState({ contestId: CONTEST_ID, actorUserId: BOB });
-    expect(roomForBob.availableSportEventParticipantIds).not.toContain('sep-a');
-
-    await world.pickFor(ENTRY_A, 'a');
     await world.pickFor(ENTRY_B, 'a');
+
+    expect(world.held(ENTRY_A)).toEqual(['a']);
     expect(world.held(ENTRY_B)).toEqual(['a']);
-  });
-
-  it('frees the golfer a full-tier swap displaced, so another entry can take them', async () => {
-    const world = buildWorld({ isExclusive: true });
-    await world.pickFor(ENTRY_A, 'a');
-    await world.pickFor(ENTRY_A, 'b');
-    await world.pickFor(ENTRY_A, 'c');
-
-    await world.pickFor(ENTRY_B, 'b');
-
-    expect(world.held(ENTRY_A)).toEqual(['a', 'c']);
-    expect(world.held(ENTRY_B)).toEqual(['b']);
   });
 });
 
@@ -631,6 +608,6 @@ describe('Selection room response — the published shape', () => {
       ['tier-2', ['sep-d']],
     ]);
     expect(response.pickHistories.map((pick) => pick.participantName)).toEqual(['Golfer A', 'Golfer D']);
-    expect(response.contestConfiguration?.rosterSize).toBe(4);
+    expect(response.rosterSize).toBe(4);
   });
 });

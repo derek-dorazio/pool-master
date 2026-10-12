@@ -223,12 +223,11 @@ describe('ContestRepository', () => {
     const contest = await createContest(league.id, event.id, 'Before', ContestStatus.DRAFT);
     const startsAt = new Date('2026-06-04T12:00:00.000Z');
 
-    const renamed = await repos().contests.update(contest.id, { name: 'After', startsAt, isExclusive: true });
+    const renamed = await repos().contests.update(contest.id, { name: 'After', startsAt });
 
     expect(renamed).toEqual(expect.objectContaining({
       name: 'After',
       startsAt,
-      isExclusive: true,
       status: ContestStatus.DRAFT,
       sportEventId: event.id,
       sport: Sport.GOLF,
@@ -443,11 +442,11 @@ describe('ContestEntryPickRepository — read-only', () => {
     await expect(repos().picks.countByEntries([])).resolves.toEqual(new Map());
   });
 
-  it('finds a golfer\'s picks and counts picks across one contest\'s entries, ignoring other contests', async () => {
+  it('counts picks across one contest\'s entries, ignoring other contests', async () => {
     const prisma = getPrisma();
     const { league, squads, event, field } = await createLeagueAndEvent();
     const [contest, other] = [
-      await createContest(league.id, event.id, 'Exclusive'),
+      await createContest(league.id, event.id, 'Counted'),
       await createContest(league.id, event.id, 'Other'),
     ];
     const [alpha, bravo, elsewhere] = await Promise.all([
@@ -461,15 +460,11 @@ describe('ContestEntryPickRepository — read-only', () => {
         pickedAt: new Date(`2026-06-01T12:0${minute}:00.000Z`),
       },
     });
-    const bravoPick = await pick(bravo.id, field[0].id, 1, 1);
-    const alphaPick = await pick(alpha.id, field[0].id, 1, 0);
+    await pick(bravo.id, field[0].id, 1, 1);
+    await pick(alpha.id, field[0].id, 1, 0);
     await pick(alpha.id, field[1].id, 2, 2);
     await pick(elsewhere.id, field[0].id, 1, 3);
 
-    const golferPicks = await repos().picks.findByContestAndParticipant(contest.id, field[0].id);
-
-    expect(golferPicks.map((row) => row.id)).toEqual([alphaPick.id, bravoPick.id]);
-    await expect(repos().picks.findByContestAndParticipant(contest.id, field[2].id)).resolves.toEqual([]);
     await expect(repos().picks.countByContest(contest.id)).resolves.toBe(3);
     await expect(repos().picks.countByContest(other.id)).resolves.toBe(1);
   });

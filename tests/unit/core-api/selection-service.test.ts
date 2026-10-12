@@ -89,7 +89,6 @@ function contest(overrides: Partial<Contest> = {}): Contest {
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
     scoringEngine: ScoringEngine.STROKE_PLAY,
-    isExclusive: false,
     scoringStopsOnElimination: false,
     ...TIMESTAMPS,
     ...overrides,
@@ -101,7 +100,6 @@ function configuration(overrides: Partial<ContestConfiguration> = {}): ContestCo
     id: 'config-1',
     contestId: CONTEST_ID,
     selectionType: SelectionType.TIERED,
-    isExclusive: false,
     // Every tier takes the contest's picksPerTier (#479): two tiers × 2 is a roster of 4.
     configJson: { selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 3 },
     ...TIMESTAMPS,
@@ -205,8 +203,6 @@ interface SetupOptions {
   squadMemberships?: SquadMembership[];
   /** The picks every read of the room sees. */
   picks?: ContestEntryPickWithParticipant[];
-  /** Picks of the submitted participant across the contest, for the exclusivity read. */
-  contestPicksForParticipant?: ContestEntryPick[];
   actorMembership?: LeagueMembership | null;
   tierGroups?: unknown[];
   valuations?: unknown[];
@@ -252,9 +248,6 @@ function setup(options: SetupOptions = {}) {
     }),
     picks: fakeContestEntryPickRepo({
       findByEntriesWithParticipant: jest.fn().mockResolvedValue(options.picks ?? []),
-      findByContestAndParticipant: jest
-        .fn()
-        .mockResolvedValue(options.contestPicksForParticipant ?? []),
       countByContest: jest.fn().mockResolvedValue((options.picks ?? []).length),
     }),
     pickWrites: { createPick, deletePick } as never,
@@ -408,17 +401,12 @@ describe('#324 SelectionService.getSelectionState', () => {
     expect(view.canCurrentUserSubmit).toBe(false);
   });
 
-  it('hides a participant another entry has taken only when the contest is exclusive', async () => {
+  it('keeps a participant another entry has taken available to every entry', async () => {
     const taken = [pick('pick-a', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID })];
 
-    const shared = await setup({ picks: taken }).service.getSelectionState({ contestId: CONTEST_ID });
-    expect(shared.availableSportEventParticipantIds).toContain('sep-a');
+    const view = await setup({ picks: taken }).service.getSelectionState({ contestId: CONTEST_ID });
 
-    const exclusive = await setup({
-      configuration: { isExclusive: true },
-      picks: taken,
-    }).service.getSelectionState({ contestId: CONTEST_ID });
-    expect(exclusive.availableSportEventParticipantIds).not.toContain('sep-a');
+    expect(view.availableSportEventParticipantIds).toContain('sep-a');
   });
 
   it('leaves an inactive field row out of the available ids while keeping it in its group', async () => {
@@ -573,32 +561,6 @@ describe('#324 SelectionService.submitSelection — the guards, in order', () =>
     expect(createPick).not.toHaveBeenCalled();
   });
 
-  it('answers 400 PARTICIPANT_ALREADY_TAKEN when an exclusive contest has the pick on another entry', async () => {
-    const { service, createPick } = setup({
-      configuration: { isExclusive: true },
-      contestPicksForParticipant: [
-        { id: 'pick-other', entryId: OTHER_ENTRY_ID } as ContestEntryPick,
-      ],
-    });
-
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
-      code: 'PARTICIPANT_ALREADY_TAKEN',
-      statusCode: 400,
-      message: 'SportEventParticipant sep-a is already selected by another entry',
-    });
-    expect(createPick).not.toHaveBeenCalled();
-  });
-
-  it('does not treat the submitting entry\'s own pick as taken by another entry', async () => {
-    const { service, createPick } = setup({
-      configuration: { isExclusive: true },
-      contestPicksForParticipant: [{ id: 'pick-mine', entryId: ENTRY_ID } as ContestEntryPick],
-    });
-
-    await expect(service.submitSelection(submit())).resolves.toMatchObject({ outcome: 'placed' });
-    expect(createPick).toHaveBeenCalledTimes(1);
-  });
-
   it('answers 400 TIER_MISSING for a selectable participant with no tier assignment', async () => {
     // A price-only valuation: the row is selectable and priced, but belongs to no tier.
     const { service, createPick } = setup({
@@ -639,26 +601,6 @@ describe('#324 SelectionService.submitSelection — the guards, in order', () =>
 
     expect(result.outcome).toBe('toggled-off');
     expect(deletePick).toHaveBeenCalledWith('pick-a');
-    expect(createPick).not.toHaveBeenCalled();
-  });
-
-  // An engine's rejection is answered after the shared exclusivity check. The one input where
-  // that order shows is a full exclusive budget-pick entry picking a golfer another entry
-  // already holds: exclusivity answers first.
-  it('answers 400 PARTICIPANT_ALREADY_TAKEN, not ENTRY_COMPLETE, when a full exclusive budget-pick entry picks a golfer another entry holds', async () => {
-    const { service, createPick } = setup({
-      contest: { selectionType: SelectionType.BUDGET_PICK },
-      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 500, countedScores: 2 }, isExclusive: true },
-      picks: [pick('pick-b', 'p-b', 'sep-b', { lineupSlot: 1 }), pick('pick-c', 'p-c', 'sep-c', { lineupSlot: 2 })],
-      contestPicksForParticipant: [
-        pick('pick-other', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID }),
-      ] as unknown as ContestEntryPick[],
-    });
-
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
-      code: 'PARTICIPANT_ALREADY_TAKEN',
-      statusCode: 400,
-    });
     expect(createPick).not.toHaveBeenCalled();
   });
 
@@ -1154,13 +1096,9 @@ describe('SelectionService budget rooms (#93): the cap blocks submitting, never 
     });
   });
 
-  it.each([
-    { isExclusive: true, cheapestFill: 80 },
-    { isExclusive: false, cheapestFill: 40 },
-  ])('prices the cheapest fill without golfers another entry holds only when exclusive is $isExclusive', async ({ isExclusive, cheapestFill }) => {
+  it('prices the cheapest fill with golfers another entry holds still in the open field', async () => {
     const { service } = setup({
       ...BUDGET,
-      configuration: { ...BUDGET.configuration, isExclusive },
       picks: [
         pick('pick-b', 'p-b', 'sep-b', { lineupSlot: 1 }),
         pick('pick-other', 'p-d', 'sep-d', { entryId: OTHER_ENTRY_ID, lineupSlot: 1 }),
@@ -1169,55 +1107,29 @@ describe('SelectionService budget rooms (#93): the cap blocks submitting, never 
 
     const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
-    expect(view.lineupSummary).toMatchObject({ openSlots: 1, cheapestFill });
+    expect(view.lineupSummary).toMatchObject({ openSlots: 1, cheapestFill: 40 });
   });
 });
 
-// Exclusivity is the shared handler's, not an engine's (#198): it is driven by the contest's
-// configuration and must hold the same way whichever engine serves the room. Each engine is
-// run at both settings so a later move of the rule into one engine, or out of the handler,
-// fails here for the engine it drops.
+// A golfer one entry holds stays in every room's available ids, whichever engine serves it.
 describe.each([
   { selectionType: SelectionType.TIERED, configuration: {} },
   {
     selectionType: SelectionType.BUDGET_PICK,
     configuration: { configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 500, countedScores: 2 } },
   },
-])('SelectionService exclusivity in a $selectionType room', ({ selectionType, configuration: typeConfiguration }) => {
+])('SelectionService in a $selectionType room', ({ selectionType, configuration: typeConfiguration }) => {
   const takenByOtherEntry = [pick('pick-other', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID })];
-  const roomWith = (isExclusive: boolean, extra: SetupOptions = {}) =>
+  const room = () =>
     setup({
       contest: { selectionType },
-      configuration: { selectionType, isExclusive, ...typeConfiguration },
-      ...extra,
+      configuration: { selectionType, ...typeConfiguration },
+      picks: takenByOtherEntry,
     });
 
-  it('refuses 400 PARTICIPANT_ALREADY_TAKEN for a golfer another entry holds when the contest is exclusive', async () => {
-    const { service, createPick } = roomWith(true, {
-      contestPicksForParticipant: takenByOtherEntry as unknown as ContestEntryPick[],
-    });
+  it('keeps a golfer another entry holds in the available ids', async () => {
+    const view = await room().service.getSelectionState({ contestId: CONTEST_ID });
 
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
-      code: 'PARTICIPANT_ALREADY_TAKEN',
-      statusCode: 400,
-    });
-    expect(createPick).not.toHaveBeenCalled();
-  });
-
-  it('places a golfer another entry holds when the contest is not exclusive', async () => {
-    const { service, createPick } = roomWith(false, {
-      contestPicksForParticipant: takenByOtherEntry as unknown as ContestEntryPick[],
-    });
-
-    await expect(service.submitSelection(submit())).resolves.toMatchObject({ outcome: 'placed' });
-    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: 'sep-a' }));
-  });
-
-  it('drops a golfer another entry holds from the available ids only when the contest is exclusive', async () => {
-    const exclusive = await roomWith(true, { picks: takenByOtherEntry }).service.getSelectionState({ contestId: CONTEST_ID });
-    const shared = await roomWith(false, { picks: takenByOtherEntry }).service.getSelectionState({ contestId: CONTEST_ID });
-
-    expect(exclusive.availableSportEventParticipantIds).not.toContain('sep-a');
-    expect(shared.availableSportEventParticipantIds).toContain('sep-a');
+    expect(view.availableSportEventParticipantIds).toContain('sep-a');
   });
 });

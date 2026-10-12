@@ -5,7 +5,6 @@ import type {
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import type {
-  AutoPickPolicy,
   ContestConfigTemplate,
   ContestConfiguration,
   ContestFormat,
@@ -36,14 +35,6 @@ export class PrismaContestConfigurationRepository
         templateVersion: configuration.templateVersion,
         selectionType: configuration.selectionType,
         configJson: configuration.configJson as object | undefined,
-        rounds: configuration.rounds,
-        timePerPickSeconds: configuration.timePerPickSeconds,
-        autoPickPolicy: configuration.autoPickPolicy,
-        tierConfig: configuration.tierConfig as object[] | undefined,
-        isExclusive: configuration.isExclusive ?? false,
-        picksPerPeriod: configuration.picksPerPeriod,
-        roundValues: configuration.roundValues,
-        startRound: configuration.startRound,
         minimumEntries: configuration.minimumEntries,
         maxEntriesPerSquad: configuration.maxEntriesPerSquad,
         totalPrizePoolAmount: configuration.totalPrizePoolAmount,
@@ -70,28 +61,6 @@ export class PrismaContestConfigurationRepository
         }),
         ...(updates.configJson !== undefined && {
           configJson: updates.configJson as object,
-        }),
-        ...(updates.rounds !== undefined && { rounds: updates.rounds }),
-        ...(updates.timePerPickSeconds !== undefined && {
-          timePerPickSeconds: updates.timePerPickSeconds,
-        }),
-        ...(updates.autoPickPolicy !== undefined && {
-          autoPickPolicy: updates.autoPickPolicy,
-        }),
-        ...(updates.tierConfig !== undefined && {
-          tierConfig: updates.tierConfig as object[],
-        }),
-        ...(updates.isExclusive !== undefined && {
-          isExclusive: updates.isExclusive,
-        }),
-        ...(updates.picksPerPeriod !== undefined && {
-          picksPerPeriod: updates.picksPerPeriod,
-        }),
-        ...(updates.roundValues !== undefined && {
-          roundValues: updates.roundValues,
-        }),
-        ...(updates.startRound !== undefined && {
-          startRound: updates.startRound,
         }),
         ...(updates.minimumEntries !== undefined && {
           minimumEntries: updates.minimumEntries,
@@ -208,14 +177,6 @@ function mapContestConfiguration(row: {
   templateVersion: number | null;
   selectionType: SelectionType;
   configJson: unknown;
-  rounds: number | null;
-  timePerPickSeconds: number | null;
-  autoPickPolicy: AutoPickPolicy | null;
-  tierConfig: unknown;
-  isExclusive: boolean;
-  picksPerPeriod: number | null;
-  roundValues: unknown;
-  startRound: string | null;
   minimumEntries: number | null;
   maxEntriesPerSquad: number | null;
   totalPrizePoolAmount: number | null;
@@ -231,14 +192,6 @@ function mapContestConfiguration(row: {
     // Parsed, not cast: the rules decide what an entry may pick, so a row that breaks them
     // fails loudly here rather than downstream (#93).
     configJson: row.configJson === null ? undefined : ContestSelectionConfigSchema.parse(row.configJson),
-    rounds: row.rounds ?? undefined,
-    timePerPickSeconds: row.timePerPickSeconds ?? undefined,
-    autoPickPolicy: row.autoPickPolicy ?? undefined,
-    tierConfig: (row.tierConfig as ContestConfiguration['tierConfig']) ?? undefined,
-    isExclusive: row.isExclusive,
-    picksPerPeriod: row.picksPerPeriod ?? undefined,
-    roundValues: (row.roundValues as number[] | null) ?? undefined,
-    startRound: row.startRound ?? undefined,
     minimumEntries: row.minimumEntries ?? undefined,
     maxEntriesPerSquad: row.maxEntriesPerSquad ?? undefined,
     totalPrizePoolAmount: row.totalPrizePoolAmount ?? undefined,

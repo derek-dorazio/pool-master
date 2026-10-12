@@ -149,7 +149,6 @@ function contest(id: string, name: string, status: 'DRAFT' | 'OPEN' | 'ACTIVE' |
     sportEventId: `event-${id}`,
     sport: 'GOLF',
     entryCount: 4,
-    isExclusive: false,
   };
 }
 
