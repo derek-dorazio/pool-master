@@ -435,8 +435,8 @@ than generic `Error` values when the error is expected and client-visible.
 
 Rules:
 
-- Every code the API sends is listed once in `API_ERROR_CODES`
-  (`packages/shared/dto/api-error-codes.ts`), and typed as `ApiErrorCode`. Error classes'
+- Every code the API sends, apart from Fastify's own `FST_ERR_*` codes, is listed once in
+  `API_ERROR_CODES` (`packages/shared/dto/api-error-codes.ts`), and typed as `ApiErrorCode`. Error classes'
   `code` fields and `sendError` take only listed codes, so a new code is added to the list in
   the same change, and a code that stops being sent is removed from it (a unit test fails while
   a listed code appears nowhere in the server source). The web keys its error copy by
