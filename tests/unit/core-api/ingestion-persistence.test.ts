@@ -157,7 +157,7 @@ describe('IngestionPersistence', () => {
         ],
       },
     });
-    expect(result.writeDiagnostics?.rows).toHaveLength(1);
+    expect(result.writeDiagnostics.rows).toHaveLength(1);
     expect(logger.info).toHaveBeenCalledWith(
       expect.objectContaining({ externalId: 'golf-weekend-2' }),
       'Skipped provider event with no linked sport event',

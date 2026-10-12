@@ -143,12 +143,13 @@ async function runAndReadPayload(input: {
   job: IngestionJobRecord;
 }): Promise<unknown> {
   const { ledger, rowFor } = createLedgerStore();
-  const [syncRun] = await ledger.createSubmissions({
+  const syncRuns = await ledger.createSubmissions({
     normalizedRequest: input.normalizedRequest,
     providerId: 'mock-provider',
     submittedAt: new Date('2026-05-30T12:00:00.000Z'),
     runType: input.runType,
   });
+  const syncRun = syncRuns.at(0);
   if (!syncRun) {
     throw new Error('Expected a sync run to be created.');
   }

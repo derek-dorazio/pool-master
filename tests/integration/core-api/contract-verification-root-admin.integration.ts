@@ -552,12 +552,8 @@ describe('Contract verification (root admin)', () => {
     });
     expect(templateListRes.statusCode).toBe(200);
     expect(ContestConfigTemplateListResponseSchema.safeParse(templateListRes.json()).success).toBe(true);
-    const template = templateListRes.json<ContestConfigTemplateListResponse>().templates[0];
-    const templateId = template?.id;
-    expect(templateId).toBeDefined();
-    if (!templateId || !template) {
-      throw new Error('Expected at least one contest template');
-    }
+    const template = expectDefined(templateListRes.json<ContestConfigTemplateListResponse>().templates.at(0), 'a contest template');
+    const templateId = template.id;
 
     // #248 — the write left /api/v1/admin and the admin-auth plugin, and stays root-admin only.
     const member = await createTestUser({ displayName: 'Template Write Non Admin' });

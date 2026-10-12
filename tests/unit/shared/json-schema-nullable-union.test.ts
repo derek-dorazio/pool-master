@@ -20,7 +20,7 @@ const ResponseSchema = z.object({
 
 describe('zodToJsonSchema with a nullable union', () => {
   it('puts nullable on every typed member of the union instead of on an anyOf with no type', () => {
-    const schema = zodToJsonSchema(ResponseSchema) as { properties: Record<string, Record<string, unknown>> };
+    const schema = zodToJsonSchema(ResponseSchema) as { properties: Partial<Record<string, Record<string, unknown>>> };
     const rules = schema.properties['rules'];
 
     expect(rules).not.toHaveProperty('nullable');

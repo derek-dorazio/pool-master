@@ -466,7 +466,7 @@ export class InMemoryContestWorld {
       findByLeagueAndUser: async (leagueId, userId) => {
         const rows = [...this.squadMemberships.values()].filter((row) =>
           row.leagueId === leagueId && row.userId === userId);
-        return rows.find((row) => row.status === SquadMembershipStatus.ACTIVE) ?? rows[0] ?? null;
+        return rows.find((row) => row.status === SquadMembershipStatus.ACTIVE) ?? rows.at(0) ?? null;
       },
       create: async (input) => this.addSquadMember(input.squadId, input.userId, input),
       update: async (id, updates) => {

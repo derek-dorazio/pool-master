@@ -872,7 +872,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
 
-    expect(refreshedEntryResponse.data?.entry?.tiebreakerValue).toBe(271);
+    expect(refreshedEntryResponse.data?.entry.tiebreakerValue).toBe(271);
   });
 
   // pool-master-eux.5: contest-entry detail keeps picks as pointers after legacy score fields are removed.

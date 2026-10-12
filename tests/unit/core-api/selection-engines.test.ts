@@ -359,7 +359,7 @@ describe('budget-pick selection engine', () => {
 
     expect(others).toEqual([]);
     expect(group).toMatchObject({ groupName: 'Field', picksFromGroup: 6 });
-    expect(group?.participants.map((row) => row.participantId)).toEqual(['b', 'c', 'd', 'a']);
+    expect(group.participants.map((row) => row.participantId)).toEqual(['b', 'c', 'd', 'a']);
   });
 
   describe('summarizeLineup', () => {

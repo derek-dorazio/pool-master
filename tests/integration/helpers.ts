@@ -221,8 +221,11 @@ export function getSentMail(): CapturedMail[] {
 
 /** Tear down after all tests. */
 export async function teardownIntegrationTests(): Promise<void> {
-  if (app) await app.close();
-  if (prisma) await prisma.$disconnect();
+  // Setup can fail before assigning these, and teardown must still run.
+  const startedApp = app as FastifyInstance | undefined;
+  const startedPrisma = prisma as PrismaClient | undefined;
+  if (startedApp) await startedApp.close();
+  if (startedPrisma) await startedPrisma.$disconnect();
   await stopIntegrationMailSink();
 }
 
@@ -298,8 +301,8 @@ export async function createTestUser(overrides: {
   const email = overrides.email ?? `test-${id.slice(0, 8)}@integration.test`;
   const username = overrides.username ?? email;
   const fallbackName = overrides.displayName ?? `Test User ${id.slice(0, 8)}`;
-  const [fallbackFirstName, ...fallbackLastParts] = fallbackName.split(/\s+/);
-  const firstName = overrides.firstName ?? fallbackFirstName ?? 'Test';
+  const [fallbackFirstName = 'Test', ...fallbackLastParts] = fallbackName.split(/\s+/);
+  const firstName = overrides.firstName ?? fallbackFirstName;
   const lastName = overrides.lastName ?? (fallbackLastParts.join(' ').trim() || 'User');
   const passwordHash = await bcrypt.hash(overrides.password ?? 'TestPass123', 10);
 
