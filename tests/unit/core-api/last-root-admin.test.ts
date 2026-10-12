@@ -117,7 +117,7 @@ describe('last-root-admin guard counts only active root admins', () => {
 
     const error = await rejection(world.service.setRootAdmin(actorFor('admin-active'), 'admin-active', false));
 
-    expect(error.code).toBe('LAST_ROOT_ADMIN');
+    expect(error.code).toBe('ACCOUNT_LAST_ROOT_ADMIN');
     expect(world.row('admin-active')?.isRootAdmin).toBe(true);
   });
 

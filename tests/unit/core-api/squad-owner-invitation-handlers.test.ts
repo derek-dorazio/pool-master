@@ -195,14 +195,14 @@ describe('Team-owner invitation route handlers', () => {
         acceptInvitation: accept,
       });
       const register = mockFn<AuthService['register']>(async () => {
-        throw new AuthError('Username already taken', 'USERNAME_EXISTS', 409);
+        throw new AuthError('Username already taken', 'ACCOUNT_USERNAME_TAKEN', 409);
       });
       const handlers = createSquadOwnerInvitationHandlers(service, stubInstance(AuthService, { register }));
 
       const reply = await call(handlers.registerAndAcceptInvitation, request({ body: registerBody }, false));
 
       expect(reply.statusCode).toBe(409);
-      expect(reply.body).toMatchObject({ error: { code: 'USERNAME_EXISTS' } });
+      expect(reply.body).toMatchObject({ error: { code: 'ACCOUNT_USERNAME_TAKEN' } });
       expect(accept).not.toHaveBeenCalled();
     });
 

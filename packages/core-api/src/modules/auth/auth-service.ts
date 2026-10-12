@@ -347,7 +347,7 @@ export class AuthService {
           conflictingUserId: emailCollision.id,
         },
       }, 'Rejected registration for duplicate email');
-      throw new AuthError('Email is already in use', 'EMAIL_EXISTS', 409);
+      throw new AuthError('Email is already in use', 'ACCOUNT_EMAIL_TAKEN', 409);
     }
 
     if (normalizedUsername === normalizedEmail) {
@@ -364,7 +364,7 @@ export class AuthService {
           conflictingUserId: usernameCollision.id,
         },
       }, 'Rejected registration for duplicate username');
-      throw new AuthError('Username is already in use', 'USERNAME_EXISTS', 409);
+      throw new AuthError('Username is already in use', 'ACCOUNT_USERNAME_TAKEN', 409);
     }
   }
 }

@@ -258,7 +258,7 @@ describe('RootAdminUserPage', () => {
   it('shows the server refusal in the role dialog when demoting the last root admin', async () => {
     primeAdminUserDetail({ id: 'user-2', isRootAdmin: true });
     setUserRootAdminMock.mockResolvedValue({
-      error: { error: { code: 'LAST_ROOT_ADMIN', message: 'Cannot remove the last remaining root admin.' } },
+      error: { error: { code: 'ACCOUNT_LAST_ROOT_ADMIN', message: 'Cannot remove the last remaining root admin.' } },
     });
 
     renderUserPage('/manage/users/user-2');

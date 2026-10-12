@@ -104,7 +104,7 @@ describe('AuthService', () => {
       await expect(
         service.register('NewUser', 'user@example.com', 'Password123!', 'New', 'User'),
       ).rejects.toMatchObject({
-        code: 'EMAIL_EXISTS',
+        code: 'ACCOUNT_EMAIL_TAKEN',
         statusCode: 409,
       } satisfies Partial<AuthError>);
       expect(users.create).not.toHaveBeenCalled();
@@ -122,7 +122,7 @@ describe('AuthService', () => {
       await expect(
         service.register('TakenUser', 'new@example.com', 'Password123!', 'New', 'User'),
       ).rejects.toMatchObject({
-        code: 'USERNAME_EXISTS',
+        code: 'ACCOUNT_USERNAME_TAKEN',
         statusCode: 409,
       } satisfies Partial<AuthError>);
       expect(users.create).not.toHaveBeenCalled();

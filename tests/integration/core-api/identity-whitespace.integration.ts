@@ -84,14 +84,14 @@ describe('registration and sign-in', () => {
     expect(stored.username).toBe(identity.username);
   });
 
-  it('refuses a padded, upper-case copy of an existing email with 409 EMAIL_EXISTS instead of making a near-duplicate account', async () => {
+  it('refuses a padded, upper-case copy of an existing email with 409 ACCOUNT_EMAIL_TAKEN instead of making a near-duplicate account', async () => {
     const first = newIdentity();
     expect((await registerAccount(first.username, first.email)).statusCode).toBe(201);
 
     const second = await registerAccount(newIdentity().username, padded(first.email).toUpperCase());
 
     expect(second.statusCode).toBe(409);
-    expect(second.json<{ error: { code: string } }>().error.code).toBe('EMAIL_EXISTS');
+    expect(second.json<{ error: { code: string } }>().error.code).toBe('ACCOUNT_EMAIL_TAKEN');
   });
 
   it('signs in with a padded, mixed-case email', async () => {

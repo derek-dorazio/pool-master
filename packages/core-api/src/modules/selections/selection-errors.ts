@@ -30,7 +30,7 @@ export const selectionErrors = {
   entryNotFound: (entryId: string, contestId: string) =>
     new SelectionError(
       `Entry ${entryId} was not found for contest ${contestId}`,
-      'ENTRY_NOT_FOUND',
+      'CONTEST_ENTRY_NOT_FOUND',
       404,
     ),
 

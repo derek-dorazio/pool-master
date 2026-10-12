@@ -115,20 +115,20 @@ describe('registration', () => {
     expect(await liveRefreshTokens(body.user.id)).toBe(1);
   });
 
-  it('refuses an email already in use, whatever its case, with 409 EMAIL_EXISTS', async () => {
+  it('refuses an email already in use, whatever its case, with 409 ACCOUNT_EMAIL_TAKEN', async () => {
     const first = await register();
     const second = await register({ username: newIdentity().username, email: first.identity.email.toUpperCase() });
 
     expect(second.response.statusCode).toBe(409);
-    expect(errorCode(second.response)).toBe('EMAIL_EXISTS');
+    expect(errorCode(second.response)).toBe('ACCOUNT_EMAIL_TAKEN');
   });
 
-  it('refuses a username already in use with 409 USERNAME_EXISTS', async () => {
+  it('refuses a username already in use with 409 ACCOUNT_USERNAME_TAKEN', async () => {
     const first = await register();
     const second = await register({ username: first.identity.username, email: newIdentity().email });
 
     expect(second.response.statusCode).toBe(409);
-    expect(errorCode(second.response)).toBe('USERNAME_EXISTS');
+    expect(errorCode(second.response)).toBe('ACCOUNT_USERNAME_TAKEN');
   });
 
   it('refuses a username equal to another account\'s email, since sign-in accepts either', async () => {
@@ -136,7 +136,7 @@ describe('registration', () => {
     const second = await register({ username: first.identity.email, email: newIdentity().email });
 
     expect(second.response.statusCode).toBe(409);
-    expect(errorCode(second.response)).toBe('USERNAME_EXISTS');
+    expect(errorCode(second.response)).toBe('ACCOUNT_USERNAME_TAKEN');
   });
 
   it('rejects a password shorter than eight characters with 400 before creating anything', async () => {
