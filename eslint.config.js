@@ -190,14 +190,16 @@ export default tseslint.config(
     },
   },
   {
-    // #524, #539 — build-tool configs and tsx scripts. Each sits outside its package's
-    // `tsconfig.json` on purpose (they run in Node, and must stay out of `dist`), so
+    // #524, #539, #616 — build-tool configs, tsx scripts and the Playwright suites. Each
+    // sits outside its package's `tsconfig.json` on purpose (they run in Node, and must
+    // stay out of `dist`), so
     // `projectService`, which only finds the nearest `tsconfig.json`, cannot place
     // them and reports a hard parse error. Naming the programs that include them is
     // what lets the type-aware rules reach them at all. The `.mjs` scripts stay out of
     // lint with every other `.js` flavour, above.
     files: [
       'clients/poolmaster/*.config.ts',
+      'clients/poolmaster/e2e/**/*.ts',
       'packages/*/openapi-ts.config.ts',
       'packages/*/scripts/**/*.ts',
       'scripts/**/*.ts',
@@ -345,7 +347,8 @@ export default tseslint.config(
   },
   {
     // Test files across every workspace, matching the scanner's walk roots
-    // (tests/, packages/, clients/poolmaster/src/). The rule also fires on the
+    // (tests/, packages/, clients/poolmaster/src/), plus the Playwright suites in
+    // clients/poolmaster/e2e/ since they joined lint (#616). The rule also fires on the
     // file path itself, so a parked `*.skip.test.ts` is caught by being linted
     // at all -- which is why the glob covers those names too.
     files: [
@@ -353,6 +356,7 @@ export default tseslint.config(
       'packages/**/*.{test,spec}.{ts,tsx}',
       'packages/**/__tests__/**/*.{ts,tsx}',
       'clients/poolmaster/src/**/*.{test,spec}.{ts,tsx}',
+      'clients/poolmaster/e2e/**/*.ts',
       '**/*.skip.{test,spec}.{ts,tsx}',
       '**/skipped/**/*.{ts,tsx}',
     ],
