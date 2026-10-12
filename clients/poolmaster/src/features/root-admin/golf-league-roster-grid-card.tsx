@@ -24,8 +24,8 @@ import { useGolfPlayersQuery } from './use-golf-catalog';
 const columnHelper = createColumnHelper<ParticipantLeagueAffiliationDto>();
 
 type RosterGridMeta = {
-  draft: Record<string, string>;
-  setDraft: Dispatch<SetStateAction<Record<string, string>>>;
+  draft: Partial<Record<string, string>>;
+  setDraft: Dispatch<SetStateAction<Partial<Record<string, string>>>>;
   onRemove: (entry: ParticipantLeagueAffiliationDto) => void;
 };
 
@@ -129,7 +129,7 @@ export function GolfLeagueRosterGridCard({
     feature: 'root-admin-golf-league-home-page',
   });
 
-  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [draft, setDraft] = useState<Partial<Record<string, string>>>({});
   const [draftLeagueId, setDraftLeagueId] = useState(leagueId);
   const [addOpen, setAddOpen] = useState(false);
   const [addSearch, setAddSearch] = useState('');
@@ -246,7 +246,7 @@ export function GolfLeagueRosterGridCard({
   const invalidCount = useMemo(
     () =>
       Object.entries(draft).filter(
-        ([, raw]) => raw.trim() !== '' && !isValidRank(raw),
+        ([, raw]) => raw !== undefined && raw.trim() !== '' && !isValidRank(raw),
       ).length,
     [draft],
   );

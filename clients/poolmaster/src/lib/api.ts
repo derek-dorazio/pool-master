@@ -18,7 +18,7 @@ export function resolveBaseUrl() {
     return poolMasterConfig.apiBaseUrl.replace(/\/+$/, '');
   }
 
-  if (typeof window !== 'undefined' && window.location?.origin !== 'null') {
+  if (typeof window !== 'undefined' && window.location.origin !== 'null') {
     return window.location.origin;
   }
 

@@ -155,7 +155,7 @@ function useLeagueContextQuery(options: {
     return {
       isRootAdmin,
       isMember,
-      isCommissioner: isMember && membership?.role === 'COMMISSIONER',
+      isCommissioner: isMember && membership.role === 'COMMISSIONER',
       membership,
       squadMembership,
       mySquadId: squadMembership?.status === 'ACTIVE' ? squadMembership.squadId : null,

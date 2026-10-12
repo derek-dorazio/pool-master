@@ -429,7 +429,7 @@ export function parseGolfRosterUpload(
   return records.map((record, index) => {
     const parsed = golfRosterUploadRowSchema.safeParse(record);
     if (!parsed.success) {
-      const [issue] = parsed.error.issues;
+      const issue = parsed.error.issues.at(0);
       throw new Error(
         `Row ${index + 1}: ${issue?.message ?? 'is not a valid roster row'}.`,
       );
@@ -483,14 +483,8 @@ const GOLF_ROUND_STATUS_LABEL: Record<GolfRoundScoreStatus, string> = {
 };
 
 /** Human-readable label for a golf round-result status enum value. */
-export function formatGolfRoundStatus(status: string): string {
-  return (
-    GOLF_ROUND_STATUS_LABEL[status as GolfRoundScoreStatus] ??
-    status
-      .toLowerCase()
-      .replace(/_/g, ' ')
-      .replace(/^\w/, (c) => c.toUpperCase())
-  );
+export function formatGolfRoundStatus(status: GolfRoundScoreStatus): string {
+  return GOLF_ROUND_STATUS_LABEL[status];
 }
 
 export const GOLF_ROUND_SCORE_UPLOAD_HEADERS = [
@@ -556,8 +550,8 @@ export function parseGolfRoundScoreUpload(
   return scored.map((record, index) => {
     const parsed = golfRoundScoreUploadRowSchema.safeParse(record);
     if (!parsed.success) {
-      const [issue] = parsed.error.issues;
-      const field = issue?.path?.[0];
+      const issue = parsed.error.issues.at(0);
+      const field = issue?.path.at(0);
       throw new Error(
         `Row ${index + 1}${field ? ` (${String(field)})` : ''}: ${
           issue?.message ?? 'is not a valid score row'

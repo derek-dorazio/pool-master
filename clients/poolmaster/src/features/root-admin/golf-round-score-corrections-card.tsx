@@ -27,8 +27,8 @@ type ScoreRow = GolfRoundScoreRow;
 type ScorePatch = UpdateGolfRoundScoreRequest;
 
 type CorrectionsMeta = {
-  draft: Record<string, RowDraft>;
-  setDraft: Dispatch<SetStateAction<Record<string, RowDraft>>>;
+  draft: Partial<Record<string, RowDraft>>;
+  setDraft: Dispatch<SetStateAction<Partial<Record<string, RowDraft>>>>;
   savingId: string | null;
   onSave: (row: ScoreRow) => void;
 };
@@ -256,7 +256,7 @@ export function GolfRoundScoreCorrectionsCard({
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-scores-page',
   });
-  const [draft, setDraft] = useState<Record<string, RowDraft>>({});
+  const [draft, setDraft] = useState<Partial<Record<string, RowDraft>>>({});
   const [draftScope, setDraftScope] = useState(`${eventId}:${round}`);
 
   const saveMutation = useInvalidatingMutation({
@@ -308,7 +308,7 @@ export function GolfRoundScoreCorrectionsCard({
       draft,
       setDraft,
       savingId: saveMutation.isPending
-        ? saveMutation.variables?.sportEventParticipantId ?? null
+        ? saveMutation.variables.sportEventParticipantId
         : null,
       onSave: (row) => {
         const body = buildRoundScorePatch(row, draft[row.sportEventParticipantId]);

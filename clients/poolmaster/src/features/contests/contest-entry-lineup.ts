@@ -33,7 +33,7 @@ type LineupRules = {
  */
 export function buildPickedAtById(selectionState: SelectionState, entryId: string): Map<string, string> {
   return new Map(
-    (selectionState.pickHistories ?? [])
+    selectionState.pickHistories
       .flatMap((pick) => (pick.entryId === entryId && pick.participantId
         ? [[pick.participantId, pick.pickedAt] as const]
         : [])),
@@ -131,7 +131,7 @@ export const LINEUP_RULES: Record<EnterableSelectionType, LineupRules> = {
     applySelection: (selectionState, participantId) => {
       const next = withGroupSelection(selectionState, participantId, (group) =>
         getNextBudgetSelectedParticipantIds(group, participantId));
-      const [field] = next.selectionGroups ?? [];
+      const field = next.selectionGroups?.at(0);
       return next.lineupSummary && field
         ? { ...next, lineupSummary: respend(next.lineupSummary, field) }
         : next;

@@ -14,3 +14,6 @@ afterEach(() => {
 afterAll(() => {
   server.close();
 });
+
+// jsdom does not implement scrollIntoView; every browser the app supports does.
+Element.prototype.scrollIntoView = () => undefined;

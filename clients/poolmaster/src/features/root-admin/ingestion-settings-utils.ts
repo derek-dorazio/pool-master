@@ -40,7 +40,7 @@ export function cloneIngestionConfig(
     eventParticipants: { ...config.eventParticipants },
     eventLiveScores: { ...config.eventLiveScores },
     perSportOverrides: Object.fromEntries(
-      Object.entries(config.perSportOverrides ?? {}).map(([sport, override]) => [
+      Object.entries(config.perSportOverrides).map(([sport, override]) => [
         sport,
         {
           ...(override.healthCheck && { healthCheck: { ...override.healthCheck } }),
@@ -60,7 +60,9 @@ export function buildSportOverrideDraft(
   config: IngestionScheduleConfig,
   sport: SyncSport,
 ): Record<IngestionPolicyKey, boolean> {
-  const override = config.perSportOverrides[sport];
+  // Widened to Partial: a sport with no override is a miss, which the record type hides.
+  const overrides: Partial<IngestionScheduleConfig['perSportOverrides']> = config.perSportOverrides;
+  const override = overrides[sport];
 
   return Object.fromEntries(
     INGESTION_POLICY_FIELDS.map((field) => [

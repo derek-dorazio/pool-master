@@ -158,8 +158,8 @@ export function BudgetPricingSettingsForm({ group }: { group: BudgetPricingSetti
           <Button
             data-testid="root-admin-budget-pricing-add"
             onClick={() => {
-              const [first] = form.getValues('profiles');
-              profiles.append({ ...(first ?? group.defaults.profiles[0]), name: '' });
+              const first = form.getValues('profiles').at(0) ?? group.defaults.profiles.at(0);
+              if (first) profiles.append({ ...first, name: '' });
             }}
             type="button"
             variant="secondary"

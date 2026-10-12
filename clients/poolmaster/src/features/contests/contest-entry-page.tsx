@@ -233,7 +233,7 @@ export function ContestEntryPage() {
     }
 
     const focusGroup = () => {
-      groupToggle.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      groupToggle.scrollIntoView({ behavior: 'smooth', block: 'start' });
       groupToggle.focus();
     };
 
@@ -798,7 +798,7 @@ export function ContestEntryPage() {
 
               return (
                 <EditableSelectionGroup
-                  canSelect={isEditable && isMyEntry}
+                  canSelect={isMyEntry}
                   group={group}
                   isBusy={submitSelectionMutation.isPending}
                   isExpanded={isExpanded}

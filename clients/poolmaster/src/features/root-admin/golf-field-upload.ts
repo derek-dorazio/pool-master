@@ -98,8 +98,8 @@ export function parseGolfFieldUpload(
   return records.map((record, index) => {
     const parsed = golfFieldUploadRowSchema.safeParse(record);
     if (!parsed.success) {
-      const [issue] = parsed.error.issues;
-      const field = issue?.path?.[0];
+      const issue = parsed.error.issues.at(0);
+      const field = issue?.path.at(0);
       throw new Error(
         `Row ${index + 1}${field ? ` (${String(field)})` : ''}: ${
           issue?.message ?? 'is not a valid field row'
@@ -107,8 +107,9 @@ export function parseGolfFieldUpload(
       );
     }
     // Keep only what the row names: an omitted value must stay omitted, not become undefined-as-null.
+    // Read as unknown: the entries' type drops the undefined an optional column can hold.
     const row: GolfFieldUploadRow = {};
-    for (const [key, value] of Object.entries(parsed.data)) {
+    for (const [key, value] of Object.entries<unknown>(parsed.data)) {
       if (value !== undefined) {
         (row as Record<string, unknown>)[key] = value;
       }

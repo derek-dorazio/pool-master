@@ -250,7 +250,7 @@ export function ContestLeaderboardPage() {
     if (!jumpTargetId) {
       return;
     }
-    document.getElementById(entryBlockId(jumpTargetId))?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    document.getElementById(entryBlockId(jumpTargetId))?.scrollIntoView({ block: 'start', behavior: 'smooth' });
     setJumpTargetId(null);
   }, [jumpTargetId, pageIndex]);
 
@@ -337,7 +337,8 @@ export function ContestLeaderboardPage() {
     ? -1
     : view.entries.findIndex((entry) => entry.squadId === mySquadId);
   const jumpToMyTeam = () => {
-    const target = view.entries[myBestIndex];
+    // at(-1) would be the last entry, so a team with no entry is ruled out first.
+    const target = myBestIndex < 0 ? undefined : view.entries.at(myBestIndex);
     if (!target) {
       return;
     }

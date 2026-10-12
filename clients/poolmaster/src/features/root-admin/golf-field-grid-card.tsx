@@ -33,8 +33,8 @@ import {
 export type { GolfFieldEntry } from './golf-field-patch';
 
 type FieldGridMeta = {
-  draft: Record<string, GolfFieldRowDraft>;
-  setDraft: Dispatch<SetStateAction<Record<string, GolfFieldRowDraft>>>;
+  draft: Partial<Record<string, GolfFieldRowDraft>>;
+  setDraft: Dispatch<SetStateAction<Partial<Record<string, GolfFieldRowDraft>>>>;
   /** Released for contests (#431): prices are locked; rank, odds, seed and withdrawals are not. */
   pricesLocked: boolean;
 };
@@ -183,7 +183,7 @@ export function GolfFieldGridCard({
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-field-page',
   });
-  const [draft, setDraft] = useState<Record<string, GolfFieldRowDraft>>({});
+  const [draft, setDraft] = useState<Partial<Record<string, GolfFieldRowDraft>>>({});
   const [draftEventId, setDraftEventId] = useState(eventId);
 
   if (draftEventId !== eventId) {

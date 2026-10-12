@@ -238,7 +238,7 @@ export function CreateContestPage() {
   // A new format starts from its default preset, or from what the fields hold when it has none.
   const selectFormat = useCallback((format: CreatableSelectionType) => {
     const formatPresets = presetsFor(format);
-    const preset = formatPresets.find((template) => template.isDefault) ?? formatPresets[0];
+    const preset = formatPresets.find((template) => template.isDefault) ?? formatPresets.at(0);
     setFormValues({
       selectionType: format,
       selectedTemplateId: preset?.id ?? '',
@@ -248,7 +248,7 @@ export function CreateContestPage() {
 
   // The soonest contest-ready event is chosen to start with.
   useEffect(() => {
-    const [soonest] = eligibleEvents;
+    const soonest = eligibleEvents.at(0);
     if (soonest && !eligibleEvents.some((event) => event.id === sportEventId)) {
       setFormValues({ sportEventId: soonest.id });
     }
@@ -260,7 +260,7 @@ export function CreateContestPage() {
       return;
     }
     defaultPresetApplied.current = true;
-    const defaultPreset = presets.find((template) => template.isDefault) ?? presets[0];
+    const defaultPreset = presets.find((template) => template.isDefault) ?? presets.at(0);
     if (defaultPreset) {
       selectPreset(defaultPreset.id);
     }

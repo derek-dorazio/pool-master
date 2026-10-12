@@ -82,7 +82,7 @@ export function GolfTournamentProviderBrowse({
           ...(Number.isNaN(roundsValue) ? {} : { rounds: roundsValue }),
         },
       });
-      if (!response.data?.event?.id) {
+      if (!response.data?.event.id) {
         throwApiError(response.error, 'Tournament creation response is missing data.');
       }
       return response.data.event;

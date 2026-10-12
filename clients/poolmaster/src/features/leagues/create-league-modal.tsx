@@ -112,7 +112,7 @@ export function CreateLeagueModal({
         },
       });
 
-      if (!response.data?.league?.leagueCode) {
+      if (!response.data?.league.leagueCode) {
         throwApiError(response.error, "League creation response is missing data.");
       }
 

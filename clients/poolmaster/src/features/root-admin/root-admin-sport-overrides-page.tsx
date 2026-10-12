@@ -195,9 +195,8 @@ export function RootAdminSportOverridesPage() {
             <div className="mt-5 flex justify-end">
               <Button
                 data-testid="root-admin-sport-overrides-save"
-                disabled={sportOverrideMutation.isPending || !overrideDraft}
+                disabled={sportOverrideMutation.isPending}
                 onClick={() =>
-                  overrideDraft &&
                   sportOverrideMutation.mutate({
                     sport: overrideSport,
                     draft: overrideDraft,

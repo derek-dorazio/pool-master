@@ -399,9 +399,9 @@ export function UserPage() {
 
   function openProfileDialog() {
     profileForm.reset({
-      email: activeUser.email ?? '',
-      firstName: activeUser.firstName ?? '',
-      lastName: activeUser.lastName ?? '',
+      email: activeUser.email,
+      firstName: activeUser.firstName,
+      lastName: activeUser.lastName,
     });
     profileMutation.reset();
     setActiveDialog('profile');
@@ -409,7 +409,7 @@ export function UserPage() {
 
   function openUsernameDialog() {
     usernameForm.reset({
-      username: activeUser.username ?? '',
+      username: activeUser.username,
     });
     usernameMutation.reset();
     setActiveDialog('username');
@@ -549,9 +549,9 @@ export function UserPage() {
       <FormModal
         canSave={
           !disableProfileEditing
-          && (profileEmail ?? '').trim().length > 0
-          && (profileFirstName ?? '').trim().length > 0
-          && (profileLastName ?? '').trim().length > 0
+          && profileEmail.trim().length > 0
+          && profileFirstName.trim().length > 0
+          && profileLastName.trim().length > 0
         }
         description="Update your name and email."
         error={profileMutation.isError ? profileMutation.error : null}
@@ -627,7 +627,7 @@ export function UserPage() {
       </FormModal>
 
       <FormModal
-        canSave={!disableUsernameEditing && (usernameValue ?? '').trim().length >= 3}
+        canSave={!disableUsernameEditing && usernameValue.trim().length >= 3}
         description="Choose a unique username for signing in and identifying your account."
         error={usernameMutation.isError ? usernameMutation.error : null}
         errorFallback="We could not save your username."
@@ -885,9 +885,9 @@ export function UserPage() {
             data-testid="user-page-save-password"
             disabled={
               disablePasswordEditing
-              || (currentPassword ?? '').length === 0
-              || (newPassword ?? '').length < 8
-              || (confirmNewPassword ?? '').length < 8
+              || currentPassword.length === 0
+              || newPassword.length < 8
+              || confirmNewPassword.length < 8
             }
             onClick={() =>
               void passwordForm.handleSubmit((values) =>

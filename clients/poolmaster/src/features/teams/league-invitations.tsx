@@ -82,7 +82,7 @@ function isExpiredInvitation(invitation: LeagueInvitationDto): boolean {
  * just cleared and read as "sent".
  */
 function describeInviteResult(result: SendLeagueInvitationsResponse): string | null {
-  const [sent] = result.sent;
+  const sent = result.sent.at(0);
   if (sent) {
     return `Invitation sent to ${sent.email}.`;
   }
@@ -554,7 +554,7 @@ function WaitingInvites({
           />
         </div>
       )}
-      {resendMutation.isSuccess && !resendMutation.isPending ? (
+      {resendMutation.isSuccess ? (
         <p className="text-sm text-muted-foreground" data-testid="league-invitation-resent">
           Invite resent with a new link. The old link no longer works.
         </p>

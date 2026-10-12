@@ -113,7 +113,7 @@ export function GolfPriceAssignAction({
       setProfileName(current.profileName);
       setDraft(toDraft(current));
     } else {
-      const [defaultProfile] = profiles;
+      const defaultProfile = profiles.at(0);
       setProfileName(defaultProfile?.name ?? '');
       setDraft(defaultProfile ? toDraft(defaultProfile) : null);
     }
