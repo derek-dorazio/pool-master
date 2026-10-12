@@ -25,8 +25,7 @@ Read from the code on `main` at `adea0a9`.
     Pegasus); add UK and Ireland, Australia, and International only when a pool asks.
   - **Formula 1 and NASCAR are sport leagues under one Auto racing sport**, with IndyCar beside
     them for the Indy 500. Drivers, vocabulary, screens and scoring are the same; only the
-    events and the official points tables differ. (Key question Q2.1: if you would rather
-    have F1 and NASCAR as separate sports, that works too and costs a little duplication.)
+    events and the official points tables differ. (Q2.1, decided by Derek 2026-10-12.)
   - Cycling: men's and women's WorldTour. Running: men's and women's World Marathon Majors.
 - **Scoring:** points by finishing place from a per-contest **points table**, with presets per
   sport league (F1's 25-18-15..., NASCAR's 40-35-34..., Win/Place/Show 5-3-1 for horses).
@@ -233,8 +232,8 @@ created.
 
 ### 3.1 One sport or three?
 
-**Q2.1** (the key question of this plan) Should Formula 1 and NASCAR be **sport leagues under
-one Auto racing sport**, or **two separate sports**?
+**Q2.1** (**Answered 2026-10-12 by Derek: one sport, as recommended.**) Should Formula 1 and
+NASCAR be **sport leagues under one Auto racing sport**, or **two separate sports**?
 
 *Recommendation: one sport, `AUTO_RACING`, with sport leagues Formula 1, NASCAR Cup Series and
 IndyCar.* The reasons:
@@ -371,7 +370,9 @@ interface, and the March Madness date still holds if knockout starts by early Ja
 
 ## 8. The per-sport loop in the add-sport skill
 
-Derek's loop is refine, implement, reflect. Suggested encoding in `.claude/skills/add-sport`
+Derek's loop is refine, implement, reflect. **Derek approved the Refine and Reflect steps on
+2026-10-12.** The "Sport extension groundwork" thread owns the skill and folds them in with
+#602. Suggested encoding in `.claude/skills/add-sport`
 (lands with #602; the draft is in the project files):
 
 1. **Step 0, Refine** (new, before "classify the sport"): fill a refinement table like §2.1
