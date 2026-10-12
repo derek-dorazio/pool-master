@@ -109,10 +109,10 @@ export const ContestEntryPickDtoSchema = z.object({
     'Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.',
   ),
   period: z.number().int().nullable().describe(
-    'Per-format period: week (SURVIVOR), draft round (BRACKET), or omitted (ROSTER). Plans/117 §7.1.',
+    'Unused: no built contest format sets it, so it is always null. Removal is tracked in #632.',
   ),
   slot: z.number().int().nullable().describe(
-    'Per-format slot: matchup index (BRACKET), confidence rank (PICKEM_CONFIDENCE), predicted position (PREDICT_TOP_N), or omitted (ROSTER, SURVIVOR). Plans/117 §7.1.',
+    'Unused: no built contest format sets it, so it is always null; a lineup position is `lineupSlot`. Removal is tracked in #632.',
   ),
   tier: z.string().nullable().describe('Selection tier (tiered ROSTER); null otherwise.'),
   cost: z.number().nullable().describe('Budget cost (budget ROSTER); null otherwise.'),

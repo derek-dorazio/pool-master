@@ -5,8 +5,8 @@ it is easily confused with, and what the phrases people use in prompts mean in t
 
 This file is vocabulary, not policy. How to *name and shape* things is
 [domain-model-conventions-rules.md](domain-model-conventions-rules.md); who may call each
-operation, with its error codes, is [`docs/DOMAIN-OPERATIONS.md`](../docs/DOMAIN-OPERATIONS.md);
-scoring formats by sport are [`docs/CONTEST-RULES.md`](../docs/CONTEST-RULES.md). Fields are
+operation, with its error codes, is [`docs/DOMAIN-OPERATIONS.md`](../docs/DOMAIN-OPERATIONS.md).
+Fields are
 `schema.prisma` and `packages/shared/domain`; nothing here lists them.
 
 ---

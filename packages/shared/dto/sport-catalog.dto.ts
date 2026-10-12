@@ -27,7 +27,7 @@ export const SportDtoSchema = z.object({
 export type SportDto = z.infer<typeof SportDtoSchema>;
 
 export const SportListResponseSchema = z.object({
-  sports: z.array(SportDtoSchema).describe('Every sport, by key.'),
+  sports: z.array(SportDtoSchema).describe('Every sport, ordered by sport.'),
 }).describe('The sports.');
 export type SportListResponse = z.infer<typeof SportListResponseSchema>;
 

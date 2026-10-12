@@ -60,7 +60,7 @@ async function createParticipant(sportId: string, name: string, externalId?: str
 }
 
 describe('Sport and SportLeague repositories', () => {
-  it('reads a sport by id, null for an unknown id, and lists every sport by key', async () => {
+  it('reads a sport by id, null for an unknown id, and lists every sport ordered by sport', async () => {
     const golf = await golfSport();
     const sports = new PrismaSportRepository(getPrisma());
 
@@ -69,7 +69,7 @@ describe('Sport and SportLeague repositories', () => {
     expect((await sports.findAll()).map((row) => row.id)).toEqual([golf.id]);
   });
 
-  it('finds a sport by key and lists sport leagues filtered by sport and activity, ordered by name', async () => {
+  it('finds a sport by its sport value and lists sport leagues filtered by sport and activity, ordered by name', async () => {
     const sport = await golfSport();
     const sports = new PrismaSportRepository(getPrisma());
     const sportLeagues = new PrismaSportLeagueRepository(getPrisma());

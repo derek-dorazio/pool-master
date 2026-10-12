@@ -217,6 +217,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       params: SPORT_PARAMS,
       response: {
         200: schemaRef('IngestionScheduleConfig'),
+        400: schemaRef('ErrorEnvelope'),
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
       },
@@ -248,6 +249,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       params: SPORT_PARAMS,
       response: {
         200: schemaRef('IngestionScheduleConfig'),
+        400: schemaRef('ErrorEnvelope'),
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
       },

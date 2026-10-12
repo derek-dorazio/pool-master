@@ -191,7 +191,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       tags: ['Contests'],
       summary: 'Get Golf contest leaderboard',
       description:
-        'Returns the member-facing leaderboard for a golf contest, as the cross-sport ContestLeaderboardResponse. While the contest is live, entry standings are computed from the event\'s standings and joined to entry picks in memory, so picks remain pointers into `participants` (the event\'s own field rows). Once the contest is COMPLETED, each entry\'s total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Golf only today: another sport answers 400 _SPORT_UNSUPPORTED. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
+        'Returns the member-facing leaderboard for a golf contest, as the cross-sport ContestLeaderboardResponse. While the contest is live, entry standings are computed from the event\'s standings and joined to entry picks in memory, so picks remain pointers into `participants` (the event\'s own field rows). Once the contest is COMPLETED, each entry\'s total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
       operationId: 'getGolfContestLeaderboard',
       response: {
         401: schemaRef('ErrorEnvelope'),
@@ -199,7 +199,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
         200: schemaRef('ContestLeaderboardResponse'),
         400: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _SPORT_UNSUPPORTED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).',
+          description: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).',
         },
         404: schemaRef('ErrorEnvelope'),
       },
