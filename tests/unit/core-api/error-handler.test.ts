@@ -30,4 +30,18 @@ describe('global error handler envelopes', () => {
       error: { code: 'INTERNAL_ERROR', message: 'boom' },
     });
   });
+
+  it.each([
+    ['a Prisma unique violation on a 500', Object.assign(new Error('Unique constraint failed'), { code: 'P2002' }), 'INTERNAL_ERROR'],
+    ['a refused connection on a 500', Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' }), 'INTERNAL_ERROR'],
+    ['an unlisted code on a 4xx', Object.assign(new Error('nope'), { code: 'SOMETHING_UNLISTED', statusCode: 409 }), 'BAD_REQUEST'],
+  ])('%s reaches the client as %s, never as the unlisted runtime code', (_label, error, code) => {
+    expect(createErrorEnvelopeFromError(error).error.code).toBe(code);
+  });
+
+  it('keeps a Fastify FST_ERR_ code as it is, listed or not', () => {
+    const mediaType = Object.assign(new Error('Unsupported Media Type'), { code: 'FST_ERR_CTP_INVALID_MEDIA_TYPE', statusCode: 415 });
+
+    expect(createErrorEnvelopeFromError(mediaType).error.code).toBe('FST_ERR_CTP_INVALID_MEDIA_TYPE');
+  });
 });
