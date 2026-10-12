@@ -1447,7 +1447,9 @@ async function putContestConfigurationUnchanged(
 ): Promise<{ status: number; errorCode: string | null }> {
   const { contest } = await readManagedContest(page, leagueId, contestId);
   // The rules as they are stored, less the configuration's own ids: the same rules sent back.
-  const { id: _id, contestId: _contestId, ...rules } = contest.configuration;
+  const rules = (({ id: _id, contestId: _contestId, ...rest }: typeof contest.configuration) => rest)(
+    contest.configuration,
+  );
   const response = await page.request.put(
     `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}/configuration`,
     {
