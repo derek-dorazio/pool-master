@@ -69,6 +69,7 @@ tells an agent what it is not allowed to know; a task tells it what order to do 
 | `add-endpoint` | Adding or changing a Fastify route — the DTO → mapper → route → regenerate → contract-verification chain |
 | `model-change` | Changing the Prisma schema, a domain type, or an enum. Classify the blast radius first |
 | `add-frontend-feature` | Building anything in `clients/poolmaster` |
+| `add-sport` | Making contests possible for a new sport or scoring family: refine, registry entry, scoring family, then reflect on the skill |
 | `release-check` | Before a push or PR, and when a gate fails |
 
 Each skill is a sequence and a set of traps. The authoritative policy stays in `rules/`,

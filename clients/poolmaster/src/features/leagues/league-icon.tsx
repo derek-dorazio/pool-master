@@ -14,7 +14,7 @@ function sizeClass(size: LeagueIconProps['size']) {
     case 'lg':
       return 'h-8 w-8';
     case 'md':
-    default:
+    case undefined:
       return 'h-6 w-6';
   }
 }

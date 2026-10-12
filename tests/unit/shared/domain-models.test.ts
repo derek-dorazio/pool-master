@@ -69,9 +69,8 @@ describe('deriveLegacyParticipantStatus', () => {
 });
 
 describe('formatParticipantStatusLabel', () => {
-  it('#236: golf reads ELIMINATED as Cut; every other sport, and every other status, reads in title case', () => {
+  it('reads ELIMINATED in the sport\'s own word (Cut for golf); with no sport, and for every other status, reads in title case', () => {
     expect(formatParticipantStatusLabel('ELIMINATED', 'GOLF')).toBe('Cut');
-    expect(formatParticipantStatusLabel('ELIMINATED', 'NBA')).toBe('Eliminated');
     expect(formatParticipantStatusLabel('ELIMINATED', null)).toBe('Eliminated');
     expect(formatParticipantStatusLabel('WITHDRAWN', 'GOLF')).toBe('Withdrawn');
     expect(formatParticipantStatusLabel('IN_PROGRESS', 'GOLF')).toBe('In Progress');

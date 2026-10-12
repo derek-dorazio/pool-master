@@ -1,14 +1,9 @@
-import { ContestFormat, Sport, TournamentFormat } from './enums';
+import { ContestFormat, type Sport, TournamentFormat } from './enums';
+import { getSportDefinition } from './sports/registry';
 
 export const VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT = {
   [TournamentFormat.STROKE_PLAY_TOURNAMENT]: [ContestFormat.ROSTER],
 } as const satisfies Record<TournamentFormat, readonly ContestFormat[]>;
-
-// Bridge for APIs/UI surfaces that only expose the Sport enum while runtime
-// authority sits on the persisted Sport.tournamentFormat.
-export const DEFAULT_TOURNAMENT_FORMAT_BY_SPORT = {
-  [Sport.GOLF]: TournamentFormat.STROKE_PLAY_TOURNAMENT,
-} as const satisfies Record<Sport, TournamentFormat>;
 
 export function getValidContestFormatsForTournamentFormat(
   tournamentFormat: TournamentFormat,
@@ -24,8 +19,12 @@ export function isContestFormatValidForTournamentFormat(
     .includes(contestFormat);
 }
 
+/**
+ * The tournament format a sport's events get, from its sport definition. A bridge for APIs and
+ * screens that only know the sport, while the persisted `Sport.tournamentFormat` is the authority.
+ */
 export function getDefaultTournamentFormatForSport(sport: Sport): TournamentFormat {
-  return DEFAULT_TOURNAMENT_FORMAT_BY_SPORT[sport];
+  return getSportDefinition(sport).tournamentFormat;
 }
 
 export function isContestFormatValidForSport(

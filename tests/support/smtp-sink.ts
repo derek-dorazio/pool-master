@@ -245,6 +245,7 @@ function decodeTransferEncoding(body: string, encoding: string | undefined): str
       ).toString('utf8');
     case 'base64':
       return Buffer.from(body.replace(/\s+/g, ''), 'base64').toString('utf8');
+    case undefined:
     default:
       return body;
   }

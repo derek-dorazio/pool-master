@@ -5,7 +5,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import { Sport } from '@poolmaster/shared/domain';
+import { SUPPORTED_SPORTS, type Sport } from '@poolmaster/shared/domain';
 import type {
   IngestionFeedSchedulePolicy,
   IngestionScheduleConfig,
@@ -24,7 +24,7 @@ export const INGESTION_SCHEDULE_SETTINGS = defineSettingsGroup<IngestionSchedule
   description: 'Which sports sync on a schedule, and how often each provider feed runs.',
   schema: IngestionScheduleConfigSchema,
   defaults: () => ({
-    scheduledSports: [Sport.GOLF],
+    scheduledSports: [...SUPPORTED_SPORTS],
     healthCheck: {
       enabled: true,
       intervalMinutes: 5,

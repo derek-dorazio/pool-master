@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ContestEntryStatus, ContestStatus, formatParticipantStatusLabel } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, formatParticipantStatusLabel, type Sport } from '@poolmaster/shared/domain';
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -64,7 +64,7 @@ function ParticipantsTable({
 }: {
   entryId: string;
   participants: ContestEntryParticipant[];
-  sport: string | null | undefined;
+  sport: Sport | null | undefined;
 }) {
   const sorted = sortDetailedParticipants(participants);
 

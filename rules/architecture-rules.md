@@ -233,6 +233,37 @@ flag, or keep them as a fallback. The decision and its alternatives are
   are the admin's. `SportEventSyncScope` has two values: `NONE` (unlinked) and `SCORES_ONLY`
   (linked). There is no provider-owned scope; do not add one.
 
+### Sport extension
+
+What differs between sports lives in exactly two places, so a new sport is added by
+filling them in rather than by finding guards scattered through the code:
+
+- **The sport registry** (`packages/shared/domain/sports/`) holds what is data: participant
+  type, scoring family, default tournament format, allowed selection types, scoring
+  definitions, vocabulary and round labels. `SPORT_DEFINITIONS` is a `Record<Sport, …>`, so a
+  sport added to the enum fails the build until it has a definition. A sport is supported
+  when it is in the registry; the `Sport` enum and the validity matrices are not a write
+  permission (§2 *Validity / Compatibility Matrices Source of Truth*).
+- **The sport's scoring family** holds what is behaviour: how results are stored, scored and
+  shown. Several sports share a family (golf is stroke play; tennis and March Madness are
+  knockout advancement; races are finish position), and each family owns one set of result
+  extension tables beside the cross-sport event core. Never one table set per sport.
+
+The rules that keep it that way:
+
+- **Never branch on a particular sport elsewhere.** `x.sport === Sport.GOLF`, a comparison
+  of a sport to a string, or a `switch` on a sport, outside the registry and scoring-family
+  folders, is the bug this structure exists to prevent. `poolmaster/no-sport-branching`
+  rejects it. Put the difference in the definition or the family. Finding one sport's row
+  among several is a lookup (`findSportRow`), not a branch.
+- **Every `switch` over a union or enum is exhaustive.** Name every member, or end in
+  `default: assertNever(value)`. A bare `default` lets the next sport, family or live-score
+  category fall through silently; `@typescript-eslint/switch-exhaustiveness-check` rejects it.
+- **Shared screens use the sport's words.** "Golfer", "tee time" and "Cut" belong to golf's
+  definition, not to a component every sport renders.
+- **Add a sport, family or enum value only with the code that serves it.** An unbuilt value
+  is dead code. The `add-sport` skill sequences the work.
+
 ---
 
 ## 5. Project Structure and Layer Boundaries

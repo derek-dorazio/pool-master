@@ -10,7 +10,7 @@
  * event and moves its lifecycle by hand (#126).
  */
 
-import type { IngestionJobStatus, Sport } from '@poolmaster/shared/domain';
+import { SUPPORTED_SPORTS, type IngestionJobStatus, type Sport } from '@poolmaster/shared/domain';
 import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
@@ -870,7 +870,7 @@ const CONFIG_RECHECK_MS = 60 * 1000;
 
 function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
     return {
-      scheduledSports: ['GOLF' as Sport],
+      scheduledSports: [...SUPPORTED_SPORTS],
       healthCheck: {
         enabled: true,
         intervalMinutes: 5,
