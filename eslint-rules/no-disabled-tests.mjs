@@ -18,7 +18,8 @@
  * `skipped/` directories, which are the same evasion at a coarser grain.
  */
 
-const DISABLED_MEMBERS = new Set(['skip', 'todo', 'fails', 'failing', 'concurrent']);
+// `fixme` is Playwright's skip (#631); the e2e suites joined lint in #616.
+const DISABLED_MEMBERS = new Set(['skip', 'todo', 'fails', 'failing', 'fixme', 'concurrent']);
 const RUNNERS = new Set(['it', 'test', 'describe', 'suite', 'bench']);
 const X_PREFIXED = new Set(['xit', 'xtest', 'xdescribe', 'xspecify']);
 const SKIPPED_PATH = /(?:^|\/)(?:skipped\/|[^/]*\.skip\.(?:test|spec)\.tsx?$)/;
