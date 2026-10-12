@@ -18,8 +18,13 @@
  * `skipped/` directories, which are the same evasion at a coarser grain.
  */
 
-// `fixme` is Playwright's skip (#631); the e2e suites joined lint in #616.
-const DISABLED_MEMBERS = new Set(['skip', 'todo', 'fails', 'failing', 'fixme', 'concurrent']);
+// `fixme` is Playwright's skip (#631) and `fail` its expected-failure marker (#634); the
+// e2e suites joined lint in #616.
+const DISABLED_MEMBERS = new Set(['skip', 'todo', 'fails', 'failing', 'fixme', 'fail', 'concurrent']);
+// Playwright also skips through the `TestInfo` a test receives: `testInfo.skip()` (#634).
+// Matched by the conventional parameter name, the only one the repo uses.
+const TEST_INFO = 'testInfo';
+const TEST_INFO_DISABLED = new Set(['skip', 'fixme', 'fail']);
 const RUNNERS = new Set(['it', 'test', 'describe', 'suite', 'bench']);
 const X_PREFIXED = new Set(['xit', 'xtest', 'xdescribe', 'xspecify']);
 const SKIPPED_PATH = /(?:^|\/)(?:skipped\/|[^/]*\.skip\.(?:test|spec)\.tsx?$)/;
@@ -95,6 +100,19 @@ export default {
         }
 
         if (callee.type !== 'MemberExpression') return;
+        if (
+          callee.object.type === 'Identifier'
+          && callee.object.name === TEST_INFO
+          && callee.property.type === 'Identifier'
+          && TEST_INFO_DISABLED.has(callee.property.name)
+        ) {
+          context.report({
+            node: callee,
+            messageId: 'disabledTest',
+            data: { form: `${TEST_INFO}.${callee.property.name}` },
+          });
+          return;
+        }
         const root = rootIdentifier(callee);
         if (root === null || !RUNNERS.has(root)) return;
         const member = disabledMemberName(callee);
