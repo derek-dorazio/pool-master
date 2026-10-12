@@ -33,7 +33,6 @@ import type { FastifyBaseLogger } from 'fastify';
 import {
   ContestEntryStatus,
   ContestStatus,
-  SelectionStatus,
   SelectionType,
   LeagueMembershipStatus,
   type ContestEntry,
@@ -556,7 +555,6 @@ export class SelectionService {
     const selectedEntry = resolvedSelectedEntryId
       ? entries.find((entry) => entry.id === resolvedSelectedEntryId) ?? null
       : null;
-    const myEntryPickCount = myEntryId ? picksByEntry.get(myEntryId)?.length ?? 0 : 0;
     const selectedEntryPicks = resolvedSelectedEntryId
       ? picksByEntry.get(resolvedSelectedEntryId) ?? []
       : [];
@@ -570,15 +568,6 @@ export class SelectionService {
         ? entries.every((entry) => entry.pickCount >= rosterSize)
         : false;
     const status = mapContestStatusToSelectionStatus(contest.status, isComplete);
-    // Against whether the contest takes picks, not `isComplete`: `submitSelection` refuses
-    // every contest that is not OPEN or whose event has started, so those close submission
-    // even while some roster is still short.
-    const canCurrentUserSubmit =
-      myEntryId !== null
-      && rosterSize > 0
-      && myEntryPickCount < rosterSize
-      && context.acceptsPicks
-      && status !== SelectionStatus.COMPLETE;
 
     return {
       contest,
@@ -599,15 +588,6 @@ export class SelectionService {
       selectedEntryId: resolvedSelectedEntryId,
       selectedEntryName: selectedEntry?.name ?? null,
       tiebreakerValue: contestEntryById.get(resolvedSelectedEntryId ?? '')?.tiebreakerValue ?? null,
-      currentPickNumber: canCurrentUserSubmit ? myEntryPickCount + 1 : myEntryPickCount,
-      // Tiered and budget-pick rooms compute this identically; the route had the same
-      // expression on both arms of a ternary on the selection type.
-      currentRound: Math.min(myEntryPickCount + 1, Math.max(rosterSize, 1)),
-      totalPicks: rosterSize * entries.length,
-      totalRounds: rosterSize,
-      currentEntryId: canCurrentUserSubmit ? myEntryId : null,
-      currentEntryName: canCurrentUserSubmit ? entryNameById(entries, myEntryId) : null,
-      canCurrentUserSubmit,
       isComplete,
       lineupSummary: resolvedSelectedEntryId
         ? engine.summarizeLineup({
@@ -739,8 +719,4 @@ function withEntry(context: SelectionContext, updated: ContestEntry): SelectionC
     ...context,
     entries: context.entries.map((entry) => (entry.id === updated.id ? updated : entry)),
   };
-}
-
-function entryNameById(entries: readonly SelectionEntry[], entryId: string | null): string | null {
-  return entries.find((entry) => entry.id === entryId)?.name ?? null;
 }

@@ -939,7 +939,6 @@ describe('SDK Functional: Roster Selection', () => {
 
     const room = await getSelectionState({ client: commissioner.client, path: { contestId }, query: { entryId } });
     expect(room.data?.rosterSize).toBe(6);
-    expect(room.data?.totalRounds).toBe(6);
     expect(room.data?.selectionGroups?.map((group) => group.picksFromGroup)).toEqual([2, 2, 2]);
 
     await submitContestSelection({

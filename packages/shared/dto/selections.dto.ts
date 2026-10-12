@@ -43,7 +43,6 @@ export const SelectionEntryDtoSchema = z.object({
   id: z.string().describe('Entry identifier.'),
   userId: z.string().describe('User that owns the entry.'),
   name: z.string().describe('Entry display name.'),
-  isOnClock: z.boolean().describe('Whether the entry currently has the active turn.'),
   status: z.nativeEnum(ContestEntryStatus).describe('DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).'),
 }).describe('Entry summary shown in the selection room.');
 export type SelectionEntryDto = z.infer<typeof SelectionEntryDtoSchema>;
@@ -74,43 +73,6 @@ export const SelectionGroupDtoSchema = z.object({
 }).describe('Contest-specific selection group used by tiered or budget-style entry builders.');
 export type SelectionGroupDto = z.infer<typeof SelectionGroupDtoSchema>;
 
-export const SelectionPickEmEventDtoSchema = z.object({
-  id: z.string(),
-  eventId: z.string().nullable(),
-  period: z.number(),
-  matchupIndex: z.number(),
-  homeParticipantId: z.string().nullable(),
-  homeParticipantName: z.string().nullable(),
-  awayParticipantId: z.string().nullable(),
-  awayParticipantName: z.string().nullable(),
-  eventTime: z.string().datetime().nullable(),
-  deadline: z.string().datetime().nullable(),
-  isLocked: z.boolean(),
-  myPickParticipantId: z.string().nullable(),
-  confidenceWeight: z.number().nullable(),
-  label: z.string().nullable().describe('Optional label used for compact pick-em presentation.'),
-}).describe('Pick-em event row surfaced in selection flows.');
-export type SelectionPickEmEventDto = z.infer<typeof SelectionPickEmEventDtoSchema>;
-
-export const SelectionBracketTeamDtoSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  seed: z.number().nullable(),
-}).describe('Minimal team identity used in bracket pick-em selection payloads.');
-export type SelectionBracketTeamDto = z.infer<typeof SelectionBracketTeamDtoSchema>;
-
-export const SelectionBracketMatchupDtoSchema = z.object({
-  id: z.string(),
-  roundNumber: z.number(),
-  matchNumber: z.number(),
-  label: z.string().nullable(),
-  isLocked: z.boolean(),
-  topTeam: SelectionBracketTeamDtoSchema.nullable(),
-  bottomTeam: SelectionBracketTeamDtoSchema.nullable(),
-  winnerId: z.string().nullable().describe('Winning team identifier when the matchup has been decided.'),
-}).describe('Bracket matchup returned to bracket-style pick clients.');
-export type SelectionBracketMatchupDto = z.infer<typeof SelectionBracketMatchupDtoSchema>;
-
 export const SelectionBudgetLineupSummaryDtoSchema = z.object({
   selectionType: z.literal(SelectionType.BUDGET_PICK),
   salaryCap: z.number().describe('Whole dollars the entry\'s picks may cost at most: its event\'s cap.'),
@@ -135,7 +97,6 @@ export const SelectionStateResponseSchema = z.object({
     SelectionType.PICK_EM,
     SelectionType.BRACKET_PICK_EM,
   ]),
-  isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
   status: z.enum([
@@ -144,16 +105,7 @@ export const SelectionStateResponseSchema = z.object({
     SelectionStatus.PAUSED,
     SelectionStatus.COMPLETE,
   ]),
-  currentPickNumber: z.number(),
-  currentRound: z.number(),
-  totalPicks: z.number(),
-  totalRounds: z.number(),
-  currentEntryId: z.string().nullable(),
-  currentEntryName: z.string().nullable(),
   myEntryId: z.string().nullable(),
-  isMyPick: z.boolean(),
-  timePerPickSeconds: z.number(),
-  currentTurnStartedAt: z.string().datetime().nullable(),
   entries: z.array(SelectionEntryDtoSchema),
   pickHistories: z.array(PickHistoryDtoSchema),
   availableParticipantIds: z.array(z.string()),
@@ -162,8 +114,6 @@ export const SelectionStateResponseSchema = z.object({
   tiebreakerValue: z.number().nullable().optional(),
   selectionGroups: z.array(SelectionGroupDtoSchema).optional(),
   isComplete: z.boolean(),
-  pickEmEvents: z.array(SelectionPickEmEventDtoSchema).optional(),
-  bracketMatchups: z.array(SelectionBracketMatchupDtoSchema).optional().describe('Bracket pick data when relevant to the selection.'),
   lineupSummary: SelectionBudgetLineupSummaryDtoSchema.nullable().optional().describe('The viewed entry\'s lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none.'),
 }).describe('Selection-state response.');
 export type SelectionStateResponse = z.infer<typeof SelectionStateResponseSchema>;
@@ -179,7 +129,6 @@ export const SelectionPickResponseSchema = z.object({
     SelectionType.PICK_EM,
     SelectionType.BRACKET_PICK_EM,
   ]),
-  isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
   status: z.enum([
@@ -188,16 +137,7 @@ export const SelectionPickResponseSchema = z.object({
     SelectionStatus.PAUSED,
     SelectionStatus.COMPLETE,
   ]),
-  currentPickNumber: z.number(),
-  currentRound: z.number(),
-  totalPicks: z.number(),
-  totalRounds: z.number(),
-  currentEntryId: z.string().nullable(),
-  currentEntryName: z.string().nullable(),
   myEntryId: z.string().nullable(),
-  isMyPick: z.boolean(),
-  timePerPickSeconds: z.number(),
-  currentTurnStartedAt: z.string().datetime().nullable(),
   entries: z.array(SelectionEntryDtoSchema),
   pickHistories: z.array(PickHistoryDtoSchema),
   availableParticipantIds: z.array(z.string()),
@@ -206,8 +146,6 @@ export const SelectionPickResponseSchema = z.object({
   tiebreakerValue: z.number().nullable().optional(),
   selectionGroups: z.array(SelectionGroupDtoSchema).optional(),
   isComplete: z.boolean(),
-  pickEmEvents: z.array(SelectionPickEmEventDtoSchema).optional(),
-  bracketMatchups: z.array(SelectionBracketMatchupDtoSchema).optional().describe('Bracket pick data when relevant to the selection.'),
   lineupSummary: SelectionBudgetLineupSummaryDtoSchema.nullable().optional().describe('The viewed entry\'s lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none.'),
 }).describe('Selection response returned immediately after a pick mutation.');
 export type SelectionPickResponse = z.infer<typeof SelectionPickResponseSchema>;

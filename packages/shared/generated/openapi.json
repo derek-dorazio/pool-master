@@ -15717,9 +15717,6 @@
               "BRACKET_PICK_EM"
             ]
           },
-          "isTurnBased": {
-            "type": "boolean"
-          },
           "isCommissioner": {
             "type": "boolean"
           },
@@ -15735,48 +15732,11 @@
               "COMPLETE"
             ]
           },
-          "currentPickNumber": {
-            "type": "number"
-          },
-          "currentRound": {
-            "type": "number"
-          },
-          "totalPicks": {
-            "type": "number"
-          },
-          "totalRounds": {
-            "type": "number"
-          },
-          "currentEntryId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "currentEntryName": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "myEntryId": {
             "type": [
               "string",
               "null"
             ]
-          },
-          "isMyPick": {
-            "type": "boolean"
-          },
-          "timePerPickSeconds": {
-            "type": "number"
-          },
-          "currentTurnStartedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
           },
           "entries": {
             "type": "array",
@@ -15795,10 +15755,6 @@
                   "type": "string",
                   "description": "Entry display name."
                 },
-                "isOnClock": {
-                  "type": "boolean",
-                  "description": "Whether the entry currently has the active turn."
-                },
                 "status": {
                   "type": "string",
                   "enum": [
@@ -15812,7 +15768,6 @@
                 "id",
                 "userId",
                 "name",
-                "isOnClock",
                 "status"
               ],
               "additionalProperties": false,
@@ -16032,207 +15987,6 @@
           "isComplete": {
             "type": "boolean"
           },
-          "pickEmEvents": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "eventId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "period": {
-                  "type": "number"
-                },
-                "matchupIndex": {
-                  "type": "number"
-                },
-                "homeParticipantId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "homeParticipantName": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "awayParticipantId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "awayParticipantName": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "eventTime": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "date-time"
-                },
-                "deadline": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "date-time"
-                },
-                "isLocked": {
-                  "type": "boolean"
-                },
-                "myPickParticipantId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "confidenceWeight": {
-                  "type": [
-                    "number",
-                    "null"
-                  ]
-                },
-                "label": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Optional label used for compact pick-em presentation."
-                }
-              },
-              "required": [
-                "id",
-                "eventId",
-                "period",
-                "matchupIndex",
-                "homeParticipantId",
-                "homeParticipantName",
-                "awayParticipantId",
-                "awayParticipantName",
-                "eventTime",
-                "deadline",
-                "isLocked",
-                "myPickParticipantId",
-                "confidenceWeight",
-                "label"
-              ],
-              "additionalProperties": false,
-              "description": "Pick-em event row surfaced in selection flows."
-            }
-          },
-          "bracketMatchups": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "roundNumber": {
-                  "type": "number"
-                },
-                "matchNumber": {
-                  "type": "number"
-                },
-                "label": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "isLocked": {
-                  "type": "boolean"
-                },
-                "topTeam": {
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "seed": {
-                      "type": [
-                        "number",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "seed"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Minimal team identity used in bracket pick-em selection payloads."
-                },
-                "bottomTeam": {
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "seed": {
-                      "type": [
-                        "number",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "seed"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Minimal team identity used in bracket pick-em selection payloads."
-                },
-                "winnerId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Winning team identifier when the matchup has been decided."
-                }
-              },
-              "required": [
-                "id",
-                "roundNumber",
-                "matchNumber",
-                "label",
-                "isLocked",
-                "topTeam",
-                "bottomTeam",
-                "winnerId"
-              ],
-              "additionalProperties": false,
-              "description": "Bracket matchup returned to bracket-style pick clients."
-            },
-            "description": "Bracket pick data when relevant to the selection."
-          },
           "lineupSummary": {
             "type": [
               "object",
@@ -16290,19 +16044,9 @@
           "contestId",
           "contestName",
           "selectionType",
-          "isTurnBased",
           "rosterSize",
           "status",
-          "currentPickNumber",
-          "currentRound",
-          "totalPicks",
-          "totalRounds",
-          "currentEntryId",
-          "currentEntryName",
           "myEntryId",
-          "isMyPick",
-          "timePerPickSeconds",
-          "currentTurnStartedAt",
           "entries",
           "pickHistories",
           "availableParticipantIds",
@@ -16331,9 +16075,6 @@
               "BRACKET_PICK_EM"
             ]
           },
-          "isTurnBased": {
-            "type": "boolean"
-          },
           "isCommissioner": {
             "type": "boolean"
           },
@@ -16349,48 +16090,11 @@
               "COMPLETE"
             ]
           },
-          "currentPickNumber": {
-            "type": "number"
-          },
-          "currentRound": {
-            "type": "number"
-          },
-          "totalPicks": {
-            "type": "number"
-          },
-          "totalRounds": {
-            "type": "number"
-          },
-          "currentEntryId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "currentEntryName": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "myEntryId": {
             "type": [
               "string",
               "null"
             ]
-          },
-          "isMyPick": {
-            "type": "boolean"
-          },
-          "timePerPickSeconds": {
-            "type": "number"
-          },
-          "currentTurnStartedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
           },
           "entries": {
             "type": "array",
@@ -16409,10 +16113,6 @@
                   "type": "string",
                   "description": "Entry display name."
                 },
-                "isOnClock": {
-                  "type": "boolean",
-                  "description": "Whether the entry currently has the active turn."
-                },
                 "status": {
                   "type": "string",
                   "enum": [
@@ -16426,7 +16126,6 @@
                 "id",
                 "userId",
                 "name",
-                "isOnClock",
                 "status"
               ],
               "additionalProperties": false,
@@ -16646,207 +16345,6 @@
           "isComplete": {
             "type": "boolean"
           },
-          "pickEmEvents": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "eventId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "period": {
-                  "type": "number"
-                },
-                "matchupIndex": {
-                  "type": "number"
-                },
-                "homeParticipantId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "homeParticipantName": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "awayParticipantId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "awayParticipantName": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "eventTime": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "date-time"
-                },
-                "deadline": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "date-time"
-                },
-                "isLocked": {
-                  "type": "boolean"
-                },
-                "myPickParticipantId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "confidenceWeight": {
-                  "type": [
-                    "number",
-                    "null"
-                  ]
-                },
-                "label": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Optional label used for compact pick-em presentation."
-                }
-              },
-              "required": [
-                "id",
-                "eventId",
-                "period",
-                "matchupIndex",
-                "homeParticipantId",
-                "homeParticipantName",
-                "awayParticipantId",
-                "awayParticipantName",
-                "eventTime",
-                "deadline",
-                "isLocked",
-                "myPickParticipantId",
-                "confidenceWeight",
-                "label"
-              ],
-              "additionalProperties": false,
-              "description": "Pick-em event row surfaced in selection flows."
-            }
-          },
-          "bracketMatchups": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "roundNumber": {
-                  "type": "number"
-                },
-                "matchNumber": {
-                  "type": "number"
-                },
-                "label": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "isLocked": {
-                  "type": "boolean"
-                },
-                "topTeam": {
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "seed": {
-                      "type": [
-                        "number",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "seed"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Minimal team identity used in bracket pick-em selection payloads."
-                },
-                "bottomTeam": {
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "seed": {
-                      "type": [
-                        "number",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "seed"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Minimal team identity used in bracket pick-em selection payloads."
-                },
-                "winnerId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Winning team identifier when the matchup has been decided."
-                }
-              },
-              "required": [
-                "id",
-                "roundNumber",
-                "matchNumber",
-                "label",
-                "isLocked",
-                "topTeam",
-                "bottomTeam",
-                "winnerId"
-              ],
-              "additionalProperties": false,
-              "description": "Bracket matchup returned to bracket-style pick clients."
-            },
-            "description": "Bracket pick data when relevant to the selection."
-          },
           "lineupSummary": {
             "type": [
               "object",
@@ -16904,19 +16402,9 @@
           "contestId",
           "contestName",
           "selectionType",
-          "isTurnBased",
           "rosterSize",
           "status",
-          "currentPickNumber",
-          "currentRound",
-          "totalPicks",
-          "totalRounds",
-          "currentEntryId",
-          "currentEntryName",
           "myEntryId",
-          "isMyPick",
-          "timePerPickSeconds",
-          "currentTurnStartedAt",
           "entries",
           "pickHistories",
           "availableParticipantIds",

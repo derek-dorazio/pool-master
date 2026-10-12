@@ -308,11 +308,8 @@ describe('#324 SelectionService.getSelectionState', () => {
     });
 
     expect(view.rosterSize).toBe(4);
-    expect(view.totalRounds).toBe(4);
-    expect(view.totalPicks).toBe(4);
     expect(view.myEntryId).toBe(ENTRY_ID);
     expect(view.selectedEntryId).toBe(ENTRY_ID);
-    expect(view.canCurrentUserSubmit).toBe(true);
     expect(view.isComplete).toBe(false);
     expect(view.status).toBe('LIVE');
     expect(view.selectionGroups.map((group) => group.groupId)).toEqual(['tier-1', 'tier-2']);
@@ -342,7 +339,6 @@ describe('#324 SelectionService.getSelectionState', () => {
 
     expect(view.myEntryId).toBeNull();
     expect(view.selectedEntryId).toBeNull();
-    expect(view.canCurrentUserSubmit).toBe(false);
     expect(view.isCommissioner).toBe(false);
   });
 
@@ -387,18 +383,15 @@ describe('#324 SelectionService.getSelectionState', () => {
 
     expect(view.isComplete).toBe(true);
     expect(view.status).toBe('COMPLETE');
-    expect(view.canCurrentUserSubmit).toBe(false);
-    expect(view.currentEntryId).toBeNull();
   });
 
-  it('closes submission for a COMPLETED contest even while the roster is short', async () => {
+  it('shows a COMPLETED contest\'s room as COMPLETE even while the roster is short', async () => {
     const { service } = setup({ contest: { status: ContestStatus.COMPLETED } });
 
     const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
     expect(view.isComplete).toBe(false);
     expect(view.status).toBe('COMPLETE');
-    expect(view.canCurrentUserSubmit).toBe(false);
   });
 
   it('keeps a participant another entry has taken available to every entry', async () => {
@@ -446,7 +439,6 @@ describe('#324 SelectionService.getSelectionState', () => {
     const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
 
     expect(view.rosterSize).toBe(2);
-    expect(view.canCurrentUserSubmit).toBe(true);
   });
 });
 
@@ -777,7 +769,6 @@ describe('SelectionService — rooms with missing or partial data', () => {
     const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
     expect(view.rosterSize).toBe(0);
     expect(view.selectionGroups).toEqual([]);
-    expect(view.canCurrentUserSubmit).toBe(false);
 
     await expect(service.submitSelection(submit())).rejects.toMatchObject({ code: 'SELECTION_CONFIG_INVALID' });
   });
