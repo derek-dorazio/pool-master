@@ -12,52 +12,18 @@
  */
 
 import type {
-  SelectionContestConfigurationDto,
   SelectionEntryDto,
   PickHistoryDto,
   SelectionGroupDto,
   SelectionParticipantDto,
   SelectionStateResponse,
 } from '@poolmaster/shared/dto';
-import type { ContestConfiguration } from '@poolmaster/shared/domain';
 import type {
   SelectionEntry,
   PickHistoryRow,
   SelectionView,
   SelectionGroup,
-  SelectionTierConfig,
 } from '../modules/selections/types';
-
-/**
- * The configuration subset a selection-room client needs. `rosterSize` is the room's, computed by
- * the contest's selection engine; a room that cannot take picks has none.
- */
-export function toSelectionContestConfigurationDto(
-  configuration: ContestConfiguration | null,
-  tiers: readonly SelectionTierConfig[],
-  rosterSize: number,
-): SelectionContestConfigurationDto | null {
-  if (!configuration) return null;
-  return {
-    isExclusive: configuration.isExclusive ?? false,
-    rounds: configuration.rounds ?? undefined,
-    rosterSize: rosterSize > 0 ? rosterSize : undefined,
-    timePerPickSeconds: configuration.timePerPickSeconds ?? undefined,
-    picksPerPeriod: configuration.picksPerPeriod ?? undefined,
-    roundValues: configuration.roundValues ?? undefined,
-    startRound: configuration.startRound ?? undefined,
-    tierConfig: tiers.length > 0 ? tiers.map(toSelectionTierConfigDto) : undefined,
-  };
-}
-
-function toSelectionTierConfigDto(tier: SelectionTierConfig) {
-  return {
-    tierId: tier.tierId,
-    tierName: tier.tierName,
-    tierNumber: tier.tierNumber,
-    picksFromTier: tier.picksFromTier,
-  };
-}
 
 function toSelectionParticipantDto(
   participant: SelectionGroup['participants'][number],
@@ -138,11 +104,6 @@ export function toSelectionStateResponse(view: SelectionView): SelectionStateRes
     isTurnBased: false,
     isCommissioner: view.isCommissioner,
     rosterSize: view.rosterSize,
-    contestConfiguration: toSelectionContestConfigurationDto(
-      view.configuration,
-      view.tiers,
-      view.rosterSize,
-    ),
     status: view.status,
     currentPickNumber: view.currentPickNumber,
     currentRound: view.currentRound,

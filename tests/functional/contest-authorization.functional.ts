@@ -76,7 +76,6 @@ async function expectContestUnchanged(commissioner: RegisteredUserContext, conte
   const reread = await getContest({ client: commissioner.client, path: { contestId } });
   expect(reread.response.status).toBe(200);
   expect(reread.data?.contest.name).toBe('Authorization Contest');
-  expect(reread.data?.contest.isExclusive).toBe(false);
 }
 
 describe('SDK Functional: contest authorization by id (#193)', () => {
@@ -95,7 +94,7 @@ describe('SDK Functional: contest authorization by id (#193)', () => {
     const response = await updateContest({
       client: member.client,
       path: { contestId },
-      body: { name: 'Renamed By A Member', isExclusive: true },
+      body: { name: 'Renamed By A Member' },
     });
 
     expectFunctionalError(response, { status: 403, code: 'LEAGUE_PERMISSION_DENIED' });

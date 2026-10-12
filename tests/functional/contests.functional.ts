@@ -577,14 +577,12 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Functional Contest Updated',
-        isExclusive: true,
       },
     });
 
     expect(updateResponse.data).toBeDefined();
     expect(updateResponse.data?.contest.id).toBe(contestId);
     expect(updateResponse.data?.contest.name).toBe('Functional Contest Updated');
-    expect(updateResponse.data?.contest.isExclusive).toBe(true);
 
     const deleteResponse = await deleteContest({
       client: commissioner.client,
@@ -886,18 +884,6 @@ describe('SDK Functional: Contests and Entries', () => {
       name: 'Entry Detail Contest',
       selectionType: SelectionType.TIERED,
       scoringEngine: ScoringEngine.STROKE_PLAY,
-      configuration: {
-        rounds: 1,
-        tierConfig: [
-          {
-            tierId: 'tier-1',
-            tierName: 'Tier 1',
-            tierNumber: 1,
-            picksFromTier: 1,
-            participantIds: [],
-          },
-        ],
-      },
     });
 
     expect(contestId).toBeTruthy();
@@ -964,22 +950,6 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
 
-    await prisma.contestConfiguration.update({
-      where: {
-        contestId,
-      },
-      data: {
-        tierConfig: [
-          {
-            tierId: 'tier-1',
-            tierName: 'Tier 1',
-            tierNumber: 1,
-            picksFromTier: 1,
-            participantIds: [participant.id],
-          },
-        ],
-      },
-    });
 
     const entryResponse = await enterContest({
       client: commissioner.client,
@@ -1082,18 +1052,6 @@ describe('SDK Functional: Contests and Entries', () => {
       name: 'Locked Contest',
       selectionType: SelectionType.TIERED,
       scoringEngine: ScoringEngine.STROKE_PLAY,
-      configuration: {
-        rounds: 1,
-        tierConfig: [
-          {
-            tierId: 'tier-1',
-            tierName: 'Tier 1',
-            tierNumber: 1,
-            picksFromTier: 1,
-            participantIds: [],
-          },
-        ],
-      },
     });
 
     const { contestId: selectableContestId } = await seedContestFixture(league.id, {
@@ -1101,17 +1059,7 @@ describe('SDK Functional: Contests and Entries', () => {
       selectionType: SelectionType.TIERED,
       scoringEngine: ScoringEngine.STROKE_PLAY,
       configuration: {
-        rounds: 1,
         configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
-        tierConfig: [
-          {
-            tierId: 'tier-1',
-            tierName: 'Tier 1',
-            tierNumber: 1,
-            picksFromTier: 1,
-            participantIds: [],
-          },
-        ],
       },
     });
 
@@ -1171,10 +1119,8 @@ describe('SDK Functional: Contests and Entries', () => {
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
 
-    // Tiers are event-owned now (plans/124 §4.5/§4.6) — the pick-submission
-    // flow requires a real tier assignment (TIER_MISSING otherwise), so this
-    // fixture needs a SportEventTier alongside the legacy tierConfig
-    // JSON this test also writes below.
+    // Tiers are event-owned (plans/124 §4.5/§4.6): the pick-submission flow requires a real
+    // tier assignment (TIER_MISSING otherwise), so this fixture needs a SportEventTier.
     const tier = await prisma.sportEventTier.create({
       data: {
         sportEventId: sportEvent.id,
@@ -1203,22 +1149,6 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
 
-    await prisma.contestConfiguration.update({
-      where: {
-        contestId: selectableContestId,
-      },
-      data: {
-        tierConfig: [
-          {
-            tierId: 'tier-1',
-            tierName: 'Tier 1',
-            tierNumber: 1,
-            picksFromTier: 1,
-            participantIds: [participant.id],
-          },
-        ],
-      },
-    });
 
     const lockedEntryResponse = await enterContest({
       client: member.client,
@@ -1299,18 +1229,6 @@ describe('SDK Functional: Contests and Entries', () => {
       name: 'Visibility Contest',
       selectionType: SelectionType.TIERED,
       scoringEngine: ScoringEngine.STROKE_PLAY,
-      configuration: {
-        rounds: 1,
-        tierConfig: [
-          {
-            tierId: 'tier-1',
-            tierName: 'Tier 1',
-            tierNumber: 1,
-            picksFromTier: 1,
-            participantIds: [],
-          },
-        ],
-      },
     });
 
     expect(contestId).toBeTruthy();
@@ -1369,20 +1287,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: { sportEventId: sportEvent.id },
     });
 
-    await prisma.contestConfiguration.update({
-      where: { contestId },
-      data: {
-        tierConfig: [
-          {
-            tierId: 'tier-1',
-            tierName: 'Tier 1',
-            tierNumber: 1,
-            picksFromTier: 1,
-            participantIds: [participant.id],
-          },
-        ],
-      },
-    });
 
     // Member enters and adds a roster pick.
     const memberEntryResponse = await enterContest({
@@ -1479,18 +1383,6 @@ describe('SDK Functional: Contests and Entries', () => {
       name: 'List Visibility Contest',
       selectionType: SelectionType.TIERED,
       scoringEngine: ScoringEngine.STROKE_PLAY,
-      configuration: {
-        rounds: 1,
-        tierConfig: [
-          {
-            tierId: 'tier-1',
-            tierName: 'Tier 1',
-            tierNumber: 1,
-            picksFromTier: 1,
-            participantIds: [],
-          },
-        ],
-      },
     });
     expect(contestId).toBeTruthy();
 
@@ -1546,20 +1438,6 @@ describe('SDK Functional: Contests and Entries', () => {
     await prisma.contest.update({
       where: { id: contestId },
       data: { sportEventId: sportEvent.id },
-    });
-    await prisma.contestConfiguration.update({
-      where: { contestId },
-      data: {
-        tierConfig: [
-          {
-            tierId: 'tier-1',
-            tierName: 'Tier 1',
-            tierNumber: 1,
-            picksFromTier: 1,
-            participantIds: [participant.id],
-          },
-        ],
-      },
     });
 
     // Both squads enter and pick.

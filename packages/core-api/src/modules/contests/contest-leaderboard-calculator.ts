@@ -29,7 +29,6 @@ export interface ContestCountingRule {
 export interface ContestScoringConfigurationRow {
   /** The contest's typed rules; every selection type's carry `countedScores` (#93). */
   configJson: ContestSelectionConfig | null;
-  rounds: number | null;
   participantScoringRules: Array<{
     participantScoringDefinitionId: string;
     sortOrder: number;

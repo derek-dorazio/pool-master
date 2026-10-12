@@ -47,7 +47,6 @@ export const UpdateContestRequestSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
-  isExclusive: z.boolean().optional().describe('Whether the contest should continue to enforce exclusive picks.'),
 }).describe('Patch payload for updating editable contest metadata.');
 export type UpdateContestRequest = z.infer<typeof UpdateContestRequestSchema>;
 
@@ -101,7 +100,6 @@ export const ContestDtoSchema = z.object({
   sportEvent: ContestEventSummaryDtoSchema.nullable().optional().describe('The sport event\'s name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself.'),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
-  isExclusive: z.boolean().describe('Whether a participant may be picked by only one entry in the contest.'),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
 }).describe('A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields).');

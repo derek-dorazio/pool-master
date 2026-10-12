@@ -70,8 +70,7 @@ export function buildEntryUserIdMap(
 /**
  * Tiers are event-owned data (plans/124 §4.6/§4.6b) — this is the one place an already
  * resolved `SportEventTierGroup[]` becomes the selection room's `SelectionTierConfig[]`. How many
- * picks each tier takes is the contest's: the same `picksPerTier` for every tier (#479). The legacy
- * tierConfig-JSON branch this replaced is gone; there is exactly one source now. Per-golfer
+ * picks each tier takes is the contest's: the same `picksPerTier` for every tier (#479). Per-golfer
  * tier and price are a separate lookup (`buildValuationLookup`), since a golfer can have a
  * price with no tier at all.
  */

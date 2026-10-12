@@ -138,9 +138,9 @@ A bracket is straight-up pick'em on a knockout event, with three rule changes:
    bonus from the knockout scoring rules. The tiebreaker is the predicted total points of the
    final.
 
-Variants: a **second-chance bracket** that starts at a later round (the Sweet 16), which the
-existing `ContestConfiguration.startRound` column was meant for; seed-multiplier and flat
-scoring as presets.
+Variants: a **second-chance bracket** that starts at a later round (the Sweet 16), which needs
+a start round in the bracket contest's rules (the unused `startRound` column was dropped in
+#598); seed-multiplier and flat scoring as presets.
 
 What bracket adds to the model: matches must exist as **bracket slots before their teams are
 known** (a slot, the two slots that feed it, sides filled in as earlier games finish). So

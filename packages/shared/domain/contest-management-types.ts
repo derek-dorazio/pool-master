@@ -1,5 +1,4 @@
 import type {
-  AutoPickPolicy,
   ContestFormat,
   ParticipantInactiveReason,
   SelectionType,
@@ -11,22 +10,6 @@ import type { EventPricingConfig } from './budget-pricing';
 import type { ContestRulesWithEntryLimit, ContestSelectionConfig } from './contest-rules';
 import type { ParticipantScoringDefinitionId } from './contest-scoring';
 import type { DomainEntity } from './types';
-
-export interface GolfContestTierDefinition {
-  tierKey: string;
-  label: string;
-  pickCount: number;
-  startPosition: number;
-  endPosition: number | null;
-}
-
-export interface PersistedGolfContestTierDefinition extends GolfContestTierDefinition {
-  tierId?: string;
-  tierName?: string;
-  tierNumber?: number;
-  picksFromTier?: number;
-  participantIds?: string[];
-}
 
 export type SportEventReadinessStatus =
   | 'NOT_RELEASED'
@@ -112,19 +95,9 @@ export interface ContestConfiguration extends DomainEntity {
   selectionType: SelectionType;
   /** The contest's rules; its `selectionType` matches the contest's (#93). */
   configJson?: ContestSelectionConfig;
-  rounds?: number;
-  timePerPickSeconds?: number;
-  autoPickPolicy?: AutoPickPolicy;
   minimumEntries?: number;
   maxEntriesPerSquad?: number | null;
   totalPrizePoolAmount?: number | null;
-
-  // Legacy support fields retained temporarily for read paths not yet narrowed.
-  roundValues?: number[];
-  startRound?: string;
-  tierConfig?: PersistedGolfContestTierDefinition[];
-  isExclusive?: boolean;
-  picksPerPeriod?: number;
 }
 
 /** Seeded reusable contest template selected during commissioner create flow. */

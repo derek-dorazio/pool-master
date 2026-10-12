@@ -111,13 +111,6 @@ export const selectionErrors = {
       400,
     ),
 
-  participantAlreadyTaken: (participantId: string) =>
-    new SelectionError(
-      `SportEventParticipant ${participantId} is already selected by another entry`,
-      'PARTICIPANT_ALREADY_TAKEN',
-      400,
-    ),
-
   tierMissing: (participantId: string) =>
     new SelectionError(
       `SportEventParticipant ${participantId} is missing a tier assignment`,

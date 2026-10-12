@@ -265,16 +265,6 @@ export class SelectionService {
       );
     }
 
-    if (context.configuration?.isExclusive) {
-      const contestPicks = await this.deps.picks.findByContestAndParticipant(
-        contestId,
-        participantId,
-      );
-      if (contestPicks.some((pick) => pick.entryId !== entryId)) {
-        throw selectionErrors.participantAlreadyTaken(participantId);
-      }
-    }
-
     if (outcome.kind === SelectionOutcomeKind.REJECT) {
       throw rejectionError(outcome, { contestId, entryId, participantId, rosterSize });
     }
@@ -573,7 +563,7 @@ export class SelectionService {
     const selectedSportEventParticipantIds = new Set(
       selectedEntryPicks.map((pick) => pick.sportEventParticipantId),
     );
-    const availableSportEventParticipantIds = this.buildAvailableParticipantIds(context, picks);
+    const availableSportEventParticipantIds = buildAvailableParticipantIds(context);
 
     const isComplete =
       rosterSize > 0
@@ -592,8 +582,6 @@ export class SelectionService {
 
     return {
       contest,
-      configuration,
-      tiers,
       rosterSize,
       isCommissioner: actorMembership ? isCommissionerRole(actorMembership.role) : false,
       status,
@@ -707,24 +695,13 @@ export class SelectionService {
       }));
   }
 
-  /**
-   * What is still selectable. In an exclusive contest a participant any entry has taken is
-   * gone for everyone; otherwise availability is just the field row's own.
-   */
-  private buildAvailableParticipantIds(
-    context: SelectionContext,
-    picks: readonly ContestEntryPickWithParticipant[],
-  ): Set<string> {
-    const takenSportEventParticipantIds = context.configuration?.isExclusive
-      ? new Set(picks.map((pick) => pick.sportEventParticipantId))
-      : null;
+}
 
-    return new Set(context.selectionParticipants.flatMap((participant) => {
-      if (!participant.isAvailable) return [];
-      if (takenSportEventParticipantIds?.has(participant.sportEventParticipantId)) return [];
-      return [participant.sportEventParticipantId];
-    }));
-  }
+/** What is still selectable: every field row that is itself available. */
+function buildAvailableParticipantIds(context: SelectionContext): Set<string> {
+  return new Set(context.selectionParticipants
+    .filter((participant) => participant.isAvailable)
+    .map((participant) => participant.sportEventParticipantId));
 }
 
 /** The shape an engine reasons over: a pick's id, whom it points at, and its place. */

@@ -8,10 +8,6 @@
  * holds, what a selection does to an entry, what stops a lineup being submitted, how the room
  * lists the field, what the room says about the viewed lineup, and which round a pick shows in.
  *
- * **Exclusivity is not an engine concern.** It is driven by `ContestConfiguration.isExclusive`
- * and applies the same way to every type, so it stays in the shared handler; an engine never
- * sees other entries' picks.
- *
  * **`evaluate` returns an outcome, not a verdict.** The first attempt at this abstraction gave
  * `validatePick` a `{ valid, reason }` return; a boolean cannot say *replace* or *toggle off*,
  * so the live tiered rules could never sit behind it, and #323 deleted the engines built on it.
@@ -137,9 +133,8 @@ export interface SelectionEngine {
 
   /**
    * What the room tells the viewer about the viewed lineup beyond its picks, or null when the
-   * type has nothing to say. `openField` is the golfers this entry could still add (available,
-   * not taken by another entry in an exclusive contest, and not already on it), for what the
-   * open places could cost.
+   * type has nothing to say. `openField` is the golfers this entry could still add (available
+   * and not already on it), for what the open places could cost.
    */
   summarizeLineup(input: LineupInput & { openField: readonly SelectionParticipant[] }): LineupSummary | null;
 

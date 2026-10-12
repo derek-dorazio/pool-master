@@ -743,7 +743,7 @@ indexes hold (plans/117 §7.1, deleted with its epic; retrieve via
 `git show c0191969^:plans/117-league-contest-substrate-redesign.md`). Its port, `ContestEntryPickRepository`, is read-only by
 design (#247), so no adapter or fake can become a second way in. The selection operations
 themselves are the selection room's: `SelectionService` is the shared handler (auth, the pick window,
-availability, exclusivity, persistence), and what varies by selection type, including the tiered
+availability, persistence), and what varies by selection type, including the tiered
 replace-on-full and toggle-off rules, is a `SelectionEngine` looked up by `SelectionType`
 (`selections/selection-engines/`, #198). A type with no engine answers 501 `SELECTION_TYPE_UNSUPPORTED`.
 

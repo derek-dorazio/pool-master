@@ -162,7 +162,6 @@ export class ContestManagementService {
         resolvedConfiguration.configuration.maxEntriesPerSquad === null
           ? null
           : resolvedConfiguration.configuration.maxEntriesPerSquad,
-      isExclusive: false,
     });
 
     await syncDerivedScoring(
@@ -282,7 +281,6 @@ export class ContestManagementService {
       configJson,
       maxEntriesPerSquad:
         input.maxEntriesPerSquad === null ? null : input.maxEntriesPerSquad,
-      isExclusive: false,
     });
 
     const refreshedConfiguration =

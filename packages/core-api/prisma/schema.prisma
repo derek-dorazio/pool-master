@@ -328,12 +328,6 @@ enum PrismaScoringEngine {
   CUMULATIVE
 }
 
-enum PrismaAutoPickPolicy {
-  QUEUE_THEN_BEST
-  BEST_AVAILABLE
-  RANDOM
-}
-
 enum PrismaPrizePayoutType {
   FIXED_AMOUNT
   PERCENTAGE
@@ -717,7 +711,6 @@ model Contest {
   contestFormat             PrismaContestFormat @default(ROSTER) @map("contest_format")
   selectionType             PrismaSelectionType @map("selection_type")
   scoringEngine             PrismaScoringEngine @map("scoring_engine")
-  isExclusive               Boolean             @default(false) @map("is_exclusive")
   scoringStopsOnElimination Boolean             @default(false) @map("scoring_stops_on_elimination")
   startsAt                  DateTime?           @map("starts_at") @db.Timestamptz
   endsAt                    DateTime?           @map("ends_at") @db.Timestamptz
@@ -737,25 +730,17 @@ model Contest {
 }
 
 model ContestConfiguration {
-  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestId            String                @unique @map("contest_id") @db.Uuid
-  templateId           String?               @map("template_id") @db.Uuid
-  templateVersion      Int?                  @map("template_version")
-  selectionType        PrismaSelectionType   @map("selection_type")
-  configJson           Json?                 @map("config_json")
-  rounds               Int?
-  timePerPickSeconds   Int?                  @map("time_per_pick_seconds")
-  autoPickPolicy       PrismaAutoPickPolicy? @map("auto_pick_policy")
-  tierConfig           Json?                 @map("tier_config")
-  isExclusive          Boolean               @default(false) @map("is_exclusive")
-  picksPerPeriod       Int?                  @map("picks_per_period")
-  roundValues          Json?                 @map("round_values")
-  startRound           String?               @map("start_round") @db.VarChar(50)
-  minimumEntries       Int?                  @map("minimum_entries")
-  maxEntriesPerSquad   Int?                  @map("max_entries_per_squad")
-  totalPrizePoolAmount Float?                @map("total_prize_pool_amount")
-  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt            DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+  id                   String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId            String              @unique @map("contest_id") @db.Uuid
+  templateId           String?             @map("template_id") @db.Uuid
+  templateVersion      Int?                @map("template_version")
+  selectionType        PrismaSelectionType @map("selection_type")
+  configJson           Json?               @map("config_json")
+  minimumEntries       Int?                @map("minimum_entries")
+  maxEntriesPerSquad   Int?                @map("max_entries_per_squad")
+  totalPrizePoolAmount Float?              @map("total_prize_pool_amount")
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
   contest                 Contest                         @relation(fields: [contestId], references: [id])
   template                ContestConfigTemplate?          @relation(fields: [templateId], references: [id])

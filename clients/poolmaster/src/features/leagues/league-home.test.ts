@@ -14,7 +14,6 @@ function contestFixture(overrides: Partial<ContestDto> & { id: string }): Contes
     selectionType: 'OPEN_SELECTION',
     scoringEngine: 'STROKE_PLAY',
     leagueId: 'league-1',
-    isExclusive: false,
     ...overrides,
   };
 }

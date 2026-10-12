@@ -37,7 +37,6 @@ const UpdateContestBodySchema = zod.object({
   name: zod.string().min(1).max(100).optional(),
   startsAt: zod.string().datetime().optional(),
   endsAt: zod.string().datetime().optional(),
-  isExclusive: zod.boolean().optional(),
 });
 
 /** The signed-in reader of a contest read. Both reads sit behind a membership gate, so there is one. */
@@ -335,7 +334,6 @@ export function createContestHandlers(contestService: ContestService) {
           name: body.name,
           startsAt: body.startsAt ? new Date(body.startsAt) : undefined,
           endsAt: body.endsAt ? new Date(body.endsAt) : undefined,
-          isExclusive: body.isExclusive,
         },
       );
       logger.info({ contestId: request.params.contestId }, 'contest update route completed');

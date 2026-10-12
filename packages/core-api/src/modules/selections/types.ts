@@ -128,8 +128,6 @@ export interface SelectionGroup {
  */
 export interface SelectionView {
   contest: Contest;
-  configuration: ContestConfiguration | null;
-  tiers: SelectionTierConfig[];
   rosterSize: number;
   isCommissioner: boolean;
   status: SelectionStatus;

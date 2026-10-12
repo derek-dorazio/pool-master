@@ -38,7 +38,6 @@ interface ContestRow {
   selectionType: SelectionType;
   scoringEngine: ScoringEngine;
   sport?: Contest['sport'] | null;
-  isExclusive: boolean;
   startsAt?: Date | null;
   endsAt?: Date | null;
   createdAt: Date;
@@ -138,7 +137,6 @@ export function toContestDto(
     }),
     startsAt: contest.startsAt?.toISOString() ?? null,
     endsAt: contest.endsAt?.toISOString() ?? null,
-    isExclusive: contest.isExclusive,
     createdAt: contest.createdAt.toISOString(),
     updatedAt: contest.updatedAt.toISOString(),
   };

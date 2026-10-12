@@ -54,17 +54,6 @@ export class PrismaContestEntryPickRepository implements ContestEntryPickReposit
     }));
   }
 
-  async findByContestAndParticipant(
-    contestId: string,
-    sportEventParticipantId: string,
-  ): Promise<ContestEntryPick[]> {
-    const rows = await this.prisma.contestEntryPick.findMany({
-      where: { sportEventParticipantId, entry: { contestId } },
-      orderBy: PICK_ORDER,
-    });
-    return rows.map(mapContestEntryPickRowToDomain);
-  }
-
   async countByContest(contestId: string): Promise<number> {
     return this.prisma.contestEntryPick.count({ where: { entry: { contestId } } });
   }

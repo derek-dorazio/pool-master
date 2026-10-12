@@ -48,14 +48,6 @@ export const SelectionEntryDtoSchema = z.object({
 }).describe('Entry summary shown in the selection room.');
 export type SelectionEntryDto = z.infer<typeof SelectionEntryDtoSchema>;
 
-export const SelectionTierConfigDtoSchema = z.object({
-  tierId: z.string(),
-  tierName: z.string(),
-  tierNumber: z.number(),
-  picksFromTier: z.number(),
-}).describe('Tier definition displayed within a selection room.');
-export type SelectionTierConfigDto = z.infer<typeof SelectionTierConfigDtoSchema>;
-
 export const SelectionParticipantDtoSchema = z.object({
   sportEventParticipantId: z.string(),
   participantId: z.string(),
@@ -81,18 +73,6 @@ export const SelectionGroupDtoSchema = z.object({
   participants: z.array(SelectionParticipantDtoSchema).describe('Selectable participants shown inside the group.'),
 }).describe('Contest-specific selection group used by tiered or budget-style entry builders.');
 export type SelectionGroupDto = z.infer<typeof SelectionGroupDtoSchema>;
-
-export const SelectionContestConfigurationDtoSchema = z.object({
-  isExclusive: z.boolean(),
-  rounds: z.number().optional(),
-  rosterSize: z.number().optional().describe('How many picks a full roster holds.'),
-  timePerPickSeconds: z.number().optional(),
-  picksPerPeriod: z.number().optional(),
-  roundValues: z.array(z.number()).optional(),
-  startRound: z.string().optional(),
-  tierConfig: z.array(SelectionTierConfigDtoSchema).optional().describe('Tier configuration when the contest uses tiered selection.'),
-}).describe('Contest-configuration subset required by selection-room clients.');
-export type SelectionContestConfigurationDto = z.infer<typeof SelectionContestConfigurationDtoSchema>;
 
 export const SelectionPickEmEventDtoSchema = z.object({
   id: z.string(),
@@ -158,7 +138,6 @@ export const SelectionStateResponseSchema = z.object({
   isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
-  contestConfiguration: SelectionContestConfigurationDtoSchema.nullable().optional(),
   status: z.enum([
     SelectionStatus.PENDING,
     SelectionStatus.LIVE,
@@ -203,7 +182,6 @@ export const SelectionPickResponseSchema = z.object({
   isTurnBased: z.boolean(),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
-  contestConfiguration: SelectionContestConfigurationDtoSchema.nullable().optional(),
   status: z.enum([
     SelectionStatus.PENDING,
     SelectionStatus.LIVE,
