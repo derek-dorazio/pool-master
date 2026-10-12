@@ -3868,7 +3868,7 @@ export type SportDto = {
  */
 export type SportListResponse = {
     /**
-     * Every sport, by key.
+     * Every sport, ordered by sport.
      */
     sports: Array<{
         /**
@@ -6702,11 +6702,11 @@ export type ContestEntryPickDto = {
      */
     contestFormat: 'ROSTER';
     /**
-     * Per-format period: week (SURVIVOR), draft round (BRACKET), or omitted (ROSTER). Plans/117 §7.1.
+     * Unused: no built contest format sets it, so it is always null. Removal is tracked in #632.
      */
     period: number | null;
     /**
-     * Per-format slot: matchup index (BRACKET), confidence rank (PICKEM_CONFIDENCE), predicted position (PREDICT_TOP_N), or omitted (ROSTER, SURVIVOR). Plans/117 §7.1.
+     * Unused: no built contest format sets it, so it is always null; a lineup position is `lineupSlot`. Removal is tracked in #632.
      */
     slot: number | null;
     /**
@@ -14044,7 +14044,7 @@ export type GetGolfContestLeaderboardData = {
 
 export type GetGolfContestLeaderboardErrors = {
     /**
-     * CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _SPORT_UNSUPPORTED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).
+     * CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).
      */
     400: ErrorEnvelope;
     /**
@@ -16285,6 +16285,10 @@ export type SetSportIngestionOverrideErrors = {
     /**
      * Standard API error envelope.
      */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
     401: ErrorEnvelope;
     /**
      * Standard API error envelope.
@@ -16313,6 +16317,10 @@ export type ResetSportIngestionOverrideData = {
 };
 
 export type ResetSportIngestionOverrideErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
