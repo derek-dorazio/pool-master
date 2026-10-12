@@ -566,7 +566,7 @@ async function seedTieredDraftFixture(options: {
     commissioner,
     challenger,
     entryId: entryResponse.data.entry.id,
-    challengerEntryId: challengerEntryResponse?.data?.entry.id ?? null,
+    challengerEntryId: challengerEntryResponse?.data.entry.id ?? null,
     sportEventParticipantId: eventParticipantIds[0],
     sportEventParticipantIds: eventParticipantIds,
   };
@@ -860,7 +860,7 @@ describe('SDK Functional: Roster Selection', () => {
     const overCapRoom = await pickFor(fixture.secondEventParticipantId);
     expect(overCapRoom.response.status).toBe(200);
     expect(overCapRoom.data?.lineupSummary).toMatchObject({ spent: 5100, isOverBudget: true, openSlots: 0 });
-    expect(overCapRoom.data?.entries?.find((entry) => entry.id === fixture.commissionerEntryId)?.status).toBe('DRAFT');
+    expect(overCapRoom.data?.entries.find((entry) => entry.id === fixture.commissionerEntryId)?.status).toBe('DRAFT');
     expect(await entryStatus()).toBe('DRAFT');
 
     expectFunctionalError(await submit(), { status: 409, code: 'ENTRY_OVER_BUDGET' });

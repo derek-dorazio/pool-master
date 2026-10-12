@@ -630,7 +630,7 @@ describe('Selection room response — the published shape', () => {
       ['tier-1', ['sep-a']],
       ['tier-2', ['sep-d']],
     ]);
-    expect(response.pickHistories?.map((pick) => pick.participantName)).toEqual(['Golfer A', 'Golfer D']);
+    expect(response.pickHistories.map((pick) => pick.participantName)).toEqual(['Golfer A', 'Golfer D']);
     expect(response.contestConfiguration?.rosterSize).toBe(4);
   });
 });

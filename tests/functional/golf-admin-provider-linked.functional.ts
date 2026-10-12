@@ -234,7 +234,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
       client: admin,
       body: { sport: 'GOLF', name: `USGA ${RUN}`, matchKeyword: 'U.S. Open' },
     });
-    expect(league.response?.status).toBe(201);
+    expect(league.response.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
 
@@ -255,7 +255,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
         autoLifecycleEnabled: false,
       },
     });
-    expect(tournament.response?.status).toBe(201);
+    expect(tournament.response.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;
     created.sportEventIds.add(eventId);
     expect(expectDefined(tournament.data).event.syncScope).toBe('NONE');
@@ -271,7 +271,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
         to: '2026-05-29T00:00:00.000Z',
       },
     });
-    expect(catalog.response?.status).toBe(200);
+    expect(catalog.response.status).toBe(200);
     const catalogEvents = expectDefined(catalog.data).events;
     expect(Array.isArray(catalogEvents)).toBe(true);
     const usOpen = catalogEvents.find((e) => e.externalId === MOCK_EVENT_EXTERNAL_ID);
@@ -293,7 +293,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
         to: '2026-07-01T00:00:00.000Z',
       },
     });
-    expect(filtered.response?.status).toBe(200);
+    expect(filtered.response.status).toBe(200);
     expect(expectDefined(filtered.data).events.length).toBeGreaterThan(0);
     expect(expectDefined(filtered.data).events.every((e) => e.name.includes('U.S. Open'))).toBe(true);
 
@@ -303,7 +303,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
       path: { eventId },
       body: { providerId: MOCK_PROVIDER_ID, externalId: MOCK_EVENT_EXTERNAL_ID },
     });
-    expect(link.response?.status).toBe(200);
+    expect(link.response.status).toBe(200);
     expect(expectDefined(link.data).event).toMatchObject({
       syncScope: 'SCORES_ONLY',
       providerId: MOCK_PROVIDER_ID,
@@ -342,7 +342,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     // for a SCORES_ONLY event, so an admin refresh works and
     // creates the provider-mapped participant identities the score sync needs.
     const refresh = await refreshEventParticipants({ client: admin, path: { eventId } });
-    expect(refresh.response?.status).toBe(202);
+    expect(refresh.response.status).toBe(202);
     await waitForSyncRuns(expectDefined(refresh.data).syncRuns.map((r) => r.id));
 
     const loadedField = await listEventParticipants({ client: admin, path: { eventId } });
@@ -378,15 +378,15 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
           })),
           reassignOrphansTo: 'tier-1',
         },
-      })).response?.status,
+      })).response.status,
     ).toBe(200);
     expect(
       (await autoAssignEventTiers({ client: admin, path: { eventId }, body: { source: 'RANKING' } }))
-        .response?.status,
+        .response.status,
     ).toBe(200);
     expect(
       (await autoAssignEventPrices({ client: admin, path: { eventId }, body: standardEventPricing() }))
-        .response?.status,
+        .response.status,
     ).toBe(200);
 
     // Released as a fixture write: the tournament's start date is fixed in the past (the mock
@@ -406,7 +406,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
       path: { eventId },
       body: { toStatus: 'IN_PROGRESS' },
     });
-    expect(toLive.response?.status).toBe(200);
+    expect(toLive.response.status).toBe(200);
     expect(expectDefined(toLive.data).event.status).toBe('IN_PROGRESS');
 
     // --- 3c. One manual EVENTLIVESCORES sync tick -> R1 scores via sync -
@@ -416,7 +416,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
       body: { feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-r1-complete' },
     });
-    expect(r1Sync.response?.status).toBe(202);
+    expect(r1Sync.response.status).toBe(202);
     await waitForSyncRuns(expectDefined(r1Sync.data).syncRuns.map((r) => r.id));
 
     // Scores arrived via the sync path — applyEventGolfRoundScores was never
@@ -467,7 +467,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
       body: { feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-completed' },
     });
-    expect(finalSync.response?.status).toBe(202);
+    expect(finalSync.response.status).toBe(202);
     await waitForSyncRuns(expectDefined(finalSync.data).syncRuns.map((r) => r.id));
 
     const roundsAfterFinalSync = await db.sportEventRound.count({ where: { sportEventId: eventId } });
@@ -478,7 +478,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
       path: { eventId },
       body: { toStatus: 'COMPLETED' },
     });
-    expect(toDone.response?.status).toBe(200);
+    expect(toDone.response.status).toBe(200);
     expect(expectDefined(toDone.data).event.status).toBe('COMPLETED');
 
     const settlement = await db.contestEntryStanding.findMany({ where: { contestId }, include: { golf: true } });
@@ -499,7 +499,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     });
 
     const unlink = await unlinkEventScoreSource({ client: admin, path: { eventId } });
-    expect(unlink.response?.status).toBe(200);
+    expect(unlink.response.status).toBe(200);
     expect(expectDefined(unlink.data).event.syncScope).toBe('NONE');
     expect(expectDefined(unlink.data).event.providerId).toBe('manual-admin');
     const unlinkedRow = await db.sportEvent.findUniqueOrThrow({ where: { id: eventId } });
@@ -513,7 +513,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
       body: { feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-late-correction' },
     });
-    expect(staleSync.response?.status).toBe(202);
+    expect(staleSync.response.status).toBe(202);
     await waitForSyncRuns(expectDefined(staleSync.data).syncRuns.map((r) => r.id));
 
     const standingsAfter = await db.sportEventParticipantStanding.findMany({

@@ -154,7 +154,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       client: c,
       body: { sport: 'GOLF', name: `PGA Tour ${RUN}`, matchKeyword: 'PGA' },
     });
-    expect(league.response?.status).toBe(201);
+    expect(league.response.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     expect(expectDefined(league.data).sportLeague.currentEventYear).toBeNull();
@@ -167,7 +167,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
         client: c,
         body: { sportId: golfSportId, participantType: 'INDIVIDUAL', name: `${RUN} Player ${i}`, shortName: `P${i}`, nationality: 'USA', externalId },
       });
-      expect(p.response?.status).toBe(201);
+      expect(p.response.status).toBe(201);
       created.participantIds.add(expectDefined(p.data).participant.id);
       // ranks 1..19 with p18 and p19 tied at 19 to exercise the tie-break
       players.push({ id: expectDefined(p.data).participant.id, externalId, rank: i >= 18 ? 19 : i + 1 });
@@ -178,7 +178,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       path: { sportLeagueId },
       body: { rows: players.map((p) => ({ externalId: p.externalId, ranking: p.rank })) },
     });
-    expect(rosterApply.response?.status).toBe(200);
+    expect(rosterApply.response.status).toBe(200);
     expect(expectDefined(rosterApply.data).affiliations.length).toBe(20);
 
     // --- Event: seeds 4 rounds + 6 default tiers --------------------------------
@@ -197,7 +197,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
         autoLifecycleEnabled: false,
       },
     });
-    expect(tournament.response?.status).toBe(201);
+    expect(tournament.response.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;
     created.sportEventIds.add(eventId);
     expect(expectDefined(tournament.data).event).toMatchObject({ syncScope: 'NONE', sportLeagueId, eventYear: 2026 });
@@ -209,7 +209,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
 
     // --- Seed the field from the sport league; derived seeds + odds ------------
     const seed = await seedEventParticipants({ client: c, path: { eventId } });
-    expect(seed.response?.status).toBe(200);
+    expect(seed.response.status).toBe(200);
     expect(expectDefined(seed.data).added).toBe(20);
     expect(expectDefined(seed.data).seedNumbersDerived).toBe(20);
     expect(expectDefined(seed.data).oddsDerived).toBe(20);
@@ -233,7 +233,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
         })),
       },
     });
-    expect(wd.response?.status).toBe(200);
+    expect(wd.response.status).toBe(200);
 
     // --- 21st, non-affiliated participant added straight to the field ----------
     const guest = await createParticipant({
@@ -243,7 +243,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const guestId = expectDefined(guest.data).participant.id;
     created.participantIds.add(guestId);
     const bulkAdd = await addEventParticipants({ client: c, path: { eventId }, body: { participantIds: [guestId] } });
-    expect(bulkAdd.response?.status).toBe(200);
+    expect(bulkAdd.response.status).toBe(200);
     expect(expectDefined(bulkAdd.data).added).toBe(1);
 
     field = await listEventParticipants({ client: c, path: { eventId } });
@@ -291,7 +291,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       path: { eventId },
       body: { rows: [...uploadRows, { externalId: `${RUN}-not-on-field`, ranking: 2 }] },
     });
-    expect(uploadPreview.response?.status).toBe(200);
+    expect(uploadPreview.response.status).toBe(200);
     expect(expectDefined(uploadPreview.data).rollup).toMatchObject({ total: 3, matched: 2, unresolved: 1, update: 2 });
     expect(expectDefined(uploadPreview.data).rows[1]).toMatchObject({ sportEventParticipantId: upB.id, after: { ranking: null } });
     expect(expectDefined(uploadPreview.data).rows[2].message).toMatch(/refresh the field from the provider first/);
@@ -304,7 +304,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(expectDefined(expectDefined(unchangedField.data).participants.find((e) => e.id === upA.id)).ranking).toBe(upA.ranking);
 
     const uploaded = await applyEventParticipantUpload({ client: c, path: { eventId }, body: { rows: uploadRows } });
-    expect(uploaded.response?.status).toBe(200);
+    expect(uploaded.response.status).toBe(200);
     expect(expectDefined(uploaded.data).participants).toHaveLength(expectDefined(field.data).participants.length);
     expect(expectDefined(uploaded.data).participants.find((e) => e.id === upA.id)).toMatchObject({ ranking: 1, oddsToWin: 3.5 });
     expect(expectDefined(expectDefined(uploaded.data).participants.find((e) => e.id === upB.id)).ranking).toBeNull();
@@ -323,11 +323,11 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
         reassignOrphansTo: 'tier-1',
       },
     });
-    expect(fourTiers.response?.status).toBe(200);
+    expect(fourTiers.response.status).toBe(200);
     const tierKeyById = new Map(expectDefined(fourTiers.data).tiers.map((tier) => [tier.id, tier.tierKey]));
 
     const autoTiers = await autoAssignEventTiers({ client: c, path: { eventId }, body: { source: 'ODDS', tierSize: 6 } });
-    expect(autoTiers.response?.status).toBe(200);
+    expect(autoTiers.response.status).toBe(200);
     // The guest golfer is tiered alongside everyone else (tiering ignores affiliation).
     const guestAfterTiering = expectDefined(expectDefined(autoTiers.data).participants.find((e) => e.participantId === guestId));
     expect(guestAfterTiering.valuation?.sportEventTierId).not.toBeNull();
@@ -335,7 +335,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     // --- Auto-assign prices; tier placement must be untouched ------------------
     const tierKeyBySep = new Map(expectDefined(autoTiers.data).participants.map((e) => [e.id, tierKeyById.get(e.valuation?.sportEventTierId ?? '')]));
     const prices = await autoAssignEventPrices({ client: c, path: { eventId }, body: standardEventPricing() });
-    expect(prices.response?.status).toBe(200);
+    expect(prices.response.status).toBe(200);
     let pricedCount = 0;
     expectDefined(prices.data).participants.forEach((e) => {
       expect(tierKeyById.get(e.valuation?.sportEventTierId ?? '')).toBe(tierKeyBySep.get(e.id));
@@ -363,7 +363,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
           : { sportEventParticipantId: e.id, tierKey: expectDefined(tierKeyById.get(expectDefined(expectDefined(e.valuation).sportEventTierId))), tierOrderIndex: expectDefined(e.valuation).tierOrderIndex ?? 0 })),
       },
     });
-    expect(replaced.response?.status).toBe(200);
+    expect(replaced.response.status).toBe(200);
     const moved = expectDefined(expectDefined(replaced.data).participants.find((e) => e.id === mover.id));
     expect(tierKeyById.get(expectDefined(expectDefined(moved.valuation).sportEventTierId))).toBe('tier-4');
 
@@ -373,7 +373,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       { status: 409, code: 'SPORT_EVENT_RELEASE_REQUIRED' },
     );
     const released = await releaseEvent({ client: c, path: { eventId } });
-    expect(released.response?.status).toBe(200);
+    expect(released.response.status).toBe(200);
     expect(expectDefined(released.data).event.status).toBe('SCHEDULED');
     expectFunctionalError(
       await autoAssignEventTiers({ client: c, path: { eventId }, body: { source: 'ODDS', tierSize: 6 } }),
@@ -384,7 +384,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const detail = await getEvent({ client: c, path: { eventId } });
     expect(expectDefined(detail.data).event.allowedTransitions).toContain('IN_PROGRESS');
     const toLive = await transitionEvent({ client: c, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } });
-    expect(toLive.response?.status).toBe(200);
+    expect(toLive.response.status).toBe(200);
     expect(expectDefined(toLive.data).event.status).toBe('IN_PROGRESS');
 
     // --- Round-1 scores: bulk preview + apply, then a single-row correction -----
@@ -396,11 +396,11 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       status: 'COMPLETED' as const,
     }));
     const preview = await previewEventGolfRoundScores({ client: c, path: { eventId, roundNumber: 1 }, body: { rows: scoreRows } });
-    expect(preview.response?.status).toBe(200);
+    expect(preview.response.status).toBe(200);
     expect(expectDefined(preview.data).rollup.unresolved).toBe(0);
 
     const applyScores = await applyEventGolfRoundScores({ client: c, path: { eventId, roundNumber: 1 }, body: { rows: scoreRows } });
-    expect(applyScores.response?.status).toBe(200);
+    expect(applyScores.response.status).toBe(200);
     const scored = expectDefined(expectDefined(applyScores.data).participants.find((e) => e.id === expectDefined(field.data).participants[0].id));
     expect(scored.rounds[0].golf).toMatchObject({ strokes: 70, scoreToPar: -1 });
     expect(scored.standing?.golf).toMatchObject({ eventScoreToPar: -1 });
@@ -410,12 +410,12 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       path: { eventId, roundNumber: 1, sportEventParticipantId: expectDefined(field.data).participants[0].id },
       body: { strokes: 65, status: 'COMPLETED' },
     });
-    expect(correction.response?.status).toBe(200);
+    expect(correction.response.status).toBe(200);
     expect(expectDefined(correction.data).participant.rounds[0].golf).toMatchObject({ strokes: 65, scoreToPar: -1 });
 
     // --- COMPLETE the event -----------------------------------------------------
     const toDone = await transitionEvent({ client: c, path: { eventId }, body: { toStatus: 'COMPLETED' } });
-    expect(toDone.response?.status).toBe(200);
+    expect(toDone.response.status).toBe(200);
     expect(expectDefined(toDone.data).event.status).toBe('COMPLETED');
 
     // --- Set the current year: refused for a year with no events (plans/147 decision 6) ---
@@ -425,12 +425,12 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(expectDefined(unchanged.data).sportLeague.currentEventYear).toBeNull();
 
     const setCurrent = await updateSportLeague({ client: c, path: { sportLeagueId }, body: { currentEventYear: 2026 } });
-    expect(setCurrent.response?.status).toBe(200);
+    expect(setCurrent.response.status).toBe(200);
     expect(expectDefined(setCurrent.data).sportLeague.currentEventYear).toBe(2026);
 
     // --- Clone the 2026 calendar one year forward -------------------------------------
     const clone = await cloneEventYear({ client: c, body: { sportLeagueId, eventYear: 2026 } });
-    expect(clone.response?.status).toBe(201);
+    expect(clone.response.status).toBe(201);
     expect(expectDefined(clone.data).events).toHaveLength(1);
     const [clonedEvent] = expectDefined(clone.data).events;
     created.sportEventIds.add(clonedEvent.id);
@@ -483,13 +483,13 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     });
 
     const first = await edition(2026);
-    expect(first.response?.status).toBe(201);
+    expect(first.response.status).toBe(201);
     created.sportEventIds.add(expectDefined(first.data).event.id);
 
     expectFunctionalError(await edition(2026), { status: 409, code: 'EVENT_EDITION_ALREADY_EXISTS' });
 
     const nextYear = await edition(2027);
-    expect(nextYear.response?.status).toBe(201);
+    expect(nextYear.response.status).toBe(201);
     created.sportEventIds.add(expectDefined(nextYear.data).event.id);
     expect(expectDefined(nextYear.data).event.eventSeriesId).toBe(expectDefined(first.data).event.eventSeriesId);
 
@@ -511,7 +511,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     created.sportLeagueIds.add(sportLeagueId);
 
     const first = await importEventYearFromProvider({ client: c, body: { sportLeagueId, eventYear: 2027, providerId: 'mock-contest-feed' } });
-    expect(first.response?.status).toBe(201);
+    expect(first.response.status).toBe(201);
     const imported = expectDefined(first.data).created;
     imported.forEach((event) => created.sportEventIds.add(event.id));
     expect(expectDefined(first.data).skipped).toEqual([]);
@@ -522,7 +522,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     }
 
     const again = await importEventYearFromProvider({ client: c, body: { sportLeagueId, eventYear: 2027, providerId: 'mock-contest-feed' } });
-    expect(again.response?.status).toBe(201);
+    expect(again.response.status).toBe(201);
     expect(expectDefined(again.data).created).toEqual([]);
     expect(expectDefined(again.data).skipped).toHaveLength(imported.length);
     expect(new Set(expectDefined(again.data).skipped.map((row) => row.reason))).toEqual(new Set(['ALREADY_LINKED']));

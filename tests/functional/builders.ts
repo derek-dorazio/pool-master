@@ -73,8 +73,8 @@ export async function buildRegisteredUser(overrides?: {
   const username = overrides?.username ?? email;
   const password = overrides?.password ?? 'FuncTest123!';
   const fallbackName = overrides?.displayName ?? 'Functional Pilot User';
-  const [fallbackFirstName, ...fallbackLastParts] = fallbackName.split(/\s+/);
-  const firstName = overrides?.firstName ?? fallbackFirstName ?? 'Functional';
+  const [fallbackFirstName = 'Functional', ...fallbackLastParts] = fallbackName.split(/\s+/);
+  const firstName = overrides?.firstName ?? fallbackFirstName;
   const lastName = overrides?.lastName ?? (fallbackLastParts.join(' ').trim() || 'User');
   const displayName = `${firstName} ${lastName}`;
 

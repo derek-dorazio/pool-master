@@ -1149,7 +1149,7 @@ describe('mock contest feed provider event-first verification', () => {
       feeds: ['EVENTPARTICIPANTS'],
     });
 
-    expect(fieldJob?.status).toBe('COMPLETED');
+    expect(fieldJob.status).toBe('COMPLETED');
     expect(getEventDetailsSpy).toHaveBeenCalledWith(eventExternalId);
     expect(getUpcomingEventsSpy).not.toHaveBeenCalled();
 

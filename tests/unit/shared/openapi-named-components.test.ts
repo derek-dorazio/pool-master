@@ -62,7 +62,7 @@ type Operation = OpenApiDoc['paths'][string][string];
 function hasSuccessRef(op: Operation): boolean {
   return Object.entries(op.responses ?? {}).some(
     ([status, response]) => /^2\d\d$/.test(status)
-      && response?.content?.['application/json']?.schema?.$ref !== undefined,
+      && response.content?.['application/json']?.schema?.$ref !== undefined,
   );
 }
 
@@ -75,7 +75,7 @@ function operations(): { operationId: string; op: Operation }[] {
   const all: { operationId: string; op: Operation }[] = [];
   for (const ops of Object.values(openapi.paths)) {
     for (const op of Object.values(ops)) {
-      if (typeof op !== 'object' || op === null) continue;
+      if (typeof op !== 'object') continue;
       if (typeof op.operationId !== 'string') continue;
       all.push({ operationId: op.operationId, op });
     }

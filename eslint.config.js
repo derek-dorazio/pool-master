@@ -138,10 +138,13 @@ export default tseslint.config(
       // operation — `process.env`, an OpenAPI schema node rewritten in place, and
       // `Record`-typed React state. The rule's alternative, a `Map`, fits none of them.
       '@typescript-eslint/no-dynamic-delete': 'off',
-      // On per area while #550 clears its findings; see the override below the shared
-      // blocks. (`no-non-null-assertion` is on through the preset since #549; tests
-      // narrow with `expectDefined` from `tests/support/expect-defined.ts` instead.)
-      '@typescript-eslint/no-unnecessary-condition': 'off',
+      // #550: a check the types say can never matter is either dead code or a sign the
+      // type is wrong. Where a value really can be missing but its type says otherwise (an
+      // index lookup, a record keyed by input, a browser API absent on some origins), widen
+      // the type or use `.at()` so the check stays honest. (`no-non-null-assertion` is on
+      // through the preset since #549; tests narrow with `expectDefined` from
+      // `tests/support/expect-defined.ts` instead.)
+      '@typescript-eslint/no-unnecessary-condition': 'error',
 
       // #345 Phase 0 (from #160's survey of all 61 type-aware rules) — type-aware rules
       // outside every preset this config spreads, measured at 0 findings at default
@@ -406,13 +409,6 @@ export default tseslint.config(
     files: ['packages/*/src/**/*.ts'],
     plugins: { poolmaster },
     rules: { 'poolmaster/no-node-env-reads': 'error' },
-  },
-  {
-    // #550: a check the types say can never matter is either dead code or a sign the type
-    // is wrong. On for the packages, scripts and web app, whose findings are cleared; the
-    // tests follow.
-    files: ['packages/**/*.ts', 'scripts/**/*.{ts,mts}', 'clients/poolmaster/src/**/*.{ts,tsx}', 'clients/poolmaster/*.config.ts'],
-    rules: { '@typescript-eslint/no-unnecessary-condition': 'error' },
   },
 
   // ---------------------------------------------------------------------------

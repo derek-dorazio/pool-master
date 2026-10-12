@@ -67,7 +67,7 @@ function cookiesFrom(response: LightMyRequestResponse): SessionCookies {
 }
 
 function cookieHeader(cookies: SessionCookies): string {
-  return Object.entries(cookies)
+  return Object.entries<string | undefined>(cookies)
     .flatMap(([name, value]) => (value === undefined ? [] : [`${name}=${encodeURIComponent(value)}`]))
     .join('; ');
 }

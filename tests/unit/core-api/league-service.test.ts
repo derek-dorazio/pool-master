@@ -408,10 +408,10 @@ describe('LeagueService', () => {
       // The admin list used to hard-code `isRootAdmin: true`, `memberType: null` and an
       // all-false `leagueRelationship` on every row: a caller having to INVENT values for
       // three fields is what proved they were never properties of the league.
-      expect(row?.league.id).toBe('league-1');
-      expect(row?.league).not.toHaveProperty('isRootAdmin');
-      expect(row?.league).not.toHaveProperty('memberType');
-      expect(row?.league).not.toHaveProperty('leagueRelationship');
+      expect(row.league.id).toBe('league-1');
+      expect(row.league).not.toHaveProperty('isRootAdmin');
+      expect(row.league).not.toHaveProperty('memberType');
+      expect(row.league).not.toHaveProperty('leagueRelationship');
     });
   });
 

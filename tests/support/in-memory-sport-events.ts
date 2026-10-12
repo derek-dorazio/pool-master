@@ -162,7 +162,7 @@ export class InMemorySportEvents {
       },
       update: async (id, updates) => {
         const row = this.sportLeagues.find((candidate) => candidate.id === id) as SportLeague;
-        Object.assign(row, Object.fromEntries(Object.entries(updates).filter(([, value]) => value !== undefined)));
+        Object.assign(row, Object.fromEntries(Object.entries<unknown>(updates).filter(([, value]) => value !== undefined)));
         return row;
       },
     };
