@@ -190,14 +190,16 @@ export default tseslint.config(
     },
   },
   {
-    // #524, #539 — build-tool configs and tsx scripts. Each sits outside its package's
-    // `tsconfig.json` on purpose (they run in Node, and must stay out of `dist`), so
+    // #524, #539, #616 — build-tool configs, tsx scripts and the Playwright suites. Each
+    // sits outside its package's `tsconfig.json` on purpose (they run in Node, and must
+    // stay out of `dist`), so
     // `projectService`, which only finds the nearest `tsconfig.json`, cannot place
     // them and reports a hard parse error. Naming the programs that include them is
     // what lets the type-aware rules reach them at all. The `.mjs` scripts stay out of
     // lint with every other `.js` flavour, above.
     files: [
       'clients/poolmaster/*.config.ts',
+      'clients/poolmaster/e2e/**/*.ts',
       'packages/*/openapi-ts.config.ts',
       'packages/*/scripts/**/*.ts',
       'scripts/**/*.ts',

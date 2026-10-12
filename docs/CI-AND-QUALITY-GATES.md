@@ -413,7 +413,8 @@ and declined.
 ### Scope
 
 `npm run lint` globs `packages/**/*.ts`, `tests/**/*.{ts,tsx}`,
-`clients/poolmaster/src/**/*.{ts,tsx}` and the webapp's build-tool configs
+`clients/poolmaster/src/**/*.{ts,tsx}`, the Playwright suites
+`clients/poolmaster/e2e/**/*.ts` (since #616) and the webapp's build-tool configs
 `clients/poolmaster/*.config.ts`. It is ESLint alone: the last standalone
 scanner, `scripts/check-feature-theme-tokens.mjs`, became
 `poolmaster/no-raw-theme-colors` in #524. `lint:service` (which carries
@@ -467,7 +468,7 @@ run in Node, not the browser, and the codegen configs and scripts must stay out 
 `dist`. Each has its own program instead — the `tsconfig.node.json` in
 `clients/poolmaster`, `packages/shared`, `packages/mock-contest-feed-provider` and
 `packages/core-api` (which also takes the repo-root `scripts/*.ts`), with
-`playwright.config.ts` in `tsconfig.e2e.json` — and each package's `typecheck`
+`playwright.config.ts` and the `e2e/` suites in `tsconfig.e2e.json` — and each package's `typecheck`
 script runs it. `projectService` only finds the nearest `tsconfig.json`, so
 `eslint.config.js` names those programs with `parserOptions.project` for these
 files; without that they are a hard parse error rather than a finding (#524, #539).
