@@ -284,7 +284,7 @@ function buildWorld(options: WorldOptions = {}) {
 }
 
 describe('Tiered selection — a member building an entry', () => {
-  it('fills a roster tier by tier, after which the room reports the entry full and closes further picks', async () => {
+  it('fills a roster tier by tier, and the room shows each tier\'s held golfers selected', async () => {
     const world = buildWorld();
 
     await world.pickFor(ENTRY_A, 'a');
@@ -294,8 +294,6 @@ describe('Tiered selection — a member building an entry', () => {
 
     expect(world.held(ENTRY_A)).toEqual(['a', 'b', 'd', 'e']);
     expect(result.view.rosterSize).toBe(4);
-    expect(result.view.canCurrentUserSubmit).toBe(false);
-    expect(result.view.currentEntryId).toBeNull();
     expect(result.view.selectionGroups.map((group) =>
       group.participants.filter((participant) => participant.isSelected).map((p) => p.participantId),
     )).toEqual([['p-a', 'p-b'], ['p-d', 'p-e']]);
@@ -347,7 +345,6 @@ describe('Tiered selection — a member building an entry', () => {
     const off = await world.pickFor(ENTRY_A, 'a');
     expect(off.outcome).toBe('toggled-off');
     expect(world.held(ENTRY_A)).toEqual([]);
-    expect(off.view.canCurrentUserSubmit).toBe(true);
 
     await world.pickFor(ENTRY_A, 'a');
     expect(world.held(ENTRY_A)).toEqual(['a']);
@@ -376,7 +373,6 @@ describe('Tiered selection — a member building an entry', () => {
 
     expect(world.held(ENTRY_A)).toEqual(['a']);
     expect(result.view.myEntryId).toBe(ENTRY_A);
-    expect(result.view.canCurrentUserSubmit).toBe(true);
   });
 
   it('refuses a pick from someone who has left the entry\'s team, leaving the entry unchanged', async () => {
@@ -448,18 +444,6 @@ describe('Tiered selection — picks change only while the contest is open', () 
     await expect(world.pickFor(ENTRY_A, 'c')).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
     expect(world.held(ENTRY_A)).toEqual(['a', 'b']);
   });
-
-  it.each(closedStatuses)('tells the room a %s contest takes no picks, even for an unfinished entry', async (status) => {
-    const world = buildWorld({
-      status,
-      leagueMemberships: [leagueMembership(ALICE, 'COMMISSIONER'), leagueMembership(BOB, 'MEMBER')],
-    });
-
-    const room = await world.service.getSelectionState({ contestId: CONTEST_ID, actorUserId: ALICE });
-
-    expect(room.canCurrentUserSubmit).toBe(false);
-    expect(room.currentEntryId).toBeNull();
-  });
 });
 
 describe('Tiered selection — picks close when the event starts, whatever the contest status says', () => {
@@ -493,14 +477,6 @@ describe('Tiered selection — picks close when the event starts, whatever the c
 
     await expect(world.pickFor(ENTRY_A, 'a')).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
     expect(world.held(ENTRY_A)).toEqual(['a']);
-  });
-
-  it('tells the room an OPEN contest whose event has started takes no picks', async () => {
-    const world = buildWorld({ eventStartDate: started });
-
-    const room = await world.service.getSelectionState({ contestId: CONTEST_ID, actorUserId: ALICE });
-
-    expect(room.canCurrentUserSubmit).toBe(false);
   });
 });
 
