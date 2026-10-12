@@ -19,7 +19,6 @@ export type {
 export {
   publishLiveScoreUpdate,
   LiveScoreValidationError,
-  LiveScorePersistenceUnsupportedError,
 } from './score-publisher';
 export type { LiveScorePublisherDeps } from './score-publisher';
 export {

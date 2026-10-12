@@ -26,7 +26,7 @@ import type {
 
 export interface SportRepository {
   findById(id: string): Promise<SportConfig | null>;
-  findByName(name: Sport): Promise<SportConfig | null>;
+  findBySport(sport: Sport): Promise<SportConfig | null>;
   findAll(): Promise<SportConfig[]>;
 }
 

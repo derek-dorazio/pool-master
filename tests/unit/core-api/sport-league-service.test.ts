@@ -14,7 +14,7 @@ import {
 // guards, and resolving upload rows. What the repositories do with a write (atomicity,
 // ordering, scoping) is asserted against Postgres in sport-catalog-repositories.integration.
 
-const GOLF = { id: 'sport-golf', name: Sport.GOLF } as never;
+const GOLF = { id: 'sport-golf', sport: Sport.GOLF } as never;
 
 function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
   return {
@@ -42,7 +42,7 @@ function buildService(overrides: {
   participants?: Parameters<typeof fakeParticipantRepo>[0];
 } = {}) {
   const deps = {
-    sports: fakeSportRepo({ findByName: jest.fn().mockResolvedValue(GOLF), ...overrides.sports }),
+    sports: fakeSportRepo({ findBySport: jest.fn().mockResolvedValue(GOLF), ...overrides.sports }),
     sportLeagues: fakeSportLeagueRepo({ findById: jest.fn().mockResolvedValue(sportLeague()), ...overrides.sportLeagues }),
     sportEvents: fakeSportEventRepo(overrides.sportEvents),
     affiliations: fakeParticipantLeagueAffiliationRepo(overrides.affiliations),
@@ -68,7 +68,7 @@ describe('SportLeagueService — sport leagues', () => {
   });
 
   it('fails with 404 SPORT_NOT_FOUND when the sport has no Sport row yet', async () => {
-    const { service } = buildService({ sports: { findByName: jest.fn().mockResolvedValue(null) } });
+    const { service } = buildService({ sports: { findBySport: jest.fn().mockResolvedValue(null) } });
 
     await expect(service.listSportLeagues({ sport: Sport.GOLF })).rejects.toMatchObject({ code: 'SPORT_NOT_FOUND', statusCode: 404 });
   });

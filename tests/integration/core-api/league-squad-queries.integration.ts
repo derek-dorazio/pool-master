@@ -101,7 +101,6 @@ describe('LeagueService.countLeagueActivity', () => {
         name: `Contest ${status}`,
         status,
         selectionType: 'TIERED' as const,
-        scoringEngine: 'STROKE_PLAY' as const,
       })),
     });
 

@@ -48,7 +48,7 @@ async function createEvent(
     },
   });
   if (withField) {
-    const sport = await prisma.sport.findUniqueOrThrow({ where: { name: Sport.GOLF } });
+    const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
     const participant = await prisma.participant.create({
       data: { sportId: sport.id, name: `Golfer ${randomUUID()}`, participantType: 'INDIVIDUAL' },
     });

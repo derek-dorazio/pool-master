@@ -330,7 +330,7 @@ export interface ContestStatusTransition {
 
 export type ContestCreate = Pick<
   Contest,
-  'leagueId' | 'sportEventId' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'scoringEngine'
+  'leagueId' | 'sportEventId' | 'name' | 'status' | 'contestFormat' | 'selectionType'
 >;
 
 // --- Entries & Picks ---

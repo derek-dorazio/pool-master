@@ -33,8 +33,8 @@ beforeEach(() => cleanupTestData());
 
 async function golfSport() {
   return getPrisma().sport.upsert({
-    where: { name: Sport.GOLF },
-    create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    where: { sport: Sport.GOLF },
+    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 }
@@ -60,19 +60,16 @@ async function createParticipant(sportId: string, name: string, externalId?: str
 }
 
 describe('Sport and SportLeague repositories', () => {
-  it('reads a sport by id, null for an unknown id, and lists every sport by name', async () => {
+  it('reads a sport by id, null for an unknown id, and lists every sport by key', async () => {
     const golf = await golfSport();
-    const nfl = await getPrisma().sport.create({
-      data: { name: Sport.NFL, participantType: 'TEAM', tournamentFormat: 'WEEKLY_GAMES_SEASON' },
-    });
     const sports = new PrismaSportRepository(getPrisma());
 
-    await expect(sports.findById(nfl.id)).resolves.toMatchObject({ id: nfl.id, name: Sport.NFL, participantType: 'TEAM' });
+    await expect(sports.findById(golf.id)).resolves.toMatchObject({ id: golf.id, sport: Sport.GOLF, participantType: 'INDIVIDUAL' });
     await expect(sports.findById(randomUUID())).resolves.toBeNull();
-    expect((await sports.findAll()).map((row) => row.id)).toEqual([golf.id, nfl.id]);
+    expect((await sports.findAll()).map((row) => row.id)).toEqual([golf.id]);
   });
 
-  it('finds a sport by name and lists sport leagues filtered by sport and activity, ordered by name', async () => {
+  it('finds a sport by key and lists sport leagues filtered by sport and activity, ordered by name', async () => {
     const sport = await golfSport();
     const sports = new PrismaSportRepository(getPrisma());
     const sportLeagues = new PrismaSportLeagueRepository(getPrisma());
@@ -80,7 +77,7 @@ describe('Sport and SportLeague repositories', () => {
     const liv = await sportLeagues.create({ sportId: sport.id, name: 'LIV Golf', matchKeyword: null });
     await sportLeagues.update(liv.id, { isActive: false });
 
-    await expect(sports.findByName(Sport.GOLF)).resolves.toMatchObject({ id: sport.id, name: Sport.GOLF });
+    await expect(sports.findBySport(Sport.GOLF)).resolves.toMatchObject({ id: sport.id, sport: Sport.GOLF });
     expect((await sportLeagues.findAll({ sportId: sport.id })).map((row) => row.name)).toEqual(['LIV Golf', 'PGA Tour']);
     expect((await sportLeagues.findAll({ sportId: sport.id, isActive: true })).map((row) => row.name)).toEqual(['PGA Tour']);
     await expect(sportLeagues.findBySportAndName(sport.id, 'PGA Tour')).resolves.toMatchObject({ matchKeyword: 'PGA' });

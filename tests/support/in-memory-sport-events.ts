@@ -31,6 +31,7 @@ import type {
   SportLeagueRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
+import { findSportRow } from '@poolmaster/shared/domain';
 import type {
   GolfRoundResult,
   GolfStandingResult,
@@ -87,10 +88,10 @@ export class InMemorySportEvents {
 
   // --- Fixtures ---------------------------------------------------------------------
 
-  addSport(name: SportConfig['name']): SportConfig {
-    const sport = stamp({ id: this.id('sport'), name, participantType: 'INDIVIDUAL', category: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' }) as SportConfig;
-    this.sports.push(sport);
-    return sport;
+  addSport(sport: SportConfig['sport']): SportConfig {
+    const row: SportConfig = stamp({ id: this.id('sport'), sport, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' });
+    this.sports.push(row);
+    return row;
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
@@ -142,7 +143,7 @@ export class InMemorySportEvents {
   sportRepo(): SportRepository {
     return {
       findById: async (id) => this.sports.find((sport) => sport.id === id) ?? null,
-      findByName: async (name) => this.sports.find((sport) => sport.name === name) ?? null,
+      findBySport: async (sport) => findSportRow(this.sports, sport) ?? null,
       findAll: async () => [...this.sports],
     };
   }
@@ -244,9 +245,9 @@ export class InMemorySportEvents {
       findById: async (id) => this.events.find((row) => row.id === id) ?? null,
       findByIds: async (ids) => this.events.filter((row) => ids.includes(row.id)),
       findByProviderRef: async (providerId, externalId) => this.events.find((row) => row.providerId === providerId && row.externalId === externalId) ?? null,
+      // No sport filter: every event is golf while Sport has one member.
       findAll: async (filters) => this.events.filter((row) => (
-        (filters.sport === undefined || row.sport === filters.sport)
-        && (filters.status === undefined || row.status === filters.status)
+        (filters.status === undefined || row.status === filters.status)
         && (filters.sportLeagueId === undefined || row.sportLeagueId === filters.sportLeagueId)
         && (filters.eventYear === undefined || row.eventYear === filters.eventYear)
         && (filters.q === undefined || row.name.toLowerCase().includes(filters.q.toLowerCase()))

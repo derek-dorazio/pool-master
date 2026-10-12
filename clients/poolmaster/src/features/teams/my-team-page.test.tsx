@@ -144,7 +144,6 @@ function contest(id: string, name: string, status: 'DRAFT' | 'OPEN' | 'ACTIVE' |
     status,
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
-    scoringEngine: 'STROKE_PLAY',
     leagueId: 'league-1',
     sportEventId: `event-${id}`,
     sport: 'GOLF',

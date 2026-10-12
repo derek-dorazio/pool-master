@@ -22,7 +22,6 @@ import {
   InviteType,
   LeagueMembershipStatus,
   LeagueRole,
-  ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
 
@@ -101,8 +100,7 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
     name: 'Masters Pool 2026',
     status: ContestStatus.DRAFT,
     contestFormat: ContestFormat.ROSTER,
-    selectionType: SelectionType.SNAKE_DRAFT,
-    scoringEngine: ScoringEngine.STROKE_PLAY,
+    selectionType: SelectionType.TIERED,
     scoringStopsOnElimination: false,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),

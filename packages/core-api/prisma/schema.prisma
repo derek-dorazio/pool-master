@@ -254,18 +254,10 @@ enum ParticipantStandingStatus {
 // Substrate redesign — pool-master-rop.78 / Phase 4 (rop.78.4)
 // =============================================================================
 
-/// Sport category — drives per-category detail table dispatch.
-/// One row per category; multiple Sport rows may share the same category
-/// (e.g., "PGA Masters" and "Wimbledon" use different category but share
-/// the ROSTER pool format via tournamentFormat).
-enum PrismaSportCategory {
+/// The sports PoolMaster runs contests for (#603, #605). Members mirror the domain `Sport`
+/// const; a sport arrives with the migration and code that support it.
+enum PrismaSport {
   GOLF
-  BASKETBALL
-  FOOTBALL
-  F1
-  NASCAR
-  TENNIS
-  SOCCER
 }
 
 /// Tournament structural format — drives which contest types are valid
@@ -273,14 +265,6 @@ enum PrismaSportCategory {
 /// (sport × pool format) compatibility matrix in shared/domain.
 enum PrismaTournamentFormat {
   STROKE_PLAY_TOURNAMENT
-  KNOCKOUT_BRACKET
-  SERIES_PLAYOFF
-  ROUND_ROBIN_SEASON
-  WEEKLY_GAMES_SEASON
-  TIME_TRIAL_RACE
-  SEASON_OF_RACES
-  GROUP_STAGE_KNOCKOUT
-  MATCH_PLAY
 }
 
 /// Contest format — the pool format applied to a SportEvent. Validity vs.
@@ -292,10 +276,6 @@ enum PrismaTournamentFormat {
 /// once anticipated it was removed as dead scaffolding — plans/124 §4.11).
 enum PrismaContestFormat {
   ROSTER
-  BRACKET
-  PICKEM_CONFIDENCE
-  SURVIVOR
-  PREDICT_TOP_N
 }
 
 // #186: the lifecycle and discriminator columns below were free text until each
@@ -310,22 +290,8 @@ enum PrismaContestStatus {
 }
 
 enum PrismaSelectionType {
-  SNAKE_DRAFT
   TIERED
   BUDGET_PICK
-  OPEN_SELECTION
-  PICK_EM
-  BRACKET_PICK_EM
-}
-
-enum PrismaScoringEngine {
-  ADVANCEMENT
-  STAT_ACCUMULATION
-  STROKE_PLAY
-  POSITION
-  BRACKET
-  FIGHT_RESULT
-  CUMULATIVE
 }
 
 enum PrismaPrizePayoutType {
@@ -560,14 +526,13 @@ model SquadOwnerInvitation {
 
 model Sport {
   id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name             String                 @unique
+  /// Which sport this row is (#603). One row per built sport, seeded by the
+  /// migration that adds the sport's support.
+  sport            PrismaSport            @unique
   participantType  PrismaParticipantType  @map("participant_type")
-  category         PrismaSportCategory    @default(GOLF)
   /// No default (#236): the table that discriminates between sports must not
   /// make a row a stroke-play golf sport by omission. Creators take it from
-  /// DEFAULT_TOURNAMENT_FORMAT_BY_SPORT. `category` still defaults to GOLF —
-  /// the enum has no value for NHL, MLB, UFC or horse racing and nothing reads
-  /// the column, so it is raised on #236 rather than guessed here.
+  /// DEFAULT_TOURNAMENT_FORMAT_BY_SPORT.
   tournamentFormat PrismaTournamentFormat @map("tournament_format")
   createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime               @updatedAt @map("updated_at") @db.Timestamptz
@@ -710,7 +675,6 @@ model Contest {
   status                    PrismaContestStatus @default(DRAFT)
   contestFormat             PrismaContestFormat @default(ROSTER) @map("contest_format")
   selectionType             PrismaSelectionType @map("selection_type")
-  scoringEngine             PrismaScoringEngine @map("scoring_engine")
   scoringStopsOnElimination Boolean             @default(false) @map("scoring_stops_on_elimination")
   startsAt                  DateTime?           @map("starts_at") @db.Timestamptz
   endsAt                    DateTime?           @map("ends_at") @db.Timestamptz
@@ -752,7 +716,7 @@ model ContestConfiguration {
 
 model ContestConfigTemplate {
   id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sport         String              @db.VarChar(50)
+  sport         PrismaSport
   eventType     String?             @map("event_type") @db.VarChar(100)
   contestFormat PrismaContestFormat @map("contest_type")
   /// A `SelectionType` value: how an entry in a contest created from this template picks.
@@ -927,7 +891,7 @@ model SportEvent {
   id                   String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   externalId           String                    @map("external_id") @db.VarChar(255)
   providerId           String                    @map("provider_id") @db.VarChar(100)
-  sport                String                    @db.VarChar(50)
+  sport                PrismaSport
   name                 String                    @db.VarChar(500)
   venue                String?                   @db.VarChar(500)
   location             String?                   @db.VarChar(500)
@@ -1158,7 +1122,7 @@ model SportEventParticipantValuation {
 model ProviderSyncRun {
   id          String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   providerId  String                      @map("provider_id") @db.VarChar(100)
-  sport       String                      @db.VarChar(50)
+  sport       PrismaSport
   eventId     String?                     @map("event_id") @db.VarChar(255)
   status      PrismaProviderSyncRunStatus
   startedAt   DateTime?                   @map("started_at") @db.Timestamptz

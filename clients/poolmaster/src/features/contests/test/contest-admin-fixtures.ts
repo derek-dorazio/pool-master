@@ -53,7 +53,6 @@ export function buildContest(overrides: Partial<ContestDto> = {}): ContestDto {
     status: 'DRAFT',
     contestFormat: 'ROSTER',
     selectionType: SelectionType.TIERED,
-    scoringEngine: 'STROKE_PLAY',
     leagueId: 'league-1',
     sportEventId: 'event-1',
     sport: 'GOLF',

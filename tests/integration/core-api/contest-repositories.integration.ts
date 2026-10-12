@@ -59,8 +59,8 @@ async function createLeagueAndEvent() {
     prisma.squad.create({ data: { leagueId: league.id, createdBy: owner.user.id, name: `Bravo ${suffix}` } }),
   ]);
   const sport = await prisma.sport.upsert({
-    where: { name: Sport.GOLF },
-    create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    where: { sport: Sport.GOLF },
+    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
@@ -95,7 +95,6 @@ async function createContest(leagueId: string, sportEventId: string, name: strin
     status,
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
-    scoringEngine: 'STROKE_PLAY',
   });
 }
 
@@ -112,7 +111,6 @@ describe('ContestRepository', () => {
       status: ContestStatus.DRAFT,
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
-      scoringEngine: 'STROKE_PLAY',
       sport: Sport.GOLF,
     }));
     await expect(repos().contests.findById(created.id)).resolves.toEqual(created);
@@ -267,21 +265,24 @@ describe('ContestConfigurationRepository', () => {
 });
 
 describe('ContestConfigTemplateRepository', () => {
-  // Templates are reference data the cleanup leaves alone, so these use a sport of their own.
-  const sport = `ITEST-${randomUUID().slice(0, 8)}`;
+  // Golf's reference templates share the sport, so these carry a key prefix of their own: the
+  // cleanup removes only them, and each assertion reads only them.
+  const prefix = `itest-${randomUUID().slice(0, 8)}-`;
+  const ours = <T extends { templateKey: string }>(templates: T[]) =>
+    templates.filter((template) => template.templateKey.startsWith(prefix));
   afterEach(async () => {
-    await getPrisma().contestConfigTemplate.deleteMany({ where: { sport } });
+    await getPrisma().contestConfigTemplate.deleteMany({ where: { templateKey: { startsWith: prefix } } });
   });
 
-  async function createTemplate(templateKey: string, eventType: string | null, sortOrder: number) {
+  async function createTemplate(key: string, eventType: string | null, sortOrder: number) {
     return getPrisma().contestConfigTemplate.create({
       data: {
-        sport,
+        sport: Sport.GOLF,
         eventType,
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
-        templateKey,
-        name: `Template ${templateKey}`,
+        templateKey: `${prefix}${key}`,
+        name: `Template ${key}`,
         description: 'Integration template',
         sortOrder,
         configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
@@ -295,9 +296,9 @@ describe('ContestConfigTemplateRepository', () => {
     await createTemplate('other', 'OTHER', 0);
 
     const templates = await new PrismaContestConfigTemplateRepository(getPrisma())
-      .list({ sport: sport as Sport, eventType: 'MAJOR' });
+      .list({ sport: Sport.GOLF, eventType: 'MAJOR' });
 
-    expect(templates.map((template) => template.templateKey)).toEqual(['major', 'any']);
+    expect(ours(templates).map((template) => template.templateKey)).toEqual([`${prefix}major`, `${prefix}any`]);
   });
 
   it('updates only the fields given, and a retired template leaves the active list', async () => {
@@ -314,8 +315,8 @@ describe('ContestConfigTemplateRepository', () => {
       sortOrder: 1,
       configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
     }));
-    const active = await repo.list({ sport: sport as Sport, active: true });
-    expect(active.map((template) => template.id)).toEqual([kept.id]);
+    const active = await repo.list({ sport: Sport.GOLF, active: true });
+    expect(ours(active).map((template) => template.id)).toEqual([kept.id]);
   });
 });
 

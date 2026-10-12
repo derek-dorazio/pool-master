@@ -2,6 +2,7 @@ import type {
   ParticipantDto,
   ParticipantLeagueAffiliationDto,
   SettingsGroup,
+  SportDto,
   SportEventDto,
   SportEventParticipantDto,
   SportEventRoundDto,
@@ -161,12 +162,11 @@ export function affiliationFixture(
 }
 
 /** The golf sport row `listSports` answers with, for pages that resolve the golf sport id. */
-export const GOLF_SPORT_FIXTURE = {
+export const GOLF_SPORT_FIXTURE: SportDto = {
   id: 'sport-golf',
-  name: 'GOLF' as const,
-  participantType: 'INDIVIDUAL' as const,
-  category: 'GOLF' as const,
-  tournamentFormat: 'STROKE_PLAY_TOURNAMENT' as const,
+  sport: 'GOLF',
+  participantType: 'INDIVIDUAL',
+  tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };

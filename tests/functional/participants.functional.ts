@@ -16,9 +16,9 @@ let createdSportId: string | null = null;
 
 async function golfSportId(): Promise<string> {
   const database = getFunctionalPrisma();
-  const existing = await database.sport.findUnique({ where: { name: 'GOLF' } });
+  const existing = await database.sport.findUnique({ where: { sport: 'GOLF' } });
   if (existing) return existing.id;
-  const created = await database.sport.create({ data: { name: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' } });
+  const created = await database.sport.create({ data: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' } });
   createdSportId = created.id;
   return created.id;
 }

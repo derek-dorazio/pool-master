@@ -23,10 +23,8 @@ import type {
   ProviderSyncRunStatus,
   ParticipantStatus,
   ParticipantType,
-  ScoringEngine,
   SelectionType,
   Sport,
-  SportCategory,
   SquadMembershipStatus,
   SquadOwnerInvitationStatus,
   TeamIconKey,
@@ -132,21 +130,12 @@ export interface LeagueInvitation extends DomainEntity {
 // --- Sport & Participant ---
 
 /**
- * Configured sport definition known to the platform.
- *
- * Per plans/117 §4.1, the Sport entity now carries `category` and
- * `tournamentFormat` from pool-master-rop.78.4. `category` drives
- * per-category detail-table dispatch in scoring; `tournamentFormat`
- * drives the validity matrix in plans/117 §9.
- *
- * The `name` field continues to hold the legacy enum-style string
- * (`Sport.GOLF` etc.) until a future slice broadens to granular
- * tournament-level names ("PGA Masters", "NCAA Tournament 2026").
+ * The reference row for a built sport (#603). `sport` is the sport itself; what a screen calls it
+ * comes from code, not from this row. `tournamentFormat` drives the validity matrix.
  */
 export interface SportConfig extends DomainEntity {
-  name: Sport;
+  sport: Sport;
   participantType: ParticipantType;
-  category: SportCategory;
   tournamentFormat: TournamentFormat;
 }
 
@@ -201,7 +190,6 @@ export interface Contest extends DomainEntity {
   status: ContestStatus;
   contestFormat: ContestFormat;
   selectionType: SelectionType;
-  scoringEngine: ScoringEngine;
   sport?: Sport;
 
   // Timing

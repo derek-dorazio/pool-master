@@ -1,21 +1,8 @@
 /**
- * Contract coverage for the ContestEntryPick.contestFormat denormalization
- * invariant from plans/117 §7.1: every persisted pick row's `contestFormat`
- * column matches the parent `Contest.contestFormat`.
- *
- * The denormalization makes the per-format partial unique indexes (see
- * `contest-entry-pick-partial-uniques.integration.ts`) implementable —
- * Postgres partial indexes can predicate only on local columns. For that to
- * be safe the application layer must guarantee the denormalized column never
- * drifts from the parent contest.
- *
- * pool-master-rop.78.6 — service-layer enforcement of this invariant lives
- * in `ContestEntryPickService.createPick`. This test exercises the service
- * end-to-end and asserts the database row matches the parent contest. It
- * also asserts a global cross-row invariant (`pick.contestFormat ===
- * pick.entry.contest.contestFormat`) over every persisted pick at the end
- * of the suite — a defensive check against any future code path that might
- * bypass the service.
+ * ContestEntryPick.contestFormat is denormalized from the parent contest
+ * (plans/117 §7.1) so partial unique indexes can predicate on a local column.
+ * ROSTER is the only format since #605, so this checks the copy is made; the
+ * per-format cross-checks went with the formats.
  */
 import { randomUUID } from 'node:crypto';
 import {
@@ -79,12 +66,10 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
     },
   });
 
-  const sport = await prisma.sport.create({
-    data: {
-      name: `Invariant Sport ${suffix}`,
-      participantType: ParticipantType.INDIVIDUAL,
-      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-    },
+  const sport = await prisma.sport.upsert({
+    where: { sport: 'GOLF' },
+    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
   });
   const sportEvent = await prisma.sportEvent.create({
     data: {
@@ -120,7 +105,6 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
       status: 'OPEN',
       contestFormat: contestFormat as 'ROSTER',
       selectionType: 'TIERED',
-      scoringEngine: 'STROKE_PLAY',
     },
   });
   const entry = await prisma.contestEntry.create({
@@ -140,52 +124,20 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
   };
 }
 
-describe('pool-master-rop.78.6 / plans/117 §7.1 — ContestEntryPick.contestFormat denormalization invariant', () => {
-  it('reads the parent contest format and writes it onto the pick row regardless of caller intent', async () => {
+describe('ContestEntryPick.contestFormat denormalization', () => {
+  it('copies the parent contest\'s format onto the pick row it creates', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(prisma);
+    const fixture = await seedFixtureForFormat('ROSTER');
 
-    for (const format of ['ROSTER', 'BRACKET', 'PICKEM_CONFIDENCE', 'PREDICT_TOP_N', 'SURVIVOR']) {
-      const fixture = await seedFixtureForFormat(format);
-      const dto = await service.createPick({
-        entryId: fixture.entryId,
-        sportEventParticipantId: fixture.sportEventParticipantId,
-        // Per-format metadata varies; supply the minimum each partial index
-        // expects so the row can be inserted without violating uniqueness.
-        period: format === 'BRACKET' || format === 'PICKEM_CONFIDENCE' || format === 'SURVIVOR' ? 1 : null,
-        slot: format === 'BRACKET' || format === 'PICKEM_CONFIDENCE' || format === 'PREDICT_TOP_N' ? 1 : null,
-      });
-
-      expect(dto.contestFormat).toBe(format);
-      const row = await prisma.contestEntryPick.findUniqueOrThrow({
-        where: { id: dto.id },
-      });
-      expect(row.contestFormat).toBe(format);
-
-      // Cross-check: pick.contestFormat === parent contest.contestFormat.
-      const parentContest = await prisma.contest.findUniqueOrThrow({
-        where: { id: fixture.contestId },
-        select: { contestFormat: true },
-      });
-      expect(row.contestFormat).toBe(parentContest.contestFormat);
-    }
-  });
-
-  it('global invariant — every persisted pick has contestFormat matching its parent contest', async () => {
-    const prisma = getPrisma();
-    const drifted = await prisma.contestEntryPick.findMany({
-      include: {
-        entry: {
-          include: {
-            contest: { select: { contestFormat: true } },
-          },
-        },
-      },
+    const dto = await service.createPick({
+      entryId: fixture.entryId,
+      sportEventParticipantId: fixture.sportEventParticipantId,
     });
-    const violations = drifted.filter(
-      (pick) => pick.contestFormat !== pick.entry.contest.contestFormat,
-    );
-    expect(violations).toEqual([]);
+
+    const row = await prisma.contestEntryPick.findUniqueOrThrow({ where: { id: dto.id } });
+    expect(dto.contestFormat).toBe('ROSTER');
+    expect(row.contestFormat).toBe('ROSTER');
   });
 });
 

@@ -224,7 +224,7 @@ const noCounts = () => jest.fn().mockResolvedValue(new Map());
 export function fakeSportRepo(overrides: Partial<SportRepository> = {}): SportRepository {
   return {
     findById: one(),
-    findByName: one(),
+    findBySport: one(),
     findAll: many(),
     ...overrides,
   };

@@ -1,3 +1,4 @@
+import { findSportRow } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -35,7 +36,7 @@ function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderPartici
     staleTime: Infinity,
     retry: false,
   });
-  const sportId = sportQuery.data?.find((sport) => sport.name === competitor.sport)?.id ?? null;
+  const sportId = findSportRow(sportQuery.data ?? [], competitor.sport)?.id ?? null;
 
   const candidatesQuery = useQuery({
     enabled: sportId !== null && trimmedSearch.length > 0,

@@ -1652,17 +1652,6 @@ describe('ContestService.getGolfLeaderboard — refusals and the settled read', 
       .rejects.toMatchObject({ code: 'CONTEST_GOLF_LEADERBOARD_EVENT_REQUIRED' });
   });
 
-  it('refuses a contest on a non-golf event', async () => {
-    const service = buildService({
-      contests: contestRepoFor(),
-      memberships: member(),
-      sportEvents: fakeSportEventRepo({ findById: jest.fn().mockResolvedValue({ id: 'event-1', sport: Sport.NFL }) }),
-    });
-
-    await expect(service.getGolfLeaderboard('contest-1', 'user-1'))
-      .rejects.toMatchObject({ code: 'CONTEST_GOLF_LEADERBOARD_SPORT_UNSUPPORTED' });
-  });
-
   it('refuses a contest whose configuration sets no count of golfers to score', async () => {
     const service = buildService({
       contests: contestRepoFor(),

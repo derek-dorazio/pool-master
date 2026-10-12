@@ -20,7 +20,7 @@ import type {
   SportDataProvider,
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
-import type { Sport } from '@poolmaster/shared/domain';
+import { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
@@ -1012,26 +1012,22 @@ describe('IngestionScheduler', () => {
       expect(mockCallbacks.onEventDetail).not.toHaveBeenCalled();
     });
 
-    it('pool-master-r04 schedules only sports enabled by ingestion sync config', async () => {
+    it('schedules no feed for a covered sport the ingestion sync config does not enable', async () => {
       const provider = fakeSportDataProvider();
       const eventReader = {
         listEventIdsForFeed: jest.fn().mockResolvedValue([]),
       };
-      const registry = createMockRegistry(provider, [
-        'GOLF' as Sport,
-        'TENNIS' as Sport,
-        'NCAA_BASKETBALL' as Sport,
-      ]);
+      const registry = createMockRegistry(provider, [Sport.GOLF]);
       const configReader = {
         getConfig: jest.fn().mockResolvedValue({
-          scheduledSports: ['GOLF'],
+          scheduledSports: [],
           healthCheck: { enabled: true, intervalMinutes: 5 },
           eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
           eventLiveScores: { enabled: false, intervalSeconds: 30 },
           perSportOverrides: {},
         }),
         getPerSportConfig: jest.fn().mockResolvedValue({
-          scheduledSports: ['GOLF'],
+          scheduledSports: [],
           healthCheck: { enabled: true, intervalMinutes: 5 },
           eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
           eventLiveScores: { enabled: false, intervalSeconds: 30 },
@@ -1049,11 +1045,7 @@ describe('IngestionScheduler', () => {
       await Promise.resolve();
       await jest.runOnlyPendingTimersAsync();
 
-      expect(eventReader.listEventIdsForFeed).toHaveBeenCalled();
-      const requestedSports = eventReader.listEventIdsForFeed.mock.calls.map(([input]) => (input as { sport: Sport }).sport);
-      expect(requestedSports).toContain('GOLF');
-      expect(requestedSports).not.toContain('TENNIS');
-      expect(requestedSports).not.toContain('NCAA_BASKETBALL');
+      expect(eventReader.listEventIdsForFeed).not.toHaveBeenCalled();
     });
 
     it('start() is idempotent — calling twice does not double timers', () => {
@@ -1195,13 +1187,9 @@ describe('IngestionScheduler job outcomes', () => {
   });
 
   it.each([
-    [{ category: 'BASKETBALL', externalEventId: 'evt-1', games: [{}, {}] }, 2],
-    [{ category: 'NFL', externalEventId: 'evt-1', games: [{}] }, 1],
-    [{ category: 'F1', externalEventId: 'evt-1', results: [{}, {}, {}] }, 3],
-    [{ category: 'NASCAR', externalEventId: 'evt-1', results: [] }, 0],
-    [{ category: 'TENNIS', externalEventId: 'evt-1', matches: [{}] }, 1],
-    [{ category: 'SOCCER', externalEventId: 'evt-1', matches: [{}, {}] }, 2],
-  ])('counts a %o live-score result\'s updates as the records the job processed', async (result, expected) => {
+    [{ category: 'GOLF', externalEventId: 'evt-1', rounds: [{}, {}] }, 2],
+    [{ category: 'GOLF', externalEventId: 'evt-1', rounds: [] }, 0],
+  ])('counts a golf live-score result\'s rounds as the records the job processed (%o)', async (result, expected) => {
     const provider = fakeSportDataProvider({ getLiveScores: jest.fn().mockResolvedValue(result) });
     const scheduler = new IngestionScheduler(createMockRegistry(provider), createMockCallbacks());
 

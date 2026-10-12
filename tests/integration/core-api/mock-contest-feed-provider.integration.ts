@@ -358,7 +358,6 @@ async function createGolfLiveVerificationContests(input: {
       status: 'ACTIVE',
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
-      scoringEngine: 'STROKE_PLAY',
     },
   });
   await createGolfLiveContestConfiguration(directContest.id);
@@ -595,16 +594,14 @@ describe('mock contest feed provider event-first verification', () => {
     // per plans/117 §10.2, now driven through explicit mock live-state control.
     const liveScores = await adapter.getLiveScores(eventExternalId, { mockEventState: 'live' });
     expect(liveScores.category).toBe('GOLF');
-    if (liveScores.category === 'GOLF') {
-      expect(liveScores.rounds.length).toBeGreaterThan(0);
-      expect(liveScores.rounds[0]).toEqual(
-        expect.objectContaining({
-          participantExternalId: expect.any(String),
-          round: expect.any(Number),
-          status: expect.stringMatching(/IN_PROGRESS|COMPLETED|DNF|DSQ|MISSED_CUT/),
-        }),
-      );
-    }
+    expect(liveScores.rounds.length).toBeGreaterThan(0);
+    expect(liveScores.rounds[0]).toEqual(
+      expect.objectContaining({
+        participantExternalId: expect.any(String),
+        round: expect.any(Number),
+        status: expect.stringMatching(/IN_PROGRESS|COMPLETED|DNF|DSQ|MISSED_CUT/),
+      }),
+    );
 
     // plans/147 — sync updates the event linked to this provider event; it never creates one.
     await linkedProviderEvent(prisma, {
@@ -1184,24 +1181,20 @@ describe('mock contest feed provider event-first verification', () => {
 
       const openScores = await adapter.getLiveScores(eventId, { mockEventState: 'open' });
       expect(openScores.category).toBe('GOLF');
-      if (openScores.category === 'GOLF') {
-        expect(openScores.rounds).toHaveLength(0);
-      }
+      expect(openScores.rounds).toHaveLength(0);
 
       const liveScores = await adapter.getLiveScores(eventId, { mockEventState: 'live' });
       expect(liveScores.category).toBe('GOLF');
-      if (liveScores.category === 'GOLF') {
-        expect(liveScores.rounds.length).toBeGreaterThan(0);
-        expect(liveScores.rounds[0]).toEqual(
-          expect.objectContaining({
-            participantExternalId: expect.any(String),
-            round: expect.any(Number),
-            strokes: expect.any(Number),
-            scoreToPar: expect.any(Number),
-            status: expect.stringMatching(/IN_PROGRESS|COMPLETED|DNF|DSQ|MISSED_CUT/),
-          }),
-        );
-      }
+      expect(liveScores.rounds.length).toBeGreaterThan(0);
+      expect(liveScores.rounds[0]).toEqual(
+        expect.objectContaining({
+          participantExternalId: expect.any(String),
+          round: expect.any(Number),
+          strokes: expect.any(Number),
+          scoreToPar: expect.any(Number),
+          status: expect.stringMatching(/IN_PROGRESS|COMPLETED|DNF|DSQ|MISSED_CUT/),
+        }),
+      );
 
     } finally {
       await lifecycleProvider.close();

@@ -84,7 +84,6 @@ function contest(id: string, name: string, status: ContestStatus, sportEventId =
     status,
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
-    scoringEngine: 'STROKE_PLAY',
     leagueId: 'league-1',
     sportEventId,
     sport: 'GOLF',

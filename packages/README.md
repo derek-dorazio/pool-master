@@ -67,15 +67,13 @@ checked, return typed error codes rather than free-text reasons, and need no pre
 in-memory snapshot of every tier, entry and pick. Do not reintroduce that shape — pure rule
 functions belong as helpers inside the service #324 creates.
 
-Which selection types the selection room serves is decided in `routes.ts` itself: `TIERED` and
-`BUDGET_PICK` reach the roster-selection path; everything else falls through to the
-unsupported branch below. `BUDGET_PICK` reaches it with no budget enforced — the spend is
-never computed and submission is never gated, so the format is live and ignores its own
-defining rule. See #93.
+Each selection type has its engine in an exhaustive registry keyed by `SelectionType`
+(`selection-engines/registry.ts`): `TIERED` and `BUDGET_PICK` are the only values, and the
+type system refuses a value with no engine.
 
 Turn-based selection (snake draft) has no implementation: it was removed in #200 and its
-rebuild is deferred to #199. `SelectionType.SNAKE_DRAFT` remains a valid enum value, and a
-contest configured with it gets `501 SELECTION_TYPE_UNSUPPORTED` from the selection-room endpoints.
+rebuild is deferred to #199. Its `SNAKE_DRAFT` enum value was deleted with the other unbuilt
+catalog values in #605; it returns with the engine that serves it.
 
 The active backend-first pass centers on current PoolMaster web flows and uses sport-specific read models for sport-specific leaderboards. Golf event scoring is stored on event participant round and standing tables; contest entries keep pick pointers and Golf leaderboard rows are computed from those event-side standings.
 
@@ -105,8 +103,8 @@ Polls configured sports data providers, upserts normalized event data, and store
 
 | Concept | Values |
 |---------|--------|
-| **Sports** | GOLF, NFL, NBA, F1, NASCAR, NCAA_BASKETBALL, NCAA_HOCKEY, NCAA_FOOTBALL, TENNIS, HORSE_RACING, SOCCER, NHL, MLB, UFC |
-| **Selection Types** | SNAKE_DRAFT, TIERED, BUDGET_PICK, OPEN_SELECTION, PICK_EM, BRACKET_PICK_EM |
+| **Sports** | GOLF (a Postgres enum since #603; a sport is added with the code that serves it) |
+| **Selection Types** | TIERED, BUDGET_PICK |
 | **Contest Lifecycle** | DRAFT → OPEN → ACTIVE → COMPLETED |
 
 ---

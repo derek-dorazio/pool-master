@@ -5931,20 +5931,7 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ],
             "description": "Sport this template applies to."
           },
@@ -5958,23 +5945,15 @@
           "contestFormat": {
             "type": "string",
             "enum": [
-              "ROSTER",
-              "BRACKET",
-              "PICKEM_CONFIDENCE",
-              "SURVIVOR",
-              "PREDICT_TOP_N"
+              "ROSTER"
             ],
             "description": "Contest type that may use the template."
           },
           "selectionType": {
             "type": "string",
             "enum": [
-              "SNAKE_DRAFT",
               "TIERED",
-              "BUDGET_PICK",
-              "OPEN_SELECTION",
-              "PICK_EM",
-              "BRACKET_PICK_EM"
+              "BUDGET_PICK"
             ],
             "description": "How an entry picks in a contest created from this template."
           },
@@ -6359,31 +6338,14 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ],
             "description": "Only templates for this sport."
           },
           "contestFormat": {
             "type": "string",
             "enum": [
-              "ROSTER",
-              "BRACKET",
-              "PICKEM_CONFIDENCE",
-              "SURVIVOR",
-              "PREDICT_TOP_N"
+              "ROSTER"
             ],
             "description": "Only templates for this contest format."
           },
@@ -6415,20 +6377,7 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF",
-                    "NFL",
-                    "NBA",
-                    "F1",
-                    "NASCAR",
-                    "NCAA_BASKETBALL",
-                    "NCAA_HOCKEY",
-                    "NCAA_FOOTBALL",
-                    "TENNIS",
-                    "HORSE_RACING",
-                    "SOCCER",
-                    "NHL",
-                    "MLB",
-                    "UFC"
+                    "GOLF"
                   ],
                   "description": "Sport this template applies to."
                 },
@@ -6442,23 +6391,15 @@
                 "contestFormat": {
                   "type": "string",
                   "enum": [
-                    "ROSTER",
-                    "BRACKET",
-                    "PICKEM_CONFIDENCE",
-                    "SURVIVOR",
-                    "PREDICT_TOP_N"
+                    "ROSTER"
                   ],
                   "description": "Contest type that may use the template."
                 },
                 "selectionType": {
                   "type": "string",
                   "enum": [
-                    "SNAKE_DRAFT",
                     "TIERED",
-                    "BUDGET_PICK",
-                    "OPEN_SELECTION",
-                    "PICK_EM",
-                    "BRACKET_PICK_EM"
+                    "BUDGET_PICK"
                   ],
                   "description": "How an entry picks in a contest created from this template."
                 },
@@ -6719,20 +6660,7 @@
               "sport": {
                 "type": "string",
                 "enum": [
-                  "GOLF",
-                  "NFL",
-                  "NBA",
-                  "F1",
-                  "NASCAR",
-                  "NCAA_BASKETBALL",
-                  "NCAA_HOCKEY",
-                  "NCAA_FOOTBALL",
-                  "TENNIS",
-                  "HORSE_RACING",
-                  "SOCCER",
-                  "NHL",
-                  "MLB",
-                  "UFC"
+                  "GOLF"
                 ],
                 "description": "Sport this template applies to."
               },
@@ -6746,23 +6674,15 @@
               "contestFormat": {
                 "type": "string",
                 "enum": [
-                  "ROSTER",
-                  "BRACKET",
-                  "PICKEM_CONFIDENCE",
-                  "SURVIVOR",
-                  "PREDICT_TOP_N"
+                  "ROSTER"
                 ],
                 "description": "Contest type that may use the template."
               },
               "selectionType": {
                 "type": "string",
                 "enum": [
-                  "SNAKE_DRAFT",
                   "TIERED",
-                  "BUDGET_PICK",
-                  "OPEN_SELECTION",
-                  "PICK_EM",
-                  "BRACKET_PICK_EM"
+                  "BUDGET_PICK"
                 ],
                 "description": "How an entry picks in a contest created from this template."
               },
@@ -7767,23 +7687,10 @@
             "format": "uuid",
             "description": "Sport identifier — what Participant.sportId and SportLeague.sportId point at."
           },
-          "name": {
+          "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ],
             "description": "The sport."
           },
@@ -7795,31 +7702,10 @@
             ],
             "description": "Whether the sport's competitors are individuals or teams."
           },
-          "category": {
-            "type": "string",
-            "enum": [
-              "GOLF",
-              "BASKETBALL",
-              "FOOTBALL",
-              "F1",
-              "NASCAR",
-              "TENNIS",
-              "SOCCER"
-            ],
-            "description": "Sport category."
-          },
           "tournamentFormat": {
             "type": "string",
             "enum": [
-              "STROKE_PLAY_TOURNAMENT",
-              "KNOCKOUT_BRACKET",
-              "SERIES_PLAYOFF",
-              "ROUND_ROBIN_SEASON",
-              "WEEKLY_GAMES_SEASON",
-              "TIME_TRIAL_RACE",
-              "SEASON_OF_RACES",
-              "GROUP_STAGE_KNOCKOUT",
-              "MATCH_PLAY"
+              "STROKE_PLAY_TOURNAMENT"
             ],
             "description": "Structural format of the sport's events; decides which contest formats are valid."
           },
@@ -7836,9 +7722,8 @@
         },
         "required": [
           "id",
-          "name",
+          "sport",
           "participantType",
-          "category",
           "tournamentFormat",
           "createdAt",
           "updatedAt"
@@ -7859,23 +7744,10 @@
                   "format": "uuid",
                   "description": "Sport identifier — what Participant.sportId and SportLeague.sportId point at."
                 },
-                "name": {
+                "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF",
-                    "NFL",
-                    "NBA",
-                    "F1",
-                    "NASCAR",
-                    "NCAA_BASKETBALL",
-                    "NCAA_HOCKEY",
-                    "NCAA_FOOTBALL",
-                    "TENNIS",
-                    "HORSE_RACING",
-                    "SOCCER",
-                    "NHL",
-                    "MLB",
-                    "UFC"
+                    "GOLF"
                   ],
                   "description": "The sport."
                 },
@@ -7887,31 +7759,10 @@
                   ],
                   "description": "Whether the sport's competitors are individuals or teams."
                 },
-                "category": {
-                  "type": "string",
-                  "enum": [
-                    "GOLF",
-                    "BASKETBALL",
-                    "FOOTBALL",
-                    "F1",
-                    "NASCAR",
-                    "TENNIS",
-                    "SOCCER"
-                  ],
-                  "description": "Sport category."
-                },
                 "tournamentFormat": {
                   "type": "string",
                   "enum": [
-                    "STROKE_PLAY_TOURNAMENT",
-                    "KNOCKOUT_BRACKET",
-                    "SERIES_PLAYOFF",
-                    "ROUND_ROBIN_SEASON",
-                    "WEEKLY_GAMES_SEASON",
-                    "TIME_TRIAL_RACE",
-                    "SEASON_OF_RACES",
-                    "GROUP_STAGE_KNOCKOUT",
-                    "MATCH_PLAY"
+                    "STROKE_PLAY_TOURNAMENT"
                   ],
                   "description": "Structural format of the sport's events; decides which contest formats are valid."
                 },
@@ -7928,9 +7779,8 @@
               },
               "required": [
                 "id",
-                "name",
+                "sport",
                 "participantType",
-                "category",
                 "tournamentFormat",
                 "createdAt",
                 "updatedAt"
@@ -7938,7 +7788,7 @@
               "additionalProperties": false,
               "description": "A sport the platform runs contests on."
             },
-            "description": "Every sport, by name."
+            "description": "Every sport, by key."
           }
         },
         "required": [
@@ -8022,20 +7872,7 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ],
             "description": "Only sport leagues of this sport."
           },
@@ -8215,20 +8052,7 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ],
             "description": "The sport the new sport league belongs to."
           },
@@ -9105,20 +8929,7 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ],
             "description": "Sport the event belongs to."
           },
@@ -9382,20 +9193,7 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ],
             "description": "Only events of this sport."
           },
@@ -9452,20 +9250,7 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF",
-                    "NFL",
-                    "NBA",
-                    "F1",
-                    "NASCAR",
-                    "NCAA_BASKETBALL",
-                    "NCAA_HOCKEY",
-                    "NCAA_FOOTBALL",
-                    "TENNIS",
-                    "HORSE_RACING",
-                    "SOCCER",
-                    "NHL",
-                    "MLB",
-                    "UFC"
+                    "GOLF"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -9754,20 +9539,7 @@
               "sport": {
                 "type": "string",
                 "enum": [
-                  "GOLF",
-                  "NFL",
-                  "NBA",
-                  "F1",
-                  "NASCAR",
-                  "NCAA_BASKETBALL",
-                  "NCAA_HOCKEY",
-                  "NCAA_FOOTBALL",
-                  "TENNIS",
-                  "HORSE_RACING",
-                  "SOCCER",
-                  "NHL",
-                  "MLB",
-                  "UFC"
+                  "GOLF"
                 ],
                 "description": "Sport the event belongs to."
               },
@@ -10201,20 +9973,7 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF",
-                    "NFL",
-                    "NBA",
-                    "F1",
-                    "NASCAR",
-                    "NCAA_BASKETBALL",
-                    "NCAA_HOCKEY",
-                    "NCAA_FOOTBALL",
-                    "TENNIS",
-                    "HORSE_RACING",
-                    "SOCCER",
-                    "NHL",
-                    "MLB",
-                    "UFC"
+                    "GOLF"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -13458,34 +13217,14 @@
           "contestFormat": {
             "type": "string",
             "enum": [
-              "ROSTER",
-              "BRACKET",
-              "PICKEM_CONFIDENCE",
-              "SURVIVOR",
-              "PREDICT_TOP_N"
+              "ROSTER"
             ]
           },
           "selectionType": {
             "type": "string",
             "enum": [
-              "SNAKE_DRAFT",
               "TIERED",
-              "BUDGET_PICK",
-              "OPEN_SELECTION",
-              "PICK_EM",
-              "BRACKET_PICK_EM"
-            ]
-          },
-          "scoringEngine": {
-            "type": "string",
-            "enum": [
-              "ADVANCEMENT",
-              "STAT_ACCUMULATION",
-              "STROKE_PLAY",
-              "POSITION",
-              "BRACKET",
-              "FIGHT_RESULT",
-              "CUMULATIVE"
+              "BUDGET_PICK"
             ]
           },
           "leagueId": {
@@ -13501,6 +13240,10 @@
             "type": [
               "string",
               "null"
+            ],
+            "enum": [
+              "GOLF",
+              null
             ]
           },
           "entryCount": {
@@ -13559,7 +13302,6 @@
           "status",
           "contestFormat",
           "selectionType",
-          "scoringEngine",
           "leagueId"
         ],
         "additionalProperties": false,
@@ -13704,11 +13446,7 @@
           "contestFormat": {
             "type": "string",
             "enum": [
-              "ROSTER",
-              "BRACKET",
-              "PICKEM_CONFIDENCE",
-              "SURVIVOR",
-              "PREDICT_TOP_N"
+              "ROSTER"
             ],
             "description": "Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns."
           },
@@ -14894,34 +14632,14 @@
               "contestFormat": {
                 "type": "string",
                 "enum": [
-                  "ROSTER",
-                  "BRACKET",
-                  "PICKEM_CONFIDENCE",
-                  "SURVIVOR",
-                  "PREDICT_TOP_N"
+                  "ROSTER"
                 ]
               },
               "selectionType": {
                 "type": "string",
                 "enum": [
-                  "SNAKE_DRAFT",
                   "TIERED",
-                  "BUDGET_PICK",
-                  "OPEN_SELECTION",
-                  "PICK_EM",
-                  "BRACKET_PICK_EM"
-                ]
-              },
-              "scoringEngine": {
-                "type": "string",
-                "enum": [
-                  "ADVANCEMENT",
-                  "STAT_ACCUMULATION",
-                  "STROKE_PLAY",
-                  "POSITION",
-                  "BRACKET",
-                  "FIGHT_RESULT",
-                  "CUMULATIVE"
+                  "BUDGET_PICK"
                 ]
               },
               "leagueId": {
@@ -14937,6 +14655,10 @@
                 "type": [
                   "string",
                   "null"
+                ],
+                "enum": [
+                  "GOLF",
+                  null
                 ]
               },
               "entryCount": {
@@ -14995,7 +14717,6 @@
               "status",
               "contestFormat",
               "selectionType",
-              "scoringEngine",
               "leagueId"
             ],
             "additionalProperties": false,
@@ -15034,34 +14755,14 @@
                 "contestFormat": {
                   "type": "string",
                   "enum": [
-                    "ROSTER",
-                    "BRACKET",
-                    "PICKEM_CONFIDENCE",
-                    "SURVIVOR",
-                    "PREDICT_TOP_N"
+                    "ROSTER"
                   ]
                 },
                 "selectionType": {
                   "type": "string",
                   "enum": [
-                    "SNAKE_DRAFT",
                     "TIERED",
-                    "BUDGET_PICK",
-                    "OPEN_SELECTION",
-                    "PICK_EM",
-                    "BRACKET_PICK_EM"
-                  ]
-                },
-                "scoringEngine": {
-                  "type": "string",
-                  "enum": [
-                    "ADVANCEMENT",
-                    "STAT_ACCUMULATION",
-                    "STROKE_PLAY",
-                    "POSITION",
-                    "BRACKET",
-                    "FIGHT_RESULT",
-                    "CUMULATIVE"
+                    "BUDGET_PICK"
                   ]
                 },
                 "leagueId": {
@@ -15077,6 +14778,10 @@
                   "type": [
                     "string",
                     "null"
+                  ],
+                  "enum": [
+                    "GOLF",
+                    null
                   ]
                 },
                 "entryCount": {
@@ -15135,7 +14840,6 @@
                 "status",
                 "contestFormat",
                 "selectionType",
-                "scoringEngine",
                 "leagueId"
               ],
               "additionalProperties": false,
@@ -15709,12 +15413,8 @@
           "selectionType": {
             "type": "string",
             "enum": [
-              "SNAKE_DRAFT",
               "TIERED",
-              "BUDGET_PICK",
-              "OPEN_SELECTION",
-              "PICK_EM",
-              "BRACKET_PICK_EM"
+              "BUDGET_PICK"
             ]
           },
           "isTurnBased": {
@@ -16323,12 +16023,8 @@
           "selectionType": {
             "type": "string",
             "enum": [
-              "SNAKE_DRAFT",
               "TIERED",
-              "BUDGET_PICK",
-              "OPEN_SELECTION",
-              "PICK_EM",
-              "BRACKET_PICK_EM"
+              "BUDGET_PICK"
             ]
           },
           "isTurnBased": {
@@ -17120,20 +16816,7 @@
             "items": {
               "type": "string",
               "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
+                "GOLF"
               ]
             },
             "minItems": 1
@@ -17228,20 +16911,7 @@
             "items": {
               "type": "string",
               "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
+                "GOLF"
               ]
             },
             "minItems": 1,
@@ -17347,20 +17017,7 @@
                   "items": {
                     "type": "string",
                     "enum": [
-                      "GOLF",
-                      "NFL",
-                      "NBA",
-                      "F1",
-                      "NASCAR",
-                      "NCAA_BASKETBALL",
-                      "NCAA_HOCKEY",
-                      "NCAA_FOOTBALL",
-                      "TENNIS",
-                      "HORSE_RACING",
-                      "SOCCER",
-                      "NHL",
-                      "MLB",
-                      "UFC"
+                      "GOLF"
                     ]
                   },
                   "minItems": 1
@@ -17554,20 +17211,7 @@
                     "items": {
                       "type": "string",
                       "enum": [
-                        "GOLF",
-                        "NFL",
-                        "NBA",
-                        "F1",
-                        "NASCAR",
-                        "NCAA_BASKETBALL",
-                        "NCAA_HOCKEY",
-                        "NCAA_FOOTBALL",
-                        "TENNIS",
-                        "HORSE_RACING",
-                        "SOCCER",
-                        "NHL",
-                        "MLB",
-                        "UFC"
+                        "GOLF"
                       ]
                     },
                     "minItems": 1,
@@ -17673,20 +17317,7 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
+                              "GOLF"
                             ]
                           },
                           "minItems": 1
@@ -17793,20 +17424,7 @@
                     "items": {
                       "type": "string",
                       "enum": [
-                        "GOLF",
-                        "NFL",
-                        "NBA",
-                        "F1",
-                        "NASCAR",
-                        "NCAA_BASKETBALL",
-                        "NCAA_HOCKEY",
-                        "NCAA_FOOTBALL",
-                        "TENNIS",
-                        "HORSE_RACING",
-                        "SOCCER",
-                        "NHL",
-                        "MLB",
-                        "UFC"
+                        "GOLF"
                       ]
                     },
                     "minItems": 1,
@@ -17912,20 +17530,7 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
+                              "GOLF"
                             ]
                           },
                           "minItems": 1
@@ -18495,20 +18100,7 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
+                              "GOLF"
                             ]
                           },
                           "minItems": 1,
@@ -18614,20 +18206,7 @@
                                 "items": {
                                   "type": "string",
                                   "enum": [
-                                    "GOLF",
-                                    "NFL",
-                                    "NBA",
-                                    "F1",
-                                    "NASCAR",
-                                    "NCAA_BASKETBALL",
-                                    "NCAA_HOCKEY",
-                                    "NCAA_FOOTBALL",
-                                    "TENNIS",
-                                    "HORSE_RACING",
-                                    "SOCCER",
-                                    "NHL",
-                                    "MLB",
-                                    "UFC"
+                                    "GOLF"
                                   ]
                                 },
                                 "minItems": 1
@@ -18734,20 +18313,7 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
+                              "GOLF"
                             ]
                           },
                           "minItems": 1,
@@ -18853,20 +18419,7 @@
                                 "items": {
                                   "type": "string",
                                   "enum": [
-                                    "GOLF",
-                                    "NFL",
-                                    "NBA",
-                                    "F1",
-                                    "NASCAR",
-                                    "NCAA_BASKETBALL",
-                                    "NCAA_HOCKEY",
-                                    "NCAA_FOOTBALL",
-                                    "TENNIS",
-                                    "HORSE_RACING",
-                                    "SOCCER",
-                                    "NHL",
-                                    "MLB",
-                                    "UFC"
+                                    "GOLF"
                                   ]
                                 },
                                 "minItems": 1
@@ -19393,20 +18946,7 @@
                     "items": {
                       "type": "string",
                       "enum": [
-                        "GOLF",
-                        "NFL",
-                        "NBA",
-                        "F1",
-                        "NASCAR",
-                        "NCAA_BASKETBALL",
-                        "NCAA_HOCKEY",
-                        "NCAA_FOOTBALL",
-                        "TENNIS",
-                        "HORSE_RACING",
-                        "SOCCER",
-                        "NHL",
-                        "MLB",
-                        "UFC"
+                        "GOLF"
                       ]
                     },
                     "minItems": 1,
@@ -19509,20 +19049,7 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
+                              "GOLF"
                             ]
                           },
                           "minItems": 1
@@ -19868,20 +19395,7 @@
                     "items": {
                       "type": "string",
                       "enum": [
-                        "GOLF",
-                        "NFL",
-                        "NBA",
-                        "F1",
-                        "NASCAR",
-                        "NCAA_BASKETBALL",
-                        "NCAA_HOCKEY",
-                        "NCAA_FOOTBALL",
-                        "TENNIS",
-                        "HORSE_RACING",
-                        "SOCCER",
-                        "NHL",
-                        "MLB",
-                        "UFC"
+                        "GOLF"
                       ]
                     },
                     "minItems": 1,
@@ -19987,20 +19501,7 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
+                              "GOLF"
                             ]
                           },
                           "minItems": 1
@@ -20107,20 +19608,7 @@
                     "items": {
                       "type": "string",
                       "enum": [
-                        "GOLF",
-                        "NFL",
-                        "NBA",
-                        "F1",
-                        "NASCAR",
-                        "NCAA_BASKETBALL",
-                        "NCAA_HOCKEY",
-                        "NCAA_FOOTBALL",
-                        "TENNIS",
-                        "HORSE_RACING",
-                        "SOCCER",
-                        "NHL",
-                        "MLB",
-                        "UFC"
+                        "GOLF"
                       ]
                     },
                     "minItems": 1,
@@ -20226,20 +19714,7 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
+                              "GOLF"
                             ]
                           },
                           "minItems": 1
@@ -20767,20 +20242,7 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
+                              "GOLF"
                             ]
                           },
                           "minItems": 1,
@@ -20886,20 +20348,7 @@
                                 "items": {
                                   "type": "string",
                                   "enum": [
-                                    "GOLF",
-                                    "NFL",
-                                    "NBA",
-                                    "F1",
-                                    "NASCAR",
-                                    "NCAA_BASKETBALL",
-                                    "NCAA_HOCKEY",
-                                    "NCAA_FOOTBALL",
-                                    "TENNIS",
-                                    "HORSE_RACING",
-                                    "SOCCER",
-                                    "NHL",
-                                    "MLB",
-                                    "UFC"
+                                    "GOLF"
                                   ]
                                 },
                                 "minItems": 1
@@ -21006,20 +20455,7 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
+                              "GOLF"
                             ]
                           },
                           "minItems": 1,
@@ -21125,20 +20561,7 @@
                                 "items": {
                                   "type": "string",
                                   "enum": [
-                                    "GOLF",
-                                    "NFL",
-                                    "NBA",
-                                    "F1",
-                                    "NASCAR",
-                                    "NCAA_BASKETBALL",
-                                    "NCAA_HOCKEY",
-                                    "NCAA_FOOTBALL",
-                                    "TENNIS",
-                                    "HORSE_RACING",
-                                    "SOCCER",
-                                    "NHL",
-                                    "MLB",
-                                    "UFC"
+                                    "GOLF"
                                   ]
                                 },
                                 "minItems": 1
@@ -22030,20 +21453,7 @@
             "items": {
               "type": "string",
               "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
+                "GOLF"
               ]
             },
             "description": "Sports the provider covers that ingestion is scheduled for."
@@ -22117,20 +21527,7 @@
                   "items": {
                     "type": "string",
                     "enum": [
-                      "GOLF",
-                      "NFL",
-                      "NBA",
-                      "F1",
-                      "NASCAR",
-                      "NCAA_BASKETBALL",
-                      "NCAA_HOCKEY",
-                      "NCAA_FOOTBALL",
-                      "TENNIS",
-                      "HORSE_RACING",
-                      "SOCCER",
-                      "NHL",
-                      "MLB",
-                      "UFC"
+                      "GOLF"
                     ]
                   },
                   "description": "Sports the provider covers that ingestion is scheduled for."
@@ -22178,20 +21575,7 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ]
           },
           "eventId": {
@@ -22265,20 +21649,7 @@
                   "sport": {
                     "type": "string",
                     "enum": [
-                      "GOLF",
-                      "NFL",
-                      "NBA",
-                      "F1",
-                      "NASCAR",
-                      "NCAA_BASKETBALL",
-                      "NCAA_HOCKEY",
-                      "NCAA_FOOTBALL",
-                      "TENNIS",
-                      "HORSE_RACING",
-                      "SOCCER",
-                      "NHL",
-                      "MLB",
-                      "UFC"
+                      "GOLF"
                     ]
                   },
                   "eventId": {
@@ -22432,20 +21803,7 @@
                   "sport": {
                     "type": "string",
                     "enum": [
-                      "GOLF",
-                      "NFL",
-                      "NBA",
-                      "F1",
-                      "NASCAR",
-                      "NCAA_BASKETBALL",
-                      "NCAA_HOCKEY",
-                      "NCAA_FOOTBALL",
-                      "TENNIS",
-                      "HORSE_RACING",
-                      "SOCCER",
-                      "NHL",
-                      "MLB",
-                      "UFC"
+                      "GOLF"
                     ]
                   },
                   "eventExternalId": {
@@ -22728,20 +22086,7 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ]
           },
           "status": {
@@ -22785,20 +22130,7 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF",
-                    "NFL",
-                    "NBA",
-                    "F1",
-                    "NASCAR",
-                    "NCAA_BASKETBALL",
-                    "NCAA_HOCKEY",
-                    "NCAA_FOOTBALL",
-                    "TENNIS",
-                    "HORSE_RACING",
-                    "SOCCER",
-                    "NHL",
-                    "MLB",
-                    "UFC"
+                    "GOLF"
                   ]
                 },
                 "eventId": {
@@ -22872,20 +22204,7 @@
                         "sport": {
                           "type": "string",
                           "enum": [
-                            "GOLF",
-                            "NFL",
-                            "NBA",
-                            "F1",
-                            "NASCAR",
-                            "NCAA_BASKETBALL",
-                            "NCAA_HOCKEY",
-                            "NCAA_FOOTBALL",
-                            "TENNIS",
-                            "HORSE_RACING",
-                            "SOCCER",
-                            "NHL",
-                            "MLB",
-                            "UFC"
+                            "GOLF"
                           ]
                         },
                         "eventId": {
@@ -23039,20 +22358,7 @@
                         "sport": {
                           "type": "string",
                           "enum": [
-                            "GOLF",
-                            "NFL",
-                            "NBA",
-                            "F1",
-                            "NASCAR",
-                            "NCAA_BASKETBALL",
-                            "NCAA_HOCKEY",
-                            "NCAA_FOOTBALL",
-                            "TENNIS",
-                            "HORSE_RACING",
-                            "SOCCER",
-                            "NHL",
-                            "MLB",
-                            "UFC"
+                            "GOLF"
                           ]
                         },
                         "eventExternalId": {
@@ -23340,20 +22646,7 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ]
           },
           "eventId": {
@@ -23390,20 +22683,7 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF",
-                    "NFL",
-                    "NBA",
-                    "F1",
-                    "NASCAR",
-                    "NCAA_BASKETBALL",
-                    "NCAA_HOCKEY",
-                    "NCAA_FOOTBALL",
-                    "TENNIS",
-                    "HORSE_RACING",
-                    "SOCCER",
-                    "NHL",
-                    "MLB",
-                    "UFC"
+                    "GOLF"
                   ]
                 },
                 "eventId": {
@@ -23477,20 +22757,7 @@
                         "sport": {
                           "type": "string",
                           "enum": [
-                            "GOLF",
-                            "NFL",
-                            "NBA",
-                            "F1",
-                            "NASCAR",
-                            "NCAA_BASKETBALL",
-                            "NCAA_HOCKEY",
-                            "NCAA_FOOTBALL",
-                            "TENNIS",
-                            "HORSE_RACING",
-                            "SOCCER",
-                            "NHL",
-                            "MLB",
-                            "UFC"
+                            "GOLF"
                           ]
                         },
                         "eventId": {
@@ -23644,20 +22911,7 @@
                         "sport": {
                           "type": "string",
                           "enum": [
-                            "GOLF",
-                            "NFL",
-                            "NBA",
-                            "F1",
-                            "NASCAR",
-                            "NCAA_BASKETBALL",
-                            "NCAA_HOCKEY",
-                            "NCAA_FOOTBALL",
-                            "TENNIS",
-                            "HORSE_RACING",
-                            "SOCCER",
-                            "NHL",
-                            "MLB",
-                            "UFC"
+                            "GOLF"
                           ]
                         },
                         "eventExternalId": {
@@ -23963,20 +23217,7 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ]
           }
         },
@@ -24015,20 +23256,7 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF",
-                    "NFL",
-                    "NBA",
-                    "F1",
-                    "NASCAR",
-                    "NCAA_BASKETBALL",
-                    "NCAA_HOCKEY",
-                    "NCAA_FOOTBALL",
-                    "TENNIS",
-                    "HORSE_RACING",
-                    "SOCCER",
-                    "NHL",
-                    "MLB",
-                    "UFC"
+                    "GOLF"
                   ]
                 }
               },
@@ -24063,20 +23291,7 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ]
           },
           "name": {
@@ -24159,20 +23374,7 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF",
-              "NFL",
-              "NBA",
-              "F1",
-              "NASCAR",
-              "NCAA_BASKETBALL",
-              "NCAA_HOCKEY",
-              "NCAA_FOOTBALL",
-              "TENNIS",
-              "HORSE_RACING",
-              "SOCCER",
-              "NHL",
-              "MLB",
-              "UFC"
+              "GOLF"
             ]
           },
           "sportLeagueId": {
@@ -24217,20 +23419,7 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF",
-                    "NFL",
-                    "NBA",
-                    "F1",
-                    "NASCAR",
-                    "NCAA_BASKETBALL",
-                    "NCAA_HOCKEY",
-                    "NCAA_FOOTBALL",
-                    "TENNIS",
-                    "HORSE_RACING",
-                    "SOCCER",
-                    "NHL",
-                    "MLB",
-                    "UFC"
+                    "GOLF"
                   ]
                 },
                 "name": {
@@ -28282,7 +27471,7 @@
             }
           },
           "422": {
-            "description": "The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).",
+            "description": "The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29263,20 +28452,7 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
+                "GOLF"
               ]
             },
             "in": "query",
@@ -29288,11 +28464,7 @@
             "schema": {
               "type": "string",
               "enum": [
-                "ROSTER",
-                "BRACKET",
-                "PICKEM_CONFIDENCE",
-                "SURVIVOR",
-                "PREDICT_TOP_N"
+                "ROSTER"
               ]
             },
             "in": "query",
@@ -29458,20 +28630,7 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
+                "GOLF"
               ]
             },
             "in": "query",
@@ -29554,7 +28713,7 @@
         "tags": [
           "Events"
         ],
-        "description": "An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league; only golf is supported so far (422 SPORT_NOT_SUPPORTED otherwise). Root admin only.",
+        "description": "An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -32065,20 +31224,7 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
+                "GOLF"
               ]
             },
             "in": "query",
@@ -33405,7 +32551,10 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "GOLF"
+              ]
             },
             "in": "path",
             "name": "sport",
@@ -33457,7 +32606,10 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "GOLF"
+              ]
             },
             "in": "path",
             "name": "sport",
@@ -33603,20 +32755,7 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
+                "GOLF"
               ]
             },
             "in": "query",
@@ -33716,20 +32855,7 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
+                "GOLF"
               ]
             },
             "in": "path",
@@ -33864,20 +32990,7 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
+                "GOLF"
               ]
             },
             "in": "query",
@@ -34097,16 +33210,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
           }
         }
       }
@@ -34200,16 +33303,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
           }
         }
       }
@@ -34294,16 +33387,6 @@
             }
           },
           "409": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

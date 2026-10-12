@@ -324,11 +324,11 @@ describe('platform config services on the settings registry', () => {
 
     await expect(
       service.updateConfig({
-        scheduledSports: ['GOLF', 'TENNIS'],
+        scheduledSports: ['GOLF'],
         eventLiveScores: { intervalSeconds: 45 },
       }, 'admin-1'),
     ).resolves.toEqual(expect.objectContaining({
-      scheduledSports: ['GOLF', 'TENNIS'],
+      scheduledSports: ['GOLF'],
       eventLiveScores: expect.objectContaining({ intervalSeconds: 45 }),
     }));
     await expect(

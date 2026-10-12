@@ -27,7 +27,7 @@ describe('provider bindings', () => {
     );
   });
 
-  it('registers the mock provider as primary for all provider-supported sports when selected', () => {
+  it('registers the mock provider as the primary golf provider when selected', () => {
     const registry = new ProviderRegistry();
 
     registerConfiguredProviders(registry, {
@@ -43,9 +43,6 @@ describe('provider bindings', () => {
     });
 
     expect(registry.getProvider(Sport.GOLF)?.providerId).toBe('mock-contest-feed');
-    expect(registry.getProvider(Sport.TENNIS)?.providerId).toBe('mock-contest-feed');
-    expect(registry.getProvider(Sport.NCAA_BASKETBALL)?.providerId).toBe('mock-contest-feed');
-    expect(registry.getProvider(Sport.NFL)).toBeNull();
   });
 
   it('pool-master-rop.5: rejects mock providers in production-like runtimes without an explicit override', () => {

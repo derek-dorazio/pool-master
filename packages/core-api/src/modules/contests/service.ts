@@ -34,7 +34,6 @@ import {
   deriveLegacyParticipantStatus,
   LeagueMembershipStatus,
   LeagueRole,
-  Sport,
   SquadMembershipStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
 } from '@poolmaster/shared/domain';
@@ -378,12 +377,6 @@ export class ContestService {
       throw new ContestOperationError(
         'Golf leaderboard requires a contest sport event.',
         'CONTEST_GOLF_LEADERBOARD_EVENT_REQUIRED',
-      );
-    }
-    if (sportEvent.sport !== Sport.GOLF) {
-      throw new ContestOperationError(
-        'Golf leaderboard is only available for Golf contests.',
-        'CONTEST_GOLF_LEADERBOARD_SPORT_UNSUPPORTED',
       );
     }
 

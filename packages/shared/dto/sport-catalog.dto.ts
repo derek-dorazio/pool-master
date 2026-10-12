@@ -10,7 +10,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { ParticipantType, Sport, SportCategory, TournamentFormat } from '../domain/enums';
+import { ParticipantType, Sport, TournamentFormat } from '../domain/enums';
 import { DateTimeSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 
@@ -18,9 +18,8 @@ import { ParticipantDtoSchema } from './participants.dto';
 
 export const SportDtoSchema = z.object({
   id: z.string().uuid().describe('Sport identifier — what Participant.sportId and SportLeague.sportId point at.'),
-  name: z.nativeEnum(Sport).describe('The sport.'),
+  sport: z.nativeEnum(Sport).describe('The sport.'),
   participantType: z.nativeEnum(ParticipantType).describe('Whether the sport\'s competitors are individuals or teams.'),
-  category: z.nativeEnum(SportCategory).describe('Sport category.'),
   tournamentFormat: z.nativeEnum(TournamentFormat).describe('Structural format of the sport\'s events; decides which contest formats are valid.'),
   createdAt: DateTimeSchema,
   updatedAt: DateTimeSchema,
@@ -28,7 +27,7 @@ export const SportDtoSchema = z.object({
 export type SportDto = z.infer<typeof SportDtoSchema>;
 
 export const SportListResponseSchema = z.object({
-  sports: z.array(SportDtoSchema).describe('Every sport, by name.'),
+  sports: z.array(SportDtoSchema).describe('Every sport, by key.'),
 }).describe('The sports.');
 export type SportListResponse = z.infer<typeof SportListResponseSchema>;
 

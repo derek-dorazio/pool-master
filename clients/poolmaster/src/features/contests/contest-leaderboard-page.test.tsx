@@ -174,7 +174,6 @@ function contestResponse(status: ContestStatusFixture) {
         status,
         contestType: 'ROSTER',
         selectionType: 'TIERED',
-        scoringEngine: 'STROKE_PLAY',
         leagueId: 'league-1',
         sport: 'GOLF',
         entryCount: 1,

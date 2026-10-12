@@ -1,4 +1,4 @@
-import { ContestFormat, ContestStatus, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, SelectionType } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -88,7 +88,6 @@ function contest(overrides: Partial<Contest> = {}): Contest {
     status: ContestStatus.OPEN,
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
-    scoringEngine: ScoringEngine.STROKE_PLAY,
     scoringStopsOnElimination: false,
     ...TIMESTAMPS,
     ...overrides,
@@ -289,16 +288,6 @@ describe('#324 SelectionService.getSelectionState', () => {
     });
   });
 
-  it('answers 501 SELECTION_TYPE_UNSUPPORTED for a selection type this surface does not serve', async () => {
-    const { service } = setup({ contest: { selectionType: SelectionType.SNAKE_DRAFT } });
-
-    await expect(service.getSelectionState({ contestId: CONTEST_ID })).rejects.toMatchObject({
-      code: 'SELECTION_TYPE_UNSUPPORTED',
-      statusCode: 501,
-      message: 'SNAKE_DRAFT selection-room endpoints are not implemented yet',
-    });
-  });
-
   it('builds a tiered room: roster size is the event\'s tiers × the contest\'s picksPerTier, groups per tier, the actor\'s own entry selected', async () => {
     const { service } = setup();
 
@@ -494,16 +483,6 @@ describe('#324 SelectionService.submitSelection — the guards, in order', () =>
       message: 'You can only submit picks for your own contest entry',
     });
     expect(createPick).not.toHaveBeenCalled();
-  });
-
-  it('answers 501 SELECTION_TYPE_UNSUPPORTED with the submission wording, not the read wording', async () => {
-    const { service } = setup({ contest: { selectionType: SelectionType.SNAKE_DRAFT } });
-
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
-      code: 'SELECTION_TYPE_UNSUPPORTED',
-      statusCode: 501,
-      message: 'SNAKE_DRAFT pick submission is not implemented yet',
-    });
   });
 
   it('answers 400 SELECTION_CONFIG_INVALID when the contest has no usable roster size', async () => {

@@ -18,7 +18,6 @@ import {
   ContestStatus,
   ContestFormat,
   ParticipantType,
-  ScoringEngine,
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
@@ -33,7 +32,6 @@ import { randomUUID } from 'node:crypto';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
 import { expectDefined } from '../support/expect-defined';
 
-const createdSportIds: string[] = [];
 const createdParticipantIds: string[] = [];
 const createdSportEventIds: string[] = [];
 const createdSportEventParticipantIds: string[] = [];
@@ -121,16 +119,6 @@ async function cleanupContestArtifacts(): Promise<void> {
     createdParticipantIds.length = 0;
   }
 
-  if (createdSportIds.length > 0) {
-    await prisma.sport.deleteMany({
-      where: {
-        id: {
-          in: createdSportIds,
-        },
-      },
-    });
-    createdSportIds.length = 0;
-  }
 }
 
 async function seedImportedGolfEvent(options: {
@@ -143,14 +131,11 @@ async function seedImportedGolfEvent(options: {
   const prisma = getFunctionalPrisma();
   const now = new Date();
   const startDate = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
-  const sport = await prisma.sport.create({
-    data: {
-      name: `ManagedContestSport-${randomUUID().slice(0, 8)}`,
-      participantType: ParticipantType.INDIVIDUAL,
-      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-    },
+  const sport = await prisma.sport.upsert({
+    where: { sport: 'GOLF' },
+    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
   });
-  createdSportIds.push(sport.id);
 
   const sportEvent = await prisma.sportEvent.create({
     data: {
@@ -537,7 +522,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const { contestId } = await seedContestFixture(league.id, {
       name: 'Functional Contest',
       selectionType: SelectionType.BUDGET_PICK,
-      scoringEngine: ScoringEngine.POSITION,
       status: 'DRAFT',
     });
 
@@ -568,7 +552,6 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(detailResponse.data?.contest.status).toBe('DRAFT');
     expect(detailResponse.data?.contest.leagueId).toBe(league.id);
     expect(detailResponse.data?.contest.selectionType).toBe('BUDGET_PICK');
-    expect(detailResponse.data?.contest.scoringEngine).toBe('POSITION');
 
     const updateResponse = await updateContest({
       client: commissioner.client,
@@ -615,7 +598,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const { contestId } = await seedContestFixture(league.id, {
       name: 'Entry Lifecycle Contest',
       selectionType: SelectionType.BUDGET_PICK,
-      scoringEngine: ScoringEngine.POSITION,
     });
 
     const enterResponse = await enterContest({
@@ -713,7 +695,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const { contestId } = await seedContestFixture(league.id, {
       name: 'Multi Entry Contest',
       selectionType: SelectionType.BUDGET_PICK,
-      scoringEngine: ScoringEngine.POSITION,
       configuration: { maxEntriesPerSquad: 2 },
     });
     await enterContest({ client: commissioner.client, path: { contestId } });
@@ -738,7 +719,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const { contestId } = await seedContestFixture(league.id, {
       name: 'Rename Contest',
       selectionType: SelectionType.BUDGET_PICK,
-      scoringEngine: ScoringEngine.POSITION,
     });
 
     expect(contestId).toBeTruthy();
@@ -823,7 +803,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const { contestId } = await seedContestFixture(league.id, {
       name: 'Tiebreaker Contest',
       selectionType: SelectionType.BUDGET_PICK,
-      scoringEngine: ScoringEngine.POSITION,
     });
 
     expect(contestId).toBeTruthy();
@@ -883,7 +862,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const { contestId } = await seedContestFixture(league.id, {
       name: 'Entry Detail Contest',
       selectionType: SelectionType.TIERED,
-      scoringEngine: ScoringEngine.STROKE_PLAY,
     });
 
     expect(contestId).toBeTruthy();
@@ -898,14 +876,11 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
 
-    const sport = await prisma.sport.create({
-      data: {
-        name: `EntryDetailSport-${randomUUID().slice(0, 8)}`,
-        participantType: ParticipantType.INDIVIDUAL,
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-      },
+    const sport = await prisma.sport.upsert({
+      where: { sport: 'GOLF' },
+      create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
     });
-    createdSportIds.push(sport.id);
 
     const participant = await prisma.participant.create({
       data: {
@@ -1000,7 +975,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const { contestId } = await seedContestFixture(league.id, {
       name: 'Outsider Contest',
       selectionType: SelectionType.BUDGET_PICK,
-      scoringEngine: ScoringEngine.POSITION,
     });
 
     expect(contestId).toBeTruthy();
@@ -1051,13 +1025,11 @@ describe('SDK Functional: Contests and Entries', () => {
     const { contestId: lockedContestId } = await seedContestFixture(league.id, {
       name: 'Locked Contest',
       selectionType: SelectionType.TIERED,
-      scoringEngine: ScoringEngine.STROKE_PLAY,
     });
 
     const { contestId: selectableContestId } = await seedContestFixture(league.id, {
       name: 'Selection Contest',
       selectionType: SelectionType.TIERED,
-      scoringEngine: ScoringEngine.STROKE_PLAY,
       configuration: {
         configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
       },
@@ -1076,14 +1048,11 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
 
-    const sport = await prisma.sport.create({
-      data: {
-        name: `FunctionalContestSport-${randomUUID().slice(0, 8)}`,
-        participantType: ParticipantType.INDIVIDUAL,
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-      },
+    const sport = await prisma.sport.upsert({
+      where: { sport: 'GOLF' },
+      create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
     });
-    createdSportIds.push(sport.id);
 
     const participant = await prisma.participant.create({
       data: {
@@ -1228,7 +1197,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const { contestId } = await seedContestFixture(league.id, {
       name: 'Visibility Contest',
       selectionType: SelectionType.TIERED,
-      scoringEngine: ScoringEngine.STROKE_PLAY,
     });
 
     expect(contestId).toBeTruthy();
@@ -1239,14 +1207,11 @@ describe('SDK Functional: Contests and Entries', () => {
       data: { status: ContestStatus.OPEN },
     });
 
-    const sport = await prisma.sport.create({
-      data: {
-        name: `VisibilitySport-${randomUUID().slice(0, 8)}`,
-        participantType: ParticipantType.INDIVIDUAL,
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-      },
+    const sport = await prisma.sport.upsert({
+      where: { sport: 'GOLF' },
+      create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
     });
-    createdSportIds.push(sport.id);
 
     const participant = await prisma.participant.create({
       data: {
@@ -1382,7 +1347,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const { contestId } = await seedContestFixture(league.id, {
       name: 'List Visibility Contest',
       selectionType: SelectionType.TIERED,
-      scoringEngine: ScoringEngine.STROKE_PLAY,
     });
     expect(contestId).toBeTruthy();
 
@@ -1392,14 +1356,11 @@ describe('SDK Functional: Contests and Entries', () => {
       data: { status: ContestStatus.OPEN },
     });
 
-    const sport = await prisma.sport.create({
-      data: {
-        name: `ListVisibilitySport-${randomUUID().slice(0, 8)}`,
-        participantType: ParticipantType.INDIVIDUAL,
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-      },
+    const sport = await prisma.sport.upsert({
+      where: { sport: 'GOLF' },
+      create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
     });
-    createdSportIds.push(sport.id);
 
     const participant = await prisma.participant.create({
       data: {

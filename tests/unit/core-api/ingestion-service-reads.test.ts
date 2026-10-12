@@ -5,7 +5,6 @@ import {
   type IngestionServiceDependencies,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
-import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { readPayload } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import type { SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { ProviderSyncRunRepository } from '../../../packages/shared/db';
@@ -71,47 +70,51 @@ async function runDeferredWorker(run: () => Promise<unknown>): Promise<void> {
 }
 
 describe('IngestionService.listProviders', () => {
-  it('lists each provider with its live health, its configured sports only, and its event activity, sorted by name', async () => {
-    const zebra = fakeSportDataProvider({ providerId: 'zebra', providerName: 'Zebra Feed', sportsCovered: [Sport.GOLF, Sport.TENNIS] });
-    const alpha = fakeSportDataProvider({
-      providerId: 'alpha',
-      providerName: 'Alpha Feed',
-      sportsCovered: [Sport.NFL],
-      healthCheck: jest.fn().mockResolvedValue({
-        providerId: 'alpha', status: 'DEGRADED', errorRateLastHour: 0.2, latencyMsP95: 900,
-        lastSuccessfulPoll: new Date('2026-05-01T00:00:00.000Z'),
-      }),
-    });
-    const registry = new ProviderRegistry();
-    registry.register(Sport.GOLF, zebra, 'PRIMARY');
-    registry.register(Sport.NFL, alpha, 'PRIMARY');
+  it('lists a provider with its live health and its event activity', async () => {
+    const provider = fakeSportDataProvider({ providerId: 'zebra', providerName: 'Zebra Feed', sportsCovered: [Sport.GOLF] });
     const lastChangedAt = new Date('2026-05-30T09:00:00.000Z');
     const sportEvents = fakeSportEventRepo({
       summarizeByProviders: jest.fn().mockResolvedValue(new Map([['zebra', { activeEventCount: 3, lastChangedAt }]])),
     });
 
-    const providers = await service({ registry, sportEvents, ingestionConfigReader: configReader() }).listProviders();
+    const providers = await service({ registry: registryWith(provider), sportEvents, ingestionConfigReader: configReader() }).listProviders();
 
     expect(providers).toEqual([
-      expect.objectContaining({
-        providerId: 'alpha', status: 'DEGRADED', errorRate: 0.2, latencyMs: 900,
-        // No event activity, so the provider's own last successful poll stands in.
-        lastEventAt: new Date('2026-05-01T00:00:00.000Z'), activeEventCount: 0,
-        // NFL is not a scheduled sport, so it is not listed as covered.
-        sportsCovered: [], supportsLiveSimulation: false,
-      }),
       expect.objectContaining({
         providerId: 'zebra', status: 'HEALTHY', lastEventAt: lastChangedAt, activeEventCount: 3, sportsCovered: [Sport.GOLF],
       }),
     ]);
   });
 
+  it('lists none of a provider\'s sports as covered when they are not scheduled, and falls back to its last successful poll', async () => {
+    const provider = fakeSportDataProvider({
+      providerId: 'alpha',
+      sportsCovered: [Sport.GOLF],
+      healthCheck: jest.fn().mockResolvedValue({
+        providerId: 'alpha', status: 'DEGRADED', errorRateLastHour: 0.2, latencyMsP95: 900,
+        lastSuccessfulPoll: new Date('2026-05-01T00:00:00.000Z'),
+      }),
+    });
+
+    const providers = await service({
+      registry: registryWith(provider), ingestionConfigReader: configReader({ ...GOLF_ONLY_CONFIG, scheduledSports: [] }),
+    }).listProviders();
+
+    expect(providers).toEqual([
+      expect.objectContaining({
+        providerId: 'alpha', status: 'DEGRADED', errorRate: 0.2, latencyMs: 900,
+        lastEventAt: new Date('2026-05-01T00:00:00.000Z'), activeEventCount: 0,
+        sportsCovered: [], supportsLiveSimulation: false,
+      }),
+    ]);
+  });
+
   it('lists every sport a provider covers when no ingestion config is wired, and a null last-event time when it has none', async () => {
-    const provider = fakeSportDataProvider({ sportsCovered: [Sport.GOLF, Sport.TENNIS] });
+    const provider = fakeSportDataProvider({ sportsCovered: [Sport.GOLF] });
 
     const [summary] = await service({ registry: registryWith(provider) }).listProviders();
 
-    expect(summary).toMatchObject({ sportsCovered: [Sport.GOLF, Sport.TENNIS], lastEventAt: null });
+    expect(summary).toMatchObject({ sportsCovered: [Sport.GOLF], lastEventAt: null });
   });
 
   it('fails the list when a provider\'s live health check throws, since there is no stored health to show', async () => {
@@ -157,7 +160,7 @@ describe('IngestionService.listSyncRuns', () => {
 describe('IngestionService.getUnmappedParticipants', () => {
   it('lists the competitors each provider reports for its scheduled sports that no participant is mapped to', async () => {
     const provider = fakeSportDataProvider({
-      providerId: 'feed', providerName: 'Feed', sportsCovered: [Sport.GOLF, Sport.TENNIS],
+      providerId: 'feed', providerName: 'Feed', sportsCovered: [Sport.GOLF],
       getParticipants: jest.fn().mockResolvedValue([
         { externalId: 'p-1', providerId: 'feed', sport: Sport.GOLF, name: 'Mapped Golfer', active: true, metadata: {} },
         { externalId: 'p-2', providerId: 'feed', sport: Sport.GOLF, name: 'New Golfer', active: true, metadata: {} },
@@ -171,13 +174,23 @@ describe('IngestionService.getUnmappedParticipants', () => {
       registry: registryWith(provider), participantMappings, ingestionConfigReader: configReader(),
     }).getUnmappedParticipants();
 
-    // Tennis is not scheduled, so the provider is only asked for golf.
     expect(provider.getParticipants).toHaveBeenCalledTimes(1);
     expect(provider.getParticipants).toHaveBeenCalledWith(Sport.GOLF);
     expect(participantMappings.findByProviderExternalIds).toHaveBeenCalledWith('feed', ['p-1', 'p-2']);
     expect(unmapped).toEqual([
       { providerId: 'feed', providerName: 'Feed', externalId: 'p-2', externalName: 'New Golfer', sport: Sport.GOLF },
     ]);
+  });
+
+  it('never asks a provider for the competitors of a sport that is not scheduled', async () => {
+    const provider = fakeSportDataProvider({ sportsCovered: [Sport.GOLF], getParticipants: jest.fn().mockResolvedValue([]) });
+
+    const unmapped = await service({
+      registry: registryWith(provider), ingestionConfigReader: configReader({ ...GOLF_ONLY_CONFIG, scheduledSports: [] }),
+    }).getUnmappedParticipants();
+
+    expect(provider.getParticipants).not.toHaveBeenCalled();
+    expect(unmapped).toEqual([]);
   });
 
   it('returns nothing when no provider is registered', async () => {

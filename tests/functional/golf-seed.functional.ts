@@ -1,3 +1,4 @@
+import { findSportRow, Sport } from '@poolmaster/shared/domain';
 import { listEventParticipants, listEvents, listParticipants, listSportLeagues, listSports } from '@poolmaster/shared/generated/hey-api';
 import { seedGolf } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import type { GolfSeedFile, GolfSeedGolfer } from '../../packages/core-api/scripts/seed-golf/seed-golf-data';
@@ -97,7 +98,7 @@ describe('Golf manual-testing seed through the admin API', () => {
     const first = await seedGolf(seed, { getClient, now: NOW });
     expect(first).toEqual([{ tour: TOUR, created: [`${RUN} Opener`, `${RUN} Classic`], skipped: [] }]);
 
-    const golfSportId = expectDefined(expectDefined((await listSports({ client })).data).sports.find((sport) => sport.name === 'GOLF')).id;
+    const golfSportId = expectDefined(findSportRow(expectDefined((await listSports({ client })).data).sports, Sport.GOLF)).id;
     const tour = expectDefined(expectDefined((await listSportLeagues({ client, query: { sport: 'GOLF' } })).data).sportLeagues.find((league) => league.name === TOUR));
     expect(tour.matchKeyword).toBe(TOUR);
     const events = expectDefined((await listEvents({ client, query: { sportLeagueId: tour.id, eventYear: 2026 } })).data).events;

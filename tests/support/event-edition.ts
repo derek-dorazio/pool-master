@@ -30,8 +30,8 @@ export async function freshEventEdition(
   options: { name?: string; eventYear?: number } = {},
 ): Promise<EventEdition> {
   const sport = await prisma.sport.upsert({
-    where: { name: 'GOLF' },
-    create: { name: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    where: { sport: 'GOLF' },
+    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const tour = await prisma.sportLeague.upsert({
@@ -67,7 +67,6 @@ export async function linkedProviderEvent(
     externalId: string;
     name: string;
     startDate: Date;
-    sport?: string;
   },
 ) {
   return prisma.sportEvent.create({
@@ -75,7 +74,7 @@ export async function linkedProviderEvent(
       ...(await freshEventEdition(prisma, { name: input.name, eventYear: input.startDate.getUTCFullYear() })),
       providerId: input.providerId,
       externalId: input.externalId,
-      sport: input.sport ?? 'GOLF',
+      sport: 'GOLF',
       name: input.name,
       startDate: input.startDate,
       syncScope: 'SCORES_ONLY',

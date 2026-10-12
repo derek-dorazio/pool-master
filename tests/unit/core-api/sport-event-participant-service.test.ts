@@ -91,13 +91,6 @@ describe('SportEventParticipantService — changing the field', () => {
     expect(store.field.find((entry) => entry.participantId === onField.id)?.seedNumber).toBe(9);
   });
 
-  // plans/147 — every event reaches its sport league through its series, so there is no
-  // "event with no sport league" case left to refuse; only the sport is checked.
-  it('refuses to seed a non-golf event (422)', async () => {
-    const nba = setup(Sport.NBA);
-    await expect(nba.service.seedFromSportLeague(nba.event.id)).rejects.toMatchObject({ code: 'SPORT_NOT_SUPPORTED', statusCode: 422 });
-  });
-
   it('adds anyone to the field, skipping ones already on it', async () => {
     const { store, service, sport, event } = setup();
     const already = store.addParticipant(sport.id, 'A');

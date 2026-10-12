@@ -77,7 +77,7 @@ describe('RootAdminUnmappedParticipantsPage', () => {
     bindParticipantProviderMappingMock.mockReset();
 
     listUnmappedProviderParticipantsMock.mockResolvedValue({ data: { participants: [COMPETITOR] } });
-    listSportsMock.mockResolvedValue({ data: { sports: [{ id: 'sport-golf', name: 'GOLF' }] } });
+    listSportsMock.mockResolvedValue({ data: { sports: [{ id: 'sport-golf', sport: 'GOLF' }] } });
     listParticipantsMock.mockResolvedValue({
       data: { participants: [{ id: 'participant-1', name: 'Ludvig Åberg', nationality: 'SWE' }] },
     });

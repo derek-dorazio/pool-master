@@ -1,18 +1,8 @@
 /**
- * Integration coverage for the per-contest-format partial unique indexes
- * landed by pool-master-rop.78.4 (plans/117 §7.1).
- *
- * Each `contest_entry_picks` partial unique enforces a per-format pick rule
- * that only Postgres-level constraints can guarantee under load. This suite
- * builds a real entry, inserts a valid pick for each format, then asserts
- * the duplicate insert fails with Prisma's P2002 unique-violation code.
- *
- * Indexes asserted:
- *   - uq_pick_roster_participant — ROSTER: no double-picking same participant
- *   - uq_pick_period_slot — BRACKET / PICKEM_CONFIDENCE: no duplicate
- *     (period, slot) tuple
- *   - uq_pick_predicted_position — PREDICT_TOP_N: no duplicate slot
- *   - uq_pick_survivor_week — SURVIVOR: one pick per week (period) per entry
+ * Integration coverage for the per-contest-format partial unique index on
+ * `contest_entry_picks` (plans/117 §7.1): a roster entry cannot pick the same
+ * participant twice. Only Postgres can guarantee that under load. ROSTER is the
+ * only built format (#605); a new format adds its own index here.
  *
  * pool-master-rop.78.6 — service-layer enforcement of the contestFormat
  * denormalization invariant is the second half of the guarantee; that layer
@@ -41,7 +31,7 @@ interface FixtureContext {
   participantBId: string;
 }
 
-async function seedContestFixture(contestFormat: string): Promise<FixtureContext> {
+async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureContext> {
   const prisma = getPrisma();
   const suffix = randomUUID().slice(0, 8);
 
@@ -88,12 +78,10 @@ async function seedContestFixture(contestFormat: string): Promise<FixtureContext
     },
   });
 
-  const sport = await prisma.sport.create({
-    data: {
-      name: `Partial Uniques Sport ${suffix}`,
-      participantType: ParticipantType.INDIVIDUAL,
-      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-    },
+  const sport = await prisma.sport.upsert({
+    where: { sport: 'GOLF' },
+    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
   });
   const sportEvent = await prisma.sportEvent.create({
     data: {
@@ -144,7 +132,6 @@ async function seedContestFixture(contestFormat: string): Promise<FixtureContext
       status: 'OPEN',
       contestFormat: contestFormat as 'ROSTER',
       selectionType: 'TIERED',
-      scoringEngine: 'STROKE_PLAY',
     },
   });
   const entry = await prisma.contestEntry.create({
@@ -197,136 +184,6 @@ describe('pool-master-rop.78.6 / plans/117 §7.1 — ContestEntryPick partial un
         entryId: fixture.entryId,
         sportEventParticipantId: fixture.participantBId,
         contestFormat: 'ROSTER',
-        isAutoPicked: false,
-      },
-    });
-  });
-
-  it('uq_pick_period_slot — rejects duplicate (entry, period, slot) tuples for BRACKET / PICKEM_CONFIDENCE', async () => {
-    const prisma = getPrisma();
-    const bracketFixture = await seedContestFixture('BRACKET');
-
-    await prisma.contestEntryPick.create({
-      data: {
-        entryId: bracketFixture.entryId,
-        sportEventParticipantId: bracketFixture.participantAId,
-        contestFormat: 'BRACKET',
-        period: 1,
-        slot: 1,
-        isAutoPicked: false,
-      },
-    });
-
-    await expect(
-      prisma.contestEntryPick.create({
-        data: {
-          entryId: bracketFixture.entryId,
-          sportEventParticipantId: bracketFixture.participantBId,
-          contestFormat: 'BRACKET',
-          period: 1,
-          slot: 1,
-          isAutoPicked: false,
-        },
-      }),
-    ).rejects.toMatchObject({ code: 'P2002' });
-
-    // The same partial index also applies to PICKEM_CONFIDENCE.
-    const pickemFixture = await seedContestFixture('PICKEM_CONFIDENCE');
-    await prisma.contestEntryPick.create({
-      data: {
-        entryId: pickemFixture.entryId,
-        sportEventParticipantId: pickemFixture.participantAId,
-        contestFormat: 'PICKEM_CONFIDENCE',
-        period: 5,
-        slot: 16,
-        isAutoPicked: false,
-      },
-    });
-    await expect(
-      prisma.contestEntryPick.create({
-        data: {
-          entryId: pickemFixture.entryId,
-          sportEventParticipantId: pickemFixture.participantBId,
-          contestFormat: 'PICKEM_CONFIDENCE',
-          period: 5,
-          slot: 16,
-          isAutoPicked: false,
-        },
-      }),
-    ).rejects.toMatchObject({ code: 'P2002' });
-  });
-
-  it('uq_pick_predicted_position — rejects duplicate slot picks for PREDICT_TOP_N', async () => {
-    const prisma = getPrisma();
-    const fixture = await seedContestFixture('PREDICT_TOP_N');
-
-    await prisma.contestEntryPick.create({
-      data: {
-        entryId: fixture.entryId,
-        sportEventParticipantId: fixture.participantAId,
-        contestFormat: 'PREDICT_TOP_N',
-        slot: 1,
-        isAutoPicked: false,
-      },
-    });
-
-    await expect(
-      prisma.contestEntryPick.create({
-        data: {
-          entryId: fixture.entryId,
-          sportEventParticipantId: fixture.participantBId,
-          contestFormat: 'PREDICT_TOP_N',
-          slot: 1,
-          isAutoPicked: false,
-        },
-      }),
-    ).rejects.toMatchObject({ code: 'P2002' });
-
-    // A different predicted position succeeds.
-    await prisma.contestEntryPick.create({
-      data: {
-        entryId: fixture.entryId,
-        sportEventParticipantId: fixture.participantBId,
-        contestFormat: 'PREDICT_TOP_N',
-        slot: 2,
-        isAutoPicked: false,
-      },
-    });
-  });
-
-  it('uq_pick_survivor_week — rejects more than one SURVIVOR pick per (entry, period)', async () => {
-    const prisma = getPrisma();
-    const fixture = await seedContestFixture('SURVIVOR');
-
-    await prisma.contestEntryPick.create({
-      data: {
-        entryId: fixture.entryId,
-        sportEventParticipantId: fixture.participantAId,
-        contestFormat: 'SURVIVOR',
-        period: 1,
-        isAutoPicked: false,
-      },
-    });
-
-    await expect(
-      prisma.contestEntryPick.create({
-        data: {
-          entryId: fixture.entryId,
-          sportEventParticipantId: fixture.participantBId,
-          contestFormat: 'SURVIVOR',
-          period: 1,
-          isAutoPicked: false,
-        },
-      }),
-    ).rejects.toMatchObject({ code: 'P2002' });
-
-    // Different week succeeds.
-    await prisma.contestEntryPick.create({
-      data: {
-        entryId: fixture.entryId,
-        sportEventParticipantId: fixture.participantBId,
-        contestFormat: 'SURVIVOR',
-        period: 2,
         isAutoPicked: false,
       },
     });

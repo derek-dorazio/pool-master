@@ -5,22 +5,7 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import { BudgetPricingProfileSchema, Sport } from '@poolmaster/shared/domain';
 
-const SportSchema = z.enum([
-  Sport.GOLF,
-  Sport.NFL,
-  Sport.NBA,
-  Sport.F1,
-  Sport.NASCAR,
-  Sport.NCAA_BASKETBALL,
-  Sport.NCAA_HOCKEY,
-  Sport.NCAA_FOOTBALL,
-  Sport.TENNIS,
-  Sport.HORSE_RACING,
-  Sport.SOCCER,
-  Sport.NHL,
-  Sport.MLB,
-  Sport.UFC,
-]);
+const SportSchema = z.nativeEnum(Sport);
 
 export const IngestionFeedSchedulePolicySchema = z.object({
   enabled: z.boolean().describe('Whether the feed should be scheduled automatically.'),

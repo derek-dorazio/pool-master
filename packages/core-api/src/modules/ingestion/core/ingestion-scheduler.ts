@@ -35,6 +35,7 @@ import { supportsMockEventStateControls, supportsProviderPayloadDiagnostics } fr
 import type { LiveScoreResult, MockEventState } from '@poolmaster/shared/dto';
 import type { ProviderSyncRunLedger } from '../persistence/provider-sync-run-ledger';
 import type { LiveScorePersistenceResult } from './score-publisher';
+import { countLiveScoreUpdates } from './live-score-count';
 
 export type { IngestionFeedType } from './sync-orchestrator';
 
@@ -705,31 +706,6 @@ export class IngestionScheduler {
       this.logger?.error({ error }, 'Falling back to config recheck delay because policy resolution failed');
       return CONFIG_RECHECK_MS;
     }
-  }
-}
-
-/**
- * Count the number of per-category updates inside a `LiveScoreResult` so
- * the scheduler can record `recordsProcessed` consistently regardless of
- * the result's category. Per plans/117 §10.2 each category exposes its
- * updates under a category-specific key (rounds, games, results, matches).
- */
-function countLiveScoreUpdates(result: LiveScoreResult): number {
-  switch (result.category) {
-    case 'GOLF':
-      return result.rounds.length;
-    case 'BASKETBALL':
-      return result.games.length;
-    case 'F1':
-      return result.results.length;
-    case 'NFL':
-      return result.games.length;
-    case 'NASCAR':
-      return result.results.length;
-    case 'TENNIS':
-      return result.matches.length;
-    case 'SOCCER':
-      return result.matches.length;
   }
 }
 

@@ -25,9 +25,9 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     const suffix = randomUUID().slice(0, 8);
     const owner = await createTestUser({ displayName: `Golf Leaderboard ${suffix}` });
     const sport = await prisma.sport.upsert({
-      where: { name: Sport.GOLF },
+      where: { sport: Sport.GOLF },
       create: {
-        name: Sport.GOLF,
+        sport: Sport.GOLF,
         participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
@@ -151,7 +151,6 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
         status: 'ACTIVE',
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
-        scoringEngine: 'STROKE_PLAY',
       },
     });
     await prisma.contestConfiguration.create({

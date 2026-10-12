@@ -1,7 +1,7 @@
 import { SelectionType } from '@poolmaster/shared/domain';
 import type { ContestConfiguration } from '@poolmaster/shared/domain';
 import { budgetPickSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/budget-pick';
-import { findSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
+import { getSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
 import {
   SelectionOutcomeKind,
   SelectionRejectCode,
@@ -76,15 +76,8 @@ function request(overrides: Partial<SelectionRequest> = {}): SelectionRequest {
 
 describe('selection engine registry', () => {
   it('serves tiered and budget-pick contests with their own engines', () => {
-    expect(findSelectionEngine(SelectionType.TIERED)).toBe(tieredSelectionEngine);
-    expect(findSelectionEngine(SelectionType.BUDGET_PICK)).toBe(budgetPickSelectionEngine);
-  });
-
-  it('has no engine for snake draft or the deferred types, which is what makes the room answer 501', () => {
-    expect(findSelectionEngine(SelectionType.SNAKE_DRAFT)).toBeUndefined();
-    expect(findSelectionEngine(SelectionType.OPEN_SELECTION)).toBeUndefined();
-    expect(findSelectionEngine(SelectionType.PICK_EM)).toBeUndefined();
-    expect(findSelectionEngine(SelectionType.BRACKET_PICK_EM)).toBeUndefined();
+    expect(getSelectionEngine(SelectionType.TIERED)).toBe(tieredSelectionEngine);
+    expect(getSelectionEngine(SelectionType.BUDGET_PICK)).toBe(budgetPickSelectionEngine);
   });
 });
 

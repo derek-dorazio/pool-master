@@ -1,9 +1,7 @@
 /**
- * Which engine serves which selection type (#198). Adding a selection type to the selection room
- * is adding an engine here; the shared handler does not change.
- *
- * A type with no entry (`SNAKE_DRAFT`, rebuilt under #199, and the deferred catalog types) has
- * no engine, and the room answers it with 501 `SELECTION_TYPE_UNSUPPORTED`.
+ * Which engine serves which selection type (#198). Adding a selection type is adding an engine
+ * here; the shared handler does not change. The record is exhaustive (#605): a selection type
+ * exists only with its engine, so a new value fails the typecheck until it has one.
  */
 
 import { SelectionType } from '@poolmaster/shared/domain';
@@ -15,12 +13,12 @@ import { tieredSelectionEngine } from './tiered';
  * Keyed by the type itself, so a second engine for the same type is a duplicate key, which
  * the compiler refuses, rather than a silent overwrite.
  */
-const ENGINE_BY_SELECTION_TYPE: Readonly<Partial<Record<SelectionType, SelectionEngine>>> = {
+const ENGINE_BY_SELECTION_TYPE: Readonly<Record<SelectionType, SelectionEngine>> = {
   [SelectionType.TIERED]: tieredSelectionEngine,
   [SelectionType.BUDGET_PICK]: budgetPickSelectionEngine,
 };
 
-/** The engine for a selection type, or undefined when the selection room does not serve it. */
-export function findSelectionEngine(selectionType: SelectionType): SelectionEngine | undefined {
+/** The engine for a selection type. */
+export function getSelectionEngine(selectionType: SelectionType): SelectionEngine {
   return ENGINE_BY_SELECTION_TYPE[selectionType];
 }

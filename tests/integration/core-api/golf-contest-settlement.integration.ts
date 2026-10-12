@@ -24,9 +24,9 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     const suffix = randomUUID().slice(0, 8);
     const owner = await createTestUser({ displayName: `Golf Settlement ${suffix}` });
     const sport = await prisma.sport.upsert({
-      where: { name: Sport.GOLF },
+      where: { sport: Sport.GOLF },
       create: {
-        name: Sport.GOLF,
+        sport: Sport.GOLF,
         participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
@@ -112,7 +112,6 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
           status: 'ACTIVE',
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
-          scoringEngine: 'STROKE_PLAY',
         },
       }),
       // #246: the golf fallback is gone, so a configuration without a scoring rule is
@@ -235,8 +234,8 @@ describe('golf contest settlement — which contests settle', () => {
     const prisma = getPrisma();
     const suffix = randomUUID().slice(0, 8);
     const sport = await prisma.sport.upsert({
-      where: { name: Sport.GOLF },
-      create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      where: { sport: Sport.GOLF },
+      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const league = await prisma.league.create({
@@ -316,8 +315,8 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     const suffix = randomUUID().slice(0, 8);
     const owner = await createTestUser({ displayName: `Golf Unplayed ${suffix}` });
     const sport = await prisma.sport.upsert({
-      where: { name: Sport.GOLF },
-      create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      where: { sport: Sport.GOLF },
+      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const league = await prisma.league.create({
@@ -373,7 +372,6 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
         status: 'ACTIVE',
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
-        scoringEngine: 'STROKE_PLAY',
       },
     });
     await prisma.contestConfiguration.create({
@@ -480,7 +478,6 @@ async function createSettlementContest(input: {
       status: input.status ?? 'ACTIVE',
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
-      scoringEngine: 'STROKE_PLAY',
     },
   });
   await prisma.contestConfiguration.create({

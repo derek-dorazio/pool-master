@@ -929,7 +929,7 @@ export const listEvents = <ThrowOnError extends boolean = false>(options?: Optio
 /**
  * Create a sport event
  *
- * An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league; only golf is supported so far (422 SPORT_NOT_SUPPORTED otherwise). Root admin only.
+ * An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. Root admin only.
  */
 export const createEvent = <ThrowOnError extends boolean = false>(options: Options<CreateEventData, ThrowOnError>) => (options.client ?? client).post<CreateEventResponses, CreateEventErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

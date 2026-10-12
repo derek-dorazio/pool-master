@@ -40,7 +40,6 @@ import type {
 } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
-  ScoringEngine,
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
@@ -268,17 +267,13 @@ describe('Contract verification (web)', () => {
     const prisma = getPrisma();
     const eventId = randomUUID();
     const participantId = randomUUID();
-    const sportId = randomUUID();
     const viewer = await createTestUser({ displayName: 'Contract Events Viewer' });
     const eventTiming = buildContestEligibleEventTiming();
 
-    await prisma.sport.create({
-      data: {
-        id: sportId,
-        name: Sport.UFC,
-        participantType: 'INDIVIDUAL',
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-      },
+    await prisma.sport.upsert({
+      where: { sport: Sport.GOLF },
+      update: {},
+      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     });
     await prisma.sportEvent.create({
       data: {
@@ -286,7 +281,7 @@ describe('Contract verification (web)', () => {
         id: eventId,
         providerId: 'contract-events-provider',
         externalId: `contract-event-${eventId}`,
-        sport: Sport.UFC,
+        sport: Sport.GOLF,
         name: 'Contract Events Major',
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
@@ -300,7 +295,7 @@ describe('Contract verification (web)', () => {
         id: participantId,
         sport: {
           connect: {
-            name: Sport.UFC,
+            sport: Sport.GOLF,
           },
         },
         participantType: 'INDIVIDUAL',
@@ -320,7 +315,7 @@ describe('Contract verification (web)', () => {
     try {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=UFC',
+        url: '/api/v1/events/?sport=GOLF',
         headers: viewer.headers,
       });
 
@@ -350,7 +345,6 @@ describe('Contract verification (web)', () => {
       await prisma.sportEventParticipant.deleteMany({ where: { sportEventId: eventId } });
       await prisma.participant.delete({ where: { id: participantId } });
       await prisma.sportEvent.delete({ where: { id: eventId } });
-      await prisma.sport.delete({ where: { id: sportId } });
     }
   });
 
@@ -366,7 +360,7 @@ describe('Contract verification (web)', () => {
         id: eventId,
         providerId: 'contract-events-provider',
         externalId: `contract-shallow-event-${eventId}`,
-        sport: Sport.UFC,
+        sport: Sport.GOLF,
         name: 'Contract Shallow Event',
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
@@ -379,7 +373,7 @@ describe('Contract verification (web)', () => {
     try {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=UFC',
+        url: '/api/v1/events/?sport=GOLF',
         headers: viewer.headers,
       });
 
@@ -512,11 +506,11 @@ describe('Contract verification (web)', () => {
     const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
     await getPrisma().sport.upsert({
       where: {
-        name: Sport.GOLF,
+        sport: Sport.GOLF,
       },
       update: {},
       create: {
-        name: Sport.GOLF,
+        sport: Sport.GOLF,
         participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
@@ -529,7 +523,7 @@ describe('Contract verification (web)', () => {
         status: 'ACTIVE',
         sport: {
           connect: {
-            name: Sport.GOLF,
+            sport: Sport.GOLF,
           },
         },
       },
@@ -562,7 +556,7 @@ describe('Contract verification (web)', () => {
           status: 'ACTIVE',
           sport: {
             connect: {
-              name: Sport.GOLF,
+              sport: Sport.GOLF,
             },
           },
         },
@@ -748,7 +742,6 @@ describe('Contract verification (web)', () => {
         status: 'DRAFT',
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
-        scoringEngine: ScoringEngine.STROKE_PLAY,
       },
     });
     await getPrisma().contestConfiguration.create({

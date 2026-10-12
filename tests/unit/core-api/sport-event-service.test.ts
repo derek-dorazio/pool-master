@@ -99,13 +99,6 @@ describe('SportEventService.createEvent', () => {
     expect(store.events).toHaveLength(1);
   });
 
-  it('refuses a sport league that is not golf with 422, rather than creating a golf event', async () => {
-    const { service, sportLeague } = setup(Sport.NBA);
-
-    await expect(service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT }))
-      .rejects.toMatchObject({ code: 'SPORT_NOT_SUPPORTED', statusCode: 422 });
-  });
-
   it('fails with 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league', async () => {
     const { service } = setup();
 

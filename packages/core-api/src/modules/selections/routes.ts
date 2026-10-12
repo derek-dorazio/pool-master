@@ -1,8 +1,7 @@
 /**
  * Selection module — REST routes for roster-based selection.
  *
- * The route surface serves the independent selection modes (tiered and budget pick). Any
- * other configured SelectionType returns 501 SELECTION_TYPE_UNSUPPORTED.
+ * The route surface serves every selection type through its engine (tiered and budget pick).
  *
  * Path, method, schema refs and wiring only (`docs/LAYERS.md` §2.7). The operations are in
  * `service.ts`, actor resolution and DTO mapping in `handler.ts`, the selection rules in
@@ -71,7 +70,7 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
       querystring: schemaRef('SelectionStateQuery'),
       response: {
         200: schemaRef('SelectionStateResponse'),
-        ...selectionErrorResponses(401, 403, 404, 501),
+        ...selectionErrorResponses(401, 403, 404),
       },
     },
     preHandler: requireContestLeagueMember,
@@ -89,7 +88,7 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
       body: schemaRef('SubmitPickRequest'),
       response: {
         200: schemaRef('SelectionPickResponse'),
-        ...selectionErrorResponses(400, 401, 403, 404, 409, 501),
+        ...selectionErrorResponses(400, 401, 403, 404, 409),
       },
     },
     handler: handlers.submitContestSelection,
@@ -105,7 +104,7 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
       params: contestEntryParams,
       response: {
         200: schemaRef('SelectionStateResponse'),
-        ...selectionErrorResponses(400, 401, 403, 404, 409, 501),
+        ...selectionErrorResponses(400, 401, 403, 404, 409),
       },
     },
     handler: handlers.submitContestEntry,

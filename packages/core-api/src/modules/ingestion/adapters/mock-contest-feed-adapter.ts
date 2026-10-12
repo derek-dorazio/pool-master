@@ -70,7 +70,7 @@ interface ProviderPayloadCaptureBuffer {
 export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloadDiagnostics, ProviderLiveSimulationControls {
   readonly providerId = 'mock-contest-feed';
   readonly providerName = 'Mock Contest Feed Provider';
-  readonly sportsCovered = [Sport.GOLF, Sport.TENNIS, Sport.NCAA_BASKETBALL] as Sport[];
+  readonly sportsCovered: Sport[] = [Sport.GOLF];
   private readonly providerPayloadCaptureStorage = new AsyncLocalStorage<ProviderPayloadCaptureBuffer>();
   private readonly scenarioIdByEventId = new Map<string, string>();
 
@@ -413,9 +413,9 @@ function withMockEventState(path: string, options?: ProviderEventSyncOptions): s
 
 /**
  * Maps a mock-feed sport literal to its domain `Sport`. Returns `null`
- * for sports the adapter intentionally does not surface — currently
- * the generic `'TEAM_TOURNAMENT'` sport. The mock ships only golf
- * scenarios now, but its contract still names these sports. Pre-rop.78.13 the
+ * for sports PoolMaster does not build (#605): the mock's contract still
+ * names tennis, NCAA basketball and a generic `'TEAM_TOURNAMENT'`, but it
+ * ships only golf scenarios. Pre-rop.78.13 the
  * adapter's local `SupportedMockSport` union didn't include
  * `'TEAM_TOURNAMENT'` at all, so the runtime fallthrough silently
  * filtered those scenarios out. The generated SDK now exposes
@@ -428,9 +428,7 @@ function toDomainSport(sport: SupportedMockSport): Sport | null {
     case 'GOLF':
       return Sport.GOLF;
     case 'TENNIS':
-      return Sport.TENNIS;
     case 'NCAA_BASKETBALL':
-      return Sport.NCAA_BASKETBALL;
     case 'TEAM_TOURNAMENT':
       return null;
   }
@@ -539,7 +537,7 @@ function toSportEvent(
 }
 
 function resolveParticipants(detail: EventDetailResponse): ContestantRecord[] {
-  if (detail.sport === 'GOLF') {
+  if (detail.sport === Sport.GOLF) {
     return mergeContestantView(
       detail.event.field.contestants,
       detail.event.feeds.odds.contestants,

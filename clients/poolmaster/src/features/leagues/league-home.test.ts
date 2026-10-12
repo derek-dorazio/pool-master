@@ -11,8 +11,7 @@ function contestFixture(overrides: Partial<ContestDto> & { id: string }): Contes
     name: `Contest ${overrides.id}`,
     status: 'OPEN',
     contestFormat: 'ROSTER',
-    selectionType: 'OPEN_SELECTION',
-    scoringEngine: 'STROKE_PLAY',
+    selectionType: 'TIERED',
     leagueId: 'league-1',
     ...overrides,
   };

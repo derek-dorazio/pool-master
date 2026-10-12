@@ -28,7 +28,7 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   MANUAL_ADMIN_PROVIDER_ID,
-  Sport,
+  type Sport,
   SportEventStatus,
   SportEventSyncScope,
   type SportEvent,
@@ -460,19 +460,15 @@ export class SportEventService {
     }
   }
 
-  /** The sport league and the sport it belongs to. Only golf creates events so far. */
+  /** The sport league and the sport it belongs to. */
   private async resolveSportLeague(sportLeagueId: string): Promise<{ sportLeague: SportLeague; sport: Sport }> {
     const sportLeague = await this.deps.sportLeagues.findById(sportLeagueId);
     if (!sportLeague) {
       throw new SportEventError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
     }
-    const sport = (await this.deps.sports.findById(sportLeague.sportId))?.name;
-    if (sport !== Sport.GOLF) {
-      throw new SportEventError(
-        `Creating events is implemented for golf only; sport league ${sportLeagueId} belongs to ${sport ?? 'an unknown sport'}.`,
-        'SPORT_NOT_SUPPORTED',
-        422,
-      );
+    const sport = (await this.deps.sports.findById(sportLeague.sportId))?.sport;
+    if (sport === undefined) {
+      throw new SportEventError(`Sport league ${sportLeagueId} belongs to no known sport.`, 'SPORT_NOT_FOUND', 404);
     }
     return { sportLeague, sport };
   }

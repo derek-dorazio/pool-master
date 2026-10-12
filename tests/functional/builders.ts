@@ -1,7 +1,7 @@
 import { createLeague, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
-import type { ContestSelectionConfig, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
+import type { ContestSelectionConfig, SelectionType } from '@poolmaster/shared/domain';
 import {
   createAuthenticatedClient,
   createFunctionalEmail,
@@ -221,7 +221,6 @@ export async function buildLeagueWithCommissioner(overrides?: {
 export async function seedContestFixture(leagueId: string, options: {
   name: string;
   selectionType: SelectionType;
-  scoringEngine: ScoringEngine;
   status?: 'DRAFT' | 'OPEN';
   configuration?: {
     maxEntriesPerSquad?: number;
@@ -240,7 +239,6 @@ export async function seedContestFixture(leagueId: string, options: {
       status: options.status ?? 'OPEN',
       contestFormat: 'ROSTER',
       selectionType: options.selectionType,
-      scoringEngine: options.scoringEngine,
     },
   });
   await prisma.contestConfiguration.create({

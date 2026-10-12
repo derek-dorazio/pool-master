@@ -29,7 +29,7 @@ let mailInbox: MailInboxServer | undefined;
 // provider-linked golf scenarios (catalog browse, score-source link, sync-driven
 // live scores) can be driven end to end through the generated SDK, the same way
 // the deployed QA stack runs poolmaster-qa-mock-contest-feed-provider alongside
-// core-api. It is registered for GOLF/TENNIS/NCAA_BASKETBALL but only ever
+// core-api. It is registered for GOLF but only ever
 // touched by requests that explicitly hit the provider/sync surface, so it is
 // inert for every other functional test.
 let mockContestFeedProvider: FastifyInstance | undefined;

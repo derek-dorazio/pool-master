@@ -76,7 +76,7 @@ async function seedScheduledGolfEvent(eventName: string): Promise<{
   const tier = await prisma.sportEventTier.create({
     data: { sportEventId: sportEvent.id, tierKey: 'A', label: 'Tier A', tierNumber: 1 },
   });
-  const golf = await prisma.sport.findUniqueOrThrow({ where: { name: 'GOLF' } });
+  const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: 'GOLF' } });
   const participant = await prisma.participant.create({
     data: {
       sportId: golf.id,

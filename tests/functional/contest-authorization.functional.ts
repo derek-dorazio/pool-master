@@ -25,7 +25,7 @@ import {
   updateContest,
   updateContestEntry,
 } from '@poolmaster/shared/generated/hey-api';
-import { ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
+import { SelectionType } from '@poolmaster/shared/domain';
 import { buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
 import type { RegisteredUserContext } from './builders';
 import {
@@ -65,7 +65,6 @@ async function buildContestWithMemberAndOutsider(status: 'DRAFT' | 'OPEN' = 'OPE
   const { contestId } = await seedContestFixture(league.id, {
     name: 'Authorization Contest',
     selectionType: SelectionType.BUDGET_PICK,
-    scoringEngine: ScoringEngine.POSITION,
     status,
   });
 
