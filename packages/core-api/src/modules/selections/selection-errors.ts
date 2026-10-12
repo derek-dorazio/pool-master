@@ -45,24 +45,6 @@ export const selectionErrors = {
     ),
 
   /**
-   * Two wordings, one code: the selection-state read says "selection-room endpoints", the submission
-   * says "pick submission". Both were inline in the route and both are kept verbatim.
-   */
-  selectionTypeUnsupportedForRead: (selectionType: string) =>
-    new SelectionError(
-      `${selectionType} selection-room endpoints are not implemented yet`,
-      'SELECTION_TYPE_UNSUPPORTED',
-      501,
-    ),
-
-  selectionTypeUnsupportedForSubmission: (selectionType: string) =>
-    new SelectionError(
-      `${selectionType} pick submission is not implemented yet`,
-      'SELECTION_TYPE_UNSUPPORTED',
-      501,
-    ),
-
-  /**
    * Picks change only while the contest is OPEN, the same window and the same code as
    * creating, editing or leaving the entry itself (`ContestService`, #117): a DRAFT is the
    * commissioner's alone, and from ACTIVE on every entry's picks are public.

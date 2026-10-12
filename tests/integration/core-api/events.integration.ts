@@ -20,7 +20,7 @@ afterAll(async () => {
 });
 
 describe('events routes', () => {
-  it('filters events by sport and status and returns contest-eligible readiness for loaded fields', async () => {
+  it('filters events by status and returns contest-eligible readiness for loaded fields', async () => {
     const prisma = getPrisma();
     const viewer = await createTestUser({ displayName: 'Events Route Viewer' });
     const eligibleEventId = randomUUID();
@@ -28,11 +28,11 @@ describe('events routes', () => {
     const participantId = randomUUID();
 
     await prisma.sport.upsert({
-      where: { name: Sport.UFC },
+      where: { sport: Sport.GOLF },
       update: {},
       create: {
         id: randomUUID(),
-        name: Sport.UFC,
+        sport: Sport.GOLF,
         participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
@@ -45,8 +45,8 @@ describe('events routes', () => {
           id: eligibleEventId,
           providerId: 'integration-test',
           externalId: `events-eligible-${eligibleEventId}`,
-          sport: Sport.UFC,
-          name: 'Eligible UFC Event',
+          sport: Sport.GOLF,
+          name: 'Eligible Golf Event',
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: new Date('2099-04-23T23:00:00.000Z'),
           status: 'SCHEDULED',
@@ -74,11 +74,11 @@ describe('events routes', () => {
         id: participantId,
         sport: {
           connect: {
-            name: Sport.UFC,
+            sport: Sport.GOLF,
           },
         },
         participantType: 'INDIVIDUAL',
-        name: 'Ready Fighter',
+        name: 'Ready Golfer',
       },
     });
     await prisma.sportEventParticipant.create({
@@ -92,23 +92,23 @@ describe('events routes', () => {
     try {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=UFC&status=SCHEDULED',
+        url: '/api/v1/events/?sport=GOLF&status=SCHEDULED',
         headers: viewer.headers,
       });
 
       expect(res.statusCode).toBe(200);
-      expect(res.json()).toEqual({
-        events: [
-          expect.objectContaining({
-            id: eligibleEventId,
-            externalId: `events-eligible-${eligibleEventId}`,
-            sport: Sport.UFC,
-            readinessStatus: 'CONTEST_ELIGIBLE',
-            readinessReasons: [],
-            contestEligible: true,
-          }),
-        ],
-      });
+      const events = res.json<{ events: Array<{ id: string }> }>().events;
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          id: eligibleEventId,
+          externalId: `events-eligible-${eligibleEventId}`,
+          sport: Sport.GOLF,
+          readinessStatus: 'CONTEST_ELIGIBLE',
+          readinessReasons: [],
+          contestEligible: true,
+        }),
+      );
+      expect(events.map((event) => event.id)).not.toContain(filteredOutEventId);
     } finally {
       await prisma.sportEventParticipantGolfStanding.deleteMany({
         where: {
@@ -141,11 +141,11 @@ describe('events routes', () => {
     const participantId = randomUUID();
 
     await prisma.sport.upsert({
-      where: { name: Sport.UFC },
+      where: { sport: Sport.GOLF },
       update: {},
       create: {
         id: randomUUID(),
-        name: Sport.UFC,
+        sport: Sport.GOLF,
         participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
@@ -158,7 +158,7 @@ describe('events routes', () => {
           id: notReleasedEventId,
           providerId: 'integration-test',
           externalId: `events-not-released-${notReleasedEventId}`,
-          sport: Sport.UFC,
+          sport: Sport.GOLF,
           name: 'Not Released Event',
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: null,
@@ -171,7 +171,7 @@ describe('events routes', () => {
           id: lockedEventId,
           providerId: 'integration-test',
           externalId: `events-locked-${lockedEventId}`,
-          sport: Sport.UFC,
+          sport: Sport.GOLF,
           name: 'Started Event',
           // Released, but its start time has passed: the contest cutoff.
           startDate: new Date('2000-04-20T15:00:00.000Z'),
@@ -188,11 +188,11 @@ describe('events routes', () => {
         id: participantId,
         sport: {
           connect: {
-            name: Sport.UFC,
+            sport: Sport.GOLF,
           },
         },
         participantType: 'INDIVIDUAL',
-        name: 'Locked Fighter',
+        name: 'Locked Golfer',
       },
     });
     await prisma.sportEventParticipant.create({
@@ -207,7 +207,7 @@ describe('events routes', () => {
       type EventList = { events: Array<{ id: string; status: string; readinessStatus: string; readinessReasons: string[] }> };
       const adminRes = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=UFC',
+        url: '/api/v1/events/?sport=GOLF',
         headers: admin.headers,
       });
       expect(adminRes.statusCode).toBe(200);
@@ -224,7 +224,7 @@ describe('events routes', () => {
 
       const viewerRes = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=UFC',
+        url: '/api/v1/events/?sport=GOLF',
         headers: viewer.headers,
       });
       expect(viewerRes.statusCode).toBe(200);
@@ -277,7 +277,7 @@ describe('events routes', () => {
       await prisma.participant.create({
         data: {
           id: participantId,
-          sport: { connect: { name: Sport.GOLF } },
+          sport: { connect: { sport: Sport.GOLF } },
           participantType: 'INDIVIDUAL',
           name: 'Release Route Golfer',
         },

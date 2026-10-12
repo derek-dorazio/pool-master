@@ -122,7 +122,6 @@ function buildWorld(options: WorldOptions = {}) {
     status: options.status ?? ContestStatus.OPEN,
     contestFormat: 'ROSTER',
     selectionType: SelectionType.TIERED,
-    scoringEngine: 'STROKE_PLAY',
     scoringStopsOnElimination: false,
     ...TIMESTAMPS,
   } as Contest;

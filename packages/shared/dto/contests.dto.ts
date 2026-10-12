@@ -8,8 +8,8 @@ import {
   ContestStatus,
   ContestFormat,
   ParticipantScoringDefinitionIdSchema,
-  ScoringEngine,
   SelectionType,
+  Sport,
 } from '@poolmaster/shared/domain';
 import { ContestConfigurationRequestSchema } from './contest-management.dto';
 import { SportEventParticipantDtoSchema } from './events.dto';
@@ -76,26 +76,10 @@ export const ContestDtoSchema = z.object({
     ContestStatus.COMPLETED,
   ]),
   contestFormat: z.enum(Object.values(ContestFormat) as [string, ...string[]]),
-  selectionType: z.enum([
-    SelectionType.SNAKE_DRAFT,
-    SelectionType.TIERED,
-    SelectionType.BUDGET_PICK,
-    SelectionType.OPEN_SELECTION,
-    SelectionType.PICK_EM,
-    SelectionType.BRACKET_PICK_EM,
-  ]),
-  scoringEngine: z.enum([
-    ScoringEngine.ADVANCEMENT,
-    ScoringEngine.STAT_ACCUMULATION,
-    ScoringEngine.STROKE_PLAY,
-    ScoringEngine.POSITION,
-    ScoringEngine.BRACKET,
-    ScoringEngine.FIGHT_RESULT,
-    ScoringEngine.CUMULATIVE,
-  ]),
+  selectionType: z.nativeEnum(SelectionType),
   leagueId: z.string(),
   sportEventId: z.string().nullable().optional(),
-  sport: z.string().nullable().optional(),
+  sport: z.nativeEnum(Sport).nullable().optional(),
   entryCount: z.number().optional().describe('Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.'),
   sportEvent: ContestEventSummaryDtoSchema.nullable().optional().describe('The sport event\'s name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself.'),
   startsAt: z.string().datetime().nullable().optional(),
@@ -125,10 +109,10 @@ export const ContestEntryPickDtoSchema = z.object({
     'Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.',
   ),
   period: z.number().int().nullable().describe(
-    'Per-format period: week (SURVIVOR), draft round (BRACKET), or omitted (ROSTER). Plans/117 §7.1.',
+    'Unused: no built contest format sets it, so it is always null. Removal is tracked in #632.',
   ),
   slot: z.number().int().nullable().describe(
-    'Per-format slot: matchup index (BRACKET), confidence rank (PICKEM_CONFIDENCE), predicted position (PREDICT_TOP_N), or omitted (ROSTER, SURVIVOR). Plans/117 §7.1.',
+    'Unused: no built contest format sets it, so it is always null; a lineup position is `lineupSlot`. Removal is tracked in #632.',
   ),
   tier: z.string().nullable().describe('Selection tier (tiered ROSTER); null otherwise.'),
   cost: z.number().nullable().describe('Budget cost (budget ROSTER); null otherwise.'),

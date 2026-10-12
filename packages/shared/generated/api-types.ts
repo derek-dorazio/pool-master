@@ -1170,7 +1170,7 @@ export interface paths {
         };
         /**
          * Get Golf contest leaderboard
-         * @description Returns the member-facing leaderboard for a golf contest, as the cross-sport ContestLeaderboardResponse. While the contest is live, entry standings are computed from the event's standings and joined to entry picks in memory, so picks remain pointers into `participants` (the event's own field rows). Once the contest is COMPLETED, each entry's total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Golf only today: another sport answers 400 _SPORT_UNSUPPORTED. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Returns the member-facing leaderboard for a golf contest, as the cross-sport ContestLeaderboardResponse. While the contest is live, entry standings are computed from the event's standings and joined to entry picks in memory, so picks remain pointers into `participants` (the event's own field rows). Once the contest is COMPLETED, each entry's total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["getGolfContestLeaderboard"];
         put?: never;
@@ -1260,7 +1260,7 @@ export interface paths {
         put?: never;
         /**
          * Create a sport event
-         * @description An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league; only golf is supported so far (422 SPORT_NOT_SUPPORTED otherwise). Root admin only.
+         * @description An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. Root admin only.
          */
         post: operations["createEvent"];
         delete?: never;
@@ -4447,19 +4447,19 @@ export interface components {
              * @description Sport this template applies to.
              * @enum {string}
              */
-            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport: "GOLF";
             /** @description Optional event-type scope for the template. */
             eventType?: string | null;
             /**
              * @description Contest type that may use the template.
              * @enum {string}
              */
-            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+            contestFormat: "ROSTER";
             /**
              * @description How an entry picks in a contest created from this template.
              * @enum {string}
              */
-            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+            selectionType: "TIERED" | "BUDGET_PICK";
             /** @description Stable machine key for the template. */
             templateKey: string;
             /** @description Commissioner-facing template label. */
@@ -4584,12 +4584,12 @@ export interface components {
              * @description Only templates for this sport.
              * @enum {string}
              */
-            sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport?: "GOLF";
             /**
              * @description Only templates for this contest format.
              * @enum {string}
              */
-            contestFormat?: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+            contestFormat?: "ROSTER";
             /** @description Templates for this event type, plus the ones that apply to any event type. */
             eventType?: string;
             /** @description Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones. */
@@ -4607,19 +4607,19 @@ export interface components {
                  * @description Sport this template applies to.
                  * @enum {string}
                  */
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport: "GOLF";
                 /** @description Optional event-type scope for the template. */
                 eventType?: string | null;
                 /**
                  * @description Contest type that may use the template.
                  * @enum {string}
                  */
-                contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                contestFormat: "ROSTER";
                 /**
                  * @description How an entry picks in a contest created from this template.
                  * @enum {string}
                  */
-                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                selectionType: "TIERED" | "BUDGET_PICK";
                 /** @description Stable machine key for the template. */
                 templateKey: string;
                 /** @description Commissioner-facing template label. */
@@ -4702,19 +4702,19 @@ export interface components {
                  * @description Sport this template applies to.
                  * @enum {string}
                  */
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport: "GOLF";
                 /** @description Optional event-type scope for the template. */
                 eventType?: string | null;
                 /**
                  * @description Contest type that may use the template.
                  * @enum {string}
                  */
-                contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                contestFormat: "ROSTER";
                 /**
                  * @description How an entry picks in a contest created from this template.
                  * @enum {string}
                  */
-                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                selectionType: "TIERED" | "BUDGET_PICK";
                 /** @description Stable machine key for the template. */
                 templateKey: string;
                 /** @description Commissioner-facing template label. */
@@ -5162,22 +5162,17 @@ export interface components {
              * @description The sport.
              * @enum {string}
              */
-            name: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport: "GOLF";
             /**
              * @description Whether the sport's competitors are individuals or teams.
              * @enum {string}
              */
             participantType: "INDIVIDUAL" | "TEAM";
             /**
-             * @description Sport category.
-             * @enum {string}
-             */
-            category: "GOLF" | "BASKETBALL" | "FOOTBALL" | "F1" | "NASCAR" | "TENNIS" | "SOCCER";
-            /**
              * @description Structural format of the sport's events; decides which contest formats are valid.
              * @enum {string}
              */
-            tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "KNOCKOUT_BRACKET" | "SERIES_PLAYOFF" | "ROUND_ROBIN_SEASON" | "WEEKLY_GAMES_SEASON" | "TIME_TRIAL_RACE" | "SEASON_OF_RACES" | "GROUP_STAGE_KNOCKOUT" | "MATCH_PLAY";
+            tournamentFormat: "STROKE_PLAY_TOURNAMENT";
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.
@@ -5191,7 +5186,7 @@ export interface components {
         };
         /** @description The sports. */
         SportListResponse: {
-            /** @description Every sport, by name. */
+            /** @description Every sport, ordered by sport. */
             sports: {
                 /**
                  * Format: uuid
@@ -5202,22 +5197,17 @@ export interface components {
                  * @description The sport.
                  * @enum {string}
                  */
-                name: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport: "GOLF";
                 /**
                  * @description Whether the sport's competitors are individuals or teams.
                  * @enum {string}
                  */
                 participantType: "INDIVIDUAL" | "TEAM";
                 /**
-                 * @description Sport category.
-                 * @enum {string}
-                 */
-                category: "GOLF" | "BASKETBALL" | "FOOTBALL" | "F1" | "NASCAR" | "TENNIS" | "SOCCER";
-                /**
                  * @description Structural format of the sport's events; decides which contest formats are valid.
                  * @enum {string}
                  */
-                tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "KNOCKOUT_BRACKET" | "SERIES_PLAYOFF" | "ROUND_ROBIN_SEASON" | "WEEKLY_GAMES_SEASON" | "TIME_TRIAL_RACE" | "SEASON_OF_RACES" | "GROUP_STAGE_KNOCKOUT" | "MATCH_PLAY";
+                tournamentFormat: "STROKE_PLAY_TOURNAMENT";
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -5271,7 +5261,7 @@ export interface components {
              * @description Only sport leagues of this sport.
              * @enum {string}
              */
-            sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport?: "GOLF";
             /** @description Only active, or only inactive, sport leagues. */
             isActive?: boolean;
         };
@@ -5357,7 +5347,7 @@ export interface components {
              * @description The sport the new sport league belongs to.
              * @enum {string}
              */
-            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport: "GOLF";
             /** @description Unique within the sport. */
             name: string;
             /** @description Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. "PGA TOUR") to use the event-year import. */
@@ -5755,7 +5745,7 @@ export interface components {
              * @description Sport the event belongs to.
              * @enum {string}
              */
-            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport: "GOLF";
             /** @description Event name shown in contest and event selectors. */
             name: string;
             /** @description Venue name when known; null otherwise. */
@@ -5855,7 +5845,7 @@ export interface components {
              * @description Only events of this sport.
              * @enum {string}
              */
-            sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport?: "GOLF";
             /**
              * @description Only events in this lifecycle status.
              * @enum {string}
@@ -5888,7 +5878,7 @@ export interface components {
                  * @description Sport the event belongs to.
                  * @enum {string}
                  */
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport: "GOLF";
                 /** @description Event name shown in contest and event selectors. */
                 name: string;
                 /** @description Venue name when known; null otherwise. */
@@ -6000,7 +5990,7 @@ export interface components {
                  * @description Sport the event belongs to.
                  * @enum {string}
                  */
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport: "GOLF";
                 /** @description Event name shown in contest and event selectors. */
                 name: string;
                 /** @description Venue name when known; null otherwise. */
@@ -6181,7 +6171,7 @@ export interface components {
                  * @description Sport the event belongs to.
                  * @enum {string}
                  */
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport: "GOLF";
                 /** @description Event name shown in contest and event selectors. */
                 name: string;
                 /** @description Venue name when known; null otherwise. */
@@ -7314,14 +7304,13 @@ export interface components {
             /** @enum {string} */
             status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
             /** @enum {string} */
-            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+            contestFormat: "ROSTER";
             /** @enum {string} */
-            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-            /** @enum {string} */
-            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+            selectionType: "TIERED" | "BUDGET_PICK";
             leagueId: string;
             sportEventId?: string | null;
-            sport?: string | null;
+            /** @enum {string|null} */
+            sport?: "GOLF" | null;
             /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
             entryCount?: number;
             /** @description The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself. */
@@ -7398,10 +7387,10 @@ export interface components {
              * @description Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.
              * @enum {string}
              */
-            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-            /** @description Per-format period: week (SURVIVOR), draft round (BRACKET), or omitted (ROSTER). Plans/117 §7.1. */
+            contestFormat: "ROSTER";
+            /** @description Unused: no built contest format sets it, so it is always null. Removal is tracked in #632. */
             period: number | null;
-            /** @description Per-format slot: matchup index (BRACKET), confidence rank (PICKEM_CONFIDENCE), predicted position (PREDICT_TOP_N), or omitted (ROSTER, SURVIVOR). Plans/117 §7.1. */
+            /** @description Unused: no built contest format sets it, so it is always null; a lineup position is `lineupSlot`. Removal is tracked in #632. */
             slot: number | null;
             /** @description Selection tier (tiered ROSTER); null otherwise. */
             tier: string | null;
@@ -7816,14 +7805,13 @@ export interface components {
                 /** @enum {string} */
                 status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
                 /** @enum {string} */
-                contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                contestFormat: "ROSTER";
                 /** @enum {string} */
-                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                /** @enum {string} */
-                scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+                selectionType: "TIERED" | "BUDGET_PICK";
                 leagueId: string;
                 sportEventId?: string | null;
-                sport?: string | null;
+                /** @enum {string|null} */
+                sport?: "GOLF" | null;
                 /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
                 entryCount?: number;
                 /** @description The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself. */
@@ -7854,14 +7842,13 @@ export interface components {
                 /** @enum {string} */
                 status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
                 /** @enum {string} */
-                contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                contestFormat: "ROSTER";
                 /** @enum {string} */
-                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                /** @enum {string} */
-                scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+                selectionType: "TIERED" | "BUDGET_PICK";
                 leagueId: string;
                 sportEventId?: string | null;
-                sport?: string | null;
+                /** @enum {string|null} */
+                sport?: "GOLF" | null;
                 /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
                 entryCount?: number;
                 /** @description The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself. */
@@ -8084,7 +8071,7 @@ export interface components {
             contestId: string;
             contestName: string;
             /** @enum {string} */
-            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+            selectionType: "TIERED" | "BUDGET_PICK";
             isCommissioner?: boolean;
             rosterSize: number;
             /** @enum {string} */
@@ -8176,7 +8163,7 @@ export interface components {
             contestId: string;
             contestName: string;
             /** @enum {string} */
-            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+            selectionType: "TIERED" | "BUDGET_PICK";
             isCommissioner?: boolean;
             rosterSize: number;
             /** @enum {string} */
@@ -8324,7 +8311,7 @@ export interface components {
         };
         /** @description Partial ingestion scheduling override used for global updates and per-sport overrides. */
         IngestionScheduleConfigOverride: {
-            scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+            scheduledSports?: "GOLF"[];
             /** @description Partial feed-scheduling override payload. */
             healthCheck?: {
                 /** @description Whether the feed should be scheduled automatically. */
@@ -8367,7 +8354,7 @@ export interface components {
              *       "GOLF"
              *     ]
              */
-            scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+            scheduledSports: "GOLF"[];
             /** @description Scheduling policy for provider health checks. */
             healthCheck: {
                 /** @description Whether the feed should be scheduled automatically. */
@@ -8404,7 +8391,7 @@ export interface components {
             /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
             perSportOverrides: {
                 [key: string]: {
-                    scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                    scheduledSports?: "GOLF"[];
                     /** @description Partial feed-scheduling override payload. */
                     healthCheck?: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -8492,7 +8479,7 @@ export interface components {
                  *       "GOLF"
                  *     ]
                  */
-                scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                scheduledSports: "GOLF"[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -8529,7 +8516,7 @@ export interface components {
                 /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                 perSportOverrides: {
                     [key: string]: {
-                        scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                        scheduledSports?: "GOLF"[];
                         /** @description Partial feed-scheduling override payload. */
                         healthCheck?: {
                             /** @description Whether the feed should be scheduled automatically. */
@@ -8574,7 +8561,7 @@ export interface components {
                  *       "GOLF"
                  *     ]
                  */
-                scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                scheduledSports: "GOLF"[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -8611,7 +8598,7 @@ export interface components {
                 /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                 perSportOverrides: {
                     [key: string]: {
-                        scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                        scheduledSports?: "GOLF"[];
                         /** @description Partial feed-scheduling override payload. */
                         healthCheck?: {
                             /** @description Whether the feed should be scheduled automatically. */
@@ -8819,7 +8806,7 @@ export interface components {
                      *       "GOLF"
                      *     ]
                      */
-                    scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                    scheduledSports: "GOLF"[];
                     /** @description Scheduling policy for provider health checks. */
                     healthCheck: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -8856,7 +8843,7 @@ export interface components {
                     /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                     perSportOverrides: {
                         [key: string]: {
-                            scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                            scheduledSports?: "GOLF"[];
                             /** @description Partial feed-scheduling override payload. */
                             healthCheck?: {
                                 /** @description Whether the feed should be scheduled automatically. */
@@ -8901,7 +8888,7 @@ export interface components {
                      *       "GOLF"
                      *     ]
                      */
-                    scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                    scheduledSports: "GOLF"[];
                     /** @description Scheduling policy for provider health checks. */
                     healthCheck: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -8938,7 +8925,7 @@ export interface components {
                     /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                     perSportOverrides: {
                         [key: string]: {
-                            scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                            scheduledSports?: "GOLF"[];
                             /** @description Partial feed-scheduling override payload. */
                             healthCheck?: {
                                 /** @description Whether the feed should be scheduled automatically. */
@@ -9116,7 +9103,7 @@ export interface components {
             /** @description The whole new value. */
             value: {
                 /** @description Sports that scheduled ingestion is allowed to run automatically. */
-                scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                scheduledSports: "GOLF"[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -9153,7 +9140,7 @@ export interface components {
                 /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                 perSportOverrides: {
                     [key: string]: {
-                        scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                        scheduledSports?: "GOLF"[];
                         /** @description Partial feed-scheduling override payload. */
                         healthCheck?: {
                             /** @description Whether the feed should be scheduled automatically. */
@@ -9280,7 +9267,7 @@ export interface components {
                  *       "GOLF"
                  *     ]
                  */
-                scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                scheduledSports: "GOLF"[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -9317,7 +9304,7 @@ export interface components {
                 /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                 perSportOverrides: {
                     [key: string]: {
-                        scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                        scheduledSports?: "GOLF"[];
                         /** @description Partial feed-scheduling override payload. */
                         healthCheck?: {
                             /** @description Whether the feed should be scheduled automatically. */
@@ -9362,7 +9349,7 @@ export interface components {
                  *       "GOLF"
                  *     ]
                  */
-                scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                scheduledSports: "GOLF"[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -9399,7 +9386,7 @@ export interface components {
                 /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                 perSportOverrides: {
                     [key: string]: {
-                        scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                        scheduledSports?: "GOLF"[];
                         /** @description Partial feed-scheduling override payload. */
                         healthCheck?: {
                             /** @description Whether the feed should be scheduled automatically. */
@@ -9586,7 +9573,7 @@ export interface components {
                      *       "GOLF"
                      *     ]
                      */
-                    scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                    scheduledSports: "GOLF"[];
                     /** @description Scheduling policy for provider health checks. */
                     healthCheck: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -9623,7 +9610,7 @@ export interface components {
                     /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                     perSportOverrides: {
                         [key: string]: {
-                            scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                            scheduledSports?: "GOLF"[];
                             /** @description Partial feed-scheduling override payload. */
                             healthCheck?: {
                                 /** @description Whether the feed should be scheduled automatically. */
@@ -9668,7 +9655,7 @@ export interface components {
                      *       "GOLF"
                      *     ]
                      */
-                    scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                    scheduledSports: "GOLF"[];
                     /** @description Scheduling policy for provider health checks. */
                     healthCheck: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -9705,7 +9692,7 @@ export interface components {
                     /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                     perSportOverrides: {
                         [key: string]: {
-                            scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                            scheduledSports?: "GOLF"[];
                             /** @description Partial feed-scheduling override payload. */
                             healthCheck?: {
                                 /** @description Whether the feed should be scheduled automatically. */
@@ -9984,7 +9971,7 @@ export interface components {
              */
             lastEventAt: string | null;
             /** @description Sports the provider covers that ingestion is scheduled for. */
-            sportsCovered: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+            sportsCovered: "GOLF"[];
             /** @description The provider's events that are scheduled or in progress. */
             activeEventCount: number;
             /** @description True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can. */
@@ -10012,7 +9999,7 @@ export interface components {
                  */
                 lastEventAt: string | null;
                 /** @description Sports the provider covers that ingestion is scheduled for. */
-                sportsCovered: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                sportsCovered: "GOLF"[];
                 /** @description The provider's events that are scheduled or in progress. */
                 activeEventCount: number;
                 /** @description True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can. */
@@ -10024,7 +10011,7 @@ export interface components {
             id: string;
             providerId: string;
             /** @enum {string} */
-            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport: "GOLF";
             /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
             eventId: string | null;
             /** @enum {string} */
@@ -10058,7 +10045,7 @@ export interface components {
                 /** @description The request that submitted the sync run. */
                 requestPayload?: {
                     /** @enum {string} */
-                    sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                    sport: "GOLF";
                     /** @description Provider event identifier the sync was asked for. */
                     eventId: string;
                     /**
@@ -10114,7 +10101,7 @@ export interface components {
                     /** @description Provider that executed the ingestion job. */
                     providerId: string;
                     /** @enum {string} */
-                    sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                    sport: "GOLF";
                     /** @description External event id for event-scoped jobs, when applicable. */
                     eventExternalId?: string;
                     /**
@@ -10224,7 +10211,7 @@ export interface components {
         ProviderSyncRunListQuery: {
             providerId?: string;
             /** @enum {string} */
-            sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport?: "GOLF";
             /** @enum {string} */
             status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
             /**
@@ -10244,7 +10231,7 @@ export interface components {
                 id: string;
                 providerId: string;
                 /** @enum {string} */
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport: "GOLF";
                 /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
                 eventId: string | null;
                 /** @enum {string} */
@@ -10278,7 +10265,7 @@ export interface components {
                     /** @description The request that submitted the sync run. */
                     requestPayload?: {
                         /** @enum {string} */
-                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                        sport: "GOLF";
                         /** @description Provider event identifier the sync was asked for. */
                         eventId: string;
                         /**
@@ -10334,7 +10321,7 @@ export interface components {
                         /** @description Provider that executed the ingestion job. */
                         providerId: string;
                         /** @enum {string} */
-                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                        sport: "GOLF";
                         /** @description External event id for event-scoped jobs, when applicable. */
                         eventExternalId?: string;
                         /**
@@ -10444,7 +10431,7 @@ export interface components {
         /** @description A manual sync submission. The runs execute asynchronously after the request is accepted. */
         ProviderManualSyncSubmissionResponse: {
             /** @enum {string} */
-            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport: "GOLF";
             /** @description Provider event identifier the submitted runs sync. */
             eventId: string;
             requestedFeeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
@@ -10457,7 +10444,7 @@ export interface components {
                 id: string;
                 providerId: string;
                 /** @enum {string} */
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport: "GOLF";
                 /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
                 eventId: string | null;
                 /** @enum {string} */
@@ -10491,7 +10478,7 @@ export interface components {
                     /** @description The request that submitted the sync run. */
                     requestPayload?: {
                         /** @enum {string} */
-                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                        sport: "GOLF";
                         /** @description Provider event identifier the sync was asked for. */
                         eventId: string;
                         /**
@@ -10547,7 +10534,7 @@ export interface components {
                         /** @description Provider that executed the ingestion job. */
                         providerId: string;
                         /** @enum {string} */
-                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                        sport: "GOLF";
                         /** @description External event id for event-scoped jobs, when applicable. */
                         eventExternalId?: string;
                         /**
@@ -10663,7 +10650,7 @@ export interface components {
             /** @description The competitor's name as the provider reports it. */
             externalName: string;
             /** @enum {string} */
-            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport: "GOLF";
         };
         /** @description Every unmapped competitor across the scheduled sports of every provider. */
         UnmappedProviderParticipantListResponse: {
@@ -10675,7 +10662,7 @@ export interface components {
                 /** @description The competitor's name as the provider reports it. */
                 externalName: string;
                 /** @enum {string} */
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport: "GOLF";
             }[];
         };
         /** @description An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it. */
@@ -10684,7 +10671,7 @@ export interface components {
             externalId: string;
             providerId: string;
             /** @enum {string} */
-            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport: "GOLF";
             name: string;
             venue: string | null;
             location: string | null;
@@ -10709,7 +10696,7 @@ export interface components {
         /** @description Filters over a provider's live catalog. */
         ProviderCatalogEventListQuery: {
             /** @enum {string} */
-            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            sport: "GOLF";
             /** @description Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter. */
             sportLeagueId?: string;
             /**
@@ -10731,7 +10718,7 @@ export interface components {
                 externalId: string;
                 providerId: string;
                 /** @enum {string} */
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport: "GOLF";
                 name: string;
                 venue: string | null;
                 location: string | null;
@@ -13678,7 +13665,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type). */
+            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type). */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -14266,7 +14253,7 @@ export interface operations {
                     "application/json": components["schemas"]["ContestLeaderboardResponse"];
                 };
             };
-            /** @description CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _SPORT_UNSUPPORTED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know). */
+            /** @description CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know). */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -14433,9 +14420,9 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Only templates for this sport. */
-                sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport?: "GOLF";
                 /** @description Only templates for this contest format. */
-                contestFormat?: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                contestFormat?: "ROSTER";
                 /** @description Templates for this event type, plus the ones that apply to any event type. */
                 eventType?: string;
                 /** @description Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones. */
@@ -14551,7 +14538,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Only events of this sport. */
-                sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport?: "GOLF";
                 /** @description Only events in this lifecycle status. */
                 status?: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /** @description Only events of this sport league's series. */
@@ -16527,7 +16514,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Only sport leagues of this sport. */
-                sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport?: "GOLF";
                 /** @description Only active, or only inactive, sport leagues. */
                 isActive?: boolean;
             };
@@ -17520,7 +17507,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                sport: string;
+                sport: "GOLF";
             };
             cookie?: never;
         };
@@ -17537,6 +17524,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IngestionScheduleConfig"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -17564,7 +17560,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                sport: string;
+                sport: "GOLF";
             };
             cookie?: never;
         };
@@ -17577,6 +17573,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IngestionScheduleConfig"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -17679,7 +17684,7 @@ export interface operations {
         parameters: {
             query?: {
                 providerId?: string;
-                sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport?: "GOLF";
                 status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
                 /** @description Earliest submission time to include. Defaults to 6 hours before `to`. */
                 from?: string;
@@ -17726,7 +17731,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport: "GOLF";
                 eventId: string;
             };
             cookie?: never;
@@ -17834,7 +17839,7 @@ export interface operations {
     listProviderCatalogEvents: {
         parameters: {
             query: {
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                sport: "GOLF";
                 /** @description Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter. */
                 sportLeagueId?: string;
                 /** @description Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today. */
@@ -17988,15 +17993,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description Standard API error envelope. */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
         };
     };
     submitContestSelection: {
@@ -18068,15 +18064,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description Standard API error envelope. */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
         };
     };
     submitContestEntry: {
@@ -18138,15 +18125,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            501: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -587,7 +587,6 @@ export function ContestDetailPage() {
           items={[
             { id: 'contest-format', label: 'Contest format', value: contest.contestFormat },
             { id: 'selection-type', label: 'Selection type', value: contest.selectionType },
-            { id: 'scoring-engine', label: 'Scoring engine', value: contest.scoringEngine },
             { id: 'status', label: 'Status', value: contestStatusLabel(contest.status) },
           ]}
         />

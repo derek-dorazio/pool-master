@@ -167,7 +167,6 @@ function buildCompletedContest() {
     status: 'COMPLETED',
     contestType: 'ROSTER',
     selectionType: 'TIERED',
-    scoringEngine: 'STROKE_PLAY',
     leagueId: 'league-1',
     sport: 'GOLF',
     entryCount: 3,
@@ -324,7 +323,6 @@ describe('MyTeamHistoryPage', () => {
             status: 'OPEN',
             contestType: 'ROSTER',
             selectionType: 'TIERED',
-            scoringEngine: 'STROKE_PLAY',
             leagueId: 'league-1',
             sport: 'GOLF',
             entryCount: 2,
@@ -335,7 +333,6 @@ describe('MyTeamHistoryPage', () => {
             status: 'COMPLETED',
             contestType: 'ROSTER',
             selectionType: 'TIERED',
-            scoringEngine: 'STROKE_PLAY',
             leagueId: 'league-1',
             sport: 'GOLF',
             entryCount: 3,
@@ -393,7 +390,7 @@ describe('MyTeamHistoryPage', () => {
 
     expect(await screen.findByTestId('my-team-history-page')).toBeInTheDocument();
     expect(await screen.findByTestId('my-team-history-contest-contest-complete')).toHaveTextContent(
-      'TIERED · STROKE_PLAY · Final',
+      'TIERED · Final',
     );
     expect(screen.getByTestId('my-team-history-entry-entry-2')).toHaveTextContent(
       'Original Team Entry 2',

@@ -33,7 +33,7 @@ import type {
   GolfRoundScoreUploadRequest,
   UpdateGolfRoundScoreRequest,
 } from '@poolmaster/shared/dto/golf-scores.dto';
-import { Sport, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 import {
   mapFieldUploadPreviewToDto,
@@ -52,7 +52,6 @@ import {
   SportProviderNotFoundError,
   SportSyncNotConfiguredError,
 } from '../ingestion/ingestion-service';
-import { SportEventError } from './errors';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import type { EventScoreSourceService } from './event-score-source-service';
 import type { SportEventServices } from './wiring';
@@ -79,12 +78,9 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     return { event: mapSportEventToDto(await sportEvents.requireSummary(eventId)) };
   }
 
-  /** The golf score operations write golf rows; any other sport's event is refused. */
-  async function requireGolfEvent(eventId: string): Promise<void> {
-    const { event } = await sportEvents.requireSummary(eventId);
-    if (event.sport !== Sport.GOLF) {
-      throw new SportEventError(`Sport event ${eventId} is ${event.sport}, not golf.`, 'SPORT_NOT_SUPPORTED', 422);
-    }
+  /** The golf score operations answer 404 EVENT_NOT_FOUND for an unknown event. Golf is the only sport (#605). */
+  async function requireEvent(eventId: string): Promise<void> {
+    await sportEvents.requireSummary(eventId);
   }
 
   async function fieldResponse(eventId: string): Promise<SportEventParticipantListResponse> {
@@ -328,7 +324,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     previewGolfRoundScores: async (
       request: FastifyRequest<RoundParams & { Body: GolfRoundScoreUploadRequest }>,
     ): Promise<GolfRoundScorePreviewResponse> => {
-      await requireGolfEvent(request.params.eventId);
+      await requireEvent(request.params.eventId);
       const rows = await golfScores.previewRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
       return mapGolfRoundScorePreviewToDto(rows);
     },
@@ -336,7 +332,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     applyGolfRoundScores: async (
       request: FastifyRequest<RoundParams & { Body: GolfRoundScoreUploadRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
-      await requireGolfEvent(request.params.eventId);
+      await requireEvent(request.params.eventId);
       await golfScores.applyRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
       return fieldResponse(request.params.eventId);
     },
@@ -345,7 +341,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       request: FastifyRequest<{ Params: { eventId: string; roundNumber: number; sportEventParticipantId: string }; Body: UpdateGolfRoundScoreRequest }>,
     ): Promise<SportEventParticipantResponse> => {
       const { eventId, roundNumber, sportEventParticipantId } = request.params;
-      await requireGolfEvent(eventId);
+      await requireEvent(eventId);
       await golfScores.updateRoundScore(eventId, roundNumber, sportEventParticipantId, request.body);
       const participant = (await field.listEventParticipants(eventId)).find((view) => view.entry.id === sportEventParticipantId);
       return { participant: mapSportEventParticipantToDto(participant as NonNullable<typeof participant>) };

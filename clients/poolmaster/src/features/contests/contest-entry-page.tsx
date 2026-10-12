@@ -36,7 +36,6 @@ import {
   buildPickedAtById,
   CONTEST_ENTRY_CODE_MESSAGES,
   getNextSelectedParticipantIds,
-  isEnterableSelectionType,
   LINEUP_RULES,
 } from './contest-entry-lineup';
 import {
@@ -414,12 +413,11 @@ export function ContestEntryPage() {
       );
       await queryClient.cancelQueries({ queryKey: selectionStateQueryKey });
       const previousSelectionState = queryClient.getQueryData<SelectionState>(selectionStateQueryKey);
-      const selectionType = previousSelectionState?.selectionType;
 
-      if (previousSelectionState && selectionType && isEnterableSelectionType(selectionType)) {
+      if (previousSelectionState) {
         queryClient.setQueryData<SelectionState>(
           selectionStateQueryKey,
-          LINEUP_RULES[selectionType].applySelection(previousSelectionState, participantId, entryId),
+          LINEUP_RULES[previousSelectionState.selectionType].applySelection(previousSelectionState, participantId, entryId),
         );
       }
 
@@ -558,9 +556,9 @@ export function ContestEntryPage() {
     && TIEBREAKER_OPTIONS.includes(selectedTiebreakerValue);
   const isBudget = contest.selectionType === SelectionType.BUDGET_PICK;
   const lineupSummary = picksHidden ? null : selectionState.lineupSummary ?? null;
-  const submitBlockedReason = !picksHidden && isEnterableSelectionType(contest.selectionType)
-    ? LINEUP_RULES[contest.selectionType].submitBlockedReason(selectionState)
-    : null;
+  const submitBlockedReason = picksHidden
+    ? null
+    : LINEUP_RULES[contest.selectionType].submitBlockedReason(selectionState);
   const finalSubmitDisabled =
     !isMyEntry
     || !isEditable
@@ -583,20 +581,6 @@ export function ContestEntryPage() {
     navigate(backToContestPath, {
       state: { leagueCode: backLeagueCode },
     });
-  }
-
-  if (!isEnterableSelectionType(contest.selectionType)) {
-    return (
-      <ErrorState
-        action={(
-          <LinkButton to={backToContestPath} variant="secondary">
-            Back to contest
-          </LinkButton>
-        )}
-        body="Only tiered and budget contests can be entered here."
-        title="This contest can't be entered here."
-      />
-    );
   }
 
   return (

@@ -1,3 +1,4 @@
+import { Sport } from '@poolmaster/shared/domain';
 import type { ProviderManualSyncSubmissionResponse, ProviderSummaryDto, ProviderSyncRunDto } from '@/lib/api';
 
 // #205 — the canonical named components, not indexes into the response map.
@@ -5,23 +6,8 @@ export type ProviderSyncRun = ProviderSyncRunDto;
 export type ProviderSummary = ProviderSummaryDto;
 export type EventSyncSubmission = ProviderManualSyncSubmissionResponse;
 
-export const ALL_SYNC_SPORT_OPTIONS = [
-  'GOLF',
-  'NFL',
-  'NBA',
-  'F1',
-  'NASCAR',
-  'NCAA_BASKETBALL',
-  'NCAA_HOCKEY',
-  'NCAA_FOOTBALL',
-  'TENNIS',
-  'HORSE_RACING',
-  'SOCCER',
-  'NHL',
-  'MLB',
-  'UFC',
-] as const;
-export type SyncSport = (typeof ALL_SYNC_SPORT_OPTIONS)[number];
+export const ALL_SYNC_SPORT_OPTIONS: readonly Sport[] = Object.values(Sport);
+export type SyncSport = Sport;
 
 export const SYNC_STATUS_OPTIONS = [
   'SUBMITTED',

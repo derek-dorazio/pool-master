@@ -209,7 +209,7 @@ export function MyTeamHistoryPage() {
                   <div>
                     <div className="font-medium text-foreground">{contest.name}</div>
                     <div className="mt-1 text-sm text-muted-foreground">
-                      {contest.selectionType} · {contest.scoringEngine} · {contestStatusLabel(contest.status)}
+                      {contest.selectionType} · {contestStatusLabel(contest.status)}
                     </div>
                   </div>
                   <Link

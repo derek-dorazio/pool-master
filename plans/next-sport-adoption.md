@@ -148,9 +148,9 @@ Questions for this section:
 - **Fit:** the closest analogue to golf among true tournaments. A 128-player singles draw with 32
   seeds; tiers by seed line or ranking; budget prices from ATP/WTA ranking or odds. Each Slam
   gives two contests (men's and women's), which suits leagues where people want more to play.
-- **Scoring:** advancement points per round won (the existing `docs/CONTEST-RULES.md` already
-  sketches "Grand Slam DFS" points: winner 40, finalist 30, SF 25, QF 20, R16 15, R32 10, R64 5).
-  The stat bonuses in that doc (aces, double faults) need a stats feed; recommend leaving them
+- **Scoring:** advancement points per round won (for example "Grand Slam DFS" points: winner
+  40, finalist 30, SF 25, QF 20, R16 15, R32 10, R64 5). Stat bonuses (aces, double faults)
+  need a stats feed; recommend leaving them
   out.
 - **Following:** solid but smaller than golf in the US. 2026 US Open averaged 1.2M viewers across
   ESPN networks; the men's final drew 3.2M on ABC, ESPN's largest ever for it.
@@ -459,12 +459,11 @@ Leaving the data feed aside, a weekly DFS contest is a close fit, closer than we
    each player locks at his own game's kickoff (the DFS norm; new rule).
 4. **Stat-based scoring.** A football extension per player per game (yards, touchdowns,
    receptions, turnovers) and a scoring definition that turns stats into fantasy points (PPR or
-   standard, as `docs/CONTEST-RULES.md` already sketches). Every pick counts, not best N.
+   standard). Every pick counts, not best N.
 5. **Weekly event creation.** 18 slates a season need creating from the schedule, ideally
    automatically.
 
-The same work would also unlock golf DFS (salary-cap golfer lineups scored by DFS points), which
-`docs/CONTEST-RULES.md` already lists.
+The same work would also unlock golf DFS (salary-cap golfer lineups scored by DFS points).
 
 Question:
 

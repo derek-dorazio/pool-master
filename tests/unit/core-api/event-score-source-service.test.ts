@@ -171,7 +171,7 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
 
 // #385: a tour's provider slate for one year, matched by the provider's tour name.
 describe('EventScoreSourceService.listTourEventsForYear', () => {
-  const pgaLeague = { id: 'pga', name: 'PGA TOUR', matchKeyword: 'PGA TOUR', sport: { name: 'GOLF' } };
+  const pgaLeague = { id: 'pga', name: 'PGA TOUR', matchKeyword: 'PGA TOUR', sport: { sport: 'GOLF' } };
 
   it('returns only events whose provider tour equals the league\'s match keyword, ignoring case, so "PGA TOUR" does not pick up the LPGA', async () => {
     const provider = buildProvider({
@@ -334,18 +334,6 @@ describe('EventScoreSourceService.startLiveSimulation', () => {
       code: 'LIVE_SIMULATION_UNSUPPORTED',
       statusCode: 422,
     });
-  });
-
-  it('refuses a non-golf event linked to a simulating provider with 422 LIVE_SIMULATION_UNSUPPORTED and never calls it', async () => {
-    const startLiveSimulation = jest.fn();
-    const provider = Object.assign(buildProvider(), { startLiveSimulation, getLiveSimulation: jest.fn() });
-    const service = new EventScoreSourceService(prismaWith({ ...linkedEvent, sport: 'TENNIS' }), registryWith(provider));
-
-    await expect(service.startLiveSimulation('event-1', {})).rejects.toMatchObject({
-      code: 'LIVE_SIMULATION_UNSUPPORTED',
-      statusCode: 422,
-    });
-    expect(startLiveSimulation).not.toHaveBeenCalled();
   });
 
   it('404s PROVIDER_EVENT_NOT_FOUND when the provider no longer has the linked event', async () => {

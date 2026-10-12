@@ -16,6 +16,7 @@
  * never changed. A tournament the seed stopped part-way through is left a draft and reported.
  */
 
+import { findSportRow, Sport } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type { AutoAssignSportEventPricesRequest } from '@poolmaster/shared/generated/hey-api';
 import {
@@ -193,7 +194,7 @@ export async function seedGolf(seed: GolfSeedFile, options: SeedGolfOptions): Pr
 
   const setupClient = await options.getClient();
   const { sports } = await must(listSports({ client: setupClient }), 'List sports');
-  const golf = sports.find((sport) => sport.name === 'GOLF');
+  const golf = findSportRow(sports, Sport.GOLF);
   if (!golf) throw new Error('No GOLF sport row; the reference-data migration has not run.');
 
   const summaries: GolfSeedSummary[] = [];

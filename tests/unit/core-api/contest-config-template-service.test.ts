@@ -37,10 +37,9 @@ function templateStore(rows: ContestConfigTemplate[]) {
   const repository: ContestConfigTemplateRepository = {
     findById: async (id) => store.get(id) ?? null,
     list: async (input = {}) => [...store.values()]
+      // No sport or format filter: every template is golf and ROSTER while those enums have one member.
       .filter((row) =>
-        (input.sport === undefined || row.sport === input.sport)
-        && (input.contestFormat === undefined || row.contestFormat === input.contestFormat)
-        && (input.eventType === undefined || row.eventType === input.eventType || row.eventType == null)
+        (input.eventType === undefined || row.eventType === input.eventType || row.eventType == null)
         && (input.active === undefined || row.active === input.active))
       .sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name)),
     update: async (id, updates) => {
@@ -114,17 +113,6 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
 
     expect(store.get('major')?.isDefault).toBe(true);
     expect(store.get('any-default')?.isDefault).toBe(true);
-  });
-
-  it('keeps another format\'s default when a default is set', async () => {
-    const { store, service } = templateStore([
-      template({ id: 'survivor-default', contestFormat: ContestFormat.SURVIVOR, isDefault: true }),
-      template({ id: 'roster' }),
-    ]);
-
-    await service.updateTemplate('roster', { isDefault: true });
-
-    expect(store.get('survivor-default')?.isDefault).toBe(true);
   });
 
   it('takes the default off a template that is deactivated, even when the request also asks for default', async () => {

@@ -7,6 +7,7 @@ import {
 import {
   EventScoreSourceService,
 } from '../../../packages/core-api/src/modules/events/event-score-source-service';
+import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import {
   cleanupTestData,
   getPrisma,
@@ -48,7 +49,6 @@ describe('ProviderSyncRunRepository.findAll', () => {
     await run('early', { createdAt: new Date('2026-05-01T01:00:00.000Z'), startedAt: new Date('2026-05-01T01:00:00.000Z') });
     await run('late', { createdAt: new Date('2026-05-01T02:00:00.000Z'), startedAt: new Date('2026-05-01T05:00:00.000Z') });
     await run('other-feed', { providerId: 'feed-b', createdAt: new Date('2026-05-01T03:00:00.000Z'), startedAt: new Date('2026-05-01T03:00:00.000Z') });
-    await run('other-sport', { sport: Sport.NFL, createdAt: new Date('2026-05-01T04:00:00.000Z'), startedAt: new Date('2026-05-01T04:00:00.000Z') });
     await run('failed', { status: ProviderSyncRunStatus.FAILED, createdAt: new Date('2026-05-01T06:00:00.000Z'), startedAt: new Date('2026-05-01T02:00:00.000Z') });
     await run('before-window', { createdAt: new Date('2026-04-30T23:59:00.000Z'), startedAt: new Date('2026-04-30T23:59:00.000Z') });
     await run('after-window', { createdAt: new Date('2026-05-02T00:01:00.000Z'), startedAt: new Date('2026-05-02T00:01:00.000Z') });
@@ -62,7 +62,7 @@ describe('ProviderSyncRunRepository.findAll', () => {
 
     const runs = await repo.findAll({ createdFrom: windowStart, createdTo: windowEnd });
 
-    expect(eventIds(runs)).toEqual(['late', 'other-sport', 'other-feed', 'failed', 'early']);
+    expect(eventIds(runs)).toEqual(['late', 'other-feed', 'failed', 'early']);
   });
 
   it('narrows the window to one provider, one sport or one status', async () => {
@@ -70,7 +70,7 @@ describe('ProviderSyncRunRepository.findAll', () => {
     const window = { createdFrom: windowStart, createdTo: windowEnd };
 
     expect(eventIds(await repo.findAll({ ...window, providerId: 'feed-b' }))).toEqual(['other-feed']);
-    expect(eventIds(await repo.findAll({ ...window, sport: Sport.NFL }))).toEqual(['other-sport']);
+    expect(eventIds(await repo.findAll({ ...window, sport: Sport.GOLF }))).toEqual(['late', 'other-feed', 'failed', 'early']);
     expect(eventIds(await repo.findAll({ ...window, status: ProviderSyncRunStatus.FAILED }))).toEqual(['failed']);
   });
 });
@@ -82,12 +82,12 @@ describe('EventScoreSourceService links', () => {
     return new EventScoreSourceService(getPrisma(), registryWith(provider));
   }
 
-  async function createEvent(name: string, sport: Sport = Sport.GOLF) {
+  async function createEvent(name: string) {
     return new PrismaSportEventRepository(getPrisma()).create({
       ...(await freshEventEdition(getPrisma())),
       externalId: `manual-${randomUUID()}`,
       providerId: 'integration-test',
-      sport,
+      sport: Sport.GOLF,
       name,
       startDate: new Date('2026-06-04T12:00:00.000Z'),
       endDate: new Date('2026-06-07T12:00:00.000Z'),
@@ -138,9 +138,13 @@ describe('EventScoreSourceService links', () => {
   });
 
   it('refuses a link to a provider that does not cover the event\'s sport, leaving the event unlinked', async () => {
-    const event = await createEvent('Tennis Open', Sport.TENNIS);
+    const event = await createEvent('Uncovered Open');
+    // Registered by hand: a provider that covers no sport is otherwise never registered.
+    const uncovering = fakeSportDataProvider({ providerId: 'uncovering-feed', sportsCovered: [] });
+    const registry = new ProviderRegistry();
+    registry.register(Sport.GOLF, uncovering, 'PRIMARY');
 
-    await expect(service().linkScoreSource(event.id, { providerId: 'integration-feed', externalId: 'tennis-2026' }))
+    await expect(new EventScoreSourceService(getPrisma(), registry).linkScoreSource(event.id, { providerId: 'uncovering-feed', externalId: 'uncovered-2026' }))
       .rejects.toMatchObject({ code: 'PROVIDER_SPORT_MISMATCH', statusCode: 422 });
     const unchanged = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } });
     expect(unchanged).toEqual(expect.objectContaining({ providerId: 'integration-test', syncScope: 'NONE' }));
@@ -182,8 +186,8 @@ describe('EventScoreSourceService tour reads', () => {
   async function createTourLeague(matchKeyword: string | null) {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
-      where: { name: Sport.GOLF },
-      create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      where: { sport: Sport.GOLF },
+      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     return prisma.sportLeague.create({ data: { sportId: sport.id, name: `Tour ${randomUUID()}`, matchKeyword } });

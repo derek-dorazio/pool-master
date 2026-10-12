@@ -103,8 +103,7 @@ export function RootAdminRunEventSyncPage() {
   );
   const supportsMockEventState = useMemo(
     () =>
-      eventSyncSport === 'GOLF'
-      && (providersQuery.data ?? []).some((provider) =>
+      (providersQuery.data ?? []).some((provider) =>
         provider.providerId === 'mock-contest-feed'
         && provider.sportsCovered.includes(eventSyncSport)),
     [eventSyncSport, providersQuery.data],

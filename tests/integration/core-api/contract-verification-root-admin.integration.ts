@@ -301,10 +301,10 @@ class SimulatingContractProvider extends OperationalContractProvider {
   }
 }
 
-async function buildIngestionApp(provider: SportDataProvider): Promise<FastifyInstance> {
+async function buildIngestionApp(provider: SportDataProvider | null): Promise<FastifyInstance> {
   const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
   const registry = new ProviderRegistry();
-  registry.register('GOLF', provider, 'PRIMARY');
+  if (provider) registry.register('GOLF', provider, 'PRIMARY');
   const scheduler = new IngestionScheduler(registry, {
     onEventDetail: async () => emptySyncWriteDiagnostics(),
     onLiveScores: async () => emptyLiveScorePersistenceResult(),
@@ -534,7 +534,7 @@ describe('Contract verification (root admin)', () => {
       url: '/api/v1/platform/ingestion-schedule',
       headers: rootAdmin.headers,
       payload: {
-        scheduledSports: ['GOLF', 'TENNIS'],
+        scheduledSports: ['GOLF'],
         eventLiveScores: {
           intervalSeconds: 45,
         },
@@ -542,7 +542,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(ingestionUpdateRes.statusCode).toBe(200);
     expect(IngestionScheduleConfigSchema.safeParse(ingestionUpdateRes.json()).success).toBe(true);
-    expect(ingestionUpdateRes.json<IngestionScheduleConfig>().scheduledSports).toEqual(['GOLF', 'TENNIS']);
+    expect(ingestionUpdateRes.json<IngestionScheduleConfig>().scheduledSports).toEqual(['GOLF']);
     expect(ingestionUpdateRes.json<IngestionScheduleConfig>().eventLiveScores.intervalSeconds).toBe(45);
 
     const templateListRes = await getApp().inject({
@@ -945,17 +945,22 @@ describe('Contract verification (root admin)', () => {
       expect(ErrorEnvelopeSchema.safeParse(missingProviderCatalogRes.json()).success).toBe(true);
       expect(missingProviderCatalogRes.json<ErrorEnvelope>().error.code).toBe('PROVIDER_NOT_FOUND');
 
-      const missingSportProviderRes = await app.inject({
-        method: 'POST',
-        url: '/api/v1/ingestion/sports/UFC/events/ufc-300/sync',
-        headers: withoutJsonBodyHeaders(rootAdmin.headers),
-        payload: {
-          feeds: ['EVENTLIVESCORES'],
-        },
-      });
-      expect(missingSportProviderRes.statusCode).toBe(404);
-      expect(ErrorEnvelopeSchema.safeParse(missingSportProviderRes.json()).success).toBe(true);
-      expect(missingSportProviderRes.json<ErrorEnvelope>().error.code).toBe('SPORT_PROVIDER_NOT_FOUND');
+      const noProviderApp = await buildIngestionApp(null);
+      try {
+        const missingSportProviderRes = await noProviderApp.inject({
+          method: 'POST',
+          url: '/api/v1/ingestion/sports/GOLF/events/missing-300/sync',
+          headers: withoutJsonBodyHeaders(rootAdmin.headers),
+          payload: {
+            feeds: ['EVENTLIVESCORES'],
+          },
+        });
+        expect(missingSportProviderRes.statusCode).toBe(404);
+        expect(ErrorEnvelopeSchema.safeParse(missingSportProviderRes.json()).success).toBe(true);
+        expect(missingSportProviderRes.json<ErrorEnvelope>().error.code).toBe('SPORT_PROVIDER_NOT_FOUND');
+      } finally {
+        await noProviderApp.close();
+      }
 
       const inactivateMissingLeagueRes = await getApp().inject({
         method: 'POST',
@@ -989,11 +994,10 @@ describe('Contract verification (root admin)', () => {
     });
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
-      where: { name: 'GOLF' },
+      where: { sport: 'GOLF' },
       create: {
-        name: 'GOLF',
+        sport: 'GOLF',
         participantType: 'INDIVIDUAL',
-        category: 'GOLF',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1086,11 +1090,10 @@ describe('Contract verification (root admin)', () => {
     const stamp = Date.now().toString().slice(-8);
 
     await getPrisma().sport.upsert({
-      where: { name: 'GOLF' },
+      where: { sport: 'GOLF' },
       create: {
-        name: 'GOLF',
+        sport: 'GOLF',
         participantType: 'INDIVIDUAL',
-        category: 'GOLF',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1128,7 +1131,7 @@ describe('Contract verification (root admin)', () => {
       ).toBe(true);
 
       // --- createParticipant (201) x3 — golf players are participants -------
-      const golf = await getPrisma().sport.findUniqueOrThrow({ where: { name: 'GOLF' } });
+      const golf = await getPrisma().sport.findUniqueOrThrow({ where: { sport: 'GOLF' } });
       for (let i = 0; i < 3; i += 1) {
         const playerRes = await getApp().inject({
           method: 'POST',
@@ -1432,11 +1435,10 @@ describe('Contract verification (root admin)', () => {
     const stamp = Date.now().toString().slice(-8);
 
     await getPrisma().sport.upsert({
-      where: { name: 'GOLF' },
+      where: { sport: 'GOLF' },
       create: {
-        name: 'GOLF',
+        sport: 'GOLF',
         participantType: 'INDIVIDUAL',
-        category: 'GOLF',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1543,11 +1545,10 @@ describe('Contract verification (root admin)', () => {
     });
     const stamp = Date.now().toString().slice(-8);
     await getPrisma().sport.upsert({
-      where: { name: 'GOLF' },
+      where: { sport: 'GOLF' },
       create: {
-        name: 'GOLF',
+        sport: 'GOLF',
         participantType: 'INDIVIDUAL',
-        category: 'GOLF',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1664,8 +1665,8 @@ describe('Contract verification (root admin)', () => {
     const app = await buildIngestionApp(new TourSlateContractProvider(tour));
     const rootAdmin = await createTestUser({ displayName: 'Root Admin Import Year Contract User', isRootAdmin: true });
     await getPrisma().sport.upsert({
-      where: { name: 'GOLF' },
-      create: { name: 'GOLF', participantType: 'INDIVIDUAL', category: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      where: { sport: 'GOLF' },
+      create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const created = { sportLeagueIds: [] as string[] };

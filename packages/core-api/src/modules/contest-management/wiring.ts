@@ -65,7 +65,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
         return null;
       }
       const [sport, loaded] = await Promise.all([
-        sports.findByName(event.sport),
+        sports.findBySport(event.sport),
         sportEvents.countParticipants([sportEventId]),
       ]);
       return {

@@ -8,13 +8,13 @@ import { fakeSportRepo } from '../../support/repo-fakes';
 
 describe('requireSport', () => {
   it('returns the Sport row when one exists for the sport', async () => {
-    const sports = fakeSportRepo({ findByName: jest.fn().mockResolvedValue({ id: 'sport-golf', name: 'GOLF' }) });
+    const sports = fakeSportRepo({ findBySport: jest.fn().mockResolvedValue({ id: 'sport-golf', sport: 'GOLF' }) });
 
-    await expect(requireSport(sports, 'GOLF' as never)).resolves.toMatchObject({ id: 'sport-golf' });
+    await expect(requireSport(sports, 'GOLF')).resolves.toMatchObject({ id: 'sport-golf' });
   });
 
   it('throws a 404 SportCatalogError SPORT_NOT_FOUND when no Sport row exists', async () => {
-    const attempt = requireSport(fakeSportRepo(), 'GOLF' as never);
+    const attempt = requireSport(fakeSportRepo(), 'GOLF');
 
     await expect(attempt).rejects.toBeInstanceOf(SportCatalogError);
     await expect(attempt).rejects.toMatchObject({ code: 'SPORT_NOT_FOUND', statusCode: 404 });

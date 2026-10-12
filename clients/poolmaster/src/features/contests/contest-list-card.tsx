@@ -23,7 +23,7 @@ export function ContestListCard({
           Starts <DateDisplay className="text-muted-foreground" value={startsAt} />
         </span>
       ) : undefined}
-      metadata={`${contest.sport} · ${contest.selectionType} · ${contest.scoringEngine}`}
+      metadata={`${contest.sport} · ${contest.selectionType}`}
       title={contest.name}
       to={buildLeagueContestPath(leagueCode, contest.id)}
       state={{ leagueCode }}

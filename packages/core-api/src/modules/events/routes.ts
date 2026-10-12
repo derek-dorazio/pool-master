@@ -99,7 +99,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       description:
         'An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. '
         + 'The series is found or created in the sport league by the event\'s name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. '
-        + 'The sport comes from the sport league; only golf is supported so far (422 SPORT_NOT_SUPPORTED otherwise). Root admin only.',
+        + 'The sport comes from the sport league. Root admin only.',
       operationId: 'createEvent',
       body: schemaRef('CreateSportEventRequest'),
       response: { 201: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409, 422) },

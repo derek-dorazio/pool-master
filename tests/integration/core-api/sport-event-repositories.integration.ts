@@ -59,8 +59,8 @@ function repos() {
 
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
-    where: { name: Sport.GOLF },
-    create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    where: { sport: Sport.GOLF },
+    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return sport.id;
@@ -517,7 +517,7 @@ async function createContestFixture(sportEventId: string) {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id, sportEventId, name: `Repository Contest ${suffix}`, status: 'OPEN',
-      contestFormat: 'ROSTER', selectionType: 'TIERED', scoringEngine: 'STROKE_PLAY',
+      contestFormat: 'ROSTER', selectionType: 'TIERED',
     },
   });
   const entry = await prisma.contestEntry.create({

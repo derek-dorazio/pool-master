@@ -97,12 +97,10 @@ describe('Contest management integration', () => {
     leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const prisma = getPrisma();
-    const sport = await prisma.sport.create({
-      data: {
-        name: `Contest Management Golf ${randomUUID().slice(0, 8)}`,
-        participantType: 'INDIVIDUAL',
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-      },
+    const sport = await prisma.sport.upsert({
+      where: { sport: 'GOLF' },
+      create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
     });
     sportId = sport.id;
 

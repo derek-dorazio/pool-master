@@ -48,7 +48,6 @@ function createContestRepo(): ContestRepository {
       status: ContestStatus.DRAFT,
       contestFormat: ContestFormat.ROSTER,
       selectionType: 'TIERED',
-      scoringEngine: 'STROKE_PLAY',
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
     }),
@@ -272,7 +271,6 @@ describe('ContestManagementService', () => {
       sportEventId: '11111111-1111-1111-1111-111111111111',
       name: 'Masters Pick 6',
       selectionType: 'TIERED',
-      scoringEngine: 'STROKE_PLAY',
       contestFormat: ContestFormat.ROSTER,
       status: ContestStatus.DRAFT,
     });
@@ -380,161 +378,6 @@ describe('ContestManagementService', () => {
     );
   });
 
-  it('pool-master-rop.78.14 rejects contest creation when the event sport does not allow the requested format', async () => {
-    const contestCoreRepo = createContestRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader({ sport: Sport.GOLF }),
-    );
-
-    await expect(
-      service.createContest(
-        { leagueId: 'league-1' },
-        {
-          name: 'Invalid bracket',
-          sportEventId: '11111111-1111-1111-1111-111111111111',
-          contestFormat: ContestFormat.BRACKET,
-          selectionType: 'TIERED',
-          configuration: {
-            maxEntriesPerSquad: 3,
-            selectionType: SelectionType.TIERED,
-            picksPerTier: 1,
-            countedScores: 4,
-            tierSource: 'ODDS',
-            tierGeneration: {
-              defaultTierSize: 10,
-            },
-            tiers: [
-              {
-                tierKey: 'A',
-                label: 'Tier A',
-                pickCount: 4,
-                startPosition: 1,
-                endPosition: 10,
-              },
-            ],
-            cutRule: {
-              type: 'FIXED_SCORE',
-              fixedScore: 80,
-            },
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-            displayScoring: 'TO_PAR',
-            tiebreaker: {
-              type: 'PREDICT_WINNING_SCORE',
-            },
-          },
-        } as unknown as CreateContestRequest,
-      ),
-    ).rejects.toMatchObject({
-      code: 'CONTEST_FORMAT_NOT_ALLOWED',
-      message: 'Selected sporting event does not support that contest format.',
-    });
-    expect(contestCoreRepo.create).not.toHaveBeenCalled();
-  });
-
-  it('pool-master-rop.78.14 rejects valid future formats until creation support exists', async () => {
-    const contestCoreRepo = createContestRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader({
-        sport: Sport.NCAA_BASKETBALL,
-        tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
-      }),
-    );
-
-    await expect(
-      service.createContest(
-        { leagueId: 'league-1' },
-        {
-          name: 'Bracket Pool',
-          sportEventId: '11111111-1111-1111-1111-111111111111',
-          contestFormat: ContestFormat.BRACKET,
-          selectionType: 'TIERED',
-          configuration: {
-            maxEntriesPerSquad: 3,
-            selectionType: SelectionType.TIERED,
-            picksPerTier: 1,
-            countedScores: 4,
-            tierSource: 'ODDS',
-            tierGeneration: {
-              defaultTierSize: 10,
-            },
-            tiers: [
-              {
-                tierKey: 'A',
-                label: 'Tier A',
-                pickCount: 4,
-                startPosition: 1,
-                endPosition: 10,
-              },
-            ],
-            cutRule: {
-              type: 'FIXED_SCORE',
-              fixedScore: 80,
-            },
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-            displayScoring: 'TO_PAR',
-            tiebreaker: {
-              type: 'PREDICT_WINNING_SCORE',
-            },
-          },
-        } as unknown as CreateContestRequest,
-      ),
-    ).rejects.toMatchObject({
-      code: 'CONTEST_FORMAT_NOT_SUPPORTED',
-      message: 'This contest format is not available for managed contest creation yet.',
-    });
-    expect(contestCoreRepo.create).not.toHaveBeenCalled();
-  });
-
-  it('pool-master-rop.78.14 rejects non-golf managed creation until sport-specific configs exist', async () => {
-    const contestCoreRepo = createContestRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader({
-        sport: Sport.NCAA_BASKETBALL,
-        tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
-      }),
-    );
-
-    await expect(
-      service.createContest(
-        { leagueId: 'league-1' },
-        {
-          name: 'Basketball Roster Pool',
-          sportEventId: '11111111-1111-1111-1111-111111111111',
-          contestFormat: ContestFormat.ROSTER,
-          selectionType: 'TIERED',
-          configuration: {
-            maxEntriesPerSquad: 3,
-            selectionType: SelectionType.TIERED,
-            picksPerTier: 1,
-            countedScores: 4,
-          },
-        },
-      ),
-    ).rejects.toMatchObject({
-      code: 'CONTEST_SPORT_NOT_SUPPORTED',
-      message: 'Managed contest creation currently supports golf events only.',
-    });
-    expect(contestCoreRepo.create).not.toHaveBeenCalled();
-  });
-
   // #246 — a settled contest's configuration is frozen with its result; reopening is the path back.
   it.each([
     ContestStatus.OPEN,
@@ -578,7 +421,6 @@ describe('ContestManagementService', () => {
         status: options?.status ?? ContestStatus.DRAFT,
         contestFormat: ContestFormat.ROSTER,
         selectionType: 'TIERED',
-        scoringEngine: 'STROKE_PLAY',
         createdAt: new Date('2026-04-07T12:00:00.000Z'),
         updatedAt: new Date('2026-04-07T12:00:00.000Z'),
       };
@@ -1218,16 +1060,6 @@ describe('ContestManagementService', () => {
       expect(contestRepo.create).not.toHaveBeenCalled();
     });
 
-    it('refuses a template made for another contest format', async () => {
-      const templateRepo = createContestConfigTemplateRepo();
-      const template = await templateRepo.findById('any');
-      (templateRepo.findById as jest.Mock).mockResolvedValue({ ...template, contestFormat: ContestFormat.SURVIVOR });
-      const { service } = build({ templateRepo });
-
-      await expect(service.createContest({ leagueId: 'league-1' }, { ...CREATE, templateId: expectDefined(template).id }))
-        .rejects.toThrow('does not match the requested contest type');
-    });
-
     it('answers 404 CONTEST_NOT_FOUND reading a contest that does not exist', async () => {
       const contestRepo = createContestRepo();
       (contestRepo.findById as jest.Mock).mockResolvedValue(null);
@@ -1424,7 +1256,6 @@ describe('ContestManagementService budget rules (#93)', () => {
       status: ContestStatus.DRAFT,
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.BUDGET_PICK,
-      scoringEngine: 'STROKE_PLAY',
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
     });

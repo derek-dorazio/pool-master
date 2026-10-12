@@ -41,9 +41,7 @@ import type {
   EventSeries,
   ParticipantInactiveReason,
   ParticipantLeagueAffiliation,
-  ParticipantType,
   Sport,
-  SportCategory,
   SportConfig,
   SportEvent,
   SportEventParticipant,
@@ -54,7 +52,6 @@ import type {
   SportEventSyncScope,
   SportEventTier,
   SportLeague,
-  TournamentFormat,
   ValuationSource,
 } from '@poolmaster/shared/domain';
 import { EventPricingConfigSchema, SportEventStatus } from '@poolmaster/shared/domain';
@@ -70,13 +67,13 @@ export class PrismaSportRepository implements SportRepository {
     return row ? toSport(row) : null;
   }
 
-  async findByName(name: Sport): Promise<SportConfig | null> {
-    const row = await this.prisma.sport.findUnique({ where: { name } });
+  async findBySport(sport: Sport): Promise<SportConfig | null> {
+    const row = await this.prisma.sport.findUnique({ where: { sport } });
     return row ? toSport(row) : null;
   }
 
   async findAll(): Promise<SportConfig[]> {
-    const rows = await this.prisma.sport.findMany({ orderBy: { name: 'asc' } });
+    const rows = await this.prisma.sport.findMany({ orderBy: { sport: 'asc' } });
     return rows.map(toSport);
   }
 }
@@ -663,10 +660,9 @@ function countMap(ids: readonly string[], counted: Array<[string, number]>): Map
 function toSport(row: Prisma.SportGetPayload<object>): SportConfig {
   return {
     id: row.id,
-    name: row.name as Sport,
-    participantType: row.participantType as ParticipantType,
-    category: row.category as SportCategory,
-    tournamentFormat: row.tournamentFormat as TournamentFormat,
+    sport: row.sport,
+    participantType: row.participantType,
+    tournamentFormat: row.tournamentFormat,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

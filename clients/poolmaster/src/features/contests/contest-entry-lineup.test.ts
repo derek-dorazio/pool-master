@@ -1,7 +1,7 @@
 import { SelectionType } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import type { SelectionStateResponse } from '@/lib/api';
-import { isEnterableSelectionType, LINEUP_RULES } from './contest-entry-lineup';
+import { LINEUP_RULES } from './contest-entry-lineup';
 
 function golfer(id: string, price: number, isSelected: boolean) {
   return {
@@ -74,9 +74,4 @@ describe('budget lineup rules on the entry page', () => {
       .toBe('Your golfers cost $120, over the $100 salary cap. Remove a golfer to get under it, then submit.');
   });
 
-  it('builds lineups for tiered and budget contests only', () => {
-    expect(isEnterableSelectionType(SelectionType.TIERED)).toBe(true);
-    expect(isEnterableSelectionType(SelectionType.BUDGET_PICK)).toBe(true);
-    expect(isEnterableSelectionType(SelectionType.SNAKE_DRAFT)).toBe(false);
-  });
 });

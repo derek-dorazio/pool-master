@@ -179,8 +179,7 @@ export function buildLeaderboardView(response: ContestLeaderboardResponse): Lead
   );
 
   const entries = response.entries.map((entry) => {
-    // Null until one of the entry's picks is scored; also null for a sport with no golf
-    // extension, which this route does not serve (400 _SPORT_UNSUPPORTED).
+    // Null until one of the entry's picks is scored.
     const entryTotal = entry.golf?.totalScoreToPar ?? null;
     return {
       entryId: entry.entryId,

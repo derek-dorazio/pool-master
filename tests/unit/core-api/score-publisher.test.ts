@@ -11,14 +11,11 @@
  *     unmapped ids — is asserted against
  *     Postgres in tests/integration/core-api/golf-participant-standing.integration.ts.
  *   - Unknown externalEventId logs a warn and skips persistence.
- *   - Non-GOLF categories throw `LiveScorePersistenceUnsupportedError`
- *     until their per-category persistence slice ships.
  */
 
 import {
   publishLiveScoreUpdate,
   LiveScoreValidationError,
-  LiveScorePersistenceUnsupportedError,
 } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { fakeLogger } from '../../support/fake-logger';
@@ -172,27 +169,5 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         );
       },
     );
-  });
-
-  describe('non-GOLF categories', () => {
-    it('throws LiveScorePersistenceUnsupportedError for BASKETBALL until the slice ships', async () => {
-      const prisma = {
-        sportEvent: buildSportEventStub(),
-        participantProviderMapping: { findMany: jest.fn() },
-        sportEventParticipant: { findMany: jest.fn() },
-        sportEventParticipantRound: { upsert: jest.fn(), findMany: jest.fn() },
-        sportEventParticipantStanding: { upsert: jest.fn(), findMany: jest.fn() },
-      };
-
-      const result: LiveScoreResult = {
-        category: 'BASKETBALL',
-        externalEventId: 'evt-ext-1',
-        games: [],
-      };
-
-      await expect(
-        publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock' }),
-      ).rejects.toBeInstanceOf(LiveScorePersistenceUnsupportedError);
-    });
   });
 });

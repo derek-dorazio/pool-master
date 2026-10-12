@@ -14,7 +14,9 @@
  *   1. The reason for choosing this direction: raw SQL that omits `id` now works. That is what
  *      reference-data migrations and bootstrap scripts do, and before this change they had to
  *      call `gen_random_uuid()` by hand — `20261004140000_seed_golf_sport_reference_row` does
- *      exactly that, precisely because `sports.id` had no default.
+ *      exactly that, precisely because `sports.id` had no default. The rows here are sport
+ *      leagues: since #603 the `sports` table holds one row per built sport, so it can no longer
+ *      take throwaway rows.
  *   2. The reason it is safe: `dbgenerated` changes nothing Prisma-side. An explicitly supplied
  *      id is still accepted, and an omitted one still produces a row.
  *
@@ -34,21 +36,25 @@ import {
 } from '../helpers';
 
 /** Every row this suite creates carries this prefix in its natural key, so cleanup is exact. */
-const SPORT_NAME_PREFIX = 'UUIDDEFAULT';
+const NAME_PREFIX = 'UUIDDEFAULT';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function uniqueSportName(): string {
-  return `${SPORT_NAME_PREFIX}_${randomUUID().slice(0, 8).toUpperCase()}`;
+function uniqueName(): string {
+  return `${NAME_PREFIX}_${randomUUID().slice(0, 8).toUpperCase()}`;
+}
+
+async function golfSportId(): Promise<string> {
+  const sport = await getPrisma().sport.upsert({
+    where: { sport: 'GOLF' },
+    update: {},
+    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+  });
+  return sport.id;
 }
 
 async function removeSuiteRows(): Promise<void> {
-  const prisma = getPrisma();
-  // sport_leagues first: it holds the FK to sports.
-  await prisma.sportLeague.deleteMany({
-    where: { sport: { name: { startsWith: SPORT_NAME_PREFIX } } },
-  });
-  await prisma.sport.deleteMany({ where: { name: { startsWith: SPORT_NAME_PREFIX } } });
+  await getPrisma().sportLeague.deleteMany({ where: { name: { startsWith: NAME_PREFIX } } });
 }
 
 beforeAll(() => setupIntegrationTests());
@@ -62,73 +68,61 @@ afterAll(async () => {
 describe('#340 database-generated uuid ids', () => {
   it('accepts a raw INSERT that omits id, and generates one', async () => {
     const prisma = getPrisma();
-    const name = uniqueSportName();
+    const sportId = await golfSportId();
+    const name = uniqueName();
 
     // No "id" column. Before #340 this failed on the NOT NULL constraint, which is why
     // reference-data migrations had to supply gen_random_uuid() themselves.
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "sports" ("name", "participant_type", "category", "tournament_format", "created_at", "updated_at")
-       VALUES ($1, 'INDIVIDUAL', 'GOLF', 'STROKE_PLAY_TOURNAMENT', NOW(), NOW())`,
+      `INSERT INTO "sport_leagues" ("sport_id", "name", "updated_at") VALUES ($1::uuid, $2, NOW())`,
+      sportId,
       name,
     );
 
-    const inserted = await prisma.sport.findUnique({ where: { name } });
+    const inserted = await prisma.sportLeague.findUnique({ where: { sportId_name: { sportId, name } } });
     expect(inserted).not.toBeNull();
     expect(inserted?.id).toMatch(UUID_PATTERN);
   });
 
   it('still accepts an explicitly supplied id through Prisma', async () => {
     const prisma = getPrisma();
+    const sportId = await golfSportId();
     const chosenId = randomUUID();
-    const name = uniqueSportName();
+    const name = uniqueName();
 
     // The claim #340 makes about write paths: `dbgenerated` does not take the id away from
     // the caller. Every repository in this codebase that supplies one keeps working.
-    const created = await prisma.sport.create({
-      data: {
-        id: chosenId,
-        name,
-        participantType: 'INDIVIDUAL',
-        category: 'GOLF',
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-      },
-    });
+    const created = await prisma.sportLeague.create({ data: { id: chosenId, sportId, name } });
 
     expect(created.id).toBe(chosenId);
-    const reread = await prisma.sport.findUnique({ where: { name } });
+    const reread = await prisma.sportLeague.findUnique({ where: { sportId_name: { sportId, name } } });
     expect(reread?.id).toBe(chosenId);
   });
 
   it('still generates an id when Prisma omits it', async () => {
     const prisma = getPrisma();
-    const name = uniqueSportName();
+    const sportId = await golfSportId();
 
-    const created = await prisma.sport.create({
-      data: {
-        name,
-        participantType: 'INDIVIDUAL',
-        category: 'GOLF',
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-      },
-    });
+    const created = await prisma.sportLeague.create({ data: { sportId, name: uniqueName() } });
 
     expect(created.id).toMatch(UUID_PATTERN);
   });
 
   it('generates distinct ids across rows inserted in one statement', async () => {
     const prisma = getPrisma();
-    const first = uniqueSportName();
-    const second = uniqueSportName();
+    const sportId = await golfSportId();
+    const first = uniqueName();
+    const second = uniqueName();
 
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "sports" ("name", "participant_type", "category", "tournament_format", "created_at", "updated_at")
-       VALUES ($1, 'INDIVIDUAL', 'GOLF', 'STROKE_PLAY_TOURNAMENT', NOW(), NOW()),
-              ($2, 'INDIVIDUAL', 'GOLF', 'STROKE_PLAY_TOURNAMENT', NOW(), NOW())`,
+      `INSERT INTO "sport_leagues" ("sport_id", "name", "updated_at")
+       VALUES ($1::uuid, $2, NOW()), ($1::uuid, $3, NOW())`,
+      sportId,
       first,
       second,
     );
 
-    const rows = await prisma.sport.findMany({
+    const rows = await prisma.sportLeague.findMany({
       where: { name: { in: [first, second] } },
       select: { id: true },
     });
@@ -138,25 +132,16 @@ describe('#340 database-generated uuid ids', () => {
 });
 
 describe('#340 sport_leagues bounded text columns', () => {
-  async function seedSport(): Promise<string> {
-    const sport = await getPrisma().sport.create({
-      data: {
-        name: uniqueSportName(),
-        participantType: 'INDIVIDUAL',
-        category: 'GOLF',
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-      },
-    });
-    return sport.id;
-  }
+  /** A suite-prefixed name padded to exactly `length` characters. */
+  const nameOfLength = (length: number) => uniqueName().padEnd(length, 'n');
 
   it('stores a name and matchKeyword of exactly 255 characters', async () => {
     const prisma = getPrisma();
-    const sportId = await seedSport();
+    const sportId = await golfSportId();
 
     // The declared bound is the one the database has always had. 255 must still fit.
     const created = await prisma.sportLeague.create({
-      data: { sportId, name: 'n'.repeat(255), matchKeyword: 'k'.repeat(255) },
+      data: { sportId, name: nameOfLength(255), matchKeyword: 'k'.repeat(255) },
     });
 
     expect(created.name).toHaveLength(255);
@@ -165,22 +150,22 @@ describe('#340 sport_leagues bounded text columns', () => {
 
   it('rejects a name longer than 255 characters, so the declared bound is real', async () => {
     const prisma = getPrisma();
-    const sportId = await seedSport();
+    const sportId = await golfSportId();
 
     // Before #340 the schema declared unbounded `String` for a column the database bounded at
     // 255. The schema was the artifact that was wrong, and this is the behavior it misdescribed.
     await expect(
-      prisma.sportLeague.create({ data: { sportId, name: 'n'.repeat(256) } }),
+      prisma.sportLeague.create({ data: { sportId, name: nameOfLength(256) } }),
     ).rejects.toThrow();
   });
 
   it('rejects a matchKeyword longer than 255 characters', async () => {
     const prisma = getPrisma();
-    const sportId = await seedSport();
+    const sportId = await golfSportId();
 
     await expect(
       prisma.sportLeague.create({
-        data: { sportId, name: uniqueSportName(), matchKeyword: 'k'.repeat(256) },
+        data: { sportId, name: uniqueName(), matchKeyword: 'k'.repeat(256) },
       }),
     ).rejects.toThrow();
   });

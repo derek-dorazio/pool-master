@@ -26,22 +26,12 @@ import { SportEventStatus } from '@poolmaster/shared/domain';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
 import { createGolfScoreService } from '../../events/wiring';
+import { countLiveScoreUpdates } from './live-score-count';
 
 export class LiveScoreValidationError extends Error {
   constructor(reason: string, public readonly issues: unknown) {
     super(`LiveScoreResult failed Zod validation: ${reason}`);
     this.name = 'LiveScoreValidationError';
-  }
-}
-
-export class LiveScorePersistenceUnsupportedError extends Error {
-  constructor(category: string) {
-    super(
-      `LiveScoreResult category ${category} persistence not yet implemented. ` +
-        `Per plans/117 §3.1, Phase 4 ships only the GOLF persistence path; ` +
-        `the rest land in future rop.78.<N> slices.`,
-    );
-    this.name = 'LiveScorePersistenceUnsupportedError';
   }
 }
 
@@ -123,44 +113,13 @@ export async function publishLiveScoreUpdate(
     };
   }
 
-  let persistenceResult: LiveScorePersistenceResult;
-  switch (validated.category) {
-    case 'GOLF':
-      persistenceResult = await createGolfScoreService(deps.prisma, deps.logger).persistRoundUpdatesForSportEvent(
-        sportEvent.id,
-        validated.rounds,
-        deps.providerId,
-        sportEvent.rounds,
-      );
-      break;
-    case 'BASKETBALL':
-    case 'F1':
-    case 'NFL':
-    case 'NASCAR':
-    case 'TENNIS':
-    case 'SOCCER':
-      throw new LiveScorePersistenceUnsupportedError(validated.category);
-  }
-
-  return persistenceResult;
+  // GOLF is the only live-score category (#605); a second category branches here.
+  return createGolfScoreService(deps.prisma, deps.logger).persistRoundUpdatesForSportEvent(
+    sportEvent.id,
+    validated.rounds,
+    deps.providerId,
+    sportEvent.rounds,
+  );
 }
 
-function countLiveScoreUpdates(result: LiveScoreResult): number {
-  switch (result.category) {
-    case 'GOLF':
-      return result.rounds.length;
-    case 'BASKETBALL':
-      return result.games.length;
-    case 'F1':
-      return result.results.length;
-    case 'NFL':
-      return result.games.length;
-    case 'NASCAR':
-      return result.results.length;
-    case 'TENNIS':
-      return result.matches.length;
-    case 'SOCCER':
-      return result.matches.length;
-  }
-}
 

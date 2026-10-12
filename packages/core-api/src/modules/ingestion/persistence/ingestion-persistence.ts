@@ -7,7 +7,7 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { getDefaultTournamentFormatForSport, type SportEventStatus } from '@poolmaster/shared/domain';
+import { getDefaultTournamentFormatForSport, type Sport, type SportEventStatus } from '@poolmaster/shared/domain';
 import type {
   SportEvent,
   SportEventDetail,
@@ -150,11 +150,11 @@ export class IngestionPersistence {
           },
         });
       } else {
-        // Resolve the Sport row — find or create by name
+        // Resolve the Sport row — find or create by sport
         const sport = await this.prisma.sport.upsert({
-          where: { name: p.sport },
+          where: { sport: p.sport },
           create: {
-            name: p.sport,
+            sport: p.sport,
             participantType: 'INDIVIDUAL',
             // No schema default (#236): a new sport row must not become golf by omission.
             tournamentFormat: getDefaultTournamentFormatForSport(p.sport),
@@ -365,7 +365,7 @@ function resolveDisposition(
 function normalizeSportEventRow(row: {
   externalId: string;
   providerId: string;
-  sport: string;
+  sport: Sport;
   name: string;
   venue: string | null;
   location: string | null;

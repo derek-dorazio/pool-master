@@ -17,7 +17,7 @@ import {
   isCommissionerRole,
   mapContestStatusToSelectionStatus,
 } from '../../../packages/core-api/src/modules/selections/selection-rules';
-import { findSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
+import { getSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
 import { tieredSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/tiered';
 import type {
   SelectionTierConfig,
@@ -387,7 +387,7 @@ describe('#324 draft rules — contest shape', () => {
   it('reads selection type and status off the domain contest', () => {
     const contest = { selectionType: SelectionType.TIERED, status: 'OPEN' } as Contest;
 
-    expect(findSelectionEngine(contest.selectionType)?.selectionType).toBe(SelectionType.TIERED);
+    expect(getSelectionEngine(contest.selectionType).selectionType).toBe(SelectionType.TIERED);
     expect(mapContestStatusToSelectionStatus(contest.status, false)).toBe(SelectionStatus.LIVE);
   });
 });

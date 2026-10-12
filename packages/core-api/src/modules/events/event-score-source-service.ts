@@ -138,7 +138,7 @@ export class EventScoreSourceService {
       );
     }
 
-    const events = await provider.getUpcomingEvents(sportLeague.sport.name as Sport, {
+    const events = await provider.getUpcomingEvents(sportLeague.sport.sport, {
       from: new Date(Date.UTC(eventYear, 0, 1)),
       to: new Date(Date.UTC(eventYear + 1, 0, 1) - 1),
     });
@@ -322,14 +322,6 @@ export class EventScoreSourceService {
     if (!supportsLiveSimulation(provider)) {
       throw new EventScoreSourceError(
         `Provider ${existing.providerId} cannot simulate live scoring.`,
-        'LIVE_SIMULATION_UNSUPPORTED',
-        422,
-      );
-    }
-    // The simulation plays golf rounds only; a simulating provider may cover other sports too.
-    if (existing.sport !== 'GOLF') {
-      throw new EventScoreSourceError(
-        `Live scoring can only be simulated for golf events, not ${existing.sport}.`,
         'LIVE_SIMULATION_UNSUPPORTED',
         422,
       );

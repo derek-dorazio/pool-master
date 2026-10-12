@@ -6,12 +6,8 @@ import { formatDollars } from '@/features/shared/ui';
  * so adding a selection type without a name fails the typecheck.
  */
 const SELECTION_TYPE_NAMES: Record<SelectionType, string> = {
-  SNAKE_DRAFT: 'Snake draft',
   TIERED: 'Tiered',
   BUDGET_PICK: 'Budget',
-  OPEN_SELECTION: 'Open selection',
-  PICK_EM: "Pick'em",
-  BRACKET_PICK_EM: "Bracket pick'em",
 };
 
 export function formatSelectionTypeName(selectionType: SelectionType) {

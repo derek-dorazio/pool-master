@@ -8,7 +8,7 @@ import {
   submitContestEntry,
   submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
+import { ContestFormat, SelectionType } from '@poolmaster/shared/domain';
 import { buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
 import {
   cleanupFunctionalData,
@@ -19,7 +19,6 @@ import {
 import { randomUUID } from 'node:crypto';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
 
-const createdSportIds: string[] = [];
 const createdParticipantIds: string[] = [];
 const createdSportEventIds: string[] = [];
 const createdSportEventParticipantIds: string[] = [];
@@ -120,24 +119,13 @@ async function cleanupDraftArtifacts(): Promise<void> {
     createdParticipantIds.length = 0;
   }
 
-  if (createdSportIds.length > 0) {
-    await prisma.sport.deleteMany({
-      where: {
-        id: {
-          in: createdSportIds,
-        },
-      },
-    });
-    createdSportIds.length = 0;
-  }
 }
 
 /**
- * A contest configured with the retained SelectionType.SNAKE_DRAFT value (#200). No
- * turn-based implementation exists behind it, so no sport event is linked: the
- * selection-room endpoints must answer 501 before they would ever read participants.
+ * A tiered contest on no sport event: enough for the selection-room guards that answer before
+ * any participant is read (whose entry it is, whether the contest exists).
  */
-async function seedUnsupportedSelectionTypeFixture() {
+async function seedEventlessContestFixture() {
   const { commissioner, league } = await buildLeagueWithCommissioner({
     displayName: 'Draft Commissioner',
     leagueName: 'Draft Functional League',
@@ -173,8 +161,7 @@ async function seedUnsupportedSelectionTypeFixture() {
 
   const { contestId } = await seedContestFixture(league.id, {
     name: 'Draft Functional Contest',
-    selectionType: SelectionType.SNAKE_DRAFT,
-    scoringEngine: ScoringEngine.STROKE_PLAY,
+    selectionType: SelectionType.TIERED,
   });
 
   const commissionerEntry = await enterContest({
@@ -247,7 +234,6 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
   const { contestId } = await seedContestFixture(league.id, {
     name: 'Budget Functional Contest',
     selectionType: SelectionType.BUDGET_PICK,
-    scoringEngine: ScoringEngine.STROKE_PLAY,
     configuration: {
       configJson: {
         selectionType: SelectionType.BUDGET_PICK,
@@ -279,14 +265,11 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
   }
 
   const prisma = getFunctionalPrisma();
-  const sport = await prisma.sport.create({
-    data: {
-      name: `SelectionBudgetSport-${randomUUID().slice(0, 8)}`,
-      participantType: 'INDIVIDUAL',
-      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-    },
+  const sport = await prisma.sport.upsert({
+    where: { sport: 'GOLF' },
+    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
   });
-  createdSportIds.push(sport.id);
 
   const firstParticipant = await prisma.participant.create({
     data: {
@@ -391,7 +374,6 @@ async function seedTieredDraftFixture(options: {
   const { contestId } = await seedContestFixture(league.id, {
     name: 'Tiered Draft Functional Contest',
     selectionType: SelectionType.TIERED,
-    scoringEngine: ScoringEngine.STROKE_PLAY,
     configuration: {
       // The contest's picks per tier, which every event tier takes (#479).
       configJson: { selectionType: SelectionType.TIERED, picksPerTier: picksFromTier, countedScores: 1 },
@@ -410,14 +392,11 @@ async function seedTieredDraftFixture(options: {
   }
 
   const prisma = getFunctionalPrisma();
-  const sport = await prisma.sport.create({
-    data: {
-      name: `SelectionTieredSport-${randomUUID().slice(0, 8)}`,
-      participantType: 'INDIVIDUAL',
-      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-    },
+  const sport = await prisma.sport.upsert({
+    where: { sport: 'GOLF' },
+    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
   });
-  createdSportIds.push(sport.id);
 
   const event = await prisma.sportEvent.create({
     data: {
@@ -502,14 +481,11 @@ async function seedTieredDraftFixture(options: {
  */
 async function seedMultiTierGolfEvent(options: { tierCount: number; golfersPerTier: number }) {
   const prisma = getFunctionalPrisma();
-  const sport = await prisma.sport.create({
-    data: {
-      name: `SelectionMultiTierSport-${randomUUID().slice(0, 8)}`,
-      participantType: 'INDIVIDUAL',
-      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-    },
+  const sport = await prisma.sport.upsert({
+    where: { sport: 'GOLF' },
+    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
   });
-  createdSportIds.push(sport.id);
 
   const event = await prisma.sportEvent.create({
     data: {
@@ -577,40 +553,8 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: Roster Selection', () => {
-  it('#200 answers 501 SELECTION_TYPE_UNSUPPORTED for a contest configured with the retained SNAKE_DRAFT type', async () => {
-    const fixture = await seedUnsupportedSelectionTypeFixture();
-
-    const stateResponse = await getSelectionState({
-      client: fixture.commissioner.client,
-      path: {
-        contestId: fixture.contestId,
-      },
-    });
-
-    expectFunctionalError(stateResponse, {
-      status: 501,
-      code: 'SELECTION_TYPE_UNSUPPORTED',
-    });
-
-    const pickResponse = await submitContestSelection({
-      client: fixture.commissioner.client,
-      path: {
-        contestId: fixture.contestId,
-      },
-      body: {
-        entryId: fixture.commissionerEntryId,
-        participantId: randomUUID(),
-      },
-    });
-
-    expectFunctionalError(pickResponse, {
-      status: 501,
-      code: 'SELECTION_TYPE_UNSUPPORTED',
-    });
-  });
-
   it('#200 rejects a selection for another squad\'s entry and a selection-state read for an unknown contest', async () => {
-    const fixture = await seedUnsupportedSelectionTypeFixture();
+    const fixture = await seedEventlessContestFixture();
 
     const wrongEntryResponse = await submitContestSelection({
       client: fixture.challenger.client,

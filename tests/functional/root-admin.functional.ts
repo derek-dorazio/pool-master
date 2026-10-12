@@ -344,7 +344,7 @@ describe('SDK Functional: Root Admin', () => {
     expect(response.data?.syncRuns[0]?.payload.detail).toBe('Imported event and field snapshot.');
   });
 
-  it('returns stable provider not-found codes for root-admin operational actions', async () => {
+  it('answers 404 PROVIDER_NOT_FOUND when a root admin browses an unknown provider\'s catalog', async () => {
     const user = await buildRegisteredUser({
       displayName: 'Root Admin Provider Error User',
     });
@@ -363,22 +363,6 @@ describe('SDK Functional: Root Admin', () => {
     expectFunctionalError(catalogResponse, {
       status: 404,
       code: 'PROVIDER_NOT_FOUND',
-    });
-
-    const prepareSyncResponse = await submitEventSync({
-      client: user.client,
-      path: {
-        sport: 'UFC',
-        eventId: 'ufc-300',
-      },
-      body: {
-        feeds: ['EVENTLIVESCORES'],
-      },
-    });
-
-    expectFunctionalError(prepareSyncResponse, {
-      status: 404,
-      code: 'SPORT_PROVIDER_NOT_FOUND',
     });
   });
 

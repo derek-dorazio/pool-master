@@ -8,21 +8,12 @@
 
 // --- Sports ---
 
+/**
+ * The sports PoolMaster runs contests for. Only built sports are members: a sport arrives
+ * with the migration and code that support it (#605), so nothing here is a catalog entry.
+ */
 export const Sport = {
   GOLF: 'GOLF',
-  NFL: 'NFL',
-  NBA: 'NBA',
-  F1: 'F1',
-  NASCAR: 'NASCAR',
-  NCAA_BASKETBALL: 'NCAA_BASKETBALL',
-  NCAA_HOCKEY: 'NCAA_HOCKEY',
-  NCAA_FOOTBALL: 'NCAA_FOOTBALL',
-  TENNIS: 'TENNIS',
-  HORSE_RACING: 'HORSE_RACING',
-  SOCCER: 'SOCCER',
-  NHL: 'NHL',
-  MLB: 'MLB',
-  UFC: 'UFC',
 } as const;
 export type Sport = (typeof Sport)[keyof typeof Sport];
 
@@ -80,102 +71,32 @@ export type PoolType = (typeof PoolType)[keyof typeof PoolType];
 // --- Contest Structure ---
 
 /**
- * Pool format applied to a contest. Replaces the legacy
- * `ContestFormat.ROSTER` enum (a duration/scope concept that turned
- * out not to be load-bearing). Multi-event contest coverage will be
- * re-modeled when a real multi-event contest type is built; the
- * speculative ContestSportEvent M:N join that once anticipated it was
- * removed as dead scaffolding (plans/124 §4.11).
- * See plans/117-league-contest-substrate-redesign.md §4.2.
+ * Pool format applied to a contest. ROSTER is the only built format: an entry picks a lineup
+ * of participants from the event's field. Bracket, pick'em and survivor formats arrive with the
+ * code that builds them (#605).
  */
 export const ContestFormat = {
   ROSTER: 'ROSTER',
-  BRACKET: 'BRACKET',
-  PICKEM_CONFIDENCE: 'PICKEM_CONFIDENCE',
-  SURVIVOR: 'SURVIVOR',
-  PREDICT_TOP_N: 'PREDICT_TOP_N',
 } as const;
 export type ContestFormat = (typeof ContestFormat)[keyof typeof ContestFormat];
 
-/** Sport category — drives per-category detail table dispatch. */
-export const SportCategory = {
-  GOLF: 'GOLF',
-  BASKETBALL: 'BASKETBALL',
-  FOOTBALL: 'FOOTBALL',
-  F1: 'F1',
-  NASCAR: 'NASCAR',
-  TENNIS: 'TENNIS',
-  SOCCER: 'SOCCER',
-} as const;
-export type SportCategory = (typeof SportCategory)[keyof typeof SportCategory];
-
-/** Tournament structural format — drives valid contest formats per sport. */
+/** Tournament structural format: decides which contest formats are valid for a sport's events. */
 export const TournamentFormat = {
   STROKE_PLAY_TOURNAMENT: 'STROKE_PLAY_TOURNAMENT',
-  KNOCKOUT_BRACKET: 'KNOCKOUT_BRACKET',
-  SERIES_PLAYOFF: 'SERIES_PLAYOFF',
-  ROUND_ROBIN_SEASON: 'ROUND_ROBIN_SEASON',
-  WEEKLY_GAMES_SEASON: 'WEEKLY_GAMES_SEASON',
-  TIME_TRIAL_RACE: 'TIME_TRIAL_RACE',
-  SEASON_OF_RACES: 'SEASON_OF_RACES',
-  GROUP_STAGE_KNOCKOUT: 'GROUP_STAGE_KNOCKOUT',
-  MATCH_PLAY: 'MATCH_PLAY',
 } as const;
 export type TournamentFormat = (typeof TournamentFormat)[keyof typeof TournamentFormat];
 
 /**
- * How participants select their picks for a contest.
+ * How an entry picks its lineup. Each value has a selection engine.
  *
- * SNAKE_DRAFT — turn-based exclusive selection; each pick owned by one manager.
  * TIERED — pick N from defined tier groups; non-exclusive.
  * BUDGET_PICK — build a roster within a cost budget; non-exclusive.
- * OPEN_SELECTION — deferred unrestricted selection catalog entry.
- * PICK_EM — deferred outcome prediction catalog entry.
- * BRACKET_PICK_EM — deferred bracket prediction catalog entry.
  */
 export const SelectionType = {
-  SNAKE_DRAFT: 'SNAKE_DRAFT',
   TIERED: 'TIERED',
   BUDGET_PICK: 'BUDGET_PICK',
-  OPEN_SELECTION: 'OPEN_SELECTION',
-  PICK_EM: 'PICK_EM',
-  BRACKET_PICK_EM: 'BRACKET_PICK_EM',
 } as const;
 export type SelectionType = (typeof SelectionType)[keyof typeof SelectionType];
-
-/**
- * How scores are calculated.
- *
- * ADVANCEMENT — points from team/player wins and round progression.
- * STAT_ACCUMULATION — points from personal player stats (goals, assists, etc.).
- * STROKE_PLAY — lower total strokes wins (golf).
- * POSITION — points by finish position (horse racing, F1).
- * BRACKET — deferred bracket prediction scoring catalog entry.
- * FIGHT_RESULT — points by win method: KO, submission, decision (UFC).
- * CUMULATIVE — generic point accumulation for deferred or catch-all modes.
- */
-export const ScoringEngine = {
-  ADVANCEMENT: 'ADVANCEMENT',
-  STAT_ACCUMULATION: 'STAT_ACCUMULATION',
-  STROKE_PLAY: 'STROKE_PLAY',
-  POSITION: 'POSITION',
-  BRACKET: 'BRACKET',
-  FIGHT_RESULT: 'FIGHT_RESULT',
-  CUMULATIVE: 'CUMULATIVE',
-} as const;
-export type ScoringEngine = (typeof ScoringEngine)[keyof typeof ScoringEngine];
-
-/**
- * Deferred survivor/knockout catalog — how picks would be submitted.
- *
- * LIVE_PICK — one pick per period, submitted before each period begins.
- * LOCKED_PICK — all picks submitted upfront before the event starts.
- */
-export const SurvivorStyle = {
-  LIVE_PICK: 'LIVE_PICK',
-  LOCKED_PICK: 'LOCKED_PICK',
-} as const;
-export type SurvivorStyle = (typeof SurvivorStyle)[keyof typeof SurvivorStyle];
 
 // --- Selection ---
 

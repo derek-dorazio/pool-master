@@ -79,10 +79,10 @@ describe('Contest Validation Integration', () => {
   });
 
   it.each([
-    SelectionType.OPEN_SELECTION,
-    SelectionType.PICK_EM,
-    SelectionType.BRACKET_PICK_EM,
-  ])('rejects deferred contest mode %s at the create contract boundary', async (selectionType) => {
+    'SNAKE_DRAFT',
+    'OPEN_SELECTION',
+    'PICK_EM',
+  ])('rejects the unbuilt selection type %s at the create contract boundary', async (selectionType) => {
     const createRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.contests(leagueId),

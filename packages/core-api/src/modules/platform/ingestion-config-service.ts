@@ -122,7 +122,7 @@ export class IngestionConfigService {
   }
 
   async setPerSportOverride(
-    sport: string,
+    sport: Sport,
     config: IngestionScheduleConfigOverride,
     rootAdminUserId: string,
   ): Promise<IngestionScheduleConfig> {
@@ -153,7 +153,7 @@ export class IngestionConfigService {
   }
 
   async clearPerSportOverride(
-    sport: string,
+    sport: Sport,
     rootAdminUserId: string,
   ): Promise<IngestionScheduleConfig> {
     this.logger?.debug({

@@ -89,14 +89,7 @@ export type SelectionBudgetLineupSummaryDto = z.infer<typeof SelectionBudgetLine
 export const SelectionStateResponseSchema = z.object({
   contestId: z.string(),
   contestName: z.string(),
-  selectionType: z.enum([
-    SelectionType.SNAKE_DRAFT,
-    SelectionType.TIERED,
-    SelectionType.BUDGET_PICK,
-    SelectionType.OPEN_SELECTION,
-    SelectionType.PICK_EM,
-    SelectionType.BRACKET_PICK_EM,
-  ]),
+  selectionType: z.nativeEnum(SelectionType),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
   status: z.enum([
@@ -121,14 +114,7 @@ export type SelectionStateResponse = z.infer<typeof SelectionStateResponseSchema
 export const SelectionPickResponseSchema = z.object({
   contestId: z.string(),
   contestName: z.string(),
-  selectionType: z.enum([
-    SelectionType.SNAKE_DRAFT,
-    SelectionType.TIERED,
-    SelectionType.BUDGET_PICK,
-    SelectionType.OPEN_SELECTION,
-    SelectionType.PICK_EM,
-    SelectionType.BRACKET_PICK_EM,
-  ]),
+  selectionType: z.nativeEnum(SelectionType),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
   status: z.enum([

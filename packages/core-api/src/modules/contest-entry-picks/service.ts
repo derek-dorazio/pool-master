@@ -46,10 +46,9 @@ export class ContestEntryPickService {
   /**
    * Insert a ContestEntryPick. Resolves `contestFormat` from the parent
    * contest in the same transaction so the denormalized column is always
-   * consistent. Callers pass per-format optional metadata (period / slot /
-   * tier / cost / lineupSlot / pickSequence / isAutoPicked); the service
-   * is format-agnostic — the partial unique indexes from plans/117 §7.1
-   * enforce the per-format combination rules at the database layer.
+   * consistent. Callers pass optional metadata (tier / cost / lineupSlot /
+   * pickSequence / isAutoPicked); the service is format-agnostic, and the
+   * ROSTER partial unique index keeps a participant to one pick per entry.
    */
   async createPick(input: ContestEntryPickInsertInput): Promise<ContestEntryPickDto> {
     return this.prisma.$transaction(async (tx) => {

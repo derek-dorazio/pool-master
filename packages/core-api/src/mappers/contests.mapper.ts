@@ -14,14 +14,13 @@ import type {
   ContestLeaderboardResponse,
 } from '@poolmaster/shared/dto';
 import {
-  Sport,
+  type Sport,
   type Contest,
   type ContestEntry,
   type ContestEntryStatus,
   type ContestStatus,
   type ContestFormat,
   type ParticipantScoringDefinitionId,
-  type ScoringEngine,
   type SelectionType,
 } from '@poolmaster/shared/domain';
 import type { ContestCountingRule, ParticipantScore } from '../modules/contests/contest-leaderboard-calculator';
@@ -36,7 +35,6 @@ interface ContestRow {
   status: ContestStatus;
   contestFormat: ContestFormat;
   selectionType: SelectionType;
-  scoringEngine: ScoringEngine;
   sport?: Contest['sport'] | null;
   startsAt?: Date | null;
   endsAt?: Date | null;
@@ -127,7 +125,6 @@ export function toContestDto(
     status: contest.status,
     contestFormat: contest.contestFormat,
     selectionType: contest.selectionType,
-    scoringEngine: contest.scoringEngine,
     leagueId: contest.leagueId,
     sportEventId: contest.sportEventId ?? null,
     sport: contest.sport ?? null,
@@ -250,7 +247,7 @@ export function toContestLeaderboardResponse(
       displayPosition: entry.displayPosition,
       countingPickLimit: entry.countingPickLimit,
       scoredPickCount: entry.scoredPickCount,
-      golf: leaderboard.sport === Sport.GOLF ? { totalScoreToPar: entry.score } : null,
+      golf: { totalScoreToPar: entry.score },
       picks: entry.picks.map((pick) => ({
         pickId: pick.pickId,
         sportEventParticipantId: pick.sportEventParticipantId,
@@ -258,9 +255,7 @@ export function toContestLeaderboardResponse(
         slot: pick.slot,
         isCounting: pick.isCounting,
         isDropped: pick.isDropped,
-        golf: leaderboard.sport === Sport.GOLF
-          ? { scoreToPar: pick.participant.score, unplayedRoundNumbers: pick.participant.unplayedRoundNumbers }
-          : null,
+        golf: { scoreToPar: pick.participant.score, unplayedRoundNumbers: pick.participant.unplayedRoundNumbers },
       })),
     })),
     asOf: leaderboard.asOf?.toISOString() ?? null,

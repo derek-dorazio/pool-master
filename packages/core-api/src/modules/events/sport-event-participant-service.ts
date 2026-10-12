@@ -34,7 +34,6 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   ParticipantStatus,
-  Sport,
   type ParticipantInactiveReason,
   type Participant,
   type SportEvent,
@@ -194,14 +193,13 @@ export class SportEventParticipantService {
   async listEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {
     const event = await this.requireEvent(sportEventId);
     const field = await this.deps.field.findBySportEvent(sportEventId);
-    const isGolf = event.sport === Sport.GOLF;
     const [participants, valuations, standings, rounds, golfStandings, golfRounds, affiliated] = await Promise.all([
       this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
       this.deps.valuations.findBySportEvent(sportEventId),
       this.deps.standings.findBySportEvent(sportEventId),
       this.deps.participantRounds.findBySportEvent(sportEventId),
-      isGolf ? this.deps.golfStandings.findBySportEvent(sportEventId) : Promise.resolve([]),
-      isGolf ? this.deps.golfRounds.findBySportEvent(sportEventId) : Promise.resolve([]),
+      this.deps.golfStandings.findBySportEvent(sportEventId),
+      this.deps.golfRounds.findBySportEvent(sportEventId),
       this.affiliatedParticipantIds(event),
     ]);
 
@@ -237,13 +235,6 @@ export class SportEventParticipantService {
    */
   async seedFromSportLeague(sportEventId: string): Promise<SeedFieldResult> {
     const event = await this.requireEvent(sportEventId);
-    if (event.sport !== Sport.GOLF) {
-      throw new SportEventError(
-        `Seeding a field from a sport league is implemented for golf only, not ${event.sport}.`,
-        'SPORT_NOT_SUPPORTED',
-        422,
-      );
-    }
     const { sportLeagueId } = event;
     const affiliations = (await this.deps.affiliations.findBySportLeague(sportLeagueId))
       .filter((affiliation) => affiliation.participant.status === ParticipantStatus.ACTIVE);

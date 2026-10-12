@@ -10,7 +10,7 @@ import type { Sport, SportConfig } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
 
 export async function requireSport(sports: SportRepository, sport: Sport): Promise<SportConfig> {
-  const sportRow = await sports.findByName(sport);
+  const sportRow = await sports.findBySport(sport);
   if (!sportRow) {
     throw new SportCatalogError(`No Sport row exists for ${sport}.`, 'SPORT_NOT_FOUND', 404);
   }

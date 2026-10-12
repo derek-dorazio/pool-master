@@ -10,9 +10,9 @@ export type { ContestEntryPickDto } from '@poolmaster/shared/dto';
 export interface ContestEntryPickInsertInput {
   entryId: string;
   sportEventParticipantId: string;
-  /** Per-format period — week (SURVIVOR), draft round (BRACKET). */
+  /** Unused since #605 removed the formats that set it; removal is tracked in #632. */
   period?: number | null;
-  /** Per-format slot — matchup index, confidence rank, predicted position. */
+  /** Unused since #605 removed the formats that set it; removal is tracked in #632. */
   slot?: number | null;
   /** Selection tier (tiered ROSTER). */
   tier?: string | null;

@@ -16,9 +16,8 @@ import { mapParticipantToDto } from './participants.mapper';
 export function mapSportToDto(sport: SportConfig): SportDto {
   return {
     id: sport.id,
-    name: sport.name,
+    sport: sport.sport,
     participantType: sport.participantType,
-    category: sport.category,
     tournamentFormat: sport.tournamentFormat,
     createdAt: sport.createdAt.toISOString(),
     updatedAt: sport.updatedAt.toISOString(),

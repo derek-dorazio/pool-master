@@ -7,6 +7,7 @@ export * from './contest-rules';
 export * from './sport-event-lifecycle';
 export * from './providers';
 export * from './sport-catalog-types';
+export * from './sport-rows';
 export {
   compareScores,
   isRoundComplete,

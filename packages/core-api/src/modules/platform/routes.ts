@@ -7,6 +7,7 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
+import { Sport } from '@poolmaster/shared/domain';
 import type { IngestionScheduleConfigOverride } from '@poolmaster/shared/dto/config.dto';
 import type { SettingsGroupUpdateRequest } from '@poolmaster/shared/dto/settings.dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
@@ -34,6 +35,12 @@ export interface PlatformModuleOptions {
   ingestionConfigService: IngestionConfigService;
   platformSettingsService: PlatformSettingsService;
 }
+
+const SPORT_PARAMS = {
+  type: 'object',
+  required: ['sport'],
+  properties: { sport: { type: 'string', enum: Object.values(Sport) } },
+};
 
 export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
@@ -207,8 +214,10 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       description:
         'Sets a per-sport feed-aware ingestion schedule override that differs from the global ingestion cadence.',
       operationId: 'setSportIngestionOverride',
+      params: SPORT_PARAMS,
       response: {
         200: schemaRef('IngestionScheduleConfig'),
+        400: schemaRef('ErrorEnvelope'),
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
       },
@@ -216,7 +225,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
     },
     handler: async (
       request: FastifyRequest<{
-        Params: { sport: string };
+        Params: { sport: Sport };
         Body: IngestionScheduleConfigOverride;
       }>,
     ) => {
@@ -237,15 +246,17 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       description:
         'Removes a persisted per-sport ingestion schedule override so the sport inherits the global runtime configuration again.',
       operationId: 'resetSportIngestionOverride',
+      params: SPORT_PARAMS,
       response: {
         200: schemaRef('IngestionScheduleConfig'),
+        400: schemaRef('ErrorEnvelope'),
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
       },
     },
     handler: async (
       request: FastifyRequest<{
-        Params: { sport: string };
+        Params: { sport: Sport };
       }>,
     ) => {
       const rootAdminUserId = requireAuthUser(request).userId;

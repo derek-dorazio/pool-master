@@ -1,3 +1,4 @@
+import { findSportRow, Sport } from '@poolmaster/shared/domain';
 import {
   addEventParticipants,
   applyEventGolfRoundScores,
@@ -52,11 +53,10 @@ const RUN = `z3l-${Date.now()}`;
 
 async function ensureGolfSportRow(): Promise<void> {
   await getFunctionalPrisma().sport.upsert({
-    where: { name: 'GOLF' },
+    where: { sport: 'GOLF' },
     create: {
-      name: 'GOLF',
+      sport: 'GOLF',
       participantType: 'INDIVIDUAL',
-      category: 'GOLF',
       tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
     update: {},
@@ -147,7 +147,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     created.userIds.add(admin.userId);
     await promoteToRootAdmin(admin);
     const c = admin.client;
-    const golfSportId = expectDefined(expectDefined((await listSports({ client: c })).data).sports.find((sport) => sport.name === 'GOLF')).id;
+    const golfSportId = expectDefined(findSportRow(expectDefined((await listSports({ client: c })).data).sports, Sport.GOLF)).id;
 
     // --- Sport league (tour) ------------------------------------------------------
     const league = await createSportLeague({

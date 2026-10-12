@@ -60,12 +60,10 @@ async function seedLeagueWithContestHistory() {
   const commissionerSquad = await seedMember(commissioner.user.id, 'COMMISSIONER', `Commish Team ${suffix}`);
   const ownerSquad = await seedMember(owner.user.id, 'MEMBER', `Owner Team ${suffix}`);
 
-  const sport = await prisma.sport.create({
-    data: {
-      name: `Delete Team Sport ${suffix}`,
-      participantType: ParticipantType.INDIVIDUAL,
-      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-    },
+  const sport = await prisma.sport.upsert({
+    where: { sport: 'GOLF' },
+    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
   });
   const sportEvent = await prisma.sportEvent.create({
     data: {
@@ -97,7 +95,6 @@ async function seedLeagueWithContestHistory() {
       status: 'OPEN',
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
-      scoringEngine: 'STROKE_PLAY',
     },
   });
   const seedEntry = async (squadId: string) => {

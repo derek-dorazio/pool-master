@@ -56,12 +56,10 @@ describe('RosterPick CRUD integration', () => {
     leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const prisma = getPrisma();
-    const sport = await prisma.sport.create({
-      data: {
-        name: `Roster Pick CRUD Sport ${randomUUID().slice(0, 8)}`,
-        participantType: ParticipantType.INDIVIDUAL,
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-      },
+    const sport = await prisma.sport.upsert({
+      where: { sport: 'GOLF' },
+      create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
     });
 
     const participant = await prisma.participant.create({

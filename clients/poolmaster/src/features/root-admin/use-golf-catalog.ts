@@ -1,3 +1,4 @@
+import { findSportRow, Sport } from '@poolmaster/shared/domain';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getParticipant, listEvents, listParticipants, listSportLeagues, listSports } from '@/lib/api';
 import type { ParticipantDto, SportEventDto, SportLeagueDto } from '@/lib/api';
@@ -50,7 +51,7 @@ const golfSportQueryOptions = {
     if (!response.data?.sports) {
       throwApiError(response.error, 'Sport list response is missing data.');
     }
-    const golf = response.data.sports.find((sport) => sport.name === 'GOLF');
+    const golf = findSportRow(response.data.sports, Sport.GOLF);
     if (!golf) {
       throw new Error('The golf sport is not set up.');
     }

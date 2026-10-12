@@ -17,7 +17,6 @@ function renderCard(status: ContestDto['status'], overrides: Partial<ContestDto>
     status,
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
-    scoringEngine: 'STROKE_PLAY',
     leagueId: 'league-1',
     sport: 'GOLF',
     entryCount: 3,

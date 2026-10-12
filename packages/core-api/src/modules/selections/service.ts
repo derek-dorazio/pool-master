@@ -21,7 +21,7 @@
  * window, participant-in-event, availability, exclusivity and persistence are the same for
  * every selection type and live here. What differs (roster size, what a selection does to the
  * entry, lineup completeness, a pick's round) is a `SelectionEngine`, looked up by the
- * contest's `SelectionType`; a type with no engine answers 501. An engine's `evaluate` returns
+ * contest's `SelectionType`; every type has one. An engine's `evaluate` returns
  * which outcome applies, and this service performs it.
  *
  * Dependencies arrive as an **options object**. `docs/LAYERS.md` §5 records why: the services
@@ -64,7 +64,7 @@ import {
   isCommissionerRole,
   mapContestStatusToSelectionStatus,
 } from './selection-rules';
-import { findSelectionEngine } from './selection-engines/registry';
+import { getSelectionEngine } from './selection-engines/registry';
 import {
   SelectionOutcomeKind,
   SelectionRejectCode,
@@ -144,7 +144,7 @@ export class SelectionService {
   /**
    * The selection room as the actor should see it. 404 for an unknown contest, and for a DRAFT
    * one to anyone but its league's commissioners and root admins, the answer the contest read
-   * gives (#117); 501 for a selection type this surface does not serve.
+   * gives (#117).
    */
   async getSelectionState(input: GetSelectionStateInput): Promise<SelectionView> {
     const context = await this.loadContext(input.contestId);
@@ -160,8 +160,7 @@ export class SelectionService {
       throw selectionErrors.contestNotFound(input.contestId);
     }
 
-    const engine = findSelectionEngine(context.contest.selectionType);
-    if (!engine) throw selectionErrors.selectionTypeUnsupportedForRead(context.contest.selectionType);
+    const engine = getSelectionEngine(context.contest.selectionType);
 
     return this.buildRoomView({
       context,
@@ -193,8 +192,7 @@ export class SelectionService {
     );
     if (!ownsRequestedEntry) throw selectionErrors.entryAccessDenied();
 
-    const engine = findSelectionEngine(context.contest.selectionType);
-    if (!engine) throw selectionErrors.selectionTypeUnsupportedForSubmission(context.contest.selectionType);
+    const engine = getSelectionEngine(context.contest.selectionType);
 
     // Placing, swapping and unselecting alike: once the contest leaves OPEN its picks are
     // revealed to the league, so a change after that would be made with the others in view;
@@ -324,8 +322,7 @@ export class SelectionService {
     );
     if (!ownsEntry) throw selectionErrors.entryAccessDenied();
 
-    const engine = findSelectionEngine(context.contest.selectionType);
-    if (!engine) throw selectionErrors.selectionTypeUnsupportedForSubmission(context.contest.selectionType);
+    const engine = getSelectionEngine(context.contest.selectionType);
 
     if (!context.acceptsPicks) {
       this.deps.logger?.warn(

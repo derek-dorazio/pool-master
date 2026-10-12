@@ -81,11 +81,10 @@ const created = {
 
 async function ensureGolfSportRow(): Promise<string> {
   const sport = await getFunctionalPrisma().sport.upsert({
-    where: { name: 'GOLF' },
+    where: { sport: 'GOLF' },
     create: {
-      name: 'GOLF',
+      sport: 'GOLF',
       participantType: 'INDIVIDUAL',
-      category: 'GOLF',
       tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
     update: {},
@@ -621,7 +620,6 @@ async function buildGolfContestFixture(sportEventId: string): Promise<string> {
       status: 'ACTIVE',
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
-      scoringEngine: 'STROKE_PLAY',
     },
   });
   created.contestIds.add(contest.id);

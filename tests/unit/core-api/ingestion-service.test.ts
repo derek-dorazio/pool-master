@@ -41,15 +41,15 @@ function echoSyncRunCreate() {
 }
 
 describe('IngestionService manual sync submission', () => {
-  it('pool-master-r04 rejects manual sync for sports outside ingestion scheduledSports config', async () => {
+  it('rejects a manual sync for a sport the ingestion config does not schedule, and runs nothing', async () => {
     const registry = registryWith(fakeSportDataProvider({
       providerId: 'mock-contest-feed',
       providerName: 'Mock Contest Feed Provider',
-      sportsCovered: [Sport.GOLF, Sport.TENNIS],
+      sportsCovered: [Sport.GOLF],
     }));
     const ingestionConfigReader = {
       getConfig: jest.fn().mockResolvedValue({
-        scheduledSports: [Sport.GOLF],
+        scheduledSports: [],
         healthCheck: { enabled: true, intervalMinutes: 5 },
         eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
         eventLiveScores: { enabled: true, intervalSeconds: 30 },
@@ -67,8 +67,8 @@ describe('IngestionService manual sync submission', () => {
     });
 
     await expect(service.syncEventData({
-      sport: Sport.TENNIS,
-      eventId: 'tennis-event-1',
+      sport: Sport.GOLF,
+      eventId: 'golf-event-1',
       feeds: ['EVENTLIVESCORES'],
     }, 'admin-1', 'admin@example.com')).rejects.toMatchObject({
       name: 'SportSyncNotConfiguredError',

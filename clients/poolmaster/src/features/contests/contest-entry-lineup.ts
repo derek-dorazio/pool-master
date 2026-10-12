@@ -7,13 +7,6 @@ import type { ErrorCodeMessages } from '@/lib/errors';
 type SelectionState = SelectionStateResponse;
 type BudgetLineupSummary = NonNullable<SelectionState['lineupSummary']>;
 
-/** The ways of picking the entry page can build a lineup for, one rules arm each. */
-export type EnterableSelectionType = typeof SelectionType.TIERED | typeof SelectionType.BUDGET_PICK;
-
-export function isEnterableSelectionType(selectionType: SelectionType): selectionType is EnterableSelectionType {
-  return selectionType === SelectionType.TIERED || selectionType === SelectionType.BUDGET_PICK;
-}
-
 /**
  * What differs between ways of picking on the entry page, mirroring the server's selection
  * engines: how a tap changes the lineup before the server answers, and what beyond a full lineup
@@ -118,7 +111,7 @@ function respend(summary: BudgetLineupSummary, group: SelectionGroup): BudgetLin
   };
 }
 
-export const LINEUP_RULES: Record<EnterableSelectionType, LineupRules> = {
+export const LINEUP_RULES: Record<SelectionType, LineupRules> = {
   [SelectionType.TIERED]: {
     applySelection: (selectionState, participantId, entryId) => {
       const pickedAtById = buildPickedAtById(selectionState, entryId);

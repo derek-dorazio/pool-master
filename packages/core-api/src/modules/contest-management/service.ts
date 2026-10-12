@@ -33,13 +33,11 @@ import type {
   SportEventStatus,
   TieredContestRules,
   TournamentFormat,
+  Sport,
 } from '@poolmaster/shared/domain';
 import {
-  ContestFormat,
   ContestStatus,
-  ScoringEngine,
   SelectionType,
-  Sport,
   canFillBudgetRoster,
   getTieredRosterSize,
   isContestFormatValidForTournamentFormat,
@@ -136,7 +134,6 @@ export class ContestManagementService {
         'CONTEST_FORMAT_NOT_ALLOWED',
       );
     }
-    this.assertContestCreationSupported(sportEvent, input.contestFormat);
     const { selectionType } = input;
     assertRulesMatchSelectionType(resolvedConfiguration.configuration, selectionType);
     const configJson = await this.resolveContestRules(input.sportEventId, resolvedConfiguration.configuration);
@@ -149,7 +146,6 @@ export class ContestManagementService {
       status: ContestStatus.DRAFT,
       contestFormat: input.contestFormat,
       selectionType,
-      scoringEngine: ScoringEngine.STROKE_PLAY,
     });
 
     const configuration = await this.contestConfigurationRepo.create({
@@ -196,25 +192,6 @@ export class ContestManagementService {
     }
     const tiers = await this.sportEventTierService.getEffectiveTiersForSportEvent(sportEventId);
     return toGolfEffectiveTierDtoList(tiers);
-  }
-
-  private assertContestCreationSupported(
-    sportEvent: ContestCreateSportEventState | null,
-    contestFormat: ContestFormat,
-  ): void {
-    if (contestFormat !== ContestFormat.ROSTER) {
-      throw new ContestManagementError(
-        'This contest format is not available for managed contest creation yet.',
-        'CONTEST_FORMAT_NOT_SUPPORTED',
-      );
-    }
-
-    if (sportEvent && sportEvent.sport !== Sport.GOLF) {
-      throw new ContestManagementError(
-        'Managed contest creation currently supports golf events only.',
-        'CONTEST_SPORT_NOT_SUPPORTED',
-      );
-    }
   }
 
   async getContest(contestId: string): Promise<ContestManagementDetailDto> {
@@ -732,12 +709,6 @@ async function resolveCreateConfiguration(
   const template = await templateRepo.findById(input.templateId);
   if (!template || !template.active) {
     throw new ContestManagementError('Contest configuration template not found');
-  }
-
-  if (template.contestFormat !== input.contestFormat) {
-    throw new ContestManagementError(
-      'Contest configuration template does not match the requested contest type',
-    );
   }
 
   if (template.selectionType !== input.selectionType) {

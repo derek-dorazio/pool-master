@@ -10,6 +10,7 @@ import type {
   ContestFormat,
   ParticipantContestScoringRule,
   SelectionType,
+  Sport,
 } from '@poolmaster/shared/domain';
 import { ContestRulesWithEntryLimitSchema, ContestSelectionConfigSchema } from '@poolmaster/shared/domain';
 
@@ -202,7 +203,7 @@ function mapContestConfiguration(row: {
 
 function mapContestConfigTemplate(row: {
   id: string;
-  sport: string;
+  sport: Sport;
   eventType: string | null;
   contestFormat: ContestFormat;
   selectionType: SelectionType;
