@@ -260,9 +260,18 @@ The cost is that a per-league difference cannot hide in the sport definition. Co
 templates already carry a sport; they would also need an optional sport league so the F1
 template defaults to F1 points (Q3.2).
 
-**Q3.2** Contest templates per sport league (F1 points preset vs NASCAR preset)? *Recommendation:*
-yes: an optional `sportLeagueId` on contest templates, and the create-contest screen picks the
-template from the event's league. Golf gets the same ability for free (an LPGA template).
+**Q3.2** (**Answered and built in #624: yes, as recommended.**) Contest templates per sport
+league (F1 points preset vs NASCAR preset)? *Recommendation:* yes: an optional `sportLeagueId` on
+contest templates, and the create-contest screen picks the template from the event's league. Golf
+gets the same ability for free (an LPGA template).
+
+What was built: `contest_config_templates.sport_league_id`, nullable, so every existing template
+stays sport-wide. The template list takes an optional `sportLeagueId` and answers that league's
+templates plus the sport-wide ones, never another league's. The create-contest page asks for the
+chosen event's league and starts each format on the league's own default, then the sport-wide
+default, then the first preset. Creating a contest from another league's template is refused with
+422 `CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH`. Root admins still edit templates but cannot yet set
+a template's league; a league's presets arrive in the migration that adds that league's events.
 
 ### 3.2 NASCAR (sport league: NASCAR Cup Series)
 

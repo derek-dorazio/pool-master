@@ -85,7 +85,7 @@ A UI Label, Not A Domain Term*.
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
 | `Contest` | contest | One league's game on one event: format, selection type and scoring | The `SportEvent` it runs on |
-| `ContestConfiguration` | contest settings | The contest's rules: roster size, picks per tier, entries per team, counting picks, prizes, and its scoring (a scoring definition and its settings, such as a racing points table) | `ContestConfigTemplate`, a global starting point it may be created from |
+| `ContestConfiguration` | contest settings | The contest's rules: roster size, picks per tier, entries per team, counting picks, prizes, and its scoring (a scoring definition and its settings, such as a racing points table) | `ContestConfigTemplate`, a global starting point it may be created from: sport-wide, or one sport league's own preset (`sportLeagueId`) |
 | `ContestEntry` | entry | One lineup a squad submits to one contest. A squad may hold several (`entryNumber`) | The squad itself |
 | `ContestEntryPick` | pick, lineup | One field member chosen on one entry. The entry's picks are its lineup | A `SportEventParticipant`, which it points at |
 | `ContestEntryStanding` | standings, final result | An entry's result, frozen when the contest settles | `SportEventParticipantStanding`, the golfer's position in the event |

@@ -103,6 +103,11 @@ export interface ContestConfiguration extends DomainEntity {
 /** Seeded reusable contest template selected during commissioner create flow. */
 export interface ContestConfigTemplate extends DomainEntity {
   sport: Sport;
+  /**
+   * The sport league whose events this template is offered for (a league's own official preset).
+   * Null means sport-wide: offered for every league of its sport.
+   */
+  sportLeagueId: string | null;
   eventType?: string | null;
   contestFormat: ContestFormat;
   /** How an entry in a contest created from this template picks. */

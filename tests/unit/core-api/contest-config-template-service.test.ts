@@ -14,6 +14,7 @@ function template(overrides: Partial<ContestConfigTemplate>): ContestConfigTempl
   return {
     id: 'template',
     sport: Sport.GOLF,
+    sportLeagueId: null,
     eventType: null,
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
@@ -31,7 +32,10 @@ function template(overrides: Partial<ContestConfigTemplate>): ContestConfigTempl
   };
 }
 
-/** Mirrors PrismaContestConfigTemplateRepository.list: an event type also matches "any event type". */
+/**
+ * Mirrors PrismaContestConfigTemplateRepository.list: an event type also matches "any event type",
+ * and a sport league also matches the sport-wide (no league) templates.
+ */
 function templateStore(rows: ContestConfigTemplate[]) {
   const store = new Map(rows.map((row) => [row.id, row]));
   const repository: ContestConfigTemplateRepository = {
@@ -40,6 +44,7 @@ function templateStore(rows: ContestConfigTemplate[]) {
       // No sport or format filter: every template is golf and ROSTER while those enums have one member.
       .filter((row) =>
         (input.eventType === undefined || row.eventType === input.eventType || row.eventType == null)
+        && (input.sportLeagueId === undefined || row.sportLeagueId === input.sportLeagueId || row.sportLeagueId === null)
         && (input.active === undefined || row.active === input.active))
       .sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name)),
     update: async (id, updates) => {
@@ -66,6 +71,20 @@ describe('ContestConfigTemplateService.listTemplates', () => {
 
     expect(listed.map((row) => row.id)).toEqual(['any', 'major']);
     expect(listed[0].configuration).toEqual({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 });
+  });
+});
+
+describe('ContestConfigTemplateService.listTemplates by sport league (#624)', () => {
+  it('lists a league\'s own templates with the sport-wide ones, leaves out another league\'s, and echoes each sportLeagueId', async () => {
+    const { service } = templateStore([
+      template({ id: 'sport-wide', sportLeagueId: null, sortOrder: 1 }),
+      template({ id: 'lpga', sportLeagueId: 'lpga-league', sortOrder: 2 }),
+      template({ id: 'pga', sportLeagueId: 'pga-league', sortOrder: 3 }),
+    ]);
+
+    const listed = await service.listTemplates({ sport: Sport.GOLF, sportLeagueId: 'lpga-league' });
+
+    expect(listed.map((row) => [row.id, row.sportLeagueId])).toEqual([['sport-wide', null], ['lpga', 'lpga-league']]);
   });
 });
 

@@ -453,6 +453,56 @@ describe('Contest management integration', () => {
     expect(createRes.json<ErrorEnvelope>().error.code).toBe('CONTEST_RULES_SELECTION_TYPE_MISMATCH');
   });
 
+  it("refuses a contest from another sport league's own template with 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH, and lists that template only for its league", async () => {
+    const prisma = getPrisma();
+    const otherLeague = await prisma.sportLeague.create({
+      data: { sportId, name: `LPGA-style ${randomUUID().slice(0, 8)}` },
+    });
+    const leagueTemplate = await prisma.contestConfigTemplate.create({
+      data: {
+        sport: Sport.GOLF,
+        sportLeagueId: otherLeague.id,
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+        templateKey: `itest-league-${randomUUID().slice(0, 8)}`,
+        name: 'LPGA-style preset',
+        description: 'Another league\'s own template',
+        sortOrder: 99,
+        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
+      },
+    });
+    try {
+      const createRes = await getApp().inject({
+        method: 'POST',
+        url: API_ROUTES.leagues.contests(leagueId),
+        headers: ownerHeaders,
+        payload: {
+          name: 'Other League Template',
+          sportEventId,
+          contestFormat: 'ROSTER',
+          selectionType: 'TIERED',
+          templateId: leagueTemplate.id,
+        },
+      });
+      expect(createRes.statusCode).toBe(422);
+      expect(createRes.json<ErrorEnvelope>().error.code).toBe('CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH');
+
+      const event = await prisma.sportEvent.findUniqueOrThrow({
+        where: { id: sportEventId },
+        select: { eventSeries: { select: { sportLeagueId: true } } },
+      });
+      const listFor = async (sportLeagueId: string) => (await getApp().inject({
+        method: 'GET',
+        url: `${CONTEST_CONFIG_TEMPLATES_URL}?sport=GOLF&sportLeagueId=${sportLeagueId}`,
+        headers: ownerHeaders,
+      })).json<ContestConfigTemplateListResponse>().templates.map((template) => template.id);
+      expect(await listFor(otherLeague.id)).toContain(leagueTemplate.id);
+      expect(await listFor(event.eventSeries.sportLeagueId)).not.toContain(leagueTemplate.id);
+    } finally {
+      await prisma.contestConfigTemplate.delete({ where: { id: leagueTemplate.id } });
+    }
+  });
+
   it('refuses a budget contest on an event with no prices with 409 CONTEST_EVENT_NOT_PRICED', async () => {
     const createRes = await getApp().inject({
       method: 'POST',

@@ -86,6 +86,12 @@ export const CONTEST_BUDGET_FIELD_OUT_OF_RANGE = 'CONTEST_BUDGET_FIELD_OUT_OF_RA
 /** Error code for random-draw rules counting more scores than the draw deals an entry (#601). */
 export const CONTEST_DRAW_FIELD_OUT_OF_RANGE = 'CONTEST_DRAW_FIELD_OUT_OF_RANGE';
 
+/**
+ * Error code for a contest created from a sport league's own template for an event of another
+ * league (#624): a league's preset is offered only for that league's events.
+ */
+export const CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH = 'CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH';
+
 /** Error code for rules of another selection type than the contest's (#93). */
 export const CONTEST_RULES_SELECTION_TYPE_MISMATCH = 'CONTEST_RULES_SELECTION_TYPE_MISMATCH';
 
@@ -132,6 +138,9 @@ export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSche
 export const ContestConfigTemplateDtoSchema = z.object({
   id: z.string().uuid().describe('Seeded contest template identifier.'),
   sport: z.enum(sportValues).describe('Sport this template applies to.'),
+  sportLeagueId: z.string().uuid().nullable().describe(
+    "Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.",
+  ),
   eventType: z.string().nullable().optional().describe('Optional event-type scope for the template.'),
   contestFormat: z.enum(contestFormatValues).describe('Contest type that may use the template.'),
   selectionType: z.enum(selectionTypeValues).describe('How an entry picks in a contest created from this template.'),
@@ -148,6 +157,9 @@ export type ContestConfigTemplateDto = z.infer<typeof ContestConfigTemplateDtoSc
 
 export const ListContestConfigTemplatesQuerySchema = z.object({
   sport: z.enum(sportValues).optional().describe('Only templates for this sport.'),
+  sportLeagueId: z.string().uuid().optional().describe(
+    "Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.",
+  ),
   contestFormat: z.enum(contestFormatValues).optional().describe('Only templates for this contest format.'),
   eventType: z.string().optional().describe('Templates for this event type, plus the ones that apply to any event type.'),
   active: z.boolean().optional().describe('Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.'),

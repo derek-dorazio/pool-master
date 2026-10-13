@@ -97,6 +97,7 @@ export class PrismaContestConfigTemplateRepository
 
   async list(input: {
     sport?: ContestConfigTemplate['sport'];
+    sportLeagueId?: string;
     contestFormat?: ContestConfigTemplate['contestFormat'];
     eventType?: string | null;
     active?: boolean;
@@ -105,8 +106,14 @@ export class PrismaContestConfigTemplateRepository
       where: {
         ...(input.sport !== undefined && { sport: input.sport }),
         ...(input.contestFormat !== undefined && { contestFormat: input.contestFormat }),
-        // An event type narrows to that type's templates plus the ones for any event type.
-        ...(input.eventType !== undefined && { OR: [{ eventType: input.eventType }, { eventType: null }] }),
+        AND: [
+          // An event type narrows to that type's templates plus the ones for any event type.
+          ...(input.eventType !== undefined ? [{ OR: [{ eventType: input.eventType }, { eventType: null }] }] : []),
+          // A sport league narrows to that league's templates plus the sport-wide ones.
+          ...(input.sportLeagueId !== undefined
+            ? [{ OR: [{ sportLeagueId: input.sportLeagueId }, { sportLeagueId: null }] }]
+            : []),
+        ],
         ...(input.active !== undefined && { active: input.active }),
       },
       orderBy: [
@@ -209,6 +216,7 @@ function mapContestConfiguration(row: {
 function mapContestConfigTemplate(row: {
   id: string;
   sport: Sport;
+  sportLeagueId: string | null;
   eventType: string | null;
   contestFormat: ContestFormat;
   selectionType: SelectionType;
@@ -226,6 +234,7 @@ function mapContestConfigTemplate(row: {
   return {
     id: row.id,
     sport: row.sport,
+    sportLeagueId: row.sportLeagueId,
     eventType: row.eventType ?? undefined,
     contestFormat: row.contestFormat,
     selectionType: row.selectionType,

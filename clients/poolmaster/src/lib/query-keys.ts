@@ -59,10 +59,13 @@ export const QueryKeys = {
     byLeagueAndContest: (leagueId: QueryKeyId, contestId: QueryKeyId) =>
       ['poolmaster', 'managed-contest', leagueId, contestId] as const,
   },
-  /** `listContestConfigTemplates` — one global read (A11), so no league in the key. */
+  /**
+   * `listContestConfigTemplates` — one global read (A11), so no pool league in the key. A sport
+   * league (`sportLeagueId`) is a filter, not a tenant.
+   */
   contestConfigTemplates: {
     all: ['poolmaster', 'contest-config-templates'] as const,
-    list: (filters: { sport?: QueryKeyId; contestFormat?: QueryKeyId; active?: boolean }) =>
+    list: (filters: { sport?: QueryKeyId; sportLeagueId?: QueryKeyId; contestFormat?: QueryKeyId; active?: boolean }) =>
       ['poolmaster', 'contest-config-templates', filters] as const,
   },
   contestEntries: {

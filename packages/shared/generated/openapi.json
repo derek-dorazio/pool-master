@@ -6224,6 +6224,14 @@
             ],
             "description": "Sport this template applies to."
           },
+          "sportLeagueId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport."
+          },
           "eventType": {
             "type": [
               "string",
@@ -6598,6 +6606,7 @@
         "required": [
           "id",
           "sport",
+          "sportLeagueId",
           "contestFormat",
           "selectionType",
           "templateKey",
@@ -6921,6 +6930,11 @@
             ],
             "description": "Only templates for this sport."
           },
+          "sportLeagueId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league."
+          },
           "contestFormat": {
             "type": "string",
             "enum": [
@@ -6960,6 +6974,14 @@
                     "HORSE_RACING"
                   ],
                   "description": "Sport this template applies to."
+                },
+                "sportLeagueId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport."
                 },
                 "eventType": {
                   "type": [
@@ -7335,6 +7357,7 @@
               "required": [
                 "id",
                 "sport",
+                "sportLeagueId",
                 "contestFormat",
                 "selectionType",
                 "templateKey",
@@ -7728,6 +7751,14 @@
                 ],
                 "description": "Sport this template applies to."
               },
+              "sportLeagueId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport."
+              },
               "eventType": {
                 "type": [
                   "string",
@@ -8102,6 +8133,7 @@
             "required": [
               "id",
               "sport",
+              "sportLeagueId",
               "contestFormat",
               "selectionType",
               "templateKey",
@@ -29225,7 +29257,7 @@
         "tags": [
           "Contests"
         ],
-        "description": "The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. Commissioners of the league only.",
+        "description": "The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. A template that names a sport league (that league's own preset) makes contests only for that league's events: 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH otherwise. Commissioners of the league only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -29298,7 +29330,7 @@
             }
           },
           "422": {
-            "description": "The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).",
+            "description": "The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport).",
             "content": {
               "application/json": {
                 "schema": {
@@ -30273,7 +30305,7 @@
         "tags": [
           "Contest Config Templates"
         ],
-        "description": "The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format.",
+        "description": "The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format, narrowed to the chosen event's sport league (that league's templates plus the sport-wide ones).",
         "parameters": [
           {
             "schema": {
@@ -30287,6 +30319,16 @@
             "name": "sport",
             "required": false,
             "description": "Only templates for this sport."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "sportLeagueId",
+            "required": false,
+            "description": "Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league."
           },
           {
             "schema": {
