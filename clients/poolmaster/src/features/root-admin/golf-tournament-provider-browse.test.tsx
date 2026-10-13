@@ -59,13 +59,13 @@ function withGolfProvider() {
 function renderBrowse(edition: GolfTournamentEdition = COMPLETE_EDITION) {
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <MemoryRouter initialEntries={['/manage/golf/tournaments/new']}>
+      <MemoryRouter initialEntries={['/manage/sports/golf/events/new']}>
         <Routes>
           <Route
             element={<GolfTournamentProviderBrowse edition={edition} onEditionChange={vi.fn()} tours={TOURS} />}
-            path="/manage/golf/tournaments/new"
+            path="/manage/sports/:sport/events/new"
           />
-          <Route element={<div data-testid="tournament-home">Home</div>} path="/manage/golf/tournaments/:eventId" />
+          <Route element={<div data-testid="tournament-home">Home</div>} path="/manage/sports/:sport/events/:eventId" />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,

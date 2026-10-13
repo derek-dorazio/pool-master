@@ -1,4 +1,4 @@
-import { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
@@ -89,6 +89,7 @@ function EditContestForm({
   const navigate = useNavigate();
   const contestPath = buildLeagueAdminContestPath(leagueCode, contest.id);
   const tierCount = managedContest.effectiveTiers.length;
+  const { participant } = getSportDefinition(event.sport).vocabulary;
   const { selectionType } = configuration;
   const salaryCap = configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null;
   const [rulesError, setRulesError] = useState<string | null>(null);
@@ -100,7 +101,7 @@ function EditContestForm({
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (submitted: EditContestFormValues) => {
-      const parsed = parseContestRules(submitted, selectionType, tierCount);
+      const parsed = parseContestRules(submitted, selectionType, tierCount, participant);
       if (parsed.error !== null) {
         throw new Error(parsed.error);
       }
@@ -159,7 +160,7 @@ function EditContestForm({
       onSubmit={(submitEvent) => {
         setRulesError(null);
         void form.handleSubmit((submitted) => {
-          const parsed = parseContestRules(submitted, selectionType, tierCount);
+          const parsed = parseContestRules(submitted, selectionType, tierCount, participant);
           if (parsed.error !== null) {
             setRulesError(parsed.error);
             return;
@@ -192,6 +193,7 @@ function EditContestForm({
               form.setValue(field, value, { shouldDirty: true });
             }
           }}
+          participant={participant}
           salaryCap={salaryCap}
           selectionType={selectionType}
           tierCount={tierCount}

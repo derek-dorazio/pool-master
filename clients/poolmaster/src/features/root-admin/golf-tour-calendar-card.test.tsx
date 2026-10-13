@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { GolfTourCalendarCard } from './golf-tour-calendar-card';
@@ -56,8 +56,10 @@ function renderCard(tour = TOUR) {
   listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] } });
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <MemoryRouter>
-        <GolfTourCalendarCard tour={tour} />
+      <MemoryRouter initialEntries={[`/manage/sports/golf/leagues/${tour.id}`]}>
+        <Routes>
+          <Route element={<GolfTourCalendarCard tour={tour} />} path="/manage/sports/:sport/leagues/:leagueId" />
+        </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -79,7 +81,7 @@ describe('plans/147 GolfTourCalendarCard', () => {
     expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: 'pga' } }));
     expect(screen.getByTestId('root-admin-golf-tour-calendar-new-tournament')).toHaveAttribute(
       'href',
-      '/manage/golf/tournaments/new?sportLeagueId=pga&eventYear=2026',
+      '/manage/sports/golf/events/new?sportLeagueId=pga&eventYear=2026',
     );
   });
 
@@ -198,7 +200,7 @@ describe('plans/147 GolfTourCalendarCard', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-tour-calendar-import'));
     await userEvent.click(screen.getByTestId('root-admin-golf-tour-calendar-import-confirm'));
 
-    expect(await screen.findByText('PGA Tour has no match keyword. Set it to the provider’s tour name, such as “PGA TOUR”.'))
+    expect(await screen.findByText('PGA Tour has no match keyword. Set it to the provider’s tour name.'))
       .toBeInTheDocument();
   });
 });

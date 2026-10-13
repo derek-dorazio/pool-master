@@ -143,11 +143,11 @@ function renderPage() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/golf/tournaments/evt-1/tiers']}>
+      <MemoryRouter initialEntries={['/manage/sports/golf/events/evt-1/tiers']}>
         <Routes>
           <Route
             element={<RootAdminGolfTournamentTiersPage />}
-            path="/manage/golf/tournaments/:eventId/tiers"
+            path="/manage/sports/:sport/events/:eventId/tiers"
           />
         </Routes>
       </MemoryRouter>

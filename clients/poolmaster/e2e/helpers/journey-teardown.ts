@@ -29,9 +29,17 @@ export type JourneyUser = {
   lastName: string;
 };
 
-/** Every name one attempt of the journey can create, all derived from its run id. */
+/** The sports a journey builds its catalog in: the golden journey's golf, the racing journey's horse racing. */
+export type JourneySport = 'GOLF' | 'HORSE_RACING';
+
+/**
+ * Every name one attempt of a journey can create, all derived from its run id. The tour, players
+ * and tournament are the sport's own words for a sport league, participants and an event: a
+ * racing run's are a circuit, horses and a race.
+ */
 export type JourneyRun = {
   runId: string;
+  sport: JourneySport;
   tourName: string;
   playerNamePrefix: string;
   tournamentName: string;
@@ -125,7 +133,7 @@ async function removeTournament(api: APIRequestContext, headers: AuthHeaders, ru
 
 async function findTourId(api: APIRequestContext, headers: AuthHeaders, run: JourneyRun): Promise<string | null> {
   const list = await expectOk(
-    api.get('/api/v1/sport-leagues', { headers, params: { sport: 'GOLF' } }),
+    api.get('/api/v1/sport-leagues', { headers, params: { sport: run.sport } }),
     'list tours',
   );
   const { sportLeagues } = (await list.json()) as { sportLeagues: { id: string; name: string }[] };

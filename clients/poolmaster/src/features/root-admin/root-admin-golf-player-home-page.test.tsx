@@ -9,7 +9,7 @@ import { RootAdminGolfPlayerEditPage } from './root-admin-golf-player-edit-page'
 import { RootAdminGolfPlayerHomePage } from './root-admin-golf-player-home-page';
 import { participantFixture } from './golf-test-fixtures';
 
-// A golfer's page, /manage/golf/players/:participantId, and its Edit details page (pool-master-rfy).
+// A golfer's page, /manage/sports/golf/participants/:participantId, and its Edit details page (pool-master-rfy).
 
 const { getParticipantMock, listParticipantProviderMappingsMock, updateParticipantMock, mockLogger } = vi.hoisted(
   () => {
@@ -69,7 +69,7 @@ const MAPPING = {
 };
 
 function renderPage(
-  path = '/manage/golf/players/p-rory',
+  path = '/manage/sports/golf/participants/p-rory',
   queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
 ) {
   return render(
@@ -78,11 +78,11 @@ function renderPage(
         <Routes>
           <Route
             element={<RootAdminGolfPlayerHomePage />}
-            path="/manage/golf/players/:participantId"
+            path="/manage/sports/:sport/participants/:participantId"
           />
           <Route
             element={<RootAdminGolfPlayerEditPage />}
-            path="/manage/golf/players/:participantId/edit"
+            path="/manage/sports/:sport/participants/:participantId/edit"
           />
         </Routes>
       </MemoryRouter>
@@ -114,7 +114,7 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
     expect(within(details).getByText('rory-1')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-golf-player-home-edit')).toHaveAttribute(
       'href',
-      '/manage/golf/players/p-rory/edit',
+      '/manage/sports/golf/participants/p-rory/edit',
     );
     const mappings = await screen.findByTestId('root-admin-golf-player-home-mappings');
     expect(within(mappings).getByText('mock-provider')).toBeInTheDocument();
@@ -161,7 +161,7 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
 
   it('names each status in plain words in Edit details, while saving the status value', async () => {
     getParticipantMock.mockResolvedValue({ data: { participant: player() } });
-    renderPage('/manage/golf/players/p-rory/edit');
+    renderPage('/manage/sports/golf/participants/p-rory/edit');
 
     const status = await screen.findByTestId('root-admin-golf-player-edit-status');
     expect(within(status).getAllByRole('option').map((option) => option.textContent)).toEqual([
@@ -175,7 +175,7 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
 
   it('returns to the player from Edit details\' Cancel without saving', async () => {
     getParticipantMock.mockResolvedValue({ data: { participant: player() } });
-    renderPage('/manage/golf/players/p-rory/edit');
+    renderPage('/manage/sports/golf/participants/p-rory/edit');
 
     await screen.findByTestId('root-admin-golf-player-edit-page');
     await userEvent.click(screen.getByRole('link', { name: 'Cancel' }));
@@ -190,7 +190,7 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
       error: { error: { code: 'VALIDATION_ERROR', message: 'Short name is too long.' } },
       response: { status: 400 },
     });
-    renderPage('/manage/golf/players/p-rory/edit');
+    renderPage('/manage/sports/golf/participants/p-rory/edit');
 
     await userEvent.click(await screen.findByTestId('root-admin-golf-player-edit-save'));
 
@@ -221,7 +221,7 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
   it('pool-master-rfy does not clobber an in-progress edit when the player query refetches', async () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     getParticipantMock.mockResolvedValue({ data: { participant: player() } });
-    renderPage('/manage/golf/players/p-rory', queryClient);
+    renderPage('/manage/sports/golf/participants/p-rory', queryClient);
 
     await userEvent.click(await screen.findByTestId('root-admin-golf-player-home-edit'));
     const nameInput = await screen.findByTestId('root-admin-golf-player-edit-name');

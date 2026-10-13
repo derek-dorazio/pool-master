@@ -1,4 +1,4 @@
-import { ContestEntryStatus, ContestStatus, SelectionType } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import { Check, X } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -81,7 +81,7 @@ function NotOpenCard({
         ))}
       </ul>
       <p className="text-sm text-on-inverse-muted">
-        Once it&apos;s open, members can enter until the first tee time, and these settings can&apos;t change.
+        Once it&apos;s open, members can enter until the {getSportDefinition(event.sport).vocabulary.eventStart}, and these settings can&apos;t change.
       </p>
       <div className="flex flex-wrap gap-3">
         <OpenContestAction contestId={contest.id} leagueId={contest.leagueId} />
@@ -140,7 +140,7 @@ function OpenCard({
         </div>
       ) : null}
       <p className="text-sm text-on-inverse-muted">
-        Entries close at the first tee time, <DateDisplay className="text-on-inverse-muted" value={event.startDate} />.
+        Entries close at the {getSportDefinition(event.sport).vocabulary.eventStart}, <DateDisplay className="text-on-inverse-muted" value={event.startDate} />.
         The contest goes live then and is final when the event ends.
       </p>
       <ViewInLeagueLink contestId={contestId} leagueCode={leagueCode} />
@@ -195,8 +195,8 @@ function DrawOpenCard({
     return (
       <StatusCardFrame eyebrow="Drawn · entries closed" title="The draw has run">
         <p className="text-sm text-on-inverse-muted" data-testid="contest-draw-ran">
-          {`Drawn ${formatDateTimeDisplay(drawnAt)}. Every entry has its golfers, and everyone in the league can see who drew whom. `}
-          The contest goes live at the first tee time, <DateDisplay className="text-on-inverse-muted" value={event.startDate} />.
+          {`Drawn ${formatDateTimeDisplay(drawnAt)}. Every entry has its ${getSportDefinition(event.sport).vocabulary.participant.many}, and everyone in the league can see who drew whom. `}
+          The contest goes live at the {getSportDefinition(event.sport).vocabulary.eventStart}, <DateDisplay className="text-on-inverse-muted" value={event.startDate} />.
         </p>
         <ViewInLeagueLink contestId={contest.id} leagueCode={leagueCode} />
       </StatusCardFrame>
@@ -211,12 +211,13 @@ function DrawOpenCard({
       {entryCount !== undefined ? (
         <div className="flex flex-wrap gap-2.5">
           <Stat label="Entries" testId="contest-stat-entries" value={entryCount} />
-          <Stat label="Until tee-off" testId="contest-stat-until-close" value={formatTimeUntil(event.startDate)} />
+          <Stat label="Until it starts" testId="contest-stat-until-close" value={formatTimeUntil(event.startDate)} />
         </div>
       ) : null}
       <p className="text-sm text-on-inverse-muted">
-        Run the draw once everyone has entered, before the first tee time,{' '}
-        <DateDisplay className="text-on-inverse-muted" value={event.startDate} />. It deals each entry its golfers at
+        Run the draw once everyone has entered, before the {getSportDefinition(event.sport).vocabulary.eventStart},{' '}
+        <DateDisplay className="text-on-inverse-muted" value={event.startDate} />. It deals each entry its{' '}
+        {getSportDefinition(event.sport).vocabulary.participant.many} at
         random, enters every entry and closes entries.
       </p>
       {drawState.isError ? (
@@ -230,6 +231,7 @@ function DrawOpenCard({
             contestId={contest.id}
             entryCount={entryCount}
             leagueId={contest.leagueId}
+            noun={getSportDefinition(event.sport).vocabulary.participant}
             picksPerEntry={drawState.data.rosterSize}
           />
         ) : null}

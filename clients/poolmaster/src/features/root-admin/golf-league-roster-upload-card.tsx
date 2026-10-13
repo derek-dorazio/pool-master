@@ -17,6 +17,8 @@ import {
   parseGolfRosterUpload,
   type GolfRosterUploadRow,
 } from './golf-admin-utils';
+import { capitalize, sportPathSegment } from './manage-navigation';
+import { useManagedSport } from './use-managed-sport';
 
 type RosterPreviewRow = ParticipantLeagueAffiliationUploadPreviewResponse['rows'][number];
 
@@ -41,6 +43,8 @@ function describeRow(row: RosterPreviewRow['row']): string {
  * week-to-week ranking maintenance path; per-row edits live in the roster grid.
  */
 export function GolfLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
+  const { sport, definition } = useManagedSport();
+  const { participant, sportLeague } = definition.vocabulary;
   const logger = getLogger().child({
     feature: 'root-admin-golf-league-home-page',
   });
@@ -94,8 +98,7 @@ export function GolfLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
         Bulk-update rankings
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Paste or upload the current rankings, preview how each row resolves to a
-        golfer, then apply.
+        {`Paste or upload the current rankings, preview how each row resolves to a ${participant.one}, then apply.`}
       </p>
       <div className="mt-4">
         <BulkUploadPanel<GolfRosterUploadRow, RosterPreviewRow>
@@ -130,7 +133,7 @@ export function GolfLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
                   <tr>
                     <th className="px-4 py-2">Row</th>
                     <th className="px-4 py-2">Resolution</th>
-                    <th className="px-4 py-2">Golfer</th>
+                    <th className="px-4 py-2">{capitalize(participant.one)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -151,15 +154,14 @@ export function GolfLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
               </table>
             </div>
           )}
-          templateFilename="golf-tour-roster-template.csv"
+          templateFilename={`${sportPathSegment(sport)}-${sportLeague.one}-roster-template.csv`}
           templateHeaders={GOLF_ROSTER_UPLOAD_HEADERS}
-          templateSampleRow={['dj-2011', 'Dustin Johnson', 12]}
           testId="root-admin-golf-league-roster-upload"
           unresolvedCount={(rows) =>
             rows.filter((row) => row.resolution !== 'MATCHED').length
           }
           unresolvedNotice={(count) =>
-            `${count} row${count === 1 ? '' : 's'} could not be matched to a golfer. Fix or remove ${
+            `${count} row${count === 1 ? '' : 's'} could not be matched to a ${participant.one}. Fix or remove ${
               count === 1 ? 'it' : 'them'
             } before applying.`
           }

@@ -17,9 +17,11 @@ import { GolfTierBoard } from './golf-tier-board';
 import { GolfTierDefinitionsPanel } from './golf-tier-definitions-panel';
 import { golfTiersLocked } from './golf-admin-utils';
 import { useGolfFieldQuery, useGolfTiersQuery, useGolfTournamentQuery } from './use-golf-tournament';
+import { buildSportEventPath } from './manage-navigation';
+import { useManagedSport } from './use-managed-sport';
 
 /**
- * plans/124 §6.3 — /manage/golf/tournaments/:eventId/tiers. Owns the tournament /
+ * plans/124 §6.3 — /manage/sports/:sport/events/:eventId/tiers. Owns the tournament /
  * tiers / field queries and the split layout; the tier-definition panel, the
  * drag-and-drop board, and the auto-assign actions are each their own component.
  * Prices are assigned here too, with the values they were assigned with shown
@@ -27,6 +29,8 @@ import { useGolfFieldQuery, useGolfTiersQuery, useGolfTournamentQuery } from './
  */
 export function RootAdminGolfTournamentTiersPage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
+  const { sport, definition } = useManagedSport();
+  const { event, participant } = definition.vocabulary;
 
   const tournamentQuery = useGolfTournamentQuery(eventId);
   const tiersQuery = useGolfTiersQuery(eventId);
@@ -41,7 +45,7 @@ export function RootAdminGolfTournamentTiersPage() {
   const field = useMemo(() => fieldQuery.data ?? [], [fieldQuery.data]);
 
   const assignmentCountByTierKey = useMemo(() => {
-    // A tier's assignments are the golfers whose valuation names it (#236).
+    // A tier's assignments are the participants whose valuation names it (#236).
     const counts: Record<string, number> = {};
     for (const tier of tiers) {
       counts[tier.tierKey] = field.filter(
@@ -60,7 +64,7 @@ export function RootAdminGolfTournamentTiersPage() {
   return (
     <AsyncPage
       errorBody={extractErrorMessage(tournamentQuery.error, {
-        fallback: 'We could not load this golf tournament right now.',
+        fallback: `We could not load this ${event.one} right now.`,
       })}
       loadingBody="Loading tiers..."
       state={pageState}
@@ -80,21 +84,23 @@ export function RootAdminGolfTournamentTiersPage() {
               <GolfTierAutoAssignActions
                 disabled={locked || field.length === 0}
                 eventId={eventId}
+                sport={tournament.sport}
               />
               <GolfPriceAssignAction
                 activeGolferCount={field.filter((entry) => entry.isActive).length}
                 current={tournament.pricing}
                 disabled={locked || field.length === 0}
                 eventId={eventId}
+                sport={tournament.sport}
               />
             </div>
           </div>
 
           {locked ? (
             <Callout data-testid="root-admin-golf-tiers-locked" tone="info">
-              This tournament has been released for contests, so its tiers and prices are
-              locked for good. A golfer added to the field from now on stays without a tier
-              and can&apos;t be picked.
+              This {event.one} has been released for contests, so its tiers and prices are
+              locked for good. A {participant.one} added to the field from now on stays without
+              a tier and can&apos;t be picked.
             </Callout>
           ) : null}
 
@@ -110,19 +116,19 @@ export function RootAdminGolfTournamentTiersPage() {
                 <Alert data-testid="root-admin-golf-tiers-field-error" tone="danger">
                   {extractErrorMessage(fieldQuery.error, {
                     fallback:
-                      'We could not load the tournament field, so golfer names and the Unassigned column may be incomplete.',
+                      `We could not load the ${event.one} field, so ${participant.one} names and the Unassigned column may be incomplete.`,
                   })}
                 </Alert>
               ) : null}
               {!fieldQuery.isError && field.length === 0 ? (
                 <Callout tone="info">
-                  This tournament has no field yet. Load or seed the field before
-                  assigning golfers to tiers.
+                  This {event.one} has no field yet. Load or seed the field before
+                  assigning {participant.many} to tiers.
                   <span className="ml-2">
                     <LinkButton
                       data-testid="root-admin-golf-tiers-field-link"
                       size="sm"
-                      to={`/manage/golf/tournaments/${eventId}/field`}
+                      to={`${buildSportEventPath(sport, eventId)}/field`}
                       variant="secondary"
                     >
                       Open Field
@@ -136,6 +142,7 @@ export function RootAdminGolfTournamentTiersPage() {
                     eventId={eventId}
                     field={field}
                     locked={locked}
+                    sport={tournament.sport}
                     tiers={tiers}
                   />
                 }
@@ -144,6 +151,7 @@ export function RootAdminGolfTournamentTiersPage() {
                     assignmentCountByTierKey={assignmentCountByTierKey}
                     eventId={eventId}
                     locked={locked}
+                    sport={tournament.sport}
                     tiers={tiers}
                   />
                 }

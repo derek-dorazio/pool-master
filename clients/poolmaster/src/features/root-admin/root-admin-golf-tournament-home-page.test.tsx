@@ -117,7 +117,7 @@ function seedDefaults() {
   });
 }
 
-function renderPage(path = '/manage/golf/tournaments/tour-1') {
+function renderPage(path = '/manage/sports/golf/events/tour-1') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -127,19 +127,19 @@ function renderPage(path = '/manage/golf/tournaments/tour-1') {
         <Routes>
           <Route
             element={<RootAdminGolfTournamentHomePage />}
-            path="/manage/golf/tournaments/:eventId"
+            path="/manage/sports/:sport/events/:eventId"
           />
           <Route
             element={<RootAdminGolfTournamentEditPage />}
-            path="/manage/golf/tournaments/:eventId/edit"
+            path="/manage/sports/:sport/events/:eventId/edit"
           />
           <Route
             element={<RootAdminGolfTournamentSchedulePage />}
-            path="/manage/golf/tournaments/:eventId/schedule"
+            path="/manage/sports/:sport/events/:eventId/schedule"
           />
           <Route
             element={<div data-testid="tournament-subpage" />}
-            path="/manage/golf/tournaments/:eventId/:view"
+            path="/manage/sports/:sport/events/:eventId/:view"
           />
         </Routes>
       </MemoryRouter>
@@ -160,7 +160,7 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     expect(await screen.findByText('Rolling Weekend Invitational')).toBeInTheDocument();
     // plans/147 — the tour (linked) and the event year, where the season used to be.
     expect(await screen.findByTestId('root-admin-golf-tournament-home-tour-link')).toHaveTextContent('PGA Tour');
-    expect(screen.getByTestId('root-admin-golf-tournament-home-tour-link')).toHaveAttribute('href', '/manage/golf/leagues/league-1');
+    expect(screen.getByTestId('root-admin-golf-tournament-home-tour-link')).toHaveAttribute('href', '/manage/sports/golf/leagues/league-1');
     expect(screen.getByText('Event year')).toBeInTheDocument();
 
     const rail = screen.getByTestId('root-admin-golf-tournament-workflow-rail');
@@ -690,7 +690,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
     expect(await screen.findByText('The participant field is not loaded yet')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-golf-tournament-home-load-field')).toHaveAttribute(
       'href',
-      '/manage/golf/tournaments/tour-1/field',
+      '/manage/sports/golf/events/tour-1/field',
     );
   });
 
@@ -887,7 +887,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
   it('tells the admin there is nothing to schedule, with no Save, when the tournament has no rounds', async () => {
     seedDefaults();
     listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
-    renderPage('/manage/golf/tournaments/tour-1/schedule');
+    renderPage('/manage/sports/golf/events/tour-1/schedule');
 
     expect(await screen.findByText('This tournament has no rounds to schedule yet.')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-golf-tournament-rounds-save')).not.toBeInTheDocument();
@@ -896,7 +896,7 @@ describe('Overview blocks: empty values, refusals and closing dialogs', () => {
   it('shows the server\'s reason as a load error, with no Save, when the round schedule cannot be loaded', async () => {
     seedDefaults();
     listEventRoundsMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'The round store is unavailable.', 500));
-    renderPage('/manage/golf/tournaments/tour-1/schedule');
+    renderPage('/manage/sports/golf/events/tour-1/schedule');
 
     const alert = await screen.findByTestId('shared-error-state');
     expect(within(alert).getByText('The round store is unavailable.')).toBeInTheDocument();

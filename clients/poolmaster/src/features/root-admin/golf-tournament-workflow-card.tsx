@@ -21,9 +21,9 @@ import {
 } from './golf-admin-utils';
 import { GolfTournamentReleaseAction } from './golf-tournament-release-action';
 import { GolfTournamentWorkflowRail } from './golf-tournament-workflow-rail';
-import { buildGolfTournamentPath } from './manage-navigation';
+import { buildSportEventPath, capitalize } from './manage-navigation';
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
-import { SportEventStatus } from '@poolmaster/shared/domain';
+import { SportEventStatus, getSportDefinition } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 block 2 — the workflow rail, "Release for contests" while the tournament
@@ -44,6 +44,8 @@ export function GolfTournamentWorkflowCard({
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-home-page',
   });
+  const definition = getSportDefinition(tournament.sport);
+  const { event, round: roundNoun } = definition.vocabulary;
   const [transitionTarget, setTransitionTarget] =
     useState<GolfTournamentStatus | null>(null);
   const [autoToggleOpen, setAutoToggleOpen] = useState(false);
@@ -55,7 +57,7 @@ export function GolfTournamentWorkflowCard({
         body: { toStatus },
       });
       if (!response.data?.event) {
-        throwApiError(response.error, 'Golf tournament transition response is missing data.');
+        throwApiError(response.error, `The ${event.one} transition response is missing data.`);
       }
       return response.data.event;
     },
@@ -79,7 +81,7 @@ export function GolfTournamentWorkflowCard({
         body: { autoLifecycleEnabled },
       });
       if (!response.data?.event) {
-        throwApiError(response.error, 'Golf tournament update response is missing data.');
+        throwApiError(response.error, `The ${event.one} update response is missing data.`);
       }
       return response.data.event;
     },
@@ -148,7 +150,7 @@ export function GolfTournamentWorkflowCard({
         </Button>
         <span>
           {tournament.autoLifecycleEnabled
-            ? 'The background scheduler advances this tournament from its round schedule.'
+            ? `The background scheduler advances this ${event.one} from its ${roundNoun.one} schedule.`
             : 'Automatic lifecycle is off — every transition is manual.'}
         </span>
       </div>
@@ -158,7 +160,7 @@ export function GolfTournamentWorkflowCard({
           <LinkButton
             data-testid="root-admin-golf-tournament-rounds-edit"
             size="sm"
-            to={`${buildGolfTournamentPath(eventId)}/schedule`}
+            to={`${buildSportEventPath(tournament.sport, eventId)}/schedule`}
             variant="secondary"
           >
             Edit schedule
@@ -168,18 +170,18 @@ export function GolfTournamentWorkflowCard({
         description={
           roundsError
             ? extractErrorMessage(roundsError, {
-                fallback: 'Round schedule is unavailable.',
+                fallback: `${capitalize(roundNoun.one)} schedule is unavailable.`,
               })
             : rounds.length === 0
-              ? 'No rounds recorded yet.'
+              ? `No ${roundNoun.many} recorded yet.`
               : rounds
                   .map(
                     (round) =>
-                      `R${round.roundNumber} ${formatDateTimeDisplay(round.scheduledDate)}`,
+                      `${definition.roundLabel(round.roundNumber, rounds.length)} ${formatDateTimeDisplay(round.scheduledDate)}`,
                   )
                   .join(' · ')
         }
-        title="Rounds"
+        title={capitalize(roundNoun.many)}
       />
 
       <ConfirmationModal
@@ -203,7 +205,7 @@ export function GolfTournamentWorkflowCard({
         onOpenChange={(open) => !open && setTransitionTarget(null)}
         open={transitionTarget !== null}
         testId="root-admin-golf-tournament-transition-modal"
-        title="Change tournament status"
+        title={`Change ${event.one} status`}
         tone="danger"
       />
 
@@ -214,7 +216,7 @@ export function GolfTournamentWorkflowCard({
             : 'Turn on automatic lifecycle'
         }
         confirmTestId="root-admin-golf-tournament-auto-confirm"
-        description="The background scheduler only advances a tournament while automatic lifecycle is on."
+        description={`The background scheduler only advances a ${event.one} while automatic lifecycle is on.`}
         errorMessage={
           autoMutation.isError
             ? extractErrorMessage(autoMutation.error, {

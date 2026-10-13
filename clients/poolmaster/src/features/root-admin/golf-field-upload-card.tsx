@@ -1,3 +1,4 @@
+import { getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import { applyEventParticipantUpload, previewEventParticipantUpload } from '@/lib/api';
 import { BulkUploadPanel, Button, StatusBadge, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -5,6 +6,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportEventParticipantDto } from '@/lib/api';
+import { capitalize, sportPathSegment } from './manage-navigation';
 import {
   GOLF_FIELD_UPLOAD_HEADERS,
   formatGolfFieldUploadValues,
@@ -41,11 +43,14 @@ export function GolfFieldUploadCard({
   eventId,
   entries,
   onClose,
+  sport,
 }: {
   eventId: string;
   entries: readonly SportEventParticipantDto[];
   onClose: () => void;
+  sport: Sport;
 }) {
+  const { participant } = getSportDefinition(sport).vocabulary;
   const logger = getLogger().child({ feature: 'root-admin-golf-tournament-field-page' });
 
   const previewMutation = useInvalidatingMutation({
@@ -78,7 +83,7 @@ export function GolfFieldUploadCard({
       QueryKeys.rootAdmin.golf.tiers(eventId),
     ],
     onError: (error) => {
-      logger.warn({ action: 'golf.fieldUpload.apply.failed', err: error }, 'Golf field upload was rejected');
+      logger.warn({ action: 'golf.fieldUpload.apply.failed', err: error }, 'Field upload was rejected');
     },
   });
 
@@ -90,8 +95,8 @@ export function GolfFieldUploadCard({
         <div>
           <h3 className="text-base font-semibold text-foreground">Bulk upload</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Adjust rankings, odds, seeds and withdrawals for golfers already on this field.
-            Golfers must be on the field first — load it from the provider to add them.
+            Adjust rankings, odds, seeds and withdrawals for {participant.many} already on this
+            field. {capitalize(participant.many)} must be on the field first — add them to the field to adjust them.
           </p>
         </div>
         <Button data-testid="root-admin-golf-field-upload-close" onClick={onClose} size="sm" variant="secondary">
@@ -133,7 +138,7 @@ export function GolfFieldUploadCard({
                     <tr>
                       <th className="px-4 py-2">Row</th>
                       <th className="px-4 py-2">Resolution</th>
-                      <th className="px-4 py-2">Golfer</th>
+                      <th className="px-4 py-2">{capitalize(participant.one)}</th>
                       <th className="px-4 py-2">Before → After</th>
                       <th className="px-4 py-2">Change</th>
                     </tr>
@@ -173,14 +178,13 @@ export function GolfFieldUploadCard({
               </div>
             </div>
           )}
-          templateFilename="golf-field-upload-template.csv"
+          templateFilename={`${sportPathSegment(sport)}-field-upload-template.csv`}
           templateHeaders={GOLF_FIELD_UPLOAD_HEADERS}
           templateRows={entries.length > 0 ? golfFieldUploadTemplateRows(entries) : undefined}
-          templateSampleRow={['ext-123', 'Rory McIlroy', 2, 8.5, 2, 'true', '']}
           testId="root-admin-golf-field-upload"
           unresolvedCount={golfFieldUploadBlockedCount}
           unresolvedNotice={(count) =>
-            `${count} row${count === 1 ? '' : 's'} cannot be applied: each row must name one golfer already on this field, once. Fix or remove ${
+            `${count} row${count === 1 ? '' : 's'} cannot be applied: each row must name one ${participant.one} already on this field, once. Fix or remove ${
               count === 1 ? 'it' : 'them'
             } before applying.`
           }

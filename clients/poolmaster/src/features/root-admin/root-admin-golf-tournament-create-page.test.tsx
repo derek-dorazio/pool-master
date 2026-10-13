@@ -7,7 +7,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentCreatePage } from './root-admin-golf-tournament-create-page';
 import { sportEventFixture, sportLeagueFixture } from './golf-test-fixtures';
 
-// plans/124 §6.3 / §4.4a — /manage/golf/tournaments/new (pool-master-3dg). plans/147: a
+// plans/124 §6.3 / §4.4a — /manage/sports/golf/events/new (pool-master-3dg). plans/147: a
 // tournament is created on a tour, in an event year, where it used to be created in a season.
 
 const {
@@ -52,7 +52,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 function renderPage(
-  entry = '/manage/golf/tournaments/new?sportLeagueId=league-1&eventYear=2026',
+  entry = '/manage/sports/golf/events/new?sportLeagueId=league-1&eventYear=2026',
   tours = [sportLeagueFixture({ id: 'league-1' }), sportLeagueFixture({ id: 'league-2', name: 'LPGA Tour' })],
 ) {
   listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: tours } });
@@ -65,11 +65,11 @@ function renderPage(
         <Routes>
           <Route
             element={<RootAdminGolfTournamentCreatePage />}
-            path="/manage/golf/tournaments/new"
+            path="/manage/sports/:sport/events/new"
           />
           <Route
             element={<div data-testid="tournament-home">Home</div>}
-            path="/manage/golf/tournaments/:eventId"
+            path="/manage/sports/:sport/events/:eventId"
           />
         </Routes>
       </MemoryRouter>
@@ -86,18 +86,18 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
   });
 
   it('pool-master-3dg, plans/147: blocks creation with a link to Tours when no active golf tour exists', async () => {
-    renderPage('/manage/golf/tournaments/new', [sportLeagueFixture({ id: 'league-1', isActive: false })]);
+    renderPage('/manage/sports/golf/events/new', [sportLeagueFixture({ id: 'league-1', isActive: false })]);
 
     expect(
       await screen.findByText('Create a tour before creating a tournament'),
     ).toBeInTheDocument();
     expect(
       screen.getByTestId('root-admin-golf-tournament-create-tours-link'),
-    ).toHaveAttribute('href', '/manage/golf/leagues');
+    ).toHaveAttribute('href', '/manage/sports/golf/leagues');
   });
 
   it('plans/147: defaults the only active tour and its current year when the URL names neither', async () => {
-    renderPage('/manage/golf/tournaments/new', [sportLeagueFixture({ id: 'league-1', currentEventYear: 2027 })]);
+    renderPage('/manage/sports/golf/events/new', [sportLeagueFixture({ id: 'league-1', currentEventYear: 2027 })]);
 
     await waitFor(() => expect(screen.getByTestId('root-admin-golf-tournament-create-tour')).toHaveValue('league-1'));
     expect(screen.getByTestId('root-admin-golf-tournament-create-event-year')).toHaveValue('2027');

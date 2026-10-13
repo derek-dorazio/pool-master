@@ -589,7 +589,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
     });
   });
 
-  it('says in plain words when even the cheapest golfers for every place cost more than the cap', async () => {
+  it('says in plain words when even the cheapest picks for every place cost more than the cap', async () => {
     await primeBudgetMocks(PRICING);
     createContestMock.mockResolvedValue({
       error: { error: { code: 'CONTEST_BUDGET_UNFILLABLE', message: 'Budget rules cannot be filled.' } },
@@ -602,7 +602,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
     fireEvent.click(screen.getByTestId('create-contest-submit'));
 
     expect(await screen.findByText(
-      'Even the cheapest golfers for every place cost more than the salary cap, so nobody could enter. Pick fewer golfers per entry.',
+      'Even the cheapest picks for every place cost more than the salary cap, so nobody could enter. Pick fewer per entry.',
     )).toBeInTheDocument();
   });
 });
@@ -699,5 +699,132 @@ describe('Commissioner tools › Contests › Create contest › Random draw for
 
     expect(screen.getByTestId('contest-rules-error')).toHaveTextContent('Scores that count must be between 1 and the 1 golfer dealt.');
     expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
+  });
+});
+
+describe('Commissioner tools › Contests › Create contest for a horse race', () => {
+  const RACE_PRESET_ID = '77777777-0000-4000-8000-000000000001';
+
+  /** Golf's catalog as before, and one released race with its Win / Place / Show preset. */
+  function primeRacingMocks() {
+    primeCommonMocks();
+    const golfEvents: ((options: unknown) => unknown) | undefined = listEventsMock.getMockImplementation();
+    const golfTemplates: ((options: unknown) => unknown) | undefined = listContestConfigTemplatesMock.getMockImplementation();
+    listEventsMock.mockImplementation((options: { query?: { sport?: string } }) => (
+      options.query?.sport === 'HORSE_RACING'
+        ? singleEvent({ id: 'race-1', sport: 'HORSE_RACING', name: 'Kentucky Derby', participantCount: 9, tierCount: 3 })
+        : golfEvents?.(options)
+    ));
+    listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string } }) => (
+      options.query?.sport === 'HORSE_RACING'
+        ? {
+          data: {
+            templates: [{
+              id: RACE_PRESET_ID,
+              sport: 'HORSE_RACING',
+              contestFormat: 'ROSTER',
+              selectionType: 'TIERED',
+              templateKey: 'horse-racing-tiered-pick-3',
+              name: 'One horse from each tier, all count',
+              description: 'Win / Place / Show',
+              sortOrder: 1,
+              isDefault: true,
+              active: true,
+              schemaVersion: 1,
+              configuration: {
+                maxEntriesPerSquad: 1,
+                selectionType: 'TIERED',
+                picksPerTier: 1,
+                countedScores: 3,
+                scoring: {
+                  participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
+                  config: { pointsTable: [5, 3, 1], didNotFinishPoints: 0 },
+                },
+              },
+            }],
+          },
+        }
+        : golfTemplates?.(options)
+    ));
+  }
+
+  afterEach(() => {
+    createContestMock.mockReset();
+    getLeagueByCodeMock.mockReset();
+    listContestConfigTemplatesMock.mockReset();
+    listEventsMock.mockReset();
+  });
+
+  it('offers one sport choice per supported sport and shows no points table for golf, which takes no scoring settings', async () => {
+    primeRacingMocks();
+
+    renderCreateContestPage();
+
+    await waitForStartingChoices();
+    expect(screen.getByTestId('contest-sport-GOLF')).toBeChecked();
+    expect(screen.getByTestId('contest-sport-HORSE_RACING')).toHaveTextContent('Horse racing');
+    expect(screen.queryByTestId('contest-scoring-points-table')).not.toBeInTheDocument();
+  });
+
+  it('lists the races on choosing horse racing, starts from its preset\'s points table, and sends that table as the contest\'s scoring', async () => {
+    primeRacingMocks();
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-race' } } });
+
+    renderCreateContestPage();
+
+    await waitForStartingChoices();
+    fireEvent.click(screen.getByTestId('contest-sport-HORSE_RACING'));
+
+    await waitFor(() => expect(screen.getByTestId('contest-event-race-1')).toBeChecked());
+    expect(screen.getByTestId('contest-event-race-1')).toHaveTextContent('9 horses · 3 tiers');
+    await waitFor(() => expect(screen.getByTestId('contest-template-horse-racing-tiered-pick-3')).toBeChecked());
+    expect(screen.getByTestId('contest-scoring-points-table')).toHaveValue('5, 3, 1');
+    expect(screen.getByTestId('contest-scoring-did-not-finish-points')).toHaveValue(0);
+    expect(screen.getByTestId('create-contest-event')).toHaveTextContent('Entries close at the post time.');
+    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
+      'Pick 1 horse from each of 3 tiers. Every score counts. Points by finishing place: 5, 3, 1. 1 entry per team.',
+    );
+
+    fireEvent.change(screen.getByTestId('contest-scoring-points-table'), { target: { value: '10, 6, 4, 2' } });
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+    expect(submittedBody()).toEqual({
+      name: 'Kentucky Derby Pick 3',
+      sportEventId: 'race-1',
+      contestFormat: 'ROSTER',
+      selectionType: 'TIERED',
+      configuration: {
+        selectionType: 'TIERED',
+        picksPerTier: 1,
+        countedScores: 3,
+        maxEntriesPerSquad: 1,
+        scoring: {
+          participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
+          config: { pointsTable: [10, 6, 4, 2], didNotFinishPoints: 0 },
+        },
+      },
+    });
+  });
+
+  it('keeps Create contest disabled with the shared rule\'s reason when a worse place would score more than a better one', async () => {
+    primeRacingMocks();
+
+    renderCreateContestPage();
+
+    await waitForStartingChoices();
+    fireEvent.click(screen.getByTestId('contest-sport-HORSE_RACING'));
+    await waitFor(() => expect(screen.getByTestId('contest-scoring-points-table')).toHaveValue('5, 3, 1'));
+
+    fireEvent.change(screen.getByTestId('contest-scoring-points-table'), { target: { value: '3, 5, 1' } });
+
+    expect(screen.getByTestId('contest-scoring-error')).toHaveTextContent(
+      'A better finishing place cannot score fewer points than a worse one.',
+    );
+    expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
+
+    fireEvent.change(screen.getByTestId('contest-scoring-points-table'), { target: { value: 'win, place' } });
+    expect(screen.getByTestId('contest-scoring-error')).toHaveTextContent('Enter the points table as whole numbers');
+    expect(createContestMock).not.toHaveBeenCalled();
   });
 });

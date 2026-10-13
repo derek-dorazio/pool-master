@@ -1,3 +1,4 @@
+import { getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import { GripVertical } from 'lucide-react';
 import { replaceEventTiers } from '@/lib/api';
@@ -53,14 +54,17 @@ export function GolfTierDefinitionsPanel({
   assignmentCountByTierKey,
   eventId,
   locked = false,
+  sport,
   tiers,
 }: {
   assignmentCountByTierKey: Record<string, number>;
   eventId: string;
   /** Released for contests (#431): the definitions are read-only. */
   locked?: boolean;
+  sport: Sport;
   tiers: SportEventTierDto[];
 }) {
+  const { event, participant } = getSportDefinition(sport).vocabulary;
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-tiers-page',
   });
@@ -100,7 +104,7 @@ export function GolfTierDefinitionsPanel({
     onError: (error) => {
       logger.warn(
         { action: 'golf.tiers.definitions.save.failed', err: error },
-        'Golf tier definition save was rejected',
+        'Tier definition save was rejected',
       );
     },
   });
@@ -168,7 +172,7 @@ export function GolfTierDefinitionsPanel({
           {extractErrorMessage(saveMutation.error, {
             codeMessages: {
               SPORT_EVENT_TIERS_LOCKED:
-                'This tournament has been released for contests, so its tier definitions are locked.',
+                `This ${event.one} has been released for contests, so its tier definitions are locked.`,
             },
             fallback: 'We could not save the tier definitions.',
           })}
@@ -260,8 +264,8 @@ export function GolfTierDefinitionsPanel({
         description={
           deleteTarget
             ? orphanCount > 0
-              ? `${deleteTarget.label} has ${orphanCount} golfer${orphanCount === 1 ? '' : 's'} assigned. They will move to the tier you choose below.`
-              : `Delete ${deleteTarget.label}? It has no golfers assigned.`
+              ? `${deleteTarget.label} has ${orphanCount} ${orphanCount === 1 ? participant.one : participant.many} assigned. They will move to the tier you choose below.`
+              : `Delete ${deleteTarget.label}? It has no ${participant.many} assigned.`
             : ''
         }
         errorMessage={
@@ -290,7 +294,7 @@ export function GolfTierDefinitionsPanel({
         tone="danger"
       >
         {orphanCount > 0 ? (
-          <FormField label="Move golfers to">
+          <FormField label={`Move ${participant.many} to`}>
             <Select
               data-testid="root-admin-golf-tier-def-reassign"
               onChange={(event) => setReassignTo(event.target.value)}

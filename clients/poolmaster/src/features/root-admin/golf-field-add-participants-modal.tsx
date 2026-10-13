@@ -1,3 +1,4 @@
+import { getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import { throwApiError } from '@/lib/errors';
 import { createColumnHelper } from '@tanstack/react-table';
@@ -19,6 +20,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { AddSportEventParticipantsResponse, ParticipantLeagueAffiliationDto } from '@/lib/api';
 import { useGolfPlayersQuery, useGolfSportLeaguesQuery } from './use-golf-catalog';
+import { capitalize } from './manage-navigation';
 
 type BulkAddResult = AddSportEventParticipantsResponse;
 
@@ -26,7 +28,7 @@ const rosterColumnHelper = createColumnHelper<ParticipantLeagueAffiliationDto>()
 const rosterBrowseColumns = [
   rosterColumnHelper.accessor((entry) => entry.participant.name, {
     id: 'name',
-    header: 'Player',
+    header: 'Name',
     cell: ({ getValue }) => (
       <span className="font-medium text-foreground">{getValue()}</span>
     ),
@@ -36,17 +38,20 @@ const rosterBrowseColumns = [
 
 /**
  * plans/124 §6.3 / §4.2 — "Add More Participants": pick a league, browse its
- * current roster in a multi-select grid (excluding golfers already in this
+ * current roster in a multi-select grid (excluding participants already in this
  * field), plus a free-text search across every `Participant` for the rarer
- * off-roster golfer. Both feed one selection set and one
+ * off-roster one. Both feed one selection set and one
  * `addEventParticipants` submit.
  */
 export function GolfFieldAddParticipantsModal({
   eventId,
   existingParticipantIds,
   onClose,
+  sport,
 }: {
   eventId: string;
+  /** The event's sport: its sport leagues and participants are the ones offered. */
+  sport: Sport;
   existingParticipantIds: ReadonlySet<string>;
   onClose: () => void;
 }) {
@@ -58,14 +63,15 @@ export function GolfFieldAddParticipantsModal({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [result, setResult] = useState<BulkAddResult | null>(null);
 
-  const leaguesQuery = useGolfSportLeaguesQuery();
+  const { participant, sportLeague } = getSportDefinition(sport).vocabulary;
+  const leaguesQuery = useGolfSportLeaguesQuery(sport);
 
   const rosterQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.leagueRoster(leagueId),
     queryFn: async (): Promise<ParticipantLeagueAffiliationDto[]> => {
       const response = await listParticipantLeagueAffiliations({ path: { sportLeagueId: leagueId } });
       if (!response.data?.affiliations) {
-        throwApiError(response.error, 'Golf tour roster response is missing data.');
+        throwApiError(response.error, 'The roster response is missing data.');
       }
       return response.data.affiliations;
     },
@@ -75,7 +81,8 @@ export function GolfFieldAddParticipantsModal({
 
   const searchTerm = search.trim();
   const searchQuery = useGolfPlayersQuery({
-    queryKey: QueryKeys.rootAdmin.golf.playerSearch(searchTerm),
+    sport,
+    queryKey: QueryKeys.rootAdmin.golf.playerSearch(sport, searchTerm),
     status: 'ACTIVE',
     q: searchTerm,
     enabled: searchTerm.length >= 2,
@@ -105,7 +112,7 @@ export function GolfFieldAddParticipantsModal({
     onError: (error) => {
       logger.warn(
         { action: 'golf.field.bulkAdd.failed', err: error },
-        'Bulk add golfers to field was rejected',
+        'Bulk add participants to field was rejected',
       );
     },
   });
@@ -154,7 +161,7 @@ export function GolfFieldAddParticipantsModal({
 
   return (
     <Modal
-      description="Pick a league to browse its current roster, or search every golfer by name. Golfers already in this field are hidden."
+      description={`Pick a ${sportLeague.one} to browse its current roster, or search every ${participant.one} by name. ${capitalize(participant.many)} already in this field are hidden.`}
       footer={
         result ? (
           <Button data-testid="root-admin-golf-field-add-done" onClick={onClose} type="button">
@@ -192,19 +199,19 @@ export function GolfFieldAddParticipantsModal({
       <div className="space-y-4">
         {result ? (
           <Alert data-testid="root-admin-golf-field-add-result" tone="success">
-            Added {result.added} golfer{result.added === 1 ? '' : 's'} to the field
+            Added {result.added} {result.added === 1 ? participant.one : participant.many} to the field
             {result.skipped > 0
               ? ` (${result.skipped} were already in it).`
               : '.'}
           </Alert>
         ) : null}
 
-        <FormField label="League">
+        <FormField label={capitalize(sportLeague.one)}>
           {leaguesQuery.isError ? (
             <ServerErrorBar
               error={leaguesQuery.error}
-              fallback="We could not load the league list. Use the search below instead."
-              title="Leagues unavailable"
+              fallback={`We could not load the ${sportLeague.one} list. Use the search below instead.`}
+              title={`${capitalize(sportLeague.many)} unavailable`}
             />
           ) : (
             <Select
@@ -214,7 +221,7 @@ export function GolfFieldAddParticipantsModal({
               value={leagueId}
             >
               <option value="">
-                {leaguesQuery.isLoading ? 'Loading leagues…' : 'Select a league to browse'}
+                {leaguesQuery.isLoading ? `Loading ${sportLeague.many}…` : `Select a ${sportLeague.one} to browse`}
               </option>
               {(leaguesQuery.data ?? []).map((league) => (
                 <option key={league.id} value={league.id}>
@@ -229,7 +236,7 @@ export function GolfFieldAddParticipantsModal({
           rosterQuery.isError ? (
             <ServerErrorBar
               error={rosterQuery.error}
-              fallback="We could not load that league's roster."
+              fallback={`We could not load that ${sportLeague.one}'s roster.`}
               title="Roster unavailable"
             />
           ) : (
@@ -239,7 +246,7 @@ export function GolfFieldAddParticipantsModal({
               emptyMessage={
                 rosterQuery.isLoading
                   ? 'Loading roster…'
-                  : 'Every golfer on that league’s roster is already in this field.'
+                  : `Every ${participant.one} on that ${sportLeague.one}’s roster is already in this field.`
               }
               getRowId={(entry) => entry.participantId}
               getRowLabel={(entry) => entry.participant.name}
@@ -254,8 +261,8 @@ export function GolfFieldAddParticipantsModal({
         ) : null}
 
         <FormField
-          helperText="Finds golfers who aren’t on any league’s current roster. Type at least 2 characters."
-          label="Search all golfers"
+          helperText={`Finds ${participant.many} who aren’t on any ${sportLeague.one}’s current roster. Type at least 2 characters.`}
+          label={`Search all ${participant.many}`}
         >
           <Input
             data-testid="root-admin-golf-field-add-search"
@@ -269,7 +276,7 @@ export function GolfFieldAddParticipantsModal({
         {searchQuery.isError ? (
           <ServerErrorBar
             error={searchQuery.error}
-            fallback="We could not search golfers right now."
+            fallback={`We could not search ${participant.many} right now.`}
             title="Search failed"
           />
         ) : searchRows.length > 0 ? (
@@ -291,13 +298,13 @@ export function GolfFieldAddParticipantsModal({
             ))}
           </ul>
         ) : searchTerm.length >= 2 && !searchQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground">No new golfers matched that search.</p>
+          <p className="text-sm text-muted-foreground">No new {participant.many} matched that search.</p>
         ) : null}
 
         {addMutation.isError ? (
           <ServerErrorBar
             error={addMutation.error}
-            fallback="We could not add the selected golfers."
+            fallback={`We could not add the selected ${participant.many}.`}
             title="Add failed"
           />
         ) : null}

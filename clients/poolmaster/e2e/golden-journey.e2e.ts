@@ -136,6 +136,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     const runId = `${Date.now().toString(36)}${randomBytes(2).toString('hex')}`;
     const run: JourneyRun = {
       runId,
+      sport: 'GOLF',
       tourName: `E2E Tour ${runId}`,
       playerNamePrefix: `E2E Golfer ${runId}`,
       tournamentName: `E2E Open ${runId}`,
@@ -177,12 +178,12 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expectListPageLoaded(page, '/manage/events', 'root-admin-events-page', 'root-admin-events-table');
       await expectListPageLoaded(page, '/manage/leagues', 'root-admin-manage-leagues-page', 'root-admin-manage-leagues-table');
       await expectListPageLoaded(page, '/manage/users', 'root-admin-manage-users-page', 'root-admin-manage-users-table');
-      await expectListPageLoaded(page, '/manage/golf/tournaments', 'root-admin-golf-tournament-list-page', 'root-admin-golf-tournament-list-table');
-      await expectListPageLoaded(page, '/manage/golf/players', 'root-admin-golf-player-list-page', 'root-admin-golf-player-list-table');
+      await expectListPageLoaded(page, '/manage/sports/golf/events', 'root-admin-golf-tournament-list-page', 'root-admin-golf-tournament-list-table');
+      await expectListPageLoaded(page, '/manage/sports/golf/participants', 'root-admin-golf-player-list-page', 'root-admin-golf-player-list-table');
     });
 
     const tourId = await test.step('create a golf tour', async () => {
-      await page.goto('/manage/golf/leagues');
+      await page.goto('/manage/sports/golf/leagues');
       await page.getByTestId('root-admin-golf-league-list-new').click();
       await page.getByTestId('root-admin-golf-league-list-new-name').fill(run.tourName);
       const created = await submitAndRead<{ sportLeague: { id: string } }>(
@@ -199,7 +200,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     });
 
     const playerIds = await test.step(`create ${PLAYER_COUNT} players`, async () => {
-      await page.goto('/manage/golf/players');
+      await page.goto('/manage/sports/golf/participants');
       const ids: string[] = [];
       for (let index = 1; index <= PLAYER_COUNT; index += 1) {
         await page.getByTestId('root-admin-golf-player-list-new').click();
@@ -226,7 +227,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       const now = new Date();
       const start = addDays(now, 7);
       start.setHours(8, 0, 0, 0);
-      await page.goto('/manage/golf/tournaments/new');
+      await page.goto('/manage/sports/golf/events/new');
       await page.getByTestId('root-admin-golf-tournament-create-tour').selectOption(tourId);
       await page.getByTestId('root-admin-golf-tournament-create-event-year').fill(String(start.getFullYear()));
       await page.getByTestId('root-admin-golf-tournament-create-name').fill(run.tournamentName);
@@ -239,14 +240,14 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         '/api/v1/events',
       );
       const id = created.event.id;
-      await expect(page).toHaveURL(new RegExp(`/manage/golf/tournaments/${id}$`));
+      await expect(page).toHaveURL(new RegExp(`/manage/sports/golf/events/${id}$`));
       await expect(page.getByTestId('root-admin-golf-tournament-home-page')).toBeVisible();
       return id;
     });
     journey.eventId = eventId;
 
     await test.step(`load the ${PLAYER_COUNT} players into the field in one submit`, async () => {
-      await page.goto(`/manage/golf/tournaments/${eventId}/field`);
+      await page.goto(`/manage/sports/golf/events/${eventId}/field`);
       await page.getByTestId('root-admin-golf-field-add').click();
       await expect(page.getByTestId('root-admin-golf-field-add-modal')).toBeVisible();
       // The free-text search spans every participant, so the players need no tour roster.
@@ -265,7 +266,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     });
 
     journey.fieldEntryIds = await test.step('place one player in each default tier and save', async () => {
-      await page.goto(`/manage/golf/tournaments/${eventId}/tiers`);
+      await page.goto(`/manage/sports/golf/events/${eventId}/tiers`);
       // The board's cards are keyed by field entry, not player, so the act needs that mapping.
       // It reads it straight from the API rather than by sniffing the page's own response.
       //
@@ -331,7 +332,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 
     await test.step('set four golfers\' prices in the Field grid, so a budget roster can go over the cap and a swap brings it under', async () => {
       const fieldEntryIds = journey?.fieldEntryIds ?? [];
-      await page.goto(`/manage/golf/tournaments/${eventId}/field`);
+      await page.goto(`/manage/sports/golf/events/${eventId}/field`);
       for (const { index, price } of BUDGET_PRICES) {
         await page.getByTestId(`root-admin-golf-field-price-${fieldEntryIds[index]}`).fill(String(price));
       }
@@ -345,7 +346,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     // contest on one that is released, has a field, and has not started (`contestEligible`).
     const firstFieldEntryId = journey.fieldEntryIds[0];
     await test.step('release the tournament for contests, which locks its tiers', async () => {
-      await page.goto(`/manage/golf/tournaments/${eventId}`);
+      await page.goto(`/manage/sports/golf/events/${eventId}`);
       await expect(page.getByTestId('root-admin-golf-tournament-release')).toBeEnabled();
       await page.getByTestId('root-admin-golf-tournament-release').click();
       await expect(page.getByTestId('root-admin-golf-tournament-release-modal')).toBeVisible();
@@ -358,7 +359,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       expect(released.event.status).toBe('SCHEDULED');
       await expect(page.getByTestId('root-admin-golf-tournament-release')).toHaveCount(0);
 
-      await page.goto(`/manage/golf/tournaments/${eventId}/tiers`);
+      await page.goto(`/manage/sports/golf/events/${eventId}/tiers`);
       await expect(page.getByTestId('root-admin-golf-tiers-locked')).toBeVisible();
       await expect(page.getByTestId(`root-admin-golf-tier-move-${firstFieldEntryId}`)).toBeDisabled();
     });
@@ -720,7 +721,7 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
   });
 
   await test.step('enter round-1 scores for the six players', async () => {
-    await page.goto(`/manage/golf/tournaments/${state.eventId}/scores`);
+    await page.goto(`/manage/sports/golf/events/${state.eventId}/results`);
     await expect(page.getByTestId('root-admin-golf-tournament-scores-page')).toBeVisible();
     const rows = Array.from(
       { length: PLAYER_COUNT },
@@ -752,7 +753,7 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
   });
 
   await test.step('move the tournament to in progress', async () => {
-    await page.goto(`/manage/golf/tournaments/${state.eventId}`);
+    await page.goto(`/manage/sports/golf/events/${state.eventId}`);
     await page.getByTestId('root-admin-golf-tournament-transition-IN_PROGRESS').click();
     const moved = await submitAndRead<{ event: { status: string } }>(
       page,
@@ -1045,7 +1046,7 @@ test('act 6: completing the event settles the contest and freezes its standing a
   await test.step('move the tournament to completed, which is what settles its contests', async () => {
     // There is no settle operation to call: settlement is a consequence of the event reaching
     // COMPLETED (EventLifecycleService), so the admin's transition is the whole trigger.
-    await page.goto(`/manage/golf/tournaments/${state.eventId}`);
+    await page.goto(`/manage/sports/golf/events/${state.eventId}`);
     await page.getByTestId('root-admin-golf-tournament-transition-COMPLETED').click();
     const moved = await submitAndRead<{ event: { status: string } }>(
       page,
@@ -1356,7 +1357,7 @@ async function uploadRoundScores(
   round: number,
   rows: ReadonlyArray<{ playerName: string; strokes: number; scoreToPar: number }>,
 ): Promise<void> {
-  await page.goto(`/manage/golf/tournaments/${eventId}/scores`);
+  await page.goto(`/manage/sports/golf/events/${eventId}/results`);
   await expect(page.getByTestId('root-admin-golf-tournament-scores-page')).toBeVisible();
   await page
     .getByRole('radiogroup', { name: 'Round' })

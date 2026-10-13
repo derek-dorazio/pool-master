@@ -53,6 +53,7 @@ describe('RootAdminManageLayout', () => {
       'Leagues',
       'Users',
       'Golf',
+      'Horse racing',
       'Content Configuration',
       'Events',
       'Sync',

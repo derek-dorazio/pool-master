@@ -15,7 +15,7 @@ import {
   valuationFixture,
 } from './golf-test-fixtures';
 
-// plans/124 §6.3 — /manage/golf/tournaments/:eventId/field Field editor (pool-master-za4).
+// plans/124 §6.3 — /manage/sports/golf/events/:eventId/field Field editor (pool-master-za4).
 
 const {
   getEventMock,
@@ -150,11 +150,11 @@ function renderPage() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/golf/tournaments/evt-1/field']}>
+      <MemoryRouter initialEntries={['/manage/sports/golf/events/evt-1/field']}>
         <Routes>
           <Route
             element={<RootAdminGolfTournamentFieldPage />}
-            path="/manage/golf/tournaments/:eventId/field"
+            path="/manage/sports/:sport/events/:eventId/field"
           />
         </Routes>
       </MemoryRouter>
@@ -589,7 +589,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       await userEvent.selectOptions(await screen.findByTestId('root-admin-golf-field-add-league'), 'liv');
 
       expect(
-        await screen.findByText('Every golfer on that league’s roster is already in this field.'),
+        await screen.findByText('Every golfer on that tour’s roster is already in this field.'),
       ).toBeInTheDocument();
     });
 
@@ -615,7 +615,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
 
       await openAddModal();
 
-      expect(await screen.findByText('Leagues unavailable')).toBeInTheDocument();
+      expect(await screen.findByText('Tours unavailable')).toBeInTheDocument();
       expect(screen.queryByTestId('root-admin-golf-field-add-league')).not.toBeInTheDocument();
       expect(screen.getByTestId('root-admin-golf-field-add-search')).toBeInTheDocument();
     });

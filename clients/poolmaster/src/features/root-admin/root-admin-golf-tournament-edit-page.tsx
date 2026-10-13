@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
+import { getSportDefinition } from '@poolmaster/shared/domain';
 import { ROUNDS_PAR_MAX, ROUNDS_PAR_MIN } from '@poolmaster/shared/dto';
 import { updateEvent } from '@/lib/api';
 import type { SportEventDto, UpdateSportEventRequest } from '@/lib/api';
@@ -18,7 +19,8 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { localDateTimeInputToIso } from './golf-admin-utils';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import { buildGolfTournamentPath } from './manage-navigation';
+import { buildSportEventPath, capitalize } from './manage-navigation';
+import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useGolfTournamentQuery } from './use-golf-tournament';
 
 const editFormSchema = z.object({
@@ -50,7 +52,11 @@ function toDefaults(tournament: SportEventDto): EditFormValues {
   };
 }
 
-function toRequestBody(values: EditFormValues): UpdateSportEventRequest {
+/**
+ * The details as an update. Par per round is sent only when the event's scoring family reads it;
+ * otherwise the field is not shown, and the stored value is left as it is.
+ */
+function toRequestBody(values: EditFormValues, sendsRoundsPar: boolean): UpdateSportEventRequest {
   return {
     name: values.name,
     // A blank field clears the value (null), rather than storing an empty string.
@@ -59,7 +65,9 @@ function toRequestBody(values: EditFormValues): UpdateSportEventRequest {
     startDate: localDateTimeInputToIso(values.startDate) ?? values.startDate,
     endDate: localDateTimeInputToIso(values.endDate) ?? null,
     rounds: values.rounds,
-    roundsPar: values.roundsPar === '' ? null : Number(values.roundsPar),
+    ...(sendsRoundsPar
+      ? { roundsPar: values.roundsPar === '' ? null : Number(values.roundsPar) }
+      : {}),
   };
 }
 
@@ -68,7 +76,9 @@ function GolfTournamentEditForm({ tournament }: { tournament: SportEventDto }) {
     feature: 'root-admin-golf-tournament-edit-page',
   });
   const navigate = useNavigate();
-  const homePath = buildGolfTournamentPath(tournament.id);
+  const homePath = buildSportEventPath(tournament.sport, tournament.id);
+  const { vocabulary } = getSportDefinition(tournament.sport);
+  const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament.sport);
 
   const form = useForm<EditFormValues>({
     resolver: zodResolver(editFormSchema),
@@ -80,10 +90,10 @@ function GolfTournamentEditForm({ tournament }: { tournament: SportEventDto }) {
     mutationFn: async (values: EditFormValues) => {
       const response = await updateEvent({
         path: { eventId: tournament.id },
-        body: toRequestBody(values),
+        body: toRequestBody(values, scoresUnplayedRoundsAgainstPar),
       });
       if (!response.data?.event) {
-        throwApiError(response.error, 'Golf tournament update response is missing data.');
+        throwApiError(response.error, `The ${vocabulary.event.one} update response is missing data.`);
       }
       return response.data.event;
     },
@@ -104,7 +114,7 @@ function GolfTournamentEditForm({ tournament }: { tournament: SportEventDto }) {
   return (
     <FormPage
       cancelTo={homePath}
-      description="The tour and event year are fixed at creation and cannot be changed."
+      description={`The ${vocabulary.sportLeague.one} and event year are fixed at creation and cannot be changed.`}
       errorMessage={updateMutation.isError
         ? extractErrorMessage(updateMutation.error, { fallback: 'We could not save these details.' })
         : undefined}
@@ -140,9 +150,10 @@ function GolfTournamentEditForm({ tournament }: { tournament: SportEventDto }) {
           />
         </FormField>
       </div>
-      <FormField error={form.formState.errors.rounds?.message} label="Rounds">
+      <FormField error={form.formState.errors.rounds?.message} label={capitalize(vocabulary.round.many)}>
         <Input min={1} type="number" {...form.register('rounds')} />
       </FormField>
+      {scoresUnplayedRoundsAgainstPar ? (
       <FormField
         error={form.formState.errors.roundsPar?.message}
         helperText="Contests score a round a golfer did not play (cut, withdrawn, no score) as 80 strokes against this par. Leave blank to work it out from players' finished rounds."
@@ -157,11 +168,15 @@ function GolfTournamentEditForm({ tournament }: { tournament: SportEventDto }) {
           {...form.register('roundsPar')}
         />
       </FormField>
+      ) : null}
     </FormPage>
   );
 }
 
-/** Edit a tournament's details: name, venue, location, dates, rounds and par, with one Save. */
+/**
+ * Edit an event's details: name, venue, location, dates, rounds and, for a family that scores
+ * unplayed rounds against it, par per round, with one Save.
+ */
 export function RootAdminGolfTournamentEditPage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
   const tournamentQuery = useGolfTournamentQuery(eventId);
@@ -172,9 +187,9 @@ export function RootAdminGolfTournamentEditPage() {
   return (
     <AsyncPage
       errorBody={extractErrorMessage(tournamentQuery.error, {
-        fallback: 'We could not load this golf tournament right now.',
+        fallback: 'We could not load this event right now.',
       })}
-      loadingBody="Loading golf tournament..."
+      loadingBody="Loading event..."
       state={tournamentQuery.isLoading ? 'loading' : tournamentQuery.isError ? 'error' : 'ready'}
     >
       {tournament ? <GolfTournamentEditForm tournament={tournament} /> : null}

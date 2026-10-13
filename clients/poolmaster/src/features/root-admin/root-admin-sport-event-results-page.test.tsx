@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
-import { RootAdminGolfTournamentScoresPage } from './root-admin-golf-tournament-scores-page';
+import { RootAdminSportEventResultsPage } from './root-admin-sport-event-results-page';
 import {
   fieldEntryFixture,
   participantFixture,
@@ -12,7 +12,8 @@ import {
   sportEventRoundFixture,
 } from './golf-test-fixtures';
 
-// plans/124 §6.3 — /manage/golf/tournaments/:eventId/scores Round scores (pool-master-r11).
+// plans/124 §6.3 — a golf event's results page: round scores (pool-master-r11), chosen by the
+// stroke-play family's entry in the admin results registry (plans/racing-sports.md Q9.6).
 
 const {
   getEventMock,
@@ -129,11 +130,11 @@ function renderPage() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/golf/tournaments/evt-1/scores']}>
+      <MemoryRouter initialEntries={['/manage/sports/golf/events/evt-1/results']}>
         <Routes>
           <Route
-            element={<RootAdminGolfTournamentScoresPage />}
-            path="/manage/golf/tournaments/:eventId/scores"
+            element={<RootAdminSportEventResultsPage />}
+            path="/manage/sports/:sport/events/:eventId/results"
           />
         </Routes>
       </MemoryRouter>
@@ -141,7 +142,7 @@ function renderPage() {
   );
 }
 
-describe('pool-master-r11 RootAdminGolfTournamentScoresPage', () => {
+describe('pool-master-r11 RootAdminSportEventResultsPage for a golf event', () => {
   afterEach(() => {
     vi.clearAllMocks();
     mockLogger.child.mockReturnValue(mockLogger);
@@ -158,7 +159,7 @@ describe('pool-master-r11 RootAdminGolfTournamentScoresPage', () => {
     ).not.toBeInTheDocument();
     // bulk load + corrections both render for round 1.
     expect(screen.getByTestId('root-admin-golf-scores-upload-textarea')).toBeInTheDocument();
-    expect(screen.getByText('Rory McIlroy')).toBeInTheDocument();
+    expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
   });
 
   it('pool-master-r11 shows the sync-tick alert for a SCORES_ONLY tournament but keeps the tools usable', async () => {

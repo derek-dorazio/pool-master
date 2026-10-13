@@ -1,4 +1,4 @@
-import { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, getSportDefinition, type SportNoun } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import { Lock, Trophy } from 'lucide-react';
 import { useState } from 'react';
@@ -30,7 +30,7 @@ import {
   SettingsSection,
 } from '@/features/shared/ui';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
-import { formatContestRules, formatEntriesPerTeam, formatSelectionTypeName } from './contest-rules';
+import { countParticipants, formatContestRules, formatEntriesPerTeam, formatSelectionTypeName } from './contest-rules';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
 import { sportEventQueryOptions } from './use-contest-schedule';
@@ -47,7 +47,15 @@ function FixedNote() {
 }
 
 /** The event's tiers, Tier 1 on top, one per row with its golfer count. */
-function ContestTiersSection({ eventName, tiers }: { eventName: string; tiers: EffectiveTierDto[] }) {
+function ContestTiersSection({
+  eventName,
+  noun,
+  tiers,
+}: {
+  eventName: string;
+  noun: SportNoun;
+  tiers: EffectiveTierDto[];
+}) {
   const sortedTiers = [...tiers].sort((left, right) => left.tierNumber - right.tierNumber);
 
   return (
@@ -62,7 +70,7 @@ function ContestTiersSection({ eventName, tiers }: { eventName: string; tiers: E
             key={tier.tierKey}
             label={<Chip tone="info">Tier {tier.tierNumber}</Chip>}
             testId={`contest-tier-${tier.tierNumber}`}
-            value={`${tier.assignments.length} golfer${tier.assignments.length === 1 ? '' : 's'}`}
+            value={countParticipants(tier.assignments.length, noun)}
           />
         ))
       ) : (
@@ -152,6 +160,7 @@ export function ManageContestPage() {
   const rules = formatContestRules(
     configuration,
     managedContest.effectiveTiers.length,
+    getSportDefinition(event.sport).vocabulary.participant,
     configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null,
   );
   const eventLabel = event.venue ? `${event.name} · ${event.venue}` : event.name;
@@ -235,7 +244,11 @@ export function ManageContestPage() {
         />
       </SettingsSection>
 
-      {isTiered ? <ContestTiersSection eventName={event.name} tiers={managedContest.effectiveTiers} /> : null}
+      {isTiered ? <ContestTiersSection
+          eventName={event.name}
+          noun={getSportDefinition(event.sport).vocabulary.participant}
+          tiers={managedContest.effectiveTiers}
+        /> : null}
 
       {isNotOpen ? (
         <DangerZone testId="manage-contest-danger-zone">

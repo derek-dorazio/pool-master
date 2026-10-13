@@ -1,39 +1,43 @@
 import { useNavigate } from 'react-router-dom';
 import { SegmentedControl } from '@/features/shared/ui';
-import { GOLF_PLAYER_LIST_PATH, GOLF_TOUR_LIST_PATH, GOLF_TOURNAMENT_LIST_PATH } from './manage-navigation';
+import {
+  buildSportEventListPath,
+  buildSportLeagueListPath,
+  buildSportParticipantListPath,
+  capitalize,
+} from './manage-navigation';
+import { useManagedSport } from './use-managed-sport';
 
-const GOLF_LISTS = ['tournaments', 'players', 'tours'] as const;
+const SPORT_LISTS = ['events', 'participants', 'leagues'] as const;
 
-type GolfList = (typeof GOLF_LISTS)[number];
+type SportList = (typeof SPORT_LISTS)[number];
 
-const GOLF_LIST_LABELS: Record<GolfList, string> = {
-  tournaments: 'Tournaments',
-  players: 'Players',
-  tours: 'Tours',
-};
-
-const GOLF_LIST_PATHS: Record<GolfList, string> = {
-  tournaments: GOLF_TOURNAMENT_LIST_PATH,
-  players: GOLF_PLAYER_LIST_PATH,
-  tours: GOLF_TOUR_LIST_PATH,
-};
-
-/** Moves between the Golf section's three lists; the side menu has one Golf entry. */
-export function GolfSectionMenu({ current }: { current: GolfList }) {
+/**
+ * Moves between a sport's three lists, named in its own words (golf: Tournaments, Golfers,
+ * Tours); the side menu has one entry per sport.
+ */
+export function GolfSectionMenu({ current }: { current: SportList }) {
   const navigate = useNavigate();
+  const { sport, definition } = useManagedSport();
+  const { event, participant, sportLeague } = definition.vocabulary;
+  const lists: Record<SportList, { label: string; path: string }> = {
+    events: { label: capitalize(event.many), path: buildSportEventListPath(sport) },
+    participants: { label: capitalize(participant.many), path: buildSportParticipantListPath(sport) },
+    leagues: { label: capitalize(sportLeague.many), path: buildSportLeagueListPath(sport) },
+  };
 
   return (
-    <nav aria-label="Golf lists" data-testid="root-admin-golf-menu">
+    <nav aria-label={`${definition.name} lists`} data-testid="root-admin-golf-menu">
       <SegmentedControl
-        aria-label="Golf list"
+        aria-label={`${definition.name} list`}
         onChange={(next) => {
-          const list = GOLF_LISTS.find((candidate) => candidate === next);
+          const list = SPORT_LISTS.find((candidate) => candidate === next);
           if (list) {
-            navigate(GOLF_LIST_PATHS[list]);
+            navigate(lists[list].path);
           }
         }}
-        options={GOLF_LISTS.map((list) => ({
-          label: GOLF_LIST_LABELS[list],
+        options={SPORT_LISTS.map((list) => ({
+          label: lists[list].label,
           testId: `root-admin-golf-menu-${list}`,
           value: list,
         }))}

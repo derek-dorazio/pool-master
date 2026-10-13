@@ -1,6 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { Sport, getSportDefinition } from "@poolmaster/shared/domain";
+import { finishPositionUi } from "./scoring-family-ui/finish-position";
+import { strokePlayUi } from "./scoring-family-ui/stroke-play";
 import {
   EditableSelectionGroup,
   LockedSelectionGroup,
@@ -47,6 +50,8 @@ function buildGroup(
   };
 }
 
+const GOLFER = getSportDefinition(Sport.GOLF).vocabulary.participant;
+
 describe("pool-master-dn4.7: contest entry selection components", () => {
   it("rule: renders editable tier summary chips and participant option cards", async () => {
     const user = userEvent.setup();
@@ -55,6 +60,7 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
 
     render(
       <EditableSelectionGroup
+        noun={GOLFER}
         canSelect
         group={buildGroup(["sep-1"])}
         isBusy={false}
@@ -85,6 +91,7 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
   it("rule: marks replacement choices when a tier is full", () => {
     render(
       <EditableSelectionGroup
+        noun={GOLFER}
         canSelect
         group={buildGroup(["sep-1", "sep-2"])}
         isBusy={false}
@@ -102,7 +109,7 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
   });
 
   it("rule: renders locked selections as read-only rows", () => {
-    render(<LockedSelectionGroup group={buildGroup(["sep-1"])} />);
+    render(<LockedSelectionGroup noun={GOLFER} group={buildGroup(["sep-1"])} />);
 
     expect(screen.getByText("Locked")).toBeInTheDocument();
     expect(
@@ -122,8 +129,8 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
         isSubmitting={false}
         onChange={handleChange}
         onSubmit={handleSubmit}
-        options={[2, 1, 0, -1]}
         submitDisabled={false}
+        tiebreaker={strokePlayUi.entryTiebreaker}
         value=""
       />,
     );
@@ -147,13 +154,35 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
         isSubmitting={false}
         onChange={vi.fn()}
         onSubmit={vi.fn()}
-        options={[0]}
         submitDisabled={false}
+        tiebreaker={strokePlayUi.entryTiebreaker}
         value="0"
       />,
     );
 
     expect(screen.getByTestId("contest-entry-submit")).toHaveTextContent("Save entry");
+  });
+
+  it("asks for no tiebreaker prediction for a finish-position entry and still offers Submit entry", async () => {
+    const user = userEvent.setup();
+    const handleSubmit = vi.fn();
+
+    render(
+      <TiebreakerSelector
+        disabled={false}
+        isSubmitted={false}
+        isSubmitting={false}
+        onChange={vi.fn()}
+        onSubmit={handleSubmit}
+        submitDisabled={false}
+        tiebreaker={finishPositionUi.entryTiebreaker}
+        value=""
+      />,
+    );
+
+    expect(screen.queryByTestId("contest-entry-tiebreaker-select")).not.toBeInTheDocument();
+    await user.click(screen.getByTestId("contest-entry-submit"));
+    expect(handleSubmit).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -178,6 +207,7 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
   function renderEditable(group: SelectionGroup, onParticipantSelect = vi.fn()) {
     render(
       <EditableSelectionGroup
+        noun={GOLFER}
         canSelect
         group={group}
         isBusy={false}
@@ -212,6 +242,7 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
   it("disables every golfer while a pick is saving or when the viewer cannot pick", () => {
     const { rerender } = render(
       <EditableSelectionGroup
+        noun={GOLFER}
         canSelect
         group={buildGroup(["sep-1"])}
         isBusy
@@ -225,6 +256,7 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
 
     rerender(
       <EditableSelectionGroup
+        noun={GOLFER}
         canSelect={false}
         group={buildGroup(["sep-1"])}
         isBusy={false}
@@ -255,7 +287,7 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
   });
 
   it("says no golfer was saved for a locked tier the entry left empty", () => {
-    render(<LockedSelectionGroup group={buildGroup([])} />);
+    render(<LockedSelectionGroup noun={GOLFER} group={buildGroup([])} />);
 
     expect(screen.getByText("No golfer was saved from this tier.")).toBeInTheDocument();
   });

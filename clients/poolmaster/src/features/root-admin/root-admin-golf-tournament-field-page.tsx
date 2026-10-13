@@ -11,9 +11,10 @@ import { GolfFieldRefreshAction } from './golf-field-refresh-action';
 import { GolfFieldAddParticipantsModal } from './golf-field-add-participants-modal';
 import { GolfFieldUploadCard } from './golf-field-upload-card';
 import { useGolfFieldQuery, useGolfTournamentQuery } from './use-golf-tournament';
+import { useManagedSport } from './use-managed-sport';
 
 /**
- * plans/124 §6.3 — /manage/golf/tournaments/:eventId/field. Owns the tournament +
+ * plans/124 §6.3 — /manage/sports/:sport/events/:eventId/field. Owns the tournament +
  * field queries and the header-action layout; the editable grid and each header
  * action are their own component.
  */
@@ -21,6 +22,7 @@ export function RootAdminGolfTournamentFieldPage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
   const [addOpen, setAddOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const { event } = useManagedSport().definition.vocabulary;
 
   const tournamentQuery = useGolfTournamentQuery(eventId);
   const fieldQuery = useGolfFieldQuery(eventId);
@@ -44,9 +46,9 @@ export function RootAdminGolfTournamentFieldPage() {
   return (
     <AsyncPage
       errorBody={extractErrorMessage(tournamentQuery.error, {
-        fallback: 'We could not load this golf tournament right now.',
+        fallback: `We could not load this ${event.one} right now.`,
       })}
-      loadingBody="Loading tournament field..."
+      loadingBody={`Loading ${event.one} field...`}
       state={pageState}
       testId="root-admin-golf-tournament-field-page"
     >
@@ -56,7 +58,7 @@ export function RootAdminGolfTournamentFieldPage() {
 
           <div className="flex flex-wrap items-center justify-end gap-3">
             <div className="flex flex-wrap gap-2">
-              <GolfFieldSeedAction eventId={eventId} />
+              <GolfFieldSeedAction eventId={eventId} sport={tournament.sport} />
               <Button
                 data-testid="root-admin-golf-field-add"
                 onClick={() => setAddOpen(true)}
@@ -87,6 +89,7 @@ export function RootAdminGolfTournamentFieldPage() {
               entries={entries}
               eventId={eventId}
               onClose={() => setUploadOpen(false)}
+              sport={tournament.sport}
             />
           ) : null}
 
@@ -102,6 +105,7 @@ export function RootAdminGolfTournamentFieldPage() {
             }
             fieldLoading={fieldQuery.isLoading}
             pricesLocked={golfTiersLocked(tournament.status)}
+            sport={tournament.sport}
           />
 
           {addOpen ? (
@@ -109,6 +113,7 @@ export function RootAdminGolfTournamentFieldPage() {
               eventId={eventId}
               existingParticipantIds={existingParticipantIds}
               onClose={() => setAddOpen(false)}
+              sport={tournament.sport}
             />
           ) : null}
         </div>

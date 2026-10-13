@@ -1,4 +1,5 @@
-import { PARTICIPANT_SCORING_DEFINITIONS } from "@poolmaster/shared/domain";
+import type { SportNoun } from "@poolmaster/shared/domain";
+import type { EntryTiebreakerUi } from "./scoring-family-ui/types";
 import type { SelectionStateResponse } from "@/lib/api";
 import {
   Alert,
@@ -59,12 +60,15 @@ export function SelectionParticipantCard({
   canSelect,
   group,
   isBusy,
+  noun,
   onSelect,
   participant,
 }: {
   canSelect: boolean;
   group: SelectionGroup;
   isBusy: boolean;
+  /** What the event's sport calls a participant: "golfer", "horse". */
+  noun: SportNoun;
   onSelect: (participant: SelectionParticipant) => void;
   participant: SelectionParticipant;
 }) {
@@ -74,14 +78,14 @@ export function SelectionParticipantCard({
     participant.sportEventParticipantId,
   );
   const canReplace = groupIsFull && !isSelected;
-  // A held golfer stays clickable even after withdrawing: picking them again unselects them,
+  // A held participant stays clickable even after withdrawing: picking them again unselects them,
   // which the server allows, and otherwise the entry would be stuck holding them.
   const isDisabled =
     isBusy ||
     !canSelect ||
     (!participant.isAvailable && !isSelected);
 
-  let actionLabel = "Select golfer";
+  let actionLabel = `Select ${noun.one}`;
   if (isSelected) {
     actionLabel = "Selected";
   } else if (!participant.isAvailable) {
@@ -119,7 +123,7 @@ export function SelectionParticipantCard({
               {participant.participantName}
             </div>
             <div className="mt-1 text-sm text-muted-foreground">
-              {participant.team ?? participant.role ?? "Golf field participant"}
+              {participant.team ?? participant.role ?? "In the field"}
             </div>
           </div>
           <StatusBadge tone={isSelected ? "success" : "neutral"}>
@@ -164,6 +168,7 @@ export function EditableSelectionGroup({
   group,
   isBusy,
   isExpanded,
+  noun,
   onParticipantSelect,
   onToggle,
   setToggleRef,
@@ -172,6 +177,7 @@ export function EditableSelectionGroup({
   group: SelectionGroup;
   isBusy: boolean;
   isExpanded: boolean;
+  noun: SportNoun;
   onParticipantSelect: (participant: SelectionParticipant) => void;
   onToggle: () => void;
   setToggleRef: (element: HTMLButtonElement | null) => void;
@@ -199,8 +205,7 @@ export function EditableSelectionGroup({
             {group.groupName}
           </h4>
           <p className="mt-1 text-sm text-muted-foreground">
-            Choose {group.picksFromGroup} golfer
-            {group.picksFromGroup === 1 ? "" : "s"} from this tier.
+            Choose {group.picksFromGroup} {group.picksFromGroup === 1 ? noun.one : noun.many} from this tier.
           </p>
           <SelectedParticipantChips group={group} />
         </div>
@@ -225,6 +230,7 @@ export function EditableSelectionGroup({
               group={group}
               isBusy={isBusy}
               key={participant.sportEventParticipantId}
+              noun={noun}
               onSelect={onParticipantSelect}
               participant={participant}
             />
@@ -237,8 +243,10 @@ export function EditableSelectionGroup({
 
 export function LockedSelectionGroup({
   group,
+  noun,
 }: {
   group: SelectionGroup;
+  noun: SportNoun;
 }) {
   const selectedParticipants = getSelectedParticipants(group);
 
@@ -263,7 +271,7 @@ export function LockedSelectionGroup({
 
       <Tile className="mt-4 overflow-x-auto" padding="none" radius="lg">
         <div className="grid grid-cols-[minmax(0,1.6fr)_100px_110px_90px] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
-          <span>Golfer</span>
+          <span className="capitalize">{noun.one}</span>
           <span className="text-right">Contest rank</span>
           <span className="text-right">Ranking</span>
           <span className="text-right">Status</span>
@@ -283,7 +291,7 @@ export function LockedSelectionGroup({
                   <div className="mt-1 text-xs text-muted-foreground">
                     {participant.team ??
                       participant.role ??
-                      "Golf field participant"}
+                      "In the field"}
                   </div>
                 </div>
                 <span className="text-right text-foreground">
@@ -301,7 +309,7 @@ export function LockedSelectionGroup({
             ))
           ) : (
             <Alert className="m-4">
-              No golfer was saved from this tier.
+              No {noun.one} was saved from this tier.
             </Alert>
           )}
         </div>
@@ -310,14 +318,18 @@ export function LockedSelectionGroup({
   );
 }
 
+/**
+ * The entry's tiebreaker prediction, when its scoring family asks for one, and the submit action.
+ * A family with no tiebreaker (`tiebreaker` null) shows the submit action alone.
+ */
 export function TiebreakerSelector({
   disabled,
   isSubmitted,
   isSubmitting,
   onChange,
   onSubmit,
-  options,
   submitDisabled,
+  tiebreaker,
   value,
 }: {
   disabled: boolean;
@@ -326,29 +338,31 @@ export function TiebreakerSelector({
   isSubmitting: boolean;
   onChange: (value: string) => void;
   onSubmit: () => void;
-  options: number[];
   submitDisabled: boolean;
+  tiebreaker: EntryTiebreakerUi | null;
   value: string;
 }) {
   return (
     <Tile padding="sm" radius="lg" variant="subtle">
-      <FormField label="Winning Score Relative to Par">
-        <Select
-          data-testid="contest-entry-tiebreaker-select"
-          disabled={disabled}
-          onChange={(event) => onChange(event.target.value)}
-          value={value}
-        >
-          <option value="">Select score</option>
-          {options.map((option) => (
-            <option key={option} value={option}>
-              {PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(option)}
-            </option>
-          ))}
-        </Select>
-      </FormField>
+      {tiebreaker ? (
+        <FormField label={tiebreaker.label}>
+          <Select
+            data-testid="contest-entry-tiebreaker-select"
+            disabled={disabled}
+            onChange={(event) => onChange(event.target.value)}
+            value={value}
+          >
+            <option value="">{tiebreaker.placeholder}</option>
+            {tiebreaker.options.map((option) => (
+              <option key={option} value={option}>
+                {tiebreaker.format(option)}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+      ) : null}
       <Button
-        className="mt-4"
+        className={tiebreaker ? "mt-4" : undefined}
         data-testid="contest-entry-submit"
         disabled={submitDisabled}
         onClick={onSubmit}

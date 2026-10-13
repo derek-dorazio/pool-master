@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { SportEventSyncScope } from '@poolmaster/shared/domain';
+import { SportEventSyncScope, getSportDefinition } from '@poolmaster/shared/domain';
 import { linkEventScoreSource, listProviders, unlinkEventScoreSource } from '@/lib/api';
 import {
   Button,
@@ -24,6 +24,7 @@ import {
   type GolfProviderCatalogEvent,
 } from './use-golf-provider-catalog';
 import type { SportEventDto } from '@/lib/api';
+import { getScoringFamilyAdminUi } from './scoring-family-admin';
 
 type PickerCatalogEvent = GolfProviderCatalogEvent & { id: string };
 
@@ -53,9 +54,13 @@ export function GolfTournamentScoreSourceCard({
   const [unlinkOpen, setUnlinkOpen] = useState(false);
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
   const [catalogSearch, setCatalogSearch] = useState('');
+  const definition = getSportDefinition(tournament.sport);
+  const { event: eventNoun } = definition.vocabulary;
+  const resultsWord = getScoringFamilyAdminUi(tournament.sport).resultsLabel.toLowerCase();
 
   const catalog = useGolfProviderCatalog({
     enabled: linkOpen,
+    sport: tournament.sport,
     from: tournament.startDate,
     to: tournament.endDate || undefined,
     search: catalogSearch,
@@ -79,13 +84,13 @@ export function GolfTournamentScoreSourceCard({
     retry: false,
   });
   const simulatingProviderId = (providersQuery.data ?? []).find(
-    (provider) => provider.sportsCovered.includes('GOLF') && provider.supportsLiveSimulation,
+    (provider) => provider.sportsCovered.includes(tournament.sport) && provider.supportsLiveSimulation,
   )?.providerId ?? null;
 
   const linkMutation = useInvalidatingMutation({
     mutationFn: async (link: { providerId: string | null; externalId: string }) => {
       if (!link.providerId) {
-        throw new Error('No golf provider is configured.');
+        throw new Error(`No ${definition.name.toLowerCase()} provider is configured.`);
       }
       const response = await linkEventScoreSource({
         path: { eventId },
@@ -142,8 +147,8 @@ export function GolfTournamentScoreSourceCard({
         </StatusBadge>
         <p className="text-sm text-muted-foreground">
           {tournament.syncScope === SportEventSyncScope.NONE
-            ? 'Not linked — scores must be entered manually.'
-            : `Linked to ${tournament.providerId} event ${tournament.externalId} — polled on the live-scores sync cadence.`}
+            ? `Not linked — ${resultsWord} must be entered manually.`
+            : `Linked to ${tournament.providerId} event ${tournament.externalId} — polled on the live-${resultsWord} sync cadence.`}
         </p>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
@@ -206,13 +211,13 @@ export function GolfTournamentScoreSourceCard({
 
       <PickerModal<PickerCatalogEvent>
         canApply={selectedCatalogId !== null && !linkMutation.isPending}
-        description="Pick the provider event this tournament's live scores should come from."
+        description={`Pick the provider event this ${eventNoun.one}'s live ${resultsWord} should come from.`}
         emptyMessage={
           catalog.isLoading
             ? 'Loading provider events...'
             : providerId === null
-              ? 'No provider is registered for golf.'
-              : 'No provider events fall in this tournament’s date window.'
+              ? `No provider is registered for ${definition.name.toLowerCase()}.`
+              : `No provider events fall in this ${eventNoun.one}’s date window.`
         }
         errorMessage={
           linkMutation.isError

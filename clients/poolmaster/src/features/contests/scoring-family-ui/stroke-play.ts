@@ -47,7 +47,18 @@ export function formatThru(participant: SportEventParticipantDto): string | null
   return thru === null || thru <= 0 ? null : String(thru);
 }
 
+/** The winning scores an entry may predict, relative to par: +10 down to -30. */
+const WINNING_SCORE_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
+
 export const strokePlayUi: ScoringFamilyUi = {
+  // The tiebreaker is a predicted winning score relative to par, read like any golf total.
+  entryTiebreaker: {
+    label: 'Winning Score Relative to Par',
+    placeholder: 'Select score',
+    options: WINNING_SCORE_OPTIONS,
+    format: PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format,
+    describe: (value) => `Winning score relative to par: ${PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(value)}`,
+  },
   leaderboard(response, sport) {
     // Stroke play has one scoring definition: golf's total relative to par.
     const definition = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL;

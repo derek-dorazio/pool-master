@@ -6,7 +6,7 @@ import {
   buildLeagueContestPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
-import { ContestEntryStatus, ContestStatus, PARTICIPANT_SCORING_DEFINITIONS, SelectionType } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, SelectionType, type SportNoun } from '@poolmaster/shared/domain';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
@@ -47,6 +47,7 @@ import {
   contestStatusLabel,
 } from './contest-status';
 import { ContestHeader, ContestSubMenu } from './contest-header';
+import { contestEntryTiebreaker, contestParticipantNoun } from './contest-sport';
 import { fetchContestEntries } from './use-contest-entries';
 import { useContestSchedule } from './use-contest-schedule';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -55,14 +56,10 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type SelectionState = SelectionStateResponse;
 
-const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
-
-// The tiebreaker is a predicted winning score relative to par.
-const formatTiebreaker = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format;
 const HIDDEN_PICKS_HELPER = 'Hidden until the contest locks';
 
-function formatGolfersStillToPick(count: number): string {
-  return `${count} ${count === 1 ? 'golfer' : 'golfers'} still to pick`;
+function formatStillToPick(count: number, participant: SportNoun): string {
+  return `${count} ${count === 1 ? participant.one : participant.many} still to pick`;
 }
 
 // The entry page says what an open contest means for this entry; every other status reads as it
@@ -524,6 +521,10 @@ export function ContestEntryPage() {
 
   const contest = contestQuery.data;
   const selectionState = selectionStateQuery.data;
+  const participantNoun = contestParticipantNoun(contest.sport);
+  // The prediction the contest's scoring family asks for: a golf entry's winning score, none
+  // for a race, whose entries submit without one.
+  const tiebreaker = contestEntryTiebreaker(contest.sport);
   const backLeagueCode = hintedLeagueCode ?? contestLeague?.leagueCode ?? null;
   const backToContestPath = backLeagueCode
     ? buildLeagueContestPath(backLeagueCode, contestId)
@@ -556,9 +557,10 @@ export function ContestEntryPage() {
       ? Number.parseInt(tiebreakerDraft.trim(), 10)
       : null;
   const hasSelectedTiebreaker =
-    selectedTiebreakerValue !== null
+    tiebreaker !== null
+    && selectedTiebreakerValue !== null
     && Number.isFinite(selectedTiebreakerValue)
-    && TIEBREAKER_OPTIONS.includes(selectedTiebreakerValue);
+    && tiebreaker.options.includes(selectedTiebreakerValue);
   const isBudget = contest.selectionType === SelectionType.BUDGET_PICK;
   const lineupSummary = picksHidden ? null : selectionState.lineupSummary ?? null;
   const submitBlockedReason = picksHidden
@@ -569,7 +571,7 @@ export function ContestEntryPage() {
     || !isEditable
     || !lineupComplete
     || submitBlockedReason !== null
-    || !hasSelectedTiebreaker
+    || (tiebreaker !== null && !hasSelectedTiebreaker)
     || saveEntryDetailsMutation.isPending
     || submitEntryMutation.isPending
     || submitSelectionMutation.isPending;
@@ -642,7 +644,7 @@ export function ContestEntryPage() {
         titleTestId="contest-entry-heading"
       />
 
-      {isRandomDraw ? <DrawEntryMetrics isEditable={isEditable} selectionState={selectionState} /> : (
+      {isRandomDraw ? <DrawEntryMetrics isEditable={isEditable} noun={participantNoun} selectionState={selectionState} /> : (
       <Tile>
         <MetricGrid className="md:grid-cols-4">
           {isBudget ? (
@@ -663,25 +665,27 @@ export function ContestEntryPage() {
             label="Picks saved"
             value={picksHidden ? 'Hidden' : `${completionStats.totalSelections}/${completionStats.requiredSelections}`}
           />
-          <MetricTile
-            helperText={(
-              <span data-testid="contest-entry-tiebreaker-summary">
-                {picksHidden
-                  ? HIDDEN_PICKS_HELPER
-                  : savedTiebreaker !== null
-                  ? `Relative to par ${formatTiebreaker(savedTiebreaker)}`
-                  : isEditable
-                    ? 'Needed after lineup is complete'
-                    : 'No tiebreaker was saved'}
-              </span>
-            )}
-            label="Tiebreaker"
-            value={(
-              <span data-testid="contest-entry-tiebreaker-status">
-                {picksHidden ? 'Hidden' : hasSavedTiebreaker ? 'Saved' : isEditable ? 'Needed' : 'Closed'}
-              </span>
-            )}
-          />
+          {tiebreaker ? (
+            <MetricTile
+              helperText={(
+                <span data-testid="contest-entry-tiebreaker-summary">
+                  {picksHidden
+                    ? HIDDEN_PICKS_HELPER
+                    : savedTiebreaker !== null
+                    ? tiebreaker.describe(savedTiebreaker)
+                    : isEditable
+                      ? 'Needed after lineup is complete'
+                      : 'No tiebreaker was saved'}
+                </span>
+              )}
+              label="Tiebreaker"
+              value={(
+                <span data-testid="contest-entry-tiebreaker-status">
+                  {picksHidden ? 'Hidden' : hasSavedTiebreaker ? 'Saved' : isEditable ? 'Needed' : 'Closed'}
+                </span>
+              )}
+            />
+          ) : null}
           <MetricTile
             helperText={
               picksHidden
@@ -689,7 +693,7 @@ export function ContestEntryPage() {
                 : isEditable
                 ? nextIncompleteGroupId
                   ? isBudget
-                    ? formatGolfersStillToPick(completionStats.requiredSelections - completionStats.totalSelections)
+                    ? formatStillToPick(completionStats.requiredSelections - completionStats.totalSelections, participantNoun)
                     : `Next focus: ${selectionGroups.find((group) => group.groupId === nextIncompleteGroupId)?.groupName ?? 'Open tier'}`
                   : 'Lineup is fully selected'
                 : 'Entry editing is closed'
@@ -741,17 +745,17 @@ export function ContestEntryPage() {
                     </Alert>
                   ) : null}
                 </Tile>
-              ) : (
+              ) : tiebreaker ? (
                 <Alert className="mt-5" title="Saved tiebreaker">
                   <div
                     data-testid="contest-entry-readonly-tiebreaker"
                   >
                     {selectionState.tiebreakerValue === null || selectionState.tiebreakerValue === undefined
                       ? 'No tiebreaker prediction was saved.'
-                      : `Winning score relative to par: ${formatTiebreaker(selectionState.tiebreakerValue)}`}
+                      : tiebreaker.describe(selectionState.tiebreakerValue)}
                   </div>
                 </Alert>
-              )
+              ) : null
             ) : (
               <Alert className="mt-5">
                 This entry belongs to another team.
@@ -764,12 +768,12 @@ export function ContestEntryPage() {
         <Tile>
           <h3 className="text-xl font-semibold" data-testid="contest-entry-builder-heading">
             {isRandomDraw
-              ? selectionState.drawnAt ? 'Dealt golfers' : 'Golfers'
+              ? `${selectionState.drawnAt ? 'Dealt ' : ''}${selectionState.drawnAt ? participantNoun.many : participantNoun.many.charAt(0).toUpperCase() + participantNoun.many.slice(1)}`
               : isEditable ? 'Build your lineup' : 'Saved lineup detail'}
           </h3>
           {isRandomDraw ? (
             <div className="mt-5">
-              <DrawLineup selectionState={selectionState} />
+              <DrawLineup noun={participantNoun} selectionState={selectionState} />
             </div>
           ) : (
           <div className="mt-5 space-y-5">
@@ -784,6 +788,7 @@ export function ContestEntryPage() {
                 group={group}
                 isBusy={submitSelectionMutation.isPending}
                 key={group.groupId}
+                noun={participantNoun}
                 onParticipantSelect={(participant) => {
                   // A refused pick is shown by the mutation's error state and rolled back there.
                   void submitSelectionMutation.mutateAsync(participant.sportEventParticipantId).catch(() => undefined);
@@ -791,10 +796,10 @@ export function ContestEntryPage() {
                 summary={lineupSummary}
               />
             ) : (
-              <LockedBudgetLineup group={group} key={group.groupId} summary={lineupSummary} />
+              <LockedBudgetLineup group={group} key={group.groupId} noun={participantNoun} summary={lineupSummary} />
             ))) : selectionGroups.map((group) => {
               if (!isEditable) {
-                return <LockedSelectionGroup group={group} key={group.groupId} />;
+                return <LockedSelectionGroup group={group} key={group.groupId} noun={participantNoun} />;
               }
 
               const isExpanded = expandedGroupId === group.groupId;
@@ -806,6 +811,7 @@ export function ContestEntryPage() {
                   isBusy={submitSelectionMutation.isPending}
                   isExpanded={isExpanded}
                   key={group.groupId}
+                  noun={participantNoun}
                   onParticipantSelect={(nextParticipant) => {
                     void submitSelectionMutation
                       .mutateAsync(nextParticipant.sportEventParticipantId)
@@ -848,7 +854,9 @@ export function ContestEntryPage() {
             {isMyEntry && isEditable && !isSubmitted ? (
               <Alert data-testid="contest-entry-not-submitted" title="Not submitted" tone="warning">
                 {lineupComplete
-                  ? 'Your lineup is complete. Choose a tiebreaker and submit it: an entry only counts once it is submitted.'
+                  ? tiebreaker
+                    ? 'Your lineup is complete. Choose a tiebreaker and submit it: an entry only counts once it is submitted.'
+                    : 'Your lineup is complete. Submit it: an entry only counts once it is submitted.'
                   : 'This entry only counts once its lineup is complete and submitted. A change that leaves a submitted lineup short needs submitting again.'}
               </Alert>
             ) : null}
@@ -884,8 +892,8 @@ export function ContestEntryPage() {
                 isSubmitting={saveEntryDetailsMutation.isPending || submitEntryMutation.isPending}
                 onChange={setTiebreakerDraft}
                 onSubmit={() => void submitEntry()}
-                options={TIEBREAKER_OPTIONS}
                 submitDisabled={finalSubmitDisabled}
+                tiebreaker={tiebreaker}
                 value={hasSelectedTiebreaker ? String(selectedTiebreakerValue) : ''}
               />
             ) : null}

@@ -73,6 +73,7 @@ const STANDARD_PRICING = { profileName: 'Standard', salaryCap: 50000, unit: 100,
 describe('golf-admin-utils: describeGolfReleaseBlockers', () => {
   const now = new Date('2026-04-01T00:00:00.000Z');
   const ready = {
+    sport: 'GOLF' as const,
     status: 'DRAFT' as const,
     startDate: '2026-05-07T12:00:00.000Z',
     loadedParticipantCount: 120,
@@ -236,15 +237,15 @@ describe('pool-master-3dg golf-admin-utils: localDateTimeInputToIso', () => {
 });
 
 describe('pool-master-3dg golf-admin-utils: resolveGolfProviderId', () => {
-  it('pool-master-3dg returns the first provider covering GOLF, else null', () => {
-    expect(
-      resolveGolfProviderId([
-        { providerId: 'espn', sportsCovered: ['NFL'] },
-        { providerId: 'mock-contest-feed', sportsCovered: ['GOLF', 'NBA'] },
-      ]),
-    ).toBe('mock-contest-feed');
-    expect(resolveGolfProviderId([])).toBeNull();
-    expect(resolveGolfProviderId(undefined)).toBeNull();
+  it('returns the first provider covering the sport asked for, and null when none covers it', () => {
+    const providers = [
+      { providerId: 'espn', sportsCovered: ['NFL'] },
+      { providerId: 'mock-contest-feed', sportsCovered: ['GOLF', 'NBA'] },
+    ];
+    expect(resolveGolfProviderId(providers, 'GOLF')).toBe('mock-contest-feed');
+    expect(resolveGolfProviderId(providers, 'HORSE_RACING')).toBeNull();
+    expect(resolveGolfProviderId([], 'GOLF')).toBeNull();
+    expect(resolveGolfProviderId(undefined, 'GOLF')).toBeNull();
   });
 });
 

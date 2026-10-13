@@ -38,7 +38,7 @@ at the end).
 
 ## 1. Create the tournament
 
-*Golf → Tournaments → New* (`/manage/golf/tournaments/new`).
+*Golf → Tournaments → New* (`/manage/sports/golf/events/new`).
 
 | Field | Set it to |
 |---|---|
@@ -65,7 +65,7 @@ instead; that list shows only events that start inside the tournament's own date
 mock lists the 2026 and 2027 PGA TOUR and LPGA Tour schedules, and their fields are each
 tour's ranked players (about 150), not the 80-golfer field used below.
 
-To create a whole year of those listed events at once, open the tour's page (`/manage/golf/leagues/:leagueId`),
+To create a whole year of those listed events at once, open the tour's page (`/manage/sports/golf/leagues/:leagueId`),
 pick the year on its tournament calendar, and choose *Import {year} from provider*. Every
 event the mock lists for that tour and year is created and linked for scores; ones the tour
 already has are skipped, so it is safe to run again. The tour's match keyword must be the
@@ -79,7 +79,7 @@ row are skipped, so add any that are missing with *Edit schedule*.
 
 ## 4. Load the field from the mock
 
-*Field* (`/manage/golf/tournaments/:id/field`), then *Load Participant Field*. This loads
+*Field* (`/manage/sports/golf/events/:id/field`), then *Load Participant Field*. This loads
 the mock's 80 golfers and records each one's mock id, which is what the score sync matches
 on. Then:
 
@@ -104,7 +104,7 @@ with the provider's again, as it does grid edits (#415).
 
 ## 5. Build tiers
 
-*Tiers* (`/manage/golf/tournaments/:id/tiers`), then *Auto-assign tiers from ranking*. A golf
+*Tiers* (`/manage/sports/golf/events/:id/tiers`), then *Auto-assign tiers from ranking*. A golf
 event starts with six tiers. Auto-assign fills them in ranking order, ten golfers at a time,
 and the last tier takes everyone left. The mock's 80 golfers therefore come out as
 10/10/10/10/10/30. A tier-pick contest's configuration is checked against this tier count.

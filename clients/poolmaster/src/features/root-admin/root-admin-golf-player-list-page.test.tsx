@@ -8,7 +8,7 @@ import { RootAdminGolfPlayerCreatePage } from './root-admin-golf-player-create-p
 import { RootAdminGolfPlayerListPage } from './root-admin-golf-player-list-page';
 import { GOLF_SPORT_FIXTURE, participantFixture } from './golf-test-fixtures';
 
-// /manage/golf/players and its Add player page, /manage/golf/players/new (pool-master-rfy).
+// /manage/sports/golf/participants and its Add player page, /manage/sports/golf/participants/new (pool-master-rfy).
 
 const { listParticipantsMock, listSportsMock, createParticipantMock, mockLogger } = vi.hoisted(
   () => {
@@ -54,7 +54,7 @@ function player(overrides: Parameters<typeof participantFixture>[0] = {}) {
 }
 
 function renderPage({
-  path = '/manage/golf/players',
+  path = '/manage/sports/golf/participants',
   sportsLoaded = true,
 }: { path?: string; sportsLoaded?: boolean } = {}) {
   // #236: golfers are the golf sport's participants, scoped by its id.
@@ -68,9 +68,9 @@ function renderPage({
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
-          <Route element={<RootAdminGolfPlayerListPage />} path="/manage/golf/players" />
-          <Route element={<RootAdminGolfPlayerCreatePage />} path="/manage/golf/players/new" />
-          <Route element={<div data-testid="player-home" />} path="/manage/golf/players/:participantId" />
+          <Route element={<RootAdminGolfPlayerListPage />} path="/manage/sports/:sport/participants" />
+          <Route element={<RootAdminGolfPlayerCreatePage />} path="/manage/sports/:sport/participants/new" />
+          <Route element={<div data-testid="player-home" />} path="/manage/sports/:sport/participants/:participantId" />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -116,7 +116,7 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
   it('pool-master-rfy re-queries when the status filter changes, so non-active golfers are reachable', async () => {
     listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
-    await screen.findByText('No active golf players.');
+    await screen.findByText('No active golfers.');
 
     await userEvent.selectOptions(
       screen.getByTestId('root-admin-golf-player-list-status'),
@@ -128,14 +128,14 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
         expect.objectContaining({ query: { sportId: 'sport-golf', status: 'RETIRED' } }),
       ),
     );
-    expect(await screen.findByText('No retired golf players.')).toBeInTheDocument();
+    expect(await screen.findByText('No retired golfers.')).toBeInTheDocument();
   });
 
   it('pool-master-rfy shows empty and error states', async () => {
     listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
     expect(
-      await screen.findByText('No active golf players.'),
+      await screen.findByText('No active golfers.'),
     ).toBeInTheDocument();
   });
 
@@ -169,7 +169,7 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
   it('opens Add player as its own page, and Cancel returns to the list without saving', async () => {
     listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
-    await screen.findByText('No active golf players.');
+    await screen.findByText('No active golfers.');
 
     await userEvent.click(screen.getByTestId('root-admin-golf-player-list-new'));
     expect(await screen.findByTestId('root-admin-golf-player-create-page')).toBeInTheDocument();
@@ -184,7 +184,7 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
       error: { error: { code: 'CONFLICT', message: 'A golfer with this external ID already exists.' } },
       response: { status: 409 },
     });
-    renderPage({ path: '/manage/golf/players/new' });
+    renderPage({ path: '/manage/sports/golf/participants/new' });
 
     await userEvent.type(
       await screen.findByTestId('root-admin-golf-player-list-new-name'),
@@ -203,7 +203,7 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
       data: { participant: player({ id: 'new', name: 'Ludvig Åberg' }) },
     });
     renderPage();
-    await screen.findByText('No active golf players.');
+    await screen.findByText('No active golfers.');
 
     await userEvent.click(screen.getByTestId('root-admin-golf-player-list-new'));
     await userEvent.type(
@@ -223,7 +223,7 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
   it('pool-master-rfy blocks submit until a name is entered', async () => {
     listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
-    await screen.findByText('No active golf players.');
+    await screen.findByText('No active golfers.');
     await userEvent.click(screen.getByTestId('root-admin-golf-player-list-new'));
     expect(screen.getByTestId('root-admin-golf-player-list-new-save')).toBeDisabled();
   });

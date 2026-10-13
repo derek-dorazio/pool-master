@@ -12,6 +12,13 @@ export interface SportNoun {
 export interface SportVocabulary {
   /** One competitor: "golfer" / "golfers". */
   participant: SportNoun;
+  /** One event a contest runs on: "tournament" / "tournaments" for golf, "race" / "races" for horse racing. */
+  event: SportNoun;
+  /**
+   * One sport league, the organiser whose events recur each year: "tour" / "tours" for golf (the
+   * PGA Tour), "circuit" / "circuits" for horse racing (US Thoroughbred).
+   */
+  sportLeague: SportNoun;
   /** One scheduled stage of an event: "round" / "rounds". */
   round: SportNoun;
   /**
@@ -40,6 +47,8 @@ export interface SportTierLayout {
  */
 export interface SportDefinition {
   sport: Sport;
+  /** The sport's name as a heading or menu entry reads it: "Golf", "Horse racing". */
+  name: string;
   participantType: ParticipantType;
   scoringFamily: ScoringFamily;
   /** The tournament format a new event of this sport gets. */

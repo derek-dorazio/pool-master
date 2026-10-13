@@ -19,7 +19,9 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { ParticipantLeagueAffiliationDto } from '@/lib/api';
+import { capitalize } from './manage-navigation';
 import { useGolfPlayersQuery } from './use-golf-catalog';
+import { useManagedSport } from './use-managed-sport';
 
 const columnHelper = createColumnHelper<ParticipantLeagueAffiliationDto>();
 
@@ -33,16 +35,17 @@ function isValidRank(raw: string): boolean {
   return /^\d+$/.test(raw.trim()) && Number(raw) > 0;
 }
 
-const rosterColumns = [
+/** The roster's columns, the first named for the sport's participant ("Golfer", "Horse"). */
+const buildRosterColumns = (participantLabel: string) => [
   columnHelper.accessor((entry) => entry.participant.name, {
     id: 'name',
-    header: 'Golfer',
+    header: participantLabel,
     cell: ({ getValue }) => (
       <span className="font-medium text-foreground">{getValue()}</span>
     ),
   }),
   columnHelper.accessor('ranking', {
-    // The ranking the tour keeps for the golfer (#236), not a world ranking.
+    // The ranking the sport league keeps for the participant (#236), not a world ranking.
     header: 'Ranking',
     cell: ({ row, table }) => {
       const entry = row.original;
@@ -108,7 +111,7 @@ const rosterColumns = [
 ];
 
 /**
- * A tour's page: the roster grid the admin maintains week to week.
+ * A sport league's page: the roster grid the admin maintains week to week.
  * Per-row ranking edits collect into a local draft (holding only the
  * edited cells, never seeded from the query — `rules/react-ui-rules.md` "Server
  * Data Form-State Hazard") and save in one call; an "Add golfer" picker and a
@@ -128,6 +131,9 @@ export function GolfLeagueRosterGridCard({
   const logger = getLogger().child({
     feature: 'root-admin-golf-league-home-page',
   });
+  const { sport, definition } = useManagedSport();
+  const { participant, sportLeague } = definition.vocabulary;
+  const rosterColumns = useMemo(() => buildRosterColumns(capitalize(participant.one)), [participant.one]);
 
   const [draft, setDraft] = useState<Partial<Record<string, string>>>({});
   const [draftLeagueId, setDraftLeagueId] = useState(leagueId);
@@ -144,7 +150,8 @@ export function GolfLeagueRosterGridCard({
   }
 
   const playersQuery = useGolfPlayersQuery({
-    queryKey: QueryKeys.rootAdmin.golf.playerList('ACTIVE'),
+    sport,
+    queryKey: QueryKeys.rootAdmin.golf.playerList(sport, 'ACTIVE'),
     status: 'ACTIVE',
     enabled: addOpen,
   });
@@ -275,7 +282,7 @@ export function GolfLeagueRosterGridCard({
         <div>
           <h3 className="text-base font-semibold text-foreground">Roster</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            {entries.length} golfer{entries.length === 1 ? '' : 's'} on this tour.
+            {`${entries.length} ${entries.length === 1 ? participant.one : participant.many} on this ${sportLeague.one}.`}
           </p>
         </div>
         <Button
@@ -287,7 +294,7 @@ export function GolfLeagueRosterGridCard({
           }}
           size="sm"
         >
-          Add golfer
+          {`Add ${participant.one}`}
         </Button>
       </div>
 
@@ -302,7 +309,7 @@ export function GolfLeagueRosterGridCard({
           emptyMessage={
             rosterLoading
               ? 'Loading roster…'
-              : 'No golfers on this tour yet. Add golfers or use the bulk upload above.'
+              : `No ${participant.many} on this ${sportLeague.one} yet. Add ${participant.many} or use the bulk upload above.`
           }
           getRowId={(entry) => entry.participantId}
           meta={gridMeta}
@@ -356,10 +363,10 @@ export function GolfLeagueRosterGridCard({
         canApply={addSelectedId !== null}
         emptyMessage={
           playersQuery.isLoading
-            ? 'Loading golfers…'
+            ? `Loading ${participant.many}…`
             : playersQuery.isError
-              ? 'We could not load the golfer list.'
-              : 'Every active golfer is already on this roster.'
+              ? `We could not load the ${participant.one} list.`
+              : `Every active ${participant.one} is already on this roster.`
         }
         getItemLabel={(item) => item.name}
         isPending={addMutation.isPending}
@@ -375,28 +382,28 @@ export function GolfLeagueRosterGridCard({
         onSelect={(item) => setAddSelectedId(item.id)}
         open={addOpen}
         search={{
-          label: 'Search golfers',
+          label: `Search ${participant.many}`,
           onChange: setAddSearch,
           placeholder: 'Name',
           value: addSearch,
         }}
         selectedId={addSelectedId}
         testId="root-admin-golf-league-roster-add-modal"
-        title="Add golfer to roster"
+        title={`Add ${participant.one} to roster`}
       />
 
       <ConfirmationModal
-        confirmLabel="Remove from tour"
+        confirmLabel={`Remove from ${sportLeague.one}`}
         confirmTestId="root-admin-golf-league-roster-remove-confirm"
         description={
           removeTarget
-            ? `Remove ${removeTarget.participant.name} from this tour's roster. This does not retire the golfer; do that from the golfer's own page.`
+            ? `Remove ${removeTarget.participant.name} from this ${sportLeague.one}'s roster. This does not retire the ${participant.one}; do that from the ${participant.one}'s own page.`
             : ''
         }
         errorMessage={
           removeMutation.isError
             ? extractErrorMessage(removeMutation.error, {
-                fallback: 'We could not remove this golfer.',
+                fallback: `We could not remove this ${participant.one}.`,
               })
             : undefined
         }
@@ -410,7 +417,7 @@ export function GolfLeagueRosterGridCard({
         onOpenChange={(next) => !next && setRemoveTarget(null)}
         open={removeTarget !== null}
         testId="root-admin-golf-league-roster-remove-modal"
-        title="Remove golfer"
+        title={`Remove ${participant.one}`}
         tone="danger"
       />
     </Tile>

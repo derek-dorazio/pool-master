@@ -149,6 +149,7 @@ function primeCommonMocks(overrides?: {
       contest: {
         id: 'contest-1',
         leagueId: 'league-1',
+        sport: 'GOLF',
         name: 'Bohler Masters Tiered',
         status: overrides?.contestStatus ?? 'OPEN',
         contestType: 'ROSTER',
@@ -446,6 +447,56 @@ describe('ContestEntryPage', () => {
       }),
       expect.any(String),
     );
+  });
+
+  it('submits a complete horse racing entry with no tiebreaker to choose, since a race asks for no prediction', async () => {
+    primeCommonMocks();
+    getContestMock.mockResolvedValue({
+      data: {
+        contest: {
+          id: 'contest-1',
+          leagueId: 'league-1',
+          sport: 'HORSE_RACING',
+          name: 'Derby Pick 3',
+          status: 'OPEN',
+          contestType: 'ROSTER',
+          selectionType: 'TIERED',
+        },
+      },
+    });
+    getSelectionStateMock.mockResolvedValue({
+      data: buildSelectionState([
+        {
+          groupId: 'tier-1',
+          groupName: 'Tier 1',
+          groupNumber: 1,
+          picksFromGroup: 1,
+          selectedParticipantIds: ['sep-1'],
+          participants: [{ ...buildGolfParticipant('sep-1', 'Sovereignty', 1, true), role: 'HORSE' }],
+        },
+      ]),
+    });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- forwards the untyped selection-state mock's resolution.
+    submitContestEntryMock.mockImplementation(() => getSelectionStateMock());
+
+    renderContestEntryPage();
+
+    expect(await screen.findByTestId('contest-entry-submit')).toBeEnabled();
+    expect(screen.queryByTestId('contest-entry-tiebreaker-select')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-tiebreaker-status')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-not-submitted')).toHaveTextContent(
+      'Your lineup is complete. Submit it: an entry only counts once it is submitted.',
+    );
+    expect(screen.getByTestId('contest-entry-group-tier-1')).toHaveTextContent('Choose 1 horse from this tier.');
+
+    fireEvent.click(screen.getByTestId('contest-entry-submit'));
+
+    await waitFor(() =>
+      expect(submitContestEntryMock).toHaveBeenCalledWith({
+        path: { contestId: 'contest-1', entryId: 'entry-1' },
+      }),
+    );
+    expect(updateContestEntryMock).not.toHaveBeenCalled();
   });
 
   it('pool-master-rop.20 preserves unsaved entry details across selection-state query refetches', async () => {
@@ -971,6 +1022,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
         contest: {
           id: 'contest-1',
           leagueId: 'league-1',
+          sport: 'GOLF',
           name: 'Bohler Masters Tiered',
           status: 'OPEN',
           contestType: 'ROSTER',
@@ -1000,6 +1052,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
         contest: {
           id: 'contest-1',
           leagueId: 'league-1',
+          sport: 'GOLF',
           name: 'Bohler Masters Tiered',
           status: 'OPEN',
           contestType: 'ROSTER',
@@ -1192,6 +1245,7 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
         contest: {
           id: 'contest-1',
           leagueId: 'league-1',
+          sport: 'GOLF',
           name: 'Bohler Masters Budget',
           status: 'OPEN',
           contestType: 'ROSTER',
@@ -1238,7 +1292,7 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
     fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-select'), { target: { value: '-12' } });
 
     expect(screen.getByTestId('contest-entry-submit-blocked')).toHaveTextContent(
-      'Your golfers cost $16,000, over the $15,000 salary cap. Remove a golfer to get under it, then submit.',
+      'Your picks cost $16,000, over the $15,000 salary cap. Remove one to get under it, then submit.',
     );
     expect(screen.getByTestId('contest-entry-submit')).toBeDisabled();
   });
@@ -1324,7 +1378,7 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
     fireEvent.click(screen.getByTestId('contest-entry-submit'));
 
     expect(await screen.findByTestId('contest-entry-submit-error')).toHaveTextContent(
-      'Your golfers cost more than the salary cap. Remove a golfer to get under it, then submit.',
+      'Your picks cost more than the salary cap. Remove one to get under it, then submit.',
     );
   });
 });
@@ -1370,6 +1424,7 @@ describe('ContestEntryPage — a random-draw entry', () => {
         contest: {
           id: 'contest-1',
           leagueId: 'league-1',
+          sport: 'GOLF',
           name: 'Masters Sweepstake',
           status: 'OPEN',
           contestType: 'ROSTER',

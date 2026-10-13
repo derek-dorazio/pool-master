@@ -71,7 +71,7 @@ describe('budget lineup rules on the entry page', () => {
     const summary = fits.lineupSummary ?? null;
     expect(summary).not.toBeNull();
     expect(budget.submitBlockedReason({ ...fits, lineupSummary: summary && { ...summary, spent: 120, isOverBudget: true } }))
-      .toBe('Your golfers cost $120, over the $100 salary cap. Remove a golfer to get under it, then submit.');
+      .toBe('Your picks cost $120, over the $100 salary cap. Remove one to get under it, then submit.');
   });
 
 });
@@ -89,7 +89,7 @@ describe('random-draw lineup rules on the entry page', () => {
     const room = { ...budgetRoom(['a', 'b']), selectionType: SelectionType.RANDOM_DRAW, lineupSummary: undefined };
 
     expect(draw.submitBlockedReason(room)).toBe(
-      'Golfers in this contest are dealt by the commissioner’s draw, so there is nothing to submit.',
+      'Picks in this contest are dealt by the commissioner’s draw, so there is nothing to submit.',
     );
   });
 });

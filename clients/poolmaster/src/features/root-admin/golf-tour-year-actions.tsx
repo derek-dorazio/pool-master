@@ -6,6 +6,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportLeagueDto } from '@/lib/api';
+import { useManagedSport } from './use-managed-sport';
 
 /**
  * plans/147 — what used to be done to a season is done to a tour's event year: make it
@@ -26,6 +27,7 @@ export function GolfTourYearActions({
   tour: SportLeagueDto;
 }) {
   const logger = getLogger().child({ feature: 'golf-tour-year-actions' });
+  const { event } = useManagedSport().definition.vocabulary;
   const [setCurrentOpen, setSetCurrentOpen] = useState(false);
   const [cloneOpen, setCloneOpen] = useState(false);
   const targetYear = eventYear + 1;
@@ -106,7 +108,7 @@ export function GolfTourYearActions({
           setCurrentMutation.isError
             ? extractErrorMessage(setCurrentMutation.error, {
                 codeMessages: {
-                  EVENT_YEAR_HAS_NO_EVENTS: `${tour.name} has no tournaments in ${eventYear}, so it cannot be the current year.`,
+                  EVENT_YEAR_HAS_NO_EVENTS: `${tour.name} has no ${event.many} in ${eventYear}, so it cannot be the current year.`,
                 },
                 fallback: 'We could not set this year as current.',
               })
@@ -124,12 +126,12 @@ export function GolfTourYearActions({
       <ConfirmationModal
         confirmLabel={`Clone to ${targetYear}`}
         confirmTestId="root-admin-golf-tour-calendar-clone-confirm"
-        description={`${eventCount} tournament${eventCount === 1 ? '' : 's'} will be copied to ${targetYear}, dates shifted one year forward, each as next year’s edition. The field, tiers, prices, scores, and provider link of each tournament are not copied, and the current year does not change.`}
+        description={`${eventCount} ${eventCount === 1 ? event.one : event.many} will be copied to ${targetYear}, dates shifted one year forward, each as next year’s edition. The field, tiers, prices, results, and provider link of each ${event.one} are not copied, and the current year does not change.`}
         errorMessage={
           cloneMutation.isError
             ? extractErrorMessage(cloneMutation.error, {
                 codeMessages: {
-                  EVENT_YEAR_NOT_EMPTY: `${tour.name} already has tournaments in ${targetYear}.`,
+                  EVENT_YEAR_NOT_EMPTY: `${tour.name} already has ${event.many} in ${targetYear}.`,
                 },
                 fallback: 'We could not clone this year.',
               })

@@ -1,3 +1,4 @@
+import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shared/domain';
 import { useMemo, useState, type ReactNode } from 'react';
 import { GripVertical } from 'lucide-react';
 import { replaceEventTierAssignments, updateEventParticipants } from '@/lib/api';
@@ -18,8 +19,9 @@ import {
 } from './golf-tier-board-utils';
 import type { SportEventParticipantDto, SportEventTierDto } from '@/lib/api';
 
-const TIER_LOCKED_MESSAGE =
-  'This tournament has been released for contests, so its tiers and prices are locked.';
+function tierLockedMessage(event: SportNoun): string {
+  return `This ${event.one} has been released for contests, so its tiers and prices are locked.`;
+}
 
 function isValidPrice(raw: string): boolean {
   return /^\d+$/.test(raw.trim());
@@ -62,14 +64,17 @@ export function GolfTierBoard({
   eventId,
   field,
   locked = false,
+  sport,
   tiers,
 }: {
   eventId: string;
   field: SportEventParticipantDto[];
   /** Released for contests (#431): the board is read-only. */
   locked?: boolean;
+  sport: Sport;
   tiers: SportEventTierDto[];
 }) {
+  const { event, participant } = getSportDefinition(sport).vocabulary;
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-tiers-page',
   });
@@ -133,7 +138,7 @@ export function GolfTierBoard({
     onError: (error) => {
       logger.warn(
         { action: 'golf.tiers.assignments.save.failed', err: error },
-        'Golf tier assignment save was rejected',
+        'Tier assignment save was rejected',
       );
     },
   });
@@ -157,7 +162,7 @@ export function GolfTierBoard({
     onError: (error) => {
       logger.warn(
         { action: 'golf.tiers.prices.save.failed', err: error },
-        'Golf tier price save was rejected',
+        'Tier price save was rejected',
       );
     },
   });
@@ -185,14 +190,14 @@ export function GolfTierBoard({
   const saving = assignmentsMutation.isPending || pricesMutation.isPending;
   const saveError = assignmentsMutation.isError
     ? extractErrorMessage(assignmentsMutation.error, {
-        codeMessages: { SPORT_EVENT_TIERS_LOCKED: TIER_LOCKED_MESSAGE },
+        codeMessages: { SPORT_EVENT_TIERS_LOCKED: tierLockedMessage(event) },
         fallback: 'We could not save these tier assignments.',
       })
     : pricesMutation.isError
       ? `Tier assignments saved, but prices could not be saved: ${extractErrorMessage(
           pricesMutation.error,
           {
-            codeMessages: { SPORT_EVENT_TIERS_LOCKED: TIER_LOCKED_MESSAGE },
+            codeMessages: { SPORT_EVENT_TIERS_LOCKED: tierLockedMessage(event) },
             fallback: 'please retry.',
           },
         )}`
@@ -342,6 +347,7 @@ export function GolfTierBoard({
             column={column}
             key={column.key}
             locked={locked}
+            participant={participant}
             onReorder={(orderedIds) =>
               setBoard((current) => reorderColumn(current, column.key, orderedIds))
             }
@@ -357,10 +363,12 @@ function TierBoardColumn({
   column,
   locked,
   onReorder,
+  participant,
   renderCard,
 }: {
   column: TierColumn;
   locked: boolean;
+  participant: SportNoun;
   onReorder: (orderedIds: string[]) => void;
   renderCard: (column: TierColumn, card: TierCard, index: number) => ReactNode;
 }) {
@@ -380,10 +388,10 @@ function TierBoardColumn({
         <span className="text-muted-foreground">({column.cards.length})</span>
       </h4>
       {column.cards.length === 0 ? (
-        <p className="mt-3 text-xs text-muted-foreground">No golfers.</p>
+        <p className="mt-3 text-xs text-muted-foreground">No {participant.many}.</p>
       ) : (
         <SortableList
-          aria-label={`${column.label} golfers`}
+          aria-label={`${column.label} ${participant.many}`}
           className="mt-3"
           items={items}
           onReorder={onReorder}

@@ -1,3 +1,4 @@
+import type { SportNoun } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { runContestDraw } from '@/lib/api';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -5,7 +6,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { Alert, Button, ConfirmDialog } from '@/features/shared/ui';
-import { pluralize } from './contest-rules';
+import { countParticipants, pluralize } from './contest-rules';
 import { CONTEST_DRAW_CODE_MESSAGES } from './use-contest-draw';
 
 /**
@@ -16,11 +17,14 @@ export function RunDrawAction({
   contestId,
   entryCount,
   leagueId,
+  noun,
   picksPerEntry,
 }: {
   contestId: string;
   entryCount: number;
   leagueId: string;
+  /** What the event's sport calls a participant: "golfer", "horse". */
+  noun: SportNoun;
   picksPerEntry: number;
 }) {
   const logger = getLogger().child({ feature: 'run-draw-action' });
@@ -75,7 +79,7 @@ export function RunDrawAction({
       <ConfirmDialog
         confirmLabel="Run draw"
         confirmTestId="contest-run-draw-confirm"
-        description={`The draw deals each of the ${pluralize(entryCount, 'entry', 'entries')} ${pluralize(picksPerEntry, 'golfer')} at random and enters them. It’s final: it can’t be undone or run again. Entries close, so no one can enter or leave afterwards, and everyone in the league sees who drew whom.`}
+        description={`The draw deals each of the ${pluralize(entryCount, 'entry', 'entries')} ${countParticipants(picksPerEntry, noun)} at random and enters them. It’s final: it can’t be undone or run again. Entries close, so no one can enter or leave afterwards, and everyone in the league sees who drew whom.`}
         isPending={runDrawMutation.isPending}
         onCancel={closeDialog}
         onConfirm={() => void runDrawMutation.mutateAsync().catch(() => undefined)}

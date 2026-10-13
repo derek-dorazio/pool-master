@@ -262,6 +262,10 @@ filling them in rather than by finding guards scattered through the code:
   On the web, how a family's results read on the shared contest screens is its entry in
   `SCORING_FAMILY_UI` (`clients/poolmaster/src/features/contests/scoring-family-ui/`), also a
   `Record<ScoringFamily, …>`, reached from a response's `sport` through its sport definition.
+  How an admin enters a family's results in Manage is its entry in `SCORING_FAMILY_ADMIN_UI`
+  (`clients/poolmaster/src/features/root-admin/scoring-family-admin.ts`), the same kind of
+  record: one set of Manage event, field, tier, participant and sport league pages serves every
+  sport under `/manage/sports/:sport/`, and only the results page body comes from the family.
 
 The rules that keep it that way:
 

@@ -4,6 +4,8 @@ import {
   parseEventYear,
   type GolfTournamentEdition,
 } from './golf-tournament-edition';
+import { capitalize } from './manage-navigation';
+import { useManagedSport } from './use-managed-sport';
 
 /**
  * plans/147 — the tour and event year a tournament is created into, shared by both
@@ -20,19 +22,20 @@ export function GolfTournamentEditionFields({
   onChange: (edition: GolfTournamentEdition) => void;
   tours: readonly SportLeagueDto[];
 }) {
+  const { event, sportLeague } = useManagedSport().definition.vocabulary;
   return (
     <>
       <FormField
-        error={edition.sportLeagueId === '' ? 'Choose the tour this tournament runs on.' : undefined}
+        error={edition.sportLeagueId === '' ? `Choose the ${sportLeague.one} this ${event.one} runs on.` : undefined}
         helperText="Required. Fixed at creation."
-        label="Tour *"
+        label={`${capitalize(sportLeague.one)} *`}
       >
         <Select
           data-testid="root-admin-golf-tournament-create-tour"
           onChange={(event) => onChange({ ...edition, sportLeagueId: event.target.value })}
           value={edition.sportLeagueId}
         >
-          <option value="">Select a tour</option>
+          <option value="">Select a {sportLeague.one}</option>
           {tours.map((tour) => (
             <option key={tour.id} value={tour.id}>
               {tour.name}
@@ -41,8 +44,8 @@ export function GolfTournamentEditionFields({
         </Select>
       </FormField>
       <FormField
-        error={parseEventYear(edition.eventYear) === null ? 'Enter the year the tournament is known by.' : undefined}
-        helperText="The year in its name — the 2026 Masters — even when it starts the December before."
+        error={parseEventYear(edition.eventYear) === null ? `Enter the year the ${event.one} is known by.` : undefined}
+        helperText="The year in its name, even when it starts the December before."
         label="Event year *"
       >
         <Input

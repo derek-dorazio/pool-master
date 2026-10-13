@@ -22,10 +22,12 @@ import {
   type GolfTournamentEdition,
 } from './golf-tournament-edition';
 import { localDateTimeInputToIso } from './golf-admin-utils';
+import { buildSportEventPath, capitalize } from './manage-navigation';
+import { useManagedSport } from './use-managed-sport';
 
 
 const manualFormSchema = z.object({
-  name: z.string().trim().min(1, 'Tournament name is required'),
+  name: z.string().trim().min(1, 'Name is required'),
   venue: z.string().trim().optional(),
   location: z.string().trim().optional(),
   startDate: z.string().min(1, 'Start date is required'),
@@ -49,6 +51,8 @@ export function GolfTournamentManualCreateForm({
     feature: 'root-admin-golf-tournament-create-page',
   });
   const navigate = useNavigate();
+  const { sport, definition } = useManagedSport();
+  const { event, participant, round } = definition.vocabulary;
 
   const form = useForm<ManualFormValues>({
     resolver: zodResolver(manualFormSchema),
@@ -58,7 +62,7 @@ export function GolfTournamentManualCreateForm({
       location: '',
       startDate: '',
       endDate: '',
-      rounds: 4,
+      rounds: definition.defaultRounds,
       autoLifecycleEnabled: true,
     },
   });
@@ -81,7 +85,7 @@ export function GolfTournamentManualCreateForm({
         },
       });
       if (!response.data?.event.id) {
-        throwApiError(response.error, 'Tournament creation response is missing data.');
+        throwApiError(response.error, `The ${event.one} creation response is missing data.`);
       }
       return response.data.event;
     },
@@ -91,7 +95,7 @@ export function GolfTournamentManualCreateForm({
         { action: 'golf.tournament.create.manual', data: { id: tournament.id } },
         'Created golf tournament manually',
       );
-      navigate(`/manage/golf/tournaments/${tournament.id}`);
+      navigate(buildSportEventPath(sport, tournament.id));
     },
     onError: (error) => {
       logger.warn(
@@ -138,7 +142,7 @@ export function GolfTournamentManualCreateForm({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField error={form.formState.errors.rounds?.message} label="Rounds">
+          <FormField error={form.formState.errors.rounds?.message} label={capitalize(round.many)}>
             <Input
               data-testid="root-admin-golf-tournament-create-rounds"
               min={1}
@@ -160,13 +164,14 @@ export function GolfTournamentManualCreateForm({
               form.setValue('autoLifecycleEnabled', event.target.checked)
             }
           />
-          Move this tournament through Live and Completed automatically from its round
+          Move this {event.one} through Live and Completed automatically from its {round.one}{' '}
           schedule.
         </label>
 
         <p className="text-sm text-muted-foreground">
-          The tournament starts as a draft that only admins can see. Release it for contests
-          from its Workflow card once its field is loaded and every golfer is in a tier.
+          The {event.one} starts as a draft that only admins can see. Release it for contests
+          from its Workflow card once its field is loaded and every {participant.one} is in a
+          tier.
         </p>
 
         <div className="flex justify-end gap-3">
@@ -176,7 +181,7 @@ export function GolfTournamentManualCreateForm({
             isLoading={createMutation.isPending}
             type="submit"
           >
-            Create tournament
+            Create {event.one}
           </Button>
         </div>
 
@@ -184,9 +189,9 @@ export function GolfTournamentManualCreateForm({
           <p className="text-sm font-medium text-destructive">
             {extractErrorMessage(createMutation.error, {
               codeMessages: {
-                EVENT_EDITION_ALREADY_EXISTS: `This tour already has a ${edition.eventYear} edition of this tournament.`,
+                EVENT_EDITION_ALREADY_EXISTS: `This ${definition.vocabulary.sportLeague.one} already has a ${edition.eventYear} edition of this ${event.one}.`,
               },
-              fallback: 'We could not create this tournament.',
+              fallback: `We could not create this ${event.one}.`,
             })}
           </p>
         ) : null}

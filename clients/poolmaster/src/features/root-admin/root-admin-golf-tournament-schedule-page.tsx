@@ -17,7 +17,8 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { localDateTimeInputToIso } from './golf-admin-utils';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import { buildGolfTournamentPath } from './manage-navigation';
+import { buildSportEventPath, capitalize } from './manage-navigation';
+import { useManagedSport } from './use-managed-sport';
 import { useGolfRoundsQuery, useGolfTournamentQuery } from './use-golf-tournament';
 
 const roundsFormSchema = z.object({
@@ -62,7 +63,9 @@ function GolfTournamentScheduleForm({
     feature: 'root-admin-golf-tournament-schedule-page',
   });
   const navigate = useNavigate();
-  const homePath = buildGolfTournamentPath(eventId);
+  const { sport, definition } = useManagedSport();
+  const { event, round } = definition.vocabulary;
+  const homePath = buildSportEventPath(sport, eventId);
 
   const form = useForm<RoundsFormValues>({
     resolver: zodResolver(roundsFormSchema),
@@ -86,7 +89,7 @@ function GolfTournamentScheduleForm({
         },
       });
       if (!response.data?.rounds) {
-        throwApiError(response.error, 'Golf tournament rounds update response is missing data.');
+        throwApiError(response.error, `The ${event.one} schedule update response is missing data.`);
       }
       return response.data.rounds;
     },
@@ -103,9 +106,9 @@ function GolfTournamentScheduleForm({
   return (
     <FormPage
       cancelTo={homePath}
-      description="When each round starts and ends. The background scheduler moves the tournament along this schedule."
+      description={`When each ${round.one} starts and ends. The background scheduler moves the ${event.one} along this schedule.`}
       errorMessage={roundsMutation.isError
-        ? extractErrorMessage(roundsMutation.error, { fallback: 'We could not save the round schedule.' })
+        ? extractErrorMessage(roundsMutation.error, { fallback: `We could not save the ${round.one} schedule.` })
         : undefined}
       isPending={roundsMutation.isPending}
       isSubmitDisabled={!form.formState.isValid}
@@ -114,13 +117,13 @@ function GolfTournamentScheduleForm({
       submitLabel="Save schedule"
       submitTestId="root-admin-golf-tournament-rounds-save"
       testId="root-admin-golf-tournament-schedule-page"
-      title="Round schedule"
+      title={`${capitalize(round.one)} schedule`}
     >
       {fields.map((field, index) => (
         <div className="grid gap-3 sm:grid-cols-2" key={field.id}>
           <FormField
             error={form.formState.errors.rounds?.[index]?.scheduledDate?.message}
-            label={`Round ${field.roundNumber} date`}
+            label={`${definition.roundLabel(field.roundNumber, fields.length)} date`}
           >
             <Input
               data-testid={`root-admin-golf-tournament-round-${field.roundNumber}-date`}
@@ -128,7 +131,7 @@ function GolfTournamentScheduleForm({
               {...form.register(`rounds.${index}.scheduledDate`)}
             />
           </FormField>
-          <FormField label={`Round ${field.roundNumber} end`}>
+          <FormField label={`${definition.roundLabel(field.roundNumber, fields.length)} end`}>
             <Input
               data-testid={`root-admin-golf-tournament-round-${field.roundNumber}-end`}
               type="datetime-local"
@@ -141,9 +144,10 @@ function GolfTournamentScheduleForm({
   );
 }
 
-/** Reschedule a tournament's rounds, on a page of its own. */
+/** Reschedule an event's rounds, on a page of its own. */
 export function RootAdminGolfTournamentSchedulePage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
+  const { event, round } = useManagedSport().definition.vocabulary;
   const tournamentQuery = useGolfTournamentQuery(eventId);
   const roundsQuery = useGolfRoundsQuery(eventId);
 
@@ -154,8 +158,8 @@ export function RootAdminGolfTournamentSchedulePage() {
   return (
     <AsyncPage
       error={query.error}
-      errorBody="We could not load this tournament's round schedule right now."
-      loadingBody="Loading round schedule..."
+      errorBody={`We could not load this ${event.one}'s ${round.one} schedule right now.`}
+      loadingBody={`Loading ${round.one} schedule...`}
       state={
         tournamentQuery.isLoading || roundsQuery.isLoading
           ? 'loading'
@@ -165,7 +169,7 @@ export function RootAdminGolfTournamentSchedulePage() {
               ? 'empty'
               : 'ready'
       }
-      emptyBody="This tournament has no rounds to schedule yet."
+      emptyBody={`This ${event.one} has no ${round.many} to schedule yet.`}
     >
       {roundsQuery.data ? (
         <GolfTournamentScheduleForm eventId={eventId} rounds={roundsQuery.data} />

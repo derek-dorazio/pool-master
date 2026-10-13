@@ -50,9 +50,21 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     }
   });
 
-  it('has every vocabulary word filled in, and an eliminated word that is either absent or filled in', () => {
-    const { participant, round, eliminated, withdrawn, eventStart } = definition.vocabulary;
-    for (const word of [participant.one, participant.many, round.one, round.many, withdrawn, eventStart]) {
+  it('has a name and every vocabulary word filled in, and an eliminated word that is either absent or filled in', () => {
+    const { participant, event, sportLeague, round, eliminated, withdrawn, eventStart } = definition.vocabulary;
+    for (const word of [
+      definition.name,
+      participant.one,
+      participant.many,
+      event.one,
+      event.many,
+      sportLeague.one,
+      sportLeague.many,
+      round.one,
+      round.many,
+      withdrawn,
+      eventStart,
+    ]) {
       expect(word.trim()).not.toBe('');
     }
     if (eliminated !== undefined) {
@@ -89,6 +101,18 @@ describe('sport registry', () => {
     expect(horseRacing.vocabulary.withdrawn).toBe('Scratched');
     expect(horseRacing.vocabulary.eliminated).toBeUndefined();
     expect(horseRacing.vocabulary.participant).toEqual({ one: 'horse', many: 'horses' });
+  });
+
+  it('calls a horse racing event a race and its sport league a circuit, and a golf one a tournament on a tour', () => {
+    const horseRacing = getSportDefinition(Sport.HORSE_RACING);
+    const golf = getSportDefinition(Sport.GOLF);
+
+    expect(horseRacing.name).toBe('Horse racing');
+    expect(horseRacing.vocabulary.event).toEqual({ one: 'race', many: 'races' });
+    expect(horseRacing.vocabulary.sportLeague).toEqual({ one: 'circuit', many: 'circuits' });
+    expect(golf.name).toBe('Golf');
+    expect(golf.vocabulary.event).toEqual({ one: 'tournament', many: 'tournaments' });
+    expect(golf.vocabulary.sportLeague).toEqual({ one: 'tour', many: 'tours' });
   });
 
   it('gives a new horse race one round labelled Race, and three tiers so an eight-runner field fills each', () => {
