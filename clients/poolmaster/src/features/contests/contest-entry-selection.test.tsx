@@ -197,7 +197,8 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
               ...participant,
               status: "WITHDRAWN",
               isAvailable: false,
-              unavailableReason: "Withdrawn",
+              // What the selection state carries for a withdrawn golfer today: server text, not copy.
+              unavailableReason: "SportEventParticipant sep-2 is unavailable with status WITHDRAWN",
             }
           : participant,
       ),
@@ -231,12 +232,14 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: "sep-2" }));
   });
 
-  it("disables a withdrawn golfer the entry does not hold, showing why", () => {
+  it("disables a withdrawn golfer the entry does not hold, labelled with the sport's word and no server text", () => {
     renderEditable(groupWithWithdrawn(["sep-1"]));
 
     const withdrawn = screen.getByTestId("contest-entry-participant-sep-2");
     expect(withdrawn).toBeDisabled();
     expect(withdrawn).toHaveTextContent("Withdrawn");
+    expect(withdrawn).not.toHaveTextContent("SportEventParticipant");
+    expect(withdrawn).not.toHaveTextContent("WITHDRAWN");
   });
 
   it("disables every golfer while a pick is saving or when the viewer cannot pick", () => {
