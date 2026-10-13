@@ -10,6 +10,7 @@ import {
   type AuthSessionData,
 } from './auth-session-cache';
 import { AuthContext, type AuthContextValue } from './auth-context';
+import { forgetSignedInUserId, rememberSignedInUserId } from './signed-in-user';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const logger = getLogger().child({
@@ -66,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    rememberSignedInUserId(meQuery.data.id);
     logger.info(
       {
         action: 'auth.me.succeeded',
@@ -205,6 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
       }
       clearAuthSession(queryClient);
+      forgetSignedInUserId();
       logger.info(
         {
           action: 'auth.logout.completed',

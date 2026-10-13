@@ -110,8 +110,17 @@ function renderAuthProvider(options?: { user?: AuthSessionUser }) {
   return { ...utils, queryClient };
 }
 
+const SIGNED_IN_USER_COOKIE = 'poolmaster_signed_in_user';
+
+function readSignedInUserCookie() {
+  const match = document.cookie.split(';').map((part) => part.trim())
+    .find((part) => part.startsWith(`${SIGNED_IN_USER_COOKIE}=`));
+  return match ? match.slice(SIGNED_IN_USER_COOKIE.length + 1) || null : null;
+}
+
 describe('AuthProvider', () => {
   afterEach(() => {
+    document.cookie = `${SIGNED_IN_USER_COOKIE}=; Path=/; Max-Age=0`;
     getCurrentUserMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
@@ -247,6 +256,37 @@ describe('AuthProvider', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(refreshTokenMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('remembers which account is signed in, and forgets it on sign-out', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: buildUser({ id: 'user-7' }),
+      },
+    });
+    logoutUserMock.mockResolvedValue({ data: undefined });
+
+    renderAuthProvider();
+
+    await screen.findByText('user-7');
+    await waitFor(() => expect(readSignedInUserCookie()).toBe('user-7'));
+
+    fireEvent.click(screen.getByTestId('auth-clear-session'));
+
+    await waitFor(() => expect(screen.getByTestId('auth-state')).toHaveTextContent('guest'));
+    expect(readSignedInUserCookie()).toBeNull();
+  });
+
+  it('keeps the remembered account when the session lapses rather than being signed out', async () => {
+    document.cookie = `${SIGNED_IN_USER_COOKIE}=user-7; Path=/`;
+    getCurrentUserMock.mockRejectedValue(new Error('Unauthorized'));
+    refreshTokenMock.mockResolvedValue({ data: undefined });
+
+    renderAuthProvider();
+
+    await waitFor(() => expect(refreshTokenMock).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByTestId('auth-state')).toHaveTextContent('guest'));
+    expect(readSignedInUserCookie()).toBe('user-7');
   });
 
   it('clears local state even when the logout request fails', async () => {
