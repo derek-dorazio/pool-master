@@ -468,10 +468,7 @@ export class ContestService {
     const context = await this.getEntryContext(contestId, userId, 'act');
     if (!(await this.areEntriesOpen(context.contest))) {
       this.logger.warn({ contestId, userId, status: context.contest.status }, 'contest entry create locked contest');
-      throw new ContestEntryOperationError(
-        'Contest entries can only be changed before the contest starts',
-        'CONTEST_ENTRY_LOCKED',
-      );
+      throw entriesLockedError();
     }
     await this.assertEntryFieldReady(context.contest, userId);
 
@@ -500,7 +497,7 @@ export class ContestService {
     // deletes the first entry and keeps the later ones, so a count would reuse a number still
     // taken, and (contest, squad, entry number) is unique.
     const nextEntryNumber = (await this.findHighestEntryNumber(contestId, squad.id)) + 1;
-    const created = await this.deps.entries.create({
+    const result = await this.deps.entries.create({
       contestId,
       squadId: squad.id,
       entryNumber: nextEntryNumber,
@@ -508,7 +505,12 @@ export class ContestService {
       // Born a draft; the owner submits it once its lineup is complete (#481).
       status: ContestEntryStatus.DRAFT,
     });
-    const dto = await this.loadEntryDtoById(created.id);
+    // The draw closed entries after the window check above: it ran while this entry was on its way in.
+    if (result.status === 'contestDrawn') {
+      this.logger.warn({ contestId, userId }, 'contest entry create locked by draw');
+      throw entriesLockedError();
+    }
+    const dto = await this.loadEntryDtoById(result.entry.id);
     this.logger.info({
       contestId,
       userId,
@@ -527,10 +529,7 @@ export class ContestService {
     const context = await this.getEntryContext(contestId, userId, 'act');
     if (!(await this.areEntriesOpen(context.contest))) {
       this.logger.warn({ contestId, userId, status: context.contest.status }, 'contest entry delete locked contest');
-      throw new ContestEntryOperationError(
-        'Contest entries can only be changed before the contest starts',
-        'CONTEST_ENTRY_LOCKED',
-      );
+      throw entriesLockedError();
     }
     if (!context.squadMembership) {
       // The same code the route's requireOwnSquad gate answers, so the state reads one way
@@ -557,7 +556,11 @@ export class ContestService {
       );
     }
 
-    await this.deps.entries.delete(existing.id);
+    const deleted = await this.deps.entries.delete(existing.id);
+    if (deleted.status === 'contestDrawn') {
+      this.logger.warn({ contestId, userId, entryId: existing.id }, 'contest entry delete locked by draw');
+      throw entriesLockedError();
+    }
     this.logger.info({ contestId, userId, entryId: existing.id }, 'contest entry delete completed');
   }
 
@@ -576,10 +579,7 @@ export class ContestService {
     const context = await this.getEntryContext(contestId, userId, 'act');
     if (!(await this.areEntriesOpen(context.contest))) {
       this.logger.warn({ contestId, entryId, userId, status: context.contest.status }, 'contest entry update locked contest');
-      throw new ContestEntryOperationError(
-        'Contest entries can only be changed before the contest starts',
-        'CONTEST_ENTRY_LOCKED',
-      );
+      throw entriesLockedError();
     }
     if (!context.squadMembership) {
       this.logger.warn({ contestId, entryId, userId }, 'contest entry update missing squad manager');
@@ -1069,6 +1069,13 @@ export class ContestEntryNotFoundError extends Error {
     super(`Contest entry not found for contest ${contestId} and squad ${squadId}`);
     this.name = 'ContestEntryNotFoundError';
   }
+}
+
+function entriesLockedError(): ContestEntryOperationError {
+  return new ContestEntryOperationError(
+    'Contest entries can only be changed before the contest starts',
+    'CONTEST_ENTRY_LOCKED',
+  );
 }
 
 function buildDefaultEntryName(squadName: string, entryNumber: number): string {

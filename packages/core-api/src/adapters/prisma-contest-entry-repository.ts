@@ -2,9 +2,15 @@
  * Prisma adapter for ContestEntryRepository port.
  */
 
-import type { PrismaClient } from '@prisma/client';
-import type { ContestEntryRepository, ContestEntryWithSquad } from '@poolmaster/shared/db';
+import type { Prisma, PrismaClient } from '@prisma/client';
+import type {
+  ContestEntryCreateResult,
+  ContestEntryDeleteResult,
+  ContestEntryRepository,
+  ContestEntryWithSquad,
+} from '@poolmaster/shared/db';
 import type { ContestEntry, ContestEntryStatus } from '@poolmaster/shared/domain';
+import { lockContestRow } from './contest-row-lock';
 
 export class PrismaContestEntryRepository implements ContestEntryRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -44,18 +50,23 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     return rows.map(mapToEntry);
   }
 
-  async create(entry: Omit<ContestEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntry> {
-    const row = await this.prisma.contestEntry.create({
-      data: {
-        contestId: entry.contestId,
-        squadId: entry.squadId,
-        entryNumber: entry.entryNumber,
-        name: entry.name,
-        status: entry.status,
-        tiebreakerValue: entry.tiebreakerValue,
-      },
+  /** Refused once the contest is drawn; waits for a draw being recorded (#644). */
+  async create(entry: Omit<ContestEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntryCreateResult> {
+    return this.prisma.$transaction(async (tx) => {
+      await lockContestRow(tx, entry.contestId);
+      if (await isContestDrawn(tx, entry.contestId)) return { status: 'contestDrawn' };
+      const row = await tx.contestEntry.create({
+        data: {
+          contestId: entry.contestId,
+          squadId: entry.squadId,
+          entryNumber: entry.entryNumber,
+          name: entry.name,
+          status: entry.status,
+          tiebreakerValue: entry.tiebreakerValue,
+        },
+      });
+      return { status: 'created', entry: mapToEntry(row) };
     });
-    return mapToEntry(row);
   }
 
   async update(id: string, updates: Partial<ContestEntry>): Promise<ContestEntry> {
@@ -70,9 +81,20 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     return mapToEntry(row);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.contestEntry.delete({ where: { id } });
+  /** Refused once the contest is drawn; waits for a draw being recorded (#644). */
+  async delete(id: string): Promise<ContestEntryDeleteResult> {
+    return this.prisma.$transaction(async (tx) => {
+      const { contestId } = await tx.contestEntry.findUniqueOrThrow({ where: { id }, select: { contestId: true } });
+      await lockContestRow(tx, contestId);
+      if (await isContestDrawn(tx, contestId)) return { status: 'contestDrawn' };
+      await tx.contestEntry.delete({ where: { id } });
+      return { status: 'deleted' };
+    });
   }
+}
+
+async function isContestDrawn(tx: Prisma.TransactionClient, contestId: string): Promise<boolean> {
+  return (await tx.contestDraw.count({ where: { contestId } })) > 0;
 }
 
 function mapToEntry(row: {

@@ -370,7 +370,7 @@ describe('ContestEntryRepository', () => {
     }));
   });
 
-  it('deletes one entry and leaves the contest\'s other entries', async () => {
+  it('deletes one entry of an undrawn contest and leaves the contest\'s other entries', async () => {
     const prisma = getPrisma();
     const { league, squads, event } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'Entry Delete');
@@ -379,7 +379,7 @@ describe('ContestEntryRepository', () => {
       prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[1].id, entryNumber: 1, name: 'Staying' } }),
     ]);
 
-    await repos().entries.delete(leaving.id);
+    await expect(repos().entries.delete(leaving.id)).resolves.toEqual({ status: 'deleted' });
 
     expect((await repos().entries.findByContest(contest.id)).map((entry) => entry.id)).toEqual([staying.id]);
   });
