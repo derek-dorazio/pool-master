@@ -103,10 +103,13 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
     findByIdWithSquad: jest.fn().mockResolvedValue(DEFAULT_ENTRY_WITH_SQUAD),
     findByContestWithSquad: jest.fn().mockResolvedValue([DEFAULT_ENTRY_WITH_SQUAD]),
     create: mockFn<ContestEntryRepository['create']>(async (input) => ({
-      ...input,
-      id: 'entry-1',
-      createdAt: new Date('2026-01-01'),
-      updatedAt: new Date('2026-01-01'),
+      status: 'created',
+      entry: {
+        ...input,
+        id: 'entry-1',
+        createdAt: new Date('2026-01-01'),
+        updatedAt: new Date('2026-01-01'),
+      },
     })),
     update: mockFn<ContestEntryRepository['update']>(async (id, updates) => ({
       id,
@@ -613,6 +616,69 @@ describe('ContestService', () => {
       await expect(service.createEntry('contest-1', 'user-1'))
         .rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
       expect(entryRepo.create).not.toHaveBeenCalled();
+    });
+
+    describe('when a random draw closes the contest while the write is on its way', () => {
+      const activeSquadMembership = {
+        id: 'squad-membership-1',
+        squadId: 'squad-1',
+        leagueId: 'league-1',
+        userId: 'user-1',
+        status: SquadMembershipStatus.ACTIVE,
+        joinedAt: new Date('2026-01-01'),
+        createdAt: new Date('2026-01-01'),
+        updatedAt: new Date('2026-01-01'),
+      };
+
+      function serviceWithEntries(entries: ContestEntryRepository) {
+        return buildService({
+          contests: createMockContestRepo({
+            findById: jest.fn().mockResolvedValue(
+              buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.OPEN }),
+            ),
+          }),
+          configurations: createMockContestConfigurationRepo(),
+          memberships: createMockMembershipRepo({
+            findByLeagueAndUser: jest.fn().mockResolvedValue(
+              buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' }),
+            ),
+          }),
+          squads: createMockSquadRepo(),
+          squadMemberships: createMockSquadMembershipRepo({
+            findByLeagueAndUser: jest.fn().mockResolvedValue(activeSquadMembership),
+          }),
+          entries,
+        });
+      }
+
+      it('refuses the new entry with CONTEST_ENTRY_LOCKED when the repository finds the contest drawn', async () => {
+        const service = serviceWithEntries(createMockEntryRepo({
+          findBySquad: jest.fn().mockResolvedValue([]),
+          create: jest.fn().mockResolvedValue({ status: 'contestDrawn' }),
+        }));
+
+        await expect(service.createEntry('contest-1', 'user-1'))
+          .rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
+      });
+
+      it('refuses to leave with CONTEST_ENTRY_LOCKED when the repository finds the contest drawn', async () => {
+        const service = serviceWithEntries(createMockEntryRepo({
+          findBySquad: jest.fn().mockResolvedValue([{
+            id: 'entry-1',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            entryNumber: 1,
+            name: "Derek's Squad Entry 1",
+            status: 'DRAFT',
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }]),
+          delete: jest.fn().mockResolvedValue({ status: 'contestDrawn' }),
+        }));
+
+        await expect(service.deleteMyEntry('contest-1', 'user-1'))
+          .rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
+      });
     });
 
     it('rejects contest entry creation when the league member has no active squad', async () => {

@@ -44,6 +44,11 @@ The draw is refused when the contest is not open, the event has started, there a
 or the field (its available members) is smaller than `entries × picksPerEntry`. It is final:
 there is no undo and no redraw.
 
+Recording the draw and creating or deleting an entry each lock the contest row first (#644),
+so an entry on its way in when the commissioner presses Run draw either lands before the draw,
+which then refuses because the entries changed, or after it, and is refused because entries
+are closed. No drawn contest holds an entry without its dealt picks.
+
 ## 4. The deal
 
 - The field is the event's available participants (withdrawn golfers are not dealt), ordered

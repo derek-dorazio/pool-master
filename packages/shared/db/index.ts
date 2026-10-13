@@ -13,6 +13,8 @@ export type {
   ContestCreate,
   ContestStatusFilter,
   ContestStatusTransition,
+  ContestEntryCreateResult,
+  ContestEntryDeleteResult,
   ContestEntryRepository,
   ContestEntryWithSquad,
   ContestRepository,

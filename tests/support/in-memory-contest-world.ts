@@ -344,6 +344,8 @@ export class InMemoryContestWorld {
       findBySquad: async (squadId) =>
         [...this.entries.values()].filter((entry) => entry.squadId === squadId),
       create: async (input) => {
+        // The adapter refuses an entry once the contest is drawn.
+        if (this.contests.get(input.contestId)?.drawnAt !== undefined) return { status: 'contestDrawn' };
         // @@unique([contestId, squadId, entryNumber]) on contest_entries.
         const clash = [...this.entries.values()].some((entry) =>
           entry.contestId === input.contestId
@@ -360,7 +362,7 @@ export class InMemoryContestWorld {
           updatedAt: now,
         };
         this.entries.set(entry.id, entry);
-        return entry;
+        return { status: 'created', entry };
       },
       update: async (id, updates) => {
         const existing = this.entries.get(id);
@@ -370,11 +372,14 @@ export class InMemoryContestWorld {
         return updated;
       },
       delete: async (id) => {
+        const contestId = this.entries.get(id)?.contestId;
+        if (contestId !== undefined && this.contests.get(contestId)?.drawnAt !== undefined) return { status: 'contestDrawn' };
         // The adapter deletes an entry's picks with it.
         for (const [pickId, pick] of this.picks) {
           if (pick.entryId === id) this.picks.delete(pickId);
         }
         this.entries.delete(id);
+        return { status: 'deleted' };
       },
     };
   }

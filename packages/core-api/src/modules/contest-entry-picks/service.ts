@@ -23,6 +23,7 @@ import type {
   ContestEntryPickDto,
   ContestEntryPickInsertInput,
 } from './types';
+import { lockContestRow } from '../../adapters';
 import { mapContestEntryPickToDto } from '../../mappers/contest-entry-picks.mapper';
 
 export class ContestEntryPickEntryMissingError extends Error {
@@ -160,6 +161,8 @@ export class ContestEntryPickService {
   async recordDraw(input: ContestDrawRecordInput): Promise<void> {
     const { contestId } = input;
     await this.prisma.$transaction(async (tx) => {
+      // Entry writes take the same lock, so the entry set read below cannot change before commit (#644).
+      await lockContestRow(tx, contestId);
       const contest = await tx.contest.findUnique({ where: { id: contestId }, select: { contestFormat: true } });
       if (!contest) throw new ContestEntryPickContestMissingError(contestId);
 
@@ -200,7 +203,7 @@ export class ContestEntryPickService {
       });
 
       await tx.contestEntry.updateMany({
-        where: { contestId },
+        where: { id: { in: [...dealtEntryIds] } },
         data: { status: ContestEntryStatus.SUBMITTED },
       });
     });

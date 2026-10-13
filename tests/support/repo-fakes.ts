@@ -19,6 +19,8 @@
  *   - `create` / `update` / `resolve` → echo the input back with id and timestamps, which
  *     is more useful than `undefined` and is what the richest local factories already did
  *   - `delete` → `undefined`
+ *   - the entry port's `create` and `delete` return a result, so theirs are the write going
+ *     through: `{ status: 'created', entry }` and `{ status: 'deleted' }`
  *
  * A test that needs a specific value passes it in `overrides`, exactly as the local
  * factories took them, so migrating a call site is usually deleting the factory and
@@ -73,6 +75,7 @@ import type {
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
+import type { ContestEntry } from '@poolmaster/shared/domain';
 
 /** Echoes a create input back with the fields a repository would have assigned. */
 function echoCreate(idPrefix: string) {
@@ -346,11 +349,17 @@ export function fakeContestEntryRepo(
     findByContest: many(),
     findByContestWithSquad: many(),
     findBySquad: many(),
-    create: echoCreate('contest-entry'),
+    create: createdEntry(echoCreate('contest-entry')),
     update: echoUpdate(),
-    delete: nothing(),
+    delete: jest.fn().mockResolvedValue({ status: 'deleted' }),
     ...overrides,
   };
+}
+
+/** Wraps an echoing create in the entry port's result, as an entry written to an undrawn contest. */
+function createdEntry(create: jest.Mock): ContestEntryRepository['create'] {
+  return jest.fn().mockImplementation(async (input: Record<string, unknown>) =>
+    ({ status: 'created', entry: (await create(input)) as ContestEntry }));
 }
 
 /** Read-only, like the port: a pick is only ever inserted through ContestEntryPickService. */

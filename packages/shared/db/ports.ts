@@ -340,14 +340,22 @@ export interface ContestEntryWithSquad extends ContestEntry {
   squadName: string;
 }
 
+/**
+ * An entry write the contest's draw may have closed (#644). Creating and deleting an entry take
+ * the contest row lock, as recording a draw does, so a write and a draw never interleave: the
+ * one that runs second sees the other.
+ */
+export type ContestEntryCreateResult = { status: 'created'; entry: ContestEntry } | { status: 'contestDrawn' };
+export type ContestEntryDeleteResult = { status: 'deleted' } | { status: 'contestDrawn' };
+
 export interface ContestEntryRepository {
   findByIdWithSquad(id: string): Promise<ContestEntryWithSquad | null>;
   findByContest(contestId: string): Promise<ContestEntry[]>;
   /** In entry-number order, then creation order; `submittedOnly` keeps SUBMITTED entries alone (#481). */
   findByContestWithSquad(contestId: string, options?: { submittedOnly?: boolean }): Promise<ContestEntryWithSquad[]>;
   findBySquad(squadId: string): Promise<ContestEntry[]>;
-  create(entry: Omit<ContestEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntry>;
+  create(entry: Omit<ContestEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntryCreateResult>;
   update(id: string, updates: Partial<ContestEntry>): Promise<ContestEntry>;
-  delete(id: string): Promise<void>;
+  delete(id: string): Promise<ContestEntryDeleteResult>;
 }
 
