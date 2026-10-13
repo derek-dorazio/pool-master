@@ -509,15 +509,20 @@ code defaults that may depend on the environment) and added to `SETTINGS_GROUPS`
 
 ### Manual-testing seed data goes through the admin API
 
-- `packages/core-api/scripts/seed-golf/` is the pattern: one data file (`golf-2026.json`) and a
-  script that writes it with the generated SDK as a root admin, so every rule the Manage
+- `packages/core-api/scripts/seed-golf/` is the pattern: data files (`golf-2026.json`) and a
+  script that writes them with the generated SDK as a root admin, so every rule the Manage
   screens apply applies to it too and nothing writes the database behind the service.
-- It runs only when someone asks: `npm run seed:golf` locally, the *Seed QA golf data*
+- It runs only when someone asks: `npm run seed:golf` locally, the *Load sport data*
   workflow on QA. Never from a migration, a deploy, a reset, or a Prisma seed.
-- It is idempotent by skipping, not by overwriting: anything that already exists is left as
-  it is, so it is safe after a QA reset and never clobbers what someone edited by hand.
-- Its dates are moved relative to the day it runs, so what it creates is usable then. No
-  automated test may depend on seeded rows; tests build their own.
+- A data file carries its scope in an envelope (schema version, sport, season, sport
+  leagues, contents, `testData`), checked before any write; the filename is never parsed.
+  Made-up data is allowed only when the envelope says `testData`, and only on local and QA.
+- It is re-entrant by comparing and filling in: what is missing is added, what differs is
+  updated while the event has not started, a dropped field entry is withdrawn, and nothing is
+  deleted. A league ranking someone already has is kept, and a started event is reported, not
+  changed. A dry run reports the same without writing.
+- A test seed's dates are moved relative to the day it runs, so what it creates is usable
+  then. No automated test may depend on seeded rows; tests build their own.
 
 ### There is deliberately no Prisma seed
 

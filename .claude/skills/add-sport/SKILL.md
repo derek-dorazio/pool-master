@@ -131,6 +131,9 @@ missing, wrong or unused, and traps you hit. Fix this file in the same PR, so th
 it, and add one line to the PR body saying what changed in the skill. A sport PR that changes
 nothing here says so explicitly.
 
+Add the sport's sources to the `load-sport-data` skill's source list, so its schedules and
+fields can be loaded without keying them in.
+
 When the sport lands as a series of slices, each slice's PR still records what it learned,
 and the closing slice folds the lessons in. Check each against the code before writing it
 down: a lesson that was true mid-series may not be by the end.

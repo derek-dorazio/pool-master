@@ -70,6 +70,7 @@ tells an agent what it is not allowed to know; a task tells it what order to do 
 | `model-change` | Changing the Prisma schema, a domain type, or an enum. Classify the blast radius first |
 | `add-frontend-feature` | Building anything in `clients/poolmaster` |
 | `add-sport` | Making contests possible for a new sport or scoring family: refine, registry entry, scoring family, then reflect on the skill |
+| `load-sport-data` | Putting a sport league's real schedule or fields on a site from public sources: gather, cross-check, write the data file, dry run, apply on the user's yes |
 | `release-check` | Before a push or PR, and when a gate fails |
 
 Each skill is a sequence and a set of traps. The authoritative policy stays in `rules/`,
