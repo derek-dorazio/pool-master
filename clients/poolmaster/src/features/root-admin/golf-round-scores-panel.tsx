@@ -12,11 +12,11 @@ import { QueryKeys } from '@/lib/query-keys';
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 import {
   golfRoundScoreRows,
-  golfTournamentHasScoreSync,
-} from './golf-admin-utils';
+  sportEventHasScoreSync,
+} from './sport-admin-utils';
 import { GolfRoundScoreCorrectionsCard } from './golf-round-score-corrections-card';
 import { GolfRoundScoreUploadCard } from './golf-round-score-upload-card';
-import { useGolfFieldQuery } from './use-golf-tournament';
+import { useSportEventFieldQuery } from './use-sport-event';
 
 /**
  * Stroke play's results (plans/124 §6.3): an event's round scores, one round at a time. Owns the
@@ -29,7 +29,7 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
   const { roundLabel } = getSportDefinition(tournament.sport);
 
   const roundsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.rounds(eventId),
+    queryKey: QueryKeys.rootAdmin.manageSport.rounds(eventId),
     queryFn: async (): Promise<SportEventRoundDto[]> => {
       const response = await listEventRounds({ path: { eventId } });
       if (!response.data?.rounds) {
@@ -43,7 +43,7 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
 
   // #236: the field carries each golfer's per-round golf results, so one read serves
   // the CSV template and the chosen round's corrections.
-  const fieldQuery = useGolfFieldQuery(eventId);
+  const fieldQuery = useSportEventFieldQuery(eventId);
 
   const roundOptions = useMemo(() => {
     const total = tournament.rounds ?? 0;
@@ -76,7 +76,7 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
 
   return (
     <div className="space-y-6" data-testid="root-admin-golf-tournament-scores-page">
-      {golfTournamentHasScoreSync(tournament.syncScope) ? (
+      {sportEventHasScoreSync(tournament.syncScope) ? (
         <Alert data-testid="root-admin-golf-scores-sync-alert" tone="warning">
           Scores for this tournament sync automatically from the linked provider.
           Manual edits here are corrections and may be overwritten by the next sync

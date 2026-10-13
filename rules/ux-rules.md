@@ -248,7 +248,7 @@ administration area (root admin included), reusing the same shared components.
    not "Back to" and "View" links on each page. A contest's pages share
    `ContestHeader`: Entries, Leaderboard once picks are revealed, and My entry
    once the viewer's team has one. An event's pages in Manage share
-   `GolfTournamentHeader` whatever its sport: Overview, Field, Tiers, and the
+   `SportEventHeader` whatever its sport: Overview, Field, Tiers, and the
    results page its scoring family names (Scores for golf, Results for a race).
 10. **Actions are named for what they do, never "draft".** "Draft" is a contest
     status and also the snake-draft selection type, so no button or link uses

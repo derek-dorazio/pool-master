@@ -151,21 +151,21 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     await expect(page.getByTestId('root-admin-manage-menu-horse-racing')).toBeVisible();
     await page.getByTestId('root-admin-manage-menu-horse-racing').click();
     await expect(page).toHaveURL(/\/manage\/sports\/horse-racing\/events$/);
-    await expect(page.getByTestId('root-admin-golf-tournament-list-page')).toBeVisible();
+    await expect(page.getByTestId('root-admin-sport-event-list-page')).toBeVisible();
   });
 
   const circuitId = await test.step('create a racing circuit', async () => {
     await page.goto('/manage/sports/horse-racing/leagues');
-    await page.getByTestId('root-admin-golf-league-list-new').click();
-    await page.getByTestId('root-admin-golf-league-list-new-name').fill(run.tourName);
+    await page.getByTestId('root-admin-sport-league-list-new').click();
+    await page.getByTestId('root-admin-sport-league-list-new-name').fill(run.tourName);
     const created = await submitAndRead<{ sportLeague: { id: string } }>(
       page,
-      'root-admin-golf-league-list-new-save',
+      'root-admin-sport-league-list-new-save',
       'POST',
       '/api/v1/sport-leagues',
     );
-    await page.getByTestId('root-admin-golf-league-list-search').fill(run.tourName);
-    await expect(page.getByTestId(`root-admin-golf-league-row-${created.sportLeague.id}`)).toBeVisible();
+    await page.getByTestId('root-admin-sport-league-list-search').fill(run.tourName);
+    await expect(page.getByTestId(`root-admin-sport-league-row-${created.sportLeague.id}`)).toBeVisible();
     return created.sportLeague.id;
   });
 
@@ -173,19 +173,19 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     await page.goto('/manage/sports/horse-racing/participants');
     const ids: string[] = [];
     for (let horse = 1; horse <= HORSE_COUNT; horse += 1) {
-      await page.getByTestId('root-admin-golf-player-list-new').click();
-      await page.getByTestId('root-admin-golf-player-list-new-name').fill(horseName(run, horse));
+      await page.getByTestId('root-admin-participant-list-new').click();
+      await page.getByTestId('root-admin-participant-list-new-name').fill(horseName(run, horse));
       const created = await submitAndRead<{ participant: { id: string } }>(
         page,
-        'root-admin-golf-player-list-new-save',
+        'root-admin-participant-list-new-save',
         'POST',
         '/api/v1/participants',
       );
       ids.push(created.participant.id);
     }
-    await page.getByTestId('root-admin-golf-player-list-search').fill(run.playerNamePrefix);
+    await page.getByTestId('root-admin-participant-list-search').fill(run.playerNamePrefix);
     for (const id of ids) {
-      await expect(page.getByTestId(`root-admin-golf-player-row-${id}`)).toBeVisible();
+      await expect(page.getByTestId(`root-admin-participant-row-${id}`)).toBeVisible();
     }
     return ids;
   });
@@ -195,35 +195,35 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     const start = addDays(new Date(), 7);
     start.setHours(17, 0, 0, 0);
     await page.goto('/manage/sports/horse-racing/events/new');
-    await page.getByTestId('root-admin-golf-tournament-create-tour').selectOption(circuitId);
-    await page.getByTestId('root-admin-golf-tournament-create-event-year').fill(String(start.getFullYear()));
-    await page.getByTestId('root-admin-golf-tournament-create-name').fill(run.tournamentName);
-    await page.getByTestId('root-admin-golf-tournament-create-start').fill(dateTimeInput(start));
+    await page.getByTestId('root-admin-sport-event-create-tour').selectOption(circuitId);
+    await page.getByTestId('root-admin-sport-event-create-event-year').fill(String(start.getFullYear()));
+    await page.getByTestId('root-admin-sport-event-create-name').fill(run.tournamentName);
+    await page.getByTestId('root-admin-sport-event-create-start').fill(dateTimeInput(start));
     // A race is one race: the form starts from the sport's own default.
-    await expect(page.getByTestId('root-admin-golf-tournament-create-rounds')).toHaveValue('1');
+    await expect(page.getByTestId('root-admin-sport-event-create-rounds')).toHaveValue('1');
     const created = await submitAndRead<{ event: { id: string; sport: string } }>(
       page,
-      'root-admin-golf-tournament-create-submit',
+      'root-admin-sport-event-create-submit',
       'POST',
       '/api/v1/events',
     );
     expect(created.event.sport).toBe('HORSE_RACING');
     await expect(page).toHaveURL(new RegExp(`/manage/sports/horse-racing/events/${created.event.id}$`));
-    await expect(page.getByTestId('root-admin-golf-tournament-home-page')).toBeVisible();
+    await expect(page.getByTestId('root-admin-sport-event-home-page')).toBeVisible();
     return created.event.id;
   });
   journey.raceId = raceId;
 
   await test.step(`enter the ${HORSE_COUNT} horses in the field`, async () => {
     await page.goto(`/manage/sports/horse-racing/events/${raceId}/field`);
-    await page.getByTestId('root-admin-golf-field-add').click();
-    await page.getByTestId('root-admin-golf-field-add-search').fill(runId);
+    await page.getByTestId('root-admin-event-field-add').click();
+    await page.getByTestId('root-admin-event-field-add-search').fill(runId);
     for (const id of horseIds) {
-      await page.getByTestId(`root-admin-golf-field-add-search-select-${id}`).check();
+      await page.getByTestId(`root-admin-event-field-add-search-select-${id}`).check();
     }
-    await submitAndRead(page, 'root-admin-golf-field-add-submit', 'POST', `/api/v1/events/${raceId}/participants`);
-    await expect(page.getByTestId('root-admin-golf-field-add-result')).toBeVisible();
-    await page.getByTestId('root-admin-golf-field-add-done').click();
+    await submitAndRead(page, 'root-admin-event-field-add-submit', 'POST', `/api/v1/events/${raceId}/participants`);
+    await expect(page.getByTestId('root-admin-event-field-add-result')).toBeVisible();
+    await page.getByTestId('root-admin-event-field-add-done').click();
   });
 
   const fieldEntryIds = await test.step('set each horse\'s odds to win in the field grid', async () => {
@@ -241,11 +241,11 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     });
 
     for (const [index, entryId] of entryIds.entries()) {
-      await page.getByTestId(`root-admin-golf-field-oddsToWin-${entryId}`).fill(String(ODDS_TO_WIN[index]));
+      await page.getByTestId(`root-admin-event-field-oddsToWin-${entryId}`).fill(String(ODDS_TO_WIN[index]));
     }
-    await submitAndRead(page, 'root-admin-golf-field-save', 'PATCH', `/api/v1/events/${raceId}/participants`);
+    await submitAndRead(page, 'root-admin-event-field-save', 'PATCH', `/api/v1/events/${raceId}/participants`);
     for (const [index, entryId] of entryIds.entries()) {
-      await expect(page.getByTestId(`root-admin-golf-field-oddsToWin-${entryId}`)).toHaveValue(String(ODDS_TO_WIN[index]));
+      await expect(page.getByTestId(`root-admin-event-field-oddsToWin-${entryId}`)).toHaveValue(String(ODDS_TO_WIN[index]));
     }
     return entryIds;
   });
@@ -253,30 +253,30 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
 
   await test.step('tier the field from its odds: the three favourites, the middle three, the two longshots', async () => {
     await page.goto(`/manage/sports/horse-racing/events/${raceId}/tiers`);
-    await page.getByTestId('root-admin-golf-tier-auto-odds').click();
-    await submitAndRead(page, 'root-admin-golf-tier-auto-tiers-confirm', 'POST', `/api/v1/events/${raceId}/tiers/auto-assign`);
+    await page.getByTestId('root-admin-tier-auto-odds').click();
+    await submitAndRead(page, 'root-admin-tier-auto-tiers-confirm', 'POST', `/api/v1/events/${raceId}/tiers/auto-assign`);
     for (const [index, entryId] of fieldEntryIds.entries()) {
       await expect(
         page
-          .getByTestId(`root-admin-golf-tier-column-tier-${TIER_OF_HORSE[index]}`)
-          .getByTestId(`root-admin-golf-tier-card-${entryId}`),
+          .getByTestId(`root-admin-tier-column-tier-${TIER_OF_HORSE[index]}`)
+          .getByTestId(`root-admin-tier-card-${entryId}`),
       ).toBeVisible();
     }
   });
 
   await test.step('price the field with the default pricing profile', async () => {
-    await page.getByTestId('root-admin-golf-tier-auto-prices').click();
-    await expect(page.getByTestId('root-admin-golf-tier-auto-prices-preview')).toBeVisible();
-    await submitAndRead(page, 'root-admin-golf-tier-auto-prices-confirm', 'POST', `/api/v1/events/${raceId}/prices/auto-assign`);
-    await expect(page.getByTestId('root-admin-golf-tiers-pricing')).toContainText('Priced with');
+    await page.getByTestId('root-admin-tier-auto-prices').click();
+    await expect(page.getByTestId('root-admin-tier-auto-prices-preview')).toBeVisible();
+    await submitAndRead(page, 'root-admin-tier-auto-prices-confirm', 'POST', `/api/v1/events/${raceId}/prices/auto-assign`);
+    await expect(page.getByTestId('root-admin-tiers-pricing')).toContainText('Priced with');
   });
 
   await test.step('release the race for contests', async () => {
     await page.goto(`/manage/sports/horse-racing/events/${raceId}`);
-    await page.getByTestId('root-admin-golf-tournament-release').click();
+    await page.getByTestId('root-admin-sport-event-release').click();
     const released = await submitAndRead<{ event: { status: string } }>(
       page,
-      'root-admin-golf-tournament-release-confirm',
+      'root-admin-sport-event-release-confirm',
       'POST',
       `/api/v1/events/${raceId}/release`,
     );
@@ -425,7 +425,7 @@ test('act 4: the root admin starts the race, loads its official finishing order,
   await test.step('the race\'s Results page offers the finishing-order card, not golf round scores', async () => {
     await page.goto(`/manage/sports/horse-racing/events/${state.raceId}/results`);
     await expect(page.getByTestId('root-admin-race-results-panel')).toBeVisible();
-    await expect(page.getByTestId('root-admin-golf-tournament-menu-results')).toHaveText('Results');
+    await expect(page.getByTestId('root-admin-sport-event-menu-results')).toHaveText('Results');
     await expect(page.getByTestId('root-admin-race-result-empty')).toBeVisible();
     await expect(page.getByTestId('root-admin-golf-scores-upload-textarea')).toHaveCount(0);
   });
@@ -482,10 +482,10 @@ test('act 4: the root admin starts the race, loads its official finishing order,
 
 async function moveRaceTo(page: Page, raceId: string, status: 'IN_PROGRESS' | 'COMPLETED') {
   await page.goto(`/manage/sports/horse-racing/events/${raceId}`);
-  await page.getByTestId(`root-admin-golf-tournament-transition-${status}`).click();
+  await page.getByTestId(`root-admin-sport-event-transition-${status}`).click();
   const moved = await submitAndRead<{ event: { status: string } }>(
     page,
-    'root-admin-golf-tournament-transition-confirm',
+    'root-admin-sport-event-transition-confirm',
     'POST',
     `/api/v1/events/${raceId}/transition`,
   );

@@ -22,21 +22,21 @@ import { WelcomePage } from '@/features/leagues/leagues-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminContentConfigurationListPage } from '@/features/root-admin/root-admin-content-configuration-list-page';
 import { RootAdminEventsPage } from '@/features/root-admin/root-admin-events-page';
-import { RootAdminGolfLeagueCreatePage } from '@/features/root-admin/root-admin-golf-league-create-page';
-import { RootAdminGolfLeagueEditPage } from '@/features/root-admin/root-admin-golf-league-edit-page';
-import { RootAdminGolfLeagueHomePage } from '@/features/root-admin/root-admin-golf-league-home-page';
-import { RootAdminGolfPlayerCreatePage } from '@/features/root-admin/root-admin-golf-player-create-page';
-import { RootAdminGolfPlayerEditPage } from '@/features/root-admin/root-admin-golf-player-edit-page';
-import { RootAdminGolfPlayerHomePage } from '@/features/root-admin/root-admin-golf-player-home-page';
-import { RootAdminGolfPlayerListPage } from '@/features/root-admin/root-admin-golf-player-list-page';
-import { RootAdminGolfLeagueListPage } from '@/features/root-admin/root-admin-golf-league-list-page';
-import { RootAdminGolfTournamentCreatePage } from '@/features/root-admin/root-admin-golf-tournament-create-page';
-import { RootAdminGolfTournamentEditPage } from '@/features/root-admin/root-admin-golf-tournament-edit-page';
-import { RootAdminGolfTournamentSchedulePage } from '@/features/root-admin/root-admin-golf-tournament-schedule-page';
-import { RootAdminGolfTournamentFieldPage } from '@/features/root-admin/root-admin-golf-tournament-field-page';
-import { RootAdminGolfTournamentHomePage } from '@/features/root-admin/root-admin-golf-tournament-home-page';
-import { RootAdminGolfTournamentTiersPage } from '@/features/root-admin/root-admin-golf-tournament-tiers-page';
-import { RootAdminGolfTournamentListPage } from '@/features/root-admin/root-admin-golf-tournament-list-page';
+import { RootAdminSportLeagueCreatePage } from '@/features/root-admin/root-admin-sport-league-create-page';
+import { RootAdminSportLeagueEditPage } from '@/features/root-admin/root-admin-sport-league-edit-page';
+import { RootAdminSportLeagueHomePage } from '@/features/root-admin/root-admin-sport-league-home-page';
+import { RootAdminParticipantCreatePage } from '@/features/root-admin/root-admin-participant-create-page';
+import { RootAdminParticipantEditPage } from '@/features/root-admin/root-admin-participant-edit-page';
+import { RootAdminParticipantHomePage } from '@/features/root-admin/root-admin-participant-home-page';
+import { RootAdminParticipantListPage } from '@/features/root-admin/root-admin-participant-list-page';
+import { RootAdminSportLeagueListPage } from '@/features/root-admin/root-admin-sport-league-list-page';
+import { RootAdminSportEventCreatePage } from '@/features/root-admin/root-admin-sport-event-create-page';
+import { RootAdminSportEventEditPage } from '@/features/root-admin/root-admin-sport-event-edit-page';
+import { RootAdminSportEventSchedulePage } from '@/features/root-admin/root-admin-sport-event-schedule-page';
+import { RootAdminSportEventFieldPage } from '@/features/root-admin/root-admin-sport-event-field-page';
+import { RootAdminSportEventHomePage } from '@/features/root-admin/root-admin-sport-event-home-page';
+import { RootAdminSportEventTiersPage } from '@/features/root-admin/root-admin-sport-event-tiers-page';
+import { RootAdminSportEventListPage } from '@/features/root-admin/root-admin-sport-event-list-page';
 import { RootAdminSportEventResultsPage } from '@/features/root-admin/root-admin-sport-event-results-page';
 import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-route';
 import { ManageSportRoute } from '@/features/root-admin/manage-sport-route';
@@ -282,28 +282,28 @@ export const router = createBrowserRouter([
                     element: <ManageSportRoute />,
                     children: [
                       { index: true, element: <ManageSportLandingRedirect /> },
-                      { path: 'leagues', element: <RootAdminGolfLeagueListPage /> },
-                      { path: 'leagues/new', element: <RootAdminGolfLeagueCreatePage /> },
-                      { path: 'leagues/:leagueId', element: <RootAdminGolfLeagueHomePage /> },
-                      { path: 'leagues/:leagueId/edit', element: <RootAdminGolfLeagueEditPage /> },
-                      { path: 'events', element: <RootAdminGolfTournamentListPage /> },
-                      { path: 'events/new', element: <RootAdminGolfTournamentCreatePage /> },
+                      { path: 'leagues', element: <RootAdminSportLeagueListPage /> },
+                      { path: 'leagues/new', element: <RootAdminSportLeagueCreatePage /> },
+                      { path: 'leagues/:leagueId', element: <RootAdminSportLeagueHomePage /> },
+                      { path: 'leagues/:leagueId/edit', element: <RootAdminSportLeagueEditPage /> },
+                      { path: 'events', element: <RootAdminSportEventListPage /> },
+                      { path: 'events/new', element: <RootAdminSportEventCreatePage /> },
                       {
                         path: 'events/:eventId',
                         element: <ManageSportEventRoute />,
                         children: [
-                          { index: true, element: <RootAdminGolfTournamentHomePage /> },
-                          { path: 'edit', element: <RootAdminGolfTournamentEditPage /> },
-                          { path: 'schedule', element: <RootAdminGolfTournamentSchedulePage /> },
-                          { path: 'field', element: <RootAdminGolfTournamentFieldPage /> },
-                          { path: 'tiers', element: <RootAdminGolfTournamentTiersPage /> },
+                          { index: true, element: <RootAdminSportEventHomePage /> },
+                          { path: 'edit', element: <RootAdminSportEventEditPage /> },
+                          { path: 'schedule', element: <RootAdminSportEventSchedulePage /> },
+                          { path: 'field', element: <RootAdminSportEventFieldPage /> },
+                          { path: 'tiers', element: <RootAdminSportEventTiersPage /> },
                           { path: 'results', element: <RootAdminSportEventResultsPage /> },
                         ],
                       },
-                      { path: 'participants', element: <RootAdminGolfPlayerListPage /> },
-                      { path: 'participants/new', element: <RootAdminGolfPlayerCreatePage /> },
-                      { path: 'participants/:participantId', element: <RootAdminGolfPlayerHomePage /> },
-                      { path: 'participants/:participantId/edit', element: <RootAdminGolfPlayerEditPage /> },
+                      { path: 'participants', element: <RootAdminParticipantListPage /> },
+                      { path: 'participants/new', element: <RootAdminParticipantCreatePage /> },
+                      { path: 'participants/:participantId', element: <RootAdminParticipantHomePage /> },
+                      { path: 'participants/:participantId/edit', element: <RootAdminParticipantEditPage /> },
                     ],
                   },
                   {

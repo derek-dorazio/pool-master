@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SettingsChange, SettingsGroup } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
-import { budgetPricingGroupFixture } from './golf-test-fixtures';
+import { budgetPricingGroupFixture } from './sport-test-fixtures';
 import { RootAdminSettingsPage } from './root-admin-settings-page';
 
 const { listSettingsGroupsMock, listSettingsGroupHistoryMock, updateSettingsGroupMock } = vi.hoisted(() => ({

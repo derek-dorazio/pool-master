@@ -18,7 +18,7 @@ import {
   type RaceResultUploadRow,
 } from './race-result-upload';
 import { capitalize } from './manage-navigation';
-import { useGolfFieldQuery } from './use-golf-tournament';
+import { useSportEventFieldQuery } from './use-sport-event';
 
 const RESOLUTION_TONE: Record<RaceResultPreviewRow['resolution'], 'active' | 'warning' | 'danger'> = {
   MATCHED: 'active',
@@ -188,7 +188,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
       return response.data.participants;
     },
     // The result is read back from the field; the event's counts follow it.
-    invalidates: [QueryKeys.rootAdmin.golf.field(event.id), QueryKeys.rootAdmin.golf.tournament(event.id)],
+    invalidates: [QueryKeys.rootAdmin.manageSport.field(event.id), QueryKeys.rootAdmin.manageSport.event(event.id)],
     onError: (error) => {
       logger.warn({ action: 'race.result.apply.failed', err: error }, 'Race result apply was rejected');
     },
@@ -295,7 +295,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
  * its finishing order. The event's Results page shows it for a finish-position event.
  */
 export function RaceFinishingOrderPanel({ event }: { event: SportEventDto }) {
-  const fieldQuery = useGolfFieldQuery(event.id);
+  const fieldQuery = useSportEventFieldQuery(event.id);
   const field = fieldQuery.data ?? [];
 
   return (

@@ -6,7 +6,7 @@ import {
   parseRaceResultUpload,
   raceResultTemplateRows,
 } from './race-result-upload';
-import { fieldEntryFixture, participantFixture } from './golf-test-fixtures';
+import { fieldEntryFixture, participantFixture } from './sport-test-fixtures';
 
 const HEADER = 'externalId,playerName,finishPosition,resultStatus,startPosition,riderName';
 
