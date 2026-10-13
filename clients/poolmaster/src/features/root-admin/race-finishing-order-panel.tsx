@@ -303,12 +303,17 @@ export function RaceFinishingOrderPanel({ event }: { event: SportEventDto }) {
       {fieldQuery.isError ? (
         <Alert data-testid="root-admin-race-result-field-error" tone="danger">
           {extractErrorMessage(fieldQuery.error, {
-            fallback: 'We could not load the field, so the current result and the template are not shown.',
+            fallback: 'We could not load the field, so the current result is not shown and a finishing order cannot be loaded.',
           })}
         </Alert>
       ) : null}
-      {fieldQuery.isSuccess ? <StoredFinishingOrder event={event} field={field} /> : null}
-      <FinishingOrderUploadCard event={event} field={field} />
+      {fieldQuery.isSuccess ? (
+        <>
+          <StoredFinishingOrder event={event} field={field} />
+          {/* Only once the field is read, so the official box starts from the stored result. */}
+          <FinishingOrderUploadCard event={event} field={field} />
+        </>
+      ) : null}
     </div>
   );
 }
