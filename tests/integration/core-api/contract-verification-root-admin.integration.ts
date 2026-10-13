@@ -1283,6 +1283,26 @@ describe('Contract verification (root admin)', () => {
       expect(oversizedSaveRes.statusCode).toBe(400);
       expect(ErrorEnvelopeSchema.safeParse(oversizedSaveRes.json()).success).toBe(true);
 
+      // updateEventParticipants (200): a withdrawn golfer reinstated with `inactiveReason: null`
+      // clears the reason, as the contract says null does, rather than being refused with a 400.
+      const withdrawRes = await getApp().inject({
+        method: 'PATCH',
+        url: `/api/v1/events/${eventId}/participants`,
+        headers: rootAdmin.headers,
+        payload: { participants: [{ sportEventParticipantId: fieldRowId, isActive: false, inactiveReason: 'WITHDRAWN' }] },
+      });
+      expect(withdrawRes.statusCode).toBe(200);
+      const reinstateRes = await getApp().inject({
+        method: 'PATCH',
+        url: `/api/v1/events/${eventId}/participants`,
+        headers: rootAdmin.headers,
+        payload: { participants: [{ sportEventParticipantId: fieldRowId, isActive: true, inactiveReason: null }] },
+      });
+      expect(reinstateRes.statusCode).toBe(200);
+      const reinstated = SportEventParticipantListResponseSchema.safeParse(reinstateRes.json());
+      expect(reinstated.success).toBe(true);
+      expect(reinstated.data?.participants.find((row) => row.id === fieldRowId)).toMatchObject({ isActive: true, inactiveReason: null });
+
       const uploadApplyRes = await getApp().inject({
         method: 'POST',
         url: `/api/v1/events/${eventId}/participants/upload`,
