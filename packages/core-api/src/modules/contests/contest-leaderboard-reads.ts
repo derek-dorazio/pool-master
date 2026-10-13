@@ -18,11 +18,7 @@ import type {
   ContestScoringConfigurationRow,
   ParticipantScore,
 } from './contest-leaderboard-calculator';
-import {
-  buildUnplayedRoundContext,
-  scoreGolferForContest,
-  type UnplayedRoundScoringEvent,
-} from './golf-unplayed-rounds';
+import { scoringFamilyForSport, type FieldScoringEvent } from '../scoring-families';
 
 export interface ContestLeaderboardReadDeps {
   eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants'>;
@@ -41,26 +37,14 @@ export async function loadEventField(
 }
 
 /**
- * Each field row's score under the contest's scoring definition. The one definition today,
- * GOLF_RELATIVE_TO_PAR_TOTAL, scores a golfer by their event total against par, which lives on
- * the standing's golf extension, with every round they did not play scored as 80 strokes
- * (#478, `golf-unplayed-rounds`). A row with no score and no unplayed round is unscored.
+ * Each field row's score under the contest's scoring definition, from the scoring family of
+ * the event's sport (#606). A row the family cannot score yet is unscored.
  */
 export function toParticipantScores(
   field: readonly SportEventParticipantView[],
-  event: UnplayedRoundScoringEvent,
+  event: FieldScoringEvent,
 ): ParticipantScore[] {
-  const context = buildUnplayedRoundContext(field, event);
-  return field.map((row) => {
-    const { score, unplayedRoundNumbers } = scoreGolferForContest(row, context);
-    return {
-      sportEventParticipantId: row.entry.id,
-      name: row.participant.name,
-      score,
-      unplayedRoundNumbers,
-      asOf: row.standing?.standing.asOf ?? null,
-    };
-  });
+  return scoringFamilyForSport(event.sport).scoreField(field, event);
 }
 
 /** The contest's counting and scoring configuration, or null when it has none. */

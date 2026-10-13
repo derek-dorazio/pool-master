@@ -65,8 +65,9 @@ In order:
    is declared once there and nowhere else.
 4. **Scoring family.** Reusing one: nothing beyond the registry entry. New one: implement the
    scoring-family interface, add its extension tables beside the core round and standing rows
-   (one table set per family, never per sport), register it, and add its live-score variant
-   to the results union.
+   (one table set per family, never per sport), register it in the scoring-family registry and
+   the leaderboard detail map, and add its live-score variant to the results union. The
+   compiler lists both maps once the family is in the enum.
 5. **Field seeding and pricing.** Confirm the seeding source feeds tiers and budget prices
    through the existing event services.
 6. **Admin results.** An admin must be able to enter or correct every result without a

@@ -127,6 +127,13 @@ participants, leaderboard detail). Knockout's match entity then arrives as the t
 and may add a method. Recommendation: keep #606 as its own PR, opened as soon as the horse
 racing ticket is planned in detail, shaped by finish position.
 
+**Added ahead of the sport (2026-10-13, #606):** Derek chose to build the interface before
+racing. It exists with stroke play as the only family, and was checked against finish position
+and knockout advancement. A family scores the event's field for the contest (racing: the
+points table, with the "did not finish" value as its missing-result rule), writes a provider's
+live scores, stores and reads back an entry's settled total (racing: `ContestEntryRaceStanding`),
+and supplies the leaderboard's detail blocks. #622 implements it for finish position.
+
 ### 1.5 Results entry and data sources
 
 - **Admin entry first, for every racing sport.** The admin results card is the finishing order:

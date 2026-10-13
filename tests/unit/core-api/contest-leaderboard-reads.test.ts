@@ -258,5 +258,5 @@ function field(...golfers: ReturnType<typeof golfer>[]) {
 }
 
 function scoringEvent(event: { rounds: number | null; roundsPar: number | null; status?: string }) {
-  return { status: 'IN_PROGRESS', ...event } as unknown as Parameters<typeof toParticipantScores>[1];
+  return { sport: 'GOLF', status: 'IN_PROGRESS', ...event } as unknown as Parameters<typeof toParticipantScores>[1];
 }

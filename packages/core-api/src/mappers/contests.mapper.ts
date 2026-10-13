@@ -14,6 +14,8 @@ import type {
   ContestLeaderboardResponse,
 } from '@poolmaster/shared/dto';
 import {
+  ScoringFamily,
+  getSportDefinition,
   type Sport,
   type Contest,
   type ContestEntry,
@@ -227,9 +229,28 @@ export function toContestEntryListResponse(input: {
   };
 }
 
+type LeaderboardEntryDto = ContestLeaderboardResponse['entries'][number];
+type LeaderboardPickDto = LeaderboardEntryDto['picks'][number];
+
+/** How a scoring family's detail blocks appear on a leaderboard entry and its picks (#606). */
+interface LeaderboardFamilyDetailMapper {
+  entry(entry: ContestEntryStandingRow): Pick<LeaderboardEntryDto, 'golf'>;
+  pick(pick: ScoredContestEntryPickRow): Pick<LeaderboardPickDto, 'golf'>;
+}
+
+const LEADERBOARD_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, LeaderboardFamilyDetailMapper>> = {
+  [ScoringFamily.STROKE_PLAY]: {
+    entry: (entry) => ({ golf: { totalScoreToPar: entry.score } }),
+    pick: (pick) => ({
+      golf: { scoreToPar: pick.participant.score, unplayedRoundNumbers: pick.participant.unplayedRoundNumbers },
+    }),
+  },
+};
+
 export function toContestLeaderboardResponse(
   leaderboard: ContestLeaderboardModel,
 ): ContestLeaderboardResponse {
+  const detail = LEADERBOARD_DETAIL_BY_SCORING_FAMILY[getSportDefinition(leaderboard.sport).scoringFamily];
   return {
     contestId: leaderboard.contestId,
     sportEventId: leaderboard.sportEventId,
@@ -247,7 +268,7 @@ export function toContestLeaderboardResponse(
       displayPosition: entry.displayPosition,
       countingPickLimit: entry.countingPickLimit,
       scoredPickCount: entry.scoredPickCount,
-      golf: { totalScoreToPar: entry.score },
+      ...detail.entry(entry),
       picks: entry.picks.map((pick) => ({
         pickId: pick.pickId,
         sportEventParticipantId: pick.sportEventParticipantId,
@@ -255,7 +276,7 @@ export function toContestLeaderboardResponse(
         slot: pick.slot,
         isCounting: pick.isCounting,
         isDropped: pick.isDropped,
-        golf: { scoreToPar: pick.participant.score, unplayedRoundNumbers: pick.participant.unplayedRoundNumbers },
+        ...detail.pick(pick),
       })),
     })),
     asOf: leaderboard.asOf?.toISOString() ?? null,

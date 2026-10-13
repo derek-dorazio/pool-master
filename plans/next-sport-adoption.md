@@ -88,9 +88,17 @@ One slice of work that tennis, March Madness and soccer knockouts all need:
    pattern as golf).
 3. An admin results screen: per round, mark the winner of each pairing (or mark losers out).
    A March Madness event is 67 games; a Slam singles draw is 127 matches per draw.
-4. A settlement path that is not golf's. The counting rule and settlement service already
-   have sport-neutral names (#604).
+4. A knockout scoring-family module. Settlement, contest scoring and the leaderboard already
+   dispatch through the event's scoring family (#606), and the counting rule and settlement
+   service have sport-neutral names (#604).
 5. Sport-aware labels for the picker, leaderboard and event screens.
+
+**Added ahead of the sport (2026-10-13, #606):** the scoring-family interface and registry are
+built, with stroke play (golf) as the only family. A family scores the event's field for the
+contest, writes a provider's live scores, stores and reads back an entry's settled total, and
+supplies the leaderboard's detail blocks. The interface was checked against knockout
+advancement: the knockout module implements it and adds its match reads (who beat whom, for
+the seed bonus) as its own field read.
 
 #### Knockout scoring rules (Derek, 2026-10-11)
 

@@ -57,6 +57,7 @@ import {
   toParticipantScores,
 } from './contest-leaderboard-reads';
 import { areContestEntriesOpen } from './entry-window';
+import { scoringFamilyForSport } from '../scoring-families';
 import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import {
@@ -437,7 +438,7 @@ export class ContestService {
               displayPosition: standing.displayPosition,
               countingPickLimit: standing.countingPickLimit,
               scoredPickCount: standing.scoredPickCount,
-              score: standing.golf?.totalScoreToPar ?? null,
+              score: scoringFamilyForSport(sportEvent.sport).settledEntryTotal(standing),
             })),
           ),
           asOf: standings[0].asOf ?? latestAsOf,

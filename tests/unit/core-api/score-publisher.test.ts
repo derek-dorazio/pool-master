@@ -23,7 +23,7 @@ import { asPrismaClient } from '../../support/prisma-double';
 
 function buildSportEventStub(internalId = 'evt-1') {
   return {
-    findUnique: jest.fn().mockResolvedValue({ id: internalId, status: 'IN_PROGRESS' }),
+    findUnique: jest.fn().mockResolvedValue({ id: internalId, sport: 'GOLF', status: 'IN_PROGRESS' }),
   };
 }
 

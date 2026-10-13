@@ -7,9 +7,8 @@
  *   2. Resolve provider-side `participantExternalId` to internal
  *      `SportEventParticipant.id` UUIDs.
  *   3. Skip the update unless the event is IN_PROGRESS.
- *   4. Persist the per-category detail rows (Phase 4 ships the GOLF
- *      variant, delegated to `GolfScoreService` — plans/124 §3.1; other
- *      categories throw `LiveScoreUnsupportedError`).
+ *   4. Persist the batch through the event's scoring family, which writes
+ *      its own result rows (stroke play: `GolfScoreService`).
  *
  * It used to emit a `live_score.persisted` event as a fourth step. Nothing
  * ever subscribed, so #261 removed the event bus with it: the persisted rows
@@ -25,7 +24,7 @@ import {
 import { SportEventStatus } from '@poolmaster/shared/domain';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
-import { createGolfScoreService } from '../../events/wiring';
+import { scoringFamilyForSport } from '../../scoring-families';
 import { countLiveScoreUpdates } from './live-score-count';
 
 export class LiveScoreValidationError extends Error {
@@ -76,7 +75,7 @@ export async function publishLiveScoreUpdate(
   // to one event, then dispatch to the per-category persistence path.
   const sportEvent = await deps.prisma.sportEvent.findUnique({
     where: { providerId_externalId: { providerId: deps.providerId, externalId: validated.externalEventId } },
-    select: { id: true, rounds: true, status: true },
+    select: { id: true, sport: true, rounds: true, status: true },
   });
   if (!sportEvent) {
     deps.logger?.warn(
@@ -113,13 +112,8 @@ export async function publishLiveScoreUpdate(
     };
   }
 
-  // GOLF is the only live-score category (#605); a second category branches here.
-  return createGolfScoreService(deps.prisma, deps.logger).persistRoundUpdatesForSportEvent(
-    sportEvent.id,
-    validated.rounds,
-    deps.providerId,
-    sportEvent.rounds,
-  );
+  // The event's scoring family writes the batch into its own result rows (#606).
+  return scoringFamilyForSport(sportEvent.sport).persistLiveScores(deps, sportEvent, validated);
 }
 
 
