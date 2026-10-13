@@ -316,8 +316,8 @@ class Loader {
       if (entry.oddsToWin !== undefined && row?.oddsToWin !== entry.oddsToWin) patch.oddsToWin = entry.oddsToWin;
       // Back in the field after a withdrawal (a re-commitment). A test seed's withdrawals come from its scores, so it never reinstates.
       if (!this.file.testData && row && !row.isActive && row.inactiveReason === 'WITHDRAWN') {
-        // Only isActive: the stored reason means nothing once active, and the field PATCH refuses a null reason.
         patch.isActive = true;
+        patch.inactiveReason = null;
         reinstated.push(name);
       }
       if (participantId !== null && Object.keys(patch).length > 0) patches.push({ participantId, patch });
