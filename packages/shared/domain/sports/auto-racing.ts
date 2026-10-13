@@ -16,8 +16,8 @@ export const autoRacingSportDefinition: SportDefinition = {
   scoringFamily: ScoringFamily.FINISH_POSITION,
   tournamentFormat: TournamentFormat.RACE,
   defaultRounds: 1,
-  // Five tiers of eight: a full NASCAR field of 40 fills them exactly, and a 27-car IndyCar field
-  // leaves the last tier the short one.
+  // Five tiers of eight: a full NASCAR field of 40 fills them exactly, and the 33-car Indy 500
+  // field leaves the last tier the short one (8/8/8/8/1).
   defaultTierLayout: { tierCount: 5, tierSize: 8 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],

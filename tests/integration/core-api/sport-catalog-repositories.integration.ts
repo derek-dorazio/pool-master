@@ -67,8 +67,9 @@ describe('Sport and SportLeague repositories', () => {
     await expect(sports.findById(golf.id)).resolves.toMatchObject({ id: golf.id, sport: Sport.GOLF, participantType: 'INDIVIDUAL' });
     await expect(sports.findById(randomUUID())).resolves.toBeNull();
     // Auto racing's row survives the cleanup: its seeded series carry contest templates.
-    expect((await sports.findAll()).map((row) => row.sport)).toEqual([Sport.GOLF, Sport.AUTO_RACING]);
-    expect((await sports.findAll())[0].id).toBe(golf.id);
+    const allSports = await sports.findAll();
+    expect(allSports.map((row) => row.sport)).toEqual([Sport.GOLF, Sport.AUTO_RACING]);
+    expect(allSports[0].id).toBe(golf.id);
   });
 
   it('finds a sport by its sport value and lists sport leagues filtered by sport and activity, ordered by name', async () => {
