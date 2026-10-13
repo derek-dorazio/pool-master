@@ -576,9 +576,10 @@ model SportLeague {
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  sport        Sport                          @relation(fields: [sportId], references: [id])
-  affiliations ParticipantLeagueAffiliation[]
-  eventSeries  EventSeries[]
+  sport                  Sport                          @relation(fields: [sportId], references: [id])
+  affiliations           ParticipantLeagueAffiliation[]
+  eventSeries            EventSeries[]
+  contestConfigTemplates ContestConfigTemplate[]
 
   @@unique([sportId, name])
   @@map("sport_leagues")
@@ -733,6 +734,9 @@ model ContestConfiguration {
 model ContestConfigTemplate {
   id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sport         PrismaSport
+  /// The sport league whose events this template is offered for — a league's own official
+  /// preset (NASCAR, IndyCar, F1 points). Null offers it for every league of its sport.
+  sportLeagueId String?             @map("sport_league_id") @db.Uuid
   eventType     String?             @map("event_type") @db.VarChar(100)
   contestFormat PrismaContestFormat @map("contest_type")
   /// A `SelectionType` value: how an entry in a contest created from this template picks.
@@ -748,10 +752,12 @@ model ContestConfigTemplate {
   createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
+  sportLeague    SportLeague?           @relation(fields: [sportLeagueId], references: [id], onDelete: Restrict)
   configurations ContestConfiguration[]
 
   @@unique([sport, eventType, contestFormat, selectionType, templateKey])
   @@index([sport, contestFormat, active, sortOrder])
+  @@index([sportLeagueId])
   @@map("contest_config_templates")
 }
 

@@ -30,7 +30,7 @@ export function contestConfigTemplatesModule(fastify: FastifyInstance): void {
       tags: ['Contest Config Templates'],
       summary: 'List contest configuration templates',
       description:
-        'The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format.',
+        'The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format, narrowed to the chosen event\'s sport league (that league\'s templates plus the sport-wide ones).',
       operationId: 'listContestConfigTemplates',
       querystring: schemaRef('ListContestConfigTemplatesQuery'),
       response: {

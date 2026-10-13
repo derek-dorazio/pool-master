@@ -96,13 +96,16 @@ describe('contest-management dto schemas', () => {
   it('accepts template list query params and template dto payloads', () => {
     const query = ListContestConfigTemplatesQuerySchema.parse({
       sport: 'GOLF',
+      sportLeagueId: '22222222-2222-4222-8222-222222222222',
       contestFormat: 'ROSTER',
     });
     expect(query.sport).toBe('GOLF');
+    expect(query.sportLeagueId).toBe('22222222-2222-4222-8222-222222222222');
 
     const template = ContestConfigTemplateDtoSchema.parse({
       id: '11111111-1111-4111-8111-111111111111',
       sport: 'GOLF',
+      sportLeagueId: null,
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       templateKey: 'golf-tiered-pick-6',

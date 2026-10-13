@@ -19,6 +19,7 @@ import {
   CONTEST_BUDGET_UNFILLABLE,
   CONTEST_CONFIGURATION_LOCKED,
   CONTEST_CONFIGURATION_REQUIRED,
+  CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH,
   CONTEST_EVENT_NOT_PRICED,
   CONTEST_EVENT_ALREADY_STARTED,
   CONTEST_NOT_DRAFT,
@@ -66,6 +67,8 @@ export interface ContestCreateSportEventState {
   status: SportEventStatus;
   startDate: Date;
   sport: Sport;
+  /** The event's sport league, read through its series. */
+  sportLeagueId: string;
   tournamentFormat: TournamentFormat;
   participantCount: number | null;
   loadedParticipantCount: number;
@@ -126,6 +129,19 @@ export class ContestManagementService {
       this.contestConfigTemplateRepo,
     );
     const sportEvent = await this.assertSportEventContestEligible(input.sportEventId);
+    const templateLeagueId = resolvedConfiguration.template?.sportLeagueId ?? null;
+    if (templateLeagueId !== null && templateLeagueId !== sportEvent.sportLeagueId) {
+      this.logger.warn({
+        sportEventId: input.sportEventId,
+        eventSportLeagueId: sportEvent.sportLeagueId,
+        templateId: resolvedConfiguration.template?.id,
+        templateSportLeagueId: templateLeagueId,
+      }, 'contest management create contest rejected for another league\'s template');
+      throw new ContestManagementError(
+        'That template is another sport league\'s preset; it is offered only for that league\'s events.',
+        CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH,
+      );
+    }
     if (
       !isContestFormatValidForTournamentFormat(
         sportEvent.tournamentFormat,

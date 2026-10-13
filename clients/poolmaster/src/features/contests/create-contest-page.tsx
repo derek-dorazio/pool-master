@@ -117,6 +117,17 @@ const createContestFormSchema = z.object({
 
 type CreateContestFormValues = z.infer<typeof createContestFormSchema>;
 
+/**
+ * A format's starting preset: the event's sport league's own default over the sport-wide default,
+ * else the first. The list holds only that league's templates and the sport-wide ones, so a
+ * template with a sport league is the event's league's.
+ */
+function defaultPresetOf<Preset extends Pick<ContestConfigTemplateDto, 'isDefault' | 'sportLeagueId'>>(presets: Preset[]) {
+  return presets.find((template) => template.isDefault && template.sportLeagueId !== null)
+    ?? presets.find((template) => template.isDefault)
+    ?? presets.at(0);
+}
+
 function sortEventsBySoonest(events: SportEventDto[]) {
   return [...events].sort((left, right) => Date.parse(left.startDate) - Date.parse(right.startDate));
 }
@@ -154,9 +165,10 @@ export function CreateContestPage() {
   const { participant } = sportDefinition.vocabulary;
   const scoringSettingsUi = SCORING_SETTINGS_UI[scoringDefinitionId];
   const [isNameEdited, setIsNameEdited] = useState(false);
-  // The sport whose default preset was applied last: a sport's default is applied when its
-  // presets arrive and again on switching back to it; while the sport stays, Custom stays Custom.
-  const defaultPresetAppliedFor = useRef<Sport | null>(null);
+  // The sport and sport league whose default preset was applied last: their default is applied
+  // when their presets arrive and again on switching back to them; while both stay, Custom stays
+  // Custom.
+  const defaultPresetAppliedFor = useRef<`${Sport}/${string}` | null>(null);
 
   const setFormValues = useCallback((next: Partial<CreateContestFormValues>) => {
     for (const [field, value] of Object.entries(next) as Array<[keyof CreateContestFormValues, CreateContestFormValues[keyof CreateContestFormValues]]>) {
@@ -177,26 +189,29 @@ export function CreateContestPage() {
     retry: false,
   });
 
+  const eligibleEvents = useMemo(
+    () => eventsQuery.data?.filter((event) => event.contestEligible) ?? [],
+    [eventsQuery.data],
+  );
+  const selectedEvent = eligibleEvents.find((event) => event.id === sportEventId) ?? null;
+  // The chosen event's sport league: its own presets are offered beside the sport-wide ones, so
+  // the presets wait for an event.
+  const sportLeagueId = selectedEvent?.sportLeagueId;
+
   const templatesQuery = useQuery({
-    queryKey: QueryKeys.contestConfigTemplates.list({ sport, contestFormat: ContestFormat.ROSTER, active: true }),
+    queryKey: QueryKeys.contestConfigTemplates.list({ sport, sportLeagueId, contestFormat: ContestFormat.ROSTER, active: true }),
     queryFn: async (): Promise<ContestConfigTemplateDto[]> => {
       const response = await listContestConfigTemplates({
-        query: { sport, contestFormat: ContestFormat.ROSTER, active: true },
+        query: { sport, sportLeagueId, contestFormat: ContestFormat.ROSTER, active: true },
       });
       if (!response.data?.templates) {
         throwApiError(response.error, 'Contest template response is missing data.');
       }
       return response.data.templates;
     },
-    enabled: Boolean(league?.id),
+    enabled: Boolean(league?.id) && selectedEvent !== null,
     retry: false,
   });
-
-  const eligibleEvents = useMemo(
-    () => eventsQuery.data?.filter((event) => event.contestEligible) ?? [],
-    [eventsQuery.data],
-  );
-  const selectedEvent = eligibleEvents.find((event) => event.id === sportEventId) ?? null;
   const tierCount = selectedEvent?.tierCount ?? 0;
   // The event's salary cap, which every budget contest on it plays under; null until it is priced.
   const salaryCap = selectedEvent?.pricing?.salaryCap ?? null;
@@ -245,8 +260,7 @@ export function CreateContestPage() {
 
   // A new format starts from its default preset, or from what the fields hold when it has none.
   const selectFormat = useCallback((format: CreatableSelectionType) => {
-    const formatPresets = presetsFor(format);
-    const preset = formatPresets.find((template) => template.isDefault) ?? formatPresets.at(0);
+    const preset = defaultPresetOf(presetsFor(format));
     setFormValues({
       selectionType: format,
       selectedTemplateId: preset?.id ?? '',
@@ -278,17 +292,19 @@ export function CreateContestPage() {
     }
   }, [eligibleEvents, setFormValues, sportEventId]);
 
-  // A newly chosen sport starts on its default preset; while it stays, Custom stays Custom.
+  // A newly chosen sport or sport league starts on its default preset; while both stay, Custom
+  // stays Custom.
   useEffect(() => {
-    if (defaultPresetAppliedFor.current === sport || !presets.length) {
+    const presetsKey: `${Sport}/${string}` = `${sport}/${sportLeagueId ?? ''}`;
+    if (defaultPresetAppliedFor.current === presetsKey || !presets.length) {
       return;
     }
-    defaultPresetAppliedFor.current = sport;
-    const defaultPreset = presets.find((template) => template.isDefault) ?? presets.at(0);
+    defaultPresetAppliedFor.current = presetsKey;
+    const defaultPreset = defaultPresetOf(presets);
     if (defaultPreset) {
       selectPreset(defaultPreset.id);
     }
-  }, [presets, selectPreset, sport]);
+  }, [presets, selectPreset, sport, sportLeagueId]);
 
   // A tiered contest's "Scores that count" starts at the default for the chosen event's tiers. A
   // preset whose picks per tier the form still holds keeps its own count over the formula.
@@ -433,7 +449,9 @@ export function CreateContestPage() {
       description="Only commissioners see it until you open it to the league."
       errorMessage={errorMessage}
       isPending={createMutation.isPending}
+      // The event's presets are still loading: a contest sent now would skip its default preset.
       isSubmitDisabled={!selectedEvent
+        || templatesQuery.isPending
         || parsedRules.error !== null
         || parsedScoring.error !== null
         || (selectionType === SelectionType.BUDGET_PICK && isBudgetUnavailable)}

@@ -733,7 +733,7 @@ export const listContests = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Create a new contest in a league
  *
- * The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. Commissioners of the league only.
+ * The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. A template that names a sport league (that league's own preset) makes contests only for that league's events: 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH otherwise. Commissioners of the league only.
  */
 export const createContest = <ThrowOnError extends boolean = false>(options: Options<CreateContestData, ThrowOnError>) => (options.client ?? client).post<CreateContestResponses, CreateContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -892,7 +892,7 @@ export const enterContest = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * List contest configuration templates
  *
- * The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format.
+ * The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format, narrowed to the chosen event's sport league (that league's templates plus the sport-wide ones).
  */
 export const listContestConfigTemplates = <ThrowOnError extends boolean = false>(options?: Options<ListContestConfigTemplatesData, ThrowOnError>) => (options?.client ?? client).get<ListContestConfigTemplatesResponses, ListContestConfigTemplatesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

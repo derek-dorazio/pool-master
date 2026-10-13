@@ -48,7 +48,7 @@ export function createContestManagementService(
 
 /**
  * What contest creation and opening need to know about the event: its status and start time,
- * its release and field-lock timing, its sport's tournament format, how much of its field has
+ * its release and field-lock timing, its sport league (for a league's own template), its sport's tournament format, how much of its field has
  * loaded, and for budget rules its salary cap and its active golfers' prices (#93). Composed
  * from the slice-2 ports (#247) — it was a raw Prisma read inlined here.
  */
@@ -73,6 +73,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
         status: event.status,
         startDate: event.startDate,
         sport: event.sport,
+        sportLeagueId: event.sportLeagueId,
         tournamentFormat: sport?.tournamentFormat ?? getDefaultTournamentFormatForSport(event.sport),
         participantCount: event.participantCount ?? null,
         loadedParticipantCount: loaded.get(sportEventId) ?? 0,

@@ -49,6 +49,7 @@ export class ContestConfigTemplateService {
   ): Promise<ContestConfigTemplateDto[]> {
     this.logger.debug({
       sport: query.sport ?? null,
+      sportLeagueId: query.sportLeagueId ?? null,
       contestFormat: query.contestFormat ?? null,
       eventType: query.eventType ?? null,
       active: query.active ?? null,
@@ -56,6 +57,7 @@ export class ContestConfigTemplateService {
 
     const templates = await this.repository.list({
       sport: query.sport,
+      sportLeagueId: query.sportLeagueId,
       contestFormat: query.contestFormat,
       eventType: query.eventType,
       active: query.active,

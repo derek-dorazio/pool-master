@@ -1020,7 +1020,7 @@ export interface paths {
         put?: never;
         /**
          * Create a new contest in a league
-         * @description The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. Commissioners of the league only.
+         * @description The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. A template that names a sport league (that league's own preset) makes contests only for that league's events: 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH otherwise. Commissioners of the league only.
          */
         post: operations["createContest"];
         delete?: never;
@@ -1214,7 +1214,7 @@ export interface paths {
         };
         /**
          * List contest configuration templates
-         * @description The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format.
+         * @description The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format, narrowed to the chosen event's sport league (that league's templates plus the sport-wide ones).
          */
         get: operations["listContestConfigTemplates"];
         put?: never;
@@ -4578,6 +4578,11 @@ export interface components {
              * @enum {string}
              */
             sport: "GOLF" | "HORSE_RACING";
+            /**
+             * Format: uuid
+             * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+             */
+            sportLeagueId: string | null;
             /** @description Optional event-type scope for the template. */
             eventType?: string | null;
             /**
@@ -4786,6 +4791,11 @@ export interface components {
              */
             sport?: "GOLF" | "HORSE_RACING";
             /**
+             * Format: uuid
+             * @description Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
+             */
+            sportLeagueId?: string;
+            /**
              * @description Only templates for this contest format.
              * @enum {string}
              */
@@ -4808,6 +4818,11 @@ export interface components {
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING";
+                /**
+                 * Format: uuid
+                 * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                 */
+                sportLeagueId: string | null;
                 /** @description Optional event-type scope for the template. */
                 eventType?: string | null;
                 /**
@@ -5017,6 +5032,11 @@ export interface components {
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING";
+                /**
+                 * Format: uuid
+                 * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                 */
+                sportLeagueId: string | null;
                 /** @description Optional event-type scope for the template. */
                 eventType?: string | null;
                 /**
@@ -14313,7 +14333,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type). */
+            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport). */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -15069,6 +15089,8 @@ export interface operations {
             query?: {
                 /** @description Only templates for this sport. */
                 sport?: "GOLF" | "HORSE_RACING";
+                /** @description Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league. */
+                sportLeagueId?: string;
                 /** @description Only templates for this contest format. */
                 contestFormat?: "ROSTER";
                 /** @description Templates for this event type, plus the ones that apply to any event type. */

@@ -15,6 +15,7 @@ import {
   CONTEST_RULES_SELECTION_TYPE_MISMATCH,
   CONTEST_CONFIGURATION_LOCKED,
   CONTEST_CONFIGURATION_REQUIRED,
+  CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH,
   CONTEST_EVENT_ALREADY_STARTED,
   CONTEST_EVENT_NOT_PRICED,
   CONTEST_NOT_DRAFT,
@@ -112,6 +113,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
   const template = {
     id: '11111111-1111-4111-8111-111111111111',
     sport: Sport.GOLF,
+    sportLeagueId: null,
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
     templateKey: 'golf-tiered-pick-6',
@@ -199,10 +201,14 @@ function createSportEventTierServiceStub(
   } as unknown as SportEventTierService;
 }
 
+const PGA_TOUR_LEAGUE_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const LPGA_TOUR_LEAGUE_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+
 function createSportEventReader(overrides?: Partial<{
   status: SportEventStatus;
   startDate: Date;
   sport: Sport;
+  sportLeagueId: string;
   tournamentFormat: TournamentFormat;
   participantCount: number | null;
   loadedParticipantCount: number;
@@ -219,6 +225,7 @@ function createSportEventReader(overrides?: Partial<{
       status: overrides?.status ?? SportEventStatus.SCHEDULED,
       startDate: overrides?.startDate ?? new Date('2026-05-14T12:00:00.000Z'),
       sport: overrides?.sport ?? Sport.GOLF,
+      sportLeagueId: overrides?.sportLeagueId ?? PGA_TOUR_LEAGUE_ID,
       tournamentFormat:
         overrides?.tournamentFormat ?? TournamentFormat.STROKE_PLAY_TOURNAMENT,
       participantCount: overrides?.participantCount ?? 72,
@@ -403,6 +410,54 @@ describe('ContestManagementService', () => {
       service.updateContestConfiguration('contest-1', { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 5 }),
     ).rejects.toMatchObject({ code: CONTEST_CONFIGURATION_LOCKED, statusCode: 409 });
     expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
+  });
+
+  describe('a sport league\'s own template (#624)', () => {
+    async function createFromLeagueTemplate(templateLeagueId: string | null, eventLeagueId: string) {
+      const contestCoreRepo = createContestRepo();
+      const templateRepo = createContestConfigTemplateRepo();
+      const template = await templateRepo.findById('11111111-1111-4111-8111-111111111111');
+      if (!template) throw new Error('The template fake holds one template');
+      jest.mocked(templateRepo.findById).mockResolvedValue({ ...template, sportLeagueId: templateLeagueId });
+      const service = new ContestManagementService(
+        contestCoreRepo,
+        templateRepo,
+        createContestConfigurationRepo(),
+        createParticipantScoringRuleRepo(),
+        createSportEventTierServiceStub(),
+        undefined,
+        createSportEventReader({ sportLeagueId: eventLeagueId }),
+      );
+      const created = service.createContest({ leagueId: 'league-1' }, {
+        name: 'Major Pick 6',
+        sportEventId: '11111111-1111-1111-1111-111111111111',
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+        templateId: '11111111-1111-4111-8111-111111111111',
+      });
+      return { created, contestCoreRepo };
+    }
+
+    it('refuses with 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH and creates nothing when the template is another league\'s', async () => {
+      const { created, contestCoreRepo } = await createFromLeagueTemplate(LPGA_TOUR_LEAGUE_ID, PGA_TOUR_LEAGUE_ID);
+
+      await expect(created).rejects.toMatchObject({ code: CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH, statusCode: 422 });
+      expect(contestCoreRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('creates the contest when the template is the event\'s own league\'s', async () => {
+      const { created, contestCoreRepo } = await createFromLeagueTemplate(LPGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID);
+
+      await expect(created).resolves.toBe('contest-1');
+      expect(contestCoreRepo.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('creates the contest from a sport-wide template (no sport league) for any league\'s event', async () => {
+      const { created, contestCoreRepo } = await createFromLeagueTemplate(null, LPGA_TOUR_LEAGUE_ID);
+
+      await expect(created).resolves.toBe('contest-1');
+      expect(contestCoreRepo.create).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('openContest', () => {
@@ -1367,6 +1422,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     jest.mocked(templateRepo.findById).mockResolvedValue({
       id: '99999999-9999-4999-8999-999999999999',
       sport: Sport.HORSE_RACING,
+      sportLeagueId: null,
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.RANDOM_DRAW,
       templateKey: 'horse-racing-random-draw-win-place-show',
