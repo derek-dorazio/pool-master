@@ -102,6 +102,29 @@ export const RaceResultStatus = {
 } as const;
 export type RaceResultStatus = (typeof RaceResultStatus)[keyof typeof RaceResultStatus];
 
+/** Why one row of a race's finishing order cannot be applied (#622). */
+export const RaceResultRowError = {
+  DUPLICATE_PARTICIPANT: 'DUPLICATE_PARTICIPANT',
+  POSITION_WITHOUT_FINISH: 'POSITION_WITHOUT_FINISH',
+  FINISH_WITHOUT_POSITION: 'FINISH_WITHOUT_POSITION',
+} as const;
+export type RaceResultRowError = (typeof RaceResultRowError)[keyof typeof RaceResultRowError];
+
+/** Why a race's finishing order as a whole cannot be applied (#622). */
+export const RaceResultOrderError = {
+  POSITIONS_INVALID: 'POSITIONS_INVALID',
+  FIELD_INCOMPLETE: 'FIELD_INCOMPLETE',
+} as const;
+export type RaceResultOrderError = (typeof RaceResultOrderError)[keyof typeof RaceResultOrderError];
+
+/** What applying one row of a finishing order would do to the runner's stored result (#622). */
+export const RaceResultChange = {
+  CREATE: 'CREATE',
+  UPDATE: 'UPDATE',
+  UNCHANGED: 'UNCHANGED',
+} as const;
+export type RaceResultChange = (typeof RaceResultChange)[keyof typeof RaceResultChange];
+
 /**
  * How an entry picks its lineup. Each value has a selection engine.
  *

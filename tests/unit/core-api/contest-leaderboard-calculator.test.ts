@@ -9,11 +9,28 @@ import {
 import {
   applySettledContestStandings,
   buildContestEntryStanding,
+  participantScoreDetailFor,
   rankContestEntryStandings,
   resolveContestCountingRule,
   resolveContestScoringDefinition,
   type ParticipantScore,
 } from '../../../packages/core-api/src/modules/contests/contest-leaderboard-calculator';
+
+describe('a participant score\'s family detail', () => {
+  it('returns the detail of the family asked for, unplayed rounds and all', () => {
+    const detail = participantScoreDetailFor(ScoringFamily.STROKE_PLAY, {
+      scoringFamily: ScoringFamily.STROKE_PLAY,
+      unplayedRoundNumbers: [3, 4],
+    });
+
+    expect(detail.unplayedRoundNumbers).toEqual([3, 4]);
+  });
+
+  it('throws when the detail is another family\'s, since a contest scores with one family only', () => {
+    expect(() => participantScoreDetailFor(ScoringFamily.STROKE_PLAY, { scoringFamily: ScoringFamily.FINISH_POSITION }))
+      .toThrow('Expected STROKE_PLAY score detail, got FINISH_POSITION');
+  });
+});
 
 describe('contest scoring definition', () => {
   // Each rule is read the way the adapter reads a stored row: its id and config through the

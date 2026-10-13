@@ -22,6 +22,9 @@ import type {
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import {
+  RaceResultChange,
+  RaceResultOrderError,
+  RaceResultRowError,
   RaceResultStatus,
   type RaceResultStatus as RaceResultStatusValue,
   type Sport,
@@ -60,14 +63,6 @@ export interface RaceResultInput {
   isOfficial: boolean;
   rows: readonly RaceResultRowInput[];
 }
-
-/** Why a resolved row cannot be applied. */
-export type RaceResultRowError = 'DUPLICATE_PARTICIPANT' | 'POSITION_WITHOUT_FINISH' | 'FINISH_WITHOUT_POSITION';
-
-/** Why the race's result as a whole cannot be applied. */
-export type RaceResultOrderError = 'POSITIONS_INVALID' | 'FIELD_INCOMPLETE';
-
-export type RaceResultChange = 'CREATE' | 'UPDATE' | 'UNCHANGED';
 
 export interface RaceResultValues {
   resultStatus: RaceResultStatusValue;
@@ -160,7 +155,7 @@ export class RaceResultService {
         sportEventParticipantId,
         participantName: participant.name,
         rowError,
-        change: rowError ? null : !before ? 'CREATE' : raceResultValuesEqual(before, after) ? 'UNCHANGED' : 'UPDATE',
+        change: rowError ? null : !before ? RaceResultChange.CREATE : raceResultValuesEqual(before, after) ? RaceResultChange.UNCHANGED : RaceResultChange.UPDATE,
         before,
         after,
       };
@@ -175,14 +170,14 @@ export class RaceResultService {
 
     const orderErrors: RaceResultOrderError[] = [];
     if (!placesFormFinishingOrder(finishingPlaces(merged.values()))) {
-      orderErrors.push('POSITIONS_INVALID');
+      orderErrors.push(RaceResultOrderError.POSITIONS_INVALID);
     }
     // An official result leaves no active runner without one, and no finisher without a place.
     if (input.isOfficial && (
       field.some((entry) => entry.isActive && !merged.has(entry.id))
       || [...merged.values()].some((values) => values.resultStatus === RaceResultStatus.FINISHED && values.finishPosition === null)
     )) {
-      orderErrors.push('FIELD_INCOMPLETE');
+      orderErrors.push(RaceResultOrderError.FIELD_INCOMPLETE);
     }
     return { rows, orderErrors };
   }
@@ -204,7 +199,7 @@ export class RaceResultService {
         422,
       );
     }
-    if (preview.orderErrors.includes('POSITIONS_INVALID')) {
+    if (preview.orderErrors.includes(RaceResultOrderError.POSITIONS_INVALID)) {
       this.deps.logger?.warn({ sportEventId }, 'Refused a race result whose places do not form a finishing order');
       throw new RaceResultError(
         'The finishing places do not form a finishing order: they run 1, 2, 3 ..., and only a dead heat repeats a place, skipping the next (1, 2, 2, 4).',
@@ -212,7 +207,7 @@ export class RaceResultService {
         422,
       );
     }
-    if (preview.orderErrors.includes('FIELD_INCOMPLETE')) {
+    if (preview.orderErrors.includes(RaceResultOrderError.FIELD_INCOMPLETE)) {
       this.deps.logger?.warn({ sportEventId }, 'Refused an official race result that leaves runners without a result');
       throw new RaceResultError(
         'An official result needs a result for every active runner on the field, and a place for every finisher.',
@@ -272,10 +267,10 @@ export class RaceResultService {
 }
 
 function raceResultRowError(row: RaceResultRowInput, isOfficial: boolean, rowsNamingRunner: number): RaceResultRowError | null {
-  if (rowsNamingRunner > 1) return 'DUPLICATE_PARTICIPANT';
+  if (rowsNamingRunner > 1) return RaceResultRowError.DUPLICATE_PARTICIPANT;
   const finished = row.resultStatus === RaceResultStatus.FINISHED;
-  if (!finished && row.finishPosition !== null) return 'POSITION_WITHOUT_FINISH';
-  if (finished && isOfficial && row.finishPosition === null) return 'FINISH_WITHOUT_POSITION';
+  if (!finished && row.finishPosition !== null) return RaceResultRowError.POSITION_WITHOUT_FINISH;
+  if (finished && isOfficial && row.finishPosition === null) return RaceResultRowError.FINISH_WITHOUT_POSITION;
   return null;
 }
 

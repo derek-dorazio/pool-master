@@ -270,13 +270,6 @@ enum PrismaTournamentFormat {
   RACE
 }
 
-/// Contest format — the pool format applied to a SportEvent. Validity vs.
-/// tournamentFormat is enforced by the const map in packages/shared/domain
-/// (see plans/117 §9). Replaces the legacy `ContestType.SINGLE_EVENT` enum
-/// which was a duration/scope concept that turned out not to be load-bearing.
-/// Multi-event contest coverage will be re-modeled when a real multi-event
-/// contest type is built (the speculative ContestSportEvent M:N join that
-/// once anticipated it was removed as dead scaffolding — plans/124 §4.11).
 /// How one field member's race ended (#622). Mirrors the domain `RaceResultStatus`. Only a
 /// FINISHED runner has a finishing place; every other status scores the contest's
 /// "did not finish" points.
@@ -287,6 +280,13 @@ enum RaceResultStatus {
   DID_NOT_START
 }
 
+/// Contest format — the pool format applied to a SportEvent. Validity vs.
+/// tournamentFormat is enforced by the const map in packages/shared/domain
+/// (see plans/117 §9). Replaces the legacy `ContestType.SINGLE_EVENT` enum
+/// which was a duration/scope concept that turned out not to be load-bearing.
+/// Multi-event contest coverage will be re-modeled when a real multi-event
+/// contest type is built (the speculative ContestSportEvent M:N join that
+/// once anticipated it was removed as dead scaffolding — plans/124 §4.11).
 enum PrismaContestFormat {
   ROSTER
 }
@@ -1011,8 +1011,8 @@ model SportEventParticipant {
   createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime                   @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportEvent  SportEvent                      @relation(fields: [sportEventId], references: [id])
-  participant Participant                     @relation(fields: [participantId], references: [id])
+  sportEvent  SportEvent                       @relation(fields: [sportEventId], references: [id])
+  participant Participant                      @relation(fields: [participantId], references: [id])
   valuation   SportEventParticipantValuation?
   picks       ContestEntryPick[]
   rounds      SportEventParticipantRound[]

@@ -1,6 +1,6 @@
 /**
  * Stroke play's leaderboard (golf): THR, then one column per round, with every score rendered
- * through the contest's participant scoring definition. `PARTICIPANT_SCORING_DEFINITIONS` owns
+ * through stroke play's participant scoring definition. `PARTICIPANT_SCORING_DEFINITIONS` owns
  * how a score reads — `format` for a total, `formatRound` for the strokes-once-complete /
  * to-par-while-in-progress round rule (#248) — and this module calls those; it never
  * reimplements them. The 80-strokes rule for an unplayed round (#478) is stroke play's.
@@ -49,7 +49,8 @@ export function formatThru(participant: SportEventParticipantDto): string | null
 
 export const strokePlayUi: ScoringFamilyUi = {
   leaderboard(response, sport) {
-    const definition = PARTICIPANT_SCORING_DEFINITIONS[response.scoringDefinitionId];
+    // Stroke play has one scoring definition: golf's total relative to par.
+    const definition = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL;
     // A withdrawn golfer's 80s can fall on rounds nobody has played yet, so those get columns too.
     const unplayedRoundNumbers = response.entries.flatMap((entry) =>
       entry.picks.flatMap((pick) => pick.golf?.unplayedRoundNumbers ?? []),
@@ -104,12 +105,10 @@ export const strokePlayUi: ScoringFamilyUi = {
             };
           }
           const round = roundsByNumber.get(roundNumber);
-          // Stroke play's definitions format rounds; one that does not shows the round as a dash.
-          const { formatRound } = definition;
           return {
             ...cell,
-            text: round?.golf && formatRound
-              ? formatRound({
+            text: round?.golf
+              ? definition.formatRound({
                 status: round.status,
                 strokes: round.golf.strokes,
                 scoreToPar: round.golf.scoreToPar,

@@ -23148,7 +23148,7 @@
                 "POSITIONS_INVALID",
                 "FIELD_INCOMPLETE"
               ],
-              "description": "Why the race's result as a whole cannot be applied. POSITIONS_INVALID: the finishing places, with the ones already stored for runners not named, do not run 1, 2, 3 ... with only a dead heat repeating a place and skipping the next. FIELD_INCOMPLETE: an official result leaves an active runner on the field with no result."
+              "description": "Why the race's result as a whole cannot be applied. POSITIONS_INVALID: the finishing places, with the ones already stored for runners not named, do not run 1, 2, 3 ... with only a dead heat repeating a place and skipping the next. FIELD_INCOMPLETE: an official result leaves an active runner on the field with no result, or a FINISHED runner with no place."
             },
             "description": "Problems with the race's result as a whole; empty when it can be applied as far as the order goes."
           },

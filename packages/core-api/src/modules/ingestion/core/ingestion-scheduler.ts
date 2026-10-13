@@ -130,6 +130,8 @@ export class IngestionScheduler {
   private running = false;
   private readonly startedSportLoops = new Set<Sport>();
   private readonly inFlightScheduledEventSyncs = new Set<string>();
+  /** The unregistered scheduled sports last warned about, so an unchanged set is not re-warned every cycle. */
+  private lastWarnedUnregisteredSports: string | null = null;
   private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
 
   constructor(
@@ -672,12 +674,19 @@ export class IngestionScheduler {
     const registeredSports = new Set(this.registry.getSupportedSports());
     const configuredSports = Array.from(new Set(config.scheduledSports));
     const unregisteredSports = configuredSports.filter((sport) => !registeredSports.has(sport));
-    if (unregisteredSports.length > 0) {
+    const unregisteredKey = unregisteredSports.length > 0 ? [...unregisteredSports].sort().join(',') : null;
+    if (unregisteredKey !== null && unregisteredKey === this.lastWarnedUnregisteredSports) {
+      this.logger?.debug({
+        configuredSports,
+        unregisteredSports,
+      }, 'Configured scheduled ingestion sports still have no registered provider');
+    } else if (unregisteredKey !== null) {
       this.logger?.warn({
         configuredSports,
         unregisteredSports,
       }, 'Configured scheduled ingestion sports have no registered provider');
     }
+    this.lastWarnedUnregisteredSports = unregisteredKey;
 
     return configuredSports.filter((sport) => registeredSports.has(sport));
   }

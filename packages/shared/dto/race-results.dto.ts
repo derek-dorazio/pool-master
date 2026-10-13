@@ -5,7 +5,12 @@
  * runner's result is reads back through SportEventParticipantDto's `race` block.
  */
 import { z } from 'zod';
-import { RaceResultStatus } from '@poolmaster/shared/domain';
+import {
+  RaceResultChange,
+  RaceResultOrderError,
+  RaceResultRowError,
+  RaceResultStatus,
+} from '@poolmaster/shared/domain';
 import { registerSchema } from './schema-registry';
 import { UploadRowResolutionDtoSchema } from './sport-catalog.dto';
 
@@ -29,20 +34,13 @@ export const RaceResultUploadRequestSchema = z.object({
 }).describe('A race\'s finishing order, or a correction to it: one row per runner named. Runners not named keep the result already stored.');
 export type RaceResultUploadRequest = z.infer<typeof RaceResultUploadRequestSchema>;
 
-export const RaceResultRowErrorDtoSchema = z.enum([
-  'DUPLICATE_PARTICIPANT',
-  'POSITION_WITHOUT_FINISH',
-  'FINISH_WITHOUT_POSITION',
-]).describe('Why a resolved row cannot be applied. DUPLICATE_PARTICIPANT: another row names the same runner. POSITION_WITHOUT_FINISH: a finishing place on a runner that did not finish. FINISH_WITHOUT_POSITION: an official result for a FINISHED runner with no place.');
+export const RaceResultRowErrorDtoSchema = z.nativeEnum(RaceResultRowError).describe('Why a resolved row cannot be applied. DUPLICATE_PARTICIPANT: another row names the same runner. POSITION_WITHOUT_FINISH: a finishing place on a runner that did not finish. FINISH_WITHOUT_POSITION: an official result for a FINISHED runner with no place.');
 export type RaceResultRowErrorDto = z.infer<typeof RaceResultRowErrorDtoSchema>;
 
-export const RaceResultOrderErrorDtoSchema = z.enum([
-  'POSITIONS_INVALID',
-  'FIELD_INCOMPLETE',
-]).describe('Why the race\'s result as a whole cannot be applied. POSITIONS_INVALID: the finishing places, with the ones already stored for runners not named, do not run 1, 2, 3 ... with only a dead heat repeating a place and skipping the next. FIELD_INCOMPLETE: an official result leaves an active runner on the field with no result.');
+export const RaceResultOrderErrorDtoSchema = z.nativeEnum(RaceResultOrderError).describe('Why the race\'s result as a whole cannot be applied. POSITIONS_INVALID: the finishing places, with the ones already stored for runners not named, do not run 1, 2, 3 ... with only a dead heat repeating a place and skipping the next. FIELD_INCOMPLETE: an official result leaves an active runner on the field with no result, or a FINISHED runner with no place.');
 export type RaceResultOrderErrorDto = z.infer<typeof RaceResultOrderErrorDtoSchema>;
 
-export const RaceResultChangeDtoSchema = z.enum(['CREATE', 'UPDATE', 'UNCHANGED'])
+export const RaceResultChangeDtoSchema = z.nativeEnum(RaceResultChange)
   .describe('What applying the row would do to the runner\'s stored result.');
 
 export const RaceResultValuesDtoSchema = z.object({

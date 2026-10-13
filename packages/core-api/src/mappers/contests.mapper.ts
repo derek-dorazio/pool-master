@@ -25,7 +25,11 @@ import {
   type ParticipantScoringDefinitionId,
   type SelectionType,
 } from '@poolmaster/shared/domain';
-import type { ContestCountingRule, ParticipantScore } from '../modules/contests/contest-leaderboard-calculator';
+import {
+  participantScoreDetailFor,
+  type ContestCountingRule,
+  type ParticipantScore,
+} from '../modules/contests/contest-leaderboard-calculator';
 import type { SportEventParticipantView } from '../modules/events/sport-event-participant-service';
 import { mapSportEventParticipantToDto } from './sport-event-participants.mapper';
 
@@ -246,10 +250,8 @@ const LEADERBOARD_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, Leade
     pick: (pick) => ({
       golf: {
         scoreToPar: pick.participant.score,
-        // A stroke-play field scores stroke-play details; any other arm has no unplayed rounds.
-        unplayedRoundNumbers: pick.participant.detail.scoringFamily === ScoringFamily.STROKE_PLAY
-          ? pick.participant.detail.unplayedRoundNumbers
-          : [],
+        unplayedRoundNumbers: participantScoreDetailFor(ScoringFamily.STROKE_PLAY, pick.participant.detail)
+          .unplayedRoundNumbers,
       },
       race: null,
     }),
