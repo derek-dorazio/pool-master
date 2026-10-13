@@ -38,6 +38,7 @@ import { RootAdminGolfTournamentHomePage } from '@/features/root-admin/root-admi
 import { RootAdminGolfTournamentTiersPage } from '@/features/root-admin/root-admin-golf-tournament-tiers-page';
 import { RootAdminGolfTournamentListPage } from '@/features/root-admin/root-admin-golf-tournament-list-page';
 import { RootAdminSportEventResultsPage } from '@/features/root-admin/root-admin-sport-event-results-page';
+import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-route';
 import { ManageSportRoute } from '@/features/root-admin/manage-sport-route';
 import { ManageSportLandingRedirect } from '@/features/root-admin/manage-sport-landing-redirect';
 import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin-ingestion-schedule-page';
@@ -287,12 +288,18 @@ export const router = createBrowserRouter([
                       { path: 'leagues/:leagueId/edit', element: <RootAdminGolfLeagueEditPage /> },
                       { path: 'events', element: <RootAdminGolfTournamentListPage /> },
                       { path: 'events/new', element: <RootAdminGolfTournamentCreatePage /> },
-                      { path: 'events/:eventId', element: <RootAdminGolfTournamentHomePage /> },
-                      { path: 'events/:eventId/edit', element: <RootAdminGolfTournamentEditPage /> },
-                      { path: 'events/:eventId/schedule', element: <RootAdminGolfTournamentSchedulePage /> },
-                      { path: 'events/:eventId/field', element: <RootAdminGolfTournamentFieldPage /> },
-                      { path: 'events/:eventId/tiers', element: <RootAdminGolfTournamentTiersPage /> },
-                      { path: 'events/:eventId/results', element: <RootAdminSportEventResultsPage /> },
+                      {
+                        path: 'events/:eventId',
+                        element: <ManageSportEventRoute />,
+                        children: [
+                          { index: true, element: <RootAdminGolfTournamentHomePage /> },
+                          { path: 'edit', element: <RootAdminGolfTournamentEditPage /> },
+                          { path: 'schedule', element: <RootAdminGolfTournamentSchedulePage /> },
+                          { path: 'field', element: <RootAdminGolfTournamentFieldPage /> },
+                          { path: 'tiers', element: <RootAdminGolfTournamentTiersPage /> },
+                          { path: 'results', element: <RootAdminSportEventResultsPage /> },
+                        ],
+                      },
                       { path: 'participants', element: <RootAdminGolfPlayerListPage /> },
                       { path: 'participants/new', element: <RootAdminGolfPlayerCreatePage /> },
                       { path: 'participants/:participantId', element: <RootAdminGolfPlayerHomePage /> },
