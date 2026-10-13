@@ -40,7 +40,7 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-const TOURS = [sportLeagueFixture({ id: 'league-1', name: 'PGA Tour' })];
+const SPORT_LEAGUES = [sportLeagueFixture({ id: 'league-1', name: 'PGA Tour' })];
 const COMPLETE_EDITION: SportEventEdition = { sportLeagueId: 'league-1', eventYear: '2026' };
 const MASTERS = {
   externalId: 'pga-2026-masters',
@@ -62,7 +62,7 @@ function renderBrowse(edition: SportEventEdition = COMPLETE_EDITION) {
       <MemoryRouter initialEntries={['/manage/sports/golf/events/new']}>
         <Routes>
           <Route
-            element={<SportEventProviderBrowse edition={edition} onEditionChange={vi.fn()} tours={TOURS} />}
+            element={<SportEventProviderBrowse edition={edition} onEditionChange={vi.fn()} sportLeagues={SPORT_LEAGUES} />}
             path="/manage/sports/:sport/events/new"
           />
           <Route element={<div data-testid="tournament-home">Home</div>} path="/manage/sports/:sport/events/:eventId" />

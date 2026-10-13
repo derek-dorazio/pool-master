@@ -105,8 +105,8 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
     onSuccess: () => navigate(homePath),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tournament.update.failed', err: error },
-        'Golf tournament update was rejected',
+        { action: 'event.update.failed', err: error },
+        'Event update was rejected',
       );
     },
   });

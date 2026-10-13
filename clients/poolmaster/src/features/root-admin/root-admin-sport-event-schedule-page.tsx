@@ -97,8 +97,8 @@ function SportEventScheduleForm({
     onSuccess: () => navigate(homePath),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tournament.rounds.update.failed', err: error },
-        'Golf tournament rounds update was rejected',
+        { action: 'event.rounds.update.failed', err: error },
+        'Event rounds update was rejected',
       );
     },
   });

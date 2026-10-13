@@ -24,7 +24,7 @@ import { useManagedSport } from './use-managed-sport';
 export function RootAdminSportLeagueHomePage() {
   const { leagueId = '' } = useParams<{ leagueId: string }>();
   const { sport, definition } = useManagedSport();
-  const { sportLeague } = definition.vocabulary;
+  const { sportLeague: sportLeagueNoun } = definition.vocabulary;
 
   useManagePageOwnsHeading();
 
@@ -60,20 +60,20 @@ export function RootAdminSportLeagueHomePage() {
 
   return (
     <AsyncPage
-      emptyBody={`This ${sportLeague.one} does not exist or has been removed.`}
-      emptyTitle={`${capitalize(sportLeague.one)} not found`}
+      emptyBody={`This ${sportLeagueNoun.one} does not exist or has been removed.`}
+      emptyTitle={`${capitalize(sportLeagueNoun.one)} not found`}
       errorBody={extractErrorMessage(leaguesQuery.error, {
-        fallback: `We could not load this ${sportLeague.one} right now.`,
+        fallback: `We could not load this ${sportLeagueNoun.one} right now.`,
       })}
-      loadingBody={`Loading ${sportLeague.one}...`}
+      loadingBody={`Loading ${sportLeagueNoun.one}...`}
       state={pageState}
       testId="root-admin-sport-league-home-page"
     >
       {league ? (
         <div className="space-y-8">
-          <SportLeagueHeading tour={league} />
-          <SportLeagueDetailsSection tour={league} />
-          <SportLeagueCalendarCard tour={league} />
+          <SportLeagueHeading sportLeague={league} />
+          <SportLeagueDetailsSection sportLeague={league} />
+          <SportLeagueCalendarCard sportLeague={league} />
           <SportLeagueRosterUploadCard leagueId={league.id} />
           <SportLeagueRosterGridCard
             entries={rosterQuery.data ?? []}
@@ -81,13 +81,13 @@ export function RootAdminSportLeagueHomePage() {
             rosterError={
               rosterQuery.isError
                 ? extractErrorMessage(rosterQuery.error, {
-                    fallback: `We could not load this ${sportLeague.one}’s roster right now.`,
+                    fallback: `We could not load this ${sportLeagueNoun.one}’s roster right now.`,
                   })
                 : null
             }
             rosterLoading={rosterQuery.isLoading}
           />
-          <SportLeagueDangerZone tour={league} />
+          <SportLeagueDangerZone sportLeague={league} />
         </div>
       ) : null}
     </AsyncPage>

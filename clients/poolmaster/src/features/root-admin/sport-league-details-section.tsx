@@ -21,29 +21,29 @@ import { buildSportLeaguePath, capitalize } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 
 /** The sport league's identity heading: name, active state, roster size and event count. */
-export function SportLeagueHeading({ tour }: { tour: SportLeagueDto }) {
+export function SportLeagueHeading({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const { participant, event } = useManagedSport().definition.vocabulary;
   return (
     <IdentityHeading
       icon={<Route aria-hidden size={22} />}
       meta={(
         <>
-          <StatusBadge tone={tour.isActive ? 'active' : 'inactive'}>
-            {tour.isActive ? 'Active' : 'Inactive'}
+          <StatusBadge tone={sportLeague.isActive ? 'active' : 'inactive'}>
+            {sportLeague.isActive ? 'Active' : 'Inactive'}
           </StatusBadge>
           <span data-testid="root-admin-sport-league-counts">
-            {`${tour.affiliationCount} ${tour.affiliationCount === 1 ? participant.one : participant.many} · ${tour.sportEventCount} ${tour.sportEventCount === 1 ? event.one : event.many}`}
+            {`${sportLeague.affiliationCount} ${sportLeague.affiliationCount === 1 ? participant.one : participant.many} · ${sportLeague.sportEventCount} ${sportLeague.sportEventCount === 1 ? event.one : event.many}`}
           </span>
         </>
       )}
-      name={tour.name}
+      name={sportLeague.name}
       testId="root-admin-sport-league-identity"
     />
   );
 }
 
 /** The sport league's properties as labelled rows, with one Edit (rules/ux-rules.md §12 rules 5 and 6). */
-export function SportLeagueDetailsSection({ tour }: { tour: SportLeagueDto }) {
+export function SportLeagueDetailsSection({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const { sport, definition } = useManagedSport();
   return (
     <SettingsSection
@@ -51,7 +51,7 @@ export function SportLeagueDetailsSection({ tour }: { tour: SportLeagueDto }) {
         <LinkButton
           data-testid="root-admin-sport-league-home-edit"
           size="sm"
-          to={`${buildSportLeaguePath(sport, tour.id)}/edit`}
+          to={`${buildSportLeaguePath(sport, sportLeague.id)}/edit`}
           variant="secondary"
         >
           Edit
@@ -60,28 +60,28 @@ export function SportLeagueDetailsSection({ tour }: { tour: SportLeagueDto }) {
       testId="root-admin-sport-league-details"
       title="Details"
     >
-      <SettingsRow label="Match keyword" value={tour.matchKeyword || 'Not set'} />
-      <SettingsRow label="Roster size" value={tour.affiliationCount} />
-      <SettingsRow label={capitalize(definition.vocabulary.event.many)} value={tour.sportEventCount} />
-      <SettingsRow label="Current year" value={tour.currentEventYear ?? 'Not set'} />
+      <SettingsRow label="Match keyword" value={sportLeague.matchKeyword || 'Not set'} />
+      <SettingsRow label="Roster size" value={sportLeague.affiliationCount} />
+      <SettingsRow label={capitalize(definition.vocabulary.event.many)} value={sportLeague.sportEventCount} />
+      <SettingsRow label="Current year" value={sportLeague.currentEventYear ?? 'Not set'} />
     </SettingsSection>
   );
 }
 
 /** Deactivating or reactivating the sport league, confirmed first, at the bottom of its page. */
-export function SportLeagueDangerZone({ tour }: { tour: SportLeagueDto }) {
+export function SportLeagueDangerZone({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const logger = getLogger().child({
     feature: 'root-admin-sport-league-home-page',
   });
-  const { sportLeague, event } = useManagedSport().definition.vocabulary;
+  const { sportLeague: sportLeagueNoun, event } = useManagedSport().definition.vocabulary;
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const actionLabel = tour.isActive ? `Deactivate ${sportLeague.one}` : `Activate ${sportLeague.one}`;
+  const actionLabel = sportLeague.isActive ? `Deactivate ${sportLeagueNoun.one}` : `Activate ${sportLeagueNoun.one}`;
 
   const toggleActiveMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await updateSportLeague({
-        path: { sportLeagueId: tour.id },
-        body: { isActive: !tour.isActive },
+        path: { sportLeagueId: sportLeague.id },
+        body: { isActive: !sportLeague.isActive },
       });
       if (!response.data?.sportLeague) {
         throwApiError(response.error, 'Sport league update response is missing data.');
@@ -92,7 +92,7 @@ export function SportLeagueDangerZone({ tour }: { tour: SportLeagueDto }) {
     onSuccess: () => setConfirmOpen(false),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tour.toggleActive.failed', err: error },
+        { action: 'sportLeague.toggleActive.failed', err: error },
         'Sport league active toggle was rejected',
       );
     },
@@ -112,14 +112,14 @@ export function SportLeagueDangerZone({ tour }: { tour: SportLeagueDto }) {
               data-testid="root-admin-sport-league-home-toggle-active"
               onClick={() => setConfirmOpen(true)}
               size="sm"
-              variant={tour.isActive ? 'danger' : 'primary'}
+              variant={sportLeague.isActive ? 'danger' : 'primary'}
             >
               {actionLabel}
             </Button>
           )}
-          description={tour.isActive
-            ? `Marks the ${sportLeague.one} inactive. Its roster and ${event.many} stay as they are.`
-            : `Marks the ${sportLeague.one} active again.`}
+          description={sportLeague.isActive
+            ? `Marks the ${sportLeagueNoun.one} inactive. Its roster and ${event.many} stay as they are.`
+            : `Marks the ${sportLeagueNoun.one} active again.`}
           title={actionLabel}
         />
       </DangerZone>
@@ -127,9 +127,9 @@ export function SportLeagueDangerZone({ tour }: { tour: SportLeagueDto }) {
       <ConfirmDialog
         confirmLabel={actionLabel}
         confirmTestId="root-admin-sport-league-toggle-active-confirm"
-        description={tour.isActive
-          ? `${tour.name} will show as inactive. You can activate it again at any time.`
-          : `${tour.name} will show as active.`}
+        description={sportLeague.isActive
+          ? `${sportLeague.name} will show as inactive. You can activate it again at any time.`
+          : `${sportLeague.name} will show as active.`}
         isPending={toggleActiveMutation.isPending}
         onCancel={closeDialog}
         onConfirm={() => toggleActiveMutation.mutate()}
@@ -138,12 +138,12 @@ export function SportLeagueDangerZone({ tour }: { tour: SportLeagueDto }) {
         pendingLabel="Saving..."
         testId="root-admin-sport-league-toggle-active-dialog"
         title={`${actionLabel}?`}
-        tone={tour.isActive ? 'danger' : 'default'}
+        tone={sportLeague.isActive ? 'danger' : 'default'}
       >
         {toggleActiveMutation.isError ? (
           <p className="text-sm font-medium text-destructive">
             {extractErrorMessage(toggleActiveMutation.error, {
-              fallback: `We could not change this ${sportLeague.one}’s active state.`,
+              fallback: `We could not change this ${sportLeagueNoun.one}’s active state.`,
             })}
           </p>
         ) : null}

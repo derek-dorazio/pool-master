@@ -16,29 +16,29 @@ import { useManagedSport } from './use-managed-sport';
 export function SportEventEditionFields({
   edition,
   onChange,
-  tours,
+  sportLeagues,
 }: {
   edition: SportEventEdition;
   onChange: (edition: SportEventEdition) => void;
-  tours: readonly SportLeagueDto[];
+  sportLeagues: readonly SportLeagueDto[];
 }) {
-  const { event, sportLeague } = useManagedSport().definition.vocabulary;
+  const { event, sportLeague: sportLeagueNoun } = useManagedSport().definition.vocabulary;
   return (
     <>
       <FormField
-        error={edition.sportLeagueId === '' ? `Choose the ${sportLeague.one} this ${event.one} runs on.` : undefined}
+        error={edition.sportLeagueId === '' ? `Choose the ${sportLeagueNoun.one} this ${event.one} runs on.` : undefined}
         helperText="Required. Fixed at creation."
-        label={`${capitalize(sportLeague.one)} *`}
+        label={`${capitalize(sportLeagueNoun.one)} *`}
       >
         <Select
           data-testid="root-admin-sport-event-create-tour"
           onChange={(event) => onChange({ ...edition, sportLeagueId: event.target.value })}
           value={edition.sportLeagueId}
         >
-          <option value="">Select a {sportLeague.one}</option>
-          {tours.map((tour) => (
-            <option key={tour.id} value={tour.id}>
-              {tour.name}
+          <option value="">Select a {sportLeagueNoun.one}</option>
+          {sportLeagues.map((sportLeague) => (
+            <option key={sportLeague.id} value={sportLeague.id}>
+              {sportLeague.name}
             </option>
           ))}
         </Select>

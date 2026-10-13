@@ -15,12 +15,12 @@ import { useManagedSport } from './use-managed-sport';
  * again; the result says how many were created and skipped. No preview: the confirm says
  * what will happen and the skip rule makes a repeat harmless.
  */
-export function SportLeagueYearImport({ eventYear, tour }: { eventYear: number; tour: SportLeagueDto }) {
+export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: number; sportLeague: SportLeagueDto }) {
   const logger = getLogger().child({ feature: 'sport-league-year-import' });
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<ImportSportEventYearFromProviderResponse | null>(null);
   const { sport, definition } = useManagedSport();
-  const { event, sportLeague } = definition.vocabulary;
+  const { event, sportLeague: sportLeagueNoun } = definition.vocabulary;
   const { providerId, isSuccess: providersLoaded } = useSportProviderId(true, sport);
 
   const importMutation = useInvalidatingMutation({
@@ -29,7 +29,7 @@ export function SportLeagueYearImport({ eventYear, tour }: { eventYear: number; 
         throw new Error('No provider is configured for this sport.');
       }
       const response = await importEventYearFromProvider({
-        body: { sportLeagueId: tour.id, eventYear, providerId },
+        body: { sportLeagueId: sportLeague.id, eventYear, providerId },
       });
       if (!response.data?.created) {
         throwApiError(response.error, 'Import year response is missing data.');
@@ -41,16 +41,16 @@ export function SportLeagueYearImport({ eventYear, tour }: { eventYear: number; 
     onSuccess: (imported) => {
       logger.info(
         {
-          action: 'golf.tour.importYear',
-          data: { sportLeagueId: tour.id, eventYear, created: imported.created.length, skipped: imported.skipped.length },
+          action: 'sportLeague.importYear',
+          data: { sportLeagueId: sportLeague.id, eventYear, created: imported.created.length, skipped: imported.skipped.length },
         },
-        'Imported golf tour year from provider',
+        'Imported sport league year from provider',
       );
       setResult(imported);
       setOpen(false);
     },
     onError: (error) => {
-      logger.warn({ action: 'golf.tour.importYear.failed', err: error }, 'Golf tour year import was rejected');
+      logger.warn({ action: 'sportLeague.importYear.failed', err: error }, 'Sport league year import was rejected');
     },
   });
 
@@ -76,7 +76,7 @@ export function SportLeagueYearImport({ eventYear, tour }: { eventYear: number; 
       {result ? (
         <p className="w-full text-sm text-muted-foreground" data-testid="root-admin-sport-league-calendar-import-result" role="status">
           {result.created.length === 0 && result.skipped.length === 0
-            ? `The provider lists no ${eventYear} ${event.many} for the ${sportLeague.one} “${tour.matchKeyword ?? ''}”. Check that ${tour.name}’s match keyword is the provider’s ${sportLeague.one} name.`
+            ? `The provider lists no ${eventYear} ${event.many} for the ${sportLeagueNoun.one} “${sportLeague.matchKeyword ?? ''}”. Check that ${sportLeague.name}’s match keyword is the provider’s ${sportLeagueNoun.one} name.`
             : `Created ${result.created.length} ${result.created.length === 1 ? event.one : event.many}; skipped ${result.skipped.length} already here.`}
         </p>
       ) : null}
@@ -84,12 +84,12 @@ export function SportLeagueYearImport({ eventYear, tour }: { eventYear: number; 
       <ConfirmationModal
         confirmLabel={`Import ${eventYear}`}
         confirmTestId="root-admin-sport-league-calendar-import-confirm"
-        description={`Every ${eventYear} ${event.one} the provider lists for ${tour.name} that isn’t here yet is created and linked for results. ${event.many.charAt(0).toUpperCase()}${event.many.slice(1)} already here are skipped, and no fields are loaded.`}
+        description={`Every ${eventYear} ${event.one} the provider lists for ${sportLeague.name} that isn’t here yet is created and linked for results. ${event.many.charAt(0).toUpperCase()}${event.many.slice(1)} already here are skipped, and no fields are loaded.`}
         errorMessage={
           importMutation.isError
             ? extractErrorMessage(importMutation.error, {
                 codeMessages: {
-                  SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD: `${tour.name} has no match keyword. Set it to the provider’s ${sportLeague.one} name.`,
+                  SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD: `${sportLeague.name} has no match keyword. Set it to the provider’s ${sportLeagueNoun.one} name.`,
                 },
                 fallback: 'We could not import this year.',
               })

@@ -33,8 +33,8 @@ export function RootAdminSportEventHomePage() {
   const tournament = tournamentQuery.data;
 
   // The sport league's name, from the list the sport's screens already share.
-  const toursQuery = useSportLeaguesQuery(sport);
-  const tourName = toursQuery.data?.find((tour) => tour.id === tournament?.sportLeagueId)?.name;
+  const sportLeaguesQuery = useSportLeaguesQuery(sport);
+  const sportLeagueName = sportLeaguesQuery.data?.find((sportLeague) => sportLeague.id === tournament?.sportLeagueId)?.name;
 
   useManagePageOwnsHeading();
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
@@ -78,7 +78,7 @@ export function RootAdminSportEventHomePage() {
             </Callout>
           ) : null}
 
-          <SportEventDetailsSection tourName={tourName} tournament={tournament} />
+          <SportEventDetailsSection sportLeagueName={sportLeagueName} tournament={tournament} />
 
           <SportEventWorkflowCard
             eventId={eventId}

@@ -137,7 +137,7 @@ export function TierBoard({
     ],
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tiers.assignments.save.failed', err: error },
+        { action: 'event.tiers.assignments.save.failed', err: error },
         'Tier assignment save was rejected',
       );
     },
@@ -161,7 +161,7 @@ export function TierBoard({
     onSuccess: () => setPriceDraft({}),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tiers.prices.save.failed', err: error },
+        { action: 'event.tiers.prices.save.failed', err: error },
         'Tier price save was rejected',
       );
     },

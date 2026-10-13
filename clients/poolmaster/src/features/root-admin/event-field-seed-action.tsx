@@ -45,7 +45,7 @@ export function EventFieldSeedAction({ eventId, sport }: { eventId: string; spor
     },
     onError: (error) => {
       logger.warn(
-        { action: 'golf.field.seed.failed', err: error },
+        { action: 'event.field.seed.failed', err: error },
         'Field seed was rejected',
       );
     },

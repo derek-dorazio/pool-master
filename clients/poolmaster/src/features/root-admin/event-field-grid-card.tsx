@@ -233,7 +233,7 @@ export function EventFieldGridCard({
     onSuccess: () => setDraft({}),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.field.save.failed', err: error },
+        { action: 'event.field.save.failed', err: error },
         'Field save was rejected',
       );
     },

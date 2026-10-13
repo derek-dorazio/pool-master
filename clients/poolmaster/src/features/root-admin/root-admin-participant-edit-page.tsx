@@ -90,7 +90,7 @@ function ParticipantEditForm({ player }: { player: ParticipantDto }) {
     onSuccess: () => navigate(homePath),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.player.update.failed', err: error },
+        { action: 'participant.update.failed', err: error },
         'Participant update was rejected',
       );
     },

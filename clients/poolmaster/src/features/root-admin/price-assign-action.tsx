@@ -113,7 +113,7 @@ export function PriceAssignAction({
     ],
     onSuccess: () => setOpen(false),
     onError: (error) => {
-      logger.warn({ action: 'golf.prices.autoAssign.failed', err: error }, 'Golf price auto-assign was rejected');
+      logger.warn({ action: 'event.prices.autoAssign.failed', err: error }, 'Price auto-assign was rejected');
     },
   });
 

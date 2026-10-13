@@ -21,36 +21,36 @@ type CreateMode = 'manual' | 'provider';
  */
 export function RootAdminSportEventCreatePage() {
   const [searchParams] = useSearchParams();
-  const initialTourId = searchParams.get('sportLeagueId') ?? '';
+  const initialSportLeagueId = searchParams.get('sportLeagueId') ?? '';
   const initialYear = searchParams.get('eventYear') ?? '';
 
   const [mode, setMode] = useState<CreateMode>('manual');
   const [selection, setSelection] = useState<Partial<SportEventEdition>>({});
 
   const { sport, definition } = useManagedSport();
-  const { event, sportLeague } = definition.vocabulary;
+  const { event, sportLeague: sportLeagueNoun } = definition.vocabulary;
   const sportName = definition.name.toLowerCase();
-  const toursQuery = useSportLeaguesQuery(sport);
+  const sportLeaguesQuery = useSportLeaguesQuery(sport);
 
   // A tournament is created on an active tour only.
-  const tours = useMemo(
-    () => (toursQuery.data ?? []).filter((tour) => tour.isActive),
-    [toursQuery.data],
+  const sportLeagues = useMemo(
+    () => (sportLeaguesQuery.data ?? []).filter((sportLeague) => sportLeague.isActive),
+    [sportLeaguesQuery.data],
   );
 
   // Defaults: the ?sportLeagueId= / ?eventYear= context, else the only tour, and that
   // tour's current year or this calendar year. Computed during render (never written
   // into state from a query effect) so a refetch can't clobber an explicit pick.
   const sportLeagueId = selection.sportLeagueId
-    ?? (initialTourId || (tours.length === 1 ? tours[0].id : ''));
-  const tour = tours.find((candidate) => candidate.id === sportLeagueId);
+    ?? (initialSportLeagueId || (sportLeagues.length === 1 ? sportLeagues[0].id : ''));
+  const sportLeague = sportLeagues.find((candidate) => candidate.id === sportLeagueId);
   const eventYear = selection.eventYear
-    ?? (initialYear || String(tour?.currentEventYear ?? new Date().getFullYear()));
+    ?? (initialYear || String(sportLeague?.currentEventYear ?? new Date().getFullYear()));
   const edition: SportEventEdition = { sportLeagueId, eventYear };
 
-  const toursLoaded = !toursQuery.isLoading && !toursQuery.isError;
+  const sportLeaguesLoaded = !sportLeaguesQuery.isLoading && !sportLeaguesQuery.isError;
 
-  if (toursLoaded && tours.length === 0) {
+  if (sportLeaguesLoaded && sportLeagues.length === 0) {
     return (
       <section
         className="space-y-4"
@@ -58,11 +58,11 @@ export function RootAdminSportEventCreatePage() {
       >
         <Callout tone="warning">
           <p className="font-medium">
-            Create a {sportLeague.one} before creating a {event.one}
+            Create a {sportLeagueNoun.one} before creating a {event.one}
           </p>
           <p className="mt-1 text-sm">
-            Every {sportName} {event.one} runs on a {sportLeague.one}. There are no active{' '}
-            {sportName} {sportLeague.many} yet.
+            Every {sportName} {event.one} runs on a {sportLeagueNoun.one}. There are no active{' '}
+            {sportName} {sportLeagueNoun.many} yet.
           </p>
           <div className="mt-3">
             <LinkButton
@@ -70,7 +70,7 @@ export function RootAdminSportEventCreatePage() {
               to={buildSportLeagueListPath(sport)}
               variant="secondary"
             >
-              Go to {capitalize(sportLeague.many)}
+              Go to {capitalize(sportLeagueNoun.many)}
             </LinkButton>
           </div>
         </Callout>
@@ -94,9 +94,9 @@ export function RootAdminSportEventCreatePage() {
       />
 
       {mode === 'manual' ? (
-        <SportEventManualCreateForm edition={edition} onEditionChange={setSelection} tours={tours} />
+        <SportEventManualCreateForm edition={edition} onEditionChange={setSelection} sportLeagues={sportLeagues} />
       ) : (
-        <SportEventProviderBrowse edition={edition} onEditionChange={setSelection} tours={tours} />
+        <SportEventProviderBrowse edition={edition} onEditionChange={setSelection} sportLeagues={sportLeagues} />
       )}
     </section>
   );

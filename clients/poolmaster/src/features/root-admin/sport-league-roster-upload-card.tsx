@@ -63,8 +63,8 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
     invalidates: [],
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tour.roster.preview.failed', err: error },
-        'Golf tour roster preview was rejected',
+        { action: 'sportLeague.roster.preview.failed', err: error },
+        'Sport league roster preview was rejected',
       );
     },
   });
@@ -86,8 +86,8 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
     ],
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tour.roster.apply.failed', err: error },
-        'Golf tour roster apply was rejected',
+        { action: 'sportLeague.roster.apply.failed', err: error },
+        'Sport league roster apply was rejected',
       );
     },
   });

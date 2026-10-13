@@ -41,11 +41,11 @@ type ManualFormValues = z.infer<typeof manualFormSchema>;
 export function SportEventManualCreateForm({
   edition,
   onEditionChange,
-  tours,
+  sportLeagues,
 }: {
   edition: SportEventEdition;
   onEditionChange: (edition: SportEventEdition) => void;
-  tours: readonly SportLeagueDto[];
+  sportLeagues: readonly SportLeagueDto[];
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-create-page',
@@ -92,15 +92,15 @@ export function SportEventManualCreateForm({
     invalidates: [QueryKeys.rootAdmin.manageSport.events],
     onSuccess: (tournament) => {
       logger.info(
-        { action: 'golf.tournament.create.manual', data: { id: tournament.id } },
-        'Created golf tournament manually',
+        { action: 'event.create.manual', data: { id: tournament.id } },
+        'Created event manually',
       );
       navigate(buildSportEventPath(sport, tournament.id));
     },
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tournament.create.manual.failed', err: error },
-        'Manual golf tournament creation was rejected',
+        { action: 'event.create.manual.failed', err: error },
+        'Manual event creation was rejected',
       );
     },
   });
@@ -153,7 +153,7 @@ export function SportEventManualCreateForm({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <SportEventEditionFields edition={edition} onChange={onEditionChange} tours={tours} />
+          <SportEventEditionFields edition={edition} onChange={onEditionChange} sportLeagues={sportLeagues} />
         </div>
 
         <label className="flex items-center gap-2 text-sm text-muted-foreground">

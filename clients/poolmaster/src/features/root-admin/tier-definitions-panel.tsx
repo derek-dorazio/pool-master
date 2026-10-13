@@ -103,7 +103,7 @@ export function TierDefinitionsPanel({
     ],
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tiers.definitions.save.failed', err: error },
+        { action: 'event.tiers.definitions.save.failed', err: error },
         'Tier definition save was rejected',
       );
     },

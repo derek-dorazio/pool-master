@@ -14,10 +14,10 @@ import { useManagedSport } from './use-managed-sport';
  * the years on offer are the ones the tour has tournaments in, plus its current year and
  * the year after the latest (what "clone to next year" and "new tournament" aim at).
  */
-export function SportLeagueCalendarCard({ tour }: { tour: SportLeagueDto }) {
+export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const { sport, definition } = useManagedSport();
   const { event: eventNoun } = definition.vocabulary;
-  const tournamentsQuery = useSportLeagueEventsQuery(tour.id);
+  const tournamentsQuery = useSportLeagueEventsQuery(sportLeague.id);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
   const yearsWithEvents = useMemo(
@@ -26,7 +26,7 @@ export function SportLeagueCalendarCard({ tour }: { tour: SportLeagueDto }) {
   );
   // Default: the tour's current year, else its latest year with tournaments, else this one.
   // Computed during render so a refetch can't clobber an explicit pick.
-  const eventYear = selectedYear ?? tour.currentEventYear ?? yearsWithEvents.at(0) ?? new Date().getFullYear();
+  const eventYear = selectedYear ?? sportLeague.currentEventYear ?? yearsWithEvents.at(0) ?? new Date().getFullYear();
   const years = useMemo(
     () => [...new Set([...yearsWithEvents, eventYear, (yearsWithEvents.at(0) ?? eventYear) + 1])].sort((a, b) => b - a),
     [yearsWithEvents, eventYear],
@@ -42,7 +42,7 @@ export function SportLeagueCalendarCard({ tour }: { tour: SportLeagueDto }) {
         <div>
           <h3 className="text-base font-semibold text-foreground">{`${capitalize(eventNoun.one)} calendar`}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            {`${tour.name}’s ${eventNoun.many} in one year, earliest first.`}
+            {`${sportLeague.name}’s ${eventNoun.many} in one year, earliest first.`}
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
@@ -63,13 +63,13 @@ export function SportLeagueCalendarCard({ tour }: { tour: SportLeagueDto }) {
             eventCount={yearTournaments.length}
             eventYear={eventYear}
             onCloned={setSelectedYear}
-            tour={tour}
+            sportLeague={sportLeague}
           />
-          <SportLeagueYearImport eventYear={eventYear} tour={tour} />
+          <SportLeagueYearImport eventYear={eventYear} sportLeague={sportLeague} />
           <LinkButton
             data-testid="root-admin-sport-league-calendar-new-tournament"
             size="sm"
-            to={`${buildSportEventListPath(sport)}/new?sportLeagueId=${tour.id}&eventYear=${eventYear}`}
+            to={`${buildSportEventListPath(sport)}/new?sportLeagueId=${sportLeague.id}&eventYear=${eventYear}`}
           >
             {`New ${eventNoun.one}`}
           </LinkButton>

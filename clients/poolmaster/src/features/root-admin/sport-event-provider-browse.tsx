@@ -41,13 +41,13 @@ function defaultWindowValue(offsetDays: number): string {
 export function SportEventProviderBrowse({
   edition,
   onEditionChange,
-  tours,
+  sportLeagues,
 }: {
   edition: SportEventEdition;
   onEditionChange: (edition: SportEventEdition) => void;
-  tours: readonly SportLeagueDto[];
+  sportLeagues: readonly SportLeagueDto[];
 }) {
-  const scopedTour = tours.find((tour) => tour.id === edition.sportLeagueId);
+  const scopedSportLeague = sportLeagues.find((sportLeague) => sportLeague.id === edition.sportLeagueId);
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-create-page',
   });
@@ -67,7 +67,7 @@ export function SportEventProviderBrowse({
     sport,
     from: localDateTimeInputToIso(browseFrom),
     to: localDateTimeInputToIso(browseTo),
-    sportLeagueId: scopedTour?.id,
+    sportLeagueId: scopedSportLeague?.id,
     search: browseSearch,
   });
   const providerId = catalog.providerId;
@@ -95,15 +95,15 @@ export function SportEventProviderBrowse({
     invalidates: [QueryKeys.rootAdmin.manageSport.events],
     onSuccess: (tournament) => {
       logger.info(
-        { action: 'golf.tournament.create.provider', data: { id: tournament.id } },
-        'Created golf tournament from provider event',
+        { action: 'event.create.provider', data: { id: tournament.id } },
+        'Created event from provider event',
       );
       navigate(buildSportEventPath(sport, tournament.id));
     },
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tournament.create.provider.failed', err: error },
-        'Provider golf tournament creation was rejected',
+        { action: 'event.create.provider.failed', err: error },
+        'Provider event creation was rejected',
       );
     },
   });
@@ -142,9 +142,9 @@ export function SportEventProviderBrowse({
             </FormField>
           </div>
 
-          {scopedTour ? (
+          {scopedSportLeague ? (
             <p className="mt-3 text-xs text-muted-foreground">
-              Filtered to {scopedTour.name}.
+              Filtered to {scopedSportLeague.name}.
             </p>
           ) : null}
 
@@ -216,7 +216,7 @@ export function SportEventProviderBrowse({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <SportEventEditionFields edition={edition} onChange={onEditionChange} tours={tours} />
+              <SportEventEditionFields edition={edition} onChange={onEditionChange} sportLeagues={sportLeagues} />
               <FormField
                 helperText={`The provider doesn't report a ${round.one} count; adjust per-${round.one} dates later.`}
                 label={capitalize(round.many)}

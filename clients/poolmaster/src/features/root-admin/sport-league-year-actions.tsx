@@ -19,24 +19,24 @@ export function SportLeagueYearActions({
   eventCount,
   eventYear,
   onCloned,
-  tour,
+  sportLeague,
 }: {
   eventCount: number;
   eventYear: number;
   onCloned: (targetYear: number) => void;
-  tour: SportLeagueDto;
+  sportLeague: SportLeagueDto;
 }) {
   const logger = getLogger().child({ feature: 'sport-league-year-actions' });
   const { event } = useManagedSport().definition.vocabulary;
   const [setCurrentOpen, setSetCurrentOpen] = useState(false);
   const [cloneOpen, setCloneOpen] = useState(false);
   const targetYear = eventYear + 1;
-  const isCurrent = tour.currentEventYear === eventYear;
+  const isCurrent = sportLeague.currentEventYear === eventYear;
 
   const setCurrentMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await updateSportLeague({
-        path: { sportLeagueId: tour.id },
+        path: { sportLeagueId: sportLeague.id },
         body: { currentEventYear: eventYear },
       });
       if (!response.data?.sportLeague) {
@@ -47,14 +47,14 @@ export function SportLeagueYearActions({
     invalidates: [QueryKeys.rootAdmin.manageSport.leagues],
     onSuccess: () => setSetCurrentOpen(false),
     onError: (error) => {
-      logger.warn({ action: 'golf.tour.setCurrentYear.failed', err: error }, 'Set-current golf year was rejected');
+      logger.warn({ action: 'sportLeague.setCurrentYear.failed', err: error }, 'Set-current event year was rejected');
     },
   });
 
   const cloneMutation = useInvalidatingMutation({
     mutationFn: async () => {
       // targetYear omitted -> the backend clones to eventYear + 1.
-      const response = await cloneEventYear({ body: { sportLeagueId: tour.id, eventYear } });
+      const response = await cloneEventYear({ body: { sportLeagueId: sportLeague.id, eventYear } });
       if (!response.data?.events) {
         throwApiError(response.error, 'Clone year response is missing data.');
       }
@@ -64,14 +64,14 @@ export function SportLeagueYearActions({
     invalidates: [QueryKeys.rootAdmin.manageSport.events, QueryKeys.rootAdmin.manageSport.leagues],
     onSuccess: (events) => {
       logger.info(
-        { action: 'golf.tour.cloneYear', data: { sportLeagueId: tour.id, eventYear, targetYear, count: events.length } },
-        'Cloned golf tour year',
+        { action: 'sportLeague.cloneYear', data: { sportLeagueId: sportLeague.id, eventYear, targetYear, count: events.length } },
+        'Cloned sport league year',
       );
       setCloneOpen(false);
       onCloned(targetYear);
     },
     onError: (error) => {
-      logger.warn({ action: 'golf.tour.cloneYear.failed', err: error }, 'Golf tour year clone was rejected');
+      logger.warn({ action: 'sportLeague.cloneYear.failed', err: error }, 'Sport league year clone was rejected');
     },
   });
 
@@ -103,12 +103,12 @@ export function SportLeagueYearActions({
       <ConfirmationModal
         confirmLabel="Set as current"
         confirmTestId="root-admin-sport-league-calendar-set-current-confirm"
-        description={`${eventYear} becomes ${tour.name}’s current year, replacing ${tour.currentEventYear ?? 'none'}.`}
+        description={`${eventYear} becomes ${sportLeague.name}’s current year, replacing ${sportLeague.currentEventYear ?? 'none'}.`}
         errorMessage={
           setCurrentMutation.isError
             ? extractErrorMessage(setCurrentMutation.error, {
                 codeMessages: {
-                  EVENT_YEAR_HAS_NO_EVENTS: `${tour.name} has no ${event.many} in ${eventYear}, so it cannot be the current year.`,
+                  EVENT_YEAR_HAS_NO_EVENTS: `${sportLeague.name} has no ${event.many} in ${eventYear}, so it cannot be the current year.`,
                 },
                 fallback: 'We could not set this year as current.',
               })
@@ -131,7 +131,7 @@ export function SportLeagueYearActions({
           cloneMutation.isError
             ? extractErrorMessage(cloneMutation.error, {
                 codeMessages: {
-                  EVENT_YEAR_NOT_EMPTY: `${tour.name} already has ${event.many} in ${targetYear}.`,
+                  EVENT_YEAR_NOT_EMPTY: `${sportLeague.name} already has ${event.many} in ${targetYear}.`,
                 },
                 fallback: 'We could not clone this year.',
               })
