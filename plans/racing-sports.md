@@ -431,6 +431,24 @@ same after every one of them.
 5. **Close-out.** The US Thoroughbred league and the Pegasus pilot event, set up through
    admin. Docs, and the Reflect step on the add-sport skill.
 
+**Where it stands (2026-10-13).** Slices 1 to 4 are merged: the web scoring-family registry
+(#648), the backend interface prep (#649), finish position and horse racing on the backend
+(#650), and racing in the web admin and create flow (#651). Slice 5 delivered what an agent can
+do without the QA environment:
+
+- `docs/RACE-SETUP-PROCEDURES.md`, the procedure a root admin follows to create the US
+  Thoroughbred circuit, add horses, create the Pegasus World Cup, build and release its field,
+  run contests on it, handle scratches, enter the finishing order and settle. It sits beside
+  the golf procedure, which is about the mock feed and simulated rounds throughout.
+- The Reflect step on the add-sport skill, folding in what slices 3 and 4 taught.
+
+**What remains, by hand in QA:** an admin follows that procedure to create the US Thoroughbred
+circuit and the Pegasus World Cup (confirming the date and post time with Gulfstream Park when
+creating it), enters the field and morning-line odds once the post-position draw is published,
+and runs the race through to a settled contest. Writing the procedure turned up one thing for
+a follow-up ticket rather than this slice: budget prices come from seed numbers, not odds, so an
+admin must enter seeds in market order before pricing a race (the procedure says so).
+
 **Q9.1** Where does a contest's points table live? *Recommendation:* in the contest's
 participant scoring rule `config`, which exists today and is always `{}`. Each scoring
 definition gets its own Zod schema for it, keyed by scoring definition id, so the column is

@@ -1,6 +1,6 @@
 ---
 name: add-sport
-description: Adding a new sport (or a new scoring family) to PoolMaster — refine it, add the registry entry, scoring family, storage, admin results, contest setup, web vocabulary and tests, then reflect on this skill. Use whenever work makes contests possible for a sport that is not yet supported.
+description: Adding a new sport (or a new scoring family) to PoolMaster — refine it, add the registry entry, scoring family, storage, admin results, contest setup, web vocabulary and tests, set up its first event, then reflect on this skill. Use whenever work makes contests possible for a sport that is not yet supported.
 user-invocable: true
 allowed-tools: [Read, Grep, Glob, Edit, Write, Bash]
 ---
@@ -24,7 +24,7 @@ Fill in a refinement table for the sport before any code, one row per decision:
 | Participant | Individual or team, and what the audience calls one |
 | Sport leagues | Which real-world leagues or tours run its events (one sport, many leagues: auto racing has F1, IndyCar and NASCAR) |
 | Event and field | What one event is, how big its field is, how many rounds or stages |
-| Seeding source | Ranking, seed lines or odds: what feeds tiers and budget prices |
+| Seeding source | Ranking, seed lines or odds: what feeds tiers and budget prices, and how an admin gets it in before release |
 | Selection types | Which existing engines fit (tiered, budget) |
 | Scoring rules and presets | How a participant scores, and any per-league presets |
 | Results source | Admin entry only, or a provider feed |
@@ -32,6 +32,12 @@ Fill in a refinement table for the sport before any code, one row per decision:
 
 Write every open point as a question with a recommendation. The table goes in the ticket, or
 in a plan only when the sport needs a new scoring family or a model change.
+
+Settle the seeding source for real, not as "later". Releasing an event requires every active
+participant to have a tier and a price, even when every contest on it will be a random draw,
+so a sport with no way to tier and price its field cannot release an event at all. Tiers come
+from ranking or odds; budget prices come from seed numbers, so a sport seeded by odds also
+needs seeds entered in market order before pricing.
 
 ## Step 1 — classify the sport
 
@@ -64,28 +70,55 @@ In order:
 3. **Scoring definitions.** If the sport needs a new participant scoring definition, add it to
    the exhaustive scoring-definition record with its direction, unit and formatters, and its
    contest settings schema to the settings record (the empty object when it takes none).
-   Direction is declared once there and nowhere else.
+   Direction is declared once there and nowhere else. Settings that have no sensible default
+   (a points table is the commissioner's choice) make contest create require them, from the
+   request or a template preset (`CONTEST_SCORING_SETTINGS_REQUIRED`), so ship the presets as
+   contest templates carrying them in `config_json.scoring`, in the reference-data migration.
+   Make every settings field required, never defaulted: the settings travel in a discriminated
+   union, and a JSON Schema `default` inside a `oneOf` is not applied (Ajv strict mode refuses
+   it).
 4. **Scoring family.** Reusing one: nothing beyond the registry entry. New one: implement the
    scoring-family interface, add its extension tables beside the core round and standing rows
-   (one table set per family, never per sport), register it in the scoring-family registry and
-   the leaderboard detail map, and add its live-score variant to the results union. The
-   compiler lists both maps once the family is in the enum.
+   (one table set per family, never per sport), and register it in the scoring-family registry
+   and the leaderboard detail map; the compiler lists both maps once the family is in the enum.
+   Add a live-score variant to the results union only when a provider for it exists; until
+   then the family declares `liveScores: null` and its results come from admin entry. A
+   supported sport with no provider sits in the default scheduled sports anyway, and the
+   ingestion scheduler logs one warning per change in that set: expected, not a defect.
 5. **Field seeding and pricing.** Confirm the seeding source feeds tiers and budget prices
-   through the existing event services.
+   through the existing event services, and that an event can be released (step 0).
 6. **Admin results.** An admin must be able to enter or correct every result without a
    provider (`rules/architecture-rules.md` §4 *Provider data reaches only events an admin
-   authored and linked*).
+   authored and linked*). A new family's results route refuses an event of another family
+   with 422 `EVENT_SCORING_FAMILY_MISMATCH`, as golf's score routes do. On the web, the family
+   adds its entry to `SCORING_FAMILY_ADMIN_UI` (exhaustive, so the build asks for it): the
+   results page's name and body. The Manage event, field, tier, participant and sport league
+   pages are shared by every sport under `/manage/sports/:sport/`, so a new sport needs no new
+   admin pages; its menu entry and URL segment come from the registry
+   (`rules/architecture-rules.md` §4 *Sport extension*).
 7. **Contract.** Any new DTO, route or error code goes through the `add-endpoint` skill and
    regenerates the SDK in the same slice.
-8. **Web app.** Copy and round labels come from the sport definition. Use the
-   `add-frontend-feature` skill.
+8. **Web app.** Copy and round labels come from the sport definition, admin screens
+   included: the definition's `name`, and the vocabulary's `participant`, `event`,
+   `sportLeague`, `round`, `withdrawn` and `eventStart` (and `eliminated`, only for a sport
+   that knocks participants out). A new family adds its leaderboard to `SCORING_FAMILY_UI`,
+   including its `entryTiebreaker` (null when entries submit without one); a new scoring
+   definition adds its contest-setup inputs to `SCORING_SETTINGS_UI`. Both are exhaustive
+   records. Use the `add-frontend-feature` skill.
 9. **Tests.** The registry conformance suite covers the new definition automatically; make
    sure it runs. Add integration coverage for any new query (`rules/testing-rules.md` §9
-   *Integration Test Depth Requirement*), and one browser journey: create event, seed field,
+   *Integration Test Depth Requirement*), and one end-to-end journey: create event, seed field,
    create contest, enter, score, settle (`rules/testing-rules.md` §6 *Functional and Browser
-   E2E Rules*).
+   E2E Rules*). A slice with no UI yet proves it as an SDK functional journey; once the
+   screens exist, a browser journey. The browser journey sets `JourneyRun.sport` and reuses the
+   golden journey's teardown (extend `JourneySport`), and tiers its field the realistic way:
+   odds in the field grid, then auto-assign tiers from odds.
 10. **Docs and gates.** Update the docs the change touches in the same PR, then run the
     `release-check` skill.
+11. **Go live.** Set up the sport's first sport league and event through the Manage pages, the
+    way an admin will, and write that setup down as a procedure in `docs/` (screen names,
+    paths, buttons, what to do when a result changes). Walking it is how a missing admin
+    step shows up before the first real event does.
 
 ## Step 3 — reflect
 
@@ -93,6 +126,10 @@ Before the PR is marked ready, compare what was built against this skill: steps 
 missing, wrong or unused, and traps you hit. Fix this file in the same PR, so the review sees
 it, and add one line to the PR body saying what changed in the skill. A sport PR that changes
 nothing here says so explicitly.
+
+When the sport lands as a series of slices, each slice's PR still records what it learned,
+and the closing slice folds the lessons in. Check each against the code before writing it
+down: a lesson that was true mid-series may not be by the end.
 
 ## Where this goes wrong
 
@@ -107,6 +144,14 @@ nothing here says so explicitly.
   not three sports. A new sport is a new way of competing, not a new organiser.
 - **Golf words in shared screens.** "Golfer", "tee time", "to par" and "cut" in a shared
   component are a vocabulary leak; read them from the sport definition.
+- **Sport words in a family's screens.** Two sports in one family can still say different
+  things: horse racing has a "Rider" and calls its points table "Win / Place / Show"; auto
+  racing has a "Driver". A word that differs between sports of the same family belongs in the
+  vocabulary, not hard-coded in the family's card or leaderboard.
+- **Looking up a sport league by its sport.** `SportLeagueDto` carries no `sport` (only
+  `sportId`). Find a sport's leagues by listing with `?sport=`, not by filtering the DTOs.
+- **Applying race results with POST.** The finishing-order apply is a `PUT` (it replaces the
+  rows it names); only its preview is a `POST`. Tests and helpers that guess the verb fail.
 - **Adding catalog values "for later".** Add a sport, scoring definition or enum value only
   with the code that uses it. Unused values are dead code and get deleted.
 - **Hiding missing results with defaults.** An unscored participant is unranked, never a

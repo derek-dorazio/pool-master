@@ -8425,7 +8425,6 @@ export type SelectionStateResponse = {
             ranking?: number | null;
             orderIndex?: number | null;
             isAvailable: boolean;
-            unavailableReason?: string | null;
             /**
              * Whether the currently selected entry has this participant selected.
              */
@@ -8545,7 +8544,6 @@ export type SelectionPickResponse = {
             ranking?: number | null;
             orderIndex?: number | null;
             isAvailable: boolean;
-            unavailableReason?: string | null;
             /**
              * Whether the currently selected entry has this participant selected.
              */

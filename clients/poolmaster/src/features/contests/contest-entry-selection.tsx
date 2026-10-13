@@ -1,4 +1,5 @@
-import type { SportNoun } from "@poolmaster/shared/domain";
+import { formatParticipantStatusLabel, type Sport, type SportNoun } from "@poolmaster/shared/domain";
+import { unavailableParticipantLabel } from "./contest-sport";
 import type { EntryTiebreakerUi } from "./scoring-family-ui/types";
 import type { SelectionStateResponse } from "@/lib/api";
 import {
@@ -37,7 +38,7 @@ function getGroupStatusLabel(group: SelectionGroup) {
   return "Next up";
 }
 
-function getParticipantMetaSummary(participant: SelectionParticipant) {
+function getParticipantMetaSummary(participant: SelectionParticipant, sport: Sport | null) {
   const parts: string[] = [];
 
   if (participant.orderIndex) {
@@ -50,7 +51,7 @@ function getParticipantMetaSummary(participant: SelectionParticipant) {
     parts.push(`${participant.price} salary`);
   }
   if (participant.status) {
-    parts.push(`Status: ${participant.status}`);
+    parts.push(`Status: ${formatParticipantStatusLabel(participant.status, sport)}`);
   }
 
   return parts;
@@ -63,6 +64,7 @@ export function SelectionParticipantCard({
   noun,
   onSelect,
   participant,
+  sport,
 }: {
   canSelect: boolean;
   group: SelectionGroup;
@@ -71,6 +73,8 @@ export function SelectionParticipantCard({
   noun: SportNoun;
   onSelect: (participant: SelectionParticipant) => void;
   participant: SelectionParticipant;
+  /** The contest's sport, whose words name a participant's status. */
+  sport: Sport | null;
 }) {
   const selectedCount = group.selectedParticipantIds.length;
   const groupIsFull = selectedCount >= group.picksFromGroup;
@@ -89,7 +93,7 @@ export function SelectionParticipantCard({
   if (isSelected) {
     actionLabel = "Selected";
   } else if (!participant.isAvailable) {
-    actionLabel = participant.unavailableReason ?? "Unavailable";
+    actionLabel = unavailableParticipantLabel(participant, sport);
   } else if (canReplace) {
     actionLabel = "Replace selection";
   } else if (groupIsFull) {
@@ -131,7 +135,7 @@ export function SelectionParticipantCard({
           </StatusBadge>
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-          {getParticipantMetaSummary(participant).map((part) => (
+          {getParticipantMetaSummary(participant, sport).map((part) => (
             <span key={`${participant.sportEventParticipantId}-${part}`}>
               {part}
             </span>
@@ -172,6 +176,7 @@ export function EditableSelectionGroup({
   onParticipantSelect,
   onToggle,
   setToggleRef,
+  sport,
 }: {
   canSelect: boolean;
   group: SelectionGroup;
@@ -181,6 +186,7 @@ export function EditableSelectionGroup({
   onParticipantSelect: (participant: SelectionParticipant) => void;
   onToggle: () => void;
   setToggleRef: (element: HTMLButtonElement | null) => void;
+  sport: Sport | null;
 }) {
   const isComplete = group.selectedParticipantIds.length >= group.picksFromGroup;
   const statusLabel = getGroupStatusLabel(group);
@@ -233,6 +239,7 @@ export function EditableSelectionGroup({
               noun={noun}
               onSelect={onParticipantSelect}
               participant={participant}
+              sport={sport}
             />
           ))}
         </ListStack>
@@ -244,9 +251,11 @@ export function EditableSelectionGroup({
 export function LockedSelectionGroup({
   group,
   noun,
+  sport,
 }: {
   group: SelectionGroup;
   noun: SportNoun;
+  sport: Sport | null;
 }) {
   const selectedParticipants = getSelectedParticipants(group);
 
@@ -303,7 +312,7 @@ export function LockedSelectionGroup({
                     : "-"}
                 </span>
                 <span className="text-right text-muted-foreground">
-                  {participant.status ?? "ACTIVE"}
+                  {formatParticipantStatusLabel(participant.status ?? "ACTIVE", sport)}
                 </span>
               </div>
             ))

@@ -58,7 +58,6 @@ export const SelectionParticipantDtoSchema = z.object({
   ranking: z.number().nullable().optional(),
   orderIndex: z.number().nullable().optional(),
   isAvailable: z.boolean(),
-  unavailableReason: z.string().nullable().optional(),
   isSelected: z.boolean().optional().describe('Whether the currently selected entry has this participant selected.'),
 }).describe('Selectable participant row used by roster-based entry builders.');
 export type SelectionParticipantDto = z.infer<typeof SelectionParticipantDtoSchema>;

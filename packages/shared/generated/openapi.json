@@ -17583,12 +17583,6 @@
                       "isAvailable": {
                         "type": "boolean"
                       },
-                      "unavailableReason": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
                       "isSelected": {
                         "type": "boolean",
                         "description": "Whether the currently selected entry has this participant selected."
@@ -17946,12 +17940,6 @@
                       },
                       "isAvailable": {
                         "type": "boolean"
-                      },
-                      "unavailableReason": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
                       },
                       "isSelected": {
                         "type": "boolean",

@@ -8676,7 +8676,6 @@ export interface components {
                     ranking?: number | null;
                     orderIndex?: number | null;
                     isAvailable: boolean;
-                    unavailableReason?: string | null;
                     /** @description Whether the currently selected entry has this participant selected. */
                     isSelected?: boolean;
                 }[];
@@ -8773,7 +8772,6 @@ export interface components {
                     ranking?: number | null;
                     orderIndex?: number | null;
                     isAvailable: boolean;
-                    unavailableReason?: string | null;
                     /** @description Whether the currently selected entry has this participant selected. */
                     isSelected?: boolean;
                 }[];

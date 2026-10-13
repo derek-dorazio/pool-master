@@ -39,7 +39,6 @@ function toSelectionParticipantDto(
     ranking: participant.ranking ?? null,
     orderIndex: participant.orderIndex ?? null,
     isAvailable: participant.isAvailable,
-    unavailableReason: participant.unavailableReason ?? null,
     isSelected: participant.isSelected,
   };
 }

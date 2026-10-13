@@ -42,6 +42,7 @@ the one people read.
 | Runtime logs and how to query them | [`docs/LOGGING-OPERATIONS.md`](docs/LOGGING-OPERATIONS.md) |
 | Email providers by environment | [`docs/EMAIL-DELIVERY.md`](docs/EMAIL-DELIVERY.md) |
 | Setting up a made-up golf tournament and simulating a live round in QA | [`docs/EVENT-SETUP-PROCEDURES.md`](docs/EVENT-SETUP-PROCEDURES.md) |
+| Setting up a horse race, its field and contests, and entering its result | [`docs/RACE-SETUP-PROCEDURES.md`](docs/RACE-SETUP-PROCEDURES.md) |
 | The backend modules | [`packages/README.md`](packages/README.md) |
 | The web app | [`clients/poolmaster/README.md`](clients/poolmaster/README.md) |
 | Deploying, and Terraform state hygiene | [`infrastructure/terraform/README.md`](infrastructure/terraform/README.md). The promotion model: QA deploys on every push to `main`; staging and prod are a manual `workflow_dispatch` of `deploy.yml` promoting an immutable QA image tag |
