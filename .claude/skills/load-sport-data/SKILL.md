@@ -20,26 +20,28 @@ risk). Made-up data belongs only in a test seed whose envelope says `testData: t
 
 ## Step 1 — scope the ask
 
-Turn the request into an envelope scope before gathering anything: one sport, one season,
-the sport leagues, and what the file will hold.
+A season is loaded in two kinds of run, because fields do not exist until shortly before
+each event (a PGA TOUR field is set at the commitment deadline, 5 p.m. ET the Friday before):
 
-| Ask | `contents` |
-|---|---|
-| "The 2027 PGA TOUR schedule" | `SCHEDULE` |
-| "...and who plays" | `SCHEDULE`, `PLAYERS`, `FIELDS` |
-| "The field for this week's event" | `PLAYERS`, `FIELDS` (the event must already be on the site) |
+| Run | When | `contents` |
+|---|---|---|
+| Schedule | Once per season, early | `SCHEDULE` |
+| Field | When it is announced, then again on the Tuesday of event week for withdrawals and alternates | `PLAYERS`, `FIELDS` |
 
-`contents` is what a run may change, so keep it as narrow as the ask: a fields file without
-`SCHEDULE` can never rewrite the schedule. `FIELDS` always comes with `PLAYERS`. One sport
-and season per file; several sport leagues of it are fine.
+A field file carries the players its entries name (`FIELDS` always comes with `PLAYERS`),
+so an alternate the site has never seen is added. It leaves out `SCHEDULE`, so it can never
+rewrite an event, and its event must already be on the site. `contents` is what a run may
+change: keep it as narrow as the ask. One sport and season per file; several sport leagues
+of it are fine.
 
 ## Step 2 — gather from two sources
 
-Use the source list below, primary first. Search finds the pages; reading them needs the
-pages themselves, which a cloud session cannot fetch. Dispatch the "Fetch sport sources"
-workflow on your branch with the page URLs (at most 20 a run), then pull the branch and read
-`sport-sources/`: each page's visible text, then any JSON it embeds (schedule sites keep
-their data there). `index.json` says which fetches failed.
+Use the source list below, primary first. A cloud session cannot reach any of them, and
+the tour pages fill in their schedules and fields with scripts, so a plain page fetch has
+nothing in it. Dispatch the "Fetch sport sources" workflow on your branch: JSON feeds and
+plain pages in `urls`, script-filled pages (tour field pages) in `rendered_urls`, which it
+loads in headless Chromium. Then pull the branch and read `sport-sources/`; `index.json`
+says which fetches failed.
 
 For each fact, get it from the primary and from a second, independent source: event name,
 start and end dates, venue, location, rounds, par; each player in a field and their ranking.
@@ -51,6 +53,8 @@ start and end dates, venue, location, rounds, par; each player in a field and th
   and both links. Never pick one silently.
 - **Only the official league site has it:** load it, and say so in the summary.
 - **Neither has it:** leave it out (a `null` venue, no ranking on that field entry).
+- **A feed returns nothing or a changed shape:** say so; do not fall back to search
+  snippets for data you load.
 
 Odds are not loaded: they move daily and differ by book, so two sources rarely agree.
 
@@ -95,9 +99,13 @@ scope, and the unit tests in `tests/unit/core-api/` show how to call it.
 
 ## Sources per sport
 
-| Sport | Primary | Second source | Rankings |
-|---|---|---|---|
-| Golf (PGA TOUR, LPGA Tour) | pgatour.com, lpga.com schedule and field pages | The season's Wikipedia article; espn.com golf schedule | owgr.com, rolexrankings.com |
+| Sport | Schedule | Field | Second source | Rankings | Field is set |
+|---|---|---|---|---|---|
+| Golf (PGA TOUR, LPGA Tour) | ESPN's public JSON feed (`site.api.espn.com/apis/site/v2/sports/golf/pga/...`, `lpga` likewise) | The same feed's competitors | Schedule: the season's Wikipedia article. Field: the tour's field page (pgatour.com, lpga.com), rendered | owgr.com, rolexrankings.com | PGA TOUR: Friday 5 p.m. ET before the event |
+
+ESPN's feed is public but undocumented: it can change without notice, which is what the
+second source catches. Confirm a feed URL returns what you expect before building a file
+on it, and correct this table when it does not.
 
 Adding a sport adds its row here (the `add-sport` skill's reflect step), and its data shape
 to the loader.

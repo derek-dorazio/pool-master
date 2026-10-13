@@ -1,7 +1,9 @@
-# Fetch public source pages for the load-sport-data skill and commit their text to the branch
-# the workflow runs on, under sport-sources/. Cloud agent sessions cannot reach tour and
-# reference sites; GitHub Actions can, so the skill reads and cross-checks the pages from the
-# branch, then deletes the folder before its data file is merged.
+# Fetch public sources for the load-sport-data skill and commit them to the branch the
+# workflow runs on, under sport-sources/. Cloud agent sessions cannot reach data feeds, tour
+# or reference sites; GitHub Actions can, so the skill reads and cross-checks them from the
+# branch, then deletes the folder before its data file is merged. JSON feeds (ESPN) are saved
+# as they are; pages that fill themselves in with scripts (tour field pages) are rendered in
+# headless Chromium first.
 #
 # workflow_dispatch only, never on main: it pushes a commit to the branch it runs on.
 # See scripts/fetch-sport-sources.mjs.
@@ -11,9 +13,13 @@ on:
   workflow_dispatch:
     inputs:
       urls:
-        description: https URLs to fetch, separated by spaces or newlines (at most 20)
+        description: JSON feeds and plain pages to fetch directly (https, space-separated)
         type: string
-        required: true
+        default: ''
+      rendered_urls:
+        description: Pages to load in headless Chromium first (https, space-separated; 20 URLs in all)
+        type: string
+        default: ''
 
 concurrency:
   group: fetch-sport-sources-${{ github.ref }}
@@ -26,23 +32,29 @@ jobs:
   fetch:
     name: fetch
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     if: github.ref_name != github.event.repository.default_branch
     env:
       # Inputs go through the environment, never into the script text.
       SOURCE_URLS: ${{ inputs.urls }}
+      RENDERED_URLS: ${{ inputs.rendered_urls }}
       SOURCES_DIR: sport-sources
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
+          cache: 'npm'
+      - run: npm ci
+      - name: Install headless Chromium
+        if: inputs.rendered_urls != ''
+        run: npx playwright install --with-deps chromium
       - name: Fetch the pages
         shell: bash
         run: |
           rm -rf "$SOURCES_DIR"
-          # SOURCE_URLS is split on whitespace by the script, not the shell.
-          node scripts/fetch-sport-sources.mjs "$SOURCES_DIR" "$SOURCE_URLS" 2>&1 | tee fetch.log
+          # The URL lists are split on whitespace by the script, not the shell.
+          node scripts/fetch-sport-sources.mjs "$SOURCES_DIR" --fetch "$SOURCE_URLS" --render "$RENDERED_URLS" 2>&1 | tee fetch.log
       - name: Commit the pages to this branch
         shell: bash
         run: |
