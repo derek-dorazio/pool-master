@@ -54,8 +54,9 @@ export const strokePlayUi: ScoringFamilyUi = {
     const unplayedRoundNumbers = response.entries.flatMap((entry) =>
       entry.picks.flatMap((pick) => pick.golf?.unplayedRoundNumbers ?? []),
     );
+    const fieldRoundNumbers = resolveRoundNumbers(response.participants);
     const roundNumbers = [...new Set([
-      ...resolveRoundNumbers(response.participants),
+      ...fieldRoundNumbers,
       ...unplayedRoundNumbers,
     ])].sort((left, right) => left - right);
 
@@ -97,7 +98,7 @@ export const strokePlayUi: ScoringFamilyUi = {
               ...cell,
               text: UNPLAYED_ROUND_CELL,
               unplayed: {
-                ariaLabel: `${sport.roundLabel(roundNumber, roundNumbers.length)} not played, counts as 80 strokes`,
+                ariaLabel: `${sport.roundLabel(roundNumber, fieldRoundNumbers.length)} not played, counts as 80 strokes`,
                 title: 'Not played: counts as 80 strokes',
               },
             };

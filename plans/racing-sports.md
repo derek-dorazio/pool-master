@@ -433,15 +433,18 @@ same after every one of them.
 
 **Q9.1** Where does a contest's points table live? *Recommendation:* in the contest's
 participant scoring rule `config`, which exists today and is always `{}`. Each scoring
-definition gets its own typed schema for it: `FINISH_POSITION_POINTS` takes
-`{ pointsTable, didNotFinishPoints }`. Contest templates carry the presets the same way.
+definition gets its own Zod schema for it, keyed by scoring definition id, so the column is
+typed end to end on read as well as write: `FINISH_POSITION_POINTS` takes
+`{ pointsTable, didNotFinishPoints }`, stroke play takes `{}`. Contest templates carry the
+presets the same way.
 
 **Q9.2** Tournament format for a race? *Recommendation:* a new `RACE` value. Stroke play would
 be wrong, and the validity matrix keys on it.
 
 **Q9.3** Vocabulary. The sport definition has no word for withdrawn (horse racing says
 "Scratched"), and racing has no "eliminated". *Recommendation:* add `withdrawn` to the
-vocabulary (golf "Withdrawn"), and make `eliminated` optional, absent for racing.
+vocabulary (golf "Withdrawn"), and make `eliminated` optional, absent for racing. The
+participant status label then handles an absent word explicitly.
 
 **Q9.4** A live-score arm for racing? *Recommendation:* none until a racing feed exists
 (Jolpica-F1 is the first candidate). The family declares no live-score category, and the

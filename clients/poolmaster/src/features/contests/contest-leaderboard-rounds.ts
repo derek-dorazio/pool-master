@@ -54,7 +54,8 @@ export function resolveCurrentRound(
 
 /**
  * The current-round header cue, or null when there is no round to name yet. The round's name
- * is the sport's own (`roundLabel`), given the number of rounds the field shows.
+ * is the sport's own (`roundLabel`), given the number of rounds the field shows: every caller
+ * passes `resolveRoundNumbers(participants).length`, so a round reads the same everywhere.
  */
 export function formatCurrentRoundLabel(
   round: LeaderboardRound | null,
