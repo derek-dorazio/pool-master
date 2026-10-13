@@ -28,6 +28,8 @@ export const horseRacingSportDefinition: SportDefinition = {
     round: { one: 'race', many: 'races' },
     withdrawn: 'Scratched',
     eventStart: 'post time',
+    rider: 'Rider',
+    topPlaces: 'Win / Place / Show',
   },
   // A horse race is one race; a meeting run as several numbered races would read "Race 2".
   roundLabel: (roundNumber, roundCount) => (roundCount > 1 ? `Race ${roundNumber}` : 'Race'),

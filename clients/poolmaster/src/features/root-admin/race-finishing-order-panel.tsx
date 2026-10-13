@@ -121,7 +121,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
                   <th className="px-4 py-2">Finish</th>
                   <th className="px-4 py-2">{capitalize(vocabulary.participant.one)}</th>
                   <th className="px-4 py-2">Start</th>
-                  <th className="px-4 py-2">Rider</th>
+                  {vocabulary.rider !== undefined ? <th className="px-4 py-2">{vocabulary.rider}</th> : null}
                 </tr>
               </thead>
               <tbody>
@@ -137,7 +137,9 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
                       <td className="px-4 py-2 font-medium" data-testid={`root-admin-race-result-finish-${entry.id}`}>{finish}</td>
                       <td className="px-4 py-2">{entry.participant.name}</td>
                       <td className="px-4 py-2 text-muted-foreground">{race?.startPosition ?? '—'}</td>
-                      <td className="px-4 py-2 text-muted-foreground">{race?.riderName ?? '—'}</td>
+                      {vocabulary.rider !== undefined ? (
+                        <td className="px-4 py-2 text-muted-foreground">{race?.riderName ?? '—'}</td>
+                      ) : null}
                     </tr>
                   );
                 })}

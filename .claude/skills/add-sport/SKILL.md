@@ -145,9 +145,9 @@ down: a lesson that was true mid-series may not be by the end.
 - **Golf words in shared screens.** "Golfer", "tee time", "to par" and "cut" in a shared
   component are a vocabulary leak; read them from the sport definition.
 - **Sport words in a family's screens.** Two sports in one family can still say different
-  things: horse racing has a "Rider" and calls its points table "Win / Place / Show"; auto
-  racing has a "Driver". A word that differs between sports of the same family belongs in the
-  vocabulary, not hard-coded in the family's card or leaderboard.
+  things: horse racing has a "Rider" column and calls its top places "Win / Place / Show"
+  (`vocabulary.rider`, `vocabulary.topPlaces`). A word that differs between sports of the same
+  family belongs in the vocabulary, not hard-coded in the family's card or leaderboard.
 - **Looking up a sport league by its sport.** `SportLeagueDto` carries no `sport` (only
   `sportId`). Find a sport's leagues by listing with `?sport=`, not by filtering the DTOs.
 - **Applying race results with POST.** The finishing-order apply is a `PUT` (it replaces the

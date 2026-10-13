@@ -157,6 +157,7 @@ describe('RootAdminSportEventResultsPage for a horse race', () => {
       '1stSovereignty18J. Alvarado',
       '2ndJournalism8U. Rispoli',
     ]);
+    expect(within(table).getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['Finish', 'Horse', 'Start', 'Rider']);
     expect(screen.getByTestId('root-admin-race-result-official')).toHaveTextContent('Provisional');
   });
 

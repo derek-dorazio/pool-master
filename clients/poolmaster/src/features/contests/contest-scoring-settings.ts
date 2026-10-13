@@ -2,7 +2,7 @@ import {
   FinishPositionPointsSettingsSchema,
   type ContestScoringSettings,
   type ParticipantScoringDefinitionId,
-  type SportNoun,
+  type SportVocabulary,
 } from '@poolmaster/shared/domain';
 import type { ReactElement } from 'react';
 import { FinishPositionPointsFields } from './contest-scoring-settings-fields';
@@ -31,7 +31,7 @@ type ScoringSettingsResult =
 
 export type ScoringSettingsFieldsProps = {
   onChange: (next: Partial<ScoringSettingsValues>) => void;
-  participant: SportNoun;
+  vocabulary: SportVocabulary;
   values: ScoringSettingsValues;
 };
 

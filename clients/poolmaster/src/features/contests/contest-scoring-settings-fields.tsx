@@ -2,11 +2,12 @@ import { FormField, Input } from '@/features/shared/ui';
 import type { ScoringSettingsFieldsProps } from './contest-scoring-settings';
 
 /** A finish-position contest's points table and its "did not finish" value (#622). */
-export function FinishPositionPointsFields({ onChange, participant, values }: ScoringSettingsFieldsProps) {
+export function FinishPositionPointsFields({ onChange, values, vocabulary }: ScoringSettingsFieldsProps) {
+  const example = vocabulary.topPlaces !== undefined ? `: 5, 3, 1 is ${vocabulary.topPlaces}` : '';
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <FormField
-        helperText="Points by finishing place, winner first: 5, 3, 1 is Win / Place / Show. A place beyond the table scores 0."
+        helperText={`Points by finishing place, winner first${example}. A place beyond the table scores 0.`}
         label="Points table"
       >
         <Input
@@ -18,7 +19,7 @@ export function FinishPositionPointsFields({ onChange, participant, values }: Sc
         />
       </FormField>
       <FormField
-        helperText={`What a ${participant.one} scores when it does not finish, is disqualified or does not start.`}
+        helperText={`What a ${vocabulary.participant.one} scores when it does not finish, is disqualified or does not start.`}
         label="Points for not finishing"
       >
         <Input
