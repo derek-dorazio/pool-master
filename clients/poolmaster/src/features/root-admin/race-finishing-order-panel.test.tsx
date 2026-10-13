@@ -171,6 +171,52 @@ describe('RootAdminSportEventResultsPage for a horse race', () => {
     expect(screen.getByTestId('root-admin-race-result-finish-sep-2')).toHaveTextContent('Did not finish');
   });
 
+  it('starts the official box ticked when the stored result is official, so a correction keeps it official', async () => {
+    seed([
+      { ...sovereignty, race: { finishPosition: 1, startPosition: null, resultStatus: 'FINISHED', isOfficial: true, riderName: null } },
+      { ...journalism, race: { finishPosition: 2, startPosition: null, resultStatus: 'FINISHED', isOfficial: true, riderName: null } },
+    ]);
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-race-result-official')).toHaveTextContent('Official');
+    expect(screen.getByTestId('root-admin-race-result-mark-official')).toBeChecked();
+
+    previewEventRaceResultsMock.mockResolvedValue(preview([previewRow('Journalism', 'sep-2', 2)]));
+    applyEventRaceResultsMock.mockResolvedValue({ data: { participants: [sovereignty, journalism] } });
+    await pasteAndPreview('playerName,finishPosition\nJournalism,2');
+    const apply = screen.getByTestId('root-admin-race-result-upload-apply');
+    expect(apply).toHaveTextContent('Apply official result');
+    await waitFor(() => expect(apply).toBeEnabled());
+    await userEvent.click(apply);
+
+    await waitFor(() => expect(applyEventRaceResultsMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: {
+        isOfficial: true,
+        rows: [{ playerName: 'Journalism', resultStatus: 'FINISHED', finishPosition: 2, startPosition: null, riderName: null }],
+      },
+    })));
+  });
+
+  it('offers no finishing-order card while the field cannot be read, so a correction never applies blind', async () => {
+    getEventMock.mockResolvedValue({ data: { event: race } });
+    listEventParticipantsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'down' } } });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-race-result-field-error')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-race-result-mark-official')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-race-result-upload-textarea')).not.toBeInTheDocument();
+  });
+
+  it('starts the official box unticked when the stored result is provisional', async () => {
+    seed([
+      { ...sovereignty, race: { finishPosition: 1, startPosition: null, resultStatus: 'FINISHED', isOfficial: false, riderName: null } },
+    ]);
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-race-result-official')).toHaveTextContent('Provisional');
+    expect(screen.getByTestId('root-admin-race-result-mark-official')).not.toBeChecked();
+  });
+
   it('previews then applies a pasted finishing order as official when the admin marks it so', async () => {
     seed();
     previewEventRaceResultsMock.mockResolvedValue(preview([

@@ -212,11 +212,11 @@ need none.
 - **DNF, DQ and DNS** score *Points for not finishing*. A horse the stewards disqualify and
   place behind another (the usual US ruling) is entered at its official place as a finisher,
   not as `DQ`.
-- **Corrections** before completing: **tick *This result is official* first** (it starts
-  unticked every time the page loads), then paste only the changed rows, *Preview* and apply.
-  Horses you leave out keep their place, but the official box applies to the whole race, so
-  applying a correction with it unticked turns the race back to Provisional and every pick
-  loses its points.
+- **Corrections** before completing: paste only the changed rows, *Preview* and apply. Horses
+  you leave out keep their place. *This result is official* starts ticked once the stored
+  result is official; leave it ticked, because the box applies to the whole race and applying
+  a correction with it unticked turns the race back to Provisional, and every pick loses its
+  points.
 
 ### Complete
 
