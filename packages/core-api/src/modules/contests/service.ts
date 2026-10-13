@@ -423,6 +423,7 @@ export class ContestService {
     if (context.contest.status === ContestStatus.COMPLETED) {
       const standings = await this.deps.standings.findByContest(contestId);
       if (standings.length > 0) {
+        const scoringFamily = scoringFamilyForSport(sportEvent.sport);
         return {
           contestId,
           sportEventId: sportEvent.id,
@@ -438,7 +439,7 @@ export class ContestService {
               displayPosition: standing.displayPosition,
               countingPickLimit: standing.countingPickLimit,
               scoredPickCount: standing.scoredPickCount,
-              score: scoringFamilyForSport(sportEvent.sport).settledEntryTotal(standing),
+              score: scoringFamily.settledEntryTotal(standing),
             })),
           ),
           asOf: standings[0].asOf ?? latestAsOf,

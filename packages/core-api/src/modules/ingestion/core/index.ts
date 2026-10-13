@@ -6,7 +6,6 @@ export type {
   ProviderParticipant,
   ProviderHealthStatus,
 } from './provider-interface';
-export { LiveScoreUnsupportedError } from './provider-interface';
 
 export { ProviderRegistry } from './provider-registry';
 export { IngestionScheduler } from './ingestion-scheduler';
