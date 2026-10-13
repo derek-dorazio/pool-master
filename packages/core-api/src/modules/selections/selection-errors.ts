@@ -86,7 +86,7 @@ export const selectionErrors = {
       400,
     ),
 
-  /** Falls back to a generic sentence when the field row carries no reason of its own. */
+  /** Names the field row's status in the message when it has one. */
   participantUnavailable: (participantId: string, status: string | null) =>
     new SelectionError(
       status

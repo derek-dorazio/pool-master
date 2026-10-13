@@ -17,8 +17,9 @@ under *Sports*, and its three lists are **Races**, **Horses** and **Circuits**.
 - **There is no racing feed.** No provider covers horse racing, so nothing is linked for
   ingestion and nothing arrives on its own: you enter the finishing order yourself. The
   race's *Score source* card reads "Not linked — results must be entered manually". Leave
-  it that way. The API logs one warning that horse racing has no provider for scheduled
-  ingestion; that is expected, and there is nothing to configure.
+  it that way. If horse racing is listed for scheduled ingestion, the API logs a warning that
+  it has no provider once each time it starts; that is expected, and there is nothing to
+  configure.
 - **You move the race through its statuses.** Draft, then Scheduled (released), In Progress
   at post time, Completed when the result is official.
 - **Contests settle once, when the race moves to Completed.** A settled contest keeps its
@@ -54,7 +55,7 @@ dialog can list it.
 
 ## 3. Create the Pegasus World Cup
 
-*Horse racing → Races → New* (`/manage/sports/horse-racing/events/new`), *Build manually*.
+*Horse racing → Races → New race* (`/manage/sports/horse-racing/events/new`), *Build manually*.
 
 | Field | Set it to |
 |---|---|
@@ -65,16 +66,20 @@ dialog can list it.
 | Races | `1` (the default for horse racing) |
 | Circuit | US Thoroughbred |
 | Event year | `2027` |
-| Move this race through Live and Completed automatically | **Unchecked** |
+| Move this race through Live and Completed automatically | **Untick it** (it starts ticked) |
 
 Press *Create race*. The race is saved as a **draft** that only admins can see.
 
-Leave automatic lifecycle off. With it on, a background job moves the race to In Progress at
-post time and to Completed from its schedule, and completing settles every contest on it,
-whether or not you have entered an official result yet. If you forget, the Workflow card's
+Turn automatic lifecycle off. With it on, a background job moves the race to In Progress at
+post time on its own; with *Ends* blank and no end time on the race it never completes the
+race, so you would still complete it by hand. Running the whole lifecycle by hand keeps the
+two steps together and lets you choose the moment. If you forget, the Workflow card's
 *Manage lifecycle manually* turns it off.
 
-The Workflow card's *Races* list should show one race at post time; *Edit schedule* changes it.
+**Post time is the race's *Starts*.** To change it (a delayed post, a date confirmed late),
+use the *Details* card's **Edit** on the race's page. The Workflow card's *Edit schedule*
+only moves the dates on the *Races* list (the race rounds), not *Starts*, so it does not move
+the release, contest or picks cutoff.
 
 ## 4. Build the field
 
@@ -84,8 +89,9 @@ The Workflow card's *Races* list should show one race at post time; *Edit schedu
 US Thoroughbred to browse its roster, or type at least two letters under *Search all horses*,
 tick each runner, and press *Add selected (n)*, then *Done*.
 
-Do not use *Seed field from circuit roster*: it derives seeds and odds from circuit
-rankings, and horses have none.
+Do not use *Seed field from circuit roster*: it adds every horse on the circuit's roster,
+not only this race's runners, and it derives seeds and odds from circuit rankings, which
+horses don't have.
 
 ### Morning-line odds and seeds
 
@@ -137,11 +143,14 @@ As a commissioner of a test league (root admin is not needed):
    finishing* is what a DNF, DQ, DNS or scratched pick scores.
 4. Name it and press *Create contest*. It is saved as a draft; on its page press
    *Open to league*.
-5. Members enter from the contest page and press *Submit entry*. A submitted tiered or budget
-   entry can be changed and saved (*Save entry*) until post time.
-6. **Random draw only:** once entries are in and before post time, the commissioner presses
-   *Run draw* on the contest's page. The draw deals each entry its horses from the horses still
-   in the field; it is final and can't be run again.
+5. **Tiered and budget:** members enter from the contest page and press *Submit entry*. A
+   submitted entry can be changed and saved (*Save entry*) until post time.
+6. **Random draw:** members join from the contest page; there is nothing to pick or submit.
+   Once entries are in and before post time, the commissioner presses *Run draw* on the
+   commissioner's contest page (`/league/:leagueCode/admin/contests/:contestId`). The draw
+   deals each entry its horses from the horses still in the field and submits every entry; it
+   is final and can't be run again. It is refused when entries × horses per entry is more than
+   the horses still in the field, so check the count after scratches.
 
 ## 6. Scratches
 
@@ -151,9 +160,11 @@ A horse withdrawn before the race is **scratched**. On *Field*, untick *In field
 - **Before release:** scratch it before *Auto-assign tiers from odds*. A scratched horse is
   not tiered or priced and does not hold up release.
 - **After release, before post time:** it stays in its tier, but members can no longer pick
-  it. A member whose tiered or budget entry holds it can unselect it, pick another horse and
-  *Save entry*, up to post time. Nothing tells
-  members a horse was scratched, so let the commissioners know.
+  it. A member whose tiered or budget entry holds it should click another horse in the same
+  tier (*Replace selection*) and *Save entry*, up to post time; that keeps the entry
+  submitted. Unselecting it instead leaves the lineup short, which returns the entry to Draft
+  until it is completed and submitted again. The entry page shows the horse as *Scratched*,
+  but no notification goes out, so let the commissioners know.
 - **Random draw:** a horse scratched before the draw is not dealt. A horse scratched after the
   draw stays with the entry it was dealt to (dealt picks are final) and scores the contest's
   *Points for not finishing* once the result is official, as in a paper sweep.
@@ -192,16 +203,20 @@ provisional, and no pick has points yet. When the stewards make the result offic
 *This result is official*, paste the order again, *Preview*, and *Apply official result*. The
 badge then reads **Official**, and contests score it. You can also go straight to official.
 
-An official result needs a place for every finisher and a result for every horse still in
-the field; scratched horses need none.
+An official result needs a result for every horse still in the field: places 1 to N for
+every finisher, not just the top three, and a status for every other runner. Scratched horses
+need none.
 
 - **Places** run 1, 2, 3 and on. A **dead heat** repeats a place and skips the next
   (1, 2, 2, 4); each horse in it scores that place's full points.
 - **DNF, DQ and DNS** score *Points for not finishing*. A horse the stewards disqualify and
   place behind another (the usual US ruling) is entered at its official place as a finisher,
   not as `DQ`.
-- **Corrections** before completing: paste only the changed rows and apply. Horses you leave
-  out keep the result they have.
+- **Corrections** before completing: **tick *This result is official* first** (it starts
+  unticked every time the page loads), then paste only the changed rows, *Preview* and apply.
+  Horses you leave out keep their place, but the official box applies to the whole race, so
+  applying a correction with it unticked turns the race back to Provisional and every pick
+  loses its points.
 
 ### Complete
 

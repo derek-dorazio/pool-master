@@ -445,11 +445,9 @@ do without the QA environment:
 **What remains, by hand in QA:** an admin follows that procedure to create the US Thoroughbred
 circuit and the Pegasus World Cup (confirming the date and post time with Gulfstream Park when
 creating it), enters the field and morning-line odds once the post-position draw is published,
-and runs the race through to a settled contest. Writing the procedure turned up two things for
-follow-up tickets rather than this slice: budget prices come from seed numbers, not odds, so an
-admin must enter seeds in market order before pricing a race (the procedure says so); and the
-entry page labels a withdrawn participant with the server's diagnostic text rather than the
-sport's word, for golf and racing alike.
+and runs the race through to a settled contest. Writing the procedure turned up one thing for
+a follow-up ticket rather than this slice: budget prices come from seed numbers, not odds, so an
+admin must enter seeds in market order before pricing a race (the procedure says so).
 
 **Q9.1** Where does a contest's points table live? *Recommendation:* in the contest's
 participant scoring rule `config`, which exists today and is always `{}`. Each scoring

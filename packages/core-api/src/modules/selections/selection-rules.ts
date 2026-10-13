@@ -113,8 +113,8 @@ export function buildValuationLookup(
  * participant's identity and its effective tier and price, in tier order then by name.
  *
  * A row is selectable exactly while its field entry is active. The unavailable ones stay in
- * the list with a reason rather than being filtered out, because a selection room has to be able
- * to show why a golfer it used to offer can no longer be picked.
+ * the list with their status rather than being filtered out, because a selection room has to be
+ * able to show why a participant it used to offer can no longer be picked.
  */
 export function buildSelectionParticipants(input: {
   field: readonly SportEventParticipant[];
