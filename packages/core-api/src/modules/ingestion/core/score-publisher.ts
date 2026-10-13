@@ -6,7 +6,8 @@
  *      payloads fail here, not inside the persistence path).
  *   2. Resolve provider-side `participantExternalId` to internal
  *      `SportEventParticipant.id` UUIDs.
- *   3. Skip the update unless the event is IN_PROGRESS.
+ *   3. Skip the update unless the event is IN_PROGRESS, and unless the
+ *      event's scoring family accepts the batch's live-score category.
  *   4. Persist the batch through the event's scoring family, which writes
  *      its own result rows (stroke play: `GolfScoreService`).
  *
@@ -21,10 +22,10 @@ import {
   LiveScoreResultSchema,
   type LiveScoreResult,
 } from '@poolmaster/shared/dto';
-import { SportEventStatus } from '@poolmaster/shared/domain';
+import { SportEventStatus, type Sport } from '@poolmaster/shared/domain';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
-import { scoringFamilyForSport } from '../../scoring-families';
+import type { ScoringFamilyModule } from '../../scoring-families';
 import { countLiveScoreUpdates } from './live-score-count';
 
 export class LiveScoreValidationError extends Error {
@@ -38,6 +39,8 @@ export interface LiveScorePublisherDeps {
   prisma: PrismaClient;
   providerId: string;
   logger?: FastifyBaseLogger;
+  /** Which scoring family scores an event's sport: the composition root passes the sport registry's. */
+  scoringFamilyForSport: (sport: Sport) => ScoringFamilyModule;
 }
 
 export interface LiveScorePersistenceResult {
@@ -112,8 +115,33 @@ export async function publishLiveScoreUpdate(
     };
   }
 
-  // The event's scoring family writes the batch into its own result rows (#606).
-  return scoringFamilyForSport(sportEvent.sport).persistLiveScores(deps, sportEvent, validated);
+  // The event's scoring family writes the batch into its own result rows (#606), and only a
+  // batch of the one category it accepts: a family entered by an admin accepts none.
+  const writer = deps.scoringFamilyForSport(sportEvent.sport).liveScores;
+  const acceptedCategory = writer?.category ?? null;
+  if (writer?.category !== validated.category) {
+    deps.logger?.warn(
+      {
+        action: 'liveScore.publish.categoryNotAccepted',
+        data: {
+          providerId: deps.providerId,
+          externalEventId: validated.externalEventId,
+          sportEventId: sportEvent.id,
+          sport: sportEvent.sport,
+          category: validated.category,
+          acceptedCategory,
+        },
+      },
+      'Skipping live-score persistence — the event\'s scoring family does not accept this live-score category',
+    );
+    return {
+      updatesReturned,
+      updatesPersisted: 0,
+      updatesSkipped: updatesReturned,
+      writeDiagnostics: emptySyncWriteDiagnostics(),
+    };
+  }
+  return writer.persist(deps, sportEvent, validated);
 }
 
 

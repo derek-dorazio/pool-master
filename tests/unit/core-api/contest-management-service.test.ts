@@ -145,9 +145,8 @@ function createParticipantScoringRuleRepo(): ParticipantContestScoringRuleReposi
       {
         id: 'rule-old',
         contestConfigurationId: 'config-1',
-        participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         sortOrder: 1,
-        config: {},
+        scoring: { success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -156,6 +155,7 @@ function createParticipantScoringRuleRepo(): ParticipantContestScoringRuleReposi
     create: mockFn<ParticipantContestScoringRuleRepository['create']>(async (rule) => ({
       id: `rule-${rule.sortOrder}`,
       ...rule,
+      scoring: { success: true, data: rule.scoring },
       createdAt: new Date('2026-04-07T12:00:02.000Z'),
       updatedAt: new Date('2026-04-07T12:00:02.000Z'),
     })),
@@ -285,14 +285,11 @@ describe('ContestManagementService', () => {
         maxEntriesPerSquad: 3,
       }),
     );
-    // pool-master-piv — cutRule/playoffHandling/displayScoring/tiebreaker
-    // dropped (plans/124 §4.6a): each was locked to one possible value with
-    // zero real reads downstream, so the config blob is now empty.
+    // The rule's settings are its definition's typed settings: golf's to-par total takes none.
     expect(participantContestScoringRuleRepo.create).toHaveBeenCalledWith({
       contestConfigurationId: 'config-1',
-      participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       sortOrder: 1,
-      config: {},
+      scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
       active: true,
     });
   });

@@ -37,6 +37,8 @@ import {
   rankSortedScores,
   type GolfRoundResult,
   type GolfStandingResult,
+  type Sport,
+  type SportEvent,
 } from '@poolmaster/shared/domain';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../ingestion/core/sync-write-diagnostics';
 import { emptySyncWriteDiagnostics, mergeSyncWriteDiagnostics, summarizeSyncWriteRows } from '../ingestion/core/sync-write-diagnostics';
@@ -112,6 +114,11 @@ export interface GolfScoreServiceDeps {
   mappings: ParticipantProviderMappingRepository;
   golfRounds: SportEventParticipantGolfRoundRepository;
   golfStandings: SportEventParticipantGolfStandingRepository;
+  /**
+   * Whether an event of this sport keeps golf round scores, by its sport's scoring family. The
+   * admin corrections refuse any other event rather than write golf rows onto it.
+   */
+  storesGolfRoundScores: (sport: Sport) => boolean;
   logger?: FastifyBaseLogger;
 }
 
@@ -372,7 +379,8 @@ export class GolfScoreService {
 
   /** Dry run — resolves every row against the event's field and reports the change it would make. Writes nothing. */
   async previewRoundScores(sportEventId: string, roundNumber: number, rows: GolfScoreRowInput[]): Promise<GolfScorePreviewRow[]> {
-    await this.requireScheduledRound(sportEventId, roundNumber);
+    const event = await this.requireGolfScoredEvent(sportEventId);
+    this.requireScheduledRound(event, sportEventId, roundNumber);
     const [field, eventRounds] = await Promise.all([
       this.deps.field.findBySportEvent(sportEventId),
       this.deps.rounds.findBySportEvent(sportEventId),
@@ -453,6 +461,7 @@ export class GolfScoreService {
    * never fills either in (#116, #398).
    */
   async updateRoundScore(sportEventId: string, roundNumber: number, sportEventParticipantId: string, patch: GolfRoundScorePatch): Promise<void> {
+    const event = await this.requireGolfScoredEvent(sportEventId);
     const entry = await this.deps.field.findById(sportEventParticipantId);
     if (!entry || entry.sportEventId !== sportEventId) {
       throw new GolfScoreError(
@@ -461,7 +470,7 @@ export class GolfScoreService {
         404,
       );
     }
-    await this.requireScheduledRound(sportEventId, roundNumber);
+    this.requireScheduledRound(event, sportEventId, roundNumber);
     const storedRound = (await this.deps.rounds.findBySportEvent(sportEventId)).find((candidate) => candidate.roundNumber === roundNumber);
     const existing = storedRound
       ? (await this.deps.golfRounds.findBySportEventParticipants([sportEventParticipantId]))
@@ -492,9 +501,28 @@ export class GolfScoreService {
     await this.refreshGolfStandings(sportEventId, [sportEventParticipantId], new Date());
   }
 
+  /**
+   * The event an admin golf score is for, refused with 422 EVENT_SCORING_FAMILY_MISMATCH when
+   * its sport's scoring family does not keep golf round scores: writing golf rows onto it would
+   * leave results its leaderboard never reads. Null when there is no such event; the handler
+   * has already answered 404 for that.
+   */
+  private async requireGolfScoredEvent(sportEventId: string): Promise<SportEvent | null> {
+    const event = await this.deps.events.findById(sportEventId);
+    if (event && !this.deps.storesGolfRoundScores(event.sport)) {
+      this.deps.logger?.warn({ sportEventId, sport: event.sport }, 'Refused golf round scores for an event whose scoring family does not keep them');
+      throw new GolfScoreError(
+        `Sport event ${sportEventId} is a ${event.sport} event, whose scoring family does not keep golf round scores.`,
+        'EVENT_SCORING_FAMILY_MISMATCH',
+        422,
+      );
+    }
+    return event;
+  }
+
   /** Refuses an admin score for a round the event does not have (#375). An event with no round count accepts any. */
-  private async requireScheduledRound(sportEventId: string, roundNumber: number): Promise<void> {
-    const scheduledRounds = (await this.deps.events.findById(sportEventId))?.rounds ?? null;
+  private requireScheduledRound(event: SportEvent | null, sportEventId: string, roundNumber: number): void {
+    const scheduledRounds = event?.rounds ?? null;
     if (scheduledRounds !== null && roundNumber > scheduledRounds) {
       throw new GolfScoreError(
         `Round ${roundNumber} is beyond sport event ${sportEventId}'s ${scheduledRounds} scheduled rounds.`,

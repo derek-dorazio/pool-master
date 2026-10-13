@@ -42,6 +42,14 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     expect(getValidContestFormatsForTournamentFormat(definition.tournamentFormat).length).toBeGreaterThan(0);
   });
 
+  it('gives a new event at least one round and at least one tier of at least one participant', () => {
+    const { tierCount, tierSize } = definition.defaultTierLayout;
+
+    for (const count of [definition.defaultRounds, tierCount, tierSize]) {
+      expect(Number.isInteger(count) && count >= 1).toBe(true);
+    }
+  });
+
   it('has every vocabulary word filled in', () => {
     const { participant, round, eliminated, eventStart } = definition.vocabulary;
     for (const word of [participant.one, participant.many, round.one, round.many, eliminated, eventStart]) {
@@ -68,6 +76,13 @@ describe('sport registry', () => {
     expect(golf.roundLabel(2, 4)).toBe('Round 2');
     expect(golf.vocabulary.eliminated).toBe('Cut');
     expect(golf.scoringFamily).toBe(ScoringFamily.STROKE_PLAY);
+  });
+
+  it('gives a new golf event four rounds and six tiers of ten golfers', () => {
+    const golf = getSportDefinition(Sport.GOLF);
+
+    expect(golf.defaultRounds).toBe(4);
+    expect(golf.defaultTierLayout).toEqual({ tierCount: 6, tierSize: 10 });
   });
 });
 

@@ -20,6 +20,14 @@ export interface SportVocabulary {
   eventStart: string;
 }
 
+/** How a new event's pick tiers are laid out before an admin edits them. */
+export interface SportTierLayout {
+  /** How many tiers a new event gets. */
+  tierCount: number;
+  /** How many participants auto-assignment places in each tier; the last tier takes the rest. */
+  tierSize: number;
+}
+
 /**
  * Everything that differs between sports and is data rather than behaviour. Behaviour that
  * differs (storing and scoring results) belongs to the sport's scoring family, never to a
@@ -31,6 +39,10 @@ export interface SportDefinition {
   scoringFamily: ScoringFamily;
   /** The tournament format a new event of this sport gets. */
   tournamentFormat: TournamentFormat;
+  /** How many rounds an admin-authored event gets when the admin gives no count. */
+  defaultRounds: number;
+  /** The tiers a new event gets, and the tier size auto-assignment uses when none is sent. */
+  defaultTierLayout: SportTierLayout;
   /** Selection types a commissioner may choose for this sport. Each has an engine. */
   selectionTypes: readonly [SelectionType, ...SelectionType[]];
   /** Scoring definitions a contest in this sport may rank by; the first is the default. */

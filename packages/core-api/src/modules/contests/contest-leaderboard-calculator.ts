@@ -7,13 +7,15 @@
 import {
   compareScores,
   PARTICIPANT_SCORING_DEFINITIONS,
-  ParticipantScoringDefinitionIdSchema,
   rankSortedScores,
   type ContestEntryStatus,
+  type ContestScoringSettings,
+  type ContestScoringSettingsParse,
   type ContestSelectionConfig,
   type ParticipantScoringDefinition,
   type ParticipantScoringDefinitionId,
   type ScoreDirection,
+  type ScoringFamily,
 } from '@poolmaster/shared/domain';
 import type {
   ContestEntryStandingRow,
@@ -30,8 +32,9 @@ export interface ContestScoringConfigurationRow {
   /** The contest's typed rules; every selection type's carry `countedScores` (#93). */
   configJson: ContestSelectionConfig | null;
   participantScoringRules: Array<{
-    participantScoringDefinitionId: string;
     sortOrder: number;
+    /** The rule's definition and settings, as read through the definition's settings schema. */
+    scoring: ContestScoringSettingsParse;
     active: boolean;
   }>;
 }
@@ -52,13 +55,23 @@ export interface ContestLeaderboardEntryInput {
   }>;
 }
 
+/**
+ * What a scoring family adds to a participant's score beyond the number, keyed by the family
+ * that scored it. One arm per family; the leaderboard mapper reads it into the family's pick
+ * detail block.
+ */
+export type ParticipantScoreDetail = {
+  scoringFamily: typeof ScoringFamily.STROKE_PLAY;
+  /** Rounds scored as a fixed 80 strokes because the golfer did not play them (#478). */
+  unplayedRoundNumbers: number[];
+};
+
 /** One field row's score under the contest's scoring definition, or null while unscored. */
 export interface ParticipantScore {
   sportEventParticipantId: string;
   name: string;
   score: number | null;
-  /** Rounds scored as a fixed 80 strokes because the golfer did not play them (#478). */
-  unplayedRoundNumbers: number[];
+  detail: ParticipantScoreDetail;
   asOf: Date | null;
 }
 
@@ -79,17 +92,26 @@ export function resolveContestCountingRule(
 
 /**
  * The scoring definition a leaderboard ranks by, read from the configuration's first active
- * participant scoring rule.
+ * participant scoring rule, with the rule's settings validated against that definition.
  *
  * There is no fallback (#246). Every configuration carries a rule — the one create writes it,
  * and the #246 migration gave one to every golf configuration that lacked it — so a missing
  * rule is a real defect, reported as `RULE_MISSING` rather than answered with a sport
  * assumption. A rule naming an id the registry does not know is `DEFINITION_UNKNOWN`:
- * ranking by a guessed direction would silently invert the standings.
+ * ranking by a guessed direction would silently invert the standings. A rule whose `config` is
+ * not a settings value of its definition is `SETTINGS_INVALID`: scoring with defaults in its
+ * place would score the contest under rules its commissioner did not set.
  */
 export type ContestScoringResolution =
-  | { ok: true; id: ParticipantScoringDefinitionId; definition: ParticipantScoringDefinition }
-  | { ok: false; reason: 'RULE_MISSING' | 'DEFINITION_UNKNOWN' };
+  | {
+    ok: true;
+    id: ParticipantScoringDefinitionId;
+    definition: ParticipantScoringDefinition;
+    scoring: ContestScoringSettings;
+  }
+  | { ok: false; reason: ContestScoringResolutionFailure };
+
+export type ContestScoringResolutionFailure = 'RULE_MISSING' | 'DEFINITION_UNKNOWN' | 'SETTINGS_INVALID';
 
 export function resolveContestScoringDefinition(
   configuration: ContestScoringConfigurationRow | null,
@@ -101,10 +123,12 @@ export function resolveContestScoringDefinition(
   if (!rule) {
     return { ok: false, reason: 'RULE_MISSING' };
   }
-  const id = ParticipantScoringDefinitionIdSchema.safeParse(rule.participantScoringDefinitionId);
-  return id.success
-    ? { ok: true, id: id.data, definition: PARTICIPANT_SCORING_DEFINITIONS[id.data] }
-    : { ok: false, reason: 'DEFINITION_UNKNOWN' };
+  if (!rule.scoring.success) {
+    return { ok: false, reason: rule.scoring.reason };
+  }
+  const scoring = rule.scoring.data;
+  const id = scoring.participantScoringDefinitionId;
+  return { ok: true, id, definition: PARTICIPANT_SCORING_DEFINITIONS[id], scoring };
 }
 
 export function buildContestEntryStanding(

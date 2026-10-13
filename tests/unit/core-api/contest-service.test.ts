@@ -23,6 +23,8 @@ import {
   Sport,
   SquadMembershipStatus,
   TeamIconKey,
+  parseContestScoringSettings,
+  type ParticipantContestScoringRule,
 } from '@poolmaster/shared/domain';
 import { buildContest, buildMembership, buildUser } from '../../factories';
 import {
@@ -936,7 +938,7 @@ describe('ContestService', () => {
       // Every configuration carries its scoring rule (#246); there is no golf fallback.
       const scoringRuleRepo = fakeParticipantContestScoringRuleRepo({
         findByContestConfiguration: jest.fn().mockResolvedValue([
-          { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: true },
+          storedScoringRule({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: true }),
         ]),
       });
       const listEventParticipants = jest.fn().mockResolvedValue([
@@ -1689,8 +1691,8 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
       ...overrides,
     }),
   });
-  const rules = (rows: Array<{ participantScoringDefinitionId: string; sortOrder: number; active: boolean }>) =>
-    fakeParticipantContestScoringRuleRepo({ findByContestConfiguration: jest.fn().mockResolvedValue(rows) });
+  const rules = (rows: StoredScoringRuleInput[]) =>
+    fakeParticipantContestScoringRuleRepo({ findByContestConfiguration: jest.fn().mockResolvedValue(rows.map(storedScoringRule)) });
   const golfRule = [{ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: true }];
 
   it.each([ContestStatus.DRAFT, ContestStatus.OPEN])('refuses to show a %s contest\'s leaderboard while picks are hidden', async (status) => {
@@ -1740,6 +1742,18 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
 
     await expect(service.getLeaderboard('contest-1', 'user-1'))
       .rejects.toMatchObject({ code: 'CONTEST_LEADERBOARD_SCORING_DEFINITION_UNKNOWN' });
+  });
+
+  it('refuses a contest whose scoring rule settings are not a settings object for its definition with 400 CONTEST_LEADERBOARD_SCORING_SETTINGS_INVALID, rather than scoring with defaults', async () => {
+    const service = buildService({
+      contests: contestRepoFor(),
+      memberships: member(),
+      configurations: configuration(),
+      scoringRules: rules([{ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: ['points'], sortOrder: 1, active: true }]),
+    });
+
+    await expect(service.getLeaderboard('contest-1', 'user-1'))
+      .rejects.toMatchObject({ code: 'CONTEST_LEADERBOARD_SCORING_SETTINGS_INVALID' });
   });
 
   it('answers a COMPLETED contest from its frozen standings, not from the live scores', async () => {
@@ -1799,3 +1813,24 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
     expect(result.entries[0]).toMatchObject({ score: null, position: null });
   });
 });
+
+interface StoredScoringRuleInput {
+  participantScoringDefinitionId: string;
+  /** The stored `config` column; an empty object when omitted. */
+  config?: unknown;
+  sortOrder: number;
+  active: boolean;
+}
+
+/** A scoring rule as the adapter reads a stored row: its id and config through the definition's schema. */
+function storedScoringRule(input: StoredScoringRuleInput): ParticipantContestScoringRule {
+  return {
+    id: `rule-${input.sortOrder}`,
+    contestConfigurationId: 'config-1',
+    sortOrder: input.sortOrder,
+    active: input.active,
+    scoring: parseContestScoringSettings(input.participantScoringDefinitionId, 'config' in input ? input.config : {}),
+    createdAt: new Date('2026-04-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-04-01T00:00:00.000Z'),
+  };
+}

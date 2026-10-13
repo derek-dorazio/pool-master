@@ -5181,7 +5181,7 @@ export type CreateSportEventRequest = {
      */
     endDate?: string;
     /**
-     * Round count; golf defaults to 4.
+     * Round count; omitted, the sport's default round count (4 for golf).
      */
     rounds?: number;
     autoLifecycleEnabled?: boolean;
@@ -5624,7 +5624,7 @@ export type AutoAssignSportEventTiersRequest = {
      */
     source: 'ODDS' | 'RANKING';
     /**
-     * Participants per tier; the last tier takes the rest. Default 10.
+     * Participants per tier; the last tier takes the rest. Default: the sport's tier size (10 for golf).
      */
     tierSize?: number;
 };
@@ -14196,7 +14196,7 @@ export type GetContestLeaderboardData = {
 
 export type GetContestLeaderboardErrors = {
     /**
-     * CONTEST_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).
+     * CONTEST_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule's settings are not valid for that definition).
      */
     400: ErrorEnvelope;
     /**

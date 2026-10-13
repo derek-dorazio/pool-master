@@ -82,11 +82,8 @@ export class ContestSettlementService {
 
     const completedAt = input?.completedAt ?? sportEvent.endDate ?? sportEvent.startDate;
     const scoringFamily = scoringFamilyForSport(sportEvent.sport);
-    const participants = toParticipantScores(await loadEventField(this.deps, sportEventId), sportEvent);
-    const scoreById = new Map(
-      participants.map((participant) => [participant.sportEventParticipantId, participant]),
-    );
-    const asOf = resolveContestStandingAsOf(participants, completedAt);
+    // The field is the event's, read once; each contest scores it under its own settings below.
+    const field = await loadEventField(this.deps, sportEventId);
     // A COMPLETED contest is already settled: its standing is the frozen result, and re-running
     // settlement (the event re-sent as COMPLETED, or a late score correction) must not rewrite
     // it. Only a contest moved back out of COMPLETED would be settled again, and no route does
@@ -110,19 +107,25 @@ export class ContestSettlementService {
       }
       const scoring = resolveContestScoringDefinition(configuration);
       if (!scoring.ok) {
-        // Skip rather than guess a direction. Settling with the wrong direction pays the
-        // wrong entries, and a payout is hard to undo; a skipped settlement is logged at
-        // error and can be run again once the configuration carries a rule naming a known
-        // definition. The leaderboard read refuses the same cases with 400, because nothing
-        // is paid.
+        // Skip rather than guess a direction or settings. Settling with the wrong direction or
+        // under rules the commissioner did not set pays the wrong entries, and a payout is hard
+        // to undo; a skipped settlement is logged at error and can be run again once the
+        // configuration carries a rule naming a known definition with valid settings. The
+        // leaderboard read refuses the same cases with 400, because nothing is paid.
         this.logger.error({
           contestId: contest.id,
           sportEventId,
           reason: scoring.reason,
-        }, 'Skipped contest settlement because its participant scoring rule is missing or names an unknown scoring definition');
+        }, 'Skipped contest settlement because its participant scoring rule is missing, names an unknown scoring definition, or carries invalid settings');
         continue;
       }
       const scoringDefinition = scoring.definition;
+      // Scored per contest: a contest's settings (a points table) change its participants' scores.
+      const participants = toParticipantScores(field, sportEvent, scoring.scoring);
+      const scoreById = new Map(
+        participants.map((participant) => [participant.sportEventParticipantId, participant]),
+      );
+      const asOf = resolveContestStandingAsOf(participants, completedAt);
       const entries = await loadContestLeaderboardEntries(this.deps, contest.id);
       const rankedEntries = rankContestEntryStandings(
         entries.map((entry) =>

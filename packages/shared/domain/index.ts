@@ -14,10 +14,15 @@ export {
   compareScores,
   isRoundComplete,
   PARTICIPANT_SCORING_DEFINITIONS,
+  PARTICIPANT_SCORING_SETTINGS_SCHEMAS,
   ParticipantScoringDefinitionIdSchema,
+  parseContestScoringSettings,
   rankSortedScores,
 } from './contest-scoring';
 export type {
+  ContestScoringSettings,
+  ContestScoringSettingsParse,
+  ParticipantScoringSettings,
   ParticipantScoringDefinition,
   ParticipantRoundScore,
   ParticipantScoringDefinitionId,
@@ -28,6 +33,7 @@ export type {
   ContestConfigTemplate,
   ContestConfiguration,
   ParticipantContestScoringRule,
+  ParticipantContestScoringRuleCreate,
   SportEvent,
   SportEventReadinessReason,
   SportEventReadinessStatus,

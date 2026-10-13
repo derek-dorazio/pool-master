@@ -199,7 +199,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
         200: schemaRef('ContestLeaderboardResponse'),
         400: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'CONTEST_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).',
+          description: 'CONTEST_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule\'s settings are not valid for that definition).',
         },
         404: schemaRef('ErrorEnvelope'),
       },

@@ -58,11 +58,12 @@ In order:
    (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Use the
    `model-change` skill.
 2. **Sport definition.** Add its `SportDefinition` to the sport registry: participant type,
-   scoring family, tournament format, selection types, scoring definitions, vocabulary and
-   round labels. Run `tsc`; every exhaustive map that lacks the sport now fails. Fix each.
+   scoring family, tournament format, default rounds and tier layout, selection types, scoring
+   definitions, vocabulary and round labels. Run `tsc`; every exhaustive map that lacks the sport now fails. Fix each.
 3. **Scoring definitions.** If the sport needs a new participant scoring definition, add it to
-   the exhaustive scoring-definition record with its direction, unit and formatters. Direction
-   is declared once there and nowhere else.
+   the exhaustive scoring-definition record with its direction, unit and formatters, and its
+   contest settings schema to the settings record (the empty object when it takes none).
+   Direction is declared once there and nowhere else.
 4. **Scoring family.** Reusing one: nothing beyond the registry entry. New one: implement the
    scoring-family interface, add its extension tables beside the core round and standing rows
    (one table set per family, never per sport), register it in the scoring-family registry and

@@ -8,7 +8,7 @@ import type {
 } from './enums';
 import type { EventPricingConfig } from './budget-pricing';
 import type { ContestRulesWithEntryLimit, ContestSelectionConfig } from './contest-rules';
-import type { ParticipantScoringDefinitionId } from './contest-scoring';
+import type { ContestScoringSettings, ContestScoringSettingsParse } from './contest-scoring';
 import type { DomainEntity } from './types';
 
 export type SportEventReadinessStatus =
@@ -117,12 +117,24 @@ export interface ContestConfigTemplate extends DomainEntity {
   schemaVersion: number;
 }
 
-/** Participant scoring rule attached to a managed contest configuration. */
+/**
+ * Participant scoring rule attached to a managed contest configuration, as read. Its stored
+ * definition id and `config` column are read through the definition's settings schema
+ * (`PARTICIPANT_SCORING_SETTINGS_SCHEMAS`), so a valid rule carries typed settings and one that
+ * names a retired definition or holds refused settings says so.
+ */
 export interface ParticipantContestScoringRule extends DomainEntity {
   contestConfigurationId: string;
-  participantScoringDefinitionId: ParticipantScoringDefinitionId;
   sortOrder: number;
-  config: Record<string, unknown>;
+  scoring: ContestScoringSettingsParse;
+  active: boolean;
+}
+
+/** A participant scoring rule as written: its settings are typed by its definition. */
+export interface ParticipantContestScoringRuleCreate {
+  contestConfigurationId: string;
+  sortOrder: number;
+  scoring: ContestScoringSettings;
   active: boolean;
 }
 

@@ -1,3 +1,4 @@
+import { ScoringFamily } from '@poolmaster/shared/domain';
 import {
   applySettledContestStandings,
   buildContestEntryStanding,
@@ -27,7 +28,7 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     ...overrides,
   });
   const scores = (rows: Array<[string, string, number | null]>) => new Map<string, ParticipantScore>(
-    rows.map(([sportEventParticipantId, name, score]) => [sportEventParticipantId, { sportEventParticipantId, name, score, unplayedRoundNumbers: [], asOf: null }]),
+    rows.map(([sportEventParticipantId, name, score]) => [sportEventParticipantId, { sportEventParticipantId, name, score, detail: { scoringFamily: ScoringFamily.STROKE_PLAY, unplayedRoundNumbers: [] }, asOf: null }]),
   );
 
   it('sums the lowest N to-par scores and marks every other scored pick dropped', () => {

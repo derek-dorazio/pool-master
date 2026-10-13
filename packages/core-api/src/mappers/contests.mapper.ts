@@ -244,7 +244,7 @@ const LEADERBOARD_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, Leade
   [ScoringFamily.STROKE_PLAY]: {
     entry: (entry) => ({ golf: { totalScoreToPar: entry.score } }),
     pick: (pick) => ({
-      golf: { scoreToPar: pick.participant.score, unplayedRoundNumbers: pick.participant.unplayedRoundNumbers },
+      golf: { scoreToPar: pick.participant.score, unplayedRoundNumbers: pick.participant.detail.unplayedRoundNumbers },
     }),
   },
 };

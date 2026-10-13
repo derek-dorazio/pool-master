@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { Prisma } from '@prisma/client';
 import { Sport } from '@poolmaster/shared/domain';
 import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import {
@@ -279,6 +280,33 @@ describe('golf contest settlement — which contests settle', () => {
     await expect(prisma.contestEntryStanding.count({ where: { contestId: draft.id } })).resolves.toBe(0);
   });
 
+  it('scores each contest under its own scoring settings: one whose settings are not a settings object stays unsettled, while one beside it with retired keys settles', async () => {
+    const prisma = getPrisma();
+    const service = createContestSettlementService(prisma);
+    const { league, event, suffix } = await seedCompletedEvent();
+    const invalidSettings = await createSettlementContest({
+      leagueId: league.id,
+      sportEventId: event.id,
+      name: `Invalid Settings ${suffix}`,
+      scoringRuleConfig: ['points'],
+    });
+    const retiredKeys = await createSettlementContest({
+      leagueId: league.id,
+      sportEventId: event.id,
+      name: `Retired Keys ${suffix}`,
+      scoringRuleConfig: { cutRule: { type: 'FIXED_SCORE', fixedScore: 80 }, playoffHandling: 'EXCLUDE_PLAYOFF_HOLES' },
+    });
+
+    const summary = await service.settleCompletedSportEvent(event.id);
+
+    expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1 });
+    await expect(prisma.contest.findUniqueOrThrow({ where: { id: invalidSettings.id }, select: { status: true } }))
+      .resolves.toEqual({ status: 'ACTIVE' });
+    await expect(prisma.contest.findUniqueOrThrow({ where: { id: retiredKeys.id }, select: { status: true } }))
+      .resolves.toEqual({ status: 'COMPLETED' });
+    await expect(prisma.contestEntryStanding.count({ where: { contestId: invalidSettings.id } })).resolves.toBe(0);
+  });
+
   it('settles nothing while the event is not yet COMPLETED', async () => {
     const prisma = getPrisma();
     const service = createContestSettlementService(prisma);
@@ -467,6 +495,8 @@ async function createSettlementContest(input: {
   name: string;
   /** Every real configuration carries a scoring rule (#246); false builds one that does not. */
   withScoringRule?: boolean;
+  /** The rule's stored `config` column; the column's default (`{}`) when omitted. */
+  scoringRuleConfig?: Prisma.InputJsonValue;
   status?: 'DRAFT' | 'OPEN' | 'ACTIVE';
 }) {
   const prisma = getPrisma();
@@ -487,7 +517,11 @@ async function createSettlementContest(input: {
       configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
       ...(input.withScoringRule !== false && {
         participantScoringRules: {
-          create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },
+          create: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+            sortOrder: 1,
+            ...(input.scoringRuleConfig !== undefined && { config: input.scoringRuleConfig }),
+          },
         },
       }),
     },

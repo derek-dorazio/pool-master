@@ -495,7 +495,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Preview a round of golf scores',
-      description: 'Resolves each row against the event\'s field and reports what it would change. Writes nothing. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event\'s scheduled rounds. Root admin only.',
+      description: 'Resolves each row against the event\'s field and reports what it would change. Writes nothing. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event\'s scheduled rounds. 422 EVENT_SCORING_FAMILY_MISMATCH when the event\'s sport is not scored by golf rounds (its scoring family is not stroke play). Root admin only.',
       operationId: 'previewEventGolfRoundScores',
       params: ROUND_PARAMS,
       body: schemaRef('GolfRoundScoreUploadRequest'),
@@ -509,7 +509,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Apply a round of golf scores',
-      description: 'All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event\'s scheduled rounds. Refreshes standings. Returns the field. Root admin only.',
+      description: 'All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event\'s scheduled rounds. 422 EVENT_SCORING_FAMILY_MISMATCH when the event\'s sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Returns the field. Root admin only.',
       operationId: 'applyEventGolfRoundScores',
       params: ROUND_PARAMS,
       body: schemaRef('GolfRoundScoreUploadRequest'),
@@ -523,7 +523,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Correct one golfer\'s round',
-      description: 'Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event\'s scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. Refreshes standings. Root admin only.',
+      description: 'Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event\'s scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. 422 EVENT_SCORING_FAMILY_MISMATCH when the event\'s sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Root admin only.',
       operationId: 'updateEventParticipantGolfRoundScore',
       params: {
         type: 'object',

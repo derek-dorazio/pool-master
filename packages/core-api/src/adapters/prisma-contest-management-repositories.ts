@@ -9,10 +9,15 @@ import type {
   ContestConfiguration,
   ContestFormat,
   ParticipantContestScoringRule,
+  ParticipantContestScoringRuleCreate,
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
-import { ContestRulesWithEntryLimitSchema, ContestSelectionConfigSchema } from '@poolmaster/shared/domain';
+import {
+  ContestRulesWithEntryLimitSchema,
+  ContestSelectionConfigSchema,
+  parseContestScoringSettings,
+} from '@poolmaster/shared/domain';
 
 export class PrismaContestConfigurationRepository
   implements ContestConfigurationRepository
@@ -152,14 +157,14 @@ export class PrismaParticipantContestScoringRuleRepository
   }
 
   async create(
-    rule: Omit<ParticipantContestScoringRule, 'id' | 'createdAt' | 'updatedAt'>,
+    rule: ParticipantContestScoringRuleCreate,
   ): Promise<ParticipantContestScoringRule> {
     const row = await this.prisma.participantContestScoringRule.create({
       data: {
         contestConfigurationId: rule.contestConfigurationId,
-        participantScoringDefinitionId: rule.participantScoringDefinitionId,
+        participantScoringDefinitionId: rule.scoring.participantScoringDefinitionId,
         sortOrder: rule.sortOrder,
-        config: rule.config as object,
+        config: rule.scoring.config,
         active: rule.active,
       },
     });
@@ -250,10 +255,10 @@ function mapParticipantScoringRule(row: {
   return {
     id: row.id,
     contestConfigurationId: row.contestConfigurationId,
-    participantScoringDefinitionId:
-      row.participantScoringDefinitionId as ParticipantContestScoringRule['participantScoringDefinitionId'],
     sortOrder: row.sortOrder,
-    config: (row.config ?? {}) as Record<string, unknown>,
+    // Parsed, not cast: the definition id and config are read through the definition's
+    // settings schema, and a row either schema refuses reads as a failed parse.
+    scoring: parseContestScoringSettings(row.participantScoringDefinitionId, row.config),
     active: row.active,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
