@@ -239,8 +239,8 @@ What differs between sports lives in exactly two places, so a new sport is added
 filling them in rather than by finding guards scattered through the code:
 
 - **The sport registry** (`packages/shared/domain/sports/`) holds what is data: participant
-  type, scoring family, default tournament format, allowed selection types, scoring
-  definitions, vocabulary and round labels. `SPORT_DEFINITIONS` is a `Record<Sport, …>`, so a
+  type, scoring family, default tournament format, default round count and tier layout,
+  allowed selection types, scoring definitions, vocabulary and round labels. `SPORT_DEFINITIONS` is a `Record<Sport, …>`, so a
   sport added to the enum fails the build until it has a definition. A sport is supported
   when it is in the registry; the `Sport` enum and the validity matrices are not a write
   permission (§2 *Validity / Compatibility Matrices Source of Truth*).
@@ -249,6 +249,10 @@ filling them in rather than by finding guards scattered through the code:
   knockout advancement; races are finish position), and each family owns one set of result
   extension tables beside the cross-sport event core. Never one table set per sport. Each
   family's backend module lives in its own folder under `packages/core-api/src/modules/scoring-families/`.
+  A family scores the field per contest, given that contest's scoring settings (the
+  participant scoring rule's `config`, typed per scoring definition by
+  `PARTICIPANT_SCORING_SETTINGS_SCHEMAS` on write and read), returns each participant score
+  with a detail keyed by family, and declares the one live-score category it accepts, or none.
   On the web, how a family's results read on the shared contest screens is its entry in
   `SCORING_FAMILY_UI` (`clients/poolmaster/src/features/contests/scoring-family-ui/`), also a
   `Record<ScoringFamily, …>`, reached from a response's `sport` through its sport definition.

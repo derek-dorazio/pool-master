@@ -1,5 +1,6 @@
 import { Sport } from '@poolmaster/shared/domain';
 import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
+import { sportStoresGolfRoundScores } from '../../../packages/core-api/src/modules/scoring-families/golf-round-scores';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
 
@@ -34,6 +35,7 @@ async function setup() {
     mappings: store.mappingRepo(),
     golfRounds: store.golfRoundRepo(),
     golfStandings: store.golfStandingRepo(),
+    storesGolfRoundScores: sportStoresGolfRoundScores,
     logger,
   });
   return { store, service, event, sport, anaEntry, benEntry, caraEntry, logger };

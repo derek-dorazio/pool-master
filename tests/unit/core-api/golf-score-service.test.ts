@@ -1,5 +1,6 @@
 import { Sport } from '@poolmaster/shared/domain';
 import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
+import { sportStoresGolfRoundScores } from '../../../packages/core-api/src/modules/scoring-families/golf-round-scores';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
 
@@ -7,7 +8,10 @@ import { fakeLogger } from '../../support/fake-logger';
 // apply is all or none, how a correction merges, and how a standing is totalled. The sync
 // path's writes against Postgres are in golf-round-scores.integration.
 
-function setup(eventOverrides: { rounds?: number } = {}) {
+function setup(
+  eventOverrides: { rounds?: number } = {},
+  storesGolfRoundScores: (sport: Sport) => boolean = sportStoresGolfRoundScores,
+) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.GOLF);
   const event = store.addEvent({ providerId: 'feed', ...eventOverrides });
@@ -23,11 +27,30 @@ function setup(eventOverrides: { rounds?: number } = {}) {
     mappings: store.mappingRepo(),
     golfRounds: store.golfRoundRepo(),
     golfStandings: store.golfStandingRepo(),
+    storesGolfRoundScores,
   });
   return { store, service, event, anaEntry, benEntry, sport };
 }
 
 const row = (overrides = {}) => ({ strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' as const, ...overrides });
+
+describe('GolfScoreService — events of another scoring family', () => {
+  it('takes golf round scores for a golf event, whose stroke-play family keeps them', () => {
+    expect(sportStoresGolfRoundScores(Sport.GOLF)).toBe(true);
+  });
+
+  // No sport but golf exists yet, so the registry lookup is injected: an event whose sport's
+  // family does not keep golf round scores (a race, once finish position is built).
+  it('refuses preview, apply and a single correction with 422 EVENT_SCORING_FAMILY_MISMATCH, writing no golf round', async () => {
+    const { store, service, event, anaEntry } = setup({}, () => false);
+    const mismatch = { code: 'EVENT_SCORING_FAMILY_MISMATCH', statusCode: 422 };
+
+    await expect(service.previewRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, ...row() }])).rejects.toMatchObject(mismatch);
+    await expect(service.applyRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, ...row() }])).rejects.toMatchObject(mismatch);
+    await expect(service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 70, scoreToPar: -2 })).rejects.toMatchObject(mismatch);
+    await expect(store.golfRoundRepo().findBySportEventParticipants([anaEntry.id])).resolves.toEqual([]);
+  });
+});
 
 describe('GolfScoreService — preview', () => {
   it('resolves rows within the event\'s field and reports CREATE, UPDATE or UNCHANGED against what is stored', async () => {
@@ -287,6 +310,7 @@ describe('GolfScoreService — provider sync', () => {
       mappings: store.mappingRepo(),
       golfRounds: store.golfRoundRepo(),
       golfStandings: store.golfStandingRepo(),
+      storesGolfRoundScores: sportStoresGolfRoundScores,
       logger,
     });
     return { store, service, event, anaEntry, benEntry, logger };

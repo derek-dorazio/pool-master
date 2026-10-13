@@ -1,7 +1,9 @@
 import {
   ContestEntryStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
+  ScoringFamily,
   SelectionType,
+  parseContestScoringSettings,
   type ContestSelectionConfig,
 } from '@poolmaster/shared/domain';
 import {
@@ -14,10 +16,16 @@ import {
 } from '../../../packages/core-api/src/modules/contests/contest-leaderboard-calculator';
 
 describe('contest scoring definition', () => {
-  const configuration = (rules: Array<{ participantScoringDefinitionId: string; sortOrder: number; active: boolean }>) => ({
+  // Each rule is read the way the adapter reads a stored row: its id and config through the
+  // definition's settings schema.
+  const configuration = (rules: Array<{ participantScoringDefinitionId: string; config?: unknown; sortOrder: number; active: boolean }>) => ({
     configJson: null,
     rounds: 4,
-    participantScoringRules: rules,
+    participantScoringRules: rules.map((rule) => ({
+      sortOrder: rule.sortOrder,
+      active: rule.active,
+      scoring: parseContestScoringSettings(rule.participantScoringDefinitionId, 'config' in rule ? rule.config : {}),
+    })),
   });
 
   it('reads the definition off the first active participant scoring rule', () => {
@@ -28,8 +36,26 @@ describe('contest scoring definition', () => {
       ok: true,
       id: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       definition: PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL,
+      scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
     });
   });
+
+  it('carries the rule\'s settings to scoring, with keys retired before settings were typed dropped', () => {
+    const resolution = resolveContestScoringDefinition(configuration([
+      { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { cutRule: { type: 'FIXED_SCORE', fixedScore: 80 } }, sortOrder: 1, active: true },
+    ]));
+
+    expect(resolution).toMatchObject({ ok: true, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } });
+  });
+
+  it.each([['an array', []], ['a string', 'points'], ['null', null]])(
+    'refuses to rank by a rule whose settings are %s rather than a settings object, as SETTINGS_INVALID',
+    (_label, config) => {
+      expect(resolveContestScoringDefinition(configuration([
+        { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config, sortOrder: 1, active: true },
+      ]))).toEqual({ ok: false, reason: 'SETTINGS_INVALID' });
+    },
+  );
 
   // #246 — the golf fallback is gone: every configuration carries a rule, so a missing one
   // is a defect to surface, not a cue to assume golf stroke play.
@@ -159,7 +185,7 @@ describe('contest counting rule', () => {
 describe('an entry\'s standing from its picks', () => {
   const at = (minute: number) => new Date(Date.UTC(2026, 3, 9, 12, minute));
   const scores = (rows: Array<[string, string, number | null]>) => new Map<string, ParticipantScore>(
-    rows.map(([id, name, score]) => [id, { sportEventParticipantId: id, name, score, unplayedRoundNumbers: [], asOf: null }]),
+    rows.map(([id, name, score]) => [id, { sportEventParticipantId: id, name, score, detail: { scoringFamily: ScoringFamily.STROKE_PLAY, unplayedRoundNumbers: [] }, asOf: null }]),
   );
   const entry = (picks: Array<{ id: string; sep: string; slot?: number | null; minute?: number }>) => ({
     id: 'entry-1',

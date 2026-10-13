@@ -49,6 +49,7 @@ import {
   rankContestEntryStandings,
   resolveContestCountingRule,
   resolveContestScoringDefinition,
+  type ContestScoringResolutionFailure,
 } from './contest-leaderboard-calculator';
 import {
   loadContestLeaderboardEntries,
@@ -391,22 +392,15 @@ export class ContestService {
     }
     const scoring = resolveContestScoringDefinition(configuration);
     if (!scoring.ok) {
-      throw scoring.reason === 'RULE_MISSING'
-        ? new ContestOperationError(
-          'The leaderboard requires the contest configuration to carry a participant scoring rule.',
-          'CONTEST_LEADERBOARD_SCORING_RULE_MISSING',
-        )
-        : new ContestOperationError(
-          'The leaderboard requires a participant scoring rule with a known scoring definition.',
-          'CONTEST_LEADERBOARD_SCORING_DEFINITION_UNKNOWN',
-        );
+      const refusal = LEADERBOARD_SCORING_REFUSALS[scoring.reason];
+      throw new ContestOperationError(refusal.message, refusal.code);
     }
     const { id: scoringDefinitionId, definition: scoringDefinition } = scoring;
     const [field, entries] = await Promise.all([
       loadEventField(this.deps, sportEvent.id),
       loadContestLeaderboardEntries(this.deps, contestId),
     ]);
-    const scores = toParticipantScores(field, sportEvent);
+    const scores = toParticipantScores(field, sportEvent, scoring.scoring);
     const scoreById = new Map(scores.map((score) => [score.sportEventParticipantId, score]));
 
     const entryRows = entries.map((entry) =>
@@ -1026,6 +1020,22 @@ export class ContestNotFoundError extends Error {
     this.name = 'ContestNotFoundError';
   }
 }
+
+/** Why a leaderboard cannot be ranked under the contest's scoring rule, as the 400 it answers. */
+const LEADERBOARD_SCORING_REFUSALS: Readonly<Record<ContestScoringResolutionFailure, { message: string; code: ApiErrorCode }>> = {
+  RULE_MISSING: {
+    message: 'The leaderboard requires the contest configuration to carry a participant scoring rule.',
+    code: 'CONTEST_LEADERBOARD_SCORING_RULE_MISSING',
+  },
+  DEFINITION_UNKNOWN: {
+    message: 'The leaderboard requires a participant scoring rule with a known scoring definition.',
+    code: 'CONTEST_LEADERBOARD_SCORING_DEFINITION_UNKNOWN',
+  },
+  SETTINGS_INVALID: {
+    message: 'The leaderboard requires the participant scoring rule\'s settings to be valid for its scoring definition.',
+    code: 'CONTEST_LEADERBOARD_SCORING_SETTINGS_INVALID',
+  },
+};
 
 export class ContestOperationError extends Error {
   code: ApiErrorCode;

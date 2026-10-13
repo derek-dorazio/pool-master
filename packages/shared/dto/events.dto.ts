@@ -109,7 +109,7 @@ export const CreateSportEventRequestSchema = z.object({
   location: z.string().optional(),
   startDate: DateTimeSchema,
   endDate: DateTimeSchema.optional(),
-  rounds: z.number().int().min(1).optional().describe('Round count; golf defaults to 4.'),
+  rounds: z.number().int().min(1).optional().describe('Round count; omitted, the sport\'s default round count (4 for golf).'),
   autoLifecycleEnabled: z.boolean().optional(),
 }).describe('An admin-authored event. Created DRAFT with its default rounds and tiers, accepting no provider data; commissioners see it once it is released.');
 export type CreateSportEventRequest = z.infer<typeof CreateSportEventRequestSchema>;
@@ -261,7 +261,7 @@ export type ReplaceSportEventTiersRequest = z.infer<typeof ReplaceSportEventTier
 
 export const AutoAssignSportEventTiersRequestSchema = z.object({
   source: z.nativeEnum(TierSource).describe('What the active field is ordered by before the tiers are filled.'),
-  tierSize: z.number().int().min(1).optional().describe('Participants per tier; the last tier takes the rest. Default 10.'),
+  tierSize: z.number().int().min(1).optional().describe('Participants per tier; the last tier takes the rest. Default: the sport\'s tier size (10 for golf).'),
 }).describe('Fills the event\'s tiers from the active field.');
 export type AutoAssignSportEventTiersRequest = z.infer<typeof AutoAssignSportEventTiersRequestSchema>;
 

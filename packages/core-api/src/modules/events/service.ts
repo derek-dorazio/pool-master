@@ -27,6 +27,7 @@ import type {
   SportRepository,
 } from '@poolmaster/shared/db';
 import {
+  getSportDefinition,
   MANUAL_ADMIN_PROVIDER_ID,
   type Sport,
   SportEventStatus,
@@ -40,8 +41,6 @@ import { hasSportEventStarted } from './operational-timing';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import type { SportEventRoundService } from './sport-event-round-service';
 import type { SportEventTierService } from './sport-event-tier-service';
-
-const GOLF_DEFAULT_ROUNDS = 4;
 
 /** An event with the counts its readers derive readiness and deletability from. */
 export interface SportEventSummary {
@@ -137,7 +136,7 @@ export class SportEventService {
   /** An admin-authored event: the reserved manual identity, DRAFT, accepting no provider data. */
   async createEvent(input: CreateSportEventInput): Promise<SportEventSummary> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
-    const rounds = input.rounds ?? GOLF_DEFAULT_ROUNDS;
+    const rounds = input.rounds ?? getSportDefinition(sport).defaultRounds;
     const eventSeries = await this.deps.eventSeries.findOrCreate(sportLeague.id, input.name);
 
     const event = await this.createEdition({
@@ -158,7 +157,7 @@ export class SportEventService {
       autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
     });
     await this.deps.rounds.ensureRounds({ sportEventId: event.id, rounds, startDate: input.startDate });
-    await this.deps.tiers.ensureDefaultTiers(event.id);
+    await this.deps.tiers.ensureDefaultTiers(event.id, event.sport);
 
     this.deps.logger?.info(
       { sportEventId: event.id, sportLeagueId: sportLeague.id, eventSeriesId: eventSeries.id, eventYear: input.eventYear, rounds },
@@ -215,7 +214,7 @@ export class SportEventService {
     } else {
       await this.deps.rounds.ensureRounds({ sportEventId: event.id, rounds, startDate: providerEvent.startDate });
     }
-    await this.deps.tiers.ensureDefaultTiers(event.id);
+    await this.deps.tiers.ensureDefaultTiers(event.id, event.sport);
 
     this.deps.logger?.info(
       { sportEventId: event.id, sportLeagueId: sportLeague.id, eventYear: input.eventYear, providerId: input.providerId, externalId: input.externalId, rounds },

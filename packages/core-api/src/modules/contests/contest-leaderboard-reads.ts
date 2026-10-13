@@ -9,6 +9,7 @@ import type {
   ContestEntryRepository,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
+import type { ContestScoringSettings } from '@poolmaster/shared/domain';
 import type {
   SportEventParticipantService,
   SportEventParticipantView,
@@ -37,17 +38,23 @@ export async function loadEventField(
 }
 
 /**
- * Each field row's score under the contest's scoring definition, from the scoring family of
- * the event's sport (#606). A row the family cannot score yet is unscored.
+ * Each field row's score under one contest's scoring definition and settings, from the scoring
+ * family of the event's sport (#606). Per contest, because settings such as a points table
+ * belong to the contest. A row the family cannot score yet is unscored.
  */
 export function toParticipantScores(
   field: readonly SportEventParticipantView[],
   event: FieldScoringEvent,
+  scoring: ContestScoringSettings,
 ): ParticipantScore[] {
-  return scoringFamilyForSport(event.sport).scoreField(field, event);
+  return scoringFamilyForSport(event.sport).scoreField(field, event, scoring);
 }
 
-/** The contest's counting and scoring configuration, or null when it has none. */
+/**
+ * The contest's counting and scoring configuration, or null when it has none. Each scoring
+ * rule arrives read through its definition's settings schema; `resolveContestScoringDefinition`
+ * refuses one that failed it.
+ */
 export async function loadContestScoringConfiguration(
   deps: Pick<ContestLeaderboardReadDeps, 'configurations' | 'scoringRules'>,
   contestId: string,
@@ -60,8 +67,8 @@ export async function loadContestScoringConfiguration(
   return {
     configJson: configuration.configJson ?? null,
     participantScoringRules: rules.map((rule) => ({
-      participantScoringDefinitionId: rule.participantScoringDefinitionId,
       sortOrder: rule.sortOrder,
+      scoring: rule.scoring,
       active: rule.active,
     })),
   };

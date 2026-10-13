@@ -1,6 +1,8 @@
 import {
   compareScores,
   PARTICIPANT_SCORING_DEFINITIONS,
+  PARTICIPANT_SCORING_SETTINGS_SCHEMAS,
+  parseContestScoringSettings,
   rankSortedScores,
 } from '@poolmaster/shared/domain';
 
@@ -69,5 +71,36 @@ describe('rankSortedScores', () => {
       { position: null, displayPosition: null },
       { position: null, displayPosition: null },
     ]);
+  });
+});
+
+describe('participant scoring settings', () => {
+  it('declares a settings schema for every scoring definition, and no schema for an id that is not one', () => {
+    expect(Object.keys(PARTICIPANT_SCORING_SETTINGS_SCHEMAS).sort()).toEqual(Object.keys(PARTICIPANT_SCORING_DEFINITIONS).sort());
+  });
+
+  it('reads golf\'s to-par total settings as the empty object, dropping keys retired before settings were typed', () => {
+    expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', {})).toEqual({
+      success: true,
+      data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
+    });
+    expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', { cutRule: { type: 'FIXED_SCORE', fixedScore: 80 }, playoffHandling: 'EXCLUDE_PLAYOFF_HOLES' }))
+      .toEqual({ success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } });
+  });
+
+  it.each([['an array', []], ['a string', 'points'], ['null', null]])('refuses golf settings stored as %s with SETTINGS_INVALID', (_label, config) => {
+    expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', config)).toEqual({
+      success: false,
+      reason: 'SETTINGS_INVALID',
+      participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+    });
+  });
+
+  it('reads settings for a definition the registry does not know as DEFINITION_UNKNOWN, keeping the stored id', () => {
+    expect(parseContestScoringSettings('STABLEFORD_POINTS', {})).toEqual({
+      success: false,
+      reason: 'DEFINITION_UNKNOWN',
+      participantScoringDefinitionId: 'STABLEFORD_POINTS',
+    });
   });
 });

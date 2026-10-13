@@ -7,6 +7,7 @@ import {
   PrismaContestEntryRepository,
   PrismaContestEntryStandingRepository,
   PrismaContestRepository,
+  PrismaParticipantContestScoringRuleRepository,
 } from '../../../packages/core-api/src/adapters';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import {
@@ -261,6 +262,55 @@ describe('ContestConfigurationRepository', () => {
       countedScores: 4,
       salaryCap: 50_000,
     });
+  });
+});
+
+describe('ParticipantContestScoringRuleRepository', () => {
+  async function configurationFor(name: string) {
+    const { league, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, name, ContestStatus.DRAFT);
+    return getPrisma().contestConfiguration.create({ data: { contestId: contest.id, selectionType: 'TIERED' } });
+  }
+
+  it('writes a rule\'s typed settings into its config column and reads them back as the definition\'s settings', async () => {
+    const configuration = await configurationFor('Typed settings');
+    const repo = new PrismaParticipantContestScoringRuleRepository(getPrisma());
+
+    await repo.create({
+      contestConfigurationId: configuration.id,
+      sortOrder: 1,
+      scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
+      active: true,
+    });
+
+    const stored = await getPrisma().participantContestScoringRule.findFirstOrThrow({ where: { contestConfigurationId: configuration.id } });
+    expect(stored).toMatchObject({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} });
+    await expect(repo.findByContestConfiguration(configuration.id)).resolves.toEqual([
+      expect.objectContaining({
+        sortOrder: 1,
+        active: true,
+        scoring: { success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
+      }),
+    ]);
+  });
+
+  it('reads retired keys out of a stored config, and a retired definition or a non-object config as a failed parse, in sort order', async () => {
+    const configuration = await configurationFor('Stored settings');
+    await getPrisma().participantContestScoringRule.createMany({
+      data: [
+        { contestConfigurationId: configuration.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { cutRule: { type: 'FIXED_SCORE', fixedScore: 80 } } },
+        { contestConfigurationId: configuration.id, participantScoringDefinitionId: 'STABLEFORD_POINTS', sortOrder: 2, config: {} },
+        { contestConfigurationId: configuration.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 3, config: [] },
+      ],
+    });
+
+    const rules = await new PrismaParticipantContestScoringRuleRepository(getPrisma()).findByContestConfiguration(configuration.id);
+
+    expect(rules.map((rule) => rule.scoring)).toEqual([
+      { success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
+      { success: false, reason: 'DEFINITION_UNKNOWN', participantScoringDefinitionId: 'STABLEFORD_POINTS' },
+      { success: false, reason: 'SETTINGS_INVALID', participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' },
+    ]);
   });
 });
 

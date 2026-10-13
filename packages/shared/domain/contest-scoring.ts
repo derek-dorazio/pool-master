@@ -73,6 +73,68 @@ export const PARTICIPANT_SCORING_DEFINITIONS: Record<
 };
 
 /**
+ * What a contest may set for its scoring definition: the Zod schema of a participant scoring
+ * rule's `config` column, keyed by the definition id. Exhaustive over the definition ids, so a
+ * definition added above fails the build until its settings are declared, even when it takes
+ * none. The column is written through these types and read back through these schemas
+ * (`parseContestScoringSettings`), so it is typed on both sides.
+ *
+ * Golf's to-par total takes no settings: the empty object. Its schema strips unknown keys rather
+ * than refusing them, because rules written before the settings were typed can still carry the
+ * retired `cutRule`/`playoffHandling` keys, which never changed a score. A value that is not an
+ * object at all is refused.
+ */
+export const PARTICIPANT_SCORING_SETTINGS_SCHEMAS = {
+  GOLF_RELATIVE_TO_PAR_TOTAL: z.object({}),
+} as const satisfies Record<ParticipantScoringDefinitionId, z.ZodType>;
+
+/** One definition's settings, as its schema parses them. */
+export type ParticipantScoringSettings<Id extends ParticipantScoringDefinitionId> = z.infer<
+  (typeof PARTICIPANT_SCORING_SETTINGS_SCHEMAS)[Id]
+>;
+
+/**
+ * A contest's scoring definition with the settings it was configured with: a participant
+ * scoring rule's definition id and `config`, correlated, so a scoring family narrows on
+ * `participantScoringDefinitionId` to read its own settings.
+ */
+export type ContestScoringSettings = {
+  [Id in ParticipantScoringDefinitionId]: {
+    participantScoringDefinitionId: Id;
+    config: ParticipantScoringSettings<Id>;
+  };
+}[ParticipantScoringDefinitionId];
+
+/**
+ * A stored rule's definition id and config, read back. A row can name a definition the registry
+ * no longer has (`DEFINITION_UNKNOWN`) or hold a config its definition's schema refuses
+ * (`SETTINGS_INVALID`); either reads as a failed parse, never as a guessed value.
+ */
+export type ContestScoringSettingsParse =
+  | { success: true; data: ContestScoringSettings }
+  | {
+    success: false;
+    reason: 'DEFINITION_UNKNOWN' | 'SETTINGS_INVALID';
+    /** The definition id as stored. */
+    participantScoringDefinitionId: string;
+  };
+
+/** Reads a stored rule's definition id and `config` through the definition's settings schema. */
+export function parseContestScoringSettings(
+  participantScoringDefinitionId: string,
+  config: unknown,
+): ContestScoringSettingsParse {
+  const id = ParticipantScoringDefinitionIdSchema.safeParse(participantScoringDefinitionId);
+  if (!id.success) {
+    return { success: false, reason: 'DEFINITION_UNKNOWN', participantScoringDefinitionId };
+  }
+  const settings = PARTICIPANT_SCORING_SETTINGS_SCHEMAS[id.data].safeParse(config);
+  return settings.success
+    ? { success: true, data: { participantScoringDefinitionId: id.data, config: settings.data } }
+    : { success: false, reason: 'SETTINGS_INVALID', participantScoringDefinitionId };
+}
+
+/**
  * Orders two raw scores best-first. This is the one place direction is
  * consulted: everything downstream reads the resulting position, which is
  * direction-free (1 is best in every sport). An unscored value sorts last in

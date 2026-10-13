@@ -3,6 +3,7 @@ import type {
   ContestConfiguration,
   ContestEntryPick,
   ParticipantContestScoringRule,
+  ParticipantContestScoringRuleCreate,
   ParticipantInactiveReason,
 } from '../domain';
 
@@ -40,7 +41,7 @@ export interface ParticipantContestScoringRuleRepository {
     contestConfigurationId: string,
   ): Promise<ParticipantContestScoringRule[]>;
   create(
-    rule: Omit<ParticipantContestScoringRule, 'id' | 'createdAt' | 'updatedAt'>,
+    rule: ParticipantContestScoringRuleCreate,
   ): Promise<ParticipantContestScoringRule>;
   delete(id: string): Promise<void>;
 }

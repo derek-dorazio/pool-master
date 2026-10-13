@@ -7,6 +7,8 @@ export const golfSportDefinition: SportDefinition = {
   participantType: ParticipantType.INDIVIDUAL,
   scoringFamily: ScoringFamily.STROKE_PLAY,
   tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
+  defaultRounds: 4,
+  defaultTierLayout: { tierCount: 6, tierSize: 10 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['GOLF_RELATIVE_TO_PAR_TOTAL'],
   vocabulary: {

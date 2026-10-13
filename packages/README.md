@@ -77,10 +77,18 @@ come from the draw (`dealRandomDraw`, a seeded and replayable round-robin deal),
 Each scoring family has its module in an exhaustive registry keyed by `ScoringFamily`
 (`modules/scoring-families/registry.ts`). Contest scoring, settlement, the settled-standing
 read, the leaderboard detail blocks and live-score writes reach it through the event's sport
-definition. The leaderboard response carries the event's `sport`, so the web resolves the same
-family for its own presentation (`SCORING_FAMILY_UI`). `STROKE_PLAY` (golf) is the only family;
-the interface was checked against finish position and knockout advancement before either is
-built.
+definition. A family scores the field per contest, given that contest's scoring settings: the
+participant scoring rule's `config`, typed per scoring definition by
+`PARTICIPANT_SCORING_SETTINGS_SCHEMAS` (golf's to-par total takes none) and read back through
+that schema, so settlement scores inside its per-contest loop and a contest whose settings fail
+the schema is skipped (the leaderboard answers 400 `CONTEST_LEADERBOARD_SCORING_SETTINGS_INVALID`).
+A participant score carries a per-family detail (stroke play: its unplayed rounds). Each family
+declares the one live-score category it accepts, or none; the score publisher skips and warns on
+a batch its event's family does not accept. The golf round-score admin routes refuse an event
+whose family does not keep golf rounds (422 `EVENT_SCORING_FAMILY_MISMATCH`). The leaderboard
+response carries the event's `sport`, so the web resolves the same family for its own
+presentation (`SCORING_FAMILY_UI`). `STROKE_PLAY` (golf) is the only family; the interface was
+checked against finish position and knockout advancement before either is built.
 
 Turn-based selection (snake draft) has no implementation: it was removed in #200 and its
 rebuild is deferred to #199. Its `SNAKE_DRAFT` enum value was deleted with the other unbuilt
@@ -107,7 +115,7 @@ Polls configured sports data providers, upserts normalized event data, and store
 | Layer | Files | Purpose |
 |-------|-------|---------|
 | `domain/` | `enums.ts`, `types.ts`, `contest-scoring.ts`, `contest-management-types.ts` | Domain interfaces, enum types, and the participant scoring definitions (direction, unit, format) |
-| `domain/sports/` | `registry.ts`, `golf.ts` | The sport registry: one `SportDefinition` per sport (scoring family, selection types, vocabulary, round labels). See `rules/architecture-rules.md` §4 *Sport extension* |
+| `domain/sports/` | `registry.ts`, `golf.ts` | The sport registry: one `SportDefinition` per sport (scoring family, selection types, default rounds and tier layout, vocabulary, round labels). See `rules/architecture-rules.md` §4 *Sport extension* |
 | `db/` | `ports.ts` | 25+ repository port interfaces (hexagonal architecture) |
 | `utils/` | `id.ts` | `generateId()` via `crypto.randomUUID()` |
 

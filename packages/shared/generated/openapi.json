@@ -10121,7 +10121,7 @@
           "rounds": {
             "type": "integer",
             "minimum": 1,
-            "description": "Round count; golf defaults to 4."
+            "description": "Round count; omitted, the sport's default round count (4 for golf)."
           },
           "autoLifecycleEnabled": {
             "type": "boolean"
@@ -10978,7 +10978,7 @@
           "tierSize": {
             "type": "integer",
             "minimum": 1,
-            "description": "Participants per tier; the last tier takes the rest. Default 10."
+            "description": "Participants per tier; the last tier takes the rest. Default: the sport's tier size (10 for golf)."
           }
         },
         "required": [
@@ -28108,7 +28108,7 @@
             }
           },
           "400": {
-            "description": "CONTEST_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).",
+            "description": "CONTEST_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule's settings are not valid for that definition).",
             "content": {
               "application/json": {
                 "schema": {
@@ -30744,7 +30744,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Resolves each row against the event's field and reports what it would change. Writes nothing. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. Root admin only.",
+        "description": "Resolves each row against the event's field and reports what it would change. Writes nothing. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -30846,7 +30846,7 @@
         "tags": [
           "Events"
         ],
-        "description": "All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. Refreshes standings. Returns the field. Root admin only.",
+        "description": "All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Returns the field. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -30948,7 +30948,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. Refreshes standings. Root admin only.",
+        "description": "Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {

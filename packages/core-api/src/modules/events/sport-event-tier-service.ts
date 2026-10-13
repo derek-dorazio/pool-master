@@ -26,19 +26,18 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   findBudgetPricingProblem,
+  getSportDefinition,
   SportEventStatus,
   TierSource,
   ValuationSource,
   type EventPricingConfig,
+  type Sport,
   type SportEvent,
   type SportEventParticipant,
   type SportEventTier,
 } from '@poolmaster/shared/domain';
 import { deriveGolfPrices } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
-
-export const DEFAULT_TIER_COUNT = 6;
-export const DEFAULT_TIER_SIZE = 10;
 
 /** One field row's place in a tier. */
 export interface TierPlacement {
@@ -95,20 +94,22 @@ export class SportEventTierService {
   }
 
   /**
-   * Six tiers for a new event, when it has none. A default, fully editable afterwards;
-   * the tier count is however many rows exist, not a stored parameter (plans/124 §4.5a).
+   * The sport's default tiers for a new event (golf: six), when it has none. A default, fully
+   * editable afterwards; the tier count is however many rows exist, not a stored parameter
+   * (plans/124 §4.5a).
    */
-  async ensureDefaultTiers(sportEventId: string): Promise<SportEventTier[]> {
+  async ensureDefaultTiers(sportEventId: string, sport: Sport): Promise<SportEventTier[]> {
     const existing = await this.deps.tiers.findBySportEvent(sportEventId);
     if (existing.length > 0) {
       return existing;
     }
-    await this.deps.tiers.createMany(sportEventId, Array.from({ length: DEFAULT_TIER_COUNT }, (_, index) => ({
+    const { tierCount } = getSportDefinition(sport).defaultTierLayout;
+    await this.deps.tiers.createMany(sportEventId, Array.from({ length: tierCount }, (_, index) => ({
       tierKey: `tier-${index + 1}`,
       label: `Tier ${index + 1}`,
       tierNumber: index + 1,
     })));
-    this.deps.logger?.info({ sportEventId, tierCount: DEFAULT_TIER_COUNT }, 'Created default tiers');
+    this.deps.logger?.info({ sportEventId, tierCount }, 'Created default tiers');
     return this.deps.tiers.findBySportEvent(sportEventId);
   }
 
@@ -158,12 +159,13 @@ export class SportEventTierService {
 
   /**
    * Sorts the active field by `source`, then fills the tiers in tier order, `tierSize`
-   * each, with the last tier taking everyone left. Recomputed from the current tiers and
+   * each (the sport's default tier size when none is sent), with the last tier taking
+   * everyone left. Recomputed from the current tiers and
    * field every run — nothing persisted to drift (plans/124 §4.5a).
    */
   async autoAssignTiers(input: { sportEventId: string; source: TierSource; tierSize?: number }): Promise<SportEventTierGroup[]> {
-    await this.requireEditableEvent(input.sportEventId);
-    const tierSize = input.tierSize ?? DEFAULT_TIER_SIZE;
+    const event = await this.requireEditableEvent(input.sportEventId);
+    const tierSize = input.tierSize ?? getSportDefinition(event.sport).defaultTierLayout.tierSize;
     const tiers = await this.deps.tiers.findBySportEvent(input.sportEventId);
     if (tiers.length === 0) {
       this.deps.logger?.warn({ sportEventId: input.sportEventId }, 'Cannot auto-assign tiers — the event has no tiers yet');
@@ -314,7 +316,7 @@ export class SportEventTierService {
   }
 
   /** 404 EVENT_NOT_FOUND for an unknown event; 409 SPORT_EVENT_TIERS_LOCKED once it is released. */
-  private async requireEditableEvent(sportEventId: string): Promise<void> {
+  private async requireEditableEvent(sportEventId: string): Promise<SportEvent> {
     const event = await this.deps.sportEvents.findById(sportEventId);
     if (!event) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
@@ -325,6 +327,7 @@ export class SportEventTierService {
       this.deps.logger?.warn({ sportEventId, status: event.status }, 'Refused a tier or price change on a released sport event');
       throw error;
     }
+    return event;
   }
 }
 

@@ -31,6 +31,7 @@ import {
 } from '../../adapters';
 import type { MailDeliveryProvider } from '../email';
 import { GolfScoreService } from '../golf/golf-score-service';
+import { sportStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { SportLeagueService } from '../sport-catalog/sport-league-service';
 import { EventLifecycleService, type CompletedSportEventSettlement } from './event-lifecycle-service';
 import { SportEventService } from './service';
@@ -57,6 +58,7 @@ export function createGolfScoreService(prisma: PrismaClient, logger?: FastifyBas
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
     golfRounds: new PrismaSportEventParticipantGolfRoundRepository(prisma),
     golfStandings: new PrismaSportEventParticipantGolfStandingRepository(prisma),
+    storesGolfRoundScores: sportStoresGolfRoundScores,
     logger,
   });
 }

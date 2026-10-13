@@ -31,8 +31,10 @@ import type {
   ContestConfigTemplate,
   ContestConfiguration,
   ContestRules,
+  ContestScoringSettings,
   ContestSelectionConfig,
   ParticipantScoringDefinitionId,
+  ParticipantScoringSettings,
   SportEventStatus,
   TieredContestRules,
   TournamentFormat,
@@ -639,7 +641,8 @@ async function syncDerivedScoring(
   scoringDefinitionId: ParticipantScoringDefinitionId,
   participantRuleRepo: ParticipantContestScoringRuleRepository,
 ): Promise<void> {
-  const typedConfiguration = ensureTypedConfiguration(configuration);
+  // A configuration without typed rules is refused before its scoring rule is replaced.
+  ensureTypedConfiguration(configuration);
   const existingParticipantRules =
     await participantRuleRepo.findByContestConfiguration(configuration.id);
   await Promise.all(
@@ -648,25 +651,28 @@ async function syncDerivedScoring(
 
   await participantRuleRepo.create({
     contestConfigurationId: configuration.id,
-    participantScoringDefinitionId: scoringDefinitionId,
     sortOrder: 1,
-    config: buildParticipantScoringConfig(typedConfiguration),
+    scoring: contestScoringSettingsOnCreate(scoringDefinitionId),
     active: true,
   });
 }
 
 /**
- * cutRule/playoffHandling/displayScoring/tiebreaker dropped (plans/124
- * §4.6a) — each was locked to exactly one possible value and had zero real
- * reads downstream (verified: nothing in contest-settlement-service.ts
- * or contest-leaderboard-calculator.ts reads this config blob). The
- * participantScoringRule row is still created — syncDerivedScoring's
- * caller relies on the row existing — it just carries no config now.
+ * The settings a contest's scoring rule is written with, per scoring definition: its `config`
+ * column, typed by `PARTICIPANT_SCORING_SETTINGS_SCHEMAS`. Golf's to-par total takes none, so it
+ * writes the empty object. (cutRule/playoffHandling/displayScoring/tiebreaker were dropped in
+ * plans/124 §4.6a: each was locked to one value and never changed a score.)
  */
-function buildParticipantScoringConfig(
-  _configuration: ContestSelectionConfig,
-): Record<string, unknown> {
-  return {};
+const SCORING_SETTINGS_ON_CREATE: {
+  readonly [Id in ParticipantScoringDefinitionId]: ParticipantScoringSettings<Id>;
+} = {
+  GOLF_RELATIVE_TO_PAR_TOTAL: {},
+};
+
+function contestScoringSettingsOnCreate(
+  participantScoringDefinitionId: ParticipantScoringDefinitionId,
+): ContestScoringSettings {
+  return { participantScoringDefinitionId, config: SCORING_SETTINGS_ON_CREATE[participantScoringDefinitionId] };
 }
 
 function buildContestManagementDetail(

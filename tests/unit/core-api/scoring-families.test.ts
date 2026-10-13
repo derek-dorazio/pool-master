@@ -1,4 +1,11 @@
-import { SPORT_DEFINITIONS, ScoringFamily, SportEventStatus } from '@poolmaster/shared/domain';
+import {
+  SPORT_DEFINITIONS,
+  ScoringFamily,
+  SportEventStatus,
+  getSportDefinition,
+  type ContestScoringSettings,
+  type Sport,
+} from '@poolmaster/shared/domain';
 import type { ContestEntryStandingResult } from '@poolmaster/shared/db';
 import {
   getScoringFamilyModule,
@@ -23,6 +30,12 @@ function settledStanding(detail: Pick<ContestEntryStandingResult, 'golf'>): Cont
   };
 }
 
+/** A contest's scoring in a sport: its default definition, with the settings it takes on create. */
+function defaultScoring(sport: Sport): ContestScoringSettings {
+  const [participantScoringDefinitionId] = getSportDefinition(sport).scoringDefinitions;
+  return { participantScoringDefinitionId, config: {} };
+}
+
 const SPORT_BY_SCORING_FAMILY = new Map(
   Object.values(SPORT_DEFINITIONS).map((definition) => [definition.scoringFamily, definition.sport]),
 );
@@ -38,7 +51,13 @@ describe.each(Object.values(ScoringFamily))('scoring family %s', (family) => {
   });
 
   it('scores an empty field as no participants', () => {
-    expect(module.scoreField([], { sport, rounds: 4, roundsPar: 72, status: SportEventStatus.IN_PROGRESS })).toEqual([]);
+    expect(module.scoreField([], { sport, rounds: 4, roundsPar: 72, status: SportEventStatus.IN_PROGRESS }, defaultScoring(sport))).toEqual([]);
+  });
+});
+
+describe('stroke play', () => {
+  it('accepts GOLF live scores, the category its golf round rows are written from', () => {
+    expect(getScoringFamilyModule(ScoringFamily.STROKE_PLAY).liveScores?.category).toBe('GOLF');
   });
 });
 

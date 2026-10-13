@@ -16,7 +16,7 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ContestEntryStandingResult, ContestEntryStandingWrite } from '@poolmaster/shared/db';
-import type { SportEvent } from '@poolmaster/shared/domain';
+import type { ContestScoringSettings, SportEvent } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import type { ParticipantScore } from '../contests/contest-leaderboard-calculator';
 import type { SportEventParticipantView } from '../events/sport-event-participant-service';
@@ -40,20 +40,44 @@ export interface LiveScoreTargetEvent {
   rounds: number | null;
 }
 
+/** A live-score result category, the discriminant of a provider's `LiveScoreResult`. */
+export type LiveScoreCategory = LiveScoreResult['category'];
+
+/**
+ * The one live-score category a family accepts, with the writer for it. One arm per category,
+ * so a writer is typed by the result it is handed.
+ */
+export type LiveScoreWriter = {
+  [Category in LiveScoreCategory]: {
+    category: Category;
+    /** Writes a provider's live-score batch into the family's result rows. */
+    persist(
+      deps: LiveScoreWriteDeps,
+      event: LiveScoreTargetEvent,
+      result: Extract<LiveScoreResult, { category: Category }>,
+    ): Promise<LiveScorePersistenceResult>;
+  };
+}[LiveScoreCategory];
+
 export interface ScoringFamilyModule {
   /**
-   * Each field row's contest score, or null while it is unscored. The family's own rule for a
-   * missing result (golf's 80-stroke round, racing's "did not finish" value) is applied here,
-   * and nowhere else.
+   * Each field row's score in one contest, or null while it is unscored, under that contest's
+   * scoring definition and settings (racing's points table is a contest setting; stroke play
+   * has none). The family's own rule for a missing result (golf's 80-stroke round, racing's
+   * "did not finish" value) is applied here, and nowhere else.
    */
-  scoreField(field: readonly SportEventParticipantView[], event: FieldScoringEvent): ParticipantScore[];
+  scoreField(
+    field: readonly SportEventParticipantView[],
+    event: FieldScoringEvent,
+    scoring: ContestScoringSettings,
+  ): ParticipantScore[];
 
-  /** Writes a provider's live-score batch into the family's result rows. */
-  persistLiveScores(
-    deps: LiveScoreWriteDeps,
-    event: LiveScoreTargetEvent,
-    result: LiveScoreResult,
-  ): Promise<LiveScorePersistenceResult>;
+  /**
+   * The live-score category the family accepts and how it writes one, or null when it takes
+   * no live scores (its results are entered by an admin). The score publisher skips a batch of
+   * any other category.
+   */
+  liveScores: LiveScoreWriter | null;
 
   /** The family's extension row for an entry's settled total. */
   entryStandingDetail(total: number | null): EntryStandingDetail;

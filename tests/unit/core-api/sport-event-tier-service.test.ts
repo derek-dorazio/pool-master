@@ -1,4 +1,4 @@
-import { SportEventStatus, TierSource } from '@poolmaster/shared/domain';
+import { Sport, SportEventStatus, TierSource } from '@poolmaster/shared/domain';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { standardEventPricing } from '../../support/budget-pricing';
@@ -27,11 +27,11 @@ function setup(status: SportEventStatus = SportEventStatus.DRAFT) {
 }
 
 describe('SportEventTierService — tiers', () => {
-  it('creates six default tiers once, and leaves an event that has tiers alone', async () => {
+  it('creates the sport\'s default tiers once (six for golf), and leaves an event that has tiers alone', async () => {
     const { store, event, service } = setup();
 
-    await service.ensureDefaultTiers(event.id);
-    const again = await service.ensureDefaultTiers(event.id);
+    await service.ensureDefaultTiers(event.id, Sport.GOLF);
+    const again = await service.ensureDefaultTiers(event.id, Sport.GOLF);
 
     expect(again.map((tier) => tier.tierKey)).toEqual(['tier-1', 'tier-2', 'tier-3', 'tier-4', 'tier-5', 'tier-6']);
     expect(store.tierRows).toHaveLength(6);
@@ -84,6 +84,18 @@ describe('SportEventTierService — assignment', () => {
 
     expect(group.participants.map((placement) => placement.participantId)).toEqual(['p-c', 'p-a', 'p-b']);
     expect(store.valuationRows[0].tierAssignedSource).toBe('AUTO_RANKING');
+  });
+
+  it('places the sport\'s default tier size (ten for golf) in each tier when no size is sent, the last tier taking the rest', async () => {
+    const { store, event, service } = setup();
+    await store.tierRepo().createMany(event.id, TWO_TIERS);
+    for (let index = 1; index <= 12; index++) {
+      store.addToField(event.id, `p-${String(index).padStart(2, '0')}`, { oddsToWin: index });
+    }
+
+    const groups = await service.autoAssignTiers({ sportEventId: event.id, source: TierSource.ODDS });
+
+    expect(groups.map((group) => group.participants.length)).toEqual([10, 2]);
   });
 
   it('does nothing for an event with no tiers yet', async () => {

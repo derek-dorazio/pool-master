@@ -17,7 +17,10 @@ import {
   publishLiveScoreUpdate,
   LiveScoreValidationError,
 } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
+import { expect } from '@jest/globals';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
+import type { ScoringFamilyModule } from '../../../packages/core-api/src/modules/scoring-families';
+import { strokePlayScoringFamily } from '../../../packages/core-api/src/modules/scoring-families/stroke-play';
 import { fakeLogger } from '../../support/fake-logger';
 import { asPrismaClient } from '../../support/prisma-double';
 
@@ -169,5 +172,45 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         );
       },
     );
+  });
+
+  describe('the event\'s scoring family', () => {
+    // Golf is the only sport, and stroke play accepts GOLF, so a family that accepts no live
+    // scores (one whose results an admin enters) is injected as the event's family.
+    const adminEnteredFamily: ScoringFamilyModule = { ...strokePlayScoringFamily, liveScores: null };
+
+    it('warns and writes nothing when the event\'s scoring family accepts no live-score category', async () => {
+      const prisma = {
+        sportEvent: { findUnique: jest.fn().mockResolvedValue({ id: 'evt-1', sport: 'GOLF', rounds: 4, status: 'IN_PROGRESS' }) },
+        sportEventRound: { findMany: jest.fn() },
+        participantProviderMapping: { findMany: jest.fn() },
+        sportEventParticipant: { findMany: jest.fn() },
+        sportEventParticipantRound: { upsert: jest.fn(), findMany: jest.fn() },
+        sportEventParticipantStanding: { upsert: jest.fn(), findMany: jest.fn() },
+      };
+      const logger = fakeLogger();
+      const result: LiveScoreResult = {
+        category: 'GOLF',
+        externalEventId: 'evt-ext-1',
+        rounds: [{ participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }],
+      };
+
+      const persisted = await publishLiveScoreUpdate(result, {
+        prisma: asPrismaClient(prisma),
+        providerId: 'mock',
+        logger,
+        scoringFamilyForSport: () => adminEnteredFamily,
+      });
+
+      expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'liveScore.publish.categoryNotAccepted',
+          data: expect.objectContaining({ category: 'GOLF', acceptedCategory: null }),
+        }),
+        expect.any(String),
+      );
+      expect(prisma.sportEventParticipantRound.upsert).not.toHaveBeenCalled();
+    });
   });
 });
