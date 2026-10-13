@@ -139,6 +139,32 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     expect(store.valuationRows.every((row) => row.priceAssignedSource === 'AUTO_RANKING')).toBe(true);
   });
 
+  it('prices a field with odds and no seeds from the favourite down, so a race priced from its morning line follows the market', async () => {
+    const { store, event, service } = setup();
+    store.addToField(event.id, 'p-long', { oddsToWin: 30 });
+    store.addToField(event.id, 'p-fav', { oddsToWin: 2.5 });
+    store.addToField(event.id, 'p-mid', { oddsToWin: 8 });
+
+    const views = await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() });
+
+    const priceOf = Object.fromEntries(views.map((view) => [view.participantId, view.price]));
+    expect(priceOf['p-fav']).toBeGreaterThan(priceOf['p-mid'] ?? Infinity);
+    expect(priceOf['p-mid']).toBeGreaterThan(priceOf['p-long'] ?? Infinity);
+  });
+
+  it('prices seeded participants by seed first, and unseeded ones after them by odds', async () => {
+    const { store, event, service } = setup();
+    store.addToField(event.id, 'p-guest-long', { oddsToWin: 40 });
+    store.addToField(event.id, 'p-seed-2', { seedNumber: 2, oddsToWin: 3 });
+    store.addToField(event.id, 'p-guest-short', { oddsToWin: 6 });
+    store.addToField(event.id, 'p-seed-1', { seedNumber: 1, oddsToWin: 10 });
+
+    const views = await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() });
+
+    const byPrice = [...views].sort((left, right) => (right.price ?? 0) - (left.price ?? 0)).map((view) => view.participantId);
+    expect(byPrice).toEqual(['p-seed-1', 'p-seed-2', 'p-guest-short', 'p-guest-long']);
+  });
+
   it('records on the event the values its field was priced with, replacing the last ones on a re-price', async () => {
     const { store, event, service } = setup();
     store.addToField(event.id, 'p-1', { seedNumber: 1 });
