@@ -323,7 +323,7 @@ describe('Loading a real golf schedule and fields through the admin API', () => 
     expect(field.get(`${prefix} Golfer 4`)).toMatchObject({ isActive: true });
   });
 
-  it('reinstates a withdrawn player the file lists again, and the dry run reports it', async () => {
+  it('reinstates a withdrawn player the file lists again, clearing the withdrawal reason, and the dry run reports it', async () => {
     const recommitted = file((events) => {
       events[0] = {
         ...events[0],
@@ -343,7 +343,7 @@ describe('Loading a real golf schedule and fields through the admin API', () => 
 
     const league = expectDefined(await leagueNamed(tour));
     const heritage = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === name('Heritage presented by Sponsor')));
-    expect((await fieldOf(heritage.id)).get(`${prefix} Golfer 3`)).toMatchObject({ isActive: true, seedNumber: 4 });
+    expect((await fieldOf(heritage.id)).get(`${prefix} Golfer 3`)).toMatchObject({ isActive: true, inactiveReason: null, seedNumber: 4 });
     expect(changes(await loadSportData(parsed(recommitted), { getClient, now: NOW, mode: LoadMode.APPLY })).filter((row) => row.subject === LoadSubject.FIELD)).toEqual([]);
   });
 });
