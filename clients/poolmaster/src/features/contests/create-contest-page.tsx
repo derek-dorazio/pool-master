@@ -168,7 +168,7 @@ export function CreateContestPage() {
   // The sport and sport league whose default preset was applied last: their default is applied
   // when their presets arrive and again on switching back to them; while both stay, Custom stays
   // Custom.
-  const defaultPresetAppliedFor = useRef<string | null>(null);
+  const defaultPresetAppliedFor = useRef<`${Sport}/${string}` | null>(null);
 
   const setFormValues = useCallback((next: Partial<CreateContestFormValues>) => {
     for (const [field, value] of Object.entries(next) as Array<[keyof CreateContestFormValues, CreateContestFormValues[keyof CreateContestFormValues]]>) {
@@ -295,7 +295,7 @@ export function CreateContestPage() {
   // A newly chosen sport or sport league starts on its default preset; while both stay, Custom
   // stays Custom.
   useEffect(() => {
-    const presetsKey = `${sport}/${sportLeagueId ?? ''}`;
+    const presetsKey: `${Sport}/${string}` = `${sport}/${sportLeagueId ?? ''}`;
     if (defaultPresetAppliedFor.current === presetsKey || !presets.length) {
       return;
     }
