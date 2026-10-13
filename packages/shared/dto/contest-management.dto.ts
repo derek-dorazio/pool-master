@@ -89,6 +89,15 @@ export const CONTEST_DRAW_FIELD_OUT_OF_RANGE = 'CONTEST_DRAW_FIELD_OUT_OF_RANGE'
 /** Error code for rules of another selection type than the contest's (#93). */
 export const CONTEST_RULES_SELECTION_TYPE_MISMATCH = 'CONTEST_RULES_SELECTION_TYPE_MISMATCH';
 
+/** Error code for a scoring definition the event's sport does not offer (#622). */
+export const CONTEST_SCORING_DEFINITION_NOT_ALLOWED = 'CONTEST_SCORING_DEFINITION_NOT_ALLOWED';
+
+/**
+ * Error code for a contest whose scoring definition needs settings nobody sent (#622): a
+ * finish-position contest's points table, with no template preset and none in the request.
+ */
+export const CONTEST_SCORING_SETTINGS_REQUIRED = 'CONTEST_SCORING_SETTINGS_REQUIRED';
+
 /** Error code for a selection type the event's sport does not offer (#602). */
 export const CONTEST_SELECTION_TYPE_NOT_ALLOWED = 'CONTEST_SELECTION_TYPE_NOT_ALLOWED';
 

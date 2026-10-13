@@ -5,6 +5,7 @@ import {
   ParticipantInactiveReason,
   ParticipantRoundStatus,
   ParticipantStandingStatus,
+  RaceResultStatus,
   Sport,
   SportEventStatus,
   SportEventSyncScope,
@@ -324,6 +325,15 @@ export const SportEventParticipantRoundDtoSchema = z.object({
 }).describe('A field row\'s part in one round.');
 export type SportEventParticipantRoundDto = z.infer<typeof SportEventParticipantRoundDtoSchema>;
 
+export const SportEventParticipantRaceResultDtoSchema = z.object({
+  finishPosition: z.number().int().min(1).nullable().describe('Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered.'),
+  startPosition: z.number().int().min(1).nullable().describe('Post position (or grid slot, or starting spot); null when not entered.'),
+  resultStatus: z.nativeEnum(RaceResultStatus).describe('How the race ended for this runner. Every status but FINISHED scores the contest\'s "did not finish" points.'),
+  isOfficial: z.boolean().describe('Whether the race\'s result is official. Contest scoring counts a result only once it is.'),
+  riderName: z.string().nullable().describe('The jockey (or rider) for this start; null when not entered. The trainer is the participant\'s teamAffiliation.'),
+}).describe('Finish-position extension of a field row: how one runner\'s race ended, as an admin entered it.');
+export type SportEventParticipantRaceResultDto = z.infer<typeof SportEventParticipantRaceResultDtoSchema>;
+
 export const SportEventParticipantDtoSchema = z.object({
   id: z.string().uuid().describe('Field row identifier.'),
   sportEventId: z.string().uuid(),
@@ -337,6 +347,7 @@ export const SportEventParticipantDtoSchema = z.object({
   valuation: SportEventParticipantValuationDtoSchema.nullable().describe('Null until a tier or price is set.'),
   standing: SportEventParticipantStandingDtoSchema.nullable().describe('Null until the participant has a scored round.'),
   rounds: z.array(SportEventParticipantRoundDtoSchema).describe('By round number.'),
+  race: SportEventParticipantRaceResultDtoSchema.nullable().describe('Present once a race result is entered for a finish-position event (a horse race); null otherwise.'),
   affiliatedWithSportLeague: z.boolean().describe(`Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. ${ADMIN_ONLY}`),
   createdAt: DateTimeSchema,
   updatedAt: DateTimeSchema,

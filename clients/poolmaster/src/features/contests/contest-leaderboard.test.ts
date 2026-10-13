@@ -74,6 +74,7 @@ function participantFixture(
     valuation: null,
     standing: null,
     rounds: [],
+    race: null,
     affiliatedWithSportLeague: true,
     createdAt: '2026-04-01T00:00:00.000Z',
     updatedAt: '2026-04-01T00:00:00.000Z',
@@ -102,6 +103,7 @@ function pickFixture(
     isCounting: true,
     isDropped: false,
     golf: null,
+    race: null,
     ...overrides,
   };
 }
@@ -270,6 +272,7 @@ describe('buildLeaderboardView', () => {
       countingPickLimit: 2,
       scoredPickCount: 2,
       golf: { totalScoreToPar: -7 },
+      race: null,
       picks: [],
       ...overrides,
     };

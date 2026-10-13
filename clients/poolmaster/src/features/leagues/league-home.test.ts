@@ -35,6 +35,7 @@ function entryFixture(index: number, overrides: Partial<LeaderboardEntry> = {}):
     countingPickLimit: 4,
     scoredPickCount: 4,
     golf: { totalScoreToPar: index - 6 },
+    race: null,
     picks: [],
     ...overrides,
   };

@@ -23,6 +23,7 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
     participantRounds: store.participantRoundRepo(),
     golfStandings: store.golfStandingRepo(),
     golfRounds: store.golfRoundRepo(),
+    raceResults: store.raceResultRepo(),
     random: () => 0.5,
   });
   return { store, service, sport, sportLeague, event };
@@ -284,6 +285,7 @@ describe('SportEventParticipantService — field upload', () => {
       participantRounds: store.participantRoundRepo(),
       golfStandings: store.golfStandingRepo(),
       golfRounds: store.golfRoundRepo(),
+      raceResults: store.raceResultRepo(),
     });
 
     for (const rows of [

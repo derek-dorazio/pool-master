@@ -200,6 +200,7 @@ describe('ContestRepository', () => {
       asOf: null,
       settledAt: new Date(),
       golf: { totalScoreToPar: -3 },
+      race: null,
     });
 
     await repos().contests.delete(contest.id);
@@ -546,16 +547,16 @@ describe('ContestEntryStandingRepository', () => {
     };
     await repos().standings.upsert({
       ...base, contestEntryId: unranked.id, position: null, displayPosition: null, scoredPickCount: 0,
-      golf: { totalScoreToPar: null },
+      golf: { totalScoreToPar: null }, race: null,
     });
     await repos().standings.upsert({
       ...base, contestEntryId: ranked.id, position: 2, displayPosition: '2', scoredPickCount: 2,
-      golf: { totalScoreToPar: -1 },
+      golf: { totalScoreToPar: -1 }, race: null,
     });
     // A re-settle overwrites the entry's row rather than adding a second one.
     await repos().standings.upsert({
       ...base, contestEntryId: ranked.id, position: 1, displayPosition: '1', scoredPickCount: 2,
-      golf: { totalScoreToPar: -4 },
+      golf: { totalScoreToPar: -4 }, race: null,
     });
 
     const standings = await repos().standings.findByContest(contest.id);
@@ -572,6 +573,29 @@ describe('ContestEntryStandingRepository', () => {
     })).resolves.toBe(2);
   });
 
+  it('writes a race standing\'s points total on its extension, overwrites it on a re-settle, and reads golf as null', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Race Points');
+    const entry = await prisma.contestEntry.create({
+      data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Race entry' },
+    });
+    const write = {
+      contestId: contest.id, contestEntryId: entry.id, position: 1, displayPosition: '1',
+      countingPickLimit: 3, scoredPickCount: 3, asOf: null, settledAt: new Date(), golf: null,
+    };
+
+    await repos().standings.upsert({ ...write, race: { totalPoints: 6 } });
+    await repos().standings.upsert({ ...write, race: { totalPoints: 9 } });
+
+    const [standing] = await repos().standings.findByContest(contest.id);
+    expect(standing.race).toEqual({ totalPoints: 9 });
+    expect(standing.golf).toBeNull();
+    await expect(prisma.contestEntryRaceStanding.count({
+      where: { contestEntryStanding: { contestId: contest.id } },
+    })).resolves.toBe(1);
+  });
+
   it('writes a standing without a golf extension when there is none', async () => {
     const prisma = getPrisma();
     const { league, squads, event } = await createLeagueAndEvent();
@@ -582,11 +606,12 @@ describe('ContestEntryStandingRepository', () => {
 
     await repos().standings.upsert({
       contestId: contest.id, contestEntryId: entry.id, position: 1, displayPosition: '1',
-      countingPickLimit: 1, scoredPickCount: 1, asOf: null, settledAt: new Date(), golf: null,
+      countingPickLimit: 1, scoredPickCount: 1, asOf: null, settledAt: new Date(), golf: null, race: null,
     });
 
     const [standing] = await repos().standings.findByContest(contest.id);
     expect(standing.golf).toBeNull();
+    expect(standing.race).toBeNull();
   });
 });
 

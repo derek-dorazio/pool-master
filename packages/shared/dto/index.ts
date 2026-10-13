@@ -13,6 +13,7 @@ export * from './settings.dto';
 export * from './events.dto';
 export * from './sport-catalog.dto';
 export * from './golf-scores.dto';
+export * from './race-results.dto';
 export * from './ingestion.dto';
 export * from './live-score.dto';
 export * from './client-logs.dto';

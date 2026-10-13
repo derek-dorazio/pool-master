@@ -104,10 +104,12 @@ export const strokePlayUi: ScoringFamilyUi = {
             };
           }
           const round = roundsByNumber.get(roundNumber);
+          // Stroke play's definitions format rounds; one that does not shows the round as a dash.
+          const { formatRound } = definition;
           return {
             ...cell,
-            text: round?.golf
-              ? definition.formatRound({
+            text: round?.golf && formatRound
+              ? formatRound({
                 status: round.status,
                 strokes: round.golf.strokes,
                 scoreToPar: round.golf.scoreToPar,

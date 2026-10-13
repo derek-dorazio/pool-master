@@ -1,4 +1,5 @@
 import { ScoringFamily, type SportDefinition } from '@poolmaster/shared/domain';
+import { finishPositionUi } from './finish-position';
 import { strokePlayUi } from './stroke-play';
 import type { ScoringFamilyUi } from './types';
 
@@ -10,6 +11,7 @@ import type { ScoringFamilyUi } from './types';
  */
 export const SCORING_FAMILY_UI: Readonly<Record<ScoringFamily, ScoringFamilyUi>> = {
   [ScoringFamily.STROKE_PLAY]: strokePlayUi,
+  [ScoringFamily.FINISH_POSITION]: finishPositionUi,
 };
 
 export function getScoringFamilyUi(sport: SportDefinition): ScoringFamilyUi {

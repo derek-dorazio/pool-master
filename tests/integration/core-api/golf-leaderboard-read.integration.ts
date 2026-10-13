@@ -229,7 +229,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     }));
     const roundTwo = rory?.rounds.find((round) => round.roundNumber === 2);
     expect(roundTwo?.golf).toEqual(expect.objectContaining({ scoreToPar: -2, thru: 9 }));
-    expect(PARTICIPANT_SCORING_DEFINITIONS[parsed.scoringDefinitionId].formatRound({
+    expect(expectDefined(PARTICIPANT_SCORING_DEFINITIONS[parsed.scoringDefinitionId].formatRound)({
       status: expectDefined(roundTwo).status,
       strokes: expectDefined(expectDefined(roundTwo).golf).strokes,
       scoreToPar: expectDefined(expectDefined(roundTwo).golf).scoreToPar,

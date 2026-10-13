@@ -225,7 +225,7 @@ function mapContestConfigTemplate(row: {
 }): ContestConfigTemplate {
   return {
     id: row.id,
-    sport: row.sport as ContestConfigTemplate['sport'],
+    sport: row.sport,
     eventType: row.eventType ?? undefined,
     contestFormat: row.contestFormat,
     selectionType: row.selectionType,

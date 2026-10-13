@@ -26,6 +26,7 @@ import type {
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
   SportEventParticipantPatch,
+  SportEventParticipantRaceResultRepository,
   SportEventParticipantRepository,
   SportEventParticipantRoundRepository,
   SportEventParticipantStandingRepository,
@@ -40,6 +41,7 @@ import {
   type SportEventParticipant,
   type SportEventParticipantGolfRound,
   type SportEventParticipantGolfStanding,
+  type SportEventParticipantRaceResult,
   type SportEventParticipantRound,
   type SportEventParticipantStanding,
   type SportEventParticipantValuation,
@@ -73,6 +75,8 @@ export interface SportEventParticipantView {
   valuation: SportEventParticipantValuation | null;
   standing: ParticipantStandingView | null;
   rounds: ParticipantRoundView[];
+  /** The finish-position extension: how the runner's race ended, once a result is entered. */
+  raceResult: SportEventParticipantRaceResult | null;
   /** Whether the participant is affiliated with the event's sport league — false flags an invite from elsewhere. */
   affiliatedWithSportLeague: boolean;
 }
@@ -182,6 +186,7 @@ export interface SportEventParticipantServiceDeps {
   participantRounds: SportEventParticipantRoundRepository;
   golfStandings: SportEventParticipantGolfStandingRepository;
   golfRounds: SportEventParticipantGolfRoundRepository;
+  raceResults: Pick<SportEventParticipantRaceResultRepository, 'findBySportEvent'>;
   random?: () => number;
   logger?: FastifyBaseLogger;
 }
@@ -193,13 +198,14 @@ export class SportEventParticipantService {
   async listEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {
     const event = await this.requireEvent(sportEventId);
     const field = await this.deps.field.findBySportEvent(sportEventId);
-    const [participants, valuations, standings, rounds, golfStandings, golfRounds, affiliated] = await Promise.all([
+    const [participants, valuations, standings, rounds, golfStandings, golfRounds, raceResults, affiliated] = await Promise.all([
       this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
       this.deps.valuations.findBySportEvent(sportEventId),
       this.deps.standings.findBySportEvent(sportEventId),
       this.deps.participantRounds.findBySportEvent(sportEventId),
       this.deps.golfStandings.findBySportEvent(sportEventId),
       this.deps.golfRounds.findBySportEvent(sportEventId),
+      this.deps.raceResults.findBySportEvent(sportEventId),
       this.affiliatedParticipantIds(event),
     ]);
 
@@ -208,6 +214,7 @@ export class SportEventParticipantService {
     const standingByEntry = new Map(standings.map((standing) => [standing.sportEventParticipantId, standing]));
     const golfByStanding = new Map(golfStandings.map((result) => [result.standing.id, result.golf]));
     const golfByRound = new Map(golfRounds.map((result) => [result.participantRound.id, result.golf]));
+    const raceResultByEntry = new Map(raceResults.map((result) => [result.sportEventParticipantId, result]));
     const roundsByEntry = new Map<string, ParticipantRoundView[]>();
     for (const round of rounds) {
       const list = roundsByEntry.get(round.sportEventParticipantId) ?? [];
@@ -223,6 +230,7 @@ export class SportEventParticipantService {
         valuation: valuationByEntry.get(entry.id) ?? null,
         standing: standing ? { standing, golf: golfByStanding.get(standing.id) ?? null } : null,
         rounds: roundsByEntry.get(entry.id) ?? [],
+        raceResult: raceResultByEntry.get(entry.id) ?? null,
         affiliatedWithSportLeague: affiliated.has(entry.participantId),
       };
     });

@@ -14,6 +14,7 @@
  */
 export const Sport = {
   GOLF: 'GOLF',
+  HORSE_RACING: 'HORSE_RACING',
 } as const;
 export type Sport = (typeof Sport)[keyof typeof Sport];
 
@@ -83,8 +84,23 @@ export type ContestFormat = (typeof ContestFormat)[keyof typeof ContestFormat];
 /** Tournament structural format: decides which contest formats are valid for a sport's events. */
 export const TournamentFormat = {
   STROKE_PLAY_TOURNAMENT: 'STROKE_PLAY_TOURNAMENT',
+  /** One race: one field, one finishing order (#623). */
+  RACE: 'RACE',
 } as const;
 export type TournamentFormat = (typeof TournamentFormat)[keyof typeof TournamentFormat];
+
+/**
+ * How one field member's race ended (#622): the finish-position family's result status. Only a
+ * FINISHED runner has a finishing place; every other status scores the contest's "did not
+ * finish" points. A horse scratched before the start is WITHDRAWN on the field, not here.
+ */
+export const RaceResultStatus = {
+  FINISHED: 'FINISHED',
+  DID_NOT_FINISH: 'DID_NOT_FINISH',
+  DISQUALIFIED: 'DISQUALIFIED',
+  DID_NOT_START: 'DID_NOT_START',
+} as const;
+export type RaceResultStatus = (typeof RaceResultStatus)[keyof typeof RaceResultStatus];
 
 /**
  * How an entry picks its lineup. Each value has a selection engine.

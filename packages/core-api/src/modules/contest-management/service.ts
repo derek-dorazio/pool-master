@@ -23,6 +23,8 @@ import {
   CONTEST_EVENT_ALREADY_STARTED,
   CONTEST_NOT_DRAFT,
   CONTEST_RULES_SELECTION_TYPE_MISMATCH,
+  CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
+  CONTEST_SCORING_SETTINGS_REQUIRED,
   CONTEST_SELECTION_TYPE_NOT_ALLOWED,
 } from '@poolmaster/shared/dto';
 import type {
@@ -33,8 +35,8 @@ import type {
   ContestRules,
   ContestScoringSettings,
   ContestSelectionConfig,
+  ParticipantContestScoringRule,
   ParticipantScoringDefinitionId,
-  ParticipantScoringSettings,
   SportEventStatus,
   TieredContestRules,
   TournamentFormat,
@@ -43,6 +45,7 @@ import type {
 import {
   ContestStatus,
   SelectionType,
+  assertNever,
   canFillBudgetRoster,
   getSportDefinition,
   sportAllowsSelectionType,
@@ -142,9 +145,10 @@ export class ContestManagementService {
     }
     const { selectionType } = input;
     assertRulesMatchSelectionType(resolvedConfiguration.configuration, selectionType);
-    const { configJson, scoringDefinitionId } = await this.resolveContestRules(
+    const { configJson, scoring } = await this.resolveContestRules(
       input.sportEventId,
       resolvedConfiguration.configuration,
+      { requested: resolvedConfiguration.scoring, kept: null },
     );
     const contest = await this.contestRepo.create({
       leagueId: context.leagueId,
@@ -171,7 +175,7 @@ export class ContestManagementService {
 
     await syncDerivedScoring(
       configuration,
-      scoringDefinitionId,
+      scoring,
       this.participantContestScoringRuleRepo,
     );
 
@@ -262,7 +266,11 @@ export class ContestManagementService {
       );
     }
     assertRulesMatchSelectionType(input, configuration.selectionType);
-    const { configJson, scoringDefinitionId } = await this.resolveContestRules(contest.sportEventId, input);
+    // A rules change that does not send scoring keeps the contest's (its points table, say).
+    const { configJson, scoring } = await this.resolveContestRules(contest.sportEventId, input, {
+      requested: input.scoring,
+      kept: currentScoring(await this.participantContestScoringRuleRepo.findByContestConfiguration(configuration.id)),
+    });
 
     await this.contestConfigurationRepo.update(configuration.id, {
       configJson,
@@ -279,7 +287,7 @@ export class ContestManagementService {
 
     await syncDerivedScoring(
       refreshedConfiguration,
-      scoringDefinitionId,
+      scoring,
       this.participantContestScoringRuleRepo,
     );
 
@@ -322,7 +330,9 @@ export class ContestManagementService {
     await this.assertSportEventNotStarted(contestId, contest.sportEventId);
     // The event may have changed since the rules were saved: its tiers, or which golfers are
     // still in the field. Rules nobody could enter are refused here too.
-    await this.resolveContestRules(contest.sportEventId, ensureTypedConfiguration(configuration));
+    await this.resolveContestRules(contest.sportEventId, ensureTypedConfiguration(configuration), {
+      kept: currentScoring(await this.participantContestScoringRuleRepo.findByContestConfiguration(configuration.id)),
+    });
 
     // Compare-and-set: of two presses racing, only one moves the contest.
     const opened = await this.contestRepo.transitionStatus(contestId, {
@@ -438,13 +448,14 @@ export class ContestManagementService {
   /**
    * The rules a contest stores, checked against its event (#93) and its sport's definition
    * (#602): one arm per selection type. Create, rules changes and opening all come through
-   * here, so each holds the same rules. Also answers which scoring definition the contest
-   * ranks by: its sport's default.
+   * here, so each holds the same rules. Also answers how the contest is scored
+   * (`resolveContestScoring`).
    */
   private async resolveContestRules(
     sportEventId: string | undefined,
     rules: ContestRules,
-  ): Promise<{ configJson: ContestSelectionConfig; scoringDefinitionId: ParticipantScoringDefinitionId }> {
+    scoringInput: ContestScoringInput,
+  ): Promise<{ configJson: ContestSelectionConfig; scoring: ContestScoringSettings }> {
     const sportEvent = await this.findRulesSportEvent(sportEventId);
     const definition = getSportDefinition(sportEvent.sport);
     if (!sportAllowsSelectionType(definition, rules.selectionType)) {
@@ -458,7 +469,7 @@ export class ContestManagementService {
         CONTEST_SELECTION_TYPE_NOT_ALLOWED,
       );
     }
-    const [scoringDefinitionId] = definition.scoringDefinitions;
+    const scoring = this.resolveContestScoring(sportEvent, scoringInput);
     switch (rules.selectionType) {
       case SelectionType.TIERED:
         await this.assertTieredRulesFitTierCount(sportEvent.id, rules);
@@ -468,12 +479,12 @@ export class ContestManagementService {
             picksPerTier: rules.picksPerTier,
             countedScores: rules.countedScores,
           },
-          scoringDefinitionId,
+          scoring,
         };
       case SelectionType.BUDGET_PICK:
         return {
           configJson: await this.resolveBudgetRules(sportEvent, rules),
-          scoringDefinitionId,
+          scoring,
         };
       case SelectionType.RANDOM_DRAW:
         // The field is checked against the entries when the draw runs (#601): until then nobody
@@ -490,9 +501,57 @@ export class ContestManagementService {
             picksPerEntry: rules.picksPerEntry,
             countedScores: rules.countedScores,
           },
-          scoringDefinitionId,
+          scoring,
         };
     }
+  }
+
+  /**
+   * How a contest is scored: the scoring definition and settings it was sent (or its template
+   * presets), else the ones it already has, else its sport's default definition with that
+   * definition's default settings. The definition must be one the event's sport offers (422
+   * CONTEST_SCORING_DEFINITION_NOT_ALLOWED). A definition whose settings have no default, such as
+   * finish-position points, whose points table is the commissioner's choice, must be sent (422
+   * CONTEST_SCORING_SETTINGS_REQUIRED). The settings themselves were parsed by their definition's
+   * schema on the way in, so they are valid settings of that definition.
+   */
+  private resolveContestScoring(
+    sportEvent: ContestCreateSportEventState,
+    { requested, kept }: ContestScoringInput,
+  ): ContestScoringSettings {
+    const definition = getSportDefinition(sportEvent.sport);
+    const offered = (id: ParticipantScoringDefinitionId) => definition.scoringDefinitions.includes(id);
+    if (requested) {
+      if (!offered(requested.participantScoringDefinitionId)) {
+        this.logger.warn({
+          sportEventId: sportEvent.id,
+          sport: sportEvent.sport,
+          participantScoringDefinitionId: requested.participantScoringDefinitionId,
+        }, 'contest management scoring refused for a definition the sport does not offer');
+        throw new ContestManagementError(
+          `A ${sportEvent.sport} contest can't be scored by ${requested.participantScoringDefinitionId}.`,
+          CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
+        );
+      }
+      return requested;
+    }
+    if (kept && offered(kept.participantScoringDefinitionId)) {
+      return kept;
+    }
+    const [defaultDefinitionId] = definition.scoringDefinitions;
+    const defaults = defaultContestScoringSettings(defaultDefinitionId);
+    if (!defaults) {
+      this.logger.warn({
+        sportEventId: sportEvent.id,
+        sport: sportEvent.sport,
+        participantScoringDefinitionId: defaultDefinitionId,
+      }, 'contest management scoring refused: the definition needs settings and none were sent');
+      throw new ContestManagementError(
+        `A ${sportEvent.sport} contest is scored by ${defaultDefinitionId}, which needs its settings: send scoring, or create the contest from a template.`,
+        CONTEST_SCORING_SETTINGS_REQUIRED,
+      );
+    }
+    return defaults;
   }
 
   /** A contest's rules are checked against its event, so a contest with none has no rules to keep. */
@@ -638,7 +697,7 @@ function assertRulesMatchSelectionType(rules: ContestRules, selectionType: Selec
 
 async function syncDerivedScoring(
   configuration: ContestConfiguration,
-  scoringDefinitionId: ParticipantScoringDefinitionId,
+  scoring: ContestScoringSettings,
   participantRuleRepo: ParticipantContestScoringRuleRepository,
 ): Promise<void> {
   // A configuration without typed rules is refused before its scoring rule is replaced.
@@ -652,27 +711,45 @@ async function syncDerivedScoring(
   await participantRuleRepo.create({
     contestConfigurationId: configuration.id,
     sortOrder: 1,
-    scoring: contestScoringSettingsOnCreate(scoringDefinitionId),
+    scoring,
     active: true,
   });
 }
 
 /**
- * The settings a contest's scoring rule is written with, per scoring definition: its `config`
- * column, typed by `PARTICIPANT_SCORING_SETTINGS_SCHEMAS`. Golf's to-par total takes none, so it
- * writes the empty object. (cutRule/playoffHandling/displayScoring/tiebreaker were dropped in
- * plans/124 §4.6a: each was locked to one value and never changed a score.)
+ * The settings a contest's scoring rule is written with when nobody chose any, per scoring
+ * definition: its `config` column, typed by `PARTICIPANT_SCORING_SETTINGS_SCHEMAS`. Golf's to-par
+ * total takes none, so it writes the empty object. (cutRule/playoffHandling/displayScoring/
+ * tiebreaker were dropped in plans/124 §4.6a: each was locked to one value and never changed a
+ * score.) Finish-position points has no default: the points table is the commissioner's choice,
+ * or the template's preset, never one the server picks (null).
  */
-const SCORING_SETTINGS_ON_CREATE: {
-  readonly [Id in ParticipantScoringDefinitionId]: ParticipantScoringSettings<Id>;
-} = {
-  GOLF_RELATIVE_TO_PAR_TOTAL: {},
-};
-
-function contestScoringSettingsOnCreate(
+function defaultContestScoringSettings(
   participantScoringDefinitionId: ParticipantScoringDefinitionId,
-): ContestScoringSettings {
-  return { participantScoringDefinitionId, config: SCORING_SETTINGS_ON_CREATE[participantScoringDefinitionId] };
+): ContestScoringSettings | null {
+  switch (participantScoringDefinitionId) {
+    case 'GOLF_RELATIVE_TO_PAR_TOTAL':
+      return { participantScoringDefinitionId, config: {} };
+    case 'FINISH_POSITION_POINTS':
+      return null;
+    default:
+      return assertNever(participantScoringDefinitionId);
+  }
+}
+
+/** What a contest's scoring is resolved from: the settings sent, and the ones it already has. */
+interface ContestScoringInput {
+  requested?: ContestScoringSettings;
+  kept?: ContestScoringSettings | null;
+}
+
+/** A configuration's current scoring: its first active rule, when that rule reads as valid. */
+function currentScoring(rules: readonly ParticipantContestScoringRule[]): ContestScoringSettings | null {
+  const rule = [...rules]
+    .filter((candidate) => candidate.active)
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .at(0);
+  return rule?.scoring.success ? rule.scoring.data : null;
 }
 
 function buildContestManagementDetail(
@@ -740,12 +817,19 @@ function ensureTypedConfiguration(configuration: {
   );
 }
 
+/**
+ * A create's configuration and scoring. The template seeds both, and the request's configuration
+ * replaces its rules; the request's scoring, when sent, replaces the template's preset, and when
+ * not, the preset still applies, so choosing a template and adjusting its rules keeps its points
+ * table.
+ */
 async function resolveCreateConfiguration(
   input: CreateContestRequest,
   templateRepo: ContestConfigTemplateRepository,
 ): Promise<{
   template?: ContestConfigTemplate;
   configuration: ContestConfigurationRequest;
+  scoring?: ContestScoringSettings;
 }> {
   if (input.templateId === undefined) {
     if (input.configuration === undefined) {
@@ -756,7 +840,7 @@ async function resolveCreateConfiguration(
         400,
       );
     }
-    return { configuration: input.configuration };
+    return { configuration: input.configuration, scoring: input.configuration.scoring };
   }
 
   const template = await templateRepo.findById(input.templateId);
@@ -773,5 +857,6 @@ async function resolveCreateConfiguration(
   return {
     template,
     configuration: input.configuration ?? template.configJson,
+    scoring: input.configuration?.scoring ?? template.configJson.scoring,
   };
 }

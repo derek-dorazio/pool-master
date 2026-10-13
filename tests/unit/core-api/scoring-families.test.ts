@@ -2,6 +2,7 @@ import {
   SPORT_DEFINITIONS,
   ScoringFamily,
   SportEventStatus,
+  assertNever,
   getSportDefinition,
   type ContestScoringSettings,
   type Sport,
@@ -15,7 +16,7 @@ import { expectDefined } from '../../support/expect-defined';
 
 // The scoring-family conformance suite (#606): every family in the registry gets these checks.
 
-function settledStanding(detail: Pick<ContestEntryStandingResult, 'golf'>): ContestEntryStandingResult {
+function settledStanding(detail: Pick<ContestEntryStandingResult, 'golf' | 'race'>): ContestEntryStandingResult {
   return {
     id: 'standing-1',
     contestId: 'contest-1',
@@ -30,10 +31,17 @@ function settledStanding(detail: Pick<ContestEntryStandingResult, 'golf'>): Cont
   };
 }
 
-/** A contest's scoring in a sport: its default definition, with the settings it takes on create. */
+/** A contest's scoring in a sport: its default definition, with representative settings. */
 function defaultScoring(sport: Sport): ContestScoringSettings {
   const [participantScoringDefinitionId] = getSportDefinition(sport).scoringDefinitions;
-  return { participantScoringDefinitionId, config: {} };
+  switch (participantScoringDefinitionId) {
+    case 'GOLF_RELATIVE_TO_PAR_TOTAL':
+      return { participantScoringDefinitionId, config: {} };
+    case 'FINISH_POSITION_POINTS':
+      return { participantScoringDefinitionId, config: { pointsTable: [5, 3, 1], didNotFinishPoints: 0 } };
+    default:
+      return assertNever(participantScoringDefinitionId);
+  }
 }
 
 const SPORT_BY_SCORING_FAMILY = new Map(
@@ -47,6 +55,7 @@ describe.each(Object.values(ScoringFamily))('scoring family %s', (family) => {
 
   it('reads back the settled total it stores on an entry standing, and an unscored entry as null', () => {
     expect(module.settledEntryTotal(settledStanding(module.entryStandingDetail(-7)))).toBe(-7);
+    expect(module.settledEntryTotal(settledStanding(module.entryStandingDetail(0)))).toBe(0);
     expect(module.settledEntryTotal(settledStanding(module.entryStandingDetail(null)))).toBeNull();
   });
 
@@ -58,6 +67,19 @@ describe.each(Object.values(ScoringFamily))('scoring family %s', (family) => {
 describe('stroke play', () => {
   it('accepts GOLF live scores, the category its golf round rows are written from', () => {
     expect(getScoringFamilyModule(ScoringFamily.STROKE_PLAY).liveScores?.category).toBe('GOLF');
+  });
+});
+
+describe('finish position', () => {
+  it('accepts no live scores, so the score publisher skips any batch for a race', () => {
+    expect(getScoringFamilyModule(ScoringFamily.FINISH_POSITION).liveScores).toBeNull();
+  });
+
+  it('stores an entry\'s total on the race standing extension and leaves the golf one empty', () => {
+    expect(getScoringFamilyModule(ScoringFamily.FINISH_POSITION).entryStandingDetail(8)).toEqual({
+      golf: null,
+      race: { totalPoints: 8 },
+    });
   });
 });
 

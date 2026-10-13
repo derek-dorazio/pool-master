@@ -3,6 +3,7 @@ import { getSportDefinition } from './sports/registry';
 
 export const VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT = {
   [TournamentFormat.STROKE_PLAY_TOURNAMENT]: [ContestFormat.ROSTER],
+  [TournamentFormat.RACE]: [ContestFormat.ROSTER],
 } as const satisfies Record<TournamentFormat, readonly ContestFormat[]>;
 
 export function getValidContestFormatsForTournamentFormat(

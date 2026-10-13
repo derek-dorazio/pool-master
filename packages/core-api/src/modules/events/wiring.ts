@@ -17,6 +17,7 @@ import {
   PrismaParticipantRepository,
   PrismaSportEventParticipantGolfRoundRepository,
   PrismaSportEventParticipantGolfStandingRepository,
+  PrismaSportEventParticipantRaceResultRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventParticipantRoundRepository,
   PrismaSportEventParticipantStandingRepository,
@@ -31,7 +32,9 @@ import {
 } from '../../adapters';
 import type { MailDeliveryProvider } from '../email';
 import { GolfScoreService } from '../golf/golf-score-service';
+import { RaceResultService } from '../scoring-families/finish-position/race-result-service';
 import { sportStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
+import { sportStoresRaceResults } from '../scoring-families/race-results';
 import { SportLeagueService } from '../sport-catalog/sport-league-service';
 import { EventLifecycleService, type CompletedSportEventSettlement } from './event-lifecycle-service';
 import { SportEventService } from './service';
@@ -63,12 +66,25 @@ export function createGolfScoreService(prisma: PrismaClient, logger?: FastifyBas
   });
 }
 
+/** The admin finishing order for a finish-position event (#622). */
+export function createRaceResultService(prisma: PrismaClient, logger?: FastifyBaseLogger): RaceResultService {
+  return new RaceResultService({
+    events: new PrismaSportEventRepository(prisma),
+    field: new PrismaSportEventParticipantRepository(prisma),
+    participants: new PrismaParticipantRepository(prisma),
+    raceResults: new PrismaSportEventParticipantRaceResultRepository(prisma),
+    storesRaceResults: sportStoresRaceResults,
+    logger,
+  });
+}
+
 export interface SportEventServices {
   sportEvents: SportEventService;
   rounds: SportEventRoundService;
   tiers: SportEventTierService;
   field: SportEventParticipantService;
   golfScores: GolfScoreService;
+  raceResults: RaceResultService;
   sportLeagues: SportLeagueService;
 }
 
@@ -84,6 +100,7 @@ export function createSportEventParticipantService(prisma: PrismaClient, logger?
     participantRounds: new PrismaSportEventParticipantRoundRepository(prisma),
     golfStandings: new PrismaSportEventParticipantGolfStandingRepository(prisma),
     golfRounds: new PrismaSportEventParticipantGolfRoundRepository(prisma),
+    raceResults: new PrismaSportEventParticipantRaceResultRepository(prisma),
     logger,
   });
 }
@@ -121,6 +138,7 @@ export function createSportEventServices(
     }),
     field: createSportEventParticipantService(prisma, logger),
     golfScores: createGolfScoreService(prisma, logger),
+    raceResults: createRaceResultService(prisma, logger),
     sportLeagues: new SportLeagueService({ sports, sportLeagues, sportEvents: events, affiliations, participants, logger }),
   };
 }

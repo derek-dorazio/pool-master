@@ -1,5 +1,8 @@
 import {
   compareScores,
+  ContestRulesWithEntryLimitSchema,
+  FINISH_POSITION_POINTS_TABLE_MAX_PLACES,
+  FinishPositionPointsSettingsSchema,
   PARTICIPANT_SCORING_DEFINITIONS,
   PARTICIPANT_SCORING_SETTINGS_SCHEMAS,
   parseContestScoringSettings,
@@ -102,5 +105,58 @@ describe('participant scoring settings', () => {
       reason: 'DEFINITION_UNKNOWN',
       participantScoringDefinitionId: 'STABLEFORD_POINTS',
     });
+  });
+});
+
+describe('finish-position points', () => {
+  it('declares finish-position points higher-is-better in points, with no per-round format', () => {
+    const definition = PARTICIPANT_SCORING_DEFINITIONS.FINISH_POSITION_POINTS;
+
+    expect(definition.direction).toBe('HIGHER_IS_BETTER');
+    expect(definition.unit).toBe('POINTS');
+    expect([0, 5, 25].map(definition.format)).toEqual(['0', '5', '25']);
+    expect(definition.formatRound).toBeNull();
+  });
+
+  it('accepts Win / Place / Show and a table with zeros and equal places', () => {
+    expect(FinishPositionPointsSettingsSchema.safeParse({ pointsTable: [5, 3, 1], didNotFinishPoints: 0 }).success).toBe(true);
+    expect(FinishPositionPointsSettingsSchema.safeParse({ pointsTable: [10, 10, 0], didNotFinishPoints: 2 }).success).toBe(true);
+  });
+
+  it.each([
+    ['an empty points table', { pointsTable: [], didNotFinishPoints: 0 }],
+    ['a negative place value', { pointsTable: [5, -1], didNotFinishPoints: 0 }],
+    ['a fractional place value', { pointsTable: [5, 2.5], didNotFinishPoints: 0 }],
+    ['a worse place scoring more than a better one', { pointsTable: [3, 5, 1], didNotFinishPoints: 0 }],
+    ['more places than the table allows', { pointsTable: Array.from({ length: FINISH_POSITION_POINTS_TABLE_MAX_PLACES + 1 }, () => 1), didNotFinishPoints: 0 }],
+    ['negative did-not-finish points', { pointsTable: [5, 3, 1], didNotFinishPoints: -1 }],
+    ['no did-not-finish points', { pointsTable: [5, 3, 1] }],
+  ])('refuses settings with %s', (_label, settings) => {
+    expect(FinishPositionPointsSettingsSchema.safeParse(settings).success).toBe(false);
+  });
+
+  it('reads stored finish-position settings back typed, and a stored table that is not one as SETTINGS_INVALID', () => {
+    expect(parseContestScoringSettings('FINISH_POSITION_POINTS', { pointsTable: [5, 3, 1], didNotFinishPoints: 0 })).toEqual({
+      success: true,
+      data: { participantScoringDefinitionId: 'FINISH_POSITION_POINTS', config: { pointsTable: [5, 3, 1], didNotFinishPoints: 0 } },
+    });
+    expect(parseContestScoringSettings('FINISH_POSITION_POINTS', {})).toEqual({
+      success: false,
+      reason: 'SETTINGS_INVALID',
+      participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
+    });
+  });
+
+  it('lets contest rules carry finish-position scoring and refuses scoring settings that do not match their definition', () => {
+    const rules = { selectionType: 'TIERED', picksPerTier: 1, countedScores: 3 };
+
+    expect(ContestRulesWithEntryLimitSchema.safeParse({
+      ...rules,
+      scoring: { participantScoringDefinitionId: 'FINISH_POSITION_POINTS', config: { pointsTable: [5, 3, 1], didNotFinishPoints: 0 } },
+    }).success).toBe(true);
+    expect(ContestRulesWithEntryLimitSchema.safeParse({
+      ...rules,
+      scoring: { participantScoringDefinitionId: 'FINISH_POSITION_POINTS', config: {} },
+    }).success).toBe(false);
   });
 });

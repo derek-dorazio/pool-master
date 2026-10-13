@@ -51,6 +51,12 @@ export type {
   SportEventParticipantGolfStandingRepository,
 } from './golf-ports';
 export type {
+  RaceResultApply,
+  RaceResultWrite,
+  RaceStandingWrite,
+  SportEventParticipantRaceResultRepository,
+} from './race-ports';
+export type {
   EventSeriesRepository,
   ParticipantLeagueAffiliationRepository,
   ParticipantMatchQuery,

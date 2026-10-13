@@ -33,12 +33,17 @@ import type {
   GolfRoundScoreUploadRequest,
   UpdateGolfRoundScoreRequest,
 } from '@poolmaster/shared/dto/golf-scores.dto';
+import type {
+  RaceResultPreviewResponse,
+  RaceResultUploadRequest,
+} from '@poolmaster/shared/dto/race-results.dto';
 import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 import {
   mapFieldUploadPreviewToDto,
   mapGolfRoundScorePreviewToDto,
   mapLiveSimulationToResponse,
+  mapRaceResultPreviewToDto,
   mapProviderEventYearImportToResponse,
   mapSportEventParticipantToDto,
   mapSportEventRoundToDto,
@@ -72,13 +77,13 @@ export interface EventHandlerDeps {
  * the provider-sync errors, which carry neither, are mapped here.
  */
 export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion }: EventHandlerDeps) {
-  const { sportEvents, rounds, field, tiers, golfScores } = services;
+  const { sportEvents, rounds, field, tiers, golfScores, raceResults } = services;
 
   async function eventResponse(eventId: string): Promise<SportEventResponse> {
     return { event: mapSportEventToDto(await sportEvents.requireSummary(eventId)) };
   }
 
-  /** The golf score operations answer 404 EVENT_NOT_FOUND for an unknown event. Golf is the only sport (#605). */
+  /** The golf score and race result operations answer 404 EVENT_NOT_FOUND for an unknown event. */
   async function requireEvent(eventId: string): Promise<void> {
     await sportEvents.requireSummary(eventId);
   }
@@ -334,6 +339,21 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     ): Promise<SportEventParticipantListResponse> => {
       await requireEvent(request.params.eventId);
       await golfScores.applyRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
+      return fieldResponse(request.params.eventId);
+    },
+
+    previewRaceResults: async (
+      request: FastifyRequest<EventParams & { Body: RaceResultUploadRequest }>,
+    ): Promise<RaceResultPreviewResponse> => {
+      await requireEvent(request.params.eventId);
+      return mapRaceResultPreviewToDto(await raceResults.previewResults(request.params.eventId, request.body));
+    },
+
+    applyRaceResults: async (
+      request: FastifyRequest<EventParams & { Body: RaceResultUploadRequest }>,
+    ): Promise<SportEventParticipantListResponse> => {
+      await requireEvent(request.params.eventId);
+      await raceResults.applyResults(request.params.eventId, request.body);
       return fieldResponse(request.params.eventId);
     },
 
