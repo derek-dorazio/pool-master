@@ -17,7 +17,7 @@
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { createClient, createConfig, type Client } from '@poolmaster/shared/generated/hey-api/client';
@@ -58,7 +58,10 @@ async function main(): Promise<void> {
   });
   const mode = values.mode === 'apply' ? LoadMode.APPLY : values.mode === 'dry-run' ? LoadMode.DRY_RUN : null;
   if (mode === null) throw new Error(`--mode is ${values.mode}; use dry-run or apply.`);
-  const path = join(dirname(fileURLToPath(import.meta.url)), values.file);
+  const dataDir = dirname(fileURLToPath(import.meta.url));
+  const path = resolve(dataDir, values.file);
+  const inside = relative(dataDir, path);
+  if (inside.startsWith('..') || isAbsolute(inside)) throw new Error(`--file ${values.file} is outside ${dataDir}.`);
   const file = parseSportDataFile(JSON.parse(readFileSync(path, 'utf8')) as unknown, { allowTestData: values['allow-test-data'] });
 
   let signedIn: { client: Client; at: number } | null = null;

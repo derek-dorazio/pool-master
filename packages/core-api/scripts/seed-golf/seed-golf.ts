@@ -289,7 +289,8 @@ class Loader {
   /**
    * What the file would change on an event's field: players to add (by participant id; null
    * for a player a dry run would create), row patches for ranking, seed and (test data) odds,
-   * and withdrawals for active rows the file no longer lists.
+   * reinstatements for withdrawn rows the file lists again, and withdrawals for active rows
+   * the file no longer lists.
    */
   private fieldChanges(league: SportDataLeague, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>, storedField: readonly StoredFieldRow[]): {
     add: Array<{ name: string; participantId: string | null }>;
@@ -302,6 +303,7 @@ class Loader {
     const add: Array<{ name: string; participantId: string | null }> = [];
     const patches: Array<{ participantId: string; patch: Omit<FieldPatch, 'sportEventParticipantId'> }> = [];
     const listed = new Set<string>();
+    const reinstated: string[] = [];
     event.field.forEach((entry, index) => {
       const name = players.get(entry.player) ?? entry.player;
       const participantId = found(participantIds.get(entry.player), `${event.name}: the participant id for ${entry.player}`);
@@ -312,14 +314,21 @@ class Loader {
       if (entry.ranking !== undefined && row?.ranking !== entry.ranking) patch.ranking = entry.ranking;
       if (row?.seedNumber !== index + 1) patch.seedNumber = index + 1;
       if (entry.oddsToWin !== undefined && row?.oddsToWin !== entry.oddsToWin) patch.oddsToWin = entry.oddsToWin;
+      // Back in the field after a withdrawal (a re-commitment). A test seed's withdrawals come from its scores, so it never reinstates.
+      if (!this.file.testData && row && !row.isActive && row.inactiveReason === 'WITHDRAWN') {
+        // Only isActive: the stored reason means nothing once active, and the field PATCH refuses a null reason.
+        patch.isActive = true;
+        reinstated.push(name);
+      }
       if (participantId !== null && Object.keys(patch).length > 0) patches.push({ participantId, patch });
     });
     const withdrawn = storedField.filter((row) => row.isActive && !listed.has(row.participantId));
     const addedIds = new Set(add.map((entry) => entry.participantId));
-    const updated = patches.filter((entry) => !addedIds.has(entry.participantId)).length;
+    const updated = patches.filter((entry) => !addedIds.has(entry.participantId) && entry.patch.isActive === undefined).length;
     const changes = [
       ...(add.length > 0 ? [`${add.length} added (${names(add.map((entry) => entry.name))})`] : []),
       ...(updated > 0 ? [`${updated} re-ranked or re-seeded`] : []),
+      ...(reinstated.length > 0 ? [`${reinstated.length} reinstated (${names(reinstated)})`] : []),
       ...(withdrawn.length > 0 ? [`${withdrawn.length} withdrawn (${names(withdrawn.map((row) => row.participant.name))})`] : []),
     ];
     return { add, patches, withdrawn, changes };
@@ -335,7 +344,8 @@ class Loader {
     const { league, event, participantIds } = input;
     const at = { sportLeague: league.name, name: event.name };
     const loadsSchedule = this.contents.has(SportDataContent.SCHEDULE);
-    const loadsField = this.contents.has(SportDataContent.FIELDS);
+    // An empty field means the file has no field for this event yet (not announced), never that everyone withdrew.
+    const loadsField = this.contents.has(SportDataContent.FIELDS) && event.field.length > 0;
     const { stored } = input;
 
     if (!stored) {

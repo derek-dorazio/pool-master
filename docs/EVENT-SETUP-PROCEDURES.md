@@ -221,6 +221,9 @@ writes nothing. The workflow's summary shows the list with the file's scope and 
 - A file only changes what its envelope's `contents` names: one without `SCHEDULE` never
   edits an event, so a file with next week's fields cannot rewrite the schedule.
 
+An event whose `field` is empty has no field in this file yet, so its stored field is left
+alone. A withdrawn player the file lists again is reinstated.
+
 Running the same file again lists everything as a skip. A real data file never releases an
 event or writes odds, tiers, prices or scores; those stay admin actions here.
 

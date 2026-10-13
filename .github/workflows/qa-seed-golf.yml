@@ -28,6 +28,10 @@ on:
           - apply
         default: dry-run
 
+# It only reads the checkout; QA is written through the API with the admin secrets.
+permissions:
+  contents: read
+
 concurrency:
   group: qa-seed-golf
   cancel-in-progress: false
