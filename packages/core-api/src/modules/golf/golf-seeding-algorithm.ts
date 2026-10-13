@@ -84,10 +84,11 @@ export function deriveGolfPrices(field: PricingFieldEntry[], values: BudgetPrici
   }));
 }
 
-function compareNullsLast(left: number | null, right: number | null): number {
-  if (left === null && right === null) return 0;
-  if (left === null) return 1;
-  if (right === null) return -1;
+/** Ascending, with a missing number after every present one; two missing numbers tie. */
+export function compareNullsLast(left: number | null | undefined, right: number | null | undefined): number {
+  if (left == null && right == null) return 0;
+  if (left == null) return 1;
+  if (right == null) return -1;
   return left - right;
 }
 

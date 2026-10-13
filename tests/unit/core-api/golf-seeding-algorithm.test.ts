@@ -137,6 +137,18 @@ describe('deriveGolfPrices — the budget pricing curve (#93)', () => {
     expect(result[result.length - 1]?.price).toBe(6000);
   });
 
+  it('prices unseeded entries shortest odds first, ties in their given order, and entries with no odds last', () => {
+    const result = deriveGolfPrices([
+      { participantId: 'no-odds', seedNumber: null, oddsToWin: null },
+      { participantId: 'long', seedNumber: null, oddsToWin: 20 },
+      { participantId: 'tied-a', seedNumber: null, oddsToWin: 5 },
+      { participantId: 'tied-b', seedNumber: null, oddsToWin: 5 },
+      { participantId: 'fav', seedNumber: null, oddsToWin: 2.5 },
+    ], standard);
+
+    expect(result.map((r) => r.participantId)).toEqual(['fav', 'tied-a', 'tied-b', 'long', 'no-odds']);
+  });
+
   it('prices a straight line with steepness 1', () => {
     const prices = deriveGolfPrices(field(3), { ...standard, steepness: 1 }).map((r) => r.price);
 

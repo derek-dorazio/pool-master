@@ -36,7 +36,7 @@ import {
   type SportEventParticipant,
   type SportEventTier,
 } from '@poolmaster/shared/domain';
-import { deriveGolfPrices } from '../golf/golf-seeding-algorithm';
+import { compareNullsLast, deriveGolfPrices } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
 
 /** One field row's place in a tier. */
@@ -275,7 +275,7 @@ export class SportEventTierService {
 
   /**
    * Prices the active field on the budget curve (#93) with `pricingConfig`'s values, best seed
-   * first and golfers with no seed (an invited guest) at the bottom in a stable order, and
+   * first, then participants with no seed by odds, shortest first (#653), and
    * records those values on the event, in one write. A separate, later action from seeding (plans/124
    * §4.7a), repeatable with other values until release. Tiers are untouched. 422
    * PRICING_CONFIG_INVALID when the values contradict each other.
@@ -333,15 +333,8 @@ export class SportEventTierService {
 
 /** Ranking or odds first as `source` says, the other second, then participant id for a stable order. */
 function compareForTiering(left: SportEventParticipant, right: SportEventParticipant, source: TierSource): number {
-  const byRanking = compareNullableNumbers(left.ranking, right.ranking);
-  const byOdds = compareNullableNumbers(left.oddsToWin, right.oddsToWin);
+  const byRanking = compareNullsLast(left.ranking, right.ranking);
+  const byOdds = compareNullsLast(left.oddsToWin, right.oddsToWin);
   const [first, second] = source === TierSource.RANKING ? [byRanking, byOdds] : [byOdds, byRanking];
   return first || second || left.participantId.localeCompare(right.participantId, undefined, { sensitivity: 'base' });
-}
-
-function compareNullableNumbers(left: number | undefined, right: number | undefined): number {
-  if (left == null && right == null) return 0;
-  if (left == null) return 1;
-  if (right == null) return -1;
-  return left - right;
 }
