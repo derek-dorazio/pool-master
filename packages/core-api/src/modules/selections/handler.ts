@@ -25,6 +25,7 @@ type ContestParams = { contestId: string };
 type SelectionStateRequest = FastifyRequest<{ Params: ContestParams; Querystring: SelectionStateQuery }>;
 type SubmitSelectionRequest = FastifyRequest<{ Params: ContestParams; Body: SubmitPickRequest }>;
 type SubmitEntryRequest = FastifyRequest<{ Params: ContestParams & { entryId: string } }>;
+type RunDrawRequest = FastifyRequest<{ Params: ContestParams }>;
 
 /**
  * Function-typed properties rather than method shorthand: the route passes each of these to
@@ -35,6 +36,7 @@ export interface SelectionHandlers {
   getSelectionState: (request: SelectionStateRequest) => Promise<SelectionStateResponse>;
   submitContestSelection: (request: SubmitSelectionRequest) => Promise<SelectionPickResponse>;
   submitContestEntry: (request: SubmitEntryRequest) => Promise<SelectionStateResponse>;
+  runContestDraw: (request: RunDrawRequest) => Promise<SelectionStateResponse>;
 }
 
 export function createSelectionHandlers(service: SelectionService): SelectionHandlers {
@@ -77,5 +79,14 @@ export function createSelectionHandlers(service: SelectionService): SelectionHan
     return toSelectionStateResponse(view);
   }
 
-  return { getSelectionState, submitContestSelection, submitContestEntry };
+  /** Running a random draw answers with the room as dealt (#601). */
+  async function runContestDraw(request: RunDrawRequest): Promise<SelectionStateResponse> {
+    const view = await service.runDraw({
+      contestId: request.params.contestId,
+      actorUserId: request.authUser?.userId,
+    });
+    return toSelectionStateResponse(view);
+  }
+
+  return { getSelectionState, submitContestSelection, submitContestEntry, runContestDraw };
 }

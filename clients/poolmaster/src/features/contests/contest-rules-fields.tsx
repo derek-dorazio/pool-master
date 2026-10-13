@@ -1,4 +1,5 @@
-import { SelectionType, getTieredRosterSize } from '@poolmaster/shared/domain';
+import type { ReactElement } from 'react';
+import { RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SelectionType, getTieredRosterSize } from '@poolmaster/shared/domain';
 import { Checkbox, FormField, formatDollars, Input } from '@/features/shared/ui';
 import { defaultCountedScoresFor, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
@@ -102,9 +103,68 @@ function BudgetRulesInputs({
 }
 
 /**
+ * The random-draw inputs: how many golfers the commissioner's draw deals each entry, and how many
+ * of their scores count. Nobody picks, so there is nothing else to set.
+ */
+function RandomDrawRulesInputs({
+  onChange,
+  values,
+}: {
+  onChange: (next: Partial<ContestRulesValues>) => void;
+  values: ContestRulesValues;
+}) {
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <FormField helperText="The draw deals each entry this many golfers at random." label="Golfers per entry">
+        <Input
+          data-testid="contest-draw-picks-per-entry"
+          max={RANDOM_DRAW_PICKS_PER_ENTRY_MAX}
+          min={1}
+          onChange={(event) => onChange({ picksPerEntry: event.target.value })}
+          type="number"
+          value={values.picksPerEntry}
+        />
+      </FormField>
+      <FormField
+        helperText={`Best ${values.countedScores || '?'} of ${values.picksPerEntry || '?'}`}
+        label="Scores that count"
+      >
+        <Input
+          data-testid="contest-draw-counted-scores"
+          min={1}
+          onChange={(event) => onChange({ countedScores: event.target.value })}
+          type="number"
+          value={values.countedScores}
+        />
+      </FormField>
+    </div>
+  );
+}
+
+type RulesInputsProps = {
+  onChange: (next: Partial<ContestRulesValues>) => void;
+  salaryCap: number | null;
+  tierCount: number;
+  values: ContestRulesValues;
+};
+
+/** Each format's own inputs. A `Record` over the type, so a new format without inputs fails the typecheck. */
+const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => ReactElement> = {
+  [SelectionType.TIERED]: ({ onChange, tierCount, values }: RulesInputsProps) => (
+    <TieredRulesInputs onChange={onChange} tierCount={tierCount} values={values} />
+  ),
+  [SelectionType.BUDGET_PICK]: ({ onChange, salaryCap, values }: RulesInputsProps) => (
+    <BudgetRulesInputs onChange={onChange} salaryCap={salaryCap} values={values} />
+  ),
+  [SelectionType.RANDOM_DRAW]: ({ onChange, values }: RulesInputsProps) => (
+    <RandomDrawRulesInputs onChange={onChange} values={values} />
+  ),
+};
+
+/**
  * The rules inputs for a contest's format: picks per tier and scores that count for a tiered
  * contest, golfers per entry and scores that count under the event's salary cap for a budget
- * one, then entries per team with No limit. Create and Edit contest both use it, so a new format
+ * one, golfers dealt per entry and scores that count for a random draw, then entries per team with No limit. Create and Edit contest both use it, so a new format
  * adds its fields here once.
  */
 export function ContestRulesFields({
@@ -123,9 +183,7 @@ export function ContestRulesFields({
 }) {
   return (
     <div className="space-y-4">
-      {selectionType === SelectionType.BUDGET_PICK
-        ? <BudgetRulesInputs onChange={onChange} salaryCap={salaryCap} values={values} />
-        : <TieredRulesInputs onChange={onChange} tierCount={tierCount} values={values} />}
+      {RULES_INPUTS[selectionType]({ onChange, salaryCap, tierCount, values })}
       <div className="grid gap-4 md:grid-cols-2">
         <FormField label="Entries per team">
           <Input

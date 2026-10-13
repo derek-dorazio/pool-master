@@ -90,6 +90,7 @@ export const SelectionStateResponseSchema = z.object({
   contestId: z.string(),
   contestName: z.string(),
   selectionType: z.nativeEnum(SelectionType),
+  drawnAt: z.string().datetime().nullable().describe('When a random-draw contest\'s draw dealt its picks, closing its entries and revealing every entry\'s picks. Null until then, and always for other selection types.'),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
   status: z.enum([
@@ -115,6 +116,7 @@ export const SelectionPickResponseSchema = z.object({
   contestId: z.string(),
   contestName: z.string(),
   selectionType: z.nativeEnum(SelectionType),
+  drawnAt: z.string().datetime().nullable().describe('When a random-draw contest\'s draw dealt its picks, closing its entries and revealing every entry\'s picks. Null until then, and always for other selection types.'),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
   status: z.enum([

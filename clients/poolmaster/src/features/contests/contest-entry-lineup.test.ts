@@ -75,3 +75,21 @@ describe('budget lineup rules on the entry page', () => {
   });
 
 });
+
+describe('random-draw lineup rules on the entry page', () => {
+  const draw = LINEUP_RULES[SelectionType.RANDOM_DRAW];
+
+  it('leaves the room unchanged on a tap, since the draw deals every golfer and nobody picks', () => {
+    const room = { ...budgetRoom(['a']), selectionType: SelectionType.RANDOM_DRAW, lineupSummary: undefined };
+
+    expect(draw.applySelection(room, 'b', 'entry-1')).toBe(room);
+  });
+
+  it('always blocks submitting by hand, saying the commissioner\'s draw deals the golfers', () => {
+    const room = { ...budgetRoom(['a', 'b']), selectionType: SelectionType.RANDOM_DRAW, lineupSummary: undefined };
+
+    expect(draw.submitBlockedReason(room)).toBe(
+      'Golfers in this contest are dealt by the commissioner’s draw, so there is nothing to submit.',
+    );
+  });
+});

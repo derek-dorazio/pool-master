@@ -32,7 +32,7 @@ export const CreateContestRequestSchema = z.object({
   contestFormat: z.literal(ContestFormat.ROSTER).describe(
     'First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.',
   ),
-  selectionType: z.enum([SelectionType.TIERED, SelectionType.BUDGET_PICK]).describe(
+  selectionType: z.nativeEnum(SelectionType).describe(
     'How an entry picks: the selection types with typed rules. It must match the template\'s selection type when a template is named, and the configuration\'s.',
   ),
   templateId: z.string().uuid().optional().describe('Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.'),
@@ -84,6 +84,7 @@ export const ContestDtoSchema = z.object({
   sportEvent: ContestEventSummaryDtoSchema.nullable().optional().describe('The sport event\'s name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself.'),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
+  drawnAt: z.string().datetime().nullable().optional().describe('When a random-draw contest\'s draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.'),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
 }).describe('A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields).');

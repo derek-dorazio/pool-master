@@ -2311,6 +2311,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/selections/{contestId}/draw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run a random draw
+         * @description Runs a random-draw contest's draw and returns the refreshed selection state. Commissioner of the contest's league only (root admins bypass): 403 otherwise. The draw shuffles the event's available field and deals it round-robin, so every entry gets the contest's picksPerEntry; field members left over are not dealt. Every entry is submitted, entries close (no entering, leaving or renaming), and every entry's picks are visible to the league from then on. Final: there is no undo or redraw. The seed and dealt order are kept so the draw can be replayed. 409 CONTEST_NOT_RANDOM_DRAW for another selection type, CONTEST_DRAW_ALREADY_RUN once drawn, CONTEST_DRAW_NOT_OPEN unless the contest is OPEN, CONTEST_EVENT_ALREADY_STARTED once its event's start time has passed, CONTEST_DRAW_NO_ENTRIES with no entries, CONTEST_DRAW_FIELD_TOO_SMALL when the available field cannot deal every entry its picks, CONTEST_DRAW_ENTRIES_CHANGED when an entry came or went while the draw ran (nothing is dealt; run it again).
+         */
+        post: operations["runContestDraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4335,6 +4355,15 @@ export interface components {
             countedScores: number;
             /** @description Maximum entries a Team may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
+        } | {
+            /** @enum {string} */
+            selectionType: "RANDOM_DRAW";
+            /** @description How many members of the field the draw deals each entry. */
+            picksPerEntry: number;
+            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+            countedScores: number;
+            /** @description Maximum entries a Team may create. Null means unlimited. */
+            maxEntriesPerSquad?: number | null;
         };
         /** @description One inherited event tier and its participant assignments. */
         EffectiveTierDto: {
@@ -4391,6 +4420,19 @@ export interface components {
                 countedScores: number;
                 /** @description Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more. */
                 salaryCap: number;
+                /** @description Contest-configuration identifier. */
+                id: string;
+                /** @description Contest that owns the configuration. */
+                contestId: string;
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+            } | {
+                /** @enum {string} */
+                selectionType: "RANDOM_DRAW";
+                /** @description How many members of the field the draw deals each entry. */
+                picksPerEntry: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
                 /** @description Contest-configuration identifier. */
                 id: string;
                 /** @description Contest that owns the configuration. */
@@ -4459,7 +4501,7 @@ export interface components {
              * @description How an entry picks in a contest created from this template.
              * @enum {string}
              */
-            selectionType: "TIERED" | "BUDGET_PICK";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
             /** @description Stable machine key for the template. */
             templateKey: string;
             /** @description Commissioner-facing template label. */
@@ -4489,6 +4531,15 @@ export interface components {
                 selectionType: "BUDGET_PICK";
                 /** @description How many golfers an entry picks, from anywhere in the field. */
                 rosterSize: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+            } | {
+                /** @enum {string} */
+                selectionType: "RANDOM_DRAW";
+                /** @description How many members of the field the draw deals each entry. */
+                picksPerEntry: number;
                 /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                 countedScores: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
@@ -4532,6 +4583,19 @@ export interface components {
                     countedScores: number;
                     /** @description Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more. */
                     salaryCap: number;
+                    /** @description Contest-configuration identifier. */
+                    id: string;
+                    /** @description Contest that owns the configuration. */
+                    contestId: string;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                } | {
+                    /** @enum {string} */
+                    selectionType: "RANDOM_DRAW";
+                    /** @description How many members of the field the draw deals each entry. */
+                    picksPerEntry: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
                     /** @description Contest-configuration identifier. */
                     id: string;
                     /** @description Contest that owns the configuration. */
@@ -4619,7 +4683,7 @@ export interface components {
                  * @description How an entry picks in a contest created from this template.
                  * @enum {string}
                  */
-                selectionType: "TIERED" | "BUDGET_PICK";
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
                 /** @description Stable machine key for the template. */
                 templateKey: string;
                 /** @description Commissioner-facing template label. */
@@ -4649,6 +4713,15 @@ export interface components {
                     selectionType: "BUDGET_PICK";
                     /** @description How many golfers an entry picks, from anywhere in the field. */
                     rosterSize: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                } | {
+                    /** @enum {string} */
+                    selectionType: "RANDOM_DRAW";
+                    /** @description How many members of the field the draw deals each entry. */
+                    picksPerEntry: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
@@ -4687,6 +4760,15 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+            } | {
+                /** @enum {string} */
+                selectionType: "RANDOM_DRAW";
+                /** @description How many members of the field the draw deals each entry. */
+                picksPerEntry: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
             };
         };
         /** @description A single contest configuration template. */
@@ -4714,7 +4796,7 @@ export interface components {
                  * @description How an entry picks in a contest created from this template.
                  * @enum {string}
                  */
-                selectionType: "TIERED" | "BUDGET_PICK";
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
                 /** @description Stable machine key for the template. */
                 templateKey: string;
                 /** @description Commissioner-facing template label. */
@@ -4744,6 +4826,15 @@ export interface components {
                     selectionType: "BUDGET_PICK";
                     /** @description How many golfers an entry picks, from anywhere in the field. */
                     rosterSize: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                } | {
+                    /** @enum {string} */
+                    selectionType: "RANDOM_DRAW";
+                    /** @description How many members of the field the draw deals each entry. */
+                    picksPerEntry: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
@@ -7245,7 +7336,7 @@ export interface components {
              * @description How an entry picks: the selection types with typed rules. It must match the template's selection type when a template is named, and the configuration's.
              * @enum {string}
              */
-            selectionType: "TIERED" | "BUDGET_PICK";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
             /**
              * Format: uuid
              * @description Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.
@@ -7266,6 +7357,15 @@ export interface components {
                 selectionType: "BUDGET_PICK";
                 /** @description How many golfers an entry picks, from anywhere in the field. */
                 rosterSize: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+            } | {
+                /** @enum {string} */
+                selectionType: "RANDOM_DRAW";
+                /** @description How many members of the field the draw deals each entry. */
+                picksPerEntry: number;
                 /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                 countedScores: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
@@ -7306,7 +7406,7 @@ export interface components {
             /** @enum {string} */
             contestFormat: "ROSTER";
             /** @enum {string} */
-            selectionType: "TIERED" | "BUDGET_PICK";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
             leagueId: string;
             sportEventId?: string | null;
             /** @enum {string|null} */
@@ -7327,6 +7427,11 @@ export interface components {
             startsAt?: string | null;
             /** Format: date-time */
             endsAt?: string | null;
+            /**
+             * Format: date-time
+             * @description When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.
+             */
+            drawnAt?: string | null;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -7807,7 +7912,7 @@ export interface components {
                 /** @enum {string} */
                 contestFormat: "ROSTER";
                 /** @enum {string} */
-                selectionType: "TIERED" | "BUDGET_PICK";
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
                 leagueId: string;
                 sportEventId?: string | null;
                 /** @enum {string|null} */
@@ -7828,6 +7933,11 @@ export interface components {
                 startsAt?: string | null;
                 /** Format: date-time */
                 endsAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.
+                 */
+                drawnAt?: string | null;
                 /** Format: date-time */
                 createdAt?: string;
                 /** Format: date-time */
@@ -7844,7 +7954,7 @@ export interface components {
                 /** @enum {string} */
                 contestFormat: "ROSTER";
                 /** @enum {string} */
-                selectionType: "TIERED" | "BUDGET_PICK";
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
                 leagueId: string;
                 sportEventId?: string | null;
                 /** @enum {string|null} */
@@ -7865,6 +7975,11 @@ export interface components {
                 startsAt?: string | null;
                 /** Format: date-time */
                 endsAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.
+                 */
+                drawnAt?: string | null;
                 /** Format: date-time */
                 createdAt?: string;
                 /** Format: date-time */
@@ -8071,7 +8186,12 @@ export interface components {
             contestId: string;
             contestName: string;
             /** @enum {string} */
-            selectionType: "TIERED" | "BUDGET_PICK";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
+            /**
+             * Format: date-time
+             * @description When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
+             */
+            drawnAt: string | null;
             isCommissioner?: boolean;
             rosterSize: number;
             /** @enum {string} */
@@ -8163,7 +8283,12 @@ export interface components {
             contestId: string;
             contestName: string;
             /** @enum {string} */
-            selectionType: "TIERED" | "BUDGET_PICK";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
+            /**
+             * Format: date-time
+             * @description When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
+             */
+            drawnAt: string | null;
             isCommissioner?: boolean;
             rosterSize: number;
             /** @enum {string} */
@@ -18073,6 +18198,73 @@ export interface operations {
             path: {
                 contestId: string;
                 entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Selection-state response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SelectionStateResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    runContestDraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
             };
             cookie?: never;
         };

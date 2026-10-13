@@ -295,7 +295,7 @@ export class ContestService {
   }> {
     const context = await this.getEntryContext(contestId, userId, 'read');
     const squadId = context.squadMembership?.squadId ?? null;
-    const picksRevealed = contestPicksRevealed(context.contest.status);
+    const picksRevealed = contestPicksRevealed(context.contest);
     const entries = await this.loadEntryDetailDtos(contestId, {
       requesterSquadId: squadId,
       revealAll: picksRevealed,
@@ -325,7 +325,7 @@ export class ContestService {
   ): Promise<{ entry: ContestEntryDto; picksRevealed: boolean }> {
     const context = await this.getEntryContext(contestId, requesterUserId, 'read');
     const requesterSquadId = context.squadMembership?.squadId ?? null;
-    const picksRevealed = contestPicksRevealed(context.contest.status);
+    const picksRevealed = contestPicksRevealed(context.contest);
 
     const found = await this.deps.entries.findByIdWithSquad(entryId);
     const row = found?.contestId === contestId ? found : null;
@@ -359,7 +359,7 @@ export class ContestService {
     requesterUserId: string,
   ): Promise<ContestLeaderboardModel> {
     const context = await this.getEntryContext(contestId, requesterUserId, 'read');
-    if (!contestPicksRevealed(context.contest.status)) {
+    if (!contestPicksRevealed(context.contest)) {
       throw new ContestOperationError(
         'The leaderboard is not available until contest picks are revealed.',
         'CONTEST_LEADERBOARD_PICKS_HIDDEN',
@@ -1131,9 +1131,11 @@ function buildEntryUrl(
  *
  * pool-master-dxd.13 — picks are hidden from non-owners until the contest moves past
  * taking entries (DRAFT or OPEN). Once it progresses (ACTIVE, COMPLETED), picks are public to
- * every league member.
+ * every league member. A random draw is public from the moment it is dealt (#601): nobody
+ * chose those picks, so there is nothing to hide.
  */
-export function contestPicksRevealed(status: ContestStatus): boolean {
-  return status !== ContestStatus.DRAFT && status !== ContestStatus.OPEN;
+export function contestPicksRevealed(contest: Pick<Contest, 'status' | 'drawnAt'>): boolean {
+  return contest.drawnAt !== undefined
+    || (contest.status !== ContestStatus.DRAFT && contest.status !== ContestStatus.OPEN);
 }
 

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ListOrdered, Wallet, type LucideIcon } from 'lucide-react';
+import { ListOrdered, Shuffle, Wallet, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -67,6 +67,11 @@ const FORMAT_CHOICES: Array<{ description: string; icon: LucideIcon; selectionTy
     icon: Wallet,
     description: 'Every golfer has a price. Pick a roster whose prices fit under the salary cap.',
   },
+  {
+    selectionType: SelectionType.RANDOM_DRAW,
+    icon: Shuffle,
+    description: 'A sweepstake: nobody picks. Once entries are in, you run the draw and each entry is dealt golfers at random.',
+  },
 ];
 
 
@@ -79,6 +84,7 @@ const createContestFormSchema = z.object({
   contestName: z.string().trim().min(1, 'Contest name is required.'),
   countedScores: z.string(),
   maxEntriesPerTeam: z.string(),
+  picksPerEntry: z.string(),
   picksPerTier: z.string(),
   rosterSize: z.string(),
   selectedTemplateId: z.string(),

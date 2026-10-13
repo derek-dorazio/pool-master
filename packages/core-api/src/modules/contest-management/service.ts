@@ -15,6 +15,7 @@ import type {
 } from '@poolmaster/shared/dto';
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
+  CONTEST_DRAW_FIELD_OUT_OF_RANGE,
   CONTEST_BUDGET_UNFILLABLE,
   CONTEST_CONFIGURATION_LOCKED,
   CONTEST_CONFIGURATION_REQUIRED,
@@ -470,6 +471,23 @@ export class ContestManagementService {
       case SelectionType.BUDGET_PICK:
         return {
           configJson: await this.resolveBudgetRules(sportEvent, rules),
+          scoringDefinitionId,
+        };
+      case SelectionType.RANDOM_DRAW:
+        // The field is checked against the entries when the draw runs (#601): until then nobody
+        // knows how many entries it must deal to.
+        if (rules.countedScores > rules.picksPerEntry) {
+          throw new ContestManagementError(
+            `countedScores (${rules.countedScores}) cannot exceed the ${rules.picksPerEntry} the draw deals each entry.`,
+            CONTEST_DRAW_FIELD_OUT_OF_RANGE,
+          );
+        }
+        return {
+          configJson: {
+            selectionType: rules.selectionType,
+            picksPerEntry: rules.picksPerEntry,
+            countedScores: rules.countedScores,
+          },
           scoringDefinitionId,
         };
     }

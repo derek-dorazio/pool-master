@@ -2640,6 +2640,20 @@ export type ContestConfigurationRequest = {
      * Maximum entries a Team may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
+} | {
+    selectionType: 'RANDOM_DRAW';
+    /**
+     * How many members of the field the draw deals each entry.
+     */
+    picksPerEntry: number;
+    /**
+     * How many golfer scores count toward the entry total, best first. At most the roster size.
+     */
+    countedScores: number;
+    /**
+     * Maximum entries a Team may create. Null means unlimited.
+     */
+    maxEntriesPerSquad?: number | null;
 };
 
 /**
@@ -2753,6 +2767,28 @@ export type ContestManagementDetailDto = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+    } | {
+        selectionType: 'RANDOM_DRAW';
+        /**
+         * How many members of the field the draw deals each entry.
+         */
+        picksPerEntry: number;
+        /**
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
+         */
+        countedScores: number;
+        /**
+         * Contest-configuration identifier.
+         */
+        id: string;
+        /**
+         * Contest that owns the configuration.
+         */
+        contestId: string;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
     };
     /**
      * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
@@ -2833,7 +2869,7 @@ export type ContestConfigTemplateDto = {
     /**
      * How an entry picks in a contest created from this template.
      */
-    selectionType: 'TIERED' | 'BUDGET_PICK';
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
     /**
      * Stable machine key for the template.
      */
@@ -2885,6 +2921,20 @@ export type ContestConfigTemplateDto = {
          * How many golfers an entry picks, from anywhere in the field.
          */
         rosterSize: number;
+        /**
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
+         */
+        countedScores: number;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+    } | {
+        selectionType: 'RANDOM_DRAW';
+        /**
+         * How many members of the field the draw deals each entry.
+         */
+        picksPerEntry: number;
         /**
          * How many golfer scores count toward the entry total, best first. At most the roster size.
          */
@@ -2960,6 +3010,28 @@ export type ContestManagementResponse = {
              * Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more.
              */
             salaryCap: number;
+            /**
+             * Contest-configuration identifier.
+             */
+            id: string;
+            /**
+             * Contest that owns the configuration.
+             */
+            contestId: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
+        } | {
+            selectionType: 'RANDOM_DRAW';
+            /**
+             * How many members of the field the draw deals each entry.
+             */
+            picksPerEntry: number;
+            /**
+             * How many golfer scores count toward the entry total, best first. At most the roster size.
+             */
+            countedScores: number;
             /**
              * Contest-configuration identifier.
              */
@@ -3076,7 +3148,7 @@ export type ContestConfigTemplateListResponse = {
         /**
          * How an entry picks in a contest created from this template.
          */
-        selectionType: 'TIERED' | 'BUDGET_PICK';
+        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
         /**
          * Stable machine key for the template.
          */
@@ -3128,6 +3200,20 @@ export type ContestConfigTemplateListResponse = {
              * How many golfers an entry picks, from anywhere in the field.
              */
             rosterSize: number;
+            /**
+             * How many golfer scores count toward the entry total, best first. At most the roster size.
+             */
+            countedScores: number;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
+        } | {
+            selectionType: 'RANDOM_DRAW';
+            /**
+             * How many members of the field the draw deals each entry.
+             */
+            picksPerEntry: number;
             /**
              * How many golfer scores count toward the entry total, best first. At most the roster size.
              */
@@ -3195,6 +3281,20 @@ export type UpdateContestConfigTemplateRequest = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+    } | {
+        selectionType: 'RANDOM_DRAW';
+        /**
+         * How many members of the field the draw deals each entry.
+         */
+        picksPerEntry: number;
+        /**
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
+         */
+        countedScores: number;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
     };
 };
 
@@ -3225,7 +3325,7 @@ export type ContestConfigTemplateResponse = {
         /**
          * How an entry picks in a contest created from this template.
          */
-        selectionType: 'TIERED' | 'BUDGET_PICK';
+        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
         /**
          * Stable machine key for the template.
          */
@@ -3277,6 +3377,20 @@ export type ContestConfigTemplateResponse = {
              * How many golfers an entry picks, from anywhere in the field.
              */
             rosterSize: number;
+            /**
+             * How many golfer scores count toward the entry total, best first. At most the roster size.
+             */
+            countedScores: number;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
+        } | {
+            selectionType: 'RANDOM_DRAW';
+            /**
+             * How many members of the field the draw deals each entry.
+             */
+            picksPerEntry: number;
             /**
              * How many golfer scores count toward the entry total, best first. At most the roster size.
              */
@@ -6522,7 +6636,7 @@ export type CreateContestRequest = {
     /**
      * How an entry picks: the selection types with typed rules. It must match the template's selection type when a template is named, and the configuration's.
      */
-    selectionType: 'TIERED' | 'BUDGET_PICK';
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
     /**
      * Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.
      */
@@ -6550,6 +6664,20 @@ export type CreateContestRequest = {
          * How many golfers an entry picks, from anywhere in the field.
          */
         rosterSize: number;
+        /**
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
+         */
+        countedScores: number;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+    } | {
+        selectionType: 'RANDOM_DRAW';
+        /**
+         * How many members of the field the draw deals each entry.
+         */
+        picksPerEntry: number;
         /**
          * How many golfer scores count toward the entry total, best first. At most the roster size.
          */
@@ -6606,7 +6734,7 @@ export type ContestDto = {
     name: string;
     status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
     contestFormat: 'ROSTER';
-    selectionType: 'TIERED' | 'BUDGET_PICK';
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
     leagueId: string;
     sportEventId?: string | null;
     sport?: 'GOLF' | null;
@@ -6629,6 +6757,10 @@ export type ContestDto = {
     } | null;
     startsAt?: string | null;
     endsAt?: string | null;
+    /**
+     * When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.
+     */
+    drawnAt?: string | null;
     createdAt?: string;
     updatedAt?: string;
 };
@@ -7295,7 +7427,7 @@ export type ContestResponse = {
         name: string;
         status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
         contestFormat: 'ROSTER';
-        selectionType: 'TIERED' | 'BUDGET_PICK';
+        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
         leagueId: string;
         sportEventId?: string | null;
         sport?: 'GOLF' | null;
@@ -7318,6 +7450,10 @@ export type ContestResponse = {
         } | null;
         startsAt?: string | null;
         endsAt?: string | null;
+        /**
+         * When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.
+         */
+        drawnAt?: string | null;
         createdAt?: string;
         updatedAt?: string;
     };
@@ -7332,7 +7468,7 @@ export type ContestListResponse = {
         name: string;
         status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
         contestFormat: 'ROSTER';
-        selectionType: 'TIERED' | 'BUDGET_PICK';
+        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
         leagueId: string;
         sportEventId?: string | null;
         sport?: 'GOLF' | null;
@@ -7355,6 +7491,10 @@ export type ContestListResponse = {
         } | null;
         startsAt?: string | null;
         endsAt?: string | null;
+        /**
+         * When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.
+         */
+        drawnAt?: string | null;
         createdAt?: string;
         updatedAt?: string;
     }>;
@@ -7630,7 +7770,11 @@ export type SelectionBudgetLineupSummaryDto = {
 export type SelectionStateResponse = {
     contestId: string;
     contestName: string;
-    selectionType: 'TIERED' | 'BUDGET_PICK';
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
+    /**
+     * When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
+     */
+    drawnAt: string | null;
     isCommissioner?: boolean;
     rosterSize: number;
     status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
@@ -7746,7 +7890,11 @@ export type SelectionStateResponse = {
 export type SelectionPickResponse = {
     contestId: string;
     contestName: string;
-    selectionType: 'TIERED' | 'BUDGET_PICK';
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
+    /**
+     * When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
+     */
+    drawnAt: string | null;
     isCommissioner?: boolean;
     rosterSize: number;
     status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
@@ -16723,3 +16871,46 @@ export type SubmitContestEntryResponses = {
 };
 
 export type SubmitContestEntryResponse = SubmitContestEntryResponses[keyof SubmitContestEntryResponses];
+
+export type RunContestDrawData = {
+    body?: never;
+    path: {
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/selections/{contestId}/draw';
+};
+
+export type RunContestDrawErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type RunContestDrawError = RunContestDrawErrors[keyof RunContestDrawErrors];
+
+export type RunContestDrawResponses = {
+    /**
+     * Selection-state response.
+     */
+    200: SelectionStateResponse;
+};
+
+export type RunContestDrawResponse = RunContestDrawResponses[keyof RunContestDrawResponses];

@@ -91,10 +91,13 @@ export type TournamentFormat = (typeof TournamentFormat)[keyof typeof Tournament
  *
  * TIERED — pick N from defined tier groups; non-exclusive.
  * BUDGET_PICK — build a roster within a cost budget; non-exclusive.
+ * RANDOM_DRAW — nobody picks: the commissioner's draw deals each entry members of the field
+ *   at random (a sweepstake, #601); exclusive, since each is dealt once.
  */
 export const SelectionType = {
   TIERED: 'TIERED',
   BUDGET_PICK: 'BUDGET_PICK',
+  RANDOM_DRAW: 'RANDOM_DRAW',
 } as const;
 export type SelectionType = (typeof SelectionType)[keyof typeof SelectionType];
 

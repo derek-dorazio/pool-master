@@ -8,6 +8,7 @@ import { formatDollars } from '@/features/shared/ui';
 const SELECTION_TYPE_NAMES: Record<SelectionType, string> = {
   TIERED: 'Tiered',
   BUDGET_PICK: 'Budget',
+  RANDOM_DRAW: 'Random draw',
 };
 
 export function formatSelectionTypeName(selectionType: SelectionType) {
@@ -21,6 +22,7 @@ export function pluralize(count: number, singular: string, plural = `${singular}
 
 type TieredRules = Extract<ContestRules, { selectionType: typeof SelectionType.TIERED }>;
 type BudgetRules = Extract<ContestRules, { selectionType: typeof SelectionType.BUDGET_PICK }>;
+type RandomDrawRules = Extract<ContestRules, { selectionType: typeof SelectionType.RANDOM_DRAW }>;
 
 /** "Every score counts.", "The best score counts." or "The best 4 scores count." */
 function formatCountedScores(countedScores: number, rosterSize: number | null) {
@@ -47,6 +49,15 @@ function formatBudgetRules({ countedScores, rosterSize }: BudgetRules, salaryCap
   return `Pick ${pluralize(rosterSize, 'golfer')} whose prices fit under ${cap}. ${formatCountedScores(countedScores, rosterSize)}`;
 }
 
+function formatRandomDrawRules({ countedScores, picksPerEntry }: RandomDrawRules) {
+  return `The draw deals each entry ${pluralize(picksPerEntry, 'golfer')} at random. ${formatCountedScores(countedScores, picksPerEntry)}`;
+}
+
+/** "Pick 6, best 4" or "Pick 6, all count": a roster size and the scores that count. */
+function formatRosterLabel(verb: string, rosterSize: number, countedScores: number) {
+  return `${verb} ${rosterSize}, ${countedScores >= rosterSize ? 'all count' : `best ${countedScores}`}`;
+}
+
 /**
  * A contest's rules as one plain sentence, such as "Pick 1 golfer from each of 6 tiers. The best
  * 4 scores count." Keyed by selection type, so each new way of picking adds its own arm here.
@@ -59,6 +70,8 @@ export function formatContestRules(configuration: ContestRules, tierCount: numbe
       return formatTieredRules(configuration, tierCount);
     case SelectionType.BUDGET_PICK:
       return formatBudgetRules(configuration, salaryCap);
+    case SelectionType.RANDOM_DRAW:
+      return formatRandomDrawRules(configuration);
   }
 }
 
@@ -91,13 +104,15 @@ export function formatPresetLabel(configuration: ContestRules, tierCount: number
       return `${pick}, ${count}`;
     }
     case SelectionType.BUDGET_PICK:
-      return `Pick ${configuration.rosterSize}, ${configuration.countedScores >= configuration.rosterSize ? 'all count' : `best ${configuration.countedScores}`}`;
+      return formatRosterLabel('Pick', configuration.rosterSize, configuration.countedScores);
+    case SelectionType.RANDOM_DRAW:
+      return formatRosterLabel('Draw', configuration.picksPerEntry, configuration.countedScores);
   }
 }
 
 /**
  * The name Create contest suggests from the event and the rules, such as "The Masters Pick 6" or
- * "The Masters Budget Pick 6", until the commissioner types their own.
+ * "The Masters Budget Pick 6", or "The Masters Sweepstake" for a random draw, until the commissioner types their own.
  */
 export function suggestContestName(
   eventName: string,
@@ -114,7 +129,7 @@ export function suggestContestName(
       return configuration?.selectionType === SelectionType.BUDGET_PICK
         ? `${eventName} Budget Pick ${configuration.rosterSize}`
         : `${eventName} Budget`;
-    default:
-      return `${eventName} ${formatSelectionTypeName(selectionType)}`;
+    case SelectionType.RANDOM_DRAW:
+      return `${eventName} Sweepstake`;
   }
 }

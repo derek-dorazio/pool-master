@@ -5611,6 +5611,43 @@
             ],
             "additionalProperties": false,
             "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "selectionType": {
+                "type": "string",
+                "enum": [
+                  "RANDOM_DRAW"
+                ]
+              },
+              "picksPerEntry": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 12,
+                "description": "How many members of the field the draw deals each entry."
+              },
+              "countedScores": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+              },
+              "maxEntriesPerSquad": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "description": "Maximum entries a Team may create. Null means unlimited."
+              }
+            },
+            "required": [
+              "selectionType",
+              "picksPerEntry",
+              "countedScores"
+            ],
+            "additionalProperties": false,
+            "description": "Random-draw rules: the commissioner's draw deals every entry the same number of the field at random."
           }
         ],
         "description": "Contest rules and entries-per-team limit, one shape per selection type. `selectionType` must match the contest's."
@@ -5808,6 +5845,53 @@
                 ],
                 "additionalProperties": false,
                 "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "RANDOM_DRAW"
+                    ]
+                  },
+                  "picksPerEntry": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12,
+                    "description": "How many members of the field the draw deals each entry."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "Contest-configuration identifier."
+                  },
+                  "contestId": {
+                    "type": "string",
+                    "description": "Contest that owns the configuration."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "picksPerEntry",
+                  "countedScores",
+                  "id",
+                  "contestId"
+                ],
+                "additionalProperties": false,
+                "description": "Random-draw rules: the commissioner's draw deals every entry the same number of the field at random."
               }
             ],
             "description": "Current commissioner-managed contest configuration."
@@ -5953,7 +6037,8 @@
             "type": "string",
             "enum": [
               "TIERED",
-              "BUDGET_PICK"
+              "BUDGET_PICK",
+              "RANDOM_DRAW"
             ],
             "description": "How an entry picks in a contest created from this template."
           },
@@ -6059,6 +6144,43 @@
                 ],
                 "additionalProperties": false,
                 "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "RANDOM_DRAW"
+                    ]
+                  },
+                  "picksPerEntry": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12,
+                    "description": "How many members of the field the draw deals each entry."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "picksPerEntry",
+                  "countedScores"
+                ],
+                "additionalProperties": false,
+                "description": "Random-draw rules: the commissioner's draw deals every entry the same number of the field at random."
               }
             ],
             "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -6213,6 +6335,53 @@
                     ],
                     "additionalProperties": false,
                     "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "RANDOM_DRAW"
+                        ]
+                      },
+                      "picksPerEntry": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 12,
+                        "description": "How many members of the field the draw deals each entry."
+                      },
+                      "countedScores": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                      },
+                      "id": {
+                        "type": "string",
+                        "description": "Contest-configuration identifier."
+                      },
+                      "contestId": {
+                        "type": "string",
+                        "description": "Contest that owns the configuration."
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      }
+                    },
+                    "required": [
+                      "selectionType",
+                      "picksPerEntry",
+                      "countedScores",
+                      "id",
+                      "contestId"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Random-draw rules: the commissioner's draw deals every entry the same number of the field at random."
                   }
                 ],
                 "description": "Current commissioner-managed contest configuration."
@@ -6399,7 +6568,8 @@
                   "type": "string",
                   "enum": [
                     "TIERED",
-                    "BUDGET_PICK"
+                    "BUDGET_PICK",
+                    "RANDOM_DRAW"
                   ],
                   "description": "How an entry picks in a contest created from this template."
                 },
@@ -6505,6 +6675,43 @@
                       ],
                       "additionalProperties": false,
                       "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "selectionType": {
+                          "type": "string",
+                          "enum": [
+                            "RANDOM_DRAW"
+                          ]
+                        },
+                        "picksPerEntry": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 12,
+                          "description": "How many members of the field the draw deals each entry."
+                        },
+                        "countedScores": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                        },
+                        "maxEntriesPerSquad": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "description": "Maximum entries a Team may create. Null means unlimited."
+                        }
+                      },
+                      "required": [
+                        "selectionType",
+                        "picksPerEntry",
+                        "countedScores"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Random-draw rules: the commissioner's draw deals every entry the same number of the field at random."
                     }
                   ],
                   "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -6638,6 +6845,43 @@
                 ],
                 "additionalProperties": false,
                 "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "RANDOM_DRAW"
+                    ]
+                  },
+                  "picksPerEntry": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12,
+                    "description": "How many members of the field the draw deals each entry."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "picksPerEntry",
+                  "countedScores"
+                ],
+                "additionalProperties": false,
+                "description": "Random-draw rules: the commissioner's draw deals every entry the same number of the field at random."
               }
             ],
             "description": "Updated persisted configuration payload copied into future contests when this template is selected."
@@ -6682,7 +6926,8 @@
                 "type": "string",
                 "enum": [
                   "TIERED",
-                  "BUDGET_PICK"
+                  "BUDGET_PICK",
+                  "RANDOM_DRAW"
                 ],
                 "description": "How an entry picks in a contest created from this template."
               },
@@ -6788,6 +7033,43 @@
                     ],
                     "additionalProperties": false,
                     "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "RANDOM_DRAW"
+                        ]
+                      },
+                      "picksPerEntry": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 12,
+                        "description": "How many members of the field the draw deals each entry."
+                      },
+                      "countedScores": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      }
+                    },
+                    "required": [
+                      "selectionType",
+                      "picksPerEntry",
+                      "countedScores"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Random-draw rules: the commissioner's draw deals every entry the same number of the field at random."
                   }
                 ],
                 "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -13036,7 +13318,8 @@
             "type": "string",
             "enum": [
               "TIERED",
-              "BUDGET_PICK"
+              "BUDGET_PICK",
+              "RANDOM_DRAW"
             ],
             "description": "How an entry picks: the selection types with typed rules. It must match the template's selection type when a template is named, and the configuration's."
           },
@@ -13119,6 +13402,43 @@
                 ],
                 "additionalProperties": false,
                 "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "RANDOM_DRAW"
+                    ]
+                  },
+                  "picksPerEntry": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12,
+                    "description": "How many members of the field the draw deals each entry."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "picksPerEntry",
+                  "countedScores"
+                ],
+                "additionalProperties": false,
+                "description": "Random-draw rules: the commissioner's draw deals every entry the same number of the field at random."
               }
             ],
             "description": "The contest configuration. With a template, replaces the template's configuration; without one, is the configuration."
@@ -13224,7 +13544,8 @@
             "type": "string",
             "enum": [
               "TIERED",
-              "BUDGET_PICK"
+              "BUDGET_PICK",
+              "RANDOM_DRAW"
             ]
           },
           "leagueId": {
@@ -13286,6 +13607,14 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "drawnAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type."
           },
           "createdAt": {
             "type": "string",
@@ -14639,7 +14968,8 @@
                 "type": "string",
                 "enum": [
                   "TIERED",
-                  "BUDGET_PICK"
+                  "BUDGET_PICK",
+                  "RANDOM_DRAW"
                 ]
               },
               "leagueId": {
@@ -14702,6 +15032,14 @@
                 ],
                 "format": "date-time"
               },
+              "drawnAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type."
+              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time"
@@ -14762,7 +15100,8 @@
                   "type": "string",
                   "enum": [
                     "TIERED",
-                    "BUDGET_PICK"
+                    "BUDGET_PICK",
+                    "RANDOM_DRAW"
                   ]
                 },
                 "leagueId": {
@@ -14824,6 +15163,14 @@
                     "null"
                   ],
                   "format": "date-time"
+                },
+                "drawnAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "description": "When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type."
                 },
                 "createdAt": {
                   "type": "string",
@@ -15414,8 +15761,17 @@
             "type": "string",
             "enum": [
               "TIERED",
-              "BUDGET_PICK"
+              "BUDGET_PICK",
+              "RANDOM_DRAW"
             ]
+          },
+          "drawnAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types."
           },
           "isCommissioner": {
             "type": "boolean"
@@ -15744,6 +16100,7 @@
           "contestId",
           "contestName",
           "selectionType",
+          "drawnAt",
           "rosterSize",
           "status",
           "myEntryId",
@@ -15768,8 +16125,17 @@
             "type": "string",
             "enum": [
               "TIERED",
-              "BUDGET_PICK"
+              "BUDGET_PICK",
+              "RANDOM_DRAW"
             ]
+          },
+          "drawnAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types."
           },
           "isCommissioner": {
             "type": "boolean"
@@ -16098,6 +16464,7 @@
           "contestId",
           "contestName",
           "selectionType",
+          "drawnAt",
           "rosterSize",
           "status",
           "myEntryId",
@@ -32840,6 +33207,89 @@
             },
             "in": "path",
             "name": "entryId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Selection-state response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelectionStateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/selections/{contestId}/draw": {
+      "post": {
+        "operationId": "runContestDraw",
+        "summary": "Run a random draw",
+        "tags": [
+          "Selections"
+        ],
+        "description": "Runs a random-draw contest's draw and returns the refreshed selection state. Commissioner of the contest's league only (root admins bypass): 403 otherwise. The draw shuffles the event's available field and deals it round-robin, so every entry gets the contest's picksPerEntry; field members left over are not dealt. Every entry is submitted, entries close (no entering, leaving or renaming), and every entry's picks are visible to the league from then on. Final: there is no undo or redraw. The seed and dealt order are kept so the draw can be replayed. 409 CONTEST_NOT_RANDOM_DRAW for another selection type, CONTEST_DRAW_ALREADY_RUN once drawn, CONTEST_DRAW_NOT_OPEN unless the contest is OPEN, CONTEST_EVENT_ALREADY_STARTED once its event's start time has passed, CONTEST_DRAW_NO_ENTRIES with no entries, CONTEST_DRAW_FIELD_TOO_SMALL when the available field cannot deal every entry its picks, CONTEST_DRAW_ENTRIES_CHANGED when an entry came or went while the draw ran (nothing is dealt; run it again).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "contestId",
             "required": true
           }
         ],

@@ -1,5 +1,6 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { type ContestEntryStatus, ContestStatus } from '@poolmaster/shared/domain';
+import type { ContestDto } from '@poolmaster/shared/dto';
 import type { StatusBadgeProps } from '@/features/shared/ui';
 
 /**
@@ -55,13 +56,14 @@ export function isHistoricalContest(status: ContestStatus) {
  * scheduled start (the event's start, the server's entry cutoff) has not passed. The contest can
  * still read OPEN after tee-off when the event's In Progress update is late; the server refuses
  * changes then, so the page stops offering them. Without a known start, OPEN alone decides.
+ * A random draw closes entries when it deals, while the contest still reads OPEN (#601).
  */
 export function areContestEntriesOpen(
-  status: ContestStatus,
+  contest: Pick<ContestDto, 'status' | 'drawnAt'>,
   startsAt: string | null | undefined,
   now: Date = new Date(),
 ) {
-  if (status !== ContestStatus.OPEN) {
+  if (contest.status !== ContestStatus.OPEN || contest.drawnAt) {
     return false;
   }
   return !startsAt || now.getTime() < new Date(startsAt).getTime();

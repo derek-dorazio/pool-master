@@ -72,6 +72,8 @@ export const QueryKeys = {
   },
   selectionStates: {
     all: ['poolmaster', 'selection-state'] as const,
+    /** Every entry's room in one contest: what a draw changes all at once. */
+    byContest: (contestId: QueryKeyId) => ['poolmaster', 'selection-state', contestId] as const,
     detail: (contestId: QueryKeyId, entryId: QueryKeyId) =>
       ['poolmaster', 'selection-state', contestId, entryId] as const,
   },

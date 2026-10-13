@@ -6,6 +6,7 @@
 
 import { SelectionType } from '@poolmaster/shared/domain';
 import { budgetPickSelectionEngine } from './budget-pick';
+import { randomDrawSelectionEngine } from './random-draw';
 import type { SelectionEngine } from './selection-engine';
 import { tieredSelectionEngine } from './tiered';
 
@@ -16,6 +17,7 @@ import { tieredSelectionEngine } from './tiered';
 const ENGINE_BY_SELECTION_TYPE: Readonly<Record<SelectionType, SelectionEngine>> = {
   [SelectionType.TIERED]: tieredSelectionEngine,
   [SelectionType.BUDGET_PICK]: budgetPickSelectionEngine,
+  [SelectionType.RANDOM_DRAW]: randomDrawSelectionEngine,
 };
 
 /** The engine for a selection type. */

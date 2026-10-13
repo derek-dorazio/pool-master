@@ -99,7 +99,7 @@ A UI Label, Not A Domain Term*.
   routes); the **selection room** is the screen where an entry's picks are made. A **pick** is
   one participant chosen, the `ContestEntryPick` record. **Draft** is not a process name: it
   survives only as the snake draft selection type (unbuilt and not in the enum since #605;
-  `TIERED` and `BUDGET_PICK` are the built types), and as `DRAFT`, the first status of a `SportEvent`, a `Contest` and a
+  `TIERED`, `BUDGET_PICK` and `RANDOM_DRAW` are the built types), and as `DRAFT`, the first status of a `SportEvent`, a `Contest` and a
   `ContestEntry` (not yet released, opened, or submitted).
 - **Round**: an event's scheduled round (`SportEventRound`) and one golfer's round
   (`SportEventParticipantRound`). A pick's `lineupSlot` is its position in the lineup, not a round.

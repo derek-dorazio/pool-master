@@ -52,8 +52,9 @@ Where to look instead, in order of authority:
 
 ### Draft Module (`modules/selections/`)
 
-It publishes three operations, `getSelectionState`, `submitContestSelection` and
-`submitContestEntry` (#481: an entry counts only once its owner submits a complete lineup). It was the last
+It publishes four operations, `getSelectionState`, `submitContestSelection`,
+`submitContestEntry` (#481: an entry counts only once its owner submits a complete lineup) and
+`runContestDraw` (#601: a random-draw contest's commissioner deals every entry its picks). It was the last
 module holding route plumbing, actor resolution, direct `prisma.` calls, the selection rules
 and response mapping in a single `routes.ts`; #346 extracted the service layer, so the
 module now carries the ordinary layering. The file set each module should end up with is
@@ -68,8 +69,10 @@ in-memory snapshot of every tier, entry and pick. Do not reintroduce that shape 
 functions belong as helpers inside the service #324 creates.
 
 Each selection type has its engine in an exhaustive registry keyed by `SelectionType`
-(`selection-engines/registry.ts`): `TIERED` and `BUDGET_PICK` are the only values, and the
-type system refuses a value with no engine.
+(`selection-engines/registry.ts`): `TIERED`, `BUDGET_PICK` and `RANDOM_DRAW`, and the type
+system refuses a value with no engine. The random-draw engine refuses every selection; its picks
+come from the draw (`dealRandomDraw`, a seeded and replayable round-robin deal), which
+`ContestEntryPickService.recordDraw` writes in one transaction with the `contest_draws` row.
 
 Each scoring family has its module in an exhaustive registry keyed by `ScoringFamily`
 (`modules/scoring-families/registry.ts`). Contest scoring, settlement, the settled-standing
@@ -111,7 +114,7 @@ Polls configured sports data providers, upserts normalized event data, and store
 | Concept | Values |
 |---------|--------|
 | **Sports** | GOLF (a Postgres enum since #603; a sport is added with the code that serves it) |
-| **Selection Types** | TIERED, BUDGET_PICK |
+| **Selection Types** | TIERED, BUDGET_PICK, RANDOM_DRAW |
 | **Contest Lifecycle** | DRAFT → OPEN → ACTIVE → COMPLETED |
 
 ---

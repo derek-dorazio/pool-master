@@ -213,7 +213,10 @@ export function ManageContestPage() {
             <>
               {eventLabel}
               <div className="text-xs text-muted-foreground">
-                Starts <DateDisplay className="text-muted-foreground" value={event.startDate} />. Entries close then.
+                Starts <DateDisplay className="text-muted-foreground" value={event.startDate} />.
+                {contest.selectionType === SelectionType.RANDOM_DRAW
+                  ? ' Entries close when you run the draw, which must be before then.'
+                  : ' Entries close then.'}
               </div>
             </>
           )}

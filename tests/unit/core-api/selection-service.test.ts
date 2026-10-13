@@ -11,6 +11,11 @@ import type {
 } from '@poolmaster/shared/domain';
 import type { ContestEntryPickWithParticipant } from '@poolmaster/shared/db';
 import { SelectionService } from '../../../packages/core-api/src/modules/selections/service';
+import { dealRandomDraw } from '../../../packages/core-api/src/modules/selections/selection-engines/random-draw';
+import {
+  ContestDrawAlreadyRunError,
+  ContestDrawEntriesChangedError,
+} from '../../../packages/core-api/src/modules/contest-entry-picks';
 import type { SelectionServiceDeps } from '../../../packages/core-api/src/modules/selections/service';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import {
@@ -211,6 +216,7 @@ interface SetupOptions {
 function setup(options: SetupOptions = {}) {
   const createPick = jest.fn().mockResolvedValue({ id: 'new-pick' });
   const deletePick = jest.fn().mockResolvedValue(undefined);
+  const recordDraw = jest.fn().mockResolvedValue(undefined);
 
   const deps: SelectionServiceDeps = {
     contests: fakeContestRepo({
@@ -249,7 +255,7 @@ function setup(options: SetupOptions = {}) {
       findByEntriesWithParticipant: jest.fn().mockResolvedValue(options.picks ?? []),
       countByContest: jest.fn().mockResolvedValue((options.picks ?? []).length),
     }),
-    pickWrites: { createPick, deletePick } as never,
+    pickWrites: { createPick, deletePick, recordDraw } as never,
     tiers: {
       getEffectiveTiersForSportEvent: jest
         .fn()
@@ -262,9 +268,10 @@ function setup(options: SetupOptions = {}) {
     sportEvents: {
       findById: jest.fn().mockResolvedValue({ id: EVENT_ID, status: 'SCHEDULED', startDate: new Date('2099-01-01T00:00:00.000Z') }),
     } as unknown as SelectionServiceDeps['sportEvents'],
+    drawSeed: () => 'seed-1',
   };
 
-  return { service: new SelectionService(deps), deps, createPick, deletePick };
+  return { service: new SelectionService(deps), deps, createPick, deletePick, recordDraw };
 }
 
 function submit(overrides: { entryId?: string; participantId?: string; actorUserId?: string } = {}) {
@@ -1101,5 +1108,126 @@ describe.each([
     const view = await room().service.getSelectionState({ contestId: CONTEST_ID });
 
     expect(view.availableSportEventParticipantIds).toContain('sep-a');
+  });
+});
+
+describe('SelectionService.runDraw — the random draw deals every entry its picks (#601)', () => {
+  const DRAWN_AT = new Date('2026-04-01T12:00:00.000Z');
+  const DRAW = {
+    contest: { selectionType: SelectionType.RANDOM_DRAW },
+    configuration: {
+      selectionType: SelectionType.RANDOM_DRAW,
+      configJson: { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 2, countedScores: 1 },
+    },
+    entries: [entry(ENTRY_ID, SQUAD_ID), entry(OTHER_ENTRY_ID, 'squad-2')],
+  } as const;
+  const runDraw = { contestId: CONTEST_ID, actorUserId: 'user-commissioner' };
+
+  it('deals each entry the contest\'s picks per entry from the field by the seed, and records the draw with who ran it', async () => {
+    const { service, recordDraw } = setup({ ...DRAW, entries: [...DRAW.entries] });
+
+    await service.runDraw(runDraw);
+
+    const expected = dealRandomDraw({
+      seed: 'seed-1',
+      sportEventParticipantIds: ['sep-a', 'sep-b', 'sep-c', 'sep-d'],
+      entryIds: [ENTRY_ID, OTHER_ENTRY_ID],
+      picksPerEntry: 2,
+    });
+    expect(recordDraw).toHaveBeenCalledWith({
+      contestId: CONTEST_ID,
+      seed: 'seed-1',
+      fieldOrder: expected.fieldOrder,
+      entryOrder: expected.entryOrder,
+      drawnByUserId: 'user-commissioner',
+      entries: expected.entries,
+    });
+    const dealt = expected.entries.flatMap((drawn) => drawn.sportEventParticipantIds);
+    expect(dealt).toHaveLength(4);
+    expect(new Set(dealt).size).toBe(4);
+  });
+
+  it('never deals a golfer who is out of the field', async () => {
+    const { service, recordDraw } = setup({
+      ...DRAW,
+      entries: [entry(ENTRY_ID, SQUAD_ID)],
+      field: [fieldRow('sep-a', 'p-a'), fieldRow('sep-b', 'p-b'), fieldRow('sep-c', 'p-c'), fieldRow('sep-d', 'p-d', false)],
+    });
+
+    await service.runDraw(runDraw);
+
+    const [[recorded]] = recordDraw.mock.calls as Array<[{ fieldOrder: string[] }]>;
+    expect([...recorded.fieldOrder].sort()).toEqual(['sep-a', 'sep-b', 'sep-c']);
+  });
+
+  it.each([
+    ['CONTEST_NOT_RANDOM_DRAW for a contest of another selection type', { contest: { selectionType: SelectionType.TIERED }, configuration: {} }],
+    ['CONTEST_DRAW_ALREADY_RUN for a contest already drawn', { contest: { ...DRAW.contest, drawnAt: DRAWN_AT } }],
+    ['CONTEST_DRAW_NOT_OPEN for a draft contest', { contest: { ...DRAW.contest, status: ContestStatus.DRAFT } }],
+    ['CONTEST_DRAW_NO_ENTRIES for a contest nobody has entered', { entries: [] }],
+    ['CONTEST_DRAW_FIELD_TOO_SMALL when the field cannot deal every entry its picks', {
+      entries: [entry(ENTRY_ID, SQUAD_ID), entry(OTHER_ENTRY_ID, 'squad-2'), entry('entry-3', 'squad-3')],
+    }],
+  ])('refuses 409 %s, dealing nothing', async (expected, overrides) => {
+    const { service, recordDraw } = setup({ ...DRAW, entries: [...DRAW.entries], ...overrides } as SetupOptions);
+
+    await expect(service.runDraw(runDraw)).rejects.toMatchObject({
+      code: expected.split(' ')[0],
+      statusCode: 409,
+    });
+    expect(recordDraw).not.toHaveBeenCalled();
+  });
+
+  it('refuses 409 CONTEST_EVENT_ALREADY_STARTED once the event has teed off, dealing nothing', async () => {
+    const { service, deps, recordDraw } = setup({ ...DRAW, entries: [...DRAW.entries] });
+    (deps.sportEvents.findById as jest.Mock).mockResolvedValue({
+      id: EVENT_ID,
+      status: 'SCHEDULED',
+      startDate: new Date('2020-01-01T00:00:00.000Z'),
+    });
+
+    await expect(service.runDraw(runDraw)).rejects.toMatchObject({ code: 'CONTEST_EVENT_ALREADY_STARTED', statusCode: 409 });
+    expect(recordDraw).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [new ContestDrawAlreadyRunError(CONTEST_ID), 'CONTEST_DRAW_ALREADY_RUN'],
+    [new ContestDrawEntriesChangedError(CONTEST_ID), 'CONTEST_DRAW_ENTRIES_CHANGED'],
+  ])('answers 409 %s when the write finds the contest drawn or its entries changed meanwhile', async (error, code) => {
+    const { service, recordDraw } = setup({ ...DRAW, entries: [...DRAW.entries] });
+    recordDraw.mockRejectedValue(error);
+
+    await expect(service.runDraw(runDraw)).rejects.toMatchObject({ code, statusCode: 409 });
+  });
+
+  it('refuses 409 SELECTION_DEALT_BY_DRAW for a pick, before the draw and after it, placing nothing', async () => {
+    const before = setup({ ...DRAW, entries: [...DRAW.entries] });
+    const after = setup({ ...DRAW, contest: { ...DRAW.contest, drawnAt: DRAWN_AT }, entries: [...DRAW.entries] });
+
+    for (const { service, createPick } of [before, after]) {
+      await expect(service.submitSelection(submit())).rejects.toMatchObject({ code: 'SELECTION_DEALT_BY_DRAW', statusCode: 409 });
+      expect(createPick).not.toHaveBeenCalled();
+    }
+  });
+
+  it('refuses 409 SELECTION_DEALT_BY_DRAW for submitting an entry once the draw has dealt', async () => {
+    const { service } = setup({ ...DRAW, contest: { ...DRAW.contest, drawnAt: DRAWN_AT }, entries: [...DRAW.entries] });
+
+    await expect(service.submitEntry({ contestId: CONTEST_ID, entryId: ENTRY_ID, actorUserId: OWNER_USER_ID }))
+      .rejects.toMatchObject({ code: 'SELECTION_DEALT_BY_DRAW', statusCode: 409 });
+  });
+
+  it('shows every entry\'s dealt picks to the league once drawn, while the contest is still open', async () => {
+    const { service } = setup({
+      ...DRAW,
+      contest: { ...DRAW.contest, drawnAt: DRAWN_AT },
+      entries: [...DRAW.entries],
+      picks: [pick('pick-other', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID, lineupSlot: 1 })],
+    });
+
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID, selectedEntryId: OTHER_ENTRY_ID });
+
+    expect(view.picks.map((row) => row.entryId)).toEqual([OTHER_ENTRY_ID]);
+    expect(view.selectedEntryId).toBe(OTHER_ENTRY_ID);
   });
 });

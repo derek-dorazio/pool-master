@@ -283,7 +283,7 @@ export function ContestDetailPage() {
   const totalCount = entries.length;
   const myCount = myEntries.length;
   const visibleEntries = myOnly ? myEntries : entries;
-  const entriesOpen = areContestEntriesOpen(contest.status, schedule?.startsAt);
+  const entriesOpen = areContestEntriesOpen(contest, schedule?.startsAt);
   const isDraft = contest.status === ContestStatus.DRAFT;
   const canCreateEntry = entriesOpen && Boolean(myTeamId);
 

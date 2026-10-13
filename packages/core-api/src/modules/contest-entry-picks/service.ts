@@ -15,9 +15,11 @@
  * this."
  */
 
-import type { PrismaClient } from '@prisma/client';
+import { Prisma, type PrismaClient } from '@prisma/client';
+import { ContestEntryStatus } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
+  ContestDrawRecordInput,
   ContestEntryPickDto,
   ContestEntryPickInsertInput,
 } from './types';
@@ -34,6 +36,22 @@ export class ContestEntryPickContestMissingError extends Error {
   constructor(contestId: string) {
     super(`Contest ${contestId} not found; cannot resolve contestFormat for pick.`);
     this.name = 'ContestEntryPickContestMissingError';
+  }
+}
+
+/** A second draw of a contest already drawn: the contest's one draw row already exists (#601). */
+export class ContestDrawAlreadyRunError extends Error {
+  constructor(contestId: string) {
+    super(`Contest ${contestId} has already been drawn.`);
+    this.name = 'ContestDrawAlreadyRunError';
+  }
+}
+
+/** The contest's entries are no longer the ones the draw dealt to (#601). Nothing was written. */
+export class ContestDrawEntriesChangedError extends Error {
+  constructor(contestId: string) {
+    super(`Contest ${contestId}'s entries changed while it was being drawn.`);
+    this.name = 'ContestDrawEntriesChangedError';
   }
 }
 
@@ -125,6 +143,74 @@ export class ContestEntryPickService {
     this.logger?.info(
       { action: 'contestEntryPick.delete.success', data: { pickId } },
       'Deleted contest entry pick',
+    );
+  }
+
+  /**
+   * Records a random draw (#601) in one transaction: the draw row, every dealt pick, and every
+   * entry submitted. All or nothing, so a contest is never half dealt.
+   *
+   * The draw row's unique contest key is the guard against two draws racing: the second
+   * insert fails, and nothing of it is written. The entries are re-read inside the
+   * transaction, so an entry added or removed after the deal was worked out stops the write
+   * instead of leaving an entry with no picks. Picks take the parent contest's
+   * `contestFormat`, as `createPick` does (plans/117 §7.1). Each pick's `lineupSlot` is its
+   * round of the deal, and its `pickSequence` its place in the deal across the contest.
+   */
+  async recordDraw(input: ContestDrawRecordInput): Promise<void> {
+    const { contestId } = input;
+    await this.prisma.$transaction(async (tx) => {
+      const contest = await tx.contest.findUnique({ where: { id: contestId }, select: { contestFormat: true } });
+      if (!contest) throw new ContestEntryPickContestMissingError(contestId);
+
+      const currentEntries = await tx.contestEntry.findMany({ where: { contestId }, select: { id: true } });
+      const dealtEntryIds = new Set(input.entries.map((entry) => entry.entryId));
+      if (currentEntries.length !== dealtEntryIds.size || currentEntries.some((entry) => !dealtEntryIds.has(entry.id))) {
+        throw new ContestDrawEntriesChangedError(contestId);
+      }
+
+      try {
+        await tx.contestDraw.create({
+          data: {
+            contestId,
+            seed: input.seed,
+            fieldOrder: [...input.fieldOrder],
+            entryOrder: [...input.entryOrder],
+            drawnByUserId: input.drawnByUserId,
+          },
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          throw new ContestDrawAlreadyRunError(contestId);
+        }
+        throw error;
+      }
+
+      const entryCount = input.entries.length;
+      await tx.contestEntryPick.createMany({
+        data: input.entries.flatMap((entry, entryIndex) =>
+          entry.sportEventParticipantIds.map((sportEventParticipantId, round) => ({
+            entryId: entry.entryId,
+            sportEventParticipantId,
+            contestFormat: contest.contestFormat,
+            lineupSlot: round + 1,
+            pickSequence: round * entryCount + entryIndex + 1,
+            isAutoPicked: true,
+          }))),
+      });
+
+      await tx.contestEntry.updateMany({
+        where: { contestId },
+        data: { status: ContestEntryStatus.SUBMITTED },
+      });
+    });
+
+    this.logger?.info(
+      {
+        action: 'contestEntryPick.recordDraw.success',
+        data: { contestId, entryCount: input.entries.length, fieldSize: input.fieldOrder.length },
+      },
+      'Recorded a random draw and its dealt picks',
     );
   }
 }

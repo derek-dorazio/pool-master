@@ -1,22 +1,25 @@
 import {
   BUDGET_ROSTER_SIZE_MAX,
+  RANDOM_DRAW_PICKS_PER_ENTRY_MAX,
   SelectionType,
   getDefaultCountedScores,
   getTieredRosterSize,
 } from '@poolmaster/shared/domain';
 import type { ContestConfigurationRequest } from '@poolmaster/shared/dto';
+import { pluralize } from './contest-rules';
 
 /** The selection types the rules fields can edit: one arm each of the configuration request. */
 export type EditableSelectionType = ContestConfigurationRequest['selectionType'];
 
 /**
- * The rules fields as the form holds them: text from the inputs, and the No limit box. Both
- * formats' fields live here so switching format keeps what was typed; only the chosen format's
+ * The rules fields as the form holds them: text from the inputs, and the No limit box. Every
+ * format's fields live here so switching format keeps what was typed; only the chosen format's
  * are read.
  */
 export type ContestRulesValues = {
   countedScores: string;
   maxEntriesPerTeam: string;
+  picksPerEntry: string;
   picksPerTier: string;
   rosterSize: string;
   unlimitedEntries: boolean;
@@ -81,6 +84,19 @@ function parseBudgetRules(values: ContestRulesValues): RulesResult {
   return withEntryLimit(values, { selectionType: SelectionType.BUDGET_PICK, rosterSize, countedScores });
 }
 
+/** The random-draw rules: how many golfers the draw deals each entry, and the scores that count. */
+function parseRandomDrawRules(values: ContestRulesValues): RulesResult {
+  const picksPerEntry = parseWholeNumber(values.picksPerEntry);
+  if (picksPerEntry === null || picksPerEntry > RANDOM_DRAW_PICKS_PER_ENTRY_MAX) {
+    return { configuration: null, error: `Golfers per entry must be between 1 and ${RANDOM_DRAW_PICKS_PER_ENTRY_MAX}.` };
+  }
+  const countedScores = parseWholeNumber(values.countedScores);
+  if (countedScores === null || countedScores > picksPerEntry) {
+    return { configuration: null, error: `Scores that count must be between 1 and the ${pluralize(picksPerEntry, 'golfer')} dealt.` };
+  }
+  return withEntryLimit(values, { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry, countedScores });
+}
+
 /**
  * The configuration the rules fields describe for a format, or the first thing wrong with them
  * in the words the form shows.
@@ -95,12 +111,14 @@ export function parseContestRules(
       return parseTieredRules(values, tierCount);
     case SelectionType.BUDGET_PICK:
       return parseBudgetRules(values);
+    case SelectionType.RANDOM_DRAW:
+      return parseRandomDrawRules(values);
   }
 }
 
 /**
  * The form's values for a saved configuration or a preset. Only its own format's fields change;
- * the other format's keep what `current` holds.
+ * the other formats' keep what `current` holds.
  */
 export function toContestRulesValues(
   configuration: ContestConfigurationRequest,
@@ -110,6 +128,7 @@ export function toContestRulesValues(
   const rules: ContestRulesValues = {
     countedScores: current.countedScores,
     maxEntriesPerTeam: current.maxEntriesPerTeam,
+    picksPerEntry: current.picksPerEntry,
     picksPerTier: current.picksPerTier,
     rosterSize: current.rosterSize,
     unlimitedEntries: current.unlimitedEntries,
@@ -124,6 +143,8 @@ export function toContestRulesValues(
       return { ...rules, ...entryLimit, picksPerTier: String(configuration.picksPerTier) };
     case SelectionType.BUDGET_PICK:
       return { ...rules, ...entryLimit, rosterSize: String(configuration.rosterSize) };
+    case SelectionType.RANDOM_DRAW:
+      return { ...rules, ...entryLimit, picksPerEntry: String(configuration.picksPerEntry) };
   }
 }
 
@@ -131,6 +152,7 @@ export function toContestRulesValues(
 export const DEFAULT_CONTEST_RULES: ContestRulesValues = {
   countedScores: '4',
   maxEntriesPerTeam: '1',
+  picksPerEntry: '4',
   picksPerTier: '1',
   rosterSize: '6',
   unlimitedEntries: false,
