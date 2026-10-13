@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RaceResultPreviewResponse } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportEventResultsPage } from './root-admin-sport-event-results-page';
-import { fieldEntryFixture, participantFixture, sportEventFixture } from './golf-test-fixtures';
+import { fieldEntryFixture, participantFixture, sportEventFixture } from './sport-test-fixtures';
 
 // Issue 623: a horse race's results page: its stored finishing order and the card that loads it,
 // chosen by the finish-position family's entry in the admin results registry

@@ -11,7 +11,7 @@ import {
   formatGolfRoundStatus,
   parseGolfRoundScoreUpload,
   type GolfRoundScoreUploadRow,
-} from './golf-admin-utils';
+} from './sport-admin-utils';
 
 type PreviewRow = GolfRoundScorePreviewResponse['rows'][number];
 
@@ -100,7 +100,7 @@ export function GolfRoundScoreUploadCard({
       return response.data;
     },
     // Round scores are read from the field (#236).
-    invalidates: [QueryKeys.rootAdmin.golf.field(eventId)],
+    invalidates: [QueryKeys.rootAdmin.manageSport.field(eventId)],
     onError: (error) => {
       logger.warn(
         { action: 'golf.roundScore.apply.failed', err: error },

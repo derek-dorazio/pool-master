@@ -1,10 +1,10 @@
 import { useParams } from 'react-router-dom';
 import { AsyncPage } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { GolfTournamentHeader } from './golf-tournament-header';
+import { SportEventHeader } from './sport-event-header';
 import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
-import { useGolfTournamentQuery } from './use-golf-tournament';
+import { useSportEventQuery } from './use-sport-event';
 import { useManagedSport } from './use-managed-sport';
 
 /**
@@ -15,7 +15,7 @@ import { useManagedSport } from './use-managed-sport';
 export function RootAdminSportEventResultsPage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
   const { definition } = useManagedSport();
-  const eventQuery = useGolfTournamentQuery(eventId);
+  const eventQuery = useSportEventQuery(eventId);
   const event = eventQuery.data;
   const familyUi = event ? getScoringFamilyAdminUi(event.sport) : null;
 
@@ -34,7 +34,7 @@ export function RootAdminSportEventResultsPage() {
     >
       {event && familyUi ? (
         <div className="space-y-6">
-          <GolfTournamentHeader current="results" tournament={event} />
+          <SportEventHeader current="results" tournament={event} />
           <familyUi.ResultsPanel event={event} />
         </div>
       ) : null}

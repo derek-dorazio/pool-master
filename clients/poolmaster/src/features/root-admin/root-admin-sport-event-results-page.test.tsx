@@ -10,7 +10,7 @@ import {
   participantFixture,
   sportEventFixture,
   sportEventRoundFixture,
-} from './golf-test-fixtures';
+} from './sport-test-fixtures';
 
 // plans/124 §6.3 — a golf event's results page: round scores (pool-master-r11), chosen by the
 // stroke-play family's entry in the admin results registry (plans/racing-sports.md Q9.6).

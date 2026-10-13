@@ -51,7 +51,7 @@ describe('pool-master-dyb SortableList', () => {
   it('pool-master-dyb wires the @dnd-kit keyboard/pointer drag affordance onto each handle', () => {
     // The actual drag move needs layout APIs jsdom does not implement; deterministic
     // reorder coverage lives on the consumer's up/down + "Move to tier" controls
-    // (golf-tier-board / golf-tier-board-utils tests). Here we assert the handle
+    // (tier-board / tier-board-utils tests). Here we assert the handle
     // exposes the sortable a11y contract so the keyboard path exists.
     render(<Harness />);
     const handle = screen.getByTestId('handle-a');

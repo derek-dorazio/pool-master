@@ -178,24 +178,24 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expectListPageLoaded(page, '/manage/events', 'root-admin-events-page', 'root-admin-events-table');
       await expectListPageLoaded(page, '/manage/leagues', 'root-admin-manage-leagues-page', 'root-admin-manage-leagues-table');
       await expectListPageLoaded(page, '/manage/users', 'root-admin-manage-users-page', 'root-admin-manage-users-table');
-      await expectListPageLoaded(page, '/manage/sports/golf/events', 'root-admin-golf-tournament-list-page', 'root-admin-golf-tournament-list-table');
-      await expectListPageLoaded(page, '/manage/sports/golf/participants', 'root-admin-golf-player-list-page', 'root-admin-golf-player-list-table');
+      await expectListPageLoaded(page, '/manage/sports/golf/events', 'root-admin-sport-event-list-page', 'root-admin-sport-event-list-table');
+      await expectListPageLoaded(page, '/manage/sports/golf/participants', 'root-admin-participant-list-page', 'root-admin-participant-list-table');
     });
 
     const tourId = await test.step('create a golf tour', async () => {
       await page.goto('/manage/sports/golf/leagues');
-      await page.getByTestId('root-admin-golf-league-list-new').click();
-      await page.getByTestId('root-admin-golf-league-list-new-name').fill(run.tourName);
+      await page.getByTestId('root-admin-sport-league-list-new').click();
+      await page.getByTestId('root-admin-sport-league-list-new-name').fill(run.tourName);
       const created = await submitAndRead<{ sportLeague: { id: string } }>(
         page,
-        'root-admin-golf-league-list-new-save',
+        'root-admin-sport-league-list-new-save',
         'POST',
         '/api/v1/sport-leagues',
       );
       const id = created.sportLeague.id;
       // The tours list pages at 25 rows, so find the new tour by its run-unique name.
-      await page.getByTestId('root-admin-golf-league-list-search').fill(run.tourName);
-      await expect(page.getByTestId(`root-admin-golf-league-row-${id}`)).toBeVisible();
+      await page.getByTestId('root-admin-sport-league-list-search').fill(run.tourName);
+      await expect(page.getByTestId(`root-admin-sport-league-row-${id}`)).toBeVisible();
       return id;
     });
 
@@ -203,20 +203,20 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await page.goto('/manage/sports/golf/participants');
       const ids: string[] = [];
       for (let index = 1; index <= PLAYER_COUNT; index += 1) {
-        await page.getByTestId('root-admin-golf-player-list-new').click();
-        await page.getByTestId('root-admin-golf-player-list-new-name').fill(`${run.playerNamePrefix} ${index}`);
+        await page.getByTestId('root-admin-participant-list-new').click();
+        await page.getByTestId('root-admin-participant-list-new-name').fill(`${run.playerNamePrefix} ${index}`);
         const created = await submitAndRead<{ participant: { id: string } }>(
           page,
-          'root-admin-golf-player-list-new-save',
+          'root-admin-participant-list-new-save',
           'POST',
           '/api/v1/participants',
         );
         ids.push(created.participant.id);
       }
       // The players list pages at 25 rows, so narrow it to this run's golfers.
-      await page.getByTestId('root-admin-golf-player-list-search').fill(run.playerNamePrefix);
+      await page.getByTestId('root-admin-participant-list-search').fill(run.playerNamePrefix);
       for (const id of ids) {
-        await expect(page.getByTestId(`root-admin-golf-player-row-${id}`)).toBeVisible();
+        await expect(page.getByTestId(`root-admin-participant-row-${id}`)).toBeVisible();
       }
       return ids;
     });
@@ -228,41 +228,41 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       const start = addDays(now, 7);
       start.setHours(8, 0, 0, 0);
       await page.goto('/manage/sports/golf/events/new');
-      await page.getByTestId('root-admin-golf-tournament-create-tour').selectOption(tourId);
-      await page.getByTestId('root-admin-golf-tournament-create-event-year').fill(String(start.getFullYear()));
-      await page.getByTestId('root-admin-golf-tournament-create-name').fill(run.tournamentName);
-      await page.getByTestId('root-admin-golf-tournament-create-start').fill(dateTimeInput(start));
-      await page.getByTestId('root-admin-golf-tournament-create-rounds').fill('4');
+      await page.getByTestId('root-admin-sport-event-create-tour').selectOption(tourId);
+      await page.getByTestId('root-admin-sport-event-create-event-year').fill(String(start.getFullYear()));
+      await page.getByTestId('root-admin-sport-event-create-name').fill(run.tournamentName);
+      await page.getByTestId('root-admin-sport-event-create-start').fill(dateTimeInput(start));
+      await page.getByTestId('root-admin-sport-event-create-rounds').fill('4');
       const created = await submitAndRead<{ event: { id: string } }>(
         page,
-        'root-admin-golf-tournament-create-submit',
+        'root-admin-sport-event-create-submit',
         'POST',
         '/api/v1/events',
       );
       const id = created.event.id;
       await expect(page).toHaveURL(new RegExp(`/manage/sports/golf/events/${id}$`));
-      await expect(page.getByTestId('root-admin-golf-tournament-home-page')).toBeVisible();
+      await expect(page.getByTestId('root-admin-sport-event-home-page')).toBeVisible();
       return id;
     });
     journey.eventId = eventId;
 
     await test.step(`load the ${PLAYER_COUNT} players into the field in one submit`, async () => {
       await page.goto(`/manage/sports/golf/events/${eventId}/field`);
-      await page.getByTestId('root-admin-golf-field-add').click();
-      await expect(page.getByTestId('root-admin-golf-field-add-modal')).toBeVisible();
+      await page.getByTestId('root-admin-event-field-add').click();
+      await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeVisible();
       // The free-text search spans every participant, so the players need no tour roster.
-      await page.getByTestId('root-admin-golf-field-add-search').fill(runId);
+      await page.getByTestId('root-admin-event-field-add-search').fill(runId);
       for (const id of playerIds) {
-        await page.getByTestId(`root-admin-golf-field-add-search-select-${id}`).check();
+        await page.getByTestId(`root-admin-event-field-add-search-select-${id}`).check();
       }
       await submitAndRead(
         page,
-        'root-admin-golf-field-add-submit',
+        'root-admin-event-field-add-submit',
         'POST',
         `/api/v1/events/${eventId}/participants`,
       );
-      await expect(page.getByTestId('root-admin-golf-field-add-result')).toBeVisible();
-      await page.getByTestId('root-admin-golf-field-add-done').click();
+      await expect(page.getByTestId('root-admin-event-field-add-result')).toBeVisible();
+      await page.getByTestId('root-admin-event-field-add-done').click();
     });
 
     journey.fieldEntryIds = await test.step('place one player in each default tier and save', async () => {
@@ -271,7 +271,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       // It reads it straight from the API rather than by sniffing the page's own response.
       //
       // A `waitForResponse` registered before this navigation could match the FIELD page's
-      // refetch of the very same path -- both pages read it through `useGolfFieldQuery`, and
+      // refetch of the very same path -- both pages read it through `useSportEventFieldQuery`, and
       // adding the field invalidates that query. Once `goto` replaced that document Chromium
       // discarded its response bodies, so `.json()` failed with "Protocol error
       // (Network.getResponseBody): No resource with given identifier found". Which response
@@ -294,23 +294,23 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         return entry.id;
       });
 
-      const unassigned = page.getByTestId('root-admin-golf-tier-column-__unassigned');
+      const unassigned = page.getByTestId('root-admin-tier-column-__unassigned');
       for (const [index, entryId] of entryIds.entries()) {
         // A freshly added golfer starts unassigned; the move control is a select of tiers.
-        await expect(unassigned.getByTestId(`root-admin-golf-tier-card-${entryId}`)).toBeVisible();
-        await page.getByTestId(`root-admin-golf-tier-move-${entryId}`).selectOption(`tier-${index + 1}`);
+        await expect(unassigned.getByTestId(`root-admin-tier-card-${entryId}`)).toBeVisible();
+        await page.getByTestId(`root-admin-tier-move-${entryId}`).selectOption(`tier-${index + 1}`);
       }
       await submitAndRead(
         page,
-        'root-admin-golf-tier-board-save',
+        'root-admin-tier-board-save',
         'PUT',
         `/api/v1/events/${eventId}/tiers/assignments`,
       );
       for (const [index, entryId] of entryIds.entries()) {
         await expect(
           page
-            .getByTestId(`root-admin-golf-tier-column-tier-${index + 1}`)
-            .getByTestId(`root-admin-golf-tier-card-${entryId}`),
+            .getByTestId(`root-admin-tier-column-tier-${index + 1}`)
+            .getByTestId(`root-admin-tier-card-${entryId}`),
         ).toBeVisible();
       }
       return entryIds;
@@ -318,27 +318,27 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 
     await test.step('price the field with the default Budget pricing profile', async () => {
       // Release needs every active golfer priced (#93); the dialog starts on the default profile.
-      await page.getByTestId('root-admin-golf-tier-auto-prices').click();
-      await expect(page.getByTestId('root-admin-golf-tier-auto-prices-modal')).toBeVisible();
-      await expect(page.getByTestId('root-admin-golf-tier-auto-prices-preview')).toBeVisible();
+      await page.getByTestId('root-admin-tier-auto-prices').click();
+      await expect(page.getByTestId('root-admin-tier-auto-prices-modal')).toBeVisible();
+      await expect(page.getByTestId('root-admin-tier-auto-prices-preview')).toBeVisible();
       await submitAndRead(
         page,
-        'root-admin-golf-tier-auto-prices-confirm',
+        'root-admin-tier-auto-prices-confirm',
         'POST',
         `/api/v1/events/${eventId}/prices/auto-assign`,
       );
-      await expect(page.getByTestId('root-admin-golf-tiers-pricing')).toContainText('Priced with');
+      await expect(page.getByTestId('root-admin-tiers-pricing')).toContainText('Priced with');
     });
 
     await test.step('set four golfers\' prices in the Field grid, so a budget roster can go over the cap and a swap brings it under', async () => {
       const fieldEntryIds = journey?.fieldEntryIds ?? [];
       await page.goto(`/manage/sports/golf/events/${eventId}/field`);
       for (const { index, price } of BUDGET_PRICES) {
-        await page.getByTestId(`root-admin-golf-field-price-${fieldEntryIds[index]}`).fill(String(price));
+        await page.getByTestId(`root-admin-event-field-price-${fieldEntryIds[index]}`).fill(String(price));
       }
-      await submitAndRead(page, 'root-admin-golf-field-save', 'PATCH', `/api/v1/events/${eventId}/participants`);
+      await submitAndRead(page, 'root-admin-event-field-save', 'PATCH', `/api/v1/events/${eventId}/participants`);
       for (const { index, price } of BUDGET_PRICES) {
-        await expect(page.getByTestId(`root-admin-golf-field-price-${fieldEntryIds[index]}`)).toHaveValue(String(price));
+        await expect(page.getByTestId(`root-admin-event-field-price-${fieldEntryIds[index]}`)).toHaveValue(String(price));
       }
     });
 
@@ -347,21 +347,21 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     const firstFieldEntryId = journey.fieldEntryIds[0];
     await test.step('release the tournament for contests, which locks its tiers', async () => {
       await page.goto(`/manage/sports/golf/events/${eventId}`);
-      await expect(page.getByTestId('root-admin-golf-tournament-release')).toBeEnabled();
-      await page.getByTestId('root-admin-golf-tournament-release').click();
-      await expect(page.getByTestId('root-admin-golf-tournament-release-modal')).toBeVisible();
+      await expect(page.getByTestId('root-admin-sport-event-release')).toBeEnabled();
+      await page.getByTestId('root-admin-sport-event-release').click();
+      await expect(page.getByTestId('root-admin-sport-event-release-modal')).toBeVisible();
       const released = await submitAndRead<{ event: { status: string } }>(
         page,
-        'root-admin-golf-tournament-release-confirm',
+        'root-admin-sport-event-release-confirm',
         'POST',
         `/api/v1/events/${eventId}/release`,
       );
       expect(released.event.status).toBe('SCHEDULED');
-      await expect(page.getByTestId('root-admin-golf-tournament-release')).toHaveCount(0);
+      await expect(page.getByTestId('root-admin-sport-event-release')).toHaveCount(0);
 
       await page.goto(`/manage/sports/golf/events/${eventId}/tiers`);
-      await expect(page.getByTestId('root-admin-golf-tiers-locked')).toBeVisible();
-      await expect(page.getByTestId(`root-admin-golf-tier-move-${firstFieldEntryId}`)).toBeDisabled();
+      await expect(page.getByTestId('root-admin-tiers-locked')).toBeVisible();
+      await expect(page.getByTestId(`root-admin-tier-move-${firstFieldEntryId}`)).toBeDisabled();
     });
 
     await test.step('root admin logs out', async () => {
@@ -754,10 +754,10 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
 
   await test.step('move the tournament to in progress', async () => {
     await page.goto(`/manage/sports/golf/events/${state.eventId}`);
-    await page.getByTestId('root-admin-golf-tournament-transition-IN_PROGRESS').click();
+    await page.getByTestId('root-admin-sport-event-transition-IN_PROGRESS').click();
     const moved = await submitAndRead<{ event: { status: string } }>(
       page,
-      'root-admin-golf-tournament-transition-confirm',
+      'root-admin-sport-event-transition-confirm',
       'POST',
       `/api/v1/events/${state.eventId}/transition`,
     );
@@ -1047,10 +1047,10 @@ test('act 6: completing the event settles the contest and freezes its standing a
     // There is no settle operation to call: settlement is a consequence of the event reaching
     // COMPLETED (EventLifecycleService), so the admin's transition is the whole trigger.
     await page.goto(`/manage/sports/golf/events/${state.eventId}`);
-    await page.getByTestId('root-admin-golf-tournament-transition-COMPLETED').click();
+    await page.getByTestId('root-admin-sport-event-transition-COMPLETED').click();
     const moved = await submitAndRead<{ event: { status: string } }>(
       page,
-      'root-admin-golf-tournament-transition-confirm',
+      'root-admin-sport-event-transition-confirm',
       'POST',
       `/api/v1/events/${state.eventId}/transition`,
     );

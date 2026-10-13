@@ -23,7 +23,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import {
   formatSportEventStatus,
   sportEventStatusTone,
-} from './golf-admin-utils';
+} from './sport-admin-utils';
 import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 
 type AdminEvent = SportEventDto;
@@ -41,7 +41,7 @@ function participantStatus(participant: SportEventParticipantDto): string {
     ?? (participant.isActive ? 'ACTIVE' : participant.inactiveReason ?? 'INACTIVE');
 }
 
-// Shared SCREAMING_SNAKE -> Title Case formatter, lifted to golf-admin-utils so
+// Shared SCREAMING_SNAKE -> Title Case formatter, lifted to sport-admin-utils so
 // the golf-admin screens and this browser use one implementation (plans/124 §6.4).
 const formatReadiness = formatSportEventStatus;
 

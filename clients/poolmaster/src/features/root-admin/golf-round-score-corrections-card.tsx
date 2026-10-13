@@ -12,7 +12,7 @@ import {
   formatGolfRoundStatus,
   type GolfRoundScoreRow,
   type GolfRoundScoreStatus,
-} from './golf-admin-utils';
+} from './sport-admin-utils';
 import {
   buildRoundScorePatch,
   isSignedInt,
@@ -277,7 +277,7 @@ export function GolfRoundScoreCorrectionsCard({
       return response.data;
     },
     // Round scores are read from the field (#236).
-    invalidates: [QueryKeys.rootAdmin.golf.field(eventId)],
+    invalidates: [QueryKeys.rootAdmin.manageSport.field(eventId)],
     onSuccess: (_data, variables) =>
       setDraft((current) => {
         const next = { ...current };

@@ -3,7 +3,7 @@ export type BulkUploadFormat = "CSV" | "JSON";
 /**
  * plans/124 §6.4 — the format-level tokeniser shared by every {@link BulkUploadPanel}
  * consumer. It turns pasted CSV / JSON text into a list of
- * `{ column: value }` records; the feature layer (golf-admin-utils.ts) then
+ * `{ column: value }` records; the feature layer (sport-admin-utils.ts) then
  * validates and coerces those records against a row schema.
  *
  * CSV: the first non-empty line is the header row; each later non-empty line is

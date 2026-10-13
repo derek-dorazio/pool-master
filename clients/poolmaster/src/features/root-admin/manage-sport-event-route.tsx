@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation, useParams } from 'react-router-dom';
 import { SPORTS_PATH, sportPathSegment } from './manage-navigation';
-import { useGolfTournamentQuery } from './use-golf-tournament';
+import { useSportEventQuery } from './use-sport-event';
 import { useManagedSport } from './use-managed-sport';
 
 /**
@@ -12,7 +12,7 @@ export function ManageSportEventRoute() {
   const { eventId = '' } = useParams<{ eventId: string }>();
   const { sport } = useManagedSport();
   const { pathname, search } = useLocation();
-  const event = useGolfTournamentQuery(eventId).data;
+  const event = useSportEventQuery(eventId).data;
 
   if (event && event.sport !== sport) {
     const ownSportPath = `${SPORTS_PATH}/${sportPathSegment(event.sport)}`;

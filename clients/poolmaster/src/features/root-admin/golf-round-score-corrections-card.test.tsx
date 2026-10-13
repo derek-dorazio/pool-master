@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { GolfRoundScoreCorrectionsCard } from './golf-round-score-corrections-card';
-import type { GolfRoundScoreRow } from './golf-admin-utils';
+import type { GolfRoundScoreRow } from './sport-admin-utils';
 
 // plans/124 §6.3 Round scores section 2 — inline corrections (pool-master-r11).
 
