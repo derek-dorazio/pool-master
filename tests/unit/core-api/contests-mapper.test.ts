@@ -1,4 +1,4 @@
-import { Sport } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ScoringFamily, Sport } from '@poolmaster/shared/domain';
 import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
 import {
   toContestLeaderboardResponse,
@@ -55,5 +55,49 @@ describe('toContestLeaderboardResponse', () => {
 
     expect(response.sport).toBe(Sport.GOLF);
     expect(ContestLeaderboardResponseSchema.parse(response).sport).toBe(Sport.GOLF);
+  });
+
+  it('publishes a horse racing entry\'s total and each pick\'s points on the race blocks, leaving the golf ones null', () => {
+    const response = toContestLeaderboardResponse({
+      contestId: 'contest-1',
+      sportEventId: 'event-1',
+      sport: Sport.HORSE_RACING,
+      scoringDefinitionId: 'FINISH_POSITION_POINTS',
+      countingRule: { type: 'BEST_N', count: 3 },
+      participants: [],
+      entries: [{
+        entryId: 'entry-1',
+        entryName: 'Paddock Pals',
+        entryNumber: 1,
+        squadId: 'squad-1',
+        squadName: 'Paddock Pals',
+        status: ContestEntryStatus.SUBMITTED,
+        score: 8,
+        position: 1,
+        displayPosition: '1',
+        countingPickLimit: 3,
+        scoredPickCount: 2,
+        picks: [{
+          pickId: 'pick-1',
+          sportEventParticipantId: 'sep-1',
+          pickedAt: new Date('2026-05-01T12:00:00.000Z'),
+          slot: 1,
+          isCounting: true,
+          isDropped: false,
+          participant: {
+            sportEventParticipantId: 'sep-1',
+            name: 'Arrow',
+            score: 5,
+            detail: { scoringFamily: ScoringFamily.FINISH_POSITION },
+            asOf: null,
+          },
+        }],
+      }],
+      asOf: null,
+    });
+
+    const [entry] = ContestLeaderboardResponseSchema.parse(response).entries;
+    expect([entry.golf, entry.race]).toEqual([null, { totalPoints: 8 }]);
+    expect([entry.picks[0].golf, entry.picks[0].race]).toEqual([null, { points: 5 }]);
   });
 });

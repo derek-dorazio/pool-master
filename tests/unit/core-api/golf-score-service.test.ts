@@ -8,10 +8,7 @@ import { fakeLogger } from '../../support/fake-logger';
 // apply is all or none, how a correction merges, and how a standing is totalled. The sync
 // path's writes against Postgres are in golf-round-scores.integration.
 
-function setup(
-  eventOverrides: { rounds?: number } = {},
-  storesGolfRoundScores: (sport: Sport) => boolean = sportStoresGolfRoundScores,
-) {
+function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.GOLF);
   const event = store.addEvent({ providerId: 'feed', ...eventOverrides });
@@ -27,7 +24,7 @@ function setup(
     mappings: store.mappingRepo(),
     golfRounds: store.golfRoundRepo(),
     golfStandings: store.golfStandingRepo(),
-    storesGolfRoundScores,
+    storesGolfRoundScores: sportStoresGolfRoundScores,
   });
   return { store, service, event, anaEntry, benEntry, sport };
 }
@@ -39,10 +36,9 @@ describe('GolfScoreService — events of another scoring family', () => {
     expect(sportStoresGolfRoundScores(Sport.GOLF)).toBe(true);
   });
 
-  // No sport but golf exists yet, so the registry lookup is injected: an event whose sport's
-  // family does not keep golf round scores (a race, once finish position is built).
-  it('refuses preview, apply and a single correction with 422 EVENT_SCORING_FAMILY_MISMATCH, writing no golf round', async () => {
-    const { store, service, event, anaEntry } = setup({}, () => false);
+  it('refuses preview, apply and a single correction for a horse racing event with 422 EVENT_SCORING_FAMILY_MISMATCH, writing no golf round', async () => {
+    expect(sportStoresGolfRoundScores(Sport.HORSE_RACING)).toBe(false);
+    const { store, service, event, anaEntry } = setup({ sport: Sport.HORSE_RACING });
     const mismatch = { code: 'EVENT_SCORING_FAMILY_MISMATCH', statusCode: 422 };
 
     await expect(service.previewRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, ...row() }])).rejects.toMatchObject(mismatch);
