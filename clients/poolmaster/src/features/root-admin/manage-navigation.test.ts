@@ -10,9 +10,10 @@ import {
 } from './manage-navigation';
 
 describe('Manage sport paths (plans/racing-sports.md Q9.6)', () => {
-  it('writes each sport as a lower-case, hyphenated URL segment: golf and horse-racing', () => {
+  it('writes each sport as a lower-case, hyphenated URL segment: golf, horse-racing and auto-racing', () => {
     expect(sportPathSegment(Sport.GOLF)).toBe('golf');
     expect(sportPathSegment(Sport.HORSE_RACING)).toBe('horse-racing');
+    expect(sportPathSegment(Sport.AUTO_RACING)).toBe('auto-racing');
   });
 
   it('reads every supported sport back from its own segment, so no two sports share a URL', () => {
@@ -44,7 +45,15 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(sports.map((item) => [item.label, item.isActive])).toEqual([
       ['Golf', false],
       ['Horse racing', true],
+      ['Auto racing', false],
     ]);
+  });
+
+  it('names an auto racing trail in racing words: Auto racing, Races, Drivers, Series', () => {
+    expect(getManageBreadcrumbLabel(['sports', 'auto-racing', 'events'], 1)).toBe('Auto racing');
+    expect(getManageBreadcrumbLabel(['sports', 'auto-racing', 'events'], 2)).toBe('Races');
+    expect(getManageBreadcrumbLabel(['sports', 'auto-racing', 'participants'], 2)).toBe('Drivers');
+    expect(getManageBreadcrumbLabel(['sports', 'auto-racing', 'leagues'], 2)).toBe('Series');
   });
 
   it('names a horse racing trail in racing words: Horse racing, Races, Horses, Circuits', () => {

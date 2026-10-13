@@ -15,6 +15,7 @@
 export const Sport = {
   GOLF: 'GOLF',
   HORSE_RACING: 'HORSE_RACING',
+  AUTO_RACING: 'AUTO_RACING',
 } as const;
 export type Sport = (typeof Sport)[keyof typeof Sport];
 
