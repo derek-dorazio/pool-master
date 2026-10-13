@@ -1,4 +1,10 @@
-import { toContestListResponse, toContestResponse } from '../../../packages/core-api/src/mappers/contests.mapper';
+import { Sport } from '@poolmaster/shared/domain';
+import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
+import {
+  toContestLeaderboardResponse,
+  toContestListResponse,
+  toContestResponse,
+} from '../../../packages/core-api/src/mappers/contests.mapper';
 import { buildContest } from '../../factories';
 
 describe('toContestListResponse', () => {
@@ -31,5 +37,23 @@ describe('toContestListResponse', () => {
 describe('toContestResponse event summary', () => {
   it('leaves the event summary off a single-contest read, whose page reads the event itself', () => {
     expect(toContestResponse(buildContest({ id: 'contest-1', sportEventId: 'event-1' })).contest).not.toHaveProperty('sportEvent');
+  });
+});
+
+describe('toContestLeaderboardResponse', () => {
+  it('publishes the event\'s sport, so a client can resolve the scoring family it renders the board with', () => {
+    const response = toContestLeaderboardResponse({
+      contestId: 'contest-1',
+      sportEventId: 'event-1',
+      sport: Sport.GOLF,
+      scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+      countingRule: { type: 'BEST_N', count: 4 },
+      participants: [],
+      entries: [],
+      asOf: null,
+    });
+
+    expect(response.sport).toBe(Sport.GOLF);
+    expect(ContestLeaderboardResponseSchema.parse(response).sport).toBe(Sport.GOLF);
   });
 });

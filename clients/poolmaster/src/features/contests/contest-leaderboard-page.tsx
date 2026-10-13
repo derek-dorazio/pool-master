@@ -28,9 +28,13 @@ import {
 } from './contest-status';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { ContestStatusBadge } from './contest-status-badge';
-import { buildLeaderboardView, type LeaderboardEntryRow } from './contest-leaderboard';
+import {
+  buildLeaderboardView,
+  type LeaderboardEntryRow,
+  type LeaderboardView,
+} from './contest-leaderboard';
 import { fetchContestEntries } from './use-contest-entries';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, getSportDefinition } from '@poolmaster/shared/domain';
 import { useContestLeaderboardQuery } from './use-contest-leaderboard';
 
 /**
@@ -40,7 +44,9 @@ import { useContestLeaderboardQuery } from './use-contest-leaderboard';
  * update, pre-live, and this one is live and post-settlement results. Nothing about how an
  * entry was drafted appears here — no tier, price, rank, odds or category — which is what
  * makes the view format-agnostic: a tiered pool and a budget pool render identically,
- * because "N golfers, M counting" is all a leaderboard is about.
+ * because "N golfers, M counting" is all a leaderboard is about. The columns after the total are
+ * the scoring family's (`SCORING_FAMILY_UI`), and every word for a participant or a round is the
+ * sport definition's.
  *
  * Once the contest is COMPLETED the same endpoint serves the standings frozen at settlement,
  * so there is no separate final mode to render.
@@ -54,7 +60,7 @@ const LEADERBOARD_ERROR_MESSAGES: ErrorCodeMessages = {
     'Your league membership is inactive, so this contest leaderboard is not available to you.',
 };
 
-/** An unscored cell. A golfer with no round posted is not a zero. */
+/** An unscored cell. A participant with nothing posted is not a zero. */
 const NO_SCORE = '—';
 
 /** Entries per page. A league can have hundreds; one page stays readable on a phone. */
@@ -72,20 +78,33 @@ function matchesSearch(entry: LeaderboardEntryRow, search: string) {
     || entry.squadName.toLowerCase().includes(needle);
 }
 
+/** "golfer" as a column header: "Golfer". */
+function capitalize(word: string) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+/** Position, name and total take fixed tracks (the name takes the slack); the family's columns follow. */
+function leaderboardGridColumns(view: LeaderboardView) {
+  return [
+    'minmax(36px,0.3fr)',
+    'minmax(0,1.5fr)',
+    'minmax(48px,0.4fr)',
+    ...view.detailColumns.map((column) => column.width),
+  ].join(' ');
+}
+
 function EntryBlock({
   entry,
   gridTemplateColumns,
   isCollapsed,
   isMine,
   onToggle,
-  roundNumbers,
 }: {
   entry: LeaderboardEntryRow;
   gridTemplateColumns: string;
   isCollapsed: boolean;
   isMine: boolean;
   onToggle: () => void;
-  roundNumbers: readonly number[];
 }) {
   const picksId = `contest-leaderboard-picks-${entry.entryId}`;
   return (
@@ -98,7 +117,7 @@ function EntryBlock({
       radius="lg"
       variant="subtle"
     >
-      {/* #389 — the grey entry bar is the toggle for its own golfer rows. */}
+      {/* #389 — the grey entry bar is the toggle for its own participant rows. */}
       <Button
         aria-controls={picksId}
         aria-expanded={!isCollapsed}
@@ -161,29 +180,20 @@ function EntryBlock({
               <span className={cn('text-right font-medium', pick.isDropped ? 'text-muted-foreground line-through' : 'text-foreground')}>
                 {pick.total ?? NO_SCORE}
               </span>
-              <span
-                className="text-right text-muted-foreground"
-                data-testid={`contest-leaderboard-pick-thru-${entry.entryId}-${pick.pickId}`}
-              >
-                {pick.thru ?? NO_SCORE}
-              </span>
-              {pick.rounds.map((round, index) => {
-                // #478 — a round the golfer did not play counts as 80 strokes; set apart so the
-                // total is explainable, and named for a screen reader.
-                const isUnplayed = pick.unplayedRoundNumbers.includes(roundNumbers[index]);
-                return (
-                  <span
-                    aria-label={isUnplayed ? `Round ${roundNumbers[index]} not played, counts as 80 strokes` : undefined}
-                    className={cn('text-right text-muted-foreground', isUnplayed && 'italic')}
-                    data-testid={`contest-leaderboard-pick-round-${entry.entryId}-${pick.pickId}-${roundNumbers[index]}`}
-                    data-unplayed={isUnplayed || undefined}
-                    key={roundNumbers[index]}
-                    title={isUnplayed ? 'Not played: counts as 80 strokes' : undefined}
-                  >
-                    {round ?? NO_SCORE}
-                  </span>
-                );
-              })}
+              {pick.detailCells.map((cell) => (
+                // #478 — a cell the participant did not play counts at a fixed value; set apart
+                // so the total is explainable, and named for a screen reader.
+                <span
+                  aria-label={cell.unplayed?.ariaLabel}
+                  className={cn('text-right text-muted-foreground', cell.unplayed && 'italic')}
+                  data-testid={cell.testId}
+                  data-unplayed={cell.unplayed ? true : undefined}
+                  key={cell.key}
+                  title={cell.unplayed?.title}
+                >
+                  {cell.text ?? NO_SCORE}
+                </span>
+              ))}
             </div>
           ))}
         </div>
@@ -201,7 +211,7 @@ export function ContestLeaderboardPage() {
   const location = useLocation();
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
 
-  // #389 — which entries' golfer rows are hidden. Keyed by entry id so it survives the live
+  // #389 — which entries' participant rows are hidden. Keyed by entry id so it survives the live
   // polls; an entry that first appears mid-session starts expanded like every other.
   const [collapsedEntryIds, setCollapsedEntryIds] = useState<ReadonlySet<string>>(() => new Set());
   const [search, setSearch] = useState('');
@@ -303,10 +313,8 @@ export function ContestLeaderboardPage() {
 
   const contest = contestQuery.data;
   const view = buildLeaderboardView(leaderboardQuery.data);
-  // Golfer name takes the slack; position, total, thru and each round get a fixed column.
-  const gridTemplateColumns = `minmax(36px,0.3fr) minmax(0,1.5fr) minmax(48px,0.4fr) minmax(40px,0.3fr) ${view.roundNumbers
-    .map(() => 'minmax(44px,0.3fr)')
-    .join(' ')}`;
+  const participantNoun = getSportDefinition(leaderboardQuery.data.sport).vocabulary.participant;
+  const gridTemplateColumns = leaderboardGridColumns(view);
 
   const allCollapsed = view.entries.length > 0
     && view.entries.every((entry) => collapsedEntryIds.has(entry.entryId));
@@ -375,11 +383,11 @@ export function ContestLeaderboardPage() {
             </Chip>
           ) : null}
           {contest.status === ContestStatus.COMPLETED ? (
-            // #246 — an entry's standing is frozen at settlement while each golfer's own
+            // #246 — an entry's standing is frozen at settlement while each participant's own
             // score stays live, so a late correction can make the two disagree on this very
             // page. Say so rather than let it read as a bug.
             <p className="text-sm text-muted-foreground" data-testid="contest-leaderboard-settled-note">
-              {`Final result, settled ${formatDateTimeDisplay(contest.endsAt, 'at the end of the event')}. Entry standings are frozen at settlement; golfer scores show current event data and can differ after a late score correction.`}
+              {`Final result, settled ${formatDateTimeDisplay(contest.endsAt, 'at the end of the event')}. Entry standings are frozen at settlement; ${participantNoun.one} scores show current event data and can differ after a late score correction.`}
             </p>
           ) : null}
         </div>
@@ -428,16 +436,11 @@ export function ContestLeaderboardPage() {
           style={{ gridTemplateColumns }}
         >
           <span>Pos</span>
-          <span>Golfer</span>
+          <span>{capitalize(participantNoun.one)}</span>
           <span className="text-right">Tot</span>
-          <span className="text-right">Thr</span>
-          {view.roundNumbers.map((roundNumber) => (
-            <span
-              className="text-right"
-              data-testid={`contest-leaderboard-round-header-${roundNumber}`}
-              key={roundNumber}
-            >
-              R{roundNumber}
+          {view.detailColumns.map((column) => (
+            <span className="text-right" data-testid={column.testId} key={column.key}>
+              {column.label}
             </span>
           ))}
         </div>
@@ -456,7 +459,6 @@ export function ContestLeaderboardPage() {
                 isMine={mySquadId !== null && entry.squadId === mySquadId}
                 key={entry.entryId}
                 onToggle={() => toggleEntry(entry.entryId)}
-                roundNumbers={view.roundNumbers}
               />
             ))
           )}
@@ -471,9 +473,9 @@ export function ContestLeaderboardPage() {
             total={matchingEntries.length}
           />
         </div>
-        {view.hasUnplayedRounds ? (
-          <p className="px-4 pt-3 text-xs text-muted-foreground" data-testid="contest-leaderboard-unplayed-note">
-            Rounds in italics were not played (missed cut, withdrawal, or no score) and count as 80 strokes against that round&apos;s par.
+        {view.footnote ? (
+          <p className="px-4 pt-3 text-xs text-muted-foreground" data-testid={view.footnote.testId}>
+            {view.footnote.text}
           </p>
         ) : null}
       </Tile>

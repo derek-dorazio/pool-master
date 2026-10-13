@@ -256,6 +256,7 @@ export function toContestLeaderboardResponse(
   return {
     contestId: leaderboard.contestId,
     sportEventId: leaderboard.sportEventId,
+    sport: leaderboard.sport,
     scoringDefinitionId: leaderboard.scoringDefinitionId,
     countingRule: leaderboard.countingRule,
     participants: leaderboard.participants.map(mapSportEventParticipantToDto),

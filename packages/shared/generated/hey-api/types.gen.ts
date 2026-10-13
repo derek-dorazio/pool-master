@@ -7082,6 +7082,10 @@ export type ContestLeaderboardResponse = {
      */
     sportEventId: string;
     /**
+     * Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.
+     */
+    sport: 'GOLF';
+    /**
      * The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
      */
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';

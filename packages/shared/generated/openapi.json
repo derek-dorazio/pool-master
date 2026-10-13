@@ -14235,6 +14235,13 @@
             "type": "string",
             "description": "Sport event the contest runs on."
           },
+          "sport": {
+            "type": "string",
+            "enum": [
+              "GOLF"
+            ],
+            "description": "Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with."
+          },
           "scoringDefinitionId": {
             "type": "string",
             "enum": [
@@ -14928,6 +14935,7 @@
         "required": [
           "contestId",
           "sportEventId",
+          "sport",
           "scoringDefinitionId",
           "countingRule",
           "participants",

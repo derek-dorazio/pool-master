@@ -77,8 +77,10 @@ come from the draw (`dealRandomDraw`, a seeded and replayable round-robin deal),
 Each scoring family has its module in an exhaustive registry keyed by `ScoringFamily`
 (`modules/scoring-families/registry.ts`). Contest scoring, settlement, the settled-standing
 read, the leaderboard detail blocks and live-score writes reach it through the event's sport
-definition. `STROKE_PLAY` (golf) is the only family; the interface was checked against finish
-position and knockout advancement before either is built.
+definition. The leaderboard response carries the event's `sport`, so the web resolves the same
+family for its own presentation (`SCORING_FAMILY_UI`). `STROKE_PLAY` (golf) is the only family;
+the interface was checked against finish position and knockout advancement before either is
+built.
 
 Turn-based selection (snake draft) has no implementation: it was removed in #200 and its
 rebuild is deferred to #199. Its `SNAKE_DRAFT` enum value was deleted with the other unbuilt

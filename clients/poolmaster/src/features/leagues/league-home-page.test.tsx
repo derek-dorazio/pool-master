@@ -303,6 +303,7 @@ describe('League Home', () => {
     getContestLeaderboardMock.mockResolvedValue(apiSuccess({
       contestId: 'live-1',
       sportEventId: 'event-live-1',
+      sport: 'GOLF',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 4 },
       participants: [],

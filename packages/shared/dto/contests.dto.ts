@@ -212,6 +212,9 @@ export type ContestCountingRuleDto = z.infer<typeof ContestCountingRuleDtoSchema
 export const ContestLeaderboardResponseSchema = z.object({
   contestId: z.string().describe('Contest whose leaderboard was requested.'),
   sportEventId: z.string().describe('Sport event the contest runs on.'),
+  sport: z.nativeEnum(Sport).describe(
+    'Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.',
+  ),
   scoringDefinitionId: ParticipantScoringDefinitionIdSchema.describe(
     'The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client\'s own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.',
   ),

@@ -5,13 +5,35 @@ import type {
   SportEventParticipantDto,
   SportEventParticipantRoundDto,
 } from '@/lib/api';
+import { getSportDefinition, Sport } from '@poolmaster/shared/domain';
+import { buildLeaderboardView, type LeaderboardPickRow, type LeaderboardView } from './contest-leaderboard';
 import {
-  buildLeaderboardView,
   formatCurrentRoundLabel,
-  formatThru,
   resolveCurrentRound,
   resolveRoundNumbers,
-} from './contest-leaderboard';
+} from './contest-leaderboard-rounds';
+import { formatThru } from './scoring-family-ui/stroke-play';
+
+const golf = getSportDefinition(Sport.GOLF);
+
+/** The round columns stroke play adds after THR, as round numbers. */
+function roundNumbersOf(view: LeaderboardView): number[] {
+  return view.detailColumns
+    .filter((column) => column.key.startsWith('round-'))
+    .map((column) => Number(column.key.slice('round-'.length)));
+}
+
+/** A pick's round cells, in column order. */
+function roundCellsOf(pick: LeaderboardPickRow): Array<string | null> {
+  return pick.detailCells.filter((cell) => cell.key.startsWith('round-')).map((cell) => cell.text);
+}
+
+/** The rounds a pick's row sets apart as not played. */
+function unplayedRoundsOf(pick: LeaderboardPickRow): number[] {
+  return pick.detailCells
+    .filter((cell) => cell.unplayed)
+    .map((cell) => Number(cell.key.slice('round-'.length)));
+}
 
 function roundFixture(
   overrides: Partial<SportEventParticipantRoundDto> & { roundNumber: number },
@@ -90,6 +112,7 @@ function responseFixture(
   return {
     contestId: 'contest-1',
     sportEventId: 'event-1',
+    sport: 'GOLF',
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
     countingRule: { type: 'BEST_N', count: 2 },
     participants: [],
@@ -164,16 +187,16 @@ describe('resolveCurrentRound', () => {
 
 describe('formatCurrentRoundLabel', () => {
   it('says nothing when there is no round to name', () => {
-    expect(formatCurrentRoundLabel(null)).toBeNull();
+    expect(formatCurrentRoundLabel(null, golf, 4)).toBeNull();
   });
 
   it('labels a round still being played', () => {
-    expect(formatCurrentRoundLabel({ roundNumber: 2, isComplete: false }))
+    expect(formatCurrentRoundLabel({ roundNumber: 2, isComplete: false }, golf, 4))
       .toBe('Round 2 — In Progress');
   });
 
   it('labels a finished round', () => {
-    expect(formatCurrentRoundLabel({ roundNumber: 4, isComplete: true }))
+    expect(formatCurrentRoundLabel({ roundNumber: 4, isComplete: true }, golf, 4))
       .toBe('Round 4 — Complete');
   });
 });
@@ -266,10 +289,10 @@ describe('buildLeaderboardView', () => {
       })],
     }));
 
-    expect(view.roundNumbers).toEqual([1, 2]);
-    expect(view.entries[0].picks[0].rounds).toEqual(['68', '-2']);
+    expect(roundNumbersOf(view)).toEqual([1, 2]);
+    expect(roundCellsOf(view.entries[0].picks[0])).toEqual(['68', '-2']);
     expect(view.entries[0].picks[0].total).toBe('-5');
-    expect(view.hasUnplayedRounds).toBe(false);
+    expect(view.footnote).toBeNull();
   });
 
   it('shows a cut golfer\'s contest score with 80 in each unplayed round, adding columns for rounds nobody has played yet', () => {
@@ -293,13 +316,13 @@ describe('buildLeaderboardView', () => {
       })],
     }));
 
-    expect(view.roundNumbers).toEqual([1, 2, 3, 4]);
+    expect(roundNumbersOf(view)).toEqual([1, 2, 3, 4]);
     // Played rounds still render through the scoring definition; only the unplayed ones read 80.
-    expect(view.entries[0].picks[0].rounds[0]).toBe('72');
-    expect(view.entries[0].picks[0].rounds.slice(2)).toEqual(['80', '80']);
+    expect(roundCellsOf(view.entries[0].picks[0])[0]).toBe('72');
+    expect(roundCellsOf(view.entries[0].picks[0]).slice(2)).toEqual(['80', '80']);
     expect(view.entries[0].picks[0].total).toBe('+18');
-    expect(view.entries[0].picks[0].unplayedRoundNumbers).toEqual([3, 4]);
-    expect(view.hasUnplayedRounds).toBe(true);
+    expect(unplayedRoundsOf(view.entries[0].picks[0])).toEqual([3, 4]);
+    expect(view.footnote?.text).toContain('count as 80 strokes');
   });
 
   it('keeps the server\'s order and its tie-aware display positions', () => {
@@ -339,7 +362,7 @@ describe('buildLeaderboardView', () => {
     expect(view.entries[0].total).toBeNull();
     expect(view.entries[0].displayPosition).toBeNull();
     expect(view.entries[0].picks[0].total).toBeNull();
-    expect(view.entries[0].picks[0].rounds).toEqual([null, null]);
+    expect(roundCellsOf(view.entries[0].picks[0])).toEqual([null, null]);
   });
 
   it('shows no total for a contest with no golf extension on the standing', () => {
@@ -422,8 +445,8 @@ describe('buildLeaderboardView', () => {
       })],
     }));
 
-    expect(view.roundNumbers).toEqual([1, 2]);
-    expect(view.entries[0].picks[1].rounds).toEqual(['71', null]);
+    expect(roundNumbersOf(view)).toEqual([1, 2]);
+    expect(roundCellsOf(view.entries[0].picks[1])).toEqual(['71', null]);
   });
 
   it('carries the current-round cue off the same response', () => {
@@ -437,7 +460,7 @@ describe('buildLeaderboardView', () => {
     const view = buildLeaderboardView(responseFixture({ participants: [rory] }));
 
     expect(view.entries).toEqual([]);
-    expect(view.roundNumbers).toEqual([1, 2]);
+    expect(roundNumbersOf(view)).toEqual([1, 2]);
   });
 });
 

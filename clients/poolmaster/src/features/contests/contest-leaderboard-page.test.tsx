@@ -189,6 +189,7 @@ function leaderboardResponse(entryTotalScoreToPar = -5) {
     data: {
       contestId: 'contest-1',
       sportEventId: 'event-1',
+      sport: 'GOLF',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 1 },
       participants: [
@@ -566,6 +567,7 @@ describe('ContestLeaderboardPage', () => {
       leaderboard: {
         contestId: 'contest-1',
         sportEventId: 'event-1',
+        sport: 'GOLF',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 1 },
         participants: [participant({
@@ -589,6 +591,7 @@ describe('ContestLeaderboardPage', () => {
       leaderboard: {
         contestId: 'contest-1',
         sportEventId: 'event-1',
+        sport: 'GOLF',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 1 },
         participants: [],
