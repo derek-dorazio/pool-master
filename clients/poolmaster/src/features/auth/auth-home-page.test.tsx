@@ -260,6 +260,30 @@ describe('AuthHomePage', () => {
     expect(screen.queryByTestId('league-destination')).not.toBeInTheDocument();
   });
 
+  it('lands an ordinary member on Welcome, not on a page another account was signed out of', async () => {
+    loginUserMock.mockResolvedValue({
+      data: {
+        user: createUser(),
+      },
+    });
+
+    renderAuthHomePage({
+      pathname: '/',
+      state: { from: '/league/ABC123', fromUserId: 'another-user' },
+    });
+
+    fireEvent.change(screen.getByTestId('auth-login-identifier'), {
+      target: { value: 'derek@example.com' },
+    });
+    fireEvent.change(screen.getByTestId('auth-login-password'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.click(screen.getByTestId('auth-login-submit'));
+
+    expect(await screen.findByTestId('welcome-destination')).toBeInTheDocument();
+    expect(screen.queryByTestId('league-destination')).not.toBeInTheDocument();
+  });
+
   it('returns the same account to the page it was signed out of', async () => {
     loginUserMock.mockResolvedValue({
       data: {
