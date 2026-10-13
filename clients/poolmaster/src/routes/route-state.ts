@@ -4,6 +4,8 @@ export type AuthRouteMode = 'login' | 'register';
 
 export type ParsedRouteState = {
   from?: string;
+  /** The account that was signed in on `from` when its session lapsed; sign-in returns only that account there. */
+  fromUserId?: string;
   authMode?: AuthRouteMode;
   leagueCode?: string;
   /** Set by the invite join page when the member joined but their chosen team name and icon did not save. */
@@ -21,6 +23,10 @@ export function parseRouteState(value: unknown): ParsedRouteState {
 
   if (typeof candidate.from === 'string') {
     parsed.from = candidate.from;
+  }
+
+  if (typeof candidate.fromUserId === 'string') {
+    parsed.fromUserId = candidate.fromUserId;
   }
 
   if (candidate.authMode === 'login' || candidate.authMode === 'register') {

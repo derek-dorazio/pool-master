@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
 
@@ -32,6 +32,13 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
+const SIGNED_IN_USER_COOKIE = 'poolmaster_signed_in_user';
+
+function SignInTarget() {
+  const location = useLocation();
+  return <div data-testid="redirect-target">{JSON.stringify(location.state)}</div>;
+}
+
 function renderMemberGuard(initialEntries = ['/league/LEAGUE1?tab=history']) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
@@ -39,7 +46,7 @@ function renderMemberGuard(initialEntries = ['/league/LEAGUE1?tab=history']) {
         <Route element={<MemberRouteGuard />}>
           <Route element={<div data-testid="member-guard-allowed">Allowed</div>} path="/league/:leagueCode" />
         </Route>
-        <Route element={<div data-testid="redirect-target">Sign in</div>} path="/" />
+        <Route element={<SignInTarget />} path="/" />
       </Routes>
     </MemoryRouter>,
   );
@@ -67,6 +74,7 @@ describe('route guards', () => {
     authState.isLoading = false;
     authState.isRootAdmin = false;
     authState.user = null;
+    document.cookie = `${SIGNED_IN_USER_COOKIE}=; Path=/; Max-Age=0`;
     mockLogger.debug.mockReset();
     mockLogger.info.mockReset();
     mockLogger.warn.mockReset();
@@ -85,6 +93,25 @@ describe('route guards', () => {
       }),
       expect.any(String),
     );
+  });
+
+  it('stamps the sign-in return page with the account last signed in, so another account does not inherit it', async () => {
+    document.cookie = `${SIGNED_IN_USER_COOKIE}=user-9; Path=/`;
+
+    renderMemberGuard(['/league/LEAGUE1']);
+
+    expect(JSON.parse((await screen.findByTestId('redirect-target')).textContent)).toEqual({
+      from: '/league/LEAGUE1',
+      fromUserId: 'user-9',
+    });
+  });
+
+  it('leaves the sign-in return page unstamped when no account was signed in, so a shared link still opens', async () => {
+    renderMemberGuard(['/league/LEAGUE1']);
+
+    expect(JSON.parse((await screen.findByTestId('redirect-target')).textContent)).toEqual({
+      from: '/league/LEAGUE1',
+    });
   });
 
   it('allows authenticated member routes and logs the happy path', async () => {

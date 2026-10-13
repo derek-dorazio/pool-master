@@ -13,6 +13,7 @@ const {
   sharedStateCalls,
 } = vi.hoisted(() => ({
   authState: {
+    isRootAdmin: false,
     user: {
       id: 'user-1',
       firstName: 'Derek',
@@ -107,6 +108,10 @@ function renderWelcomePage(initialEntries = ['/welcome']) {
           <Route
             element={<LeagueHomeDestination />}
             path="/league/:leagueCode"
+          />
+          <Route
+            element={<div data-testid="manage-leagues-destination" />}
+            path="/manage/leagues"
           />
         </Routes>
       </MemoryRouter>
@@ -203,6 +208,7 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
 
 describe('Landing a signed-in user on a league', () => {
   beforeEach(() => {
+    authState.isRootAdmin = false;
     mockApi.listLeagues.mockReset();
     document.cookie = `${RECENT_LEAGUE_COOKIE}=; Path=/; Max-Age=0`;
   });
@@ -210,6 +216,17 @@ describe('Landing a signed-in user on a league', () => {
   const activeOlder = buildLeague({ id: 'league-active', leagueCode: 'ACTIVE1', createdAt: '2026-04-01T00:00:00.000Z' });
   const inactiveNewer = buildLeague({
     id: 'league-inactive', leagueCode: 'GONE1', isActive: false, createdAt: '2026-05-01T00:00:00.000Z',
+  });
+
+  it('lands a root admin on Manage leagues, not on a league page', async () => {
+    authState.isRootAdmin = true;
+    document.cookie = `${RECENT_LEAGUE_COOKIE}=ACTIVE1; Path=/`;
+    mockApi.listLeagues.mockResolvedValue(apiSuccess(listLeaguesData([activeOlder])));
+
+    renderWelcomePage();
+
+    expect(await screen.findByTestId('manage-leagues-destination')).toBeInTheDocument();
+    expect(screen.queryByTestId('league-home-destination')).not.toBeInTheDocument();
   });
 
   it('lands a member on their newest active league, skipping a newer league that is inactive', async () => {
