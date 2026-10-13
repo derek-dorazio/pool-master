@@ -1,14 +1,16 @@
 import type { ReactElement } from 'react';
-import { RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SelectionType, getTieredRosterSize } from '@poolmaster/shared/domain';
+import { RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SelectionType, getTieredRosterSize, type SportNoun } from '@poolmaster/shared/domain';
 import { Checkbox, FormField, formatDollars, Input } from '@/features/shared/ui';
-import { defaultCountedScoresFor, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
+import { defaultCountedScoresFor, perEntryLabel, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
 function TieredRulesInputs({
   onChange,
+  participant,
   tierCount,
   values,
 }: {
   onChange: (next: Partial<ContestRulesValues>) => void;
+  participant: SportNoun;
   tierCount: number;
   values: ContestRulesValues;
 }) {
@@ -21,7 +23,7 @@ function TieredRulesInputs({
     <div className="grid gap-4 md:grid-cols-2">
       <FormField
         helperText={tierCount > 0
-          ? `${tierCount} tiers × ${values.picksPerTier || '?'} = ${rosterSize ?? '—'} golfers per entry`
+          ? `${tierCount} tiers × ${values.picksPerTier || '?'} = ${rosterSize ?? '—'} ${participant.many} per entry`
           : 'The event has no tiers yet.'}
         label="Picks per tier"
       >
@@ -56,17 +58,19 @@ function TieredRulesInputs({
 /** The budget inputs (#93). The salary cap is the event's, so it shows but does not edit. */
 function BudgetRulesInputs({
   onChange,
+  participant,
   salaryCap,
   values,
 }: {
   onChange: (next: Partial<ContestRulesValues>) => void;
+  participant: SportNoun;
   salaryCap: number | null;
   values: ContestRulesValues;
 }) {
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
-        <FormField label="Golfers per entry">
+        <FormField label={perEntryLabel(participant)}>
           <Input
             data-testid="contest-budget-roster-size"
             min={1}
@@ -94,7 +98,7 @@ function BudgetRulesInputs({
         </span>
         <span className="block text-xs text-muted-foreground">
           {salaryCap === null
-            ? 'The event’s golfers have no prices yet.'
+            ? `The event’s ${participant.many} have no prices yet.`
             : 'Set by the event’s prices, the same for every budget contest on it.'}
         </span>
       </div>
@@ -108,14 +112,19 @@ function BudgetRulesInputs({
  */
 function RandomDrawRulesInputs({
   onChange,
+  participant,
   values,
 }: {
   onChange: (next: Partial<ContestRulesValues>) => void;
+  participant: SportNoun;
   values: ContestRulesValues;
 }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <FormField helperText="The draw deals each entry this many golfers at random." label="Golfers per entry">
+      <FormField
+        helperText={`The draw deals each entry this many ${participant.many} at random.`}
+        label={perEntryLabel(participant)}
+      >
         <Input
           data-testid="contest-draw-picks-per-entry"
           max={RANDOM_DRAW_PICKS_PER_ENTRY_MAX}
@@ -143,6 +152,7 @@ function RandomDrawRulesInputs({
 
 type RulesInputsProps = {
   onChange: (next: Partial<ContestRulesValues>) => void;
+  participant: SportNoun;
   salaryCap: number | null;
   tierCount: number;
   values: ContestRulesValues;
@@ -150,14 +160,14 @@ type RulesInputsProps = {
 
 /** Each format's own inputs. A `Record` over the type, so a new format without inputs fails the typecheck. */
 const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => ReactElement> = {
-  [SelectionType.TIERED]: ({ onChange, tierCount, values }: RulesInputsProps) => (
-    <TieredRulesInputs onChange={onChange} tierCount={tierCount} values={values} />
+  [SelectionType.TIERED]: ({ onChange, participant, tierCount, values }: RulesInputsProps) => (
+    <TieredRulesInputs onChange={onChange} participant={participant} tierCount={tierCount} values={values} />
   ),
-  [SelectionType.BUDGET_PICK]: ({ onChange, salaryCap, values }: RulesInputsProps) => (
-    <BudgetRulesInputs onChange={onChange} salaryCap={salaryCap} values={values} />
+  [SelectionType.BUDGET_PICK]: ({ onChange, participant, salaryCap, values }: RulesInputsProps) => (
+    <BudgetRulesInputs onChange={onChange} participant={participant} salaryCap={salaryCap} values={values} />
   ),
-  [SelectionType.RANDOM_DRAW]: ({ onChange, values }: RulesInputsProps) => (
-    <RandomDrawRulesInputs onChange={onChange} values={values} />
+  [SelectionType.RANDOM_DRAW]: ({ onChange, participant, values }: RulesInputsProps) => (
+    <RandomDrawRulesInputs onChange={onChange} participant={participant} values={values} />
   ),
 };
 
@@ -169,12 +179,15 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
  */
 export function ContestRulesFields({
   onChange,
+  participant,
   salaryCap,
   selectionType,
   tierCount,
   values,
 }: {
   onChange: (next: Partial<ContestRulesValues>) => void;
+  /** What the event's sport calls a competitor: "golfer", "horse". */
+  participant: SportNoun;
   /** The event's salary cap, or null while its field is unpriced. */
   salaryCap: number | null;
   selectionType: EditableSelectionType;
@@ -183,7 +196,7 @@ export function ContestRulesFields({
 }) {
   return (
     <div className="space-y-4">
-      {RULES_INPUTS[selectionType]({ onChange, salaryCap, tierCount, values })}
+      {RULES_INPUTS[selectionType]({ onChange, participant, salaryCap, tierCount, values })}
       <div className="grid gap-4 md:grid-cols-2">
         <FormField label="Entries per team">
           <Input

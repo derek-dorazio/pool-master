@@ -255,7 +255,7 @@ describe('Commissioner tools › Contests › one contest', () => {
     fireEvent.click(await screen.findByTestId('contest-open-confirm'));
 
     expect(await screen.findByTestId('contest-open-error')).toHaveTextContent(
-      'Even the cheapest golfers for every place cost more than the salary cap, so nobody could enter. Pick fewer golfers per entry.',
+      'Even the cheapest picks for every place cost more than the salary cap, so nobody could enter. Pick fewer per entry.',
     );
   });
 
@@ -388,7 +388,7 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
     fireEvent.click(await screen.findByTestId('contest-run-draw-confirm'));
 
     expect(await screen.findByTestId('contest-run-draw-error')).toHaveTextContent(
-      'The field doesn’t have enough golfers to deal every entry its share, so nothing was dealt.',
+      'The field isn’t big enough to deal every entry its share, so nothing was dealt.',
     );
     expect(screen.getByTestId('contest-run-draw-dialog')).toBeInTheDocument();
   });

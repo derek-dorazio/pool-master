@@ -41,6 +41,8 @@ export function formatFinish(participant: SportEventParticipantDto, sport: Sport
 }
 
 export const finishPositionUi: ScoringFamilyUi = {
+  // A race's points table breaks no ties with a prediction: entries submit without one.
+  entryTiebreaker: null,
   leaderboard(response, sport) {
     const definition = PARTICIPANT_SCORING_DEFINITIONS[response.scoringDefinitionId];
     const provisional = response.participants.some((participant) => participant.race !== null && !participant.race.isOfficial);

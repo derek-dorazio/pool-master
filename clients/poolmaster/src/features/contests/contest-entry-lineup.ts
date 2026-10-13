@@ -130,14 +130,14 @@ export const LINEUP_RULES: Record<SelectionType, LineupRules> = {
         : next;
     },
     submitBlockedReason: ({ lineupSummary }) => lineupSummary?.isOverBudget
-      ? `Your golfers cost ${formatDollars(lineupSummary.spent)}, over the ${formatDollars(lineupSummary.salaryCap)} salary cap. Remove a golfer to get under it, then submit.`
+      ? `Your picks cost ${formatDollars(lineupSummary.spent)}, over the ${formatDollars(lineupSummary.salaryCap)} salary cap. Remove one to get under it, then submit.`
       : null,
   },
   // Nobody picks in a random draw: the commissioner's draw deals every entry's golfers and
   // submits the entry, so a tap changes nothing and there is never anything to submit by hand.
   [SelectionType.RANDOM_DRAW]: {
     applySelection: (selectionState) => selectionState,
-    submitBlockedReason: () => 'Golfers in this contest are dealt by the commissioner’s draw, so there is nothing to submit.',
+    submitBlockedReason: () => 'Picks in this contest are dealt by the commissioner’s draw, so there is nothing to submit.',
   },
 };
 
@@ -146,7 +146,7 @@ export const LINEUP_RULES: Record<SelectionType, LineupRules> = {
  * the server's own sentences are a fallback for anything not listed.
  */
 export const CONTEST_ENTRY_CODE_MESSAGES: ErrorCodeMessages = {
-  ENTRY_OVER_BUDGET: 'Your golfers cost more than the salary cap. Remove a golfer to get under it, then submit.',
-  PRICE_MISSING: 'This golfer has no price yet, so they can’t be picked.',
-  SELECTION_DEALT_BY_DRAW: 'Golfers in this contest are dealt by the commissioner’s draw, so they can’t be picked.',
+  ENTRY_OVER_BUDGET: 'Your picks cost more than the salary cap. Remove one to get under it, then submit.',
+  PRICE_MISSING: 'This pick has no price yet, so it can’t be chosen.',
+  SELECTION_DEALT_BY_DRAW: 'Picks in this contest are dealt by the commissioner’s draw, so they can’t be chosen.',
 };

@@ -1,4 +1,4 @@
-import { SelectionType, getTieredRosterSize, type ContestRules } from '@poolmaster/shared/domain';
+import { SelectionType, getTieredRosterSize, type ContestRules, type SportNoun } from '@poolmaster/shared/domain';
 import { formatDollars } from '@/features/shared/ui';
 
 /**
@@ -20,6 +20,11 @@ export function pluralize(count: number, singular: string, plural = `${singular}
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
+/** "1 horse", "6 horses": a count of the event's participants, in its sport's words. */
+export function countParticipants(count: number, participant: SportNoun) {
+  return pluralize(count, participant.one, participant.many);
+}
+
 type TieredRules = Extract<ContestRules, { selectionType: typeof SelectionType.TIERED }>;
 type BudgetRules = Extract<ContestRules, { selectionType: typeof SelectionType.BUDGET_PICK }>;
 type RandomDrawRules = Extract<ContestRules, { selectionType: typeof SelectionType.RANDOM_DRAW }>;
@@ -33,8 +38,8 @@ function formatCountedScores(countedScores: number, rosterSize: number | null) {
       : `The best ${countedScores} scores count.`;
 }
 
-function formatTieredRules({ countedScores, picksPerTier }: TieredRules, tierCount: number) {
-  const golfers = pluralize(picksPerTier, 'golfer');
+function formatTieredRules({ countedScores, picksPerTier }: TieredRules, tierCount: number, participant: SportNoun) {
+  const golfers = countParticipants(picksPerTier, participant);
   const pick = tierCount === 0
     ? `Pick ${golfers} from each of the event's tiers.`
     : tierCount === 1
@@ -44,13 +49,13 @@ function formatTieredRules({ countedScores, picksPerTier }: TieredRules, tierCou
   return `${pick} ${formatCountedScores(countedScores, rosterSize)}`;
 }
 
-function formatBudgetRules({ countedScores, rosterSize }: BudgetRules, salaryCap: number | null) {
+function formatBudgetRules({ countedScores, rosterSize }: BudgetRules, salaryCap: number | null, participant: SportNoun) {
   const cap = salaryCap === null ? 'the salary cap' : `the ${formatDollars(salaryCap)} salary cap`;
-  return `Pick ${pluralize(rosterSize, 'golfer')} whose prices fit under ${cap}. ${formatCountedScores(countedScores, rosterSize)}`;
+  return `Pick ${countParticipants(rosterSize, participant)} whose prices fit under ${cap}. ${formatCountedScores(countedScores, rosterSize)}`;
 }
 
-function formatRandomDrawRules({ countedScores, picksPerEntry }: RandomDrawRules) {
-  return `The draw deals each entry ${pluralize(picksPerEntry, 'golfer')} at random. ${formatCountedScores(countedScores, picksPerEntry)}`;
+function formatRandomDrawRules({ countedScores, picksPerEntry }: RandomDrawRules, participant: SportNoun) {
+  return `The draw deals each entry ${countParticipants(picksPerEntry, participant)} at random. ${formatCountedScores(countedScores, picksPerEntry)}`;
 }
 
 /** "Pick 6, best 4" or "Pick 6, all count": a roster size and the scores that count. */
@@ -61,17 +66,23 @@ function formatRosterLabel(verb: string, rosterSize: number, countedScores: numb
 /**
  * A contest's rules as one plain sentence, such as "Pick 1 golfer from each of 6 tiers. The best
  * 4 scores count." Keyed by selection type, so each new way of picking adds its own arm here.
- * `tierCount` is the event's; an event with no tiers yet still reads sensibly. `salaryCap` is the
- * event's too, named in a budget sentence when it is known.
+ * `tierCount` is the event's; an event with no tiers yet still reads sensibly. `participant` is
+ * what the event's sport calls a competitor. `salaryCap` is the event's too, named in a budget
+ * sentence when it is known.
  */
-export function formatContestRules(configuration: ContestRules, tierCount: number, salaryCap: number | null = null) {
+export function formatContestRules(
+  configuration: ContestRules,
+  tierCount: number,
+  participant: SportNoun,
+  salaryCap: number | null = null,
+) {
   switch (configuration.selectionType) {
     case SelectionType.TIERED:
-      return formatTieredRules(configuration, tierCount);
+      return formatTieredRules(configuration, tierCount, participant);
     case SelectionType.BUDGET_PICK:
-      return formatBudgetRules(configuration, salaryCap);
+      return formatBudgetRules(configuration, salaryCap, participant);
     case SelectionType.RANDOM_DRAW:
-      return formatRandomDrawRules(configuration);
+      return formatRandomDrawRules(configuration, participant);
   }
 }
 

@@ -1,6 +1,7 @@
+import type { SportNoun } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@/lib/api';
 import { Alert, formatDateTimeDisplay, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';
-import { pluralize } from './contest-rules';
+import { countParticipants } from './contest-rules';
 import type { SelectionGroup } from './contest-entry-selection';
 
 /**
@@ -17,9 +18,12 @@ function getDealtGolfers(selectionGroups: SelectionGroup[]) {
 /** The summary tiles: the draw, the golfers dealt, and when entries close. */
 export function DrawEntryMetrics({
   isEditable,
+  noun,
   selectionState,
 }: {
   isEditable: boolean;
+  /** What the event's sport calls a participant: "golfer", "horse". */
+  noun: SportNoun;
   selectionState: SelectionStateResponse;
 }) {
   const { drawnAt, rosterSize } = selectionState;
@@ -33,8 +37,8 @@ export function DrawEntryMetrics({
           value={<span data-testid="contest-entry-draw-status">{drawnAt ? 'Done' : 'Not yet run'}</span>}
         />
         <MetricTile
-          helperText={drawnAt ? 'Dealt at random by the draw' : `The draw deals ${pluralize(rosterSize, 'golfer')} to each entry`}
-          label="Golfers dealt"
+          helperText={drawnAt ? 'Dealt at random by the draw' : `The draw deals ${countParticipants(rosterSize, noun)} to each entry`}
+          label={`${noun.many.charAt(0).toUpperCase()}${noun.many.slice(1)} dealt`}
           value={`${dealtCount}/${rosterSize}`}
         />
         <MetricTile
@@ -51,7 +55,7 @@ export function DrawEntryMetrics({
  * The lineup panel. Before the draw: what will happen and that there is nothing to pick. After
  * it: the dealt golfers, read-only.
  */
-export function DrawLineup({ selectionState }: { selectionState: SelectionStateResponse }) {
+export function DrawLineup({ noun, selectionState }: { noun: SportNoun; selectionState: SelectionStateResponse }) {
   const { drawnAt, rosterSize } = selectionState;
   const dealtGolfers = getDealtGolfers(selectionState.selectionGroups ?? []);
 
@@ -59,7 +63,7 @@ export function DrawLineup({ selectionState }: { selectionState: SelectionStateR
     return (
       <Alert data-testid="contest-entry-draw-pending" title="Waiting for the draw">
         There is nothing to pick in this contest. Once entries are in, the commissioner runs the
-        draw, which deals this entry {pluralize(rosterSize, 'golfer')} at random and enters it.
+        draw, which deals this entry {countParticipants(rosterSize, noun)} at random and enters it.
       </Alert>
     );
   }
@@ -70,7 +74,7 @@ export function DrawLineup({ selectionState }: { selectionState: SelectionStateR
         {`Dealt by the commissioner’s draw on ${formatDateTimeDisplay(drawnAt)}. The draw is final.`}
       </p>
       <Tile padding="none" radius="lg">
-        <ul aria-label="Dealt golfers" className="divide-y divide-border">
+        <ul aria-label={`Dealt ${noun.many}`} className="divide-y divide-border">
           {dealtGolfers.map((golfer) => (
             <li className="px-4 py-3 text-sm" key={golfer.sportEventParticipantId}>
               <div className="font-medium text-foreground">{golfer.participantName}</div>

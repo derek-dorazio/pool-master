@@ -12,7 +12,7 @@ export const CONTEST_DRAW_CODE_MESSAGES: ErrorCodeMessages = {
   CONTEST_DRAW_ENTRIES_CHANGED:
     'Someone entered or left while the draw was running, so nothing was dealt. Run the draw again.',
   CONTEST_DRAW_FIELD_TOO_SMALL:
-    'The field doesn’t have enough golfers to deal every entry its share, so nothing was dealt.',
+    'The field isn’t big enough to deal every entry its share, so nothing was dealt.',
   CONTEST_DRAW_NOT_OPEN: 'The draw can only run while the contest is open for entries.',
   CONTEST_DRAW_NO_ENTRIES: 'No one has entered yet. The draw needs at least one entry to deal to.',
   CONTEST_EVENT_ALREADY_STARTED: 'The event has already started, so it’s too late to run the draw.',

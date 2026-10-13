@@ -1,3 +1,4 @@
+import type { SportNoun } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import type { SelectionStateResponse } from '@/lib/api';
 import {
@@ -25,9 +26,9 @@ function pluralizePlaces(count: number) {
 /**
  * The spend against the cap, kept in view while the list scrolls: spent of cap, what is left,
  * and what that leaves per open place. Over the cap it turns red and says what to do; when the
- * cheapest golfers left cannot fill the open places it warns, without blocking anything.
+ * cheapest participants left cannot fill the open places it warns, without blocking anything.
  */
-export function BudgetSpendBar({ summary }: { summary: BudgetLineupSummary }) {
+export function BudgetSpendBar({ noun, summary }: { noun: SportNoun; summary: BudgetLineupSummary }) {
   const { cheapestFill, isOverBudget, openSlots, remaining, salaryCap, spent } = summary;
   const perOpenPlace = openSlots > 0 && remaining > 0 ? remaining / openSlots : null;
   const cannotFill = openSlots > 0 && !isOverBudget && (cheapestFill === null || cheapestFill > remaining);
@@ -63,13 +64,13 @@ export function BudgetSpendBar({ summary }: { summary: BudgetLineupSummary }) {
       </div>
       {isOverBudget ? (
         <p className="text-sm text-destructive" data-testid="contest-entry-over-budget">
-          Your golfers cost more than the salary cap. Tap a picked golfer to remove them.
+          Your {noun.many} cost more than the salary cap. Tap a picked {noun.one} to remove them.
         </p>
       ) : cannotFill ? (
         <p className="text-sm text-muted-foreground" data-testid="contest-entry-budget-unfillable">
           {cheapestFill === null
-            ? `There aren't enough golfers left to fill your ${pluralizePlaces(openSlots)}.`
-            : `The cheapest golfers left for your ${pluralizePlaces(openSlots)} cost ${formatDollars(cheapestFill)}, more than you have left.`}
+            ? `There aren't enough ${noun.many} left to fill your ${pluralizePlaces(openSlots)}.`
+            : `The cheapest ${noun.many} left for your ${pluralizePlaces(openSlots)} cost ${formatDollars(cheapestFill)}, more than you have left.`}
         </p>
       ) : null}
     </Tile>
@@ -80,23 +81,25 @@ function BudgetParticipantRow({
   canSelect,
   isBusy,
   isRosterFull,
+  noun,
   onSelect,
   participant,
 }: {
   canSelect: boolean;
   isBusy: boolean;
   isRosterFull: boolean;
+  noun: SportNoun;
   onSelect: (participant: SelectionParticipant) => void;
   participant: SelectionParticipant;
 }) {
   const isSelected = Boolean(participant.isSelected);
   const hasPrice = participant.price !== undefined && participant.price !== null;
-  // A held golfer stays tappable even after withdrawing: tapping again removes them.
+  // A held participant stays tappable even after withdrawing: tapping again removes them.
   const isDisabled = isBusy
     || !canSelect
     || (!isSelected && (!participant.isAvailable || !hasPrice || isRosterFull));
 
-  let actionLabel = 'Add golfer';
+  let actionLabel = `Add ${noun.one}`;
   if (isSelected) {
     actionLabel = 'Picked';
   } else if (!participant.isAvailable) {
@@ -138,12 +141,15 @@ export function BudgetLineupBuilder({
   canSelect,
   group,
   isBusy,
+  noun,
   onParticipantSelect,
   summary,
 }: {
   canSelect: boolean;
   group: SelectionGroup;
   isBusy: boolean;
+  /** What the event's sport calls a participant: "golfer", "horse". */
+  noun: SportNoun;
   onParticipantSelect: (participant: SelectionParticipant) => void;
   summary: BudgetLineupSummary | null;
 }) {
@@ -157,10 +163,10 @@ export function BudgetLineupBuilder({
 
   return (
     <div className="space-y-4" data-testid="contest-entry-budget-builder">
-      {summary ? <BudgetSpendBar summary={summary} /> : null}
+      {summary ? <BudgetSpendBar noun={noun} summary={summary} /> : null}
       <div>
         <h4 className="text-lg font-semibold text-foreground">
-          {`Your golfers (${picked.length}/${group.picksFromGroup})`}
+          {`Your ${noun.many} (${picked.length}/${group.picksFromGroup})`}
         </h4>
         {picked.length ? (
           <div className="mt-2 flex flex-wrap gap-2">
@@ -180,11 +186,11 @@ export function BudgetLineupBuilder({
           </div>
         ) : (
           <p className="mt-1 text-sm text-muted-foreground">
-            {`Pick ${group.picksFromGroup} golfers whose prices fit under the cap.`}
+            {`Pick ${group.picksFromGroup} ${noun.many} whose prices fit under the cap.`}
           </p>
         )}
       </div>
-      <FormField label="Find a golfer">
+      <FormField label={`Find a ${noun.one}`}>
         <Input
           data-testid="contest-entry-budget-search"
           onChange={(event) => setSearch(event.target.value)}
@@ -200,11 +206,12 @@ export function BudgetLineupBuilder({
             isBusy={isBusy}
             isRosterFull={isRosterFull}
             key={participant.sportEventParticipantId}
+            noun={noun}
             onSelect={onParticipantSelect}
             participant={participant}
           />
         ))}
-        {!listed.length ? <Alert>{`No golfer matches “${search.trim()}”.`}</Alert> : null}
+        {!listed.length ? <Alert>{`No ${noun.one} matches “${search.trim()}”.`}</Alert> : null}
       </ListStack>
     </div>
   );
@@ -213,9 +220,11 @@ export function BudgetLineupBuilder({
 /** A budget entry once entries close: its golfers with their prices, and the spend. */
 export function LockedBudgetLineup({
   group,
+  noun,
   summary,
 }: {
   group: SelectionGroup;
+  noun: SportNoun;
   summary: BudgetLineupSummary | null;
 }) {
   const picked = group.participants.filter((participant) => participant.isSelected);
@@ -223,7 +232,7 @@ export function LockedBudgetLineup({
   return (
     <Tile data-testid="contest-entry-budget-locked" padding="sm" radius="lg" variant="subtle">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h4 className="text-lg font-semibold text-foreground">Your golfers</h4>
+        <h4 className="text-lg font-semibold text-foreground">{`Your ${noun.many}`}</h4>
         <StatusBadge tone="locked">Locked</StatusBadge>
       </div>
       {picked.length ? (
@@ -240,7 +249,7 @@ export function LockedBudgetLineup({
           ))}
         </div>
       ) : (
-        <Alert className="mt-3">No golfer was saved on this entry.</Alert>
+        <Alert className="mt-3">{`No ${noun.one} was saved on this entry.`}</Alert>
       )}
       {summary ? (
         <p className="mt-3 text-sm text-muted-foreground">

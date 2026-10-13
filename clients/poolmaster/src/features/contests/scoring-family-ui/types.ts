@@ -64,7 +64,26 @@ export interface ScoringFamilyLeaderboard {
   ): LeaderboardPickDetail;
 }
 
+/**
+ * The prediction an entry makes to break a tie (#606): what it asks for, the values on offer and
+ * how one reads. A family with no prediction to make has none, and its entries submit without one.
+ */
+export interface EntryTiebreakerUi {
+  /** The question, as the field's label: "Winning Score Relative to Par". */
+  label: string;
+  /** The empty choice: "Select score". */
+  placeholder: string;
+  /** The values an entry may choose, in the order offered. */
+  options: readonly number[];
+  /** How one value reads: "-12", "E". */
+  format: (value: number) => string;
+  /** A saved prediction in a sentence: "Winning score relative to par: -12". */
+  describe: (value: number) => string;
+}
+
 /** One scoring family's web presentation. */
 export interface ScoringFamilyUi {
   leaderboard(response: ContestLeaderboardResponse, sport: SportDefinition): ScoringFamilyLeaderboard;
+  /** The entry's tiebreaker prediction, or null when the family asks for none. */
+  entryTiebreaker: EntryTiebreakerUi | null;
 }

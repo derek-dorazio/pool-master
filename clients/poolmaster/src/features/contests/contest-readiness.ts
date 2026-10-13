@@ -1,4 +1,6 @@
+import { getSportDefinition } from '@poolmaster/shared/domain';
 import type { SportEventDto } from '@/lib/api';
+import { countParticipants } from './contest-rules';
 
 const HOUR_MS = 60 * 60_000;
 const DAY_MS = 24 * HOUR_MS;
@@ -30,7 +32,7 @@ export function formatStartsIn(startDate: string, now: Date = new Date()) {
 export type ContestReadinessCheck = { id: string; isMet: boolean; label: string };
 
 /**
- * What must hold before a contest can open to its league: the event is released with its golfers
+ * What must hold before a contest can open to its league: the event is released with its field
  * and tiers loaded, and it has not started. These mirror the server's own checks, which still
  * have the last word.
  */
@@ -38,7 +40,8 @@ export function getContestReadinessChecks(event: SportEventDto, now: Date = new 
   const isReleased = event.readinessStatus !== 'NOT_RELEASED';
   const hasStarted = event.readinessStatus === 'EVENT_STARTED'
     || new Date(event.startDate).getTime() <= now.getTime();
-  const golfers = `${event.loadedParticipantCount} golfer${event.loadedParticipantCount === 1 ? '' : 's'}`;
+  const { participant } = getSportDefinition(event.sport).vocabulary;
+  const golfers = countParticipants(event.loadedParticipantCount, participant);
   const tiers = `${event.tierCount} tier${event.tierCount === 1 ? '' : 's'}`;
 
   return [
@@ -52,7 +55,7 @@ export function getContestReadinessChecks(event: SportEventDto, now: Date = new 
       isMet: event.loadedParticipantCount > 0 && event.tierCount > 0,
       label: event.loadedParticipantCount > 0
         ? `${golfers} in ${tiers}`
-        : 'No golfers loaded yet',
+        : `No ${participant.many} loaded yet`,
     },
     {
       id: 'not-started',

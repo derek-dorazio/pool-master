@@ -4,9 +4,10 @@ import {
   SelectionType,
   getDefaultCountedScores,
   getTieredRosterSize,
+  type SportNoun,
 } from '@poolmaster/shared/domain';
 import type { ContestConfigurationRequest } from '@poolmaster/shared/dto';
-import { pluralize } from './contest-rules';
+import { countParticipants } from './contest-rules';
 
 /** The selection types the rules fields can edit: one arm each of the configuration request. */
 export type EditableSelectionType = ContestConfigurationRequest['selectionType'];
@@ -52,7 +53,7 @@ function withEntryLimit<T extends object>(values: ContestRulesValues, rules: T):
  * The tiered rules. An event with no tiers yet has no roster to check "Scores that count"
  * against; the server skips that check too.
  */
-function parseTieredRules(values: ContestRulesValues, tierCount: number): RulesResult {
+function parseTieredRules(values: ContestRulesValues, tierCount: number, participant: SportNoun): RulesResult {
   const picksPerTier = parseWholeNumber(values.picksPerTier);
   if (picksPerTier === null) {
     return { configuration: null, error: 'Picks per tier must be a positive whole number.' };
@@ -64,7 +65,7 @@ function parseTieredRules(values: ContestRulesValues, tierCount: number): RulesR
     return {
       configuration: null,
       error: tierCount > 0
-        ? `Scores that count must be between 1 and the ${rosterSize} golfers picked.`
+        ? `Scores that count must be between 1 and the ${countParticipants(rosterSize, participant)} picked.`
         : 'Scores that count must be a positive whole number.',
     };
   }
@@ -72,27 +73,27 @@ function parseTieredRules(values: ContestRulesValues, tierCount: number): RulesR
 }
 
 /** The budget rules (#93). The salary cap is the event's, so it is not part of them. */
-function parseBudgetRules(values: ContestRulesValues): RulesResult {
+function parseBudgetRules(values: ContestRulesValues, participant: SportNoun): RulesResult {
   const rosterSize = parseWholeNumber(values.rosterSize);
   if (rosterSize === null || rosterSize > BUDGET_ROSTER_SIZE_MAX) {
-    return { configuration: null, error: `Golfers per entry must be between 1 and ${BUDGET_ROSTER_SIZE_MAX}.` };
+    return { configuration: null, error: `${perEntryLabel(participant)} must be between 1 and ${BUDGET_ROSTER_SIZE_MAX}.` };
   }
   const countedScores = parseWholeNumber(values.countedScores);
   if (countedScores === null || countedScores > rosterSize) {
-    return { configuration: null, error: `Scores that count must be between 1 and the ${rosterSize} golfers picked.` };
+    return { configuration: null, error: `Scores that count must be between 1 and the ${countParticipants(rosterSize, participant)} picked.` };
   }
   return withEntryLimit(values, { selectionType: SelectionType.BUDGET_PICK, rosterSize, countedScores });
 }
 
-/** The random-draw rules: how many golfers the draw deals each entry, and the scores that count. */
-function parseRandomDrawRules(values: ContestRulesValues): RulesResult {
+/** The random-draw rules: how many participants the draw deals each entry, and the scores that count. */
+function parseRandomDrawRules(values: ContestRulesValues, participant: SportNoun): RulesResult {
   const picksPerEntry = parseWholeNumber(values.picksPerEntry);
   if (picksPerEntry === null || picksPerEntry > RANDOM_DRAW_PICKS_PER_ENTRY_MAX) {
-    return { configuration: null, error: `Golfers per entry must be between 1 and ${RANDOM_DRAW_PICKS_PER_ENTRY_MAX}.` };
+    return { configuration: null, error: `${perEntryLabel(participant)} must be between 1 and ${RANDOM_DRAW_PICKS_PER_ENTRY_MAX}.` };
   }
   const countedScores = parseWholeNumber(values.countedScores);
   if (countedScores === null || countedScores > picksPerEntry) {
-    return { configuration: null, error: `Scores that count must be between 1 and the ${pluralize(picksPerEntry, 'golfer')} dealt.` };
+    return { configuration: null, error: `Scores that count must be between 1 and the ${countParticipants(picksPerEntry, participant)} dealt.` };
   }
   return withEntryLimit(values, { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry, countedScores });
 }
@@ -105,15 +106,21 @@ export function parseContestRules(
   values: ContestRulesValues,
   selectionType: EditableSelectionType,
   tierCount: number,
+  participant: SportNoun,
 ): RulesResult {
   switch (selectionType) {
     case SelectionType.TIERED:
-      return parseTieredRules(values, tierCount);
+      return parseTieredRules(values, tierCount, participant);
     case SelectionType.BUDGET_PICK:
-      return parseBudgetRules(values);
+      return parseBudgetRules(values, participant);
     case SelectionType.RANDOM_DRAW:
-      return parseRandomDrawRules(values);
+      return parseRandomDrawRules(values, participant);
   }
+}
+
+/** "Golfers per entry", "Horses per entry": the roster-size field's label, in the sport's words. */
+export function perEntryLabel(participant: SportNoun) {
+  return `${participant.many.charAt(0).toUpperCase()}${participant.many.slice(1)} per entry`;
 }
 
 /**

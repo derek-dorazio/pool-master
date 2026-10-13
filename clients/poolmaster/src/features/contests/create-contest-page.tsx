@@ -1,14 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ListOrdered, Shuffle, Wallet, type LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import type { CreateContestRequest } from '@poolmaster/shared/dto';
-import { ContestFormat, SelectionType, Sport } from '@poolmaster/shared/domain';
+import {
+  ContestFormat,
+  ParticipantScoringDefinitionIdSchema,
+  SelectionType,
+  SUPPORTED_SPORTS,
+  getSportDefinition,
+  sportAllowsSelectionType,
+  type ContestScoringSettings,
+  type Sport,
+  type SportDefinition,
+  type SportNoun,
+} from '@poolmaster/shared/domain';
 import { createContest, listContestConfigTemplates, listEvents } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
@@ -20,28 +30,28 @@ import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import {
   Alert,
   ChoiceCard,
-  Chip,
   ErrorState,
-  formatDateTimeDisplay,
   FormField,
   FormPage,
   Input,
-  LoadingState,
   SegmentedControl,
 } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { formatStartsIn } from './contest-readiness';
 import {
   formatContestRules,
   formatEntriesPerTeamSentence,
   formatPresetLabel,
   formatSelectionTypeName,
-  pluralize,
   suggestContestName,
 } from './contest-rules';
+import {
+  EMPTY_SCORING_SETTINGS_VALUES,
+  SCORING_SETTINGS_UI,
+} from './contest-scoring-settings';
+import { EventChoices, NoEligibleEventsAlert, SetupSection, SportPicker } from './create-contest-sections';
 import { ContestRulesFields } from './contest-rules-fields';
 import {
   DEFAULT_CONTEST_RULES,
@@ -55,24 +65,32 @@ const CUSTOM_PRESET = 'custom';
 /** The ways of picking the create contract accepts; it widens as new formats are built. */
 type CreatableSelectionType = CreateContestRequest['selectionType'];
 
-/** The ways of picking Create contest offers, one card each, with its own rules fields. */
-const FORMAT_CHOICES: Array<{ description: string; icon: LucideIcon; selectionType: CreatableSelectionType }> = [
+/**
+ * The ways of picking Create contest offers, one card each, with its own rules fields. A sport
+ * offers the ones its definition lists; each card says what it means in the sport's words.
+ */
+const FORMAT_CHOICES: Array<{ describe: (participant: SportNoun) => string; icon: LucideIcon; selectionType: CreatableSelectionType }> = [
   {
     selectionType: SelectionType.TIERED,
     icon: ListOrdered,
-    description: "Pick golfers from each of the event's tiers, so the favorites are spread across every entry.",
+    describe: ({ many }) => `Pick ${many} from each of the event's tiers, so the favorites are spread across every entry.`,
   },
   {
     selectionType: SelectionType.BUDGET_PICK,
     icon: Wallet,
-    description: 'Every golfer has a price. Pick a roster whose prices fit under the salary cap.',
+    describe: ({ one }) => `Every ${one} has a price. Pick a roster whose prices fit under the salary cap.`,
   },
   {
     selectionType: SelectionType.RANDOM_DRAW,
     icon: Shuffle,
-    description: 'A sweepstake: nobody picks. Once entries are in, you run the draw and each entry is dealt golfers at random.',
+    describe: ({ many }) => `A sweepstake: nobody picks. Once entries are in, you run the draw and each entry is dealt ${many} at random.`,
   },
 ];
+
+/** The formats a sport's contests may use, in the order Create contest offers them. */
+function formatChoicesFor(sport: SportDefinition) {
+  return FORMAT_CHOICES.filter((choice) => sportAllowsSelectionType(sport, choice.selectionType));
+}
 
 
 const creatableSelectionTypes = FORMAT_CHOICES.map((choice) => choice.selectionType) as [
@@ -83,12 +101,16 @@ const creatableSelectionTypes = FORMAT_CHOICES.map((choice) => choice.selectionT
 const createContestFormSchema = z.object({
   contestName: z.string().trim().min(1, 'Contest name is required.'),
   countedScores: z.string(),
+  didNotFinishPoints: z.string(),
   maxEntriesPerTeam: z.string(),
   picksPerEntry: z.string(),
   picksPerTier: z.string(),
+  pointsTable: z.string(),
   rosterSize: z.string(),
+  scoringDefinitionId: ParticipantScoringDefinitionIdSchema,
   selectedTemplateId: z.string(),
   selectionType: z.enum(creatableSelectionTypes),
+  sport: z.custom<Sport>((value) => SUPPORTED_SPORTS.some((sport) => sport === value)),
   sportEventId: z.string().min(1, 'Choose an event for the contest.'),
   unlimitedEntries: z.boolean(),
 });
@@ -97,54 +119,6 @@ type CreateContestFormValues = z.infer<typeof createContestFormSchema>;
 
 function sortEventsBySoonest(events: SportEventDto[]) {
   return [...events].sort((left, right) => Date.parse(left.startDate) - Date.parse(right.startDate));
-}
-
-/** One numbered part of the form: 1 Event, 2 Format, 3 Rules, 4 Name. */
-function SetupSection({
-  children,
-  lead,
-  step,
-  testId,
-  title,
-}: {
-  children: ReactNode;
-  lead?: string;
-  step: number;
-  testId: string;
-  title: string;
-}) {
-  return (
-    <section
-      aria-labelledby={`${testId}-title`}
-      className="space-y-3 border-t border-border pt-5 first:border-t-0 first:pt-0"
-      data-testid={testId}
-    >
-      <div>
-        <h3 className="flex items-baseline gap-2 text-base font-semibold" id={`${testId}-title`}>
-          <span className="font-display text-sm text-muted-foreground">{step}</span>
-          {title}
-        </h3>
-        {lead ? <p className="mt-0.5 text-sm text-muted-foreground">{lead}</p> : null}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-/** No released, unstarted event with a field: nothing to build a contest on yet (#431). */
-function NoEligibleEventsAlert() {
-  return (
-    <Alert
-      data-testid="create-contest-no-events"
-      title="No golf events are currently available for contest setup."
-      tone="warning"
-    >
-      <p>
-        An event appears here once an admin releases it for contests, until it starts. Check back
-        when the next tournament is released.
-      </p>
-    </Alert>
-  );
 }
 
 /**
@@ -165,16 +139,24 @@ export function CreateContestPage() {
     resolver: zodResolver(createContestFormSchema),
     defaultValues: {
       contestName: '',
+      scoringDefinitionId: getSportDefinition(SUPPORTED_SPORTS[0]).scoringDefinitions[0],
       selectedTemplateId: '',
       selectionType: SelectionType.TIERED,
+      sport: SUPPORTED_SPORTS[0],
       sportEventId: '',
       ...DEFAULT_CONTEST_RULES,
+      ...EMPTY_SCORING_SETTINGS_VALUES,
     },
   });
   const values = form.watch();
-  const { contestName, selectedTemplateId, selectionType, sportEventId } = values;
+  const { contestName, scoringDefinitionId, selectedTemplateId, selectionType, sport, sportEventId } = values;
+  const sportDefinition = getSportDefinition(sport);
+  const { participant } = sportDefinition.vocabulary;
+  const scoringSettingsUi = SCORING_SETTINGS_UI[scoringDefinitionId];
   const [isNameEdited, setIsNameEdited] = useState(false);
-  const defaultPresetApplied = useRef(false);
+  // The sport whose default preset has been applied: each sport's is applied once, when its
+  // presets first arrive; after that, Custom stays Custom.
+  const defaultPresetAppliedFor = useRef<Sport | null>(null);
 
   const setFormValues = useCallback((next: Partial<CreateContestFormValues>) => {
     for (const [field, value] of Object.entries(next) as Array<[keyof CreateContestFormValues, CreateContestFormValues[keyof CreateContestFormValues]]>) {
@@ -183,9 +165,9 @@ export function CreateContestPage() {
   }, [form]);
 
   const eventsQuery = useQuery({
-    queryKey: QueryKeys.sportEvents.list({ sport: Sport.GOLF }),
+    queryKey: QueryKeys.sportEvents.list({ sport }),
     queryFn: async (): Promise<SportEventDto[]> => {
-      const response = await listEvents({ query: { sport: Sport.GOLF } });
+      const response = await listEvents({ query: { sport } });
       if (!response.data?.events) {
         throwApiError(response.error, 'Sport event list response is missing data.');
       }
@@ -196,10 +178,10 @@ export function CreateContestPage() {
   });
 
   const templatesQuery = useQuery({
-    queryKey: QueryKeys.contestConfigTemplates.list({ sport: Sport.GOLF, contestFormat: ContestFormat.ROSTER, active: true }),
+    queryKey: QueryKeys.contestConfigTemplates.list({ sport, contestFormat: ContestFormat.ROSTER, active: true }),
     queryFn: async (): Promise<ContestConfigTemplateDto[]> => {
       const response = await listContestConfigTemplates({
-        query: { sport: Sport.GOLF, contestFormat: ContestFormat.ROSTER, active: true },
+        query: { sport, contestFormat: ContestFormat.ROSTER, active: true },
       });
       if (!response.data?.templates) {
         throwApiError(response.error, 'Contest template response is missing data.');
@@ -230,7 +212,27 @@ export function CreateContestPage() {
     [templatesQuery.data],
   );
   const presets = useMemo(() => presetsFor(selectionType), [presetsFor, selectionType]);
-  const parsedRules = parseContestRules(values, selectionType, tierCount);
+  const parsedRules = parseContestRules(values, selectionType, tierCount, participant);
+  const parsedScoring = scoringSettingsUi.parse(values);
+
+  // A preset's rules and, when it presets them, its scoring definition and settings. Without a
+  // preset scoring, the contest scores by its sport's default definition.
+  const presetValues = useCallback((configuration: (typeof presets)[number]['configuration']) => {
+    const current = form.getValues();
+    const scoring: ContestScoringSettings | undefined = configuration.scoring;
+    const definitionId = scoring?.participantScoringDefinitionId
+      ?? getSportDefinition(current.sport).scoringDefinitions[0];
+    return {
+      ...toContestRulesValues(configuration, current),
+      scoringDefinitionId: definitionId,
+      ...(scoring
+        ? SCORING_SETTINGS_UI[definitionId].toValues(scoring, {
+          pointsTable: current.pointsTable,
+          didNotFinishPoints: current.didNotFinishPoints,
+        })
+        : {}),
+    };
+  }, [form]);
 
   const selectPreset = useCallback((templateId: string) => {
     const template = presets.find((candidate) => candidate.id === templateId);
@@ -238,8 +240,8 @@ export function CreateContestPage() {
       setFormValues({ selectedTemplateId: '' });
       return;
     }
-    setFormValues({ selectedTemplateId: template.id, ...toContestRulesValues(template.configuration, form.getValues()) });
-  }, [form, presets, setFormValues]);
+    setFormValues({ selectedTemplateId: template.id, ...presetValues(template.configuration) });
+  }, [presetValues, presets, setFormValues]);
 
   // A new format starts from its default preset, or from what the fields hold when it has none.
   const selectFormat = useCallback((format: CreatableSelectionType) => {
@@ -248,9 +250,25 @@ export function CreateContestPage() {
     setFormValues({
       selectionType: format,
       selectedTemplateId: preset?.id ?? '',
-      ...(preset ? toContestRulesValues(preset.configuration, form.getValues()) : {}),
+      ...(preset ? presetValues(preset.configuration) : {}),
     });
-  }, [form, presetsFor, setFormValues]);
+  }, [presetValues, presetsFor, setFormValues]);
+
+  // A new sport starts over: its own events and presets, a format it offers, and its default
+  // scoring definition until one of its presets says otherwise.
+  const selectSport = useCallback((next: Sport) => {
+    const definition = getSportDefinition(next);
+    const current = form.getValues('selectionType');
+    setFormValues({
+      sport: next,
+      sportEventId: '',
+      selectedTemplateId: '',
+      selectionType: sportAllowsSelectionType(definition, current)
+        ? current
+        : formatChoicesFor(definition)[0]?.selectionType ?? current,
+      scoringDefinitionId: definition.scoringDefinitions[0],
+    });
+  }, [form, setFormValues]);
 
   // The soonest contest-ready event is chosen to start with.
   useEffect(() => {
@@ -260,17 +278,17 @@ export function CreateContestPage() {
     }
   }, [eligibleEvents, setFormValues, sportEventId]);
 
-  // The default preset is chosen once; after that, Custom stays Custom.
+  // Each sport's default preset is chosen once; after that, Custom stays Custom.
   useEffect(() => {
-    if (defaultPresetApplied.current || !presets.length) {
+    if (defaultPresetAppliedFor.current === sport || !presets.length) {
       return;
     }
-    defaultPresetApplied.current = true;
+    defaultPresetAppliedFor.current = sport;
     const defaultPreset = presets.find((template) => template.isDefault) ?? presets.at(0);
     if (defaultPreset) {
       selectPreset(defaultPreset.id);
     }
-  }, [presets, selectPreset]);
+  }, [presets, selectPreset, sport]);
 
   // A tiered contest's "Scores that count" starts at the default for the chosen event's tiers. A
   // preset whose picks per tier the form still holds keeps its own count over the formula.
@@ -318,9 +336,14 @@ export function CreateContestPage() {
       if (!event) {
         throw new Error('Choose a contest-ready event for the contest.');
       }
-      const parsed = parseContestRules(submitted, submitted.selectionType, event.tierCount);
+      const submittedParticipant = getSportDefinition(submitted.sport).vocabulary.participant;
+      const parsed = parseContestRules(submitted, submitted.selectionType, event.tierCount, submittedParticipant);
       if (parsed.error !== null) {
         throw new Error(parsed.error);
+      }
+      const scoring = SCORING_SETTINGS_UI[submitted.scoringDefinitionId].parse(submitted);
+      if (scoring.error !== null) {
+        throw new Error(scoring.error);
       }
       // A preset is an optional starting point; the configuration the form holds is always sent
       // and, with a preset, replaces the preset's (#245).
@@ -330,7 +353,9 @@ export function CreateContestPage() {
         contestFormat: ContestFormat.ROSTER,
         selectionType: submitted.selectionType,
         ...(submitted.selectedTemplateId ? { templateId: submitted.selectedTemplateId } : {}),
-        configuration: parsed.configuration,
+        // A definition that takes settings sends them; one that takes none leaves the template's
+        // preset or the sport's default to apply.
+        configuration: scoring.scoring ? { ...parsed.configuration, scoring: scoring.scoring } : parsed.configuration,
       };
       const response = await createContest({ path: { id: league.id }, body });
       if (!response.data?.contest) {
@@ -374,10 +399,6 @@ export function CreateContestPage() {
     return null;
   }
 
-  if (eventsQuery.isLoading || templatesQuery.isLoading) {
-    return <LoadingState body="Loading contest setup..." testId="create-contest-page-loading" />;
-  }
-
   if (templatesQuery.isError) {
     return (
       <ErrorState
@@ -414,6 +435,7 @@ export function CreateContestPage() {
       isPending={createMutation.isPending}
       isSubmitDisabled={!selectedEvent
         || parsedRules.error !== null
+        || parsedScoring.error !== null
         || (selectionType === SelectionType.BUDGET_PICK && isBudgetUnavailable)}
       onSubmit={(submitEvent) => {
         createMutation.reset();
@@ -428,45 +450,35 @@ export function CreateContestPage() {
       title="Create contest"
     >
       <SetupSection
-        lead="Released events that haven't started. Entries close at the first tee time."
+        lead={`Released events that haven't started. Entries close at the ${sportDefinition.vocabulary.eventStart}.`}
         step={1}
         testId="create-contest-event"
         title="Event"
       >
-        {eventsQuery.isError ? (
-          <Alert tone="danger">We couldn&apos;t load golf events. Try again in a moment.</Alert>
+        <SportPicker onChange={selectSport} value={sport} />
+        {eventsQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground" data-testid="create-contest-events-loading">
+            Loading events...
+          </p>
+        ) : eventsQuery.isError ? (
+          <Alert tone="danger">
+            We couldn&apos;t load {sportDefinition.name.toLowerCase()} events. Try again in a moment.
+          </Alert>
         ) : !eligibleEvents.length ? (
-          <NoEligibleEventsAlert />
+          <NoEligibleEventsAlert sport={sportDefinition} />
         ) : (
-          <div aria-label="Event" className="grid gap-2" role="radiogroup">
-            {eligibleEvents.map((event) => (
-              <ChoiceCard
-                isSelected={event.id === sportEventId}
-                key={event.id}
-                onSelect={() => setFormValues({ sportEventId: event.id })}
-                testId={`contest-event-${event.id}`}
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="font-semibold">{event.name}</span>
-                  {event.venue ? <span className="text-xs text-muted-foreground"> · {event.venue}</span> : null}
-                  <span className="block text-xs text-muted-foreground">
-                    Starts {formatDateTimeDisplay(event.startDate)}
-                    {' · '}
-                    {pluralize(event.participantCount ?? 0, 'golfer')}
-                    {' · '}
-                    {pluralize(event.tierCount, 'tier')}
-                  </span>
-                </span>
-                <Chip>{formatStartsIn(event.startDate)}</Chip>
-              </ChoiceCard>
-            ))}
-          </div>
+          <EventChoices
+            events={eligibleEvents}
+            onSelect={(eventId) => setFormValues({ sportEventId: eventId })}
+            selectedEventId={sportEventId}
+            sport={sportDefinition}
+          />
         )}
       </SetupSection>
 
       <SetupSection step={2} testId="create-contest-format" title="Format">
         <div aria-label="Format" className="grid gap-2 md:grid-cols-2" role="radiogroup">
-          {FORMAT_CHOICES.map((choice) => {
+          {formatChoicesFor(sportDefinition).map((choice) => {
             const isSelected = choice.selectionType === selectionType;
             // A budget contest needs a priced field; the card says so rather than vanishing.
             const isUnavailable = choice.selectionType === SelectionType.BUDGET_PICK && isBudgetUnavailable;
@@ -485,7 +497,7 @@ export function CreateContestPage() {
                     {formatSelectionTypeName(choice.selectionType)}
                   </span>
                   <span className="block text-xs text-muted-foreground">
-                    {isUnavailable ? 'This event’s golfers have no prices yet.' : choice.description}
+                    {isUnavailable ? `This event’s ${participant.many} have no prices yet.` : choice.describe(participant)}
                   </span>
                 </span>
               </ChoiceCard>
@@ -506,6 +518,7 @@ export function CreateContestPage() {
       <SetupSection step={3} testId="create-contest-rules" title="Rules">
         <ContestRulesFields
           onChange={(next) => setFormValues({ ...next, selectedTemplateId: '' })}
+          participant={participant}
           salaryCap={salaryCap}
           selectionType={selectionType}
           tierCount={tierCount}
@@ -513,6 +526,16 @@ export function CreateContestPage() {
         />
         {parsedRules.error !== null ? (
           <p className="text-sm text-destructive" data-testid="contest-rules-error">{parsedRules.error}</p>
+        ) : null}
+        {scoringSettingsUi.Fields ? (
+          <scoringSettingsUi.Fields
+            onChange={(next) => setFormValues({ ...next, selectedTemplateId: '' })}
+            participant={participant}
+            values={values}
+          />
+        ) : null}
+        {parsedScoring.error !== null ? (
+          <p className="text-sm text-destructive" data-testid="contest-scoring-error">{parsedScoring.error}</p>
         ) : null}
       </SetupSection>
 
@@ -533,7 +556,11 @@ export function CreateContestPage() {
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Members will see</div>
             <div className="font-semibold">{`${contestName.trim() || 'Untitled contest'} · ${selectedEvent.name}`}</div>
             <div>
-              {`${formatContestRules(parsedRules.configuration, tierCount, salaryCap)} ${formatEntriesPerTeamSentence(parsedRules.configuration.maxEntriesPerSquad)}.`}
+              {[
+                formatContestRules(parsedRules.configuration, tierCount, participant, salaryCap),
+                scoringSettingsUi.describe(parsedScoring.scoring),
+                `${formatEntriesPerTeamSentence(parsedRules.configuration.maxEntriesPerSquad)}.`,
+              ].filter((sentence) => sentence !== null).join(' ')}
             </div>
           </div>
         ) : null}

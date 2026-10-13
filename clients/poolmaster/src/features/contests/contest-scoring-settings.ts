@@ -1,0 +1,117 @@
+import {
+  FinishPositionPointsSettingsSchema,
+  type ContestScoringSettings,
+  type ParticipantScoringDefinitionId,
+  type SportNoun,
+} from '@poolmaster/shared/domain';
+import type { ReactElement } from 'react';
+import { FinishPositionPointsFields } from './contest-scoring-settings-fields';
+
+/**
+ * A contest's scoring settings as Create contest holds them: text from the inputs. Only the
+ * fields of the contest's scoring definition are read; a definition that takes no settings reads
+ * none of them.
+ */
+export type ScoringSettingsValues = {
+  /** A finish-position contest's points by place, winner first: "5, 3, 1". */
+  pointsTable: string;
+  /** What a finish-position runner that does not finish scores. */
+  didNotFinishPoints: string;
+};
+
+/** Before a preset fills them: blank, so nothing is sent that the commissioner did not see. */
+export const EMPTY_SCORING_SETTINGS_VALUES: ScoringSettingsValues = {
+  pointsTable: '',
+  didNotFinishPoints: '',
+};
+
+type ScoringSettingsResult =
+  | { scoring: ContestScoringSettings | null; error: null }
+  | { scoring: null; error: string };
+
+export type ScoringSettingsFieldsProps = {
+  onChange: (next: Partial<ScoringSettingsValues>) => void;
+  participant: SportNoun;
+  values: ScoringSettingsValues;
+};
+
+/** What Create contest does with one scoring definition's settings. */
+interface ScoringSettingsUi {
+  /** The definition's inputs, or null when it takes no settings and so shows none. */
+  Fields: ((props: ScoringSettingsFieldsProps) => ReactElement) | null;
+  /** The form's values for a preset's settings; the other definitions' values are kept. */
+  toValues: (scoring: ContestScoringSettings, current: ScoringSettingsValues) => ScoringSettingsValues;
+  /**
+   * The settings to send, or the first thing wrong with them. Null `scoring` sends none, and the
+   * contest takes its template's preset or its sport's default.
+   */
+  parse: (values: ScoringSettingsValues) => ScoringSettingsResult;
+  /** The sentence members read about how picks score, or null when the rules sentence says it all. */
+  describe: (scoring: ContestScoringSettings | null) => string | null;
+}
+
+/** "5, 3, 1" as numbers. A blank, a non-whole number or a negative one reads as not a table. */
+function parsePointsTable(text: string): number[] | null {
+  const cells = text.split(/[\s,]+/).filter((cell) => cell !== '');
+  if (cells.length === 0) {
+    return null;
+  }
+  const points = cells.map(Number);
+  return points.every((value) => Number.isInteger(value) && value >= 0) ? points : null;
+}
+
+const finishPositionPointsUi: ScoringSettingsUi = {
+  Fields: FinishPositionPointsFields,
+  toValues: (scoring, current) => (scoring.participantScoringDefinitionId === 'FINISH_POSITION_POINTS'
+    ? {
+      ...current,
+      pointsTable: scoring.config.pointsTable.join(', '),
+      didNotFinishPoints: String(scoring.config.didNotFinishPoints),
+    }
+    : current),
+  parse: (values) => {
+    const pointsTable = parsePointsTable(values.pointsTable);
+    if (pointsTable === null) {
+      return { scoring: null, error: 'Enter the points table as whole numbers, winner first, such as 5, 3, 1.' };
+    }
+    const didNotFinishText = values.didNotFinishPoints.trim();
+    const didNotFinishPoints = didNotFinishText === '' ? Number.NaN : Number(didNotFinishText);
+    // The shared schema is the server's own check: its message is the one the form shows.
+    const parsed = FinishPositionPointsSettingsSchema.safeParse({ pointsTable, didNotFinishPoints });
+    if (!parsed.success) {
+      const issue = parsed.error.issues.at(0);
+      return {
+        scoring: null,
+        error: issue?.path.at(0) === 'didNotFinishPoints'
+          ? 'Points for not finishing must be a whole number, 0 or more.'
+          : issue?.message ?? 'The points table is not valid.',
+      };
+    }
+    return {
+      scoring: { participantScoringDefinitionId: 'FINISH_POSITION_POINTS', config: parsed.data },
+      error: null,
+    };
+  },
+  describe: (scoring) => (scoring?.participantScoringDefinitionId === 'FINISH_POSITION_POINTS'
+    ? `Points by finishing place: ${scoring.config.pointsTable.join(', ')}.`
+    : null),
+};
+
+/** Golf's total against par takes no settings: nothing to show, nothing to send. */
+const noSettingsUi: ScoringSettingsUi = {
+  Fields: null,
+  toValues: (_scoring, current) => current,
+  parse: () => ({ scoring: null, error: null }),
+  describe: () => null,
+};
+
+/**
+ * Create contest's scoring settings, keyed by the contest's scoring definition. Exhaustive over
+ * the definition ids, so a definition added to the shared registry fails the web build until
+ * Create contest knows whether it takes settings. Reached through the event's sport definition
+ * or a preset's scoring, never by comparing sports.
+ */
+export const SCORING_SETTINGS_UI: Readonly<Record<ParticipantScoringDefinitionId, ScoringSettingsUi>> = {
+  GOLF_RELATIVE_TO_PAR_TOTAL: noSettingsUi,
+  FINISH_POSITION_POINTS: finishPositionPointsUi,
+};
