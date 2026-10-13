@@ -93,18 +93,17 @@ Do not use *Seed field from circuit roster*: it adds every horse on the circuit'
 not only this race's runners, and it derives seeds and odds from circuit rankings, which
 horses don't have.
 
-### Morning-line odds and seeds
+### Morning-line odds
 
-In the field grid, give every horse its morning-line odds in the **Odds** column and a
-**Seed** in market order (1 for the favourite, 2 for the next, and so on). Then press
-*Save changes*.
+In the field grid, give every horse its morning-line odds in the **Odds** column, then press
+*Save changes*. Leave **Seed** blank.
 
 - Enter odds as a number "to 1": 5-2 is `2.5`, 8-1 is `8`, 30-1 is `30`. Lower is shorter.
-- Odds set the tiers (next step). **Seeds set the budget prices**: *Auto-assign prices* prices
-  from the best seed down, and horses with no seed come last in no meaningful order. A field
-  with odds and no seeds gets prices that have nothing to do with the market.
+- Odds set the tiers (next step) and the budget prices: *Auto-assign prices* prices from the
+  shortest odds down. A seed, if you give one, comes first: seeded horses are priced by seed
+  ahead of every unseeded one, so give every horse a seed in market order or none.
 - To set them all at once, use *Bulk upload* on the same page: CSV or JSON with
-  `playerName` (or `externalId`) and `oddsToWin` and `seedNumber` per row, *Preview*, then
+  `playerName` (or `externalId`) and `oddsToWin` per row, *Preview*, then
   *Apply to field*. It only changes horses already in the field.
 
 ### Tiers

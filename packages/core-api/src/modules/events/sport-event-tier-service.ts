@@ -295,7 +295,7 @@ export class SportEventTierService {
       return [];
     }
     const priced = deriveGolfPrices(
-      active.map((entry) => ({ participantId: entry.id, seedNumber: entry.seedNumber ?? null })),
+      active.map((entry) => ({ participantId: entry.id, seedNumber: entry.seedNumber ?? null, oddsToWin: entry.oddsToWin ?? null })),
       pricingConfig,
     );
     await this.deps.valuations.assignEventPrices({

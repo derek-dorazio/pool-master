@@ -23,8 +23,10 @@ export interface SeededParticipant {
 
 export interface PricingFieldEntry {
   participantId: string;
-  /** Null for a golfer added to the field without a seed, such as an invited guest. */
+  /** Null for a golfer added to the field without a seed, such as an invited guest, or a horse priced from its odds. */
   seedNumber: number | null;
+  /** Odds to win as a number "to 1": lower is shorter. Null when the field entry has none. */
+  oddsToWin: number | null;
 }
 
 export interface PricedParticipant {
@@ -67,17 +69,26 @@ export function deriveSeedNumbersAndOdds(
 }
 
 /**
- * Prices the field on the budget curve (#93) in seed order, best seed first, with golfers who
- * have no seed after every seeded one, in the order given. Position in that order, not the raw
- * seed number, places each golfer on the curve, so a withdrawal leaves no gap. No jitter: a
- * price is explainable from seed order alone.
+ * Prices the field on the budget curve (#93): best seed first; participants with no seed after
+ * every seeded one, shortest odds first, so a race priced from its morning line follows the
+ * market (#653); then the order given. Position in that order, not the raw seed number, places
+ * each participant on the curve, so a withdrawal leaves no gap. No jitter: a price is
+ * explainable from seed and odds order alone.
  */
 export function deriveGolfPrices(field: PricingFieldEntry[], values: BudgetPricingValues): PricedParticipant[] {
-  const ordered = [...field].sort((left, right) => (left.seedNumber ?? Infinity) - (right.seedNumber ?? Infinity));
+  const ordered = [...field].sort((left, right) =>
+    compareNullsLast(left.seedNumber, right.seedNumber) || compareNullsLast(left.oddsToWin, right.oddsToWin));
   return ordered.map((entry, position) => ({
     participantId: entry.participantId,
     price: priceOnBudgetCurve(values, position, ordered.length),
   }));
+}
+
+function compareNullsLast(left: number | null, right: number | null): number {
+  if (left === null && right === null) return 0;
+  if (left === null) return 1;
+  if (right === null) return -1;
+  return left - right;
 }
 
 function tieBreakByRanking(
