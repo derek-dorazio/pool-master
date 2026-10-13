@@ -9,7 +9,7 @@ import {
   sportEventFixture,
   tierFixture,
   valuationFixture,
-} from './golf-test-fixtures';
+} from './sport-test-fixtures';
 
 const { listEventParticipantsMock, listEventTiersMock, listEventsMock, mockLogger } = vi.hoisted(() => {
   const logger = {

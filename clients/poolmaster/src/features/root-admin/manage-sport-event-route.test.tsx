@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
-import { sportEventFixture } from './golf-test-fixtures';
+import { sportEventFixture } from './sport-test-fixtures';
 import { ManageSportEventRoute } from './manage-sport-event-route';
 import { ManageSportRoute } from './manage-sport-route';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { GolfRoundScoreRow } from './golf-admin-utils';
+import type { GolfRoundScoreRow } from './sport-admin-utils';
 import {
   buildRoundScorePatch,
   isSignedInt,

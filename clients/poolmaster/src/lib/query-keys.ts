@@ -137,47 +137,47 @@ export const QueryKeys = {
       ['poolmaster', 'root-admin', 'event-sync-events', sport] as const,
     events: ['poolmaster', 'root-admin', 'events'] as const,
     // The Manage sport screens (golf's first, every sport's since #623). Lists of one sport take
-    // the sport; invalidating the bare prefix (`tours`, `tournaments`, `players`) refreshes every
+    // the sport; invalidating the bare prefix (`leagues`, `events`, `participants`) refreshes every
     // sport's.
-    golf: {
-      all: ['poolmaster', 'root-admin', 'golf'] as const,
-      sport: (sport: QueryKeyId) => ['poolmaster', 'root-admin', 'golf', 'sport', sport] as const,
-      tours: ['poolmaster', 'root-admin', 'golf', 'tours'] as const,
-      sportTours: (sport: QueryKeyId) => ['poolmaster', 'root-admin', 'golf', 'tours', sport] as const,
-      // Deliberately NOT nested under the `tours` prefix: invalidating the
-      // `tours` list (a tour rename / active toggle) must not also wipe every
-      // tour's roster cache, since TanStack invalidation is prefix-match.
+    manageSport: {
+      all: ['poolmaster', 'root-admin', 'manage-sport'] as const,
+      sport: (sport: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'sport', sport] as const,
+      leagues: ['poolmaster', 'root-admin', 'manage-sport', 'leagues'] as const,
+      sportLeagues: (sport: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', sport] as const,
+      // Deliberately NOT nested under the `leagues` prefix: invalidating the
+      // `leagues` list (a league rename / active toggle) must not also wipe every
+      // league's roster cache, since TanStack invalidation is prefix-match.
       leagueRoster: (sportLeagueId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'league-roster', sportLeagueId] as const,
-      tournaments: ['poolmaster', 'root-admin', 'golf', 'tournaments'] as const,
-      sportTournaments: (sport: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'tournaments', 'sport', sport] as const,
-      // Under the `tournaments` prefix, so invalidating the list refreshes each tour's too.
-      tourTournaments: (sportLeagueId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'tournaments', 'tour', sportLeagueId] as const,
-      tournament: (eventId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'tournament', eventId] as const,
+        ['poolmaster', 'root-admin', 'manage-sport', 'league-roster', sportLeagueId] as const,
+      events: ['poolmaster', 'root-admin', 'manage-sport', 'events'] as const,
+      sportEvents: (sport: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'sport', sport] as const,
+      // Under the `events` prefix, so invalidating the list refreshes each league's too.
+      leagueEvents: (sportLeagueId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId] as const,
+      event: (eventId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId] as const,
       rounds: (eventId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'rounds'] as const,
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'rounds'] as const,
       field: (eventId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'field'] as const,
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'field'] as const,
       tiers: (eventId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'tiers'] as const,
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'tiers'] as const,
       liveSimulation: (eventId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'live-simulation'] as const,
-      players: ['poolmaster', 'root-admin', 'golf', 'players'] as const,
-      playerList: (sport: QueryKeyId, status?: string) =>
-        ['poolmaster', 'root-admin', 'golf', 'players', sport, 'list', status ?? 'ACTIVE'] as const,
-      playerSearch: (sport: QueryKeyId, search: string) =>
-        ['poolmaster', 'root-admin', 'golf', 'players', sport, 'search', search] as const,
-      player: (participantId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'player', participantId] as const,
-      playerMappings: (participantId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'player', participantId, 'provider-mappings'] as const,
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'live-simulation'] as const,
+      participants: ['poolmaster', 'root-admin', 'manage-sport', 'participants'] as const,
+      participantList: (sport: QueryKeyId, status?: string) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'participants', sport, 'list', status ?? 'ACTIVE'] as const,
+      participantSearch: (sport: QueryKeyId, search: string) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'participants', sport, 'search', search] as const,
+      participant: (participantId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'participant', participantId] as const,
+      participantMappings: (participantId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'participant', participantId, 'provider-mappings'] as const,
     },
     // plans/124 §6.4. `dateWindow` extends the documented (providerId, sport,
     // search) signature: both callers (create browse, Home score-source picker)
-    // go through useGolfProviderCatalog, which always passes a
+    // go through useProviderCatalog, which always passes a
     // `${from}|${to}|${sportLeagueId}` string so the from/to/league filters are
     // part of the cache identity, not just the search term.
     providerCatalogEvents: (

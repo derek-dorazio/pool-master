@@ -26,7 +26,7 @@ const statusRefreshMs = 30_000;
  * real provider.
  */
 export function GolfTournamentLiveSimulation({ tournament }: { tournament: SportEventDto }) {
-  const logger = getLogger().child({ feature: 'root-admin-golf-tournament-home-page' });
+  const logger = getLogger().child({ feature: 'root-admin-sport-event-home-page' });
   const providersQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.providers,
     queryFn: async () => {
@@ -43,7 +43,7 @@ export function GolfTournamentLiveSimulation({ tournament }: { tournament: Sport
   );
 
   const statusQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.liveSimulation(tournament.id),
+    queryKey: QueryKeys.rootAdmin.manageSport.liveSimulation(tournament.id),
     queryFn: async () => {
       const response = await getEventLiveSimulation({ path: { eventId: tournament.id } });
       if (hasErrorCode(response.error, 'LIVE_SIMULATION_NOT_RUNNING')) {
@@ -68,7 +68,7 @@ export function GolfTournamentLiveSimulation({ tournament }: { tournament: Sport
       }
       return response.data;
     },
-    invalidates: [QueryKeys.rootAdmin.golf.tournament(tournament.id)],
+    invalidates: [QueryKeys.rootAdmin.manageSport.event(tournament.id)],
     onError: (error) => {
       logger.warn(
         { action: 'golf.tournament.live-simulation.start.failed', err: error },

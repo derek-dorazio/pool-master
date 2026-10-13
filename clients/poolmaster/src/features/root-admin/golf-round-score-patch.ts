@@ -12,7 +12,7 @@
  * completed at; each cell starts from what is stored and none is filled from another.
  */
 import type { UpdateGolfRoundScoreRequest } from "@/lib/api";
-import type { GolfRoundScoreRow, GolfRoundScoreStatus } from "./golf-admin-utils";
+import type { GolfRoundScoreRow, GolfRoundScoreStatus } from "./sport-admin-utils";
 
 type ScoreRow = GolfRoundScoreRow;
 type ScorePatch = UpdateGolfRoundScoreRequest;
