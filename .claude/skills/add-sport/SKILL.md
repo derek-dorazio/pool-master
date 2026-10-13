@@ -36,8 +36,8 @@ in a plan only when the sport needs a new scoring family or a model change.
 Settle the seeding source for real, not as "later". Releasing an event requires every active
 participant to have a tier and a price, even when every contest on it will be a random draw,
 so a sport with no way to tier and price its field cannot release an event at all. Tiers come
-from ranking or odds; budget prices come from seed numbers, so a sport seeded by odds also
-needs seeds entered in market order before pricing.
+from ranking or odds; budget prices come from seed numbers, then odds for participants with
+no seed, so a sport seeded by odds needs only its odds before pricing.
 
 ## Step 1 — classify the sport
 

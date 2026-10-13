@@ -139,7 +139,7 @@ As a commissioner of a test league (root admin is not needed):
    but Submit stays disabled until it fits. To test the over-cap path, raise a few prices in
    the Field grid before releasing the event, so a few dear picks are enough to go over.
    Auto-pricing places golfers on the price curve by seed; unseeded golfers fill the cheaper
-   places in no particular order.
+   places, shortest odds first.
 
 ## 8. Go live
 
