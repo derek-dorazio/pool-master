@@ -37,10 +37,12 @@ import { RootAdminGolfTournamentFieldPage } from '@/features/root-admin/root-adm
 import { RootAdminGolfTournamentHomePage } from '@/features/root-admin/root-admin-golf-tournament-home-page';
 import { RootAdminGolfTournamentTiersPage } from '@/features/root-admin/root-admin-golf-tournament-tiers-page';
 import { RootAdminGolfTournamentListPage } from '@/features/root-admin/root-admin-golf-tournament-list-page';
-import { RootAdminGolfTournamentScoresPage } from '@/features/root-admin/root-admin-golf-tournament-scores-page';
+import { RootAdminSportEventResultsPage } from '@/features/root-admin/root-admin-sport-event-results-page';
+import { ManageSportRoute } from '@/features/root-admin/manage-sport-route';
+import { ManageSportLandingRedirect } from '@/features/root-admin/manage-sport-landing-redirect';
 import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin-ingestion-schedule-page';
 import { RootAdminMapCompetitorPage } from '@/features/root-admin/root-admin-map-competitor-page';
-import { GOLF_TOURNAMENT_LIST_PATH } from '@/features/root-admin/manage-navigation';
+import { SPORTS_LANDING_PATH } from '@/features/root-admin/manage-navigation';
 import { ManageLandingRedirect, RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-manage-leagues-page';
 import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
@@ -63,6 +65,7 @@ import { ManageTeamsPage } from '@/features/teams/manage-teams-page';
 import {
   LegacyContestCreateRedirect,
   LegacyContestManageRedirect,
+  LegacyGolfManageRedirect,
   LegacyJoinInviteRedirect,
   LegacyLeagueEntriesRedirect,
   LegacyManageContestsRedirect,
@@ -269,72 +272,37 @@ export const router = createBrowserRouter([
                     element: <RootAdminEventsPage />,
                   },
                   {
-                    path: 'golf',
-                    element: <Navigate replace to={GOLF_TOURNAMENT_LIST_PATH} />,
+                    // Every sport's pages, one copy each (plans/racing-sports.md Q9.6).
+                    path: 'sports',
+                    element: <Navigate replace to={SPORTS_LANDING_PATH} />,
                   },
                   {
-                    path: 'golf/leagues',
-                    element: <RootAdminGolfLeagueListPage />,
+                    path: 'sports/:sport',
+                    element: <ManageSportRoute />,
+                    children: [
+                      { index: true, element: <ManageSportLandingRedirect /> },
+                      { path: 'leagues', element: <RootAdminGolfLeagueListPage /> },
+                      { path: 'leagues/new', element: <RootAdminGolfLeagueCreatePage /> },
+                      { path: 'leagues/:leagueId', element: <RootAdminGolfLeagueHomePage /> },
+                      { path: 'leagues/:leagueId/edit', element: <RootAdminGolfLeagueEditPage /> },
+                      { path: 'events', element: <RootAdminGolfTournamentListPage /> },
+                      { path: 'events/new', element: <RootAdminGolfTournamentCreatePage /> },
+                      { path: 'events/:eventId', element: <RootAdminGolfTournamentHomePage /> },
+                      { path: 'events/:eventId/edit', element: <RootAdminGolfTournamentEditPage /> },
+                      { path: 'events/:eventId/schedule', element: <RootAdminGolfTournamentSchedulePage /> },
+                      { path: 'events/:eventId/field', element: <RootAdminGolfTournamentFieldPage /> },
+                      { path: 'events/:eventId/tiers', element: <RootAdminGolfTournamentTiersPage /> },
+                      { path: 'events/:eventId/results', element: <RootAdminSportEventResultsPage /> },
+                      { path: 'participants', element: <RootAdminGolfPlayerListPage /> },
+                      { path: 'participants/new', element: <RootAdminGolfPlayerCreatePage /> },
+                      { path: 'participants/:participantId', element: <RootAdminGolfPlayerHomePage /> },
+                      { path: 'participants/:participantId/edit', element: <RootAdminGolfPlayerEditPage /> },
+                    ],
                   },
                   {
-                    path: 'golf/leagues/new',
-                    element: <RootAdminGolfLeagueCreatePage />,
-                  },
-                  {
-                    path: 'golf/leagues/:leagueId',
-                    element: <RootAdminGolfLeagueHomePage />,
-                  },
-                  {
-                    path: 'golf/leagues/:leagueId/edit',
-                    element: <RootAdminGolfLeagueEditPage />,
-                  },
-                  {
-                    path: 'golf/tournaments',
-                    element: <RootAdminGolfTournamentListPage />,
-                  },
-                  {
-                    path: 'golf/tournaments/new',
-                    element: <RootAdminGolfTournamentCreatePage />,
-                  },
-                  {
-                    path: 'golf/tournaments/:eventId',
-                    element: <RootAdminGolfTournamentHomePage />,
-                  },
-                  {
-                    path: 'golf/tournaments/:eventId/edit',
-                    element: <RootAdminGolfTournamentEditPage />,
-                  },
-                  {
-                    path: 'golf/tournaments/:eventId/schedule',
-                    element: <RootAdminGolfTournamentSchedulePage />,
-                  },
-                  {
-                    path: 'golf/tournaments/:eventId/field',
-                    element: <RootAdminGolfTournamentFieldPage />,
-                  },
-                  {
-                    path: 'golf/tournaments/:eventId/tiers',
-                    element: <RootAdminGolfTournamentTiersPage />,
-                  },
-                  {
-                    path: 'golf/tournaments/:eventId/scores',
-                    element: <RootAdminGolfTournamentScoresPage />,
-                  },
-                  {
-                    path: 'golf/players',
-                    element: <RootAdminGolfPlayerListPage />,
-                  },
-                  {
-                    path: 'golf/players/new',
-                    element: <RootAdminGolfPlayerCreatePage />,
-                  },
-                  {
-                    path: 'golf/players/:participantId',
-                    element: <RootAdminGolfPlayerHomePage />,
-                  },
-                  {
-                    path: 'golf/players/:participantId/edit',
-                    element: <RootAdminGolfPlayerEditPage />,
+                    // Golf's pages before they moved under sports/golf.
+                    path: 'golf/*',
+                    element: <LegacyGolfManageRedirect />,
                   },
                   {
                     path: 'leagues',

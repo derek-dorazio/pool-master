@@ -7,7 +7,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfLeagueCreatePage } from './root-admin-golf-league-create-page';
 import { RootAdminGolfLeagueListPage } from './root-admin-golf-league-list-page';
 
-// /manage/golf/leagues, the tours list, and its New tour page (pool-master-qqs).
+// /manage/sports/golf/leagues, the tours list, and its New tour page (pool-master-qqs).
 
 const { listSportLeaguesMock, createSportLeagueMock, mockLogger } = vi.hoisted(
   () => {
@@ -55,7 +55,7 @@ function league(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function renderPage(path = '/manage/golf/leagues') {
+function renderPage(path = '/manage/sports/golf/leagues') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -63,8 +63,8 @@ function renderPage(path = '/manage/golf/leagues') {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
-          <Route element={<RootAdminGolfLeagueListPage />} path="/manage/golf/leagues" />
-          <Route element={<RootAdminGolfLeagueCreatePage />} path="/manage/golf/leagues/new" />
+          <Route element={<RootAdminGolfLeagueListPage />} path="/manage/sports/:sport/leagues" />
+          <Route element={<RootAdminGolfLeagueCreatePage />} path="/manage/sports/:sport/leagues/new" />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -157,7 +157,7 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
       error: { error: { code: 'CONFLICT', message: 'A tour with this name already exists.' } },
       response: { status: 409 },
     });
-    renderPage('/manage/golf/leagues/new');
+    renderPage('/manage/sports/golf/leagues/new');
 
     await userEvent.type(
       await screen.findByTestId('root-admin-golf-league-list-new-name'),
@@ -171,7 +171,7 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
 
   it('returns to the tours list from New tour\'s Cancel without creating anything', async () => {
     listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [] } });
-    renderPage('/manage/golf/leagues/new');
+    renderPage('/manage/sports/golf/leagues/new');
 
     await userEvent.click(await screen.findByRole('link', { name: 'Cancel' }));
 

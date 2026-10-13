@@ -26,12 +26,17 @@ function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides) {
     return [];
   }
 
-  return segments
-    .slice(manageIndex + 1)
-    .map((segment, index, relevantSegments) => ({
-      label: overrides[segment] ?? getManageBreadcrumbLabel(segment),
+  const relevantSegments = segments.slice(manageIndex + 1);
+  return relevantSegments
+    .map((segment, index) => ({
+      segment,
+      label: overrides[segment] ?? getManageBreadcrumbLabel(relevantSegments, index),
       href: `/manage/${relevantSegments.slice(0, index + 1).join("/")}`,
-    }));
+    }))
+    // `sports` only groups the sports' pages, as the menu's Sports heading does: the trail
+    // starts at the sport.
+    .filter((crumb, index) => !(index === 0 && crumb.segment === "sports"))
+    .map(({ label, href }) => ({ label, href }));
 }
 
 /** `/manage` itself, and the old Manage links, open the first section of the menu. */

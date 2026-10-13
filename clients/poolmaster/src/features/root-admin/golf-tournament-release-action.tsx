@@ -1,3 +1,4 @@
+import { getSportDefinition, type SportNoun } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { releaseEvent } from '@/lib/api';
 import { Button, Callout, ConfirmationModal } from '@/features/shared/ui';
@@ -8,11 +9,13 @@ import { QueryKeys } from '@/lib/query-keys';
 import { describeGolfReleaseBlockers } from './golf-admin-utils';
 import type { SportEventDto } from '@/lib/api';
 
-const RELEASE_CODE_MESSAGES: ErrorCodeMessages = {
-  SPORT_EVENT_NOT_DRAFT: 'This tournament has already been released.',
-  SPORT_EVENT_ALREADY_STARTED: 'This tournament has already started, so it can no longer be released.',
-  SPORT_EVENT_NOT_READY: 'This tournament is not ready yet: load its field, put every active golfer in a tier and assign prices.',
-};
+function releaseCodeMessages(event: SportNoun, participant: SportNoun): ErrorCodeMessages {
+  return {
+    SPORT_EVENT_NOT_DRAFT: `This ${event.one} has already been released.`,
+    SPORT_EVENT_ALREADY_STARTED: `This ${event.one} has already started, so it can no longer be released.`,
+    SPORT_EVENT_NOT_READY: `This ${event.one} is not ready yet: load its field, put every active ${participant.one} in a tier and assign prices.`,
+  };
+}
 
 /**
  * "Release for contests" (#431): the one-way step that takes a draft tournament to
@@ -29,12 +32,13 @@ export function GolfTournamentReleaseAction({
   const logger = getLogger().child({ feature: 'root-admin-golf-tournament-release' });
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const blockers = describeGolfReleaseBlockers(tournament);
+  const { event, participant } = getSportDefinition(tournament.sport).vocabulary;
 
   const releaseMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await releaseEvent({ path: { eventId } });
       if (!response.data?.event) {
-        throwApiError(response.error, 'Release tournament response is missing data.');
+        throwApiError(response.error, `Release ${event.one} response is missing data.`);
       }
       return response.data.event;
     },
@@ -46,14 +50,14 @@ export function GolfTournamentReleaseAction({
     onSuccess: () => {
       logger.info(
         { action: 'golf.tournament.release.succeeded', data: { eventId } },
-        'Released golf tournament for contests',
+        'Released event for contests',
       );
       setIsConfirmOpen(false);
     },
     onError: (error) => {
       logger.warn(
         { action: 'golf.tournament.release.failed', data: { eventId }, err: error },
-        'Golf tournament release was rejected',
+        'Event release was rejected',
       );
     },
   });
@@ -62,7 +66,7 @@ export function GolfTournamentReleaseAction({
     <div className="space-y-2" data-testid="root-admin-golf-tournament-release-panel">
       {blockers.length > 0 ? (
         <Callout tone="warning">
-          <p>Before this tournament can be released for contests:</p>
+          <p>Before this {event.one} can be released for contests:</p>
           <ul className="mt-1 list-disc pl-5" data-testid="root-admin-golf-tournament-release-missing">
             {blockers.map((blocker) => (
               <li key={blocker}>{blocker}</li>
@@ -82,11 +86,11 @@ export function GolfTournamentReleaseAction({
       <ConfirmationModal
         confirmLabel="Release for contests"
         confirmTestId="root-admin-golf-tournament-release-confirm"
-        description="Commissioners will be able to create contests on this tournament. Its tiers and prices lock for good; the field, ranks, odds and withdrawals stay editable. It can't be returned to a draft."
+        description={`Commissioners will be able to create contests on this ${event.one}. Its tiers and prices lock for good; the field, ranks, odds and withdrawals stay editable. It can't be returned to a draft.`}
         errorMessage={
           releaseMutation.isError
             ? extractErrorMessage(releaseMutation.error, {
-                codeMessages: RELEASE_CODE_MESSAGES,
+                codeMessages: releaseCodeMessages(event, participant),
                 fallback: 'The release was rejected.',
               })
             : undefined
@@ -98,7 +102,7 @@ export function GolfTournamentReleaseAction({
         open={isConfirmOpen}
         pendingLabel="Releasing..."
         testId="root-admin-golf-tournament-release-modal"
-        title="Release this tournament for contests?"
+        title={`Release this ${event.one} for contests?`}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+import { getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { autoAssignEventTiers } from '@/lib/api';
 import type { AutoAssignSportEventTiersRequest } from '@/lib/api';
@@ -20,10 +21,13 @@ type TierSource = AutoAssignSportEventTiersRequest['source'];
 export function GolfTierAutoAssignActions({
   eventId,
   disabled,
+  sport,
 }: {
   eventId: string;
   disabled: boolean;
+  sport: Sport;
 }) {
+  const { participant } = getSportDefinition(sport).vocabulary;
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-tiers-page',
   });
@@ -50,7 +54,7 @@ export function GolfTierAutoAssignActions({
     onError: (error) => {
       logger.warn(
         { action: 'golf.tiers.autoAssign.failed', err: error },
-        'Golf tier auto-assign was rejected',
+        'Tier auto-assign was rejected',
       );
     },
   });
@@ -80,8 +84,8 @@ export function GolfTierAutoAssignActions({
         confirmTestId="root-admin-golf-tier-auto-tiers-confirm"
         description={
           tierSource === 'ODDS'
-            ? 'Every golfer is re-tiered by odds-to-win. Manual tier assignments will be replaced. Prices are untouched.'
-            : 'Every golfer is re-tiered by ranking. Manual tier assignments will be replaced. Prices are untouched.'
+            ? `Every ${participant.one} is re-tiered by odds-to-win. Manual tier assignments will be replaced. Prices are untouched.`
+            : `Every ${participant.one} is re-tiered by ranking. Manual tier assignments will be replaced. Prices are untouched.`
         }
         errorMessage={
           autoTiersMutation.isError

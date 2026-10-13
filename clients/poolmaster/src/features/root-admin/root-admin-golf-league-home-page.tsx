@@ -11,27 +11,31 @@ import { GolfTourDangerZone, GolfTourDetailsSection, GolfTourHeading } from './g
 import { GolfLeagueRosterGridCard } from './golf-league-roster-grid-card';
 import { GolfLeagueRosterUploadCard } from './golf-league-roster-upload-card';
 import { GolfTourCalendarCard } from './golf-tour-calendar-card';
+import { capitalize } from './manage-navigation';
 import { useGolfSportLeaguesQuery } from './use-golf-catalog';
+import { useManagedSport } from './use-managed-sport';
 
 /**
- * /manage/golf/leagues/:leagueId, a tour's page. Owns the tour and roster queries and the
- * layout: identity heading, details with one Edit, the tournament calendar by event
- * year, the rankings upload, the roster grid, and the danger zone last.
+ * /manage/sports/:sport/leagues/:leagueId, a sport league's page (a golf tour, a racing circuit).
+ * Owns the league and roster queries and the layout: identity heading, details with one Edit,
+ * the event calendar by event year, the rankings upload, the roster grid, and the danger zone
+ * last.
  */
 export function RootAdminGolfLeagueHomePage() {
   const { leagueId = '' } = useParams<{ leagueId: string }>();
+  const { sport, definition } = useManagedSport();
+  const { sportLeague } = definition.vocabulary;
 
   useManagePageOwnsHeading();
-  useManageBreadcrumbOverride('leagues', 'Tours');
 
-  const leaguesQuery = useGolfSportLeaguesQuery();
+  const leaguesQuery = useGolfSportLeaguesQuery(sport);
 
   const rosterQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.leagueRoster(leagueId),
     queryFn: async (): Promise<ParticipantLeagueAffiliationDto[]> => {
       const response = await listParticipantLeagueAffiliations({ path: { sportLeagueId: leagueId } });
       if (!response.data?.affiliations) {
-        throwApiError(response.error, 'Golf tour roster response is missing data.');
+        throwApiError(response.error, 'Sport league roster response is missing data.');
       }
       return response.data.affiliations;
     },
@@ -56,12 +60,12 @@ export function RootAdminGolfLeagueHomePage() {
 
   return (
     <AsyncPage
-      emptyBody="This golf tour does not exist or has been removed."
-      emptyTitle="Tour not found"
+      emptyBody={`This ${sportLeague.one} does not exist or has been removed.`}
+      emptyTitle={`${capitalize(sportLeague.one)} not found`}
       errorBody={extractErrorMessage(leaguesQuery.error, {
-        fallback: 'We could not load this golf tour right now.',
+        fallback: `We could not load this ${sportLeague.one} right now.`,
       })}
-      loadingBody="Loading golf tour..."
+      loadingBody={`Loading ${sportLeague.one}...`}
       state={pageState}
       testId="root-admin-golf-league-home-page"
     >
@@ -77,7 +81,7 @@ export function RootAdminGolfLeagueHomePage() {
             rosterError={
               rosterQuery.isError
                 ? extractErrorMessage(rosterQuery.error, {
-                    fallback: 'We could not load this tour’s roster right now.',
+                    fallback: `We could not load this ${sportLeague.one}’s roster right now.`,
                   })
                 : null
             }

@@ -55,6 +55,7 @@ function renderCard(props: Partial<Parameters<typeof GolfFieldGridCard>[0]> = {}
           eventId="evt-1"
           fieldError={null}
           fieldLoading={false}
+          sport="GOLF"
           {...props}
         />
       </MemoryRouter>
@@ -88,6 +89,7 @@ describe('pool-master-za4 GolfFieldGridCard', () => {
           <GolfFieldGridCard
             entries={[entry({ ranking: 3 })]}
             eventId="evt-1"
+            sport="GOLF"
             fieldError={null}
             fieldLoading={false}
           />
@@ -111,6 +113,7 @@ describe('pool-master-za4 GolfFieldGridCard', () => {
           <GolfFieldGridCard
             entries={[entry()]}
             eventId="evt-2"
+            sport="GOLF"
             fieldError={null}
             fieldLoading={false}
           />

@@ -11,8 +11,9 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { GOLF_PLAYER_STATUSES, golfPlayerStatusLabel } from './golf-admin-utils';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import { buildGolfPlayerPath } from './manage-navigation';
+import { buildSportParticipantPath } from './manage-navigation';
 import { useGolfPlayerQuery } from './use-golf-catalog';
+import { useManagedSport } from './use-managed-sport';
 
 const editSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
@@ -61,7 +62,9 @@ function GolfPlayerEditForm({ player }: { player: ParticipantDto }) {
     feature: 'root-admin-golf-player-edit-page',
   });
   const navigate = useNavigate();
-  const homePath = buildGolfPlayerPath(player.id);
+  const { sport, definition } = useManagedSport();
+  const { participant } = definition.vocabulary;
+  const homePath = buildSportParticipantPath(sport, player.id);
 
   const form = useForm<EditValues>({
     resolver: zodResolver(editSchema),
@@ -76,7 +79,7 @@ function GolfPlayerEditForm({ player }: { player: ParticipantDto }) {
         body: toBody(values),
       });
       if (!response.data?.participant) {
-        throwApiError(response.error, 'Golf player update response is missing data.');
+        throwApiError(response.error, 'Participant update response is missing data.');
       }
       return response.data.participant;
     },
@@ -88,7 +91,7 @@ function GolfPlayerEditForm({ player }: { player: ParticipantDto }) {
     onError: (error) => {
       logger.warn(
         { action: 'golf.player.update.failed', err: error },
-        'Golf player update was rejected',
+        'Participant update was rejected',
       );
     },
   });
@@ -97,13 +100,13 @@ function GolfPlayerEditForm({ player }: { player: ParticipantDto }) {
     <FormPage
       cancelTo={homePath}
       errorMessage={updateMutation.isError
-        ? extractErrorMessage(updateMutation.error, { fallback: 'We could not save this golfer.' })
+        ? extractErrorMessage(updateMutation.error, { fallback: `We could not save this ${participant.one}.` })
         : undefined}
       isPending={updateMutation.isPending}
       isSubmitDisabled={!form.formState.isValid}
       onSubmit={(event) => void form.handleSubmit((values) => updateMutation.mutate(values))(event)}
       pendingLabel="Saving..."
-      submitLabel="Save player"
+      submitLabel={`Save ${participant.one}`}
       submitTestId="root-admin-golf-player-edit-save"
       testId="root-admin-golf-player-edit-page"
       title="Edit details"
@@ -140,7 +143,7 @@ function GolfPlayerEditForm({ player }: { player: ParticipantDto }) {
           <Input {...form.register('externalId')} />
         </FormField>
         <FormField
-          helperText="Removing a golfer is a status change, not a delete."
+          helperText={`Removing a ${participant.one} is a status change, not a delete.`}
           label="Status"
         >
           <Select
@@ -159,8 +162,9 @@ function GolfPlayerEditForm({ player }: { player: ParticipantDto }) {
   );
 }
 
-/** Edit a golfer's details and status, with one Save. */
+/** Edit a participant's details and status, with one Save. */
 export function RootAdminGolfPlayerEditPage() {
+  const { participant } = useManagedSport().definition.vocabulary;
   const { participantId = '' } = useParams<{ participantId: string }>();
   const playerQuery = useGolfPlayerQuery(participantId);
   const player = playerQuery.data;
@@ -170,9 +174,9 @@ export function RootAdminGolfPlayerEditPage() {
   return (
     <AsyncPage
       errorBody={extractErrorMessage(playerQuery.error, {
-        fallback: 'We could not load this golf player right now.',
+        fallback: `We could not load this ${participant.one} right now.`,
       })}
-      loadingBody="Loading golf player..."
+      loadingBody={`Loading ${participant.one}...`}
       state={playerQuery.isLoading ? 'loading' : playerQuery.isError ? 'error' : 'ready'}
     >
       {player ? <GolfPlayerEditForm player={player} /> : null}

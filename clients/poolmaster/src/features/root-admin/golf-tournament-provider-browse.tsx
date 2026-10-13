@@ -28,6 +28,8 @@ import {
   useGolfProviderCatalog,
   type GolfProviderCatalogEvent,
 } from './use-golf-provider-catalog';
+import { buildSportEventPath, capitalize } from './manage-navigation';
+import { useManagedSport } from './use-managed-sport';
 
 
 function defaultWindowValue(offsetDays: number): string {
@@ -50,16 +52,19 @@ export function GolfTournamentProviderBrowse({
     feature: 'root-admin-golf-tournament-create-page',
   });
   const navigate = useNavigate();
+  const { sport, definition } = useManagedSport();
+  const { event: eventNoun, round } = definition.vocabulary;
 
   const [browseFrom, setBrowseFrom] = useState(() => defaultWindowValue(0));
   const [browseTo, setBrowseTo] = useState(() => defaultWindowValue(45));
   const [browseSearch, setBrowseSearch] = useState('');
   const [selectedEvent, setSelectedEvent] =
     useState<GolfProviderCatalogEvent | null>(null);
-  const [providerRounds, setProviderRounds] = useState('4');
+  const [providerRounds, setProviderRounds] = useState(() => String(definition.defaultRounds));
 
   const catalog = useGolfProviderCatalog({
     enabled: true,
+    sport,
     from: localDateTimeInputToIso(browseFrom),
     to: localDateTimeInputToIso(browseTo),
     sportLeagueId: scopedTour?.id,
@@ -83,7 +88,7 @@ export function GolfTournamentProviderBrowse({
         },
       });
       if (!response.data?.event.id) {
-        throwApiError(response.error, 'Tournament creation response is missing data.');
+        throwApiError(response.error, `The ${eventNoun.one} creation response is missing data.`);
       }
       return response.data.event;
     },
@@ -93,7 +98,7 @@ export function GolfTournamentProviderBrowse({
         { action: 'golf.tournament.create.provider', data: { id: tournament.id } },
         'Created golf tournament from provider event',
       );
-      navigate(`/manage/golf/tournaments/${tournament.id}`);
+      navigate(buildSportEventPath(sport, tournament.id));
     },
     onError: (error) => {
       logger.warn(
@@ -107,8 +112,8 @@ export function GolfTournamentProviderBrowse({
     <div className="space-y-4">
       {catalog.providersError || (catalog.providersLoaded && providerId === null) ? (
         <Alert tone="warning">
-          No provider is registered for golf, so there is no catalog to browse. Build the
-          tournament manually instead.
+          No provider is registered for {definition.name.toLowerCase()}, so there is no catalog
+          to browse. Build the {eventNoun.one} manually instead.
         </Alert>
       ) : null}
 
@@ -213,8 +218,8 @@ export function GolfTournamentProviderBrowse({
             <div className="grid gap-4 sm:grid-cols-2">
               <GolfTournamentEditionFields edition={edition} onChange={onEditionChange} tours={tours} />
               <FormField
-                helperText="The provider doesn't report a round count; adjust per-round dates later."
-                label="Rounds"
+                helperText={`The provider doesn't report a ${round.one} count; adjust per-${round.one} dates later.`}
+                label={capitalize(round.many)}
               >
                 <Input
                   data-testid="root-admin-golf-tournament-create-provider-rounds"
@@ -227,7 +232,7 @@ export function GolfTournamentProviderBrowse({
             </div>
 
             <Alert tone="info">
-              The field is not imported now. After creating, open the tournament and use
+              The field is not imported now. After creating, open the {eventNoun.one} and use
               Load Participant Field.
             </Alert>
 
@@ -239,7 +244,7 @@ export function GolfTournamentProviderBrowse({
                 onClick={() => createMutation.mutate()}
                 type="button"
               >
-                Create linked tournament
+                Create linked {eventNoun.one}
               </Button>
             </div>
 
@@ -247,9 +252,9 @@ export function GolfTournamentProviderBrowse({
               <p className="text-sm font-medium text-destructive">
                 {extractErrorMessage(createMutation.error, {
                   codeMessages: {
-                    EVENT_EDITION_ALREADY_EXISTS: `This tour already has a ${edition.eventYear} edition of this tournament.`,
+                    EVENT_EDITION_ALREADY_EXISTS: `This ${definition.vocabulary.sportLeague.one} already has a ${edition.eventYear} edition of this ${eventNoun.one}.`,
                   },
-                  fallback: 'We could not create this tournament.',
+                  fallback: `We could not create this ${eventNoun.one}.`,
                 })}
               </p>
             ) : null}

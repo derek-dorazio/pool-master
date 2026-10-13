@@ -18,19 +18,28 @@ import {
   sportEventStatusTone,
 } from './golf-admin-utils';
 import type { SportEventDto } from '@/lib/api';
-import { buildGolfTournamentPath, MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
+import {
+  buildSportEventListPath,
+  buildSportEventPath,
+  capitalize,
+  MANAGE_LIST_PAGE_SIZE,
+} from './manage-navigation';
+import { useManagedSport } from './use-managed-sport';
 import { GolfSectionMenu } from './golf-section-menu';
 
 const columnHelper = createColumnHelper<SportEventDto>();
 
 export function RootAdminGolfTournamentListPage() {
+  const { sport, definition } = useManagedSport();
+  const { event } = definition.vocabulary;
+  const sportName = definition.name.toLowerCase();
   const tournamentsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.tournaments,
+    queryKey: QueryKeys.rootAdmin.golf.sportTournaments(sport),
     queryFn: async (): Promise<SportEventDto[]> => {
-      const response = await listEvents({ query: { sport: 'GOLF' } });
+      const response = await listEvents({ query: { sport } });
 
       if (!response.data?.events) {
-        throwApiError(response.error, 'Golf tournament list response is missing data.');
+        throwApiError(response.error, `The ${sportName} ${event.one} list response is missing data.`);
       }
 
       return response.data.events;
@@ -42,7 +51,7 @@ export function RootAdminGolfTournamentListPage() {
     () => [
       columnHelper.accessor((row) => `${row.name} ${row.venue || ''}`.trim(), {
         id: 'tournament',
-        header: 'Tournament',
+        header: capitalize(event.one),
         cell: ({ row }) => (
           <div>
             <div className="font-medium text-foreground">{row.original.name}</div>
@@ -104,35 +113,35 @@ export function RootAdminGolfTournamentListPage() {
         cell: ({ getValue }) => getValue(),
       }),
     ],
-    [],
+    [event.one],
   );
 
   return (
     <div className="space-y-4">
-      <GolfSectionMenu current="tournaments" />
+      <GolfSectionMenu current="events" />
       <div className="flex justify-end">
         <LinkButton
           data-testid="root-admin-golf-tournament-list-new"
-          to="/manage/golf/tournaments/new"
+          to={`${buildSportEventListPath(sport)}/new`}
         >
-          New tournament
+          New {event.one}
         </LinkButton>
       </div>
 
       <DataGridPage
         columns={columns}
         data={tournamentsQuery.data ?? []}
-        emptyMessage="No golf tournaments have been created yet."
+        emptyMessage={`No ${sportName} ${event.many} have been created yet.`}
         errorBody={extractErrorMessage(tournamentsQuery.error, {
-          fallback: 'We could not load golf tournaments right now.',
+          fallback: `We could not load ${sportName} ${event.many} right now.`,
         })}
         filterTestIdPrefix="root-admin-golf-tournament-list-filter"
         getRowId={(tournament) => tournament.id}
-        getRowLink={(tournament) => buildGolfTournamentPath(tournament.id)}
-        loadingBody="Loading golf tournaments..."
+        getRowLink={(tournament) => buildSportEventPath(sport, tournament.id)}
+        loadingBody={`Loading ${sportName} ${event.many}...`}
         pageSize={MANAGE_LIST_PAGE_SIZE}
         rowTestId={(tournament) => `root-admin-golf-tournament-row-${tournament.id}`}
-        search={{ label: 'Find a tournament', testId: 'root-admin-golf-tournament-list-search' }}
+        search={{ label: `Find a ${event.one}`, testId: 'root-admin-golf-tournament-list-search' }}
         state={
           tournamentsQuery.isLoading
             ? 'loading'

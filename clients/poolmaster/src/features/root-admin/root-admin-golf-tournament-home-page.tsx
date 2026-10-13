@@ -12,25 +12,28 @@ import { GolfTournamentHeader } from './golf-tournament-header';
 import { GolfTournamentScoreSourceCard } from './golf-tournament-score-source-card';
 import { GolfTournamentWorkflowCard } from './golf-tournament-workflow-card';
 import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
-import { buildGolfTournamentPath } from './manage-navigation';
+import { buildSportEventPath } from './manage-navigation';
 import { useGolfSportLeaguesQuery } from './use-golf-catalog';
 import { useGolfRoundsQuery, useGolfTournamentQuery } from './use-golf-tournament';
+import { useManagedSport } from './use-managed-sport';
 
 /**
- * A tournament's Overview: the shared tournament header, its details with one Edit, the
+ * An event's Overview, in any sport: the shared event header, its details with one Edit, the
  * workflow (release, transitions, round schedule) and its score source. Field, Tiers and
- * Scores are the header's other pages.
+ * the results page are the header's other pages.
  */
 export function RootAdminGolfTournamentHomePage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
+  const { sport, definition } = useManagedSport();
+  const eventNoun = definition.vocabulary.event.one;
 
   const tournamentQuery = useGolfTournamentQuery(eventId);
   const roundsQuery = useGolfRoundsQuery(eventId);
 
   const tournament = tournamentQuery.data;
 
-  // The tour's name, from the tour list the golf screens already share.
-  const toursQuery = useGolfSportLeaguesQuery();
+  // The sport league's name, from the list the sport's screens already share.
+  const toursQuery = useGolfSportLeaguesQuery(sport);
   const tourName = toursQuery.data?.find((tour) => tour.id === tournament?.sportLeagueId)?.name;
 
   useManagePageOwnsHeading();
@@ -47,9 +50,9 @@ export function RootAdminGolfTournamentHomePage() {
   return (
     <AsyncPage
       errorBody={extractErrorMessage(tournamentQuery.error, {
-        fallback: 'We could not load this golf tournament right now.',
+        fallback: `We could not load this ${eventNoun} right now.`,
       })}
-      loadingBody="Loading golf tournament..."
+      loadingBody={`Loading ${eventNoun}...`}
       state={pageState}
       testId="root-admin-golf-tournament-home-page"
     >
@@ -61,13 +64,12 @@ export function RootAdminGolfTournamentHomePage() {
             <Callout tone="info">
               <p className="font-medium">The participant field is not loaded yet</p>
               <p className="mt-1 text-sm">
-                This tournament is linked to a provider event. Open Field and use Load
-                Participant Field to pull the field in.
+                {`This ${eventNoun} is linked to a provider event. Open Field and use Load Participant Field to pull the field in.`}
               </p>
               <div className="mt-3">
                 <LinkButton
                   data-testid="root-admin-golf-tournament-home-load-field"
-                  to={`${buildGolfTournamentPath(eventId)}/field`}
+                  to={`${buildSportEventPath(tournament.sport, eventId)}/field`}
                   variant="secondary"
                 >
                   Open Field

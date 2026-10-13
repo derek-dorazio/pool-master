@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { useMemo } from 'react';
 import { DataGrid, StatusBadge, formatDateTimeDisplay } from '@/features/shared/ui';
 import type { SportEventDto } from '@/lib/api';
 import {
@@ -6,12 +7,15 @@ import {
   formatSportEventStatus,
   sportEventStatusTone,
 } from './golf-admin-utils';
+import { buildSportEventPath, capitalize } from './manage-navigation';
+import { useManagedSport } from './use-managed-sport';
 
 const columnHelper = createColumnHelper<SportEventDto>();
 
-const calendarColumns = [
+/** The calendar's columns, the first named for the sport's event ("Tournament", "Race"). */
+const buildCalendarColumns = (eventLabel: string) => [
   columnHelper.accessor('name', {
-    header: 'Tournament',
+    header: eventLabel,
     cell: ({ row }) => (
       <div>
         <div className="font-medium text-foreground">{row.original.name}</div>
@@ -65,17 +69,20 @@ export function GolfTourTournamentCalendar({
   isError: boolean;
   tournaments: SportEventDto[];
 }) {
+  const { sport, definition } = useManagedSport();
+  const { event, sportLeague } = definition.vocabulary;
+  const columns = useMemo(() => buildCalendarColumns(capitalize(event.one)), [event.one]);
   return (
     <DataGrid
-      columns={calendarColumns}
+      columns={columns}
       data={tournaments}
       emptyMessage={
         isError
-          ? 'We could not load this tour’s tournaments right now.'
-          : 'No tournaments are scheduled in this year yet.'
+          ? `We could not load this ${sportLeague.one}’s ${event.many} right now.`
+          : `No ${event.many} are scheduled in this year yet.`
       }
       getRowId={(tournament) => tournament.id}
-      getRowLink={(tournament) => `/manage/golf/tournaments/${tournament.id}`}
+      getRowLink={(tournament) => buildSportEventPath(sport, tournament.id)}
       rowTestId={(tournament) => `root-admin-golf-tour-tournament-row-${tournament.id}`}
       tableTestId="root-admin-golf-tour-calendar-table"
     />

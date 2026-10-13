@@ -1,3 +1,4 @@
+import type { Sport } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import { listProviderCatalogEvents, listProviders } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
@@ -8,10 +9,11 @@ import { throwApiError } from '@/lib/errors';
 export type GolfProviderCatalogEvent = ProviderEventDto;
 
 /**
- * The golf provider's id, resolved from the provider list (first provider covering GOLF).
- * Shared by the catalog browse below and the tour year import (#385).
+ * A sport's provider id, resolved from the provider list (the first provider covering the
+ * sport); null when none does, as for horse racing today. Shared by the catalog browse below
+ * and the sport league year import (#385).
  */
-export function useGolfProviderId(enabled: boolean) {
+export function useGolfProviderId(enabled: boolean, sport: Sport) {
   const providersQuery = useQuery({
     enabled,
     queryKey: QueryKeys.rootAdmin.providers,
@@ -25,7 +27,7 @@ export function useGolfProviderId(enabled: boolean) {
     retry: false,
   });
   return {
-    providerId: resolveGolfProviderId(providersQuery.data),
+    providerId: resolveGolfProviderId(providersQuery.data, sport),
     isSuccess: providersQuery.isSuccess,
     isError: providersQuery.isError,
   };
@@ -43,12 +45,13 @@ export function useGolfProviderId(enabled: boolean) {
  */
 export function useGolfProviderCatalog(params: {
   enabled: boolean;
+  sport: Sport;
   from?: string;
   search: string;
   sportLeagueId?: string;
   to?: string;
 }) {
-  const providersQuery = useGolfProviderId(params.enabled);
+  const providersQuery = useGolfProviderId(params.enabled, params.sport);
   const { providerId } = providersQuery;
   const trimmedSearch = params.search.trim();
 
@@ -56,18 +59,18 @@ export function useGolfProviderCatalog(params: {
     enabled: params.enabled && providerId !== null,
     queryKey: QueryKeys.rootAdmin.providerCatalogEvents(
       providerId,
-      'GOLF',
+      params.sport,
       trimmedSearch,
       `${params.from ?? ''}|${params.to ?? ''}|${params.sportLeagueId ?? ''}`,
     ),
     queryFn: async (): Promise<GolfProviderCatalogEvent[]> => {
       if (!providerId) {
-        throw new Error('No golf provider is configured.');
+        throw new Error('No provider is configured for this sport.');
       }
       const response = await listProviderCatalogEvents({
         path: { providerId },
         query: {
-          sport: 'GOLF',
+          sport: params.sport,
           ...(params.sportLeagueId ? { sportLeagueId: params.sportLeagueId } : {}),
           ...(params.from ? { from: params.from } : {}),
           ...(params.to ? { to: params.to } : {}),

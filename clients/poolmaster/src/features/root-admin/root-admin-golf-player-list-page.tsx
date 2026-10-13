@@ -17,27 +17,31 @@ import {
   type GolfPlayerStatus,
 } from './golf-admin-utils';
 import {
-  GOLF_PLAYER_LIST_PATH,
   MANAGE_LIST_PAGE_SIZE,
-  buildGolfPlayerPath,
+  buildSportParticipantListPath,
+  buildSportParticipantPath,
 } from './manage-navigation';
 import { useGolfPlayersQuery } from './use-golf-catalog';
+import { useManagedSport } from './use-managed-sport';
 import { GolfSectionMenu } from './golf-section-menu';
 
 const columnHelper = createColumnHelper<ParticipantDto>();
 
 /**
- * /manage/golf/players. The master golfer roster: a searchable, paged grid of one
- * status at a time, with Add player opening its own page and rows linking to each golfer.
+ * /manage/sports/:sport/participants. A sport's master roster (golfers, horses): a searchable,
+ * paged grid of one status at a time, with Add opening its own page and rows linking to each.
  */
 export function RootAdminGolfPlayerListPage() {
+  const { sport, definition } = useManagedSport();
+  const { participant } = definition.vocabulary;
   // One status at a time, ACTIVE first, as the golf player list this replaced did.
   // listParticipants would list every status if asked without one; the single-select
   // keeps the page's behaviour.
   const [status, setStatus] = useState<GolfPlayerStatus>('ACTIVE');
 
   const playersQuery = useGolfPlayersQuery({
-    queryKey: QueryKeys.rootAdmin.golf.playerList(status),
+    sport,
+    queryKey: QueryKeys.rootAdmin.golf.playerList(sport, status),
     status,
   });
   const columns = useMemo(
@@ -70,7 +74,7 @@ export function RootAdminGolfPlayerListPage() {
 
   return (
     <div className="space-y-4">
-      <GolfSectionMenu current="players" />
+      <GolfSectionMenu current="participants" />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <FormField className="min-w-[12rem]" label="Status">
           <Select
@@ -92,26 +96,26 @@ export function RootAdminGolfPlayerListPage() {
         </FormField>
         <LinkButton
           data-testid="root-admin-golf-player-list-new"
-          to={`${GOLF_PLAYER_LIST_PATH}/new`}
+          to={`${buildSportParticipantListPath(sport)}/new`}
         >
-          Add player
+          {`Add ${participant.one}`}
         </LinkButton>
       </div>
 
       <DataGridPage
         columns={columns}
         data={playersQuery.data ?? []}
-        emptyMessage={`No ${golfPlayerStatusLabel(status).toLowerCase()} golf players.`}
+        emptyMessage={`No ${golfPlayerStatusLabel(status).toLowerCase()} ${participant.many}.`}
         errorBody={extractErrorMessage(playersQuery.error, {
-          fallback: 'We could not load golf players right now.',
+          fallback: `We could not load ${participant.many} right now.`,
         })}
         filterTestIdPrefix="root-admin-golf-player-list-filter"
         getRowId={(player) => player.id}
-        getRowLink={(player) => buildGolfPlayerPath(player.id)}
-        loadingBody="Loading golf players..."
+        getRowLink={(player) => buildSportParticipantPath(sport, player.id)}
+        loadingBody={`Loading ${participant.many}...`}
         pageSize={MANAGE_LIST_PAGE_SIZE}
         rowTestId={(player) => `root-admin-golf-player-row-${player.id}`}
-        search={{ label: 'Find a golfer', testId: 'root-admin-golf-player-list-search' }}
+        search={{ label: `Find a ${participant.one}`, testId: 'root-admin-golf-player-list-search' }}
         state={
           playersQuery.isLoading
             ? 'loading'

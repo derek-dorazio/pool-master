@@ -460,3 +460,27 @@ withdrawn pick until the start, which satisfies Q1.5.
 after a closer look. The default is sport-generic event pages, `/manage/sports/:sport/...`,
 with the results card chosen through the scoring-family registry. The golf URLs redirect to
 them, so nobody keeps two copies of the event and field pages.
+
+*Decided in slice 4: sport-generic pages, as recommended.* A closer look found that every
+event, field, tier, participant and sport league page already read and wrote the shared
+`SportEvent`, `SportEventParticipant` and `Participant` contracts; only their words, a few
+golf-only settings and the results card were golf's. So one copy of each page now serves every
+sport under `/manage/sports/:sport/{events,participants,leagues}`, where `:sport` is the enum
+value in lower case with hyphens (`golf`, `horse-racing`). The page reads its words from the
+sport definition's vocabulary (tournament or race, golfer or horse, tour or circuit), and the
+Manage menu lists one entry per supported sport. An event's results page takes its body, its
+name ("Scores" or "Results") and whether the event has a par per round from a web
+`SCORING_FAMILY_ADMIN_UI` registry keyed by scoring family, exhaustive like `SCORING_FAMILY_UI`:
+round scores for stroke play, the finishing-order card for finish position. No page compares
+sports. The old `/manage/golf/...` links redirect to the same page under
+`/manage/sports/golf/...` (tournaments become events, players participants, scores results).
+
+Why not a second set of racing pages: they would have copied about thirty golf pages and cards
+whose only differences were words, and every later fix would have had to land twice. Why not
+leave golf's URLs and add racing beside them: the pages are the same pages, so two URL shapes
+would only have hidden that.
+
+What was deliberately left as it is: the internal `golf-` prefix on these files, components,
+test ids and query keys. Renaming them touches about nine hundred test-id uses across the unit
+and browser suites and changes nothing anyone sees, so it is a mechanical follow-up of its
+own rather than part of this slice.

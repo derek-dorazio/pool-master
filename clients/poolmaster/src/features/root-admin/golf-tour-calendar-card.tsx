@@ -4,15 +4,19 @@ import type { SportLeagueDto } from '@/lib/api';
 import { GolfTourTournamentCalendar } from './golf-tour-tournament-calendar';
 import { GolfTourYearActions } from './golf-tour-year-actions';
 import { GolfTourYearImport } from './golf-tour-year-import';
+import { buildSportEventListPath, capitalize } from './manage-navigation';
 import { useGolfTourTournamentsQuery } from './use-golf-catalog';
+import { useManagedSport } from './use-managed-sport';
 
 /**
- * plans/147 — a tour's tournaments, one event year at a time. It replaced the season
+ * plans/147 — a sport league's events (a tour's tournaments), one event year at a time. It replaced the season
  * list and the season home page: the year a tournament is branded with lives on it, so
  * the years on offer are the ones the tour has tournaments in, plus its current year and
  * the year after the latest (what "clone to next year" and "new tournament" aim at).
  */
 export function GolfTourCalendarCard({ tour }: { tour: SportLeagueDto }) {
+  const { sport, definition } = useManagedSport();
+  const { event: eventNoun } = definition.vocabulary;
   const tournamentsQuery = useGolfTourTournamentsQuery(tour.id);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
@@ -36,9 +40,9 @@ export function GolfTourCalendarCard({ tour }: { tour: SportLeagueDto }) {
     <Tile data-testid="root-admin-golf-tour-calendar">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-foreground">Tournament calendar</h3>
+          <h3 className="text-base font-semibold text-foreground">{`${capitalize(eventNoun.one)} calendar`}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            {tour.name}&rsquo;s tournaments in one year, earliest first.
+            {`${tour.name}’s ${eventNoun.many} in one year, earliest first.`}
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
@@ -65,9 +69,9 @@ export function GolfTourCalendarCard({ tour }: { tour: SportLeagueDto }) {
           <LinkButton
             data-testid="root-admin-golf-tour-calendar-new-tournament"
             size="sm"
-            to={`/manage/golf/tournaments/new?sportLeagueId=${tour.id}&eventYear=${eventYear}`}
+            to={`${buildSportEventListPath(sport)}/new?sportLeagueId=${tour.id}&eventYear=${eventYear}`}
           >
-            New tournament
+            {`New ${eventNoun.one}`}
           </LinkButton>
         </div>
       </div>

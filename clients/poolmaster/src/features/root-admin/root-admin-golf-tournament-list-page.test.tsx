@@ -6,7 +6,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentListPage } from './root-admin-golf-tournament-list-page';
 import { sportEventFixture } from './golf-test-fixtures';
 
-// plans/124 §6.3 — /manage/golf/tournaments list (pool-master-3dg).
+// plans/124 §6.3 — /manage/sports/golf/events list (pool-master-3dg).
 
 const { listEventsMock } = vi.hoisted(() => ({
   listEventsMock: vi.fn(),
@@ -24,10 +24,10 @@ function renderPage() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/golf/tournaments']}>
+      <MemoryRouter initialEntries={['/manage/sports/golf/events']}>
         <Routes>
-          <Route element={<RootAdminGolfTournamentListPage />} path="/manage/golf/tournaments" />
-          <Route element={<div data-testid="golf-players-list" />} path="/manage/golf/players" />
+          <Route element={<RootAdminGolfTournamentListPage />} path="/manage/sports/:sport/events" />
+          <Route element={<div data-testid="golf-players-list" />} path="/manage/sports/:sport/participants" />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -39,14 +39,14 @@ describe('pool-master-3dg RootAdminGolfTournamentListPage', () => {
     listEventsMock.mockReset();
   });
 
-  it('marks Tournaments in the golf sub-menu and moves to the Players list from it', async () => {
+  it('marks Tournaments in the golf sub-menu and moves to the Golfers list from it', async () => {
     listEventsMock.mockResolvedValue({ data: { events: [] } });
     renderPage();
 
     const menu = await screen.findByRole('navigation', { name: 'Golf lists' });
     expect(within(menu).getByRole('radio', { name: 'Tournaments' })).toBeChecked();
     expect(within(menu).getByRole('radio', { name: 'Tours' })).not.toBeChecked();
-    fireEvent.click(within(menu).getByRole('radio', { name: 'Players' }));
+    fireEvent.click(within(menu).getByRole('radio', { name: 'Golfers' }));
 
     expect(await screen.findByTestId('golf-players-list')).toBeInTheDocument();
   });
@@ -84,7 +84,7 @@ describe('pool-master-3dg RootAdminGolfTournamentListPage', () => {
 
     expect(screen.getByTestId('root-admin-golf-tournament-list-new')).toHaveAttribute(
       'href',
-      '/manage/golf/tournaments/new',
+      '/manage/sports/golf/events/new',
     );
     expect(
       screen.getByTestId('root-admin-golf-tournament-row-tour-1'),

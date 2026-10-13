@@ -11,7 +11,7 @@ import type {
   SportEventParticipantDto,
   SportEventRoundDto,
 } from '@/lib/api';
-import { SportEventStatus, type ParticipantRoundStatus } from '@poolmaster/shared/domain';
+import { SportEventStatus, getSportDefinition, type ParticipantRoundStatus, type Sport } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 / §6.4 — shared, pure helpers for the golf admin hub, tournament
@@ -130,12 +130,13 @@ export function resolveGolfLifecycleStage(status: GolfTournamentStatus): GolfLif
  * the server makes. Empty when it is ready, or when it is not a draft.
  */
 export function describeGolfReleaseBlockers(
-  tournament: Pick<SportEventDto, 'status' | 'startDate' | 'loadedParticipantCount' | 'untieredParticipantCount' | 'unpricedParticipantCount' | 'pricing'>,
+  tournament: Pick<SportEventDto, 'sport' | 'status' | 'startDate' | 'loadedParticipantCount' | 'untieredParticipantCount' | 'unpricedParticipantCount' | 'pricing'>,
   now: Date = new Date(),
 ): string[] {
   if (tournament.status !== SportEventStatus.DRAFT) {
     return [];
   }
+  const { participant } = getSportDefinition(tournament.sport).vocabulary;
   const blockers: string[] = [];
   if (new Date(tournament.startDate).getTime() <= now.getTime()) {
     blockers.push('Its start time has passed, so it can no longer be released.');
@@ -146,8 +147,8 @@ export function describeGolfReleaseBlockers(
   if (tournament.untieredParticipantCount > 0) {
     blockers.push(
       tournament.untieredParticipantCount === 1
-        ? 'Put the 1 active golfer without a tier into a tier.'
-        : `Put the ${tournament.untieredParticipantCount} active golfers without a tier into tiers.`,
+        ? `Put the 1 active ${participant.one} without a tier into a tier.`
+        : `Put the ${tournament.untieredParticipantCount} active ${participant.many} without a tier into tiers.`,
     );
   }
   if (!tournament.pricing) {
@@ -155,8 +156,8 @@ export function describeGolfReleaseBlockers(
   } else if (tournament.unpricedParticipantCount > 0) {
     blockers.push(
       tournament.unpricedParticipantCount === 1
-        ? 'Price the 1 active golfer without a price.'
-        : `Price the ${tournament.unpricedParticipantCount} active golfers without a price.`,
+        ? `Price the 1 active ${participant.one} without a price.`
+        : `Price the ${tournament.unpricedParticipantCount} active ${participant.many} without a price.`,
     );
   }
   return blockers;
@@ -310,15 +311,16 @@ export function localDateTimeInputToIso(
 // listProviderCatalogEvents needs a providerId. There is no dedicated
 // "which provider serves this sport" endpoint in this slice, so the golf
 // provider is resolved from the provider-health list the sync lane already
-// exposes: the first provider whose sportsCovered includes GOLF.
+// exposes: the first provider whose sportsCovered includes the sport.
 
 export function resolveGolfProviderId(
   providers:
     | ReadonlyArray<{ providerId: string; sportsCovered: readonly string[] }>
     | undefined,
+  sport: Sport,
 ): string | null {
   return (
-    providers?.find((provider) => provider.sportsCovered.includes('GOLF'))
+    providers?.find((provider) => provider.sportsCovered.includes(sport))
       ?.providerId ?? null
   );
 }

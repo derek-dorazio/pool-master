@@ -10,6 +10,7 @@ import type { SportDefinition } from './sport-definition';
  */
 export const horseRacingSportDefinition: SportDefinition = {
   sport: Sport.HORSE_RACING,
+  name: 'Horse racing',
   participantType: ParticipantType.INDIVIDUAL,
   scoringFamily: ScoringFamily.FINISH_POSITION,
   tournamentFormat: TournamentFormat.RACE,
@@ -21,6 +22,9 @@ export const horseRacingSportDefinition: SportDefinition = {
   scoringDefinitions: ['FINISH_POSITION_POINTS'],
   vocabulary: {
     participant: { one: 'horse', many: 'horses' },
+    event: { one: 'race', many: 'races' },
+    // Racing is run country by country, so a sport league is a racing circuit (plans/racing-sports.md §2.2).
+    sportLeague: { one: 'circuit', many: 'circuits' },
     round: { one: 'race', many: 'races' },
     withdrawn: 'Scratched',
     eventStart: 'post time',

@@ -1,4 +1,6 @@
+import { getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import { useState } from 'react';
+import { capitalize } from './manage-navigation';
 import { seedEventParticipants } from '@/lib/api';
 import { Alert, Button, ConfirmationModal } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -15,7 +17,8 @@ type SeedResult = SeedSportEventParticipantsResponse;
  * from the tour ranking (§4.7). Always available; golfers already in the field are
  * skipped.
  */
-export function GolfFieldSeedAction({ eventId }: { eventId: string }) {
+export function GolfFieldSeedAction({ eventId, sport }: { eventId: string; sport: Sport }) {
+  const { event, participant, sportLeague } = getSportDefinition(sport).vocabulary;
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-field-page',
   });
@@ -43,7 +46,7 @@ export function GolfFieldSeedAction({ eventId }: { eventId: string }) {
     onError: (error) => {
       logger.warn(
         { action: 'golf.field.seed.failed', err: error },
-        'Golf field seed was rejected',
+        'Field seed was rejected',
       );
     },
   });
@@ -59,7 +62,7 @@ export function GolfFieldSeedAction({ eventId }: { eventId: string }) {
         size="sm"
         variant="secondary"
       >
-        Seed field from league roster
+        Seed field from {sportLeague.one} roster
       </Button>
 
       {result ? (
@@ -68,7 +71,7 @@ export function GolfFieldSeedAction({ eventId }: { eventId: string }) {
           data-testid="root-admin-golf-field-seed-result"
           tone="success"
         >
-          Added {result.added} golfer{result.added === 1 ? '' : 's'} ({result.skipped}{' '}
+          Added {result.added} {result.added === 1 ? participant.one : participant.many} ({result.skipped}{' '}
           already in the field). Derived {result.seedNumbersDerived} seed number
           {result.seedNumbersDerived === 1 ? '' : 's'} and {result.oddsDerived} odds.
         </Alert>
@@ -77,11 +80,11 @@ export function GolfFieldSeedAction({ eventId }: { eventId: string }) {
       <ConfirmationModal
         confirmLabel="Seed field"
         confirmTestId="root-admin-golf-field-seed-confirm"
-        description="Copies the tour's current roster into this tournament's field and derives seed numbers and odds-to-win from each golfer's tour ranking. Golfers already in the field are left untouched."
+        description={`Copies the ${sportLeague.one}'s current roster into this ${event.one}'s field and derives seed numbers and odds-to-win from each ${participant.one}'s ${sportLeague.one} ranking. ${capitalize(participant.many)} already in the field are left untouched.`}
         errorMessage={
           seedMutation.isError
             ? extractErrorMessage(seedMutation.error, {
-                fallback: 'We could not seed the field from the league roster.',
+                fallback: `We could not seed the field from the ${sportLeague.one} roster.`,
               })
             : undefined
         }
@@ -91,7 +94,7 @@ export function GolfFieldSeedAction({ eventId }: { eventId: string }) {
         onOpenChange={(next) => !next && setOpen(false)}
         open={open}
         testId="root-admin-golf-field-seed-modal"
-        title="Seed field from league roster"
+        title={`Seed field from ${sportLeague.one} roster`}
       />
     </>
   );

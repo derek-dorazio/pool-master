@@ -11,11 +11,12 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import { buildGolfTourPath } from './manage-navigation';
+import { buildSportLeaguePath, capitalize } from './manage-navigation';
 import { useGolfSportLeaguesQuery } from './use-golf-catalog';
+import { useManagedSport } from './use-managed-sport';
 
 const editSchema = z.object({
-  name: z.string().trim().min(1, 'Tour name is required'),
+  name: z.string().trim().min(1, 'A name is required'),
   matchKeyword: z.string().trim().optional(),
 });
 
@@ -26,7 +27,9 @@ function GolfTourEditForm({ tour }: { tour: SportLeagueDto }) {
     feature: 'root-admin-golf-league-edit-page',
   });
   const navigate = useNavigate();
-  const homePath = buildGolfTourPath(tour.id);
+  const { sport, definition } = useManagedSport();
+  const { sportLeague } = definition.vocabulary;
+  const homePath = buildSportLeaguePath(sport, tour.id);
 
   const form = useForm<EditValues>({
     resolver: zodResolver(editSchema),
@@ -41,7 +44,7 @@ function GolfTourEditForm({ tour }: { tour: SportLeagueDto }) {
         body: { name: values.name, matchKeyword: values.matchKeyword?.trim() ?? '' },
       });
       if (!response.data?.sportLeague) {
-        throwApiError(response.error, 'Golf tour update response is missing data.');
+        throwApiError(response.error, 'Sport league update response is missing data.');
       }
       return response.data.sportLeague;
     },
@@ -50,7 +53,7 @@ function GolfTourEditForm({ tour }: { tour: SportLeagueDto }) {
     onError: (error) => {
       logger.warn(
         { action: 'golf.tour.update.failed', err: error },
-        'Golf tour update was rejected',
+        'Sport league update was rejected',
       );
     },
   });
@@ -59,22 +62,22 @@ function GolfTourEditForm({ tour }: { tour: SportLeagueDto }) {
     <FormPage
       cancelTo={homePath}
       errorMessage={updateMutation.isError
-        ? extractErrorMessage(updateMutation.error, { fallback: 'We could not save this tour.' })
+        ? extractErrorMessage(updateMutation.error, { fallback: `We could not save this ${sportLeague.one}.` })
         : undefined}
       isPending={updateMutation.isPending}
       isSubmitDisabled={!form.formState.isValid}
       onSubmit={(event) => void form.handleSubmit((values) => updateMutation.mutate(values))(event)}
       pendingLabel="Saving..."
-      submitLabel="Save tour"
+      submitLabel={`Save ${sportLeague.one}`}
       submitTestId="root-admin-golf-league-edit-save"
       testId="root-admin-golf-league-edit-page"
       title="Edit details"
     >
-      <FormField error={form.formState.errors.name?.message} label="Tour name">
+      <FormField error={form.formState.errors.name?.message} label={`${capitalize(sportLeague.one)} name`}>
         <Input data-testid="root-admin-golf-league-edit-name" {...form.register('name')} />
       </FormField>
       <FormField
-        helperText="A plain catalog-browse filter keyword, e.g. “PGA”."
+        helperText="A word a provider's event names carry, to filter its catalog when browsing."
         label="Match keyword"
       >
         <Input data-testid="root-admin-golf-league-edit-keyword" {...form.register('matchKeyword')} />
@@ -83,26 +86,27 @@ function GolfTourEditForm({ tour }: { tour: SportLeagueDto }) {
   );
 }
 
-/** Edit a golf tour's name and match keyword, with one Save. */
+/** Edit a sport league's name and match keyword, with one Save. */
 export function RootAdminGolfLeagueEditPage() {
   const { leagueId = '' } = useParams<{ leagueId: string }>();
-  const leaguesQuery = useGolfSportLeaguesQuery();
+  const { sport, definition } = useManagedSport();
+  const { sportLeague } = definition.vocabulary;
+  const leaguesQuery = useGolfSportLeaguesQuery(sport);
   const tour = useMemo(
     () => leaguesQuery.data?.find((candidate) => candidate.id === leagueId),
     [leaguesQuery.data, leagueId],
   );
 
-  useManageBreadcrumbOverride('leagues', 'Tours');
   useManageBreadcrumbOverride(leagueId || undefined, tour?.name);
 
   return (
     <AsyncPage
-      emptyBody="This golf tour does not exist or has been removed."
-      emptyTitle="Tour not found"
+      emptyBody={`This ${sportLeague.one} does not exist or has been removed.`}
+      emptyTitle={`${capitalize(sportLeague.one)} not found`}
       errorBody={extractErrorMessage(leaguesQuery.error, {
-        fallback: 'We could not load this golf tour right now.',
+        fallback: `We could not load this ${sportLeague.one} right now.`,
       })}
-      loadingBody="Loading golf tour..."
+      loadingBody={`Loading ${sportLeague.one}...`}
       state={leaguesQuery.isLoading ? 'loading' : leaguesQuery.isError ? 'error' : tour ? 'ready' : 'empty'}
     >
       {tour ? <GolfTourEditForm tour={tour} /> : null}

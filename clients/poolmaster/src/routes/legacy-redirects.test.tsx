@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   LegacyContestCreateRedirect,
   LegacyContestManageRedirect,
+  LegacyGolfManageRedirect,
   LegacyManageContestsRedirect,
 } from './legacy-redirects';
 
@@ -41,5 +42,53 @@ describe('Contest setup links from before Commissioner tools', () => {
     renderAt('/league/BIGDAWGS/contests/contest-9/manage');
 
     expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/admin/contests/contest-9');
+  });
+});
+
+function SearchProbe() {
+  const { pathname, search } = useLocation();
+  return <div data-testid="location">{`${pathname}${search}`}</div>;
+}
+
+function renderGolfLinkAt(path: string) {
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route element={<LegacyGolfManageRedirect />} path="/manage/golf/*" />
+        <Route element={<SearchProbe />} path="/manage/sports/*" />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+describe('Golf Manage links from before every sport shared one set of pages', () => {
+  it('sends an old tournament list link to golf\'s events', () => {
+    renderGolfLinkAt('/manage/golf/tournaments');
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports/golf/events');
+  });
+
+  it('sends an old tournament scores link to that event\'s results page', () => {
+    renderGolfLinkAt('/manage/golf/tournaments/evt-1/scores');
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports/golf/events/evt-1/results');
+  });
+
+  it('sends an old player link to that golfer\'s participant page and keeps the query', () => {
+    renderGolfLinkAt('/manage/golf/players/p-1?tab=affiliations');
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports/golf/participants/p-1?tab=affiliations');
+  });
+
+  it('sends an old tour link to the same tour under golf\'s leagues', () => {
+    renderGolfLinkAt('/manage/golf/leagues/league-1/edit');
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports/golf/leagues/league-1/edit');
+  });
+
+  it('sends the old golf root, or a list that no longer exists, to golf\'s events', () => {
+    renderGolfLinkAt('/manage/golf/rankings');
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports/golf/events');
   });
 });

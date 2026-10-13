@@ -17,10 +17,12 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { buildGolfTourPath } from './manage-navigation';
+import { buildSportLeaguePath, capitalize } from './manage-navigation';
+import { useManagedSport } from './use-managed-sport';
 
-/** The tour's identity heading: name, active state, roster size and tournament count. */
+/** The sport league's identity heading: name, active state, roster size and event count. */
 export function GolfTourHeading({ tour }: { tour: SportLeagueDto }) {
+  const { participant, event } = useManagedSport().definition.vocabulary;
   return (
     <IdentityHeading
       icon={<Route aria-hidden size={22} />}
@@ -30,7 +32,7 @@ export function GolfTourHeading({ tour }: { tour: SportLeagueDto }) {
             {tour.isActive ? 'Active' : 'Inactive'}
           </StatusBadge>
           <span data-testid="root-admin-golf-league-counts">
-            {tour.affiliationCount} golfers · {tour.sportEventCount} tournaments
+            {`${tour.affiliationCount} ${tour.affiliationCount === 1 ? participant.one : participant.many} · ${tour.sportEventCount} ${tour.sportEventCount === 1 ? event.one : event.many}`}
           </span>
         </>
       )}
@@ -40,15 +42,16 @@ export function GolfTourHeading({ tour }: { tour: SportLeagueDto }) {
   );
 }
 
-/** The tour's properties as labelled rows, with one Edit (rules/ux-rules.md §12 rules 5 and 6). */
+/** The sport league's properties as labelled rows, with one Edit (rules/ux-rules.md §12 rules 5 and 6). */
 export function GolfTourDetailsSection({ tour }: { tour: SportLeagueDto }) {
+  const { sport, definition } = useManagedSport();
   return (
     <SettingsSection
       action={(
         <LinkButton
           data-testid="root-admin-golf-league-home-edit"
           size="sm"
-          to={`${buildGolfTourPath(tour.id)}/edit`}
+          to={`${buildSportLeaguePath(sport, tour.id)}/edit`}
           variant="secondary"
         >
           Edit
@@ -59,19 +62,20 @@ export function GolfTourDetailsSection({ tour }: { tour: SportLeagueDto }) {
     >
       <SettingsRow label="Match keyword" value={tour.matchKeyword || 'Not set'} />
       <SettingsRow label="Roster size" value={tour.affiliationCount} />
-      <SettingsRow label="Tournaments" value={tour.sportEventCount} />
+      <SettingsRow label={capitalize(definition.vocabulary.event.many)} value={tour.sportEventCount} />
       <SettingsRow label="Current year" value={tour.currentEventYear ?? 'Not set'} />
     </SettingsSection>
   );
 }
 
-/** Deactivating or reactivating the tour, confirmed first, at the bottom of its page. */
+/** Deactivating or reactivating the sport league, confirmed first, at the bottom of its page. */
 export function GolfTourDangerZone({ tour }: { tour: SportLeagueDto }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-league-home-page',
   });
+  const { sportLeague, event } = useManagedSport().definition.vocabulary;
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const actionLabel = tour.isActive ? 'Deactivate tour' : 'Activate tour';
+  const actionLabel = tour.isActive ? `Deactivate ${sportLeague.one}` : `Activate ${sportLeague.one}`;
 
   const toggleActiveMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -80,7 +84,7 @@ export function GolfTourDangerZone({ tour }: { tour: SportLeagueDto }) {
         body: { isActive: !tour.isActive },
       });
       if (!response.data?.sportLeague) {
-        throwApiError(response.error, 'Golf tour update response is missing data.');
+        throwApiError(response.error, 'Sport league update response is missing data.');
       }
       return response.data.sportLeague;
     },
@@ -89,7 +93,7 @@ export function GolfTourDangerZone({ tour }: { tour: SportLeagueDto }) {
     onError: (error) => {
       logger.warn(
         { action: 'golf.tour.toggleActive.failed', err: error },
-        'Golf tour active toggle was rejected',
+        'Sport league active toggle was rejected',
       );
     },
   });
@@ -114,8 +118,8 @@ export function GolfTourDangerZone({ tour }: { tour: SportLeagueDto }) {
             </Button>
           )}
           description={tour.isActive
-            ? 'Marks the tour inactive. Its roster and tournaments stay as they are.'
-            : 'Marks the tour active again.'}
+            ? `Marks the ${sportLeague.one} inactive. Its roster and ${event.many} stay as they are.`
+            : `Marks the ${sportLeague.one} active again.`}
           title={actionLabel}
         />
       </DangerZone>
@@ -139,7 +143,7 @@ export function GolfTourDangerZone({ tour }: { tour: SportLeagueDto }) {
         {toggleActiveMutation.isError ? (
           <p className="text-sm font-medium text-destructive">
             {extractErrorMessage(toggleActiveMutation.error, {
-              fallback: 'We could not change this tour’s active state.',
+              fallback: `We could not change this ${sportLeague.one}’s active state.`,
             })}
           </p>
         ) : null}

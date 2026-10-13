@@ -1,3 +1,4 @@
+import { getSportDefinition } from '@poolmaster/shared/domain';
 import {
   ProgressIndicator,
   StatusBadge,
@@ -72,7 +73,8 @@ export function GolfTournamentWorkflowRail({
         />
       ) : (
         <p className="text-sm text-muted-foreground">
-          This tournament is {formatSportEventStatus(tournament.status)}.
+          This {getSportDefinition(tournament.sport).vocabulary.event.one} is{' '}
+          {formatSportEventStatus(tournament.status)}.
         </p>
       )}
 
@@ -82,7 +84,8 @@ export function GolfTournamentWorkflowRail({
           data-testid="root-admin-golf-tournament-auto-hint"
         >
           Will move to {formatSportEventStatus(auto.toStatus)} automatically around{' '}
-          {formatDateTimeDisplay(auto.at)} from the round schedule. Manual transitions stay
+          {formatDateTimeDisplay(auto.at)} from the{' '}
+          {getSportDefinition(tournament.sport).vocabulary.round.one} schedule. Manual transitions stay
           available.
         </p>
       ) : null}

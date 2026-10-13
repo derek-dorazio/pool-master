@@ -13,7 +13,7 @@ import { golfParticipantFieldActionLabel } from './golf-admin-utils';
  * client-computed label). Only rendered when `syncScope !== 'NONE'`. The first,
  * empty-field click runs with no confirmation; every later click confirms,
  * because a refresh replaces the ranking, odds, seed and withdrawal of every
- * golfer the provider reports, including ones an admin set in the field grid
+ * participant the provider reports, including ones an admin set in the field grid
  * or by bulk upload (#415).
  */
 export function GolfFieldRefreshAction({
@@ -51,7 +51,7 @@ export function GolfFieldRefreshAction({
     onError: (error) => {
       logger.warn(
         { action: 'golf.field.refresh.failed', err: error },
-        'Golf field refresh was rejected',
+        'Field refresh was rejected',
       );
     },
   });
@@ -101,7 +101,7 @@ export function GolfFieldRefreshAction({
       <ConfirmationModal
         confirmLabel={label}
         confirmTestId="root-admin-golf-field-refresh-confirm"
-        description="Pulls the field again from the linked provider event. For every golfer the provider reports, rankings, odds, seeds and withdrawals you set in the field grid or by bulk upload are replaced with the provider's values."
+        description="Pulls the field again from the linked provider event. For every participant the provider reports, rankings, odds, seeds and withdrawals you set in the field grid or by bulk upload are replaced with the provider's values."
         errorMessage={
           refreshMutation.isError && confirmOpen
             ? extractErrorMessage(refreshMutation.error, {

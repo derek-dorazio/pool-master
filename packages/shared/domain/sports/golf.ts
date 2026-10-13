@@ -4,6 +4,7 @@ import type { SportDefinition } from './sport-definition';
 
 export const golfSportDefinition: SportDefinition = {
   sport: Sport.GOLF,
+  name: 'Golf',
   participantType: ParticipantType.INDIVIDUAL,
   scoringFamily: ScoringFamily.STROKE_PLAY,
   tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
@@ -13,6 +14,8 @@ export const golfSportDefinition: SportDefinition = {
   scoringDefinitions: ['GOLF_RELATIVE_TO_PAR_TOTAL'],
   vocabulary: {
     participant: { one: 'golfer', many: 'golfers' },
+    event: { one: 'tournament', many: 'tournaments' },
+    sportLeague: { one: 'tour', many: 'tours' },
     round: { one: 'round', many: 'rounds' },
     eliminated: 'Cut',
     withdrawn: 'Withdrawn',

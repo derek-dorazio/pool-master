@@ -3,8 +3,11 @@ import {
   EventPricingConfigSchema,
   findBudgetPricingProblem,
   priceOnBudgetCurve,
+  getSportDefinition,
   type BudgetPricingProfile,
   type EventPricingConfig,
+  type Sport,
+  type SportVocabulary,
 } from '@poolmaster/shared/domain';
 import { autoAssignEventPrices } from '@/lib/api';
 import {
@@ -24,13 +27,16 @@ import { useSettingsGroupsQuery } from './use-settings-groups';
 /** The five values as the dialog's inputs hold them. */
 type PricingDraft = Record<'salaryCap' | 'unit' | 'topSharePercent' | 'floorSharePercent' | 'steepness', string>;
 
-const VALUE_FIELDS: ReadonlyArray<{ key: keyof PricingDraft; label: string; helper: string }> = [
-  { key: 'salaryCap', label: 'Salary cap ($)', helper: 'Every budget contest on this tournament uses it.' },
-  { key: 'unit', label: 'Round prices to ($)', helper: 'Every price is a multiple of it.' },
-  { key: 'topSharePercent', label: 'Best golfer (% of cap)', helper: 'The top seed\'s price.' },
-  { key: 'floorSharePercent', label: 'Worst golfer (% of cap)', helper: 'The last golfer\'s price.' },
-  { key: 'steepness', label: 'Steepness', helper: '1 is a straight line; higher keeps only the top few expensive.' },
-];
+/** The dialog's five inputs, worded for the event's sport. */
+function valueFields({ event, participant }: SportVocabulary): ReadonlyArray<{ key: keyof PricingDraft; label: string; helper: string }> {
+  return [
+    { key: 'salaryCap', label: 'Salary cap ($)', helper: `Every budget contest on this ${event.one} uses it.` },
+    { key: 'unit', label: 'Round prices to ($)', helper: 'Every price is a multiple of it.' },
+    { key: 'topSharePercent', label: `Best ${participant.one} (% of cap)`, helper: 'The top seed\'s price.' },
+    { key: 'floorSharePercent', label: `Worst ${participant.one} (% of cap)`, helper: `The last ${participant.one}'s price.` },
+    { key: 'steepness', label: 'Steepness', helper: '1 is a straight line; higher keeps only the top few expensive.' },
+  ];
+}
 
 function toDraft(values: BudgetPricingProfile | EventPricingConfig): PricingDraft {
   return {
@@ -70,13 +76,17 @@ export function GolfPriceAssignAction({
   current,
   disabled,
   eventId,
+  sport,
 }: {
   activeGolferCount: number;
   /** The values the tournament was last priced with, if any: the dialog starts from them. */
   current: EventPricingConfig | null;
   disabled: boolean;
   eventId: string;
+  sport: Sport;
 }) {
+  const { vocabulary } = getSportDefinition(sport);
+  const { event, participant } = vocabulary;
   const logger = getLogger().child({ feature: 'root-admin-golf-tournament-tiers-page' });
   const settingsQuery = useSettingsGroupsQuery();
   const profiles = useMemo(() => {
@@ -153,7 +163,7 @@ export function GolfPriceAssignAction({
       <ConfirmationModal
         confirmLabel={current ? 'Replace prices' : 'Assign prices'}
         confirmTestId="root-admin-golf-tier-auto-prices-confirm"
-        description="Every active golfer is priced from the best seed down, golfers with no seed last. Manual prices are replaced; tiers are untouched. You can price again until the tournament is released."
+        description={`Every active ${participant.one} is priced from the best seed down, ${participant.many} with no seed last. Manual prices are replaced; tiers are untouched. You can price again until the ${event.one} is released.`}
         errorMessage={
           mutation.isError
             ? extractErrorMessage(mutation.error, { fallback: 'We could not assign prices.' })
@@ -182,7 +192,7 @@ export function GolfPriceAssignAction({
           </FormField>
           {draft ? (
             <div className="grid gap-3 sm:grid-cols-2">
-              {VALUE_FIELDS.map((field) => (
+              {valueFields(vocabulary).map((field) => (
                 <FormField helperText={field.helper} key={field.key} label={field.label}>
                   <Input
                     data-testid={`root-admin-golf-tier-auto-prices-${field.key}`}
@@ -196,7 +206,7 @@ export function GolfPriceAssignAction({
           ) : null}
           {preview ? (
             <p className="text-sm text-muted-foreground" data-testid="root-admin-golf-tier-auto-prices-preview">
-              {`Best golfer ${formatDollars(preview.best)}, worst ${formatDollars(preview.worst)}, across ${activeGolferCount} active golfers.`}
+              {`Best ${participant.one} ${formatDollars(preview.best)}, worst ${formatDollars(preview.worst)}, across ${activeGolferCount} active ${participant.many}.`}
             </p>
           ) : null}
         </div>

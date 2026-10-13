@@ -14,7 +14,7 @@ import {
   sportLeagueFixture,
 } from './golf-test-fixtures';
 
-// A tour's page, /manage/golf/leagues/:leagueId (pool-master-qqs): heading and details,
+// A tour's page, /manage/sports/golf/leagues/:leagueId (pool-master-qqs): heading and details,
 // the Edit details page, the danger zone's active toggle, the roster grid (inline rank
 // edit, add, remove) and the bulk-upload flow.
 
@@ -123,15 +123,15 @@ function renderPage(leagueId = 'pga', subPath = '') {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/manage/golf/leagues/${leagueId}${subPath}`]}>
+      <MemoryRouter initialEntries={[`/manage/sports/golf/leagues/${leagueId}${subPath}`]}>
         <Routes>
           <Route
             element={<RootAdminGolfLeagueHomePage />}
-            path="/manage/golf/leagues/:leagueId"
+            path="/manage/sports/:sport/leagues/:leagueId"
           />
           <Route
             element={<RootAdminGolfLeagueEditPage />}
-            path="/manage/golf/leagues/:leagueId/edit"
+            path="/manage/sports/:sport/leagues/:leagueId/edit"
           />
         </Routes>
       </MemoryRouter>
@@ -169,7 +169,7 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
     expect(within(details).getByText('PGA')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-golf-league-home-edit')).toHaveAttribute(
       'href',
-      '/manage/golf/leagues/pga/edit',
+      '/manage/sports/golf/leagues/pga/edit',
     );
   });
 

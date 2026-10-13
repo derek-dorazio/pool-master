@@ -8,13 +8,14 @@ import {
 import { GolfTournamentManualCreateForm } from './golf-tournament-manual-create-form';
 import { GolfTournamentProviderBrowse } from './golf-tournament-provider-browse';
 import type { GolfTournamentEdition } from './golf-tournament-edition';
-import { GOLF_TOUR_LIST_PATH } from './manage-navigation';
+import { buildSportLeagueListPath, capitalize } from './manage-navigation';
 import { useGolfSportLeaguesQuery } from './use-golf-catalog';
+import { useManagedSport } from './use-managed-sport';
 
 type CreateMode = 'manual' | 'provider';
 
 /**
- * plans/124 §6.3 / §4.4a — /manage/golf/tournaments/new. Owns the create mode toggle and
+ * plans/124 §6.3 / §4.4a — /manage/sports/:sport/events/new. Owns the create mode toggle and
  * the shared, required tour and event year (plans/147 — they replaced the season); the
  * two modes themselves (manual form / provider-event browse) are separate components.
  */
@@ -26,7 +27,10 @@ export function RootAdminGolfTournamentCreatePage() {
   const [mode, setMode] = useState<CreateMode>('manual');
   const [selection, setSelection] = useState<Partial<GolfTournamentEdition>>({});
 
-  const toursQuery = useGolfSportLeaguesQuery();
+  const { sport, definition } = useManagedSport();
+  const { event, sportLeague } = definition.vocabulary;
+  const sportName = definition.name.toLowerCase();
+  const toursQuery = useGolfSportLeaguesQuery(sport);
 
   // A tournament is created on an active tour only.
   const tours = useMemo(
@@ -53,17 +57,20 @@ export function RootAdminGolfTournamentCreatePage() {
         data-testid="root-admin-golf-tournament-create-page"
       >
         <Callout tone="warning">
-          <p className="font-medium">Create a tour before creating a tournament</p>
+          <p className="font-medium">
+            Create a {sportLeague.one} before creating a {event.one}
+          </p>
           <p className="mt-1 text-sm">
-            Every golf tournament runs on a tour. There are no active golf tours yet.
+            Every {sportName} {event.one} runs on a {sportLeague.one}. There are no active{' '}
+            {sportName} {sportLeague.many} yet.
           </p>
           <div className="mt-3">
             <LinkButton
               data-testid="root-admin-golf-tournament-create-tours-link"
-              to={GOLF_TOUR_LIST_PATH}
+              to={buildSportLeagueListPath(sport)}
               variant="secondary"
             >
-              Go to Tours
+              Go to {capitalize(sportLeague.many)}
             </LinkButton>
           </div>
         </Callout>
@@ -77,7 +84,7 @@ export function RootAdminGolfTournamentCreatePage() {
       data-testid="root-admin-golf-tournament-create-page"
     >
       <SegmentedControl
-        aria-label="Tournament creation mode"
+        aria-label={`${capitalize(event.one)} creation mode`}
         onChange={(value) => setMode(value as CreateMode)}
         options={[
           { label: 'Build manually', value: 'manual' },

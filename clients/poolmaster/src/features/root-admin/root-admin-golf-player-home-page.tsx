@@ -15,10 +15,12 @@ import { QueryKeys } from '@/lib/query-keys';
 import type { ParticipantDto, ParticipantProviderMappingDto } from '@/lib/api';
 import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import { golfPlayerStatusLabel, golfPlayerStatusTone } from './golf-admin-utils';
-import { buildGolfPlayerPath } from './manage-navigation';
+import { buildSportParticipantPath, capitalize } from './manage-navigation';
 import { useGolfPlayerQuery } from './use-golf-catalog';
+import { useManagedSport } from './use-managed-sport';
 
 function GolfPlayerMappingsSection({ participantId }: { participantId: string }) {
+  const { participant } = useManagedSport().definition.vocabulary;
   const mappingsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.playerMappings(participantId),
     queryFn: async (): Promise<ParticipantProviderMappingDto[]> => {
@@ -34,14 +36,14 @@ function GolfPlayerMappingsSection({ participantId }: { participantId: string })
 
   return (
     <SettingsSection
-      description="How this golfer is matched in each provider’s feed. Read-only."
+      description={`How this ${participant.one} is matched in each provider’s feed. Read-only.`}
       testId="root-admin-golf-player-home-mappings-section"
       title={`Provider mappings (${providerMappings.length})`}
     >
       {mappingsQuery.isError ? (
         <p className="px-5 py-4 text-sm text-destructive" data-testid="root-admin-golf-player-home-mappings-error">
           {extractErrorMessage(mappingsQuery.error, {
-            fallback: 'We could not load this golfer’s provider mappings.',
+            fallback: `We could not load this ${participant.one}’s provider mappings.`,
           })}
         </p>
       ) : mappingsQuery.isLoading ? (
@@ -64,6 +66,7 @@ function GolfPlayerMappingsSection({ participantId }: { participantId: string })
 }
 
 function GolfPlayerHome({ player }: { player: ParticipantDto }) {
+  const { sport } = useManagedSport();
   return (
     <div className="space-y-8">
       <IdentityHeading
@@ -85,7 +88,7 @@ function GolfPlayerHome({ player }: { player: ParticipantDto }) {
           <LinkButton
             data-testid="root-admin-golf-player-home-edit"
             size="sm"
-            to={`${buildGolfPlayerPath(player.id)}/edit`}
+            to={`${buildSportParticipantPath(sport, player.id)}/edit`}
             variant="secondary"
           >
             Edit
@@ -114,12 +117,13 @@ function GolfPlayerHome({ player }: { player: ParticipantDto }) {
 }
 
 /**
- * A golfer's page in Manage: the identity heading, the details with one Edit (status
- * included: removing a golfer is a status change, never a delete) and the read-only
- * provider mappings. The golfer is the shared Participant.
+ * A participant's page in Manage (a golfer, a horse): the identity heading, the details with one
+ * Edit (status included: removing one is a status change, never a delete) and the read-only
+ * provider mappings.
  */
 export function RootAdminGolfPlayerHomePage() {
   const { participantId = '' } = useParams<{ participantId: string }>();
+  const { participant } = useManagedSport().definition.vocabulary;
   const playerQuery = useGolfPlayerQuery(participantId);
   const player = playerQuery.data;
 
@@ -136,12 +140,12 @@ export function RootAdminGolfPlayerHomePage() {
 
   return (
     <AsyncPage
-      emptyBody="This golf player does not exist or has been removed."
-      emptyTitle="Player not found"
+      emptyBody={`This ${participant.one} does not exist or has been removed.`}
+      emptyTitle={`${capitalize(participant.one)} not found`}
       errorBody={extractErrorMessage(playerQuery.error, {
-        fallback: 'We could not load this golf player right now.',
+        fallback: `We could not load this ${participant.one} right now.`,
       })}
-      loadingBody="Loading golf player..."
+      loadingBody={`Loading ${participant.one}...`}
       state={pageState}
       testId="root-admin-golf-player-home-page"
     >

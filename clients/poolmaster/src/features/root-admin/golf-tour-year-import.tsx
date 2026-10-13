@@ -7,6 +7,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { ImportSportEventYearFromProviderResponse, SportLeagueDto } from '@/lib/api';
 import { useGolfProviderId } from './use-golf-provider-catalog';
+import { useManagedSport } from './use-managed-sport';
 
 /**
  * #385 — one action creates a tour's year of tournaments from the golf provider, each
@@ -18,12 +19,14 @@ export function GolfTourYearImport({ eventYear, tour }: { eventYear: number; tou
   const logger = getLogger().child({ feature: 'golf-tour-year-import' });
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<ImportSportEventYearFromProviderResponse | null>(null);
-  const { providerId } = useGolfProviderId(true);
+  const { sport, definition } = useManagedSport();
+  const { event, sportLeague } = definition.vocabulary;
+  const { providerId, isSuccess: providersLoaded } = useGolfProviderId(true, sport);
 
   const importMutation = useInvalidatingMutation({
     mutationFn: async () => {
       if (!providerId) {
-        throw new Error('No golf provider is configured.');
+        throw new Error('No provider is configured for this sport.');
       }
       const response = await importEventYearFromProvider({
         body: { sportLeagueId: tour.id, eventYear, providerId },
@@ -51,6 +54,11 @@ export function GolfTourYearImport({ eventYear, tour }: { eventYear: number; tou
     },
   });
 
+  // A sport no provider covers (horse racing today) has nothing to import from.
+  if (providersLoaded && !providerId) {
+    return null;
+  }
+
   return (
     <>
       <Button
@@ -68,20 +76,20 @@ export function GolfTourYearImport({ eventYear, tour }: { eventYear: number; tou
       {result ? (
         <p className="w-full text-sm text-muted-foreground" data-testid="root-admin-golf-tour-calendar-import-result" role="status">
           {result.created.length === 0 && result.skipped.length === 0
-            ? `The provider lists no ${eventYear} tournaments for the tour “${tour.matchKeyword ?? ''}”. Check that ${tour.name}’s match keyword is the provider’s tour name.`
-            : `Created ${result.created.length} tournament${result.created.length === 1 ? '' : 's'}; skipped ${result.skipped.length} already here.`}
+            ? `The provider lists no ${eventYear} ${event.many} for the ${sportLeague.one} “${tour.matchKeyword ?? ''}”. Check that ${tour.name}’s match keyword is the provider’s ${sportLeague.one} name.`
+            : `Created ${result.created.length} ${result.created.length === 1 ? event.one : event.many}; skipped ${result.skipped.length} already here.`}
         </p>
       ) : null}
 
       <ConfirmationModal
         confirmLabel={`Import ${eventYear}`}
         confirmTestId="root-admin-golf-tour-calendar-import-confirm"
-        description={`Every ${eventYear} tournament the provider lists for ${tour.name} that isn’t here yet is created and linked for scores. Tournaments already here are skipped, and no fields are loaded.`}
+        description={`Every ${eventYear} ${event.one} the provider lists for ${tour.name} that isn’t here yet is created and linked for results. ${event.many.charAt(0).toUpperCase()}${event.many.slice(1)} already here are skipped, and no fields are loaded.`}
         errorMessage={
           importMutation.isError
             ? extractErrorMessage(importMutation.error, {
                 codeMessages: {
-                  SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD: `${tour.name} has no match keyword. Set it to the provider’s tour name, such as “PGA TOUR”.`,
+                  SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD: `${tour.name} has no match keyword. Set it to the provider’s ${sportLeague.one} name.`,
                 },
                 fallback: 'We could not import this year.',
               })

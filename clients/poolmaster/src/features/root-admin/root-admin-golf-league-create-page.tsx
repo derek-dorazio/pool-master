@@ -8,19 +8,21 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
-import { GOLF_TOUR_LIST_PATH } from './manage-navigation';
+import { buildSportLeagueListPath, capitalize } from './manage-navigation';
+import { useManagedSport } from './use-managed-sport';
 
 const newTourSchema = z.object({
-  name: z.string().trim().min(1, 'Tour name is required'),
+  name: z.string().trim().min(1, 'A name is required'),
   matchKeyword: z.string().trim().optional(),
 });
 
 type NewTourValues = z.infer<typeof newTourSchema>;
 
-/** Create a golf tour, then return to the tours list. */
+/** Create one of a sport's leagues (a golf tour, a racing circuit), then return to the list. */
 export function RootAdminGolfLeagueCreatePage() {
-  useManageBreadcrumbOverride('leagues', 'Tours');
+  const { sport, definition } = useManagedSport();
+  const { sportLeague } = definition.vocabulary;
+  const listPath = buildSportLeagueListPath(sport);
 
   const logger = getLogger().child({
     feature: 'root-admin-golf-league-create-page',
@@ -37,7 +39,7 @@ export function RootAdminGolfLeagueCreatePage() {
     mutationFn: async (values: NewTourValues) => {
       const response = await createSportLeague({
         body: {
-          sport: 'GOLF',
+          sport,
           name: values.name,
           ...(values.matchKeyword?.trim()
             ? { matchKeyword: values.matchKeyword.trim() }
@@ -45,49 +47,47 @@ export function RootAdminGolfLeagueCreatePage() {
         },
       });
       if (!response.data?.sportLeague) {
-        throwApiError(response.error, 'Golf tour creation response is missing data.');
+        throwApiError(response.error, 'Sport league creation response is missing data.');
       }
       return response.data.sportLeague;
     },
     invalidates: [QueryKeys.rootAdmin.golf.tours],
-    onSuccess: () => navigate(GOLF_TOUR_LIST_PATH),
+    onSuccess: () => navigate(listPath),
     onError: (error) => {
       logger.warn(
         { action: 'golf.tour.create.failed', err: error },
-        'Golf tour creation was rejected',
+        'Sport league creation was rejected',
       );
     },
   });
 
   return (
     <FormPage
-      cancelTo={GOLF_TOUR_LIST_PATH}
+      cancelTo={listPath}
       errorMessage={createMutation.isError
-        ? extractErrorMessage(createMutation.error, { fallback: 'We could not create this tour.' })
+        ? extractErrorMessage(createMutation.error, { fallback: `We could not create this ${sportLeague.one}.` })
         : undefined}
       isPending={createMutation.isPending}
       isSubmitDisabled={!form.formState.isValid}
       onSubmit={(event) => void form.handleSubmit((values) => createMutation.mutate(values))(event)}
       pendingLabel="Creating..."
-      submitLabel="Create tour"
+      submitLabel={`Create ${sportLeague.one}`}
       submitTestId="root-admin-golf-league-list-new-save"
       testId="root-admin-golf-league-create-page"
-      title="New golf tour"
+      title={`New ${definition.name.toLowerCase()} ${sportLeague.one}`}
     >
-      <FormField error={form.formState.errors.name?.message} label="Tour name">
+      <FormField error={form.formState.errors.name?.message} label={`${capitalize(sportLeague.one)} name`}>
         <Input
           data-testid="root-admin-golf-league-list-new-name"
-          placeholder="PGA Tour"
           {...form.register('name')}
         />
       </FormField>
       <FormField
-        helperText="Optional. A plain catalog-browse filter keyword, e.g. “PGA”."
+        helperText="Optional. A word a provider's event names carry, to filter its catalog when browsing."
         label="Match keyword"
       >
         <Input
           data-testid="root-admin-golf-league-list-new-keyword"
-          placeholder="PGA"
           {...form.register('matchKeyword')}
         />
       </FormField>

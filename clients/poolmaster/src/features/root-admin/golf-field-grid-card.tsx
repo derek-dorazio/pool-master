@@ -1,4 +1,9 @@
-import { formatParticipantStatusLabel } from '@poolmaster/shared/domain';
+import {
+  formatParticipantStatusLabel,
+  getSportDefinition,
+  ParticipantInactiveReason,
+  type Sport,
+} from '@poolmaster/shared/domain';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { updateEventParticipants } from '@/lib/api';
@@ -29,6 +34,7 @@ import {
   type GolfFieldPatch,
   type GolfFieldRowDraft,
 } from './golf-field-patch';
+import { buildSportEventPath, capitalize } from './manage-navigation';
 
 export type { GolfFieldEntry } from './golf-field-patch';
 
@@ -37,7 +43,20 @@ type FieldGridMeta = {
   setDraft: Dispatch<SetStateAction<Partial<Record<string, GolfFieldRowDraft>>>>;
   /** Released for contests (#431): prices are locked; rank, odds, seed and withdrawals are not. */
   pricesLocked: boolean;
+  /** The event's sport: it names the participant column and the reasons a runner is out. */
+  sport: Sport;
 };
+
+/**
+ * The reasons a participant can be marked out of this sport's field. Being knocked out partway
+ * (`ELIMINATED`) is offered only for a sport that has a word for it; a race has none.
+ */
+function inactiveReasonsFor(sport: Sport): readonly GolfFieldInactiveReason[] {
+  const { eliminated } = getSportDefinition(sport).vocabulary;
+  return GOLF_FIELD_INACTIVE_REASONS.filter(
+    (reason) => reason !== ParticipantInactiveReason.ELIMINATED || eliminated !== undefined,
+  );
+}
 
 const NUMERIC_COLUMN_LABEL: Record<GolfFieldNumericKey, string> = {
   ranking: 'Ranking',
@@ -94,7 +113,8 @@ function numericCell(key: GolfFieldNumericKey) {
 const fieldColumns = [
   columnHelper.accessor((entry) => entry.participant.name, {
     id: 'participantName',
-    header: 'Player',
+    header: ({ table }) =>
+      capitalize(getSportDefinition((table.options.meta as FieldGridMeta).sport).vocabulary.participant.one),
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <span className="font-medium text-foreground">
@@ -110,7 +130,7 @@ const fieldColumns = [
     id: 'active',
     header: 'In field',
     cell: ({ row, table }) => {
-      const { draft, setDraft } = table.options.meta as FieldGridMeta;
+      const { draft, setDraft, sport } = table.options.meta as FieldGridMeta;
       const entry = row.original;
       const rowDraft = draft[entry.id];
       const active = rowDraft?.isActive ?? entry.isActive;
@@ -141,9 +161,9 @@ const fieldColumns = [
               }
               value={reason}
             >
-              {GOLF_FIELD_INACTIVE_REASONS.map((value) => (
+              {inactiveReasonsFor(sport).map((value) => (
                 <option key={value} value={value}>
-                  {formatParticipantStatusLabel(value, 'GOLF')}
+                  {formatParticipantStatusLabel(value, sport)}
                 </option>
               ))}
             </Select>
@@ -173,9 +193,11 @@ export function GolfFieldGridCard({
   fieldError,
   fieldLoading,
   pricesLocked = false,
+  sport,
 }: {
   entries: GolfFieldEntry[];
   eventId: string;
+  sport: Sport;
   fieldError: string | null;
   fieldLoading: boolean;
   pricesLocked?: boolean;
@@ -212,7 +234,7 @@ export function GolfFieldGridCard({
     onError: (error) => {
       logger.warn(
         { action: 'golf.field.save.failed', err: error },
-        'Golf field save was rejected',
+        'Field save was rejected',
       );
     },
   });
@@ -223,7 +245,11 @@ export function GolfFieldGridCard({
   );
   const invalidCount = useMemo(() => golfFieldInvalidCount(draft), [draft]);
 
-  const meta = useMemo<FieldGridMeta>(() => ({ draft, setDraft, pricesLocked }), [draft, pricesLocked]);
+  const meta = useMemo<FieldGridMeta>(
+    () => ({ draft, setDraft, pricesLocked, sport }),
+    [draft, pricesLocked, sport],
+  );
+  const { event, participant, sportLeague } = getSportDefinition(sport).vocabulary;
 
   return (
     <Tile>
@@ -237,7 +263,7 @@ export function GolfFieldGridCard({
             <LinkButton
               data-testid="root-admin-golf-field-tiers-link"
               size="sm"
-              to={`/manage/golf/tournaments/${eventId}/tiers`}
+              to={`${buildSportEventPath(sport, eventId)}/tiers`}
               variant="secondary"
             >
               Tiers page
@@ -260,7 +286,7 @@ export function GolfFieldGridCard({
           emptyMessage={
             fieldLoading
               ? 'Loading field…'
-              : 'No golfers in the field yet. Seed from the league roster or add participants.'
+              : `No ${participant.many} in the field yet. Seed from the ${sportLeague.one} roster or add participants.`
           }
           getRowId={(entry) => entry.id}
           meta={meta}
@@ -306,7 +332,7 @@ export function GolfFieldGridCard({
         <Alert className="mt-3" data-testid="root-admin-golf-field-save-error" tone="danger">
           {extractErrorMessage(saveMutation.error, {
             codeMessages: {
-              SPORT_EVENT_TIERS_LOCKED: 'This tournament has been released for contests, so its prices are locked.',
+              SPORT_EVENT_TIERS_LOCKED: `This ${event.one} has been released for contests, so its prices are locked.`,
             },
             fallback: 'We could not save these field changes.',
           })}
