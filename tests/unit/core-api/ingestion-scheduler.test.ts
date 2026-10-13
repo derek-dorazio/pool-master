@@ -1226,6 +1226,32 @@ describe('IngestionScheduler scheduled loops', () => {
     expect(eventReader.listEventIdsForFeed).not.toHaveBeenCalledWith(expect.objectContaining({ sport: 'TENNIS' }));
   });
 
+  it('warns about the same unregistered scheduled sports once, logs repeats at debug, and warns again when the set changes', async () => {
+    const logger = fakeLogger();
+    let config = { ...createEnabledScheduleConfig(), scheduledSports: [Sport.HORSE_RACING] as Sport[] };
+    const configReader = { getConfig: jest.fn(() => Promise.resolve(config)), getPerSportConfig: jest.fn(() => Promise.resolve(config)) };
+    const scheduler = new IngestionScheduler(createMockRegistry(fakeSportDataProvider(), []), createMockCallbacks(), logger, { configReader });
+    const unregisteredWarnings = () => logger.warn.mock.calls.filter(
+      ([, message]) => message === 'Configured scheduled ingestion sports have no registered provider',
+    );
+
+    scheduler.start();
+    await jest.advanceTimersByTimeAsync(3 * 60 * 1000 + 1);
+
+    expect(unregisteredWarnings()).toHaveLength(1);
+    expect(logger.debug).toHaveBeenCalledWith(
+      expect.objectContaining({ unregisteredSports: [Sport.HORSE_RACING] }),
+      'Configured scheduled ingestion sports still have no registered provider',
+    );
+
+    config = { ...config, scheduledSports: [Sport.HORSE_RACING, Sport.GOLF] };
+    await jest.advanceTimersByTimeAsync(60 * 1000 + 1);
+    scheduler.stop();
+
+    expect(unregisteredWarnings()).toHaveLength(2);
+    expect(unregisteredWarnings()[1][0]).toMatchObject({ unregisteredSports: [Sport.HORSE_RACING, Sport.GOLF] });
+  });
+
   it('keeps every loop alive on the one-minute recheck when the ingestion config cannot be read', async () => {
     const logger = fakeLogger();
     const configReader = {
