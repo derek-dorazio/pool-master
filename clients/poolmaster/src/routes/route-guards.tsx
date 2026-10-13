@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Navigate, Outlet, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-context';
+import { getLastSignedInUserId } from '@/features/auth/signed-in-user';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { buildLeaguePath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
@@ -67,7 +68,17 @@ export function MemberRouteGuard() {
   }
 
   if (!auth.isAuthenticated) {
-    return <Navigate replace state={{ from: `${location.pathname}${location.search}` }} to="/" />;
+    const fromUserId = getLastSignedInUserId();
+    return (
+      <Navigate
+        replace
+        state={{
+          from: `${location.pathname}${location.search}`,
+          ...(fromUserId ? { fromUserId } : {}),
+        }}
+        to="/"
+      />
+    );
   }
 
   return <Outlet />;

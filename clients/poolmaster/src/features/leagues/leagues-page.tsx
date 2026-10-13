@@ -1,6 +1,7 @@
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-context';
 import { formatUserName } from '@/features/account/user-name';
+import { MANAGE_LANDING_PATH } from '@/features/root-admin/manage-navigation';
 import { Button } from '@/features/shared/ui/button';
 import { EmptyState, ErrorState, LoadingState } from '@/features/shared/ui/state';
 import {
@@ -13,10 +14,17 @@ import { useLeaguesQuery } from './use-leagues-query';
 export function WelcomePage() {
   const auth = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { query: leaguesQuery, leagues: allLeagues, commissionerLeagueIds } = useLeaguesQuery();
+  // A root admin's home is Manage (#658); the member landing below is for everyone else.
+  const { query: leaguesQuery, leagues: allLeagues, commissionerLeagueIds } = useLeaguesQuery({
+    enabled: !auth.isRootAdmin,
+  });
   // Land only on a league the header selector offers: an inactive league drops out of it for
   // everyone but its commissioner, so it is not somewhere a member should be sent.
   const leagues = allLeagues ? getLeagueSelectorOptions(allLeagues, commissionerLeagueIds) : allLeagues;
+
+  if (auth.isRootAdmin) {
+    return <Navigate replace to={MANAGE_LANDING_PATH} />;
+  }
 
   if (leaguesQuery.isLoading) {
     return (
