@@ -59,6 +59,7 @@ import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestSettlementService } from './modules/contests/wiring';
+import { scoringFamilyForSport } from './modules/scoring-families';
 import {
   EMAIL_SETTINGS,
   SettingsAwareMailDeliveryProvider,
@@ -153,6 +154,7 @@ export function buildApp() {
         prisma,
         providerId,
         logger: app.log,
+        scoringFamilyForSport,
       });
     },
   };

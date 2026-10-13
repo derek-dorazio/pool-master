@@ -25,7 +25,7 @@ import {
 import { SportEventStatus, type Sport } from '@poolmaster/shared/domain';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
-import { scoringFamilyForSport, type ScoringFamilyModule } from '../../scoring-families';
+import type { ScoringFamilyModule } from '../../scoring-families';
 import { countLiveScoreUpdates } from './live-score-count';
 
 export class LiveScoreValidationError extends Error {
@@ -39,8 +39,8 @@ export interface LiveScorePublisherDeps {
   prisma: PrismaClient;
   providerId: string;
   logger?: FastifyBaseLogger;
-  /** Which scoring family scores an event's sport. The sport registry's, unless a caller passes its own. */
-  scoringFamilyForSport?: (sport: Sport) => ScoringFamilyModule;
+  /** Which scoring family scores an event's sport: the composition root passes the sport registry's. */
+  scoringFamilyForSport: (sport: Sport) => ScoringFamilyModule;
 }
 
 export interface LiveScorePersistenceResult {
@@ -117,7 +117,7 @@ export async function publishLiveScoreUpdate(
 
   // The event's scoring family writes the batch into its own result rows (#606), and only a
   // batch of the one category it accepts: a family entered by an admin accepts none.
-  const writer = (deps.scoringFamilyForSport ?? scoringFamilyForSport)(sportEvent.sport).liveScores;
+  const writer = deps.scoringFamilyForSport(sportEvent.sport).liveScores;
   const acceptedCategory = writer?.category ?? null;
   if (writer?.category !== validated.category) {
     deps.logger?.warn(

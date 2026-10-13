@@ -19,7 +19,7 @@ import {
 } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { expect } from '@jest/globals';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
-import type { ScoringFamilyModule } from '../../../packages/core-api/src/modules/scoring-families';
+import { scoringFamilyForSport, type ScoringFamilyModule } from '../../../packages/core-api/src/modules/scoring-families';
 import { strokePlayScoringFamily } from '../../../packages/core-api/src/modules/scoring-families/stroke-play';
 import { fakeLogger } from '../../support/fake-logger';
 import { asPrismaClient } from '../../support/prisma-double';
@@ -50,7 +50,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       };
 
       await expect(
-        publishLiveScoreUpdate(malformed, { prisma: asPrismaClient(prisma), providerId: 'mock' }),
+        publishLiveScoreUpdate(malformed, { prisma: asPrismaClient(prisma), providerId: 'mock', scoringFamilyForSport }),
       ).rejects.toBeInstanceOf(LiveScoreValidationError);
     });
   });
@@ -90,6 +90,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       const persisted = await publishLiveScoreUpdate(result, {
         prisma: asPrismaClient(prisma),
         providerId: 'mock-contest-feed',
+        scoringFamilyForSport,
       });
 
       expect(persisted).toMatchObject({
@@ -130,6 +131,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         prisma: asPrismaClient(prisma),
         providerId: 'mock-contest-feed',
         logger,
+        scoringFamilyForSport,
       });
 
       expect(persisted).toMatchObject({
@@ -163,7 +165,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           rounds: [{ participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }],
         };
 
-        const persisted = await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock', logger });
+        const persisted = await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock', logger, scoringFamilyForSport });
 
         expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
         expect(logger.warn).toHaveBeenCalledWith(

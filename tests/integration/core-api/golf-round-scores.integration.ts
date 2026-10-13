@@ -15,6 +15,7 @@ import {
 } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import { createGolfScoreService, createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
+import { scoringFamilyForSport } from '../../../packages/core-api/src/modules/scoring-families';
 import { freshEventEdition } from '../../support/event-edition';
 
 // The admin round-score surface against real Postgres. A golfer's round is a core
@@ -349,7 +350,7 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
       category: 'GOLF',
       externalEventId: event.externalId,
       rounds: [1, 2, 3, 4].map((round) => update('ext-rory', round)).concat(update('ext-rory', 5), update('ext-jordan', 1, 19)),
-    }, { prisma, providerId: 'integration-test' });
+    }, { prisma, providerId: 'integration-test', scoringFamilyForSport });
 
     expect(result).toMatchObject({ updatesReturned: 6, updatesPersisted: 4, updatesSkipped: 2 });
     const roundNumbers = (await prisma.sportEventRound.findMany({ where: { sportEventId: event.id } })).map((round) => round.roundNumber).sort((left, right) => left - right);
