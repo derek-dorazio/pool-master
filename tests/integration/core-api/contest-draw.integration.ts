@@ -242,8 +242,7 @@ describe('a draw racing an entry write', () => {
     }));
     const holderPid = await holder.ready;
     const draw = new ContestEntryPickService(prisma).recordDraw(drawOf(fixture)).then(() => 'recorded', (error: unknown) => error);
-    await waitUntilBlockedBy(prisma, holderPid);
-    await holder.release();
+    await waitUntilBlockedBy(prisma, holderPid).finally(holder.release);
 
     expect(await draw).toBeInstanceOf(ContestDrawEntriesChangedError);
     expect(await prisma.contestDraw.count({ where: { contestId: fixture.contestId } })).toBe(0);
@@ -269,8 +268,7 @@ describe('a draw racing an entry write', () => {
       status: 'DRAFT',
       tiebreakerValue: null,
     });
-    await waitUntilBlockedBy(prisma, holderPid);
-    await holder.release();
+    await waitUntilBlockedBy(prisma, holderPid).finally(holder.release);
 
     expect(await created).toEqual({ status: 'contestDrawn' });
     expect(await prisma.contestEntry.count({ where: { contestId: fixture.contestId } })).toBe(2);
@@ -285,9 +283,8 @@ describe('a draw racing an entry write', () => {
       data: { contestId: fixture.contestId, seed: 'held-seed', fieldOrder: [], entryOrder: [], drawnByUserId: fixture.userId },
     }));
     const holderPid = await holder.ready;
-    const deleted = new PrismaContestEntryRepository(prisma).delete(first).then((result) => result, (error: unknown) => error);
-    await waitUntilBlockedBy(prisma, holderPid).catch(() => undefined);
-    await holder.release();
+    const deleted = new PrismaContestEntryRepository(prisma).delete(first);
+    await waitUntilBlockedBy(prisma, holderPid).finally(holder.release);
 
     expect(await deleted).toEqual({ status: 'contestDrawn' });
     expect(await prisma.contestEntry.count({ where: { contestId: fixture.contestId } })).toBe(2);
