@@ -5641,21 +5641,21 @@
                 },
                 "participantId": {
                   "type": "string",
-                  "description": "Global golfer identity."
+                  "description": "Global participant identity."
                 },
                 "tierOrderIndex": {
                   "type": [
                     "integer",
                     "null"
                   ],
-                  "description": "Within-tier ordering position; null when the golfer has no explicit order."
+                  "description": "Within-tier ordering position; null when the participant has no explicit order."
                 },
                 "price": {
                   "type": [
                     "number",
                     "null"
                   ],
-                  "description": "Per-golfer budget price when the event defines one; null otherwise."
+                  "description": "Per-participant budget price when the event defines one; null otherwise."
                 }
               },
               "required": [
@@ -5665,9 +5665,9 @@
                 "price"
               ],
               "additionalProperties": false,
-              "description": "One golfer's inherited tier placement for the contest's linked event."
+              "description": "One participant's inherited tier placement for the contest's linked event."
             },
-            "description": "Golfers assigned to this tier, ordered by tierOrderIndex ascending."
+            "description": "Participants assigned to this tier, ordered by tierOrderIndex ascending."
           }
         },
         "required": [
@@ -5677,7 +5677,7 @@
           "assignments"
         ],
         "additionalProperties": false,
-        "description": "One inherited event tier and its golfer assignments."
+        "description": "One inherited event tier and its participant assignments."
       },
       "ContestManagementDetailDto": {
         "type": "object",
@@ -5840,21 +5840,21 @@
                       },
                       "participantId": {
                         "type": "string",
-                        "description": "Global golfer identity."
+                        "description": "Global participant identity."
                       },
                       "tierOrderIndex": {
                         "type": [
                           "integer",
                           "null"
                         ],
-                        "description": "Within-tier ordering position; null when the golfer has no explicit order."
+                        "description": "Within-tier ordering position; null when the participant has no explicit order."
                       },
                       "price": {
                         "type": [
                           "number",
                           "null"
                         ],
-                        "description": "Per-golfer budget price when the event defines one; null otherwise."
+                        "description": "Per-participant budget price when the event defines one; null otherwise."
                       }
                     },
                     "required": [
@@ -5864,9 +5864,9 @@
                       "price"
                     ],
                     "additionalProperties": false,
-                    "description": "One golfer's inherited tier placement for the contest's linked event."
+                    "description": "One participant's inherited tier placement for the contest's linked event."
                   },
-                  "description": "Golfers assigned to this tier, ordered by tierOrderIndex ascending."
+                  "description": "Participants assigned to this tier, ordered by tierOrderIndex ascending."
                 }
               },
               "required": [
@@ -5876,7 +5876,7 @@
                 "assignments"
               ],
               "additionalProperties": false,
-              "description": "One inherited event tier and its golfer assignments."
+              "description": "One inherited event tier and its participant assignments."
             },
             "description": "Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
           },
@@ -6245,21 +6245,21 @@
                           },
                           "participantId": {
                             "type": "string",
-                            "description": "Global golfer identity."
+                            "description": "Global participant identity."
                           },
                           "tierOrderIndex": {
                             "type": [
                               "integer",
                               "null"
                             ],
-                            "description": "Within-tier ordering position; null when the golfer has no explicit order."
+                            "description": "Within-tier ordering position; null when the participant has no explicit order."
                           },
                           "price": {
                             "type": [
                               "number",
                               "null"
                             ],
-                            "description": "Per-golfer budget price when the event defines one; null otherwise."
+                            "description": "Per-participant budget price when the event defines one; null otherwise."
                           }
                         },
                         "required": [
@@ -6269,9 +6269,9 @@
                           "price"
                         ],
                         "additionalProperties": false,
-                        "description": "One golfer's inherited tier placement for the contest's linked event."
+                        "description": "One participant's inherited tier placement for the contest's linked event."
                       },
-                      "description": "Golfers assigned to this tier, ordered by tierOrderIndex ascending."
+                      "description": "Participants assigned to this tier, ordered by tierOrderIndex ascending."
                     }
                   },
                   "required": [
@@ -6281,7 +6281,7 @@
                     "assignments"
                   ],
                   "additionalProperties": false,
-                  "description": "One inherited event tier and its golfer assignments."
+                  "description": "One inherited event tier and its participant assignments."
                 },
                 "description": "Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
               },

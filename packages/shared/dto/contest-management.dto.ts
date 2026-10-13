@@ -180,18 +180,18 @@ export type ContestConfigTemplateResponse = z.infer<
  */
 export const EffectiveTierAssignmentDtoSchema = z.object({
   sportEventParticipantId: z.string().describe('Field entry the assignment belongs to.'),
-  participantId: z.string().describe('Global golfer identity.'),
-  tierOrderIndex: z.number().int().nullable().describe('Within-tier ordering position; null when the golfer has no explicit order.'),
-  price: z.number().nullable().describe('Per-golfer budget price when the event defines one; null otherwise.'),
-}).describe("One golfer's inherited tier placement for the contest's linked event.");
+  participantId: z.string().describe('Global participant identity.'),
+  tierOrderIndex: z.number().int().nullable().describe('Within-tier ordering position; null when the participant has no explicit order.'),
+  price: z.number().nullable().describe('Per-participant budget price when the event defines one; null otherwise.'),
+}).describe("One participant's inherited tier placement for the contest's linked event.");
 export type EffectiveTierAssignmentDto = z.infer<typeof EffectiveTierAssignmentDtoSchema>;
 
 export const EffectiveTierDtoSchema = z.object({
   tierKey: z.string().describe('Stable per-event tier key.'),
   label: z.string().describe('Commissioner-facing tier label.'),
   tierNumber: z.number().int().describe('1-based tier ordering.'),
-  assignments: z.array(EffectiveTierAssignmentDtoSchema).describe('Golfers assigned to this tier, ordered by tierOrderIndex ascending.'),
-}).describe('One inherited event tier and its golfer assignments.');
+  assignments: z.array(EffectiveTierAssignmentDtoSchema).describe('Participants assigned to this tier, ordered by tierOrderIndex ascending.'),
+}).describe('One inherited event tier and its participant assignments.');
 export type EffectiveTierDto = z.infer<typeof EffectiveTierDtoSchema>;
 
 export const ContestManagementDetailDtoSchema = z.object({

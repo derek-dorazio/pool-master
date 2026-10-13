@@ -75,7 +75,7 @@ Turn-based selection (snake draft) has no implementation: it was removed in #200
 rebuild is deferred to #199. Its `SNAKE_DRAFT` enum value was deleted with the other unbuilt
 catalog values in #605; it returns with the engine that serves it.
 
-The active backend-first pass centers on current PoolMaster web flows and uses sport-specific read models for sport-specific leaderboards. Golf event scoring is stored on event participant round and standing tables; contest entries keep pick pointers and Golf leaderboard rows are computed from those event-side standings.
+The active backend-first pass centers on current PoolMaster web flows and uses sport-specific read models for sport-specific leaderboards. Golf event scoring is stored on event participant round and standing tables; contest entries keep pick pointers and contest leaderboard rows are computed from those event-side standings.
 
 ### Ingestion Module (`modules/ingestion/`)
 

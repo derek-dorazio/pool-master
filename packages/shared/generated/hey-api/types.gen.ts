@@ -2643,7 +2643,7 @@ export type ContestConfigurationRequest = {
 };
 
 /**
- * One inherited event tier and its golfer assignments.
+ * One inherited event tier and its participant assignments.
  */
 export type EffectiveTierDto = {
     /**
@@ -2659,7 +2659,7 @@ export type EffectiveTierDto = {
      */
     tierNumber: number;
     /**
-     * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
+     * Participants assigned to this tier, ordered by tierOrderIndex ascending.
      */
     assignments: Array<{
         /**
@@ -2667,15 +2667,15 @@ export type EffectiveTierDto = {
          */
         sportEventParticipantId: string;
         /**
-         * Global golfer identity.
+         * Global participant identity.
          */
         participantId: string;
         /**
-         * Within-tier ordering position; null when the golfer has no explicit order.
+         * Within-tier ordering position; null when the participant has no explicit order.
          */
         tierOrderIndex: number | null;
         /**
-         * Per-golfer budget price when the event defines one; null otherwise.
+         * Per-participant budget price when the event defines one; null otherwise.
          */
         price: number | null;
     }>;
@@ -2771,7 +2771,7 @@ export type ContestManagementDetailDto = {
          */
         tierNumber: number;
         /**
-         * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
+         * Participants assigned to this tier, ordered by tierOrderIndex ascending.
          */
         assignments: Array<{
             /**
@@ -2779,15 +2779,15 @@ export type ContestManagementDetailDto = {
              */
             sportEventParticipantId: string;
             /**
-             * Global golfer identity.
+             * Global participant identity.
              */
             participantId: string;
             /**
-             * Within-tier ordering position; null when the golfer has no explicit order.
+             * Within-tier ordering position; null when the participant has no explicit order.
              */
             tierOrderIndex: number | null;
             /**
-             * Per-golfer budget price when the event defines one; null otherwise.
+             * Per-participant budget price when the event defines one; null otherwise.
              */
             price: number | null;
         }>;
@@ -2990,7 +2990,7 @@ export type ContestManagementResponse = {
              */
             tierNumber: number;
             /**
-             * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
+             * Participants assigned to this tier, ordered by tierOrderIndex ascending.
              */
             assignments: Array<{
                 /**
@@ -2998,15 +2998,15 @@ export type ContestManagementResponse = {
                  */
                 sportEventParticipantId: string;
                 /**
-                 * Global golfer identity.
+                 * Global participant identity.
                  */
                 participantId: string;
                 /**
-                 * Within-tier ordering position; null when the golfer has no explicit order.
+                 * Within-tier ordering position; null when the participant has no explicit order.
                  */
                 tierOrderIndex: number | null;
                 /**
-                 * Per-golfer budget price when the event defines one; null otherwise.
+                 * Per-participant budget price when the event defines one; null otherwise.
                  */
                 price: number | null;
             }>;

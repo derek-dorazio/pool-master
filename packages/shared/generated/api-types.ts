@@ -4336,7 +4336,7 @@ export interface components {
             /** @description Maximum entries a Team may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
         };
-        /** @description One inherited event tier and its golfer assignments. */
+        /** @description One inherited event tier and its participant assignments. */
         EffectiveTierDto: {
             /** @description Stable per-event tier key. */
             tierKey: string;
@@ -4344,15 +4344,15 @@ export interface components {
             label: string;
             /** @description 1-based tier ordering. */
             tierNumber: number;
-            /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
+            /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
             assignments: {
                 /** @description Field entry the assignment belongs to. */
                 sportEventParticipantId: string;
-                /** @description Global golfer identity. */
+                /** @description Global participant identity. */
                 participantId: string;
-                /** @description Within-tier ordering position; null when the golfer has no explicit order. */
+                /** @description Within-tier ordering position; null when the participant has no explicit order. */
                 tierOrderIndex: number | null;
-                /** @description Per-golfer budget price when the event defines one; null otherwise. */
+                /** @description Per-participant budget price when the event defines one; null otherwise. */
                 price: number | null;
             }[];
         };
@@ -4406,15 +4406,15 @@ export interface components {
                 label: string;
                 /** @description 1-based tier ordering. */
                 tierNumber: number;
-                /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
+                /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
                 assignments: {
                     /** @description Field entry the assignment belongs to. */
                     sportEventParticipantId: string;
-                    /** @description Global golfer identity. */
+                    /** @description Global participant identity. */
                     participantId: string;
-                    /** @description Within-tier ordering position; null when the golfer has no explicit order. */
+                    /** @description Within-tier ordering position; null when the participant has no explicit order. */
                     tierOrderIndex: number | null;
-                    /** @description Per-golfer budget price when the event defines one; null otherwise. */
+                    /** @description Per-participant budget price when the event defines one; null otherwise. */
                     price: number | null;
                 }[];
             }[];
@@ -4547,15 +4547,15 @@ export interface components {
                     label: string;
                     /** @description 1-based tier ordering. */
                     tierNumber: number;
-                    /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
+                    /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
                     assignments: {
                         /** @description Field entry the assignment belongs to. */
                         sportEventParticipantId: string;
-                        /** @description Global golfer identity. */
+                        /** @description Global participant identity. */
                         participantId: string;
-                        /** @description Within-tier ordering position; null when the golfer has no explicit order. */
+                        /** @description Within-tier ordering position; null when the participant has no explicit order. */
                         tierOrderIndex: number | null;
-                        /** @description Per-golfer budget price when the event defines one; null otherwise. */
+                        /** @description Per-participant budget price when the event defines one; null otherwise. */
                         price: number | null;
                     }[];
                 }[];
