@@ -87,7 +87,20 @@ function resolveLocalRefs(node: unknown, root: Record<string, unknown>): unknown
   for (const [key, value] of Object.entries(obj)) {
     resolved[key] = resolveLocalRefs(value, root);
   }
-  return distributeNullableOverAnyOf(collapseSingleAllOf(resolved));
+  return permitNullInNullableEnum(distributeNullableOverAnyOf(collapseSingleAllOf(resolved)));
+}
+
+/**
+ * A nullable enum converts to `{ type, enum, nullable: true }`. Ajv's `nullable` widens `type`
+ * but not `enum`, so null still fails the enum check and Fastify refuses a request body that
+ * sends it with a 400 — `inactiveReason: null` on the field grid save did (#666). Listing null
+ * among the enum values says what the Zod schema means.
+ */
+function permitNullInNullableEnum(node: Record<string, unknown>): Record<string, unknown> {
+  const { nullable, enum: values } = node;
+  if (nullable !== true || !Array.isArray(values)) return node;
+  const members = values as readonly unknown[];
+  return members.includes(null) ? node : { ...node, enum: [...members, null] };
 }
 
 /**
@@ -102,7 +115,7 @@ function distributeNullableOverAnyOf(node: Record<string, unknown>): Record<stri
     ...rest,
     anyOf: anyOf.map((member: unknown) =>
       member !== null && typeof member === 'object' && !Array.isArray(member)
-        ? { ...(member as Record<string, unknown>), nullable: true }
+        ? permitNullInNullableEnum({ ...(member as Record<string, unknown>), nullable: true })
         : member,
     ),
   };
