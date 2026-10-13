@@ -4,6 +4,9 @@ How a root admin sets up a made-up golf tournament in QA (or locally) and runs i
 simulated live round, to test contests, entries and the live leaderboard by hand. Nothing
 here depends on a real tournament being played that week.
 
+Horse racing has no score feed, so a race is set up and resulted by hand instead: see
+[`RACE-SETUP-PROCEDURES.md`](RACE-SETUP-PROCEDURES.md).
+
 Every step is a root-admin screen under `/manage` unless it says otherwise. To skip the setup
 and test contests on ready-made tournaments, use the seed instead (*Seeded 2026 tournaments*
 at the end).
