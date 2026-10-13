@@ -345,7 +345,7 @@ export const SportEventParticipantDtoSchema = z.object({
   seedNumber: z.number().int().nullable(),
   participant: ParticipantDtoSchema.describe('The canonical participant.'),
   valuation: SportEventParticipantValuationDtoSchema.nullable().describe('Null until a tier or price is set.'),
-  standing: SportEventParticipantStandingDtoSchema.nullable().describe('Null until the participant has a scored round.'),
+  standing: SportEventParticipantStandingDtoSchema.nullable().describe('Null until the participant has a scored round, or a race result.'),
   rounds: z.array(SportEventParticipantRoundDtoSchema).describe('By round number.'),
   race: SportEventParticipantRaceResultDtoSchema.nullable().describe('Present once a race result is entered for a finish-position event (a horse race); null otherwise.'),
   affiliatedWithSportLeague: z.boolean().describe(`Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. ${ADMIN_ONLY}`),

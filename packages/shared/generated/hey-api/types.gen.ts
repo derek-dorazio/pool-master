@@ -6289,7 +6289,7 @@ export type SportEventParticipantDto = {
         priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
     } | null;
     /**
-     * Null until the participant has a scored round.
+     * Null until the participant has a scored round, or a race result.
      */
     standing: {
         id: string;
@@ -6534,7 +6534,7 @@ export type SportEventParticipantListResponse = {
             priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
         } | null;
         /**
-         * Null until the participant has a scored round.
+         * Null until the participant has a scored round, or a race result.
          */
         standing: {
             id: string;
@@ -6840,7 +6840,7 @@ export type SportEventParticipantResponse = {
             priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
         } | null;
         /**
-         * Null until the participant has a scored round.
+         * Null until the participant has a scored round, or a race result.
          */
         standing: {
             id: string;
@@ -7781,7 +7781,7 @@ export type ContestLeaderboardResponse = {
             priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
         } | null;
         /**
-         * Null until the participant has a scored round.
+         * Null until the participant has a scored round, or a race result.
          */
         standing: {
             id: string;

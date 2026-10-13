@@ -69,7 +69,7 @@ A UI Label, Not A Domain Term*.
 
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
-| `Sport` | sport | Golf, and future sports. Says whether its participants are individuals or teams | `SportLeague` |
+| `Sport` | sport | Golf and horse racing, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
 | `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA | `League`, the office pool |
 | `EventSeries` | (series) | A recurring named event, "The Masters", across all years | One year's edition, which is the `SportEvent` |
 | `SportEvent` | tournament, event | One edition of a series in one `eventYear`, with a start date, round count and status | `Contest`, which is the pool's game played on it |
@@ -78,13 +78,14 @@ A UI Label, Not A Domain Term*.
 | `SportEventParticipant` | the field, a golfer in the field | A participant entered in one event, with that event's rank, odds, seed and active/withdrawn/cut state | The global `Participant` |
 | `SportEventTier`, `SportEventParticipantValuation` | tier, price | Tiers belong to the **event** and are shared by every contest on it; the valuation puts one field member in one tier, with a price | A contest-level setting: there is no per-contest tier override |
 | `SportEventParticipantStanding` | position, leaderboard row | A field member's running position in the event (1 is best, every sport) | An entry's standing in a contest |
+| `SportEventParticipantRaceResult` | finish, result | How one runner's race ended (finish position): its place, or did not finish, disqualified, did not start; whether the race's result is official; its rider and post position. The admin enters it | `SportEventParticipantStanding`, its place in the event, which the finishing order writes beside it |
 
 ### Contests and entries
 
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
 | `Contest` | contest | One league's game on one event: format, selection type and scoring | The `SportEvent` it runs on |
-| `ContestConfiguration` | contest settings | The contest's rules: roster size, picks per tier, entries per team, counting picks, prizes | `ContestConfigTemplate`, a global starting point it may be created from |
+| `ContestConfiguration` | contest settings | The contest's rules: roster size, picks per tier, entries per team, counting picks, prizes, and its scoring (a scoring definition and its settings, such as a racing points table) | `ContestConfigTemplate`, a global starting point it may be created from |
 | `ContestEntry` | entry | One lineup a squad submits to one contest. A squad may hold several (`entryNumber`) | The squad itself |
 | `ContestEntryPick` | pick, lineup | One field member chosen on one entry. The entry's picks are its lineup | A `SportEventParticipant`, which it points at |
 | `ContestEntryStanding` | standings, final result | An entry's result, frozen when the contest settles | `SportEventParticipantStanding`, the golfer's position in the event |
@@ -106,6 +107,15 @@ A UI Label, Not A Domain Term*.
 - **Member**: a league member (`LeagueMembership`) or a squad member, which is the same as a
   squad owner (`SquadMembership`).
 - **Player / golfer**: a `Participant`, never a league member.
+- **Horse, runner**: a horse racing `Participant`, and on a race's field a `SportEventParticipant`.
+  The jockey is the result's `riderName`, not a participant.
+- **Scratched, withdrawn**: a runner taken out of a race before the start is a field member made
+  inactive with `inactiveReason` `WITHDRAWN`; horse racing shows it as "Scratched". A runner
+  that did not start is a result (`DID_NOT_START`), which also leaves it `WITHDRAWN` in the standing.
+- **Official**: a race's result counts for contest scoring only once the admin marks it official,
+  which applies to the whole race. Until then its places are provisional.
+- **Dead heat**: runners who share a finishing place. Both take that place's full points, and the
+  next place is skipped (1, 2, 2, 4).
 - **Active**: `isActive` on a league, squad, user or field member (present in normal views),
   and the contest status `ACTIVE` (its event is in progress). Different things.
 

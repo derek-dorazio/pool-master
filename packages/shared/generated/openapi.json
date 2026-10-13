@@ -12749,7 +12749,7 @@
               "golf"
             ],
             "additionalProperties": false,
-            "description": "Null until the participant has a scored round."
+            "description": "Null until the participant has a scored round, or a race result."
           },
           "rounds": {
             "type": "array",
@@ -13281,7 +13281,7 @@
                     "golf"
                   ],
                   "additionalProperties": false,
-                  "description": "Null until the participant has a scored round."
+                  "description": "Null until the participant has a scored round, or a race result."
                 },
                 "rounds": {
                   "type": "array",
@@ -13963,7 +13963,7 @@
                   "golf"
                 ],
                 "additionalProperties": false,
-                "description": "Null until the participant has a scored round."
+                "description": "Null until the participant has a scored round, or a race result."
               },
               "rounds": {
                 "type": "array",
@@ -16104,7 +16104,7 @@
                     "golf"
                   ],
                   "additionalProperties": false,
-                  "description": "Null until the participant has a scored round."
+                  "description": "Null until the participant has a scored round, or a race result."
                 },
                 "rounds": {
                   "type": "array",

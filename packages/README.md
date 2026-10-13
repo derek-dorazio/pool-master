@@ -87,8 +87,15 @@ declares the one live-score category it accepts, or none; the score publisher sk
 a batch its event's family does not accept. The golf round-score admin routes refuse an event
 whose family does not keep golf rounds (422 `EVENT_SCORING_FAMILY_MISMATCH`). The leaderboard
 response carries the event's `sport`, so the web resolves the same family for its own
-presentation (`SCORING_FAMILY_UI`). `STROKE_PLAY` (golf) is the only family; the interface was
-checked against finish position and knockout advancement before either is built.
+presentation (`SCORING_FAMILY_UI`). Two families are built: `STROKE_PLAY` (golf) and
+`FINISH_POSITION` (horse racing, #622). Finish position keeps a race result per field row
+(`SportEventParticipantRaceResult`) and an entry's settled points on `ContestEntryRaceStanding`;
+the admin enters the finishing order through `previewEventRaceResults` and
+`applyEventRaceResults` (`scoring-families/finish-position/race-result-service.ts`), and a
+runner scores its contest's points table value at its place once the result is official. It takes
+no live scores. A contest's scoring settings ride in its configuration's optional `scoring`, a
+template can carry a preset there, and a definition with no default settings (the points table)
+must be sent or come from the template.
 
 Turn-based selection (snake draft) has no implementation: it was removed in #200 and its
 rebuild is deferred to #199. Its `SNAKE_DRAFT` enum value was deleted with the other unbuilt
@@ -115,7 +122,7 @@ Polls configured sports data providers, upserts normalized event data, and store
 | Layer | Files | Purpose |
 |-------|-------|---------|
 | `domain/` | `enums.ts`, `types.ts`, `contest-scoring.ts`, `contest-management-types.ts` | Domain interfaces, enum types, and the participant scoring definitions (direction, unit, format) |
-| `domain/sports/` | `registry.ts`, `golf.ts` | The sport registry: one `SportDefinition` per sport (scoring family, selection types, default rounds and tier layout, vocabulary, round labels). See `rules/architecture-rules.md` §4 *Sport extension* |
+| `domain/sports/` | `registry.ts`, `golf.ts`, `horse-racing.ts` | The sport registry: one `SportDefinition` per sport (scoring family, selection types, default rounds and tier layout, vocabulary, round labels). See `rules/architecture-rules.md` §4 *Sport extension* |
 | `db/` | `ports.ts` | 25+ repository port interfaces (hexagonal architecture) |
 | `utils/` | `id.ts` | `generateId()` via `crypto.randomUUID()` |
 

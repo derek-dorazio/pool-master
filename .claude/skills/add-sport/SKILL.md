@@ -54,7 +54,8 @@ in a plan only when the sport needs a new scoring family or a model change.
 In order:
 
 1. **Enum and reference row.** Add the sport to the `Sport` domain enum and the Prisma enum in
-   one migration, together with its `sports` reference row
+   one migration, and its `sports` reference row (and any contest templates) in the next one:
+   Postgres refuses a new enum value inside the transaction that adds it
    (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Use the
    `model-change` skill.
 2. **Sport definition.** Add its `SportDefinition` to the sport registry: participant type,

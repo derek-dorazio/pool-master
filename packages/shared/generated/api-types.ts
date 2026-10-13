@@ -7036,7 +7036,7 @@ export interface components {
                 /** @enum {string|null} */
                 priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
             } | null;
-            /** @description Null until the participant has a scored round. */
+            /** @description Null until the participant has a scored round, or a race result. */
             standing: {
                 /** Format: uuid */
                 id: string;
@@ -7234,7 +7234,7 @@ export interface components {
                     /** @enum {string|null} */
                     priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
                 } | null;
-                /** @description Null until the participant has a scored round. */
+                /** @description Null until the participant has a scored round, or a race result. */
                 standing: {
                     /** Format: uuid */
                     id: string;
@@ -7471,7 +7471,7 @@ export interface components {
                     /** @enum {string|null} */
                     priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
                 } | null;
-                /** @description Null until the participant has a scored round. */
+                /** @description Null until the participant has a scored round, or a race result. */
                 standing: {
                     /** Format: uuid */
                     id: string;
@@ -8171,7 +8171,7 @@ export interface components {
                     /** @enum {string|null} */
                     priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
                 } | null;
-                /** @description Null until the participant has a scored round. */
+                /** @description Null until the participant has a scored round, or a race result. */
                 standing: {
                     /** Format: uuid */
                     id: string;

@@ -1,6 +1,7 @@
 /**
  * The SportEvent operation set and its children's — rounds, the field
- * (SportEventParticipant), tiers and valuations, and the golf score corrections (#236).
+ * (SportEventParticipant), tiers and valuations, the golf score corrections (#236), and a
+ * race's finishing order (#622).
  *
  * Before #236 everything here past `listEvents` was a golf-named admin operation under
  * /admin/sports/golf, and the event browser's participant list was a third projection of
