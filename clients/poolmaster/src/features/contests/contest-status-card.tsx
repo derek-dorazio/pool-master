@@ -189,7 +189,7 @@ function DrawOpenCard({
 }) {
   const entryCount = useEntryCount(contest.id).data;
   const drawState = useContestDrawState(contest.id);
-  const drawnAt = drawState.data?.drawnAt ?? null;
+  const drawnAt = contest.drawnAt;
 
   if (drawnAt) {
     return (

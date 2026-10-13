@@ -311,7 +311,7 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
 
   function primeDrawMocks(drawnAt: string | null = null) {
     primeMocks({
-      contest: buildContest({ name: 'Masters Sweepstake', selectionType: SelectionType.RANDOM_DRAW, status: 'OPEN' }),
+      contest: buildContest({ name: 'Masters Sweepstake', selectionType: SelectionType.RANDOM_DRAW, status: 'OPEN', drawnAt }),
       managedContest: buildManagedContest({
         status: 'OPEN',
         configuration: {
@@ -333,7 +333,8 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
         buildContestEntry({ id: 'entry-2', squadId: 'team-2', status: 'DRAFT', picksCount: 0 }),
       ],
     }));
-    getSelectionStateMock.mockResolvedValue(apiSuccess(buildSelectionState({ drawnAt })));
+    // The room is never drawn here: the card must read the draw from the contest itself.
+    getSelectionStateMock.mockResolvedValue(apiSuccess(buildSelectionState({ drawnAt: null })));
   }
 
   it('reads the random-draw rules and offers Run draw for an open contest not yet drawn', async () => {
@@ -360,7 +361,9 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
     expect(dialog.getByText(/It’s final: it can’t be undone or run again. Entries close/)).toBeInTheDocument();
     expect(runContestDrawMock).not.toHaveBeenCalled();
 
-    getSelectionStateMock.mockResolvedValue(apiSuccess(buildSelectionState({ drawnAt: DRAWN_AT })));
+    listContestsMock.mockResolvedValue(apiSuccess({ contests: [buildContest({
+      name: 'Masters Sweepstake', selectionType: SelectionType.RANDOM_DRAW, status: 'OPEN', drawnAt: DRAWN_AT,
+    })] }));
     fireEvent.click(dialog.getByTestId('contest-run-draw-confirm'));
 
     await waitFor(() => expect(runContestDrawMock).toHaveBeenCalledWith(

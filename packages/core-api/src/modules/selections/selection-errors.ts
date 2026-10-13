@@ -9,6 +9,7 @@
  * contract change wearing a refactor's clothes.
  */
 
+import type { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
 import type { LineupShortfall } from './types';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
@@ -172,7 +173,7 @@ export const selectionErrors = {
     ),
 
   /** Only a random-draw contest has a draw to run (#601). */
-  notRandomDraw: (contestId: string, selectionType: string) =>
+  notRandomDraw: (contestId: string, selectionType: SelectionType) =>
     new SelectionError(
       `Contest ${contestId} is ${selectionType}; only a random-draw contest runs a draw`,
       'CONTEST_NOT_RANDOM_DRAW',
@@ -184,7 +185,7 @@ export const selectionErrors = {
     new SelectionError(`Contest ${contestId} has already been drawn`, 'CONTEST_DRAW_ALREADY_RUN', 409),
 
   /** The draw deals to the entries of an OPEN contest: a DRAFT has none, and later is too late. */
-  drawNotOpen: (contestId: string, status: string) =>
+  drawNotOpen: (contestId: string, status: ContestStatus) =>
     new SelectionError(
       `Contest ${contestId} is ${status}; the draw runs only while it is open`,
       'CONTEST_DRAW_NOT_OPEN',

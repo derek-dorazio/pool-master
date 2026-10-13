@@ -75,7 +75,7 @@ export function RunDrawAction({
       <ConfirmDialog
         confirmLabel="Run draw"
         confirmTestId="contest-run-draw-confirm"
-        description={`The draw deals each of the ${pluralize(entryCount, 'entry', 'entries')} ${pluralize(picksPerEntry, 'golfer')} at random and enters them. It’s final: it can’t be undone or run again. Entries close, so no one can enter, leave or rename an entry afterwards, and everyone in the league sees who drew whom.`}
+        description={`The draw deals each of the ${pluralize(entryCount, 'entry', 'entries')} ${pluralize(picksPerEntry, 'golfer')} at random and enters them. It’s final: it can’t be undone or run again. Entries close, so no one can enter or leave afterwards, and everyone in the league sees who drew whom.`}
         isPending={runDrawMutation.isPending}
         onCancel={closeDialog}
         onConfirm={() => void runDrawMutation.mutateAsync().catch(() => undefined)}
