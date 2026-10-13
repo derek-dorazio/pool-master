@@ -79,13 +79,18 @@ function byFinish(left: SportEventParticipantDto, right: SportEventParticipantDt
   return leftPlace - rightPlace || left.participant.name.localeCompare(right.participant.name);
 }
 
+/** A race's stored result is official once any of its rows is: apply marks every row alike. */
+function isStoredResultOfficial(field: readonly SportEventParticipantDto[]): boolean {
+  return field.some((entry) => entry.race?.isOfficial === true);
+}
+
 /**
  * The finishing order as it is stored now, one row per runner: its place (or how its race ended),
  * where it started and who rode it. Contest scoring counts it once it is official.
  */
 function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: readonly SportEventParticipantDto[] }) {
   const { vocabulary } = getSportDefinition(event.sport);
-  const official = field.some((entry) => entry.race?.isOfficial === true);
+  const official = isStoredResultOfficial(field);
   const hasResults = field.some((entry) => entry.race !== null);
 
   return (
@@ -149,11 +154,16 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
  * Loads a race's finishing order (#623): paste or upload it, preview how each row resolves and
  * what it changes, then apply. Marking it official makes contests count it; the panel is
  * remounted when that changes, so a preview is never applied under the other setting.
+ *
+ * The official box follows the stored result until the admin changes it, because apply sets the
+ * flag on every row of the race: a correction applied unticked would make an official race
+ * provisional again.
  */
 function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; field: readonly SportEventParticipantDto[] }) {
   const logger = getLogger().child({ feature: 'root-admin-race-finishing-order' });
   const { vocabulary } = getSportDefinition(event.sport);
-  const [isOfficial, setIsOfficial] = useState(false);
+  const [chosenOfficial, setChosenOfficial] = useState<boolean | null>(null);
+  const isOfficial = chosenOfficial ?? isStoredResultOfficial(field);
 
   const previewMutation = useInvalidatingMutation({
     mutationFn: async (rows: RaceResultUploadRow[]) => {
@@ -199,7 +209,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
           onChange={(changeEvent) => {
             previewMutation.reset();
             applyMutation.reset();
-            setIsOfficial(changeEvent.target.checked);
+            setChosenOfficial(changeEvent.target.checked);
           }}
         />
         This result is official. Contests score it, and every {vocabulary.participant.one} still in the field needs a result.
