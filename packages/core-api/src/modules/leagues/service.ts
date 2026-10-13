@@ -17,6 +17,7 @@ import type {
   LeagueMembership,
 } from '@poolmaster/shared/domain';
 import { ContestStatus, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import { lockContestRows } from '../../adapters';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
@@ -431,6 +432,9 @@ export class LeagueService {
       data: { leagueId },
     }, 'Deleting league-owned records');
     await this.deps.prisma.$transaction(async (tx) => {
+      // The contests' row locks come first, the order a random draw takes them in (#646).
+      const contests = await tx.contest.findMany({ where: { leagueId }, select: { id: true } });
+      await lockContestRows(tx, contests.map((contest) => contest.id));
       await tx.contestEntryPick.deleteMany({
         where: { entry: { contest: { leagueId } } },
       });

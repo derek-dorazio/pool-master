@@ -9,3 +9,13 @@ import type { Prisma } from '@prisma/client';
 export async function lockContestRow(tx: Prisma.TransactionClient, contestId: string): Promise<void> {
   await tx.$queryRaw`SELECT id FROM "contests" WHERE id = ${contestId}::uuid FOR UPDATE`;
 }
+
+/**
+ * Takes several contests' row locks (#646), always in id order, so two writers that lock an
+ * overlapping set of contests cannot each hold one the other is waiting for.
+ */
+export async function lockContestRows(tx: Prisma.TransactionClient, contestIds: Iterable<string>): Promise<void> {
+  for (const contestId of [...new Set(contestIds)].sort()) {
+    await lockContestRow(tx, contestId);
+  }
+}

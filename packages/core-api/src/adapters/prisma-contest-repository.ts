@@ -10,6 +10,7 @@ import type {
   ContestStatusTransition,
 } from '@poolmaster/shared/db';
 import type { Contest, ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { lockContestRow } from './contest-row-lock';
 
 /** What every contest read joins: its event's sport, and its draw when it has one (#601). */
 const CONTEST_INCLUDE = {
@@ -105,14 +106,16 @@ export class PrismaContestRepository implements ContestRepository {
     // so they go first. Before #247 they were not deleted at all: harmless while no DRAFT contest
     // had a rule, a foreign-key failure once #246 gave every golf configuration one. Entry
     // standings cascade from the contest.
-    await this.prisma.$transaction([
-      this.prisma.contestEntryPick.deleteMany({ where: { entry: { contestId: id } } }),
-      this.prisma.contestEntry.deleteMany({ where: { contestId: id } }),
-      this.prisma.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId: id } } }),
-      this.prisma.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId: id } } }),
-      this.prisma.contestConfiguration.deleteMany({ where: { contestId: id } }),
-      this.prisma.contest.delete({ where: { id } }),
-    ]);
+    // The contest row lock comes first, the order a random draw takes it in (#646).
+    await this.prisma.$transaction(async (tx) => {
+      await lockContestRow(tx, id);
+      await tx.contestEntryPick.deleteMany({ where: { entry: { contestId: id } } });
+      await tx.contestEntry.deleteMany({ where: { contestId: id } });
+      await tx.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId: id } } });
+      await tx.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId: id } } });
+      await tx.contestConfiguration.deleteMany({ where: { contestId: id } });
+      await tx.contest.delete({ where: { id } });
+    });
   }
 }
 
