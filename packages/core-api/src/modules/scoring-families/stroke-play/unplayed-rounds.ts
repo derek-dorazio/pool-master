@@ -24,7 +24,7 @@ import {
 import type {
   ParticipantRoundView,
   SportEventParticipantView,
-} from '../events/sport-event-participant-service';
+} from '../../events/sport-event-participant-service';
 
 /** What one unplayed round scores, in strokes. */
 export const UNPLAYED_ROUND_STROKES = 80;

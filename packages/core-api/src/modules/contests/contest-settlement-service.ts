@@ -5,6 +5,7 @@ import type {
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import { ContestStatus, SportEventStatus } from '@poolmaster/shared/domain';
+import { scoringFamilyForSport } from '../scoring-families';
 import {
   buildContestEntryStanding,
   rankContestEntryStandings,
@@ -80,6 +81,7 @@ export class ContestSettlementService {
     }
 
     const completedAt = input?.completedAt ?? sportEvent.endDate ?? sportEvent.startDate;
+    const scoringFamily = scoringFamilyForSport(sportEvent.sport);
     const participants = toParticipantScores(await loadEventField(this.deps, sportEventId), sportEvent);
     const scoreById = new Map(
       participants.map((participant) => [participant.sportEventParticipantId, participant]),
@@ -141,7 +143,7 @@ export class ContestSettlementService {
           scoredPickCount: entry.scoredPickCount,
           asOf,
           settledAt: completedAt,
-          golf: { totalScoreToPar: entry.score },
+          ...scoringFamily.entryStandingDetail(entry.score),
         });
         standingsUpserted++;
       }

@@ -7,8 +7,7 @@
  * `getLiveScores` returns the typed `LiveScoreResult` discriminated union per
  * plans/117 §10.2 (pool-master-rop.78.3). Each adapter implements one
  * category; `publishLiveScoreUpdate` validates the
- * result with Zod and persists per-category detail rows. Adapters whose
- * category typing isn't wired yet throw `LiveScoreUnsupportedError`.
+ * result with Zod and persists it through the event's scoring family.
  */
 
 import type { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
@@ -39,10 +38,7 @@ export interface SportDataProvider {
 
   /**
    * Fetch live/current scores for an event. Returns a typed
-   * `LiveScoreResult` discriminated by sport category. Throws
-   * `LiveScoreUnsupportedError` if the adapter's category typing
-   * hasn't landed yet (per plans/117 §3.1, only golf-roster adapters
-   * ship in Phase 4).
+   * `LiveScoreResult` discriminated by sport category.
    */
   getLiveScores(eventId: string, options?: ProviderEventSyncOptions): Promise<LiveScoreResult>;
 
@@ -130,23 +126,6 @@ export function supportsLiveSimulation(
     && 'getLiveSimulation' in provider
     && typeof provider.getLiveSimulation === 'function'
   );
-}
-
-/**
- * Raised by adapters whose live-score category typing hasn't landed yet
- * (e.g., openf1, espn). Per plans/117 §3.1, Phase 4 ships only
- * golf-roster providers; the rest stay shape-locked at the design layer
- * and throw at runtime until their slice ships.
- */
-export class LiveScoreUnsupportedError extends Error {
-  constructor(providerId: string, sport: string) {
-    super(
-      `Provider ${providerId} does not yet emit typed LiveScoreResult for ${sport}. ` +
-        `Per plans/117 §3.1, only golf-roster providers ship in Phase 4; ` +
-        `category typing for this provider lands in a future rop.78.<N> slice.`,
-    );
-    this.name = 'LiveScoreUnsupportedError';
-  }
 }
 
 // --- Shared types ---

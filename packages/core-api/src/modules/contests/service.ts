@@ -57,6 +57,7 @@ import {
   toParticipantScores,
 } from './contest-leaderboard-reads';
 import { areContestEntriesOpen } from './entry-window';
+import { scoringFamilyForSport } from '../scoring-families';
 import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import {
@@ -422,6 +423,7 @@ export class ContestService {
     if (context.contest.status === ContestStatus.COMPLETED) {
       const standings = await this.deps.standings.findByContest(contestId);
       if (standings.length > 0) {
+        const scoringFamily = scoringFamilyForSport(sportEvent.sport);
         return {
           contestId,
           sportEventId: sportEvent.id,
@@ -437,7 +439,7 @@ export class ContestService {
               displayPosition: standing.displayPosition,
               countingPickLimit: standing.countingPickLimit,
               scoredPickCount: standing.scoredPickCount,
-              score: standing.golf?.totalScoreToPar ?? null,
+              score: scoringFamily.settledEntryTotal(standing),
             })),
           ),
           asOf: standings[0].asOf ?? latestAsOf,
