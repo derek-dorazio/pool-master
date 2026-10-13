@@ -306,4 +306,44 @@ describe('Loading a real golf schedule and fields through the admin API', () => 
     const league = expectDefined(await leagueNamed(tour));
     expect(expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === name('Heritage presented by Sponsor'))).venue).toBe('Harbour Town Golf Links');
   });
+
+  it('leaves a stored field alone when the file carries no field for that event yet', async () => {
+    const noField = file((events) => {
+      events[0] = { ...events[0], name: name('Heritage presented by Sponsor'), venue: 'Harbour Town Golf Links', field: [] };
+      events[1] = { ...events[1], venue: 'St Andrews' };
+    });
+
+    const rows = await loadSportData(parsed(noField), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    expect(changes(rows).filter((row) => row.subject === LoadSubject.FIELD)).toEqual([]);
+    const league = expectDefined(await leagueNamed(tour));
+    const heritage = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === name('Heritage presented by Sponsor')));
+    const field = await fieldOf(heritage.id);
+    expect(field.get(`${prefix} Golfer 1`)).toMatchObject({ isActive: true });
+    expect(field.get(`${prefix} Golfer 4`)).toMatchObject({ isActive: true });
+  });
+
+  it('reinstates a withdrawn player the file lists again, and the dry run reports it', async () => {
+    const recommitted = file((events) => {
+      events[0] = {
+        ...events[0],
+        name: name('Heritage presented by Sponsor'),
+        venue: 'Harbour Town Golf Links',
+        field: [{ player: `${prefix}-p1`, ranking: 5 }, { player: `${prefix}-p2`, ranking: 2 }, { player: `${prefix}-p4`, ranking: 4 }, { player: `${prefix}-p3`, ranking: 3 }],
+      };
+      events[1] = { ...events[1], venue: 'St Andrews' };
+    });
+    const fieldRow = {
+      sportLeague: tour, subject: LoadSubject.FIELD, action: LoadAction.UPDATE, name: name('Heritage presented by Sponsor'),
+      detail: `1 reinstated (${prefix} Golfer 3)`,
+    };
+
+    expect(changes(await loadSportData(parsed(recommitted), { getClient, now: NOW, mode: LoadMode.DRY_RUN }))).toContainEqual(fieldRow);
+    expect(changes(await loadSportData(parsed(recommitted), { getClient, now: NOW, mode: LoadMode.APPLY }))).toContainEqual(fieldRow);
+
+    const league = expectDefined(await leagueNamed(tour));
+    const heritage = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === name('Heritage presented by Sponsor')));
+    expect((await fieldOf(heritage.id)).get(`${prefix} Golfer 3`)).toMatchObject({ isActive: true, inactiveReason: null, seedNumber: 4 });
+    expect(changes(await loadSportData(parsed(recommitted), { getClient, now: NOW, mode: LoadMode.APPLY })).filter((row) => row.subject === LoadSubject.FIELD)).toEqual([]);
+  });
 });
