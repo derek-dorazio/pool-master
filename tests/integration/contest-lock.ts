@@ -67,7 +67,9 @@ export async function contestEntriesFree(tx: Prisma.TransactionClient, contestId
   try {
     await tx.$queryRaw`SELECT id FROM "contest_entries" WHERE contest_id = ${contestId}::uuid FOR UPDATE NOWAIT`;
     return true;
-  } catch {
+  } catch (error) {
+    // 55P03 is lock_not_available: NOWAIT met a lock. Anything else is a real failure.
+    if (!JSON.stringify(error).includes('55P03')) throw error;
     await tx.$executeRaw`ROLLBACK TO SAVEPOINT entries_probe`;
     return false;
   }
