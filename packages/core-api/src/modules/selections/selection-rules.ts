@@ -140,9 +140,6 @@ export function buildSelectionParticipants(input: {
         tier: valuation?.tierLabel ?? null,
         orderIndex: valuation?.tierOrderIndex ?? undefined,
         isAvailable,
-        unavailableReason: isAvailable
-          ? undefined
-          : `SportEventParticipant ${entry.id} is unavailable with status ${legacyStatus}`,
       };
     })
     .sort((left, right) => {

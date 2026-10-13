@@ -39,7 +39,6 @@ export interface SelectionParticipant {
   tier?: string | null;
   orderIndex?: number;
   isAvailable: boolean;
-  unavailableReason?: string;
 }
 
 /** One field row's effective tier and price, keyed by `sportEventParticipantId`. */

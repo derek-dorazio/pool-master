@@ -285,7 +285,6 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
         participantName: 'Eliminated Golfer',
         status: 'ELIMINATED',
         isAvailable: false,
-        unavailableReason: 'SportEventParticipant sep-1 is unavailable with status ELIMINATED',
       }),
     ]);
   });
@@ -316,7 +315,6 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
         tier: 'Tier 1',
         price: 25,
         orderIndex: 1,
-        unavailableReason: undefined,
       }),
     );
     expect(participants[1]).toEqual(

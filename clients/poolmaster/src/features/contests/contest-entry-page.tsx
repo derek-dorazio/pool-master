@@ -785,6 +785,7 @@ export function ContestEntryPage() {
             {isBudget ? selectionGroups.map((group) => (isEditable ? (
               <BudgetLineupBuilder
                 canSelect={isMyEntry}
+                sport={contest.sport ?? null}
                 group={group}
                 isBusy={submitSelectionMutation.isPending}
                 key={group.groupId}
@@ -799,7 +800,7 @@ export function ContestEntryPage() {
               <LockedBudgetLineup group={group} key={group.groupId} noun={participantNoun} summary={lineupSummary} />
             ))) : selectionGroups.map((group) => {
               if (!isEditable) {
-                return <LockedSelectionGroup group={group} key={group.groupId} noun={participantNoun} />;
+                return <LockedSelectionGroup group={group} key={group.groupId} noun={participantNoun} sport={contest.sport ?? null} />;
               }
 
               const isExpanded = expandedGroupId === group.groupId;
@@ -807,6 +808,7 @@ export function ContestEntryPage() {
               return (
                 <EditableSelectionGroup
                   canSelect={isMyEntry}
+                  sport={contest.sport ?? null}
                   group={group}
                   isBusy={submitSelectionMutation.isPending}
                   isExpanded={isExpanded}

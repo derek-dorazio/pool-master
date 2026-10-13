@@ -28,7 +28,6 @@ function buildParticipant(
     ranking: orderIndex,
     orderIndex,
     isAvailable: true,
-    unavailableReason: undefined,
     isSelected,
   };
 }
@@ -60,7 +59,7 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
 
     render(
       <EditableSelectionGroup
-        noun={GOLFER}
+        noun={GOLFER} sport="GOLF"
         canSelect
         group={buildGroup(["sep-1"])}
         isBusy={false}
@@ -91,7 +90,7 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
   it("rule: marks replacement choices when a tier is full", () => {
     render(
       <EditableSelectionGroup
-        noun={GOLFER}
+        noun={GOLFER} sport="GOLF"
         canSelect
         group={buildGroup(["sep-1", "sep-2"])}
         isBusy={false}
@@ -109,7 +108,7 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
   });
 
   it("rule: renders locked selections as read-only rows", () => {
-    render(<LockedSelectionGroup noun={GOLFER} group={buildGroup(["sep-1"])} />);
+    render(<LockedSelectionGroup noun={GOLFER} sport="GOLF" group={buildGroup(["sep-1"])} />);
 
     expect(screen.getByText("Locked")).toBeInTheDocument();
     expect(
@@ -197,8 +196,6 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
               ...participant,
               status: "WITHDRAWN",
               isAvailable: false,
-              // What the selection state carries for a withdrawn golfer today: server text, not copy.
-              unavailableReason: "SportEventParticipant sep-2 is unavailable with status WITHDRAWN",
             }
           : participant,
       ),
@@ -208,7 +205,7 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
   function renderEditable(group: SelectionGroup, onParticipantSelect = vi.fn()) {
     render(
       <EditableSelectionGroup
-        noun={GOLFER}
+        noun={GOLFER} sport="GOLF"
         canSelect
         group={group}
         isBusy={false}
@@ -242,10 +239,31 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
     expect(withdrawn).not.toHaveTextContent("WITHDRAWN");
   });
 
+  it("labels a scratched horse in a horse racing contest \"Scratched\", the sport's word for withdrawn", () => {
+    render(
+      <EditableSelectionGroup
+        noun={{ one: "horse", many: "horses" }}
+        sport="HORSE_RACING"
+        canSelect
+        group={groupWithWithdrawn(["sep-1"])}
+        isBusy={false}
+        isExpanded
+        onParticipantSelect={vi.fn()}
+        onToggle={vi.fn()}
+        setToggleRef={vi.fn()}
+      />,
+    );
+
+    const scratched = screen.getByTestId("contest-entry-participant-sep-2");
+    expect(scratched).toBeDisabled();
+    expect(scratched).toHaveTextContent("Scratched");
+    expect(scratched).not.toHaveTextContent("Withdrawn");
+  });
+
   it("disables every golfer while a pick is saving or when the viewer cannot pick", () => {
     const { rerender } = render(
       <EditableSelectionGroup
-        noun={GOLFER}
+        noun={GOLFER} sport="GOLF"
         canSelect
         group={buildGroup(["sep-1"])}
         isBusy
@@ -259,7 +277,7 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
 
     rerender(
       <EditableSelectionGroup
-        noun={GOLFER}
+        noun={GOLFER} sport="GOLF"
         canSelect={false}
         group={buildGroup(["sep-1"])}
         isBusy={false}
@@ -290,7 +308,7 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
   });
 
   it("says no golfer was saved for a locked tier the entry left empty", () => {
-    render(<LockedSelectionGroup noun={GOLFER} group={buildGroup([])} />);
+    render(<LockedSelectionGroup noun={GOLFER} sport="GOLF" group={buildGroup([])} />);
 
     expect(screen.getByText("No golfer was saved from this tier.")).toBeInTheDocument();
   });

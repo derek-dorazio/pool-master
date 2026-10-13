@@ -268,10 +268,7 @@ export class SelectionService {
       };
     }
     if (!selectionParticipant.isAvailable) {
-      throw selectionErrors.participantUnavailable(
-        participantId,
-        selectionParticipant.unavailableReason,
-      );
+      throw selectionErrors.participantUnavailable(participantId, selectionParticipant.status ?? null);
     }
 
     if (outcome.kind === SelectionOutcomeKind.REJECT) {

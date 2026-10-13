@@ -23,7 +23,6 @@ type SelectionGroup = {
     ranking: number | null;
     orderIndex: number;
     isAvailable: boolean;
-    unavailableReason: string | null;
     isSelected: boolean;
   }>;
 };
@@ -245,7 +244,6 @@ function buildGolfParticipant(id: string, name: string, orderIndex: number, isSe
     ranking: orderIndex,
     orderIndex,
     isAvailable: true,
-    unavailableReason: null,
     isSelected,
   };
 }
@@ -320,7 +318,6 @@ describe('ContestEntryPage', () => {
                 ranking: 1,
                 orderIndex: 1,
                 isAvailable: true,
-                unavailableReason: null,
                 isSelected: selectedParticipantIdsByTier.get('tier-1')?.includes('sep-1') ?? false,
               },
             ],
@@ -343,7 +340,6 @@ describe('ContestEntryPage', () => {
                 ranking: 2,
                 orderIndex: 2,
                 isAvailable: true,
-                unavailableReason: null,
                 isSelected: selectedParticipantIdsByTier.get('tier-2')?.includes('sep-2') ?? false,
               },
             ],
@@ -591,7 +587,6 @@ describe('ContestEntryPage', () => {
                 ranking: 1,
                 orderIndex: 1,
                 isAvailable: true,
-                unavailableReason: null,
                 isSelected: true,
               },
             ],

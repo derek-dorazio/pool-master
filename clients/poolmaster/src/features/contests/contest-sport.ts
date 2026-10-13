@@ -1,4 +1,5 @@
-import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shared/domain';
+import { formatParticipantStatusLabel, getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shared/domain';
+import type { SelectionParticipant } from './contest-entry-selection';
 import { getScoringFamilyUi } from './scoring-family-ui/registry';
 import type { EntryTiebreakerUi } from './scoring-family-ui/types';
 
@@ -20,4 +21,12 @@ export function contestParticipantNoun(sport: Sport | null | undefined): SportNo
  */
 export function contestEntryTiebreaker(sport: Sport | null | undefined): EntryTiebreakerUi | null {
   return sport ? getScoringFamilyUi(getSportDefinition(sport)).entryTiebreaker : null;
+}
+
+/**
+ * Why a participant cannot be picked, in the contest's sport's words: "Withdrawn" for a golfer,
+ * "Scratched" for a horse.
+ */
+export function unavailableParticipantLabel(participant: SelectionParticipant, sport: Sport | null): string {
+  return participant.status ? formatParticipantStatusLabel(participant.status, sport) : 'Unavailable';
 }

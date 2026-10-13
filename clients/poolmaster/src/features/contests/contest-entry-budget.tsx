@@ -1,4 +1,4 @@
-import type { SportNoun } from '@poolmaster/shared/domain';
+import type { Sport, SportNoun } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import type { SelectionStateResponse } from '@/lib/api';
 import {
@@ -15,6 +15,7 @@ import {
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
+import { unavailableParticipantLabel } from './contest-sport';
 import type { SelectionGroup, SelectionParticipant } from './contest-entry-selection';
 
 type BudgetLineupSummary = NonNullable<SelectionStateResponse['lineupSummary']>;
@@ -84,6 +85,7 @@ function BudgetParticipantRow({
   noun,
   onSelect,
   participant,
+  sport,
 }: {
   canSelect: boolean;
   isBusy: boolean;
@@ -91,6 +93,7 @@ function BudgetParticipantRow({
   noun: SportNoun;
   onSelect: (participant: SelectionParticipant) => void;
   participant: SelectionParticipant;
+  sport: Sport | null;
 }) {
   const isSelected = Boolean(participant.isSelected);
   const hasPrice = participant.price !== undefined && participant.price !== null;
@@ -103,7 +106,7 @@ function BudgetParticipantRow({
   if (isSelected) {
     actionLabel = 'Picked';
   } else if (!participant.isAvailable) {
-    actionLabel = participant.unavailableReason ?? 'Unavailable';
+    actionLabel = unavailableParticipantLabel(participant, sport);
   } else if (!hasPrice) {
     actionLabel = 'No price';
   } else if (isRosterFull) {
@@ -143,6 +146,7 @@ export function BudgetLineupBuilder({
   isBusy,
   noun,
   onParticipantSelect,
+  sport,
   summary,
 }: {
   canSelect: boolean;
@@ -151,6 +155,8 @@ export function BudgetLineupBuilder({
   /** What the event's sport calls a participant: "golfer", "horse". */
   noun: SportNoun;
   onParticipantSelect: (participant: SelectionParticipant) => void;
+  /** The contest's sport, whose words name a participant's status. */
+  sport: Sport | null;
   summary: BudgetLineupSummary | null;
 }) {
   const [search, setSearch] = useState('');
@@ -209,6 +215,7 @@ export function BudgetLineupBuilder({
             noun={noun}
             onSelect={onParticipantSelect}
             participant={participant}
+            sport={sport}
           />
         ))}
         {!listed.length ? <Alert>{`No ${noun.one} matches “${search.trim()}”.`}</Alert> : null}

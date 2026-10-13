@@ -87,9 +87,11 @@ export const selectionErrors = {
     ),
 
   /** Falls back to a generic sentence when the field row carries no reason of its own. */
-  participantUnavailable: (participantId: string, reason?: string) =>
+  participantUnavailable: (participantId: string, status: string | null) =>
     new SelectionError(
-      reason ?? `SportEventParticipant ${participantId} is unavailable`,
+      status
+        ? `SportEventParticipant ${participantId} is unavailable with status ${status}`
+        : `SportEventParticipant ${participantId} is unavailable`,
       'PARTICIPANT_UNAVAILABLE',
       400,
     ),
