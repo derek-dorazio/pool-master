@@ -310,7 +310,49 @@ describe('RootAdminSportEventResultsPage for a horse race', () => {
     await userEvent.click(apply);
 
     expect(await screen.findByTestId('root-admin-race-result-upload-apply-error')).toHaveTextContent(
-      'An official result needs every runner still in the field',
+      'An official result needs every horse still in the field',
+    );
+  });
+});
+
+describe('RootAdminSportEventResultsPage for an auto race', () => {
+  const autoRace = sportEventFixture({ ...race, sport: 'AUTO_RACING', name: 'Daytona 500', venue: 'Daytona International Speedway' });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    mockLogger.child.mockReturnValue(mockLogger);
+  });
+
+  it('heads the stored result Finish, Driver and Start, with no Rider column because the result names only the driver', async () => {
+    getEventMock.mockResolvedValue({ data: { event: autoRace } });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: [
+      { ...sovereignty, race: { finishPosition: 1, startPosition: 4, resultStatus: 'FINISHED', isOfficial: true, riderName: null } },
+    ] } });
+    renderPage();
+
+    const table = await screen.findByTestId('root-admin-race-result-table');
+    expect(within(table).getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['Finish', 'Driver', 'Start']);
+    expect(within(table).getAllByRole('row').slice(1).map((row) => row.textContent)).toEqual(['1stSovereignty4']);
+  });
+
+  it('says every driver needs a result when the server refuses an official result whose field is incomplete', async () => {
+    getEventMock.mockResolvedValue({ data: { event: autoRace } });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: [sovereignty, journalism] } });
+    previewEventRaceResultsMock.mockResolvedValue(preview([previewRow('Sovereignty', 'sep-1', 1)]));
+    applyEventRaceResultsMock.mockResolvedValue({
+      error: { error: { code: 'RACE_RESULT_FIELD_INCOMPLETE', message: 'Field incomplete' } },
+      response: { status: 422 },
+    });
+    renderPage();
+
+    await pasteAndPreview('playerName,finishPosition\nSovereignty,1');
+    expect(screen.getByTestId('root-admin-race-results-panel')).toHaveTextContent('a place for each driver that finished');
+    const apply = screen.getByTestId('root-admin-race-result-upload-apply');
+    await waitFor(() => expect(apply).toBeEnabled());
+    await userEvent.click(apply);
+
+    expect(await screen.findByTestId('root-admin-race-result-upload-apply-error')).toHaveTextContent(
+      'An official result needs every driver still in the field: a place for each finisher, or how its race ended.',
     );
   });
 });

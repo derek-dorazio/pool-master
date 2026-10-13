@@ -2929,7 +2929,7 @@ export type ContestConfigTemplateDto = {
     /**
      * Sport this template applies to.
      */
-    sport: 'GOLF' | 'HORSE_RACING';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     /**
      * Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
      */
@@ -3257,7 +3257,7 @@ export type ListContestConfigTemplatesQuery = {
     /**
      * Only templates for this sport.
      */
-    sport?: 'GOLF' | 'HORSE_RACING';
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     /**
      * Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
      */
@@ -3288,7 +3288,7 @@ export type ContestConfigTemplateListResponse = {
         /**
          * Sport this template applies to.
          */
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         /**
          * Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
          */
@@ -3613,7 +3613,7 @@ export type ContestConfigTemplateResponse = {
         /**
          * Sport this template applies to.
          */
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         /**
          * Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
          */
@@ -4334,7 +4334,7 @@ export type SportDto = {
     /**
      * The sport.
      */
-    sport: 'GOLF' | 'HORSE_RACING';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     /**
      * Whether the sport's competitors are individuals or teams.
      */
@@ -4368,7 +4368,7 @@ export type SportListResponse = {
         /**
          * The sport.
          */
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         /**
          * Whether the sport's competitors are individuals or teams.
          */
@@ -4441,7 +4441,7 @@ export type SportLeagueListQuery = {
     /**
      * Only sport leagues of this sport.
      */
-    sport?: 'GOLF' | 'HORSE_RACING';
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     /**
      * Only active, or only inactive, sport leagues.
      */
@@ -4557,7 +4557,7 @@ export type CreateSportLeagueRequest = {
     /**
      * The sport the new sport league belongs to.
      */
-    sport: 'GOLF' | 'HORSE_RACING';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     /**
      * Unique within the sport.
      */
@@ -5063,7 +5063,7 @@ export type SportEventDto = {
     /**
      * Sport the event belongs to.
      */
-    sport: 'GOLF' | 'HORSE_RACING';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     /**
      * Event name shown in contest and event selectors.
      */
@@ -5202,7 +5202,7 @@ export type SportEventListQuery = {
     /**
      * Only events of this sport.
      */
-    sport?: 'GOLF' | 'HORSE_RACING';
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     /**
      * Only events in this lifecycle status.
      */
@@ -5244,7 +5244,7 @@ export type SportEventListResponse = {
         /**
          * Sport the event belongs to.
          */
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         /**
          * Event name shown in contest and event selectors.
          */
@@ -5400,7 +5400,7 @@ export type SportEventResponse = {
         /**
          * Sport the event belongs to.
          */
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         /**
          * Event name shown in contest and event selectors.
          */
@@ -5647,7 +5647,7 @@ export type ImportSportEventYearFromProviderResponse = {
         /**
          * Sport the event belongs to.
          */
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         /**
          * Event name shown in contest and event selectors.
          */
@@ -7260,7 +7260,7 @@ export type ContestDto = {
     selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
     leagueId: string;
     sportEventId?: string | null;
-    sport?: 'GOLF' | 'HORSE_RACING' | null;
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | null;
     /**
      * Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.
      */
@@ -7634,7 +7634,7 @@ export type ContestLeaderboardResponse = {
     /**
      * Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.
      */
-    sport: 'GOLF' | 'HORSE_RACING';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     /**
      * The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
      */
@@ -8027,7 +8027,7 @@ export type ContestResponse = {
         selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
         leagueId: string;
         sportEventId?: string | null;
-        sport?: 'GOLF' | 'HORSE_RACING' | null;
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | null;
         /**
          * Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.
          */
@@ -8068,7 +8068,7 @@ export type ContestListResponse = {
         selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
         leagueId: string;
         sportEventId?: string | null;
-        sport?: 'GOLF' | 'HORSE_RACING' | null;
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | null;
         /**
          * Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.
          */
@@ -8708,7 +8708,7 @@ export type BudgetPricingConfig = {
  * Partial ingestion scheduling override used for global updates and per-sport overrides.
  */
 export type IngestionScheduleConfigOverride = {
-    scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+    scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
     /**
      * Partial feed-scheduling override payload.
      */
@@ -8781,7 +8781,7 @@ export type IngestionScheduleConfig = {
     /**
      * Sports that scheduled ingestion is allowed to run automatically.
      */
-    scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+    scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
     /**
      * Scheduling policy for provider health checks.
      */
@@ -8850,7 +8850,7 @@ export type IngestionScheduleConfig = {
      */
     perSportOverrides: {
         [key: string]: {
-            scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+            scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
             /**
              * Partial feed-scheduling override payload.
              */
@@ -8978,7 +8978,7 @@ export type SettingsGroup = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+        scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -9047,7 +9047,7 @@ export type SettingsGroup = {
          */
         perSportOverrides: {
             [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+                scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -9121,7 +9121,7 @@ export type SettingsGroup = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+        scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -9190,7 +9190,7 @@ export type SettingsGroup = {
          */
         perSportOverrides: {
             [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+                scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -9502,7 +9502,7 @@ export type SettingsGroupList = {
             /**
              * Sports that scheduled ingestion is allowed to run automatically.
              */
-            scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+            scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -9571,7 +9571,7 @@ export type SettingsGroupList = {
              */
             perSportOverrides: {
                 [key: string]: {
-                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
                     /**
                      * Partial feed-scheduling override payload.
                      */
@@ -9645,7 +9645,7 @@ export type SettingsGroupList = {
             /**
              * Sports that scheduled ingestion is allowed to run automatically.
              */
-            scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+            scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -9714,7 +9714,7 @@ export type SettingsGroupList = {
              */
             perSportOverrides: {
                 [key: string]: {
-                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
                     /**
                      * Partial feed-scheduling override payload.
                      */
@@ -9994,7 +9994,7 @@ export type SettingsGroupUpdateRequest = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports: Array<'GOLF' | 'HORSE_RACING'>;
+        scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -10063,7 +10063,7 @@ export type SettingsGroupUpdateRequest = {
          */
         perSportOverrides: {
             [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+                scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -10246,7 +10246,7 @@ export type SettingsChange = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+        scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -10315,7 +10315,7 @@ export type SettingsChange = {
          */
         perSportOverrides: {
             [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+                scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -10389,7 +10389,7 @@ export type SettingsChange = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+        scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -10458,7 +10458,7 @@ export type SettingsChange = {
          */
         perSportOverrides: {
             [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+                scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -10737,7 +10737,7 @@ export type SettingsChangeList = {
             /**
              * Sports that scheduled ingestion is allowed to run automatically.
              */
-            scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+            scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -10806,7 +10806,7 @@ export type SettingsChangeList = {
              */
             perSportOverrides: {
                 [key: string]: {
-                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
                     /**
                      * Partial feed-scheduling override payload.
                      */
@@ -10880,7 +10880,7 @@ export type SettingsChangeList = {
             /**
              * Sports that scheduled ingestion is allowed to run automatically.
              */
-            scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+            scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -10949,7 +10949,7 @@ export type SettingsChangeList = {
              */
             perSportOverrides: {
                 [key: string]: {
-                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
+                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
                     /**
                      * Partial feed-scheduling override payload.
                      */
@@ -11469,7 +11469,7 @@ export type ProviderSummaryDto = {
     /**
      * Sports the provider covers that ingestion is scheduled for.
      */
-    sportsCovered: Array<'GOLF' | 'HORSE_RACING'>;
+    sportsCovered: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
     /**
      * The provider's events that are scheduled or in progress.
      */
@@ -11512,7 +11512,7 @@ export type ProviderListResponse = {
         /**
          * Sports the provider covers that ingestion is scheduled for.
          */
-        sportsCovered: Array<'GOLF' | 'HORSE_RACING'>;
+        sportsCovered: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING'>;
         /**
          * The provider's events that are scheduled or in progress.
          */
@@ -11530,7 +11530,7 @@ export type ProviderListResponse = {
 export type ProviderSyncRunDto = {
     id: string;
     providerId: string;
-    sport: 'GOLF' | 'HORSE_RACING';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     /**
      * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
      */
@@ -11568,7 +11568,7 @@ export type ProviderSyncRunDto = {
          * The request that submitted the sync run.
          */
         requestPayload?: {
-            sport: 'GOLF' | 'HORSE_RACING';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
             /**
              * Provider event identifier the sync was asked for.
              */
@@ -11637,7 +11637,7 @@ export type ProviderSyncRunDto = {
              * Provider that executed the ingestion job.
              */
             providerId: string;
-            sport: 'GOLF' | 'HORSE_RACING';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
             /**
              * External event id for event-scoped jobs, when applicable.
              */
@@ -11794,7 +11794,7 @@ export type ProviderSyncRunDto = {
  */
 export type ProviderSyncRunListQuery = {
     providerId?: string;
-    sport?: 'GOLF' | 'HORSE_RACING';
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
     /**
      * Earliest submission time to include. Defaults to 6 hours before `to`.
@@ -11813,7 +11813,7 @@ export type ProviderSyncRunListResponse = {
     syncRuns: Array<{
         id: string;
         providerId: string;
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         /**
          * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
          */
@@ -11851,7 +11851,7 @@ export type ProviderSyncRunListResponse = {
              * The request that submitted the sync run.
              */
             requestPayload?: {
-                sport: 'GOLF' | 'HORSE_RACING';
+                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
                 /**
                  * Provider event identifier the sync was asked for.
                  */
@@ -11920,7 +11920,7 @@ export type ProviderSyncRunListResponse = {
                  * Provider that executed the ingestion job.
                  */
                 providerId: string;
-                sport: 'GOLF' | 'HORSE_RACING';
+                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
                 /**
                  * External event id for event-scoped jobs, when applicable.
                  */
@@ -12077,7 +12077,7 @@ export type ProviderSyncRunListResponse = {
  * A manual sync submission. The runs execute asynchronously after the request is accepted.
  */
 export type ProviderManualSyncSubmissionResponse = {
-    sport: 'GOLF' | 'HORSE_RACING';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     /**
      * Provider event identifier the submitted runs sync.
      */
@@ -12090,7 +12090,7 @@ export type ProviderManualSyncSubmissionResponse = {
     syncRuns: Array<{
         id: string;
         providerId: string;
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         /**
          * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
          */
@@ -12128,7 +12128,7 @@ export type ProviderManualSyncSubmissionResponse = {
              * The request that submitted the sync run.
              */
             requestPayload?: {
-                sport: 'GOLF' | 'HORSE_RACING';
+                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
                 /**
                  * Provider event identifier the sync was asked for.
                  */
@@ -12197,7 +12197,7 @@ export type ProviderManualSyncSubmissionResponse = {
                  * Provider that executed the ingestion job.
                  */
                 providerId: string;
-                sport: 'GOLF' | 'HORSE_RACING';
+                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
                 /**
                  * External event id for event-scoped jobs, when applicable.
                  */
@@ -12364,7 +12364,7 @@ export type UnmappedProviderParticipantDto = {
      * The competitor's name as the provider reports it.
      */
     externalName: string;
-    sport: 'GOLF' | 'HORSE_RACING';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
 };
 
 /**
@@ -12382,7 +12382,7 @@ export type UnmappedProviderParticipantListResponse = {
          * The competitor's name as the provider reports it.
          */
         externalName: string;
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     }>;
 };
 
@@ -12395,7 +12395,7 @@ export type ProviderEventDto = {
      */
     externalId: string;
     providerId: string;
-    sport: 'GOLF' | 'HORSE_RACING';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     name: string;
     venue: string | null;
     location: string | null;
@@ -12423,7 +12423,7 @@ export type ProviderEventDto = {
  * Filters over a provider's live catalog.
  */
 export type ProviderCatalogEventListQuery = {
-    sport: 'GOLF' | 'HORSE_RACING';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     /**
      * Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter.
      */
@@ -12449,7 +12449,7 @@ export type ProviderCatalogEventListResponse = {
          */
         externalId: string;
         providerId: string;
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         name: string;
         venue: string | null;
         location: string | null;
@@ -15024,7 +15024,7 @@ export type ListContestConfigTemplatesData = {
         /**
          * Only templates for this sport.
          */
-        sport?: 'GOLF' | 'HORSE_RACING';
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         /**
          * Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
          */
@@ -15117,7 +15117,7 @@ export type ListEventsData = {
         /**
          * Only events of this sport.
          */
-        sport?: 'GOLF' | 'HORSE_RACING';
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         /**
          * Only events in this lifecycle status.
          */
@@ -16491,7 +16491,7 @@ export type ListSportLeaguesData = {
         /**
          * Only sport leagues of this sport.
          */
-        sport?: 'GOLF' | 'HORSE_RACING';
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         /**
          * Only active, or only inactive, sport leagues.
          */
@@ -17228,7 +17228,7 @@ export type UpdateIngestionScheduleResponse = UpdateIngestionScheduleResponses[k
 export type SetSportIngestionOverrideData = {
     body: IngestionScheduleConfigOverride;
     path: {
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     };
     query?: never;
     url: '/api/v1/platform/ingestion-schedule/{sport}';
@@ -17263,7 +17263,7 @@ export type SetSportIngestionOverrideResponse = SetSportIngestionOverrideRespons
 export type ResetSportIngestionOverrideData = {
     body?: never;
     path: {
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
     };
     query?: never;
     url: '/api/v1/platform/ingestion-schedule/{sport}/reset';
@@ -17358,7 +17358,7 @@ export type ListProviderSyncRunsData = {
     path?: never;
     query?: {
         providerId?: string;
-        sport?: 'GOLF' | 'HORSE_RACING';
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
         /**
          * Earliest submission time to include. Defaults to 6 hours before `to`.
@@ -17397,7 +17397,7 @@ export type ListProviderSyncRunsResponse = ListProviderSyncRunsResponses[keyof L
 export type SubmitEventSyncData = {
     body: EventSyncRequest;
     path: {
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         eventId: string;
     };
     query?: never;
@@ -17473,7 +17473,7 @@ export type ListProviderCatalogEventsData = {
         providerId: string;
     };
     query: {
-        sport: 'GOLF' | 'HORSE_RACING';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING';
         /**
          * Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter.
          */

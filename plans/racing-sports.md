@@ -237,6 +237,31 @@ created.
 
 ## 3. Auto racing: Formula 1, NASCAR, IndyCar
 
+**Status (2026-10-13, #624).** The sport is built as `AUTO_RACING`, "Auto racing", and covers car
+racing only: Derek decided on 2026-10-13 that motorbike racing is out of this sport for now and
+deferred it to #641. It reuses the finish-position family and the `RACE` format, so it needed
+no new tables:
+
+- The sport definition: driver / drivers, race / races, series / series, "Withdrawn", "green
+  flag". The result names only the driver, so there is no Rider column and no name for the top
+  places. One round, and five tiers of eight, which a full 40-car NASCAR field fills exactly.
+- The reference-data migration seeds the sports row and two sport leagues, **NASCAR Cup
+  Series** and **IndyCar**. Sport leagues are normally created by an admin, but a league's
+  points presets are contest templates that must name their league, so these two are
+  reference data, inserted idempotently on the (sport, name) unique.
+- Six templates, three per series, each with its league set and its own key:
+  `nascar-cup-tiered-points` (the NASCAR default), `nascar-cup-budget-points`,
+  `nascar-cup-random-draw-points`, `indycar-tiered-points` (the IndyCar default),
+  `indycar-budget-points`, `indycar-random-draw-points`. Tiered picks one driver per tier and
+  counts five; budget picks five; the draw deals one. NASCAR's table has 40 places (40, 35, 34
+  ... 1 at 36th, then 1 to 40th); IndyCar's has 33 (50, 40, 35, 32, 30, 28, 26, 24, 22, 20, then
+  19 down to 6, then 5 to 33rd). A non-finisher scores 0.
+- Setting a template as the default now clears only the defaults of its own sport league, so
+  each series keeps its own default preset.
+
+Formula 1 (#625) adds its league and preset the same way. The Daytona 500 and the Indy 500 are
+created by an admin through the Manage pages (`docs/RACE-SETUP-PROCEDURES.md`).
+
 ### 3.1 One sport or three?
 
 **Q2.1** (**Answered 2026-10-12 by Derek: one sport, as recommended.**) Should Formula 1 and
@@ -271,7 +296,8 @@ templates plus the sport-wide ones, never another league's. The create-contest p
 chosen event's league and starts each format on the league's own default, then the sport-wide
 default, then the first preset. Creating a contest from another league's template is refused with
 422 `CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH`. Root admins still edit templates but cannot yet set
-a template's league; a league's presets arrive in the migration that adds that league's events.
+a template's league; a league's presets arrive in the reference-data migration that seeds the
+league itself (auto racing's, above).
 
 ### 3.2 NASCAR (sport league: NASCAR Cup Series)
 

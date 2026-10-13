@@ -69,7 +69,7 @@ A UI Label, Not A Domain Term*.
 
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
-| `Sport` | sport | Golf and horse racing, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
+| `Sport` | sport | Golf, horse racing and auto racing, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
 | `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA | `League`, the office pool |
 | `EventSeries` | (series) | A recurring named event, "The Masters", across all years | One year's edition, which is the `SportEvent` |
 | `SportEvent` | tournament, event | One edition of a series in one `eventYear`, with a start date, round count and status | `Contest`, which is the pool's game played on it |
@@ -109,6 +109,9 @@ A UI Label, Not A Domain Term*.
 - **Player / golfer**: a `Participant`, never a league member.
 - **Horse, runner**: a horse racing `Participant`, and on a race's field a `SportEventParticipant`.
   The jockey is the result's `riderName`, not a participant.
+- **Driver**: an auto racing `Participant`, one per person whichever series they race in. An
+  auto racing result names only the driver, so its `riderName` stays empty.
+- **Series**: what auto racing calls a `SportLeague` (NASCAR Cup Series, IndyCar).
 - **Scratched, withdrawn**: a runner taken out of a race before the start is a field member made
   inactive with `inactiveReason` `WITHDRAWN`; horse racing shows it as "Scratched". A runner
   that did not start is a result (`DID_NOT_START`), which also leaves it `WITHDRAWN` in the standing.

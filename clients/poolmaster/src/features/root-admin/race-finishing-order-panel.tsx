@@ -1,9 +1,9 @@
-import { getSportDefinition, RaceResultOrderError, RaceResultStatus } from '@poolmaster/shared/domain';
+import { getSportDefinition, RaceResultOrderError, RaceResultStatus, type SportVocabulary } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { applyEventRaceResults, previewEventRaceResults } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
 import { Alert, BulkUploadPanel, Checkbox, StatusBadge, Tile } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -50,18 +50,25 @@ const ROW_ERROR_LABEL: Record<NonNullable<RaceResultPreviewRow['rowError']>, str
   FINISH_WITHOUT_POSITION: 'Finished, but has no place',
 };
 
-const ORDER_ERROR_MESSAGE: Record<RaceResultOrderError, string> = {
-  [RaceResultOrderError.POSITIONS_INVALID]:
-    'The places do not run 1, 2, 3 and on. Only a dead heat repeats a place, and the next place is then skipped (1, 2, 2, 4).',
-  [RaceResultOrderError.FIELD_INCOMPLETE]:
-    'An official result needs every runner still in the field: a place for each finisher, or how its race ended.',
-};
+/** Why the finishing order as a whole cannot be applied, in the sport's words. */
+function orderErrorMessages(vocabulary: SportVocabulary): Record<RaceResultOrderError, string> {
+  return {
+    [RaceResultOrderError.POSITIONS_INVALID]:
+      'The places do not run 1, 2, 3 and on. Only a dead heat repeats a place, and the next place is then skipped (1, 2, 2, 4).',
+    [RaceResultOrderError.FIELD_INCOMPLETE]:
+      `An official result needs every ${vocabulary.participant.one} still in the field: a place for each finisher, or how its ${vocabulary.round.one} ended.`,
+  };
+}
 
-const APPLY_CODE_MESSAGES = {
-  RACE_RESULT_POSITIONS_INVALID: ORDER_ERROR_MESSAGE.POSITIONS_INVALID,
-  RACE_RESULT_FIELD_INCOMPLETE: ORDER_ERROR_MESSAGE.FIELD_INCOMPLETE,
-  RACE_RESULT_ROWS_INVALID: 'A row does not match one runner in the field, or has a problem. Preview again to see which.',
-};
+/** What a refused apply's error code means, in the sport's words. */
+function applyCodeMessages(vocabulary: SportVocabulary): ErrorCodeMessages {
+  const orderErrors = orderErrorMessages(vocabulary);
+  return {
+    RACE_RESULT_POSITIONS_INVALID: orderErrors.POSITIONS_INVALID,
+    RACE_RESULT_FIELD_INCOMPLETE: orderErrors.FIELD_INCOMPLETE,
+    RACE_RESULT_ROWS_INVALID: `A row does not match one ${vocabulary.participant.one} in the field, or has a problem. Preview again to see which.`,
+  };
+}
 
 function describeRow(row: RaceResultPreviewRow['row']): string {
   return row.playerName ?? row.externalId ?? row.participantId ?? 'Unnamed row';
@@ -221,7 +228,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
           apply={(rows) => applyMutation.mutateAsync(rows).then(() => undefined)}
           applyError={applyMutation.isError
             ? extractErrorMessage(applyMutation.error, {
-              codeMessages: APPLY_CODE_MESSAGES,
+              codeMessages: applyCodeMessages(vocabulary),
               fallback: 'We could not apply this result.',
             })
             : null}
@@ -239,7 +246,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
             <div className="space-y-3">
               {orderErrors.map((orderError) => (
                 <Alert data-testid={`root-admin-race-result-order-error-${orderError}`} key={orderError} tone="danger">
-                  {ORDER_ERROR_MESSAGE[orderError]}
+                  {orderErrorMessages(vocabulary)[orderError]}
                 </Alert>
               ))}
               <div className="overflow-x-auto rounded-2xl border border-border">
