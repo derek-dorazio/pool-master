@@ -17,7 +17,7 @@ export function useSportEventQuery(eventId: string) {
     queryFn: async (): Promise<SportEventDto> => {
       const response = await getEvent({ path: { eventId } });
       if (!response.data?.event) {
-        throwApiError(response.error, 'Golf tournament response is missing data.');
+        throwApiError(response.error, 'Event response is missing data.');
       }
       return response.data.event;
     },
@@ -32,7 +32,7 @@ export function useSportEventFieldQuery(eventId: string) {
     queryFn: async (): Promise<SportEventParticipantDto[]> => {
       const response = await listEventParticipants({ path: { eventId } });
       if (!response.data?.participants) {
-        throwApiError(response.error, 'Golf tournament field response is missing data.');
+        throwApiError(response.error, 'Event field response is missing data.');
       }
       return response.data.participants;
     },
@@ -47,7 +47,7 @@ export function useSportEventTiersQuery(eventId: string) {
     queryFn: async (): Promise<SportEventTierDto[]> => {
       const response = await listEventTiers({ path: { eventId } });
       if (!response.data?.tiers) {
-        throwApiError(response.error, 'Golf tournament tiers response is missing data.');
+        throwApiError(response.error, 'Event tiers response is missing data.');
       }
       return response.data.tiers;
     },
@@ -62,7 +62,7 @@ export function useSportEventRoundsQuery(eventId: string) {
     queryFn: async (): Promise<SportEventRoundDto[]> => {
       const response = await listEventRounds({ path: { eventId } });
       if (!response.data?.rounds) {
-        throwApiError(response.error, 'Golf tournament rounds response is missing data.');
+        throwApiError(response.error, 'Event rounds response is missing data.');
       }
       return response.data.rounds;
     },

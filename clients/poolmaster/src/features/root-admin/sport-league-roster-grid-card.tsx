@@ -186,7 +186,7 @@ export function SportLeagueRosterGridCard({
         body: { participantId },
       });
       if (!response.data?.affiliation) {
-        throwApiError(response.error, 'Add golfer response is missing data.');
+        throwApiError(response.error, 'Add participant response is missing data.');
       }
       return response.data.affiliation;
     },

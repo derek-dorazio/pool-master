@@ -366,7 +366,7 @@ export function RootAdminRunEventSyncPage() {
 
           {!eventsQuery.isLoading && !eventsQuery.isError && selectableEvents.length === 0 ? (
             <Alert>
-              No linked {eventSyncSport} events match this preset. Link a tournament to a score
+              No linked {eventSyncSport} events match this preset. Link an event to a score
               source on its page first; an unlinked event has nothing to sync.
             </Alert>
           ) : null}

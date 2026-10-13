@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { listContestConfigTemplates, updateContestConfigTemplate, type ContestConfigTemplateDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import { LayoutTemplate } from 'lucide-react';
+import { getSportDefinition } from '@poolmaster/shared/domain';
 import {
   AsyncPage,
   Button,
@@ -18,7 +19,7 @@ import {
 import {
   cloneContestTemplate,
   getTemplateSize,
-  TEMPLATE_SIZE_FIELDS,
+  templateSizeFields,
   toPositiveNumber,
   type ContestConfigTemplate,
   updateTemplateRules,
@@ -121,6 +122,10 @@ export function RootAdminContentConfigurationDetailPage() {
         ? 'ready'
         : 'empty';
 
+  // The size field and the tiers note name the template's sport's participants and events.
+  const vocabulary = draft ? getSportDefinition(draft.sport).vocabulary : null;
+  const sizeField = draft && vocabulary ? templateSizeFields(vocabulary)[draft.configuration.selectionType] : null;
+
   return (
     <AsyncPage
       emptyBody={`No contest template matched ${templateKey}.`}
@@ -133,7 +138,7 @@ export function RootAdminContentConfigurationDetailPage() {
       state={pageState}
       testId="root-admin-content-configuration-detail-page"
     >
-      {draft ? (
+      {draft && vocabulary && sizeField ? (
         <>
           <IdentityHeading
             icon={<LayoutTemplate aria-hidden size={22} />}
@@ -235,12 +240,12 @@ export function RootAdminContentConfigurationDetailPage() {
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <FormField helperText={TEMPLATE_SIZE_FIELDS[draft.configuration.selectionType].helperText} label={TEMPLATE_SIZE_FIELDS[draft.configuration.selectionType].label}>
+                <FormField helperText={sizeField.helperText} label={sizeField.label}>
                   <Input
-                    data-testid={TEMPLATE_SIZE_FIELDS[draft.configuration.selectionType].testId}
+                    data-testid={sizeField.testId}
                     onChange={(event) => updateDraft((current) =>
                       updateTemplateRules(current, {
-                        [TEMPLATE_SIZE_FIELDS[draft.configuration.selectionType].key]: toPositiveNumber(event.target.value),
+                        [sizeField.key]: toPositiveNumber(event.target.value),
                       }))}
                     type="number"
                     value={getTemplateSize(draft.configuration)}
@@ -258,8 +263,7 @@ export function RootAdminContentConfigurationDetailPage() {
                   />
                 </FormField>
                 <p className="md:col-span-2 text-sm text-muted-foreground">
-                  Tiers, prices and golfer assignments are set per tournament, not per template —
-                  see the tournament&apos;s Tiers page.
+                  {`Tiers, prices and ${vocabulary.participant.one} assignments are set per ${vocabulary.event.one}, not per template — see the ${vocabulary.event.one}'s Tiers page.`}
                 </p>
               </div>
           </FormEditorSection>

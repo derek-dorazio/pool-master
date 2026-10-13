@@ -244,7 +244,7 @@ export type SportEventReadiness = {
 export function deriveSportEventReadiness(
   tournament: Pick<
     SportEventDto,
-    'status' | 'loadedParticipantCount' | 'tierCount' | 'untieredParticipantCount' | 'unpricedParticipantCount' | 'pricing'
+    'sport' | 'status' | 'loadedParticipantCount' | 'tierCount' | 'untieredParticipantCount' | 'unpricedParticipantCount' | 'pricing'
   >,
 ): SportEventReadiness {
   if (tournament.status === SportEventStatus.COMPLETED) {
@@ -273,18 +273,21 @@ export function deriveSportEventReadiness(
       reasons: ['No tiers defined'],
     };
   }
+  // A count of the event's participants, in its sport's words: "4 golfers", "1 horse".
+  const { participant } = getSportDefinition(tournament.sport).vocabulary;
+  const participants = (count: number) => `${count} ${count === 1 ? participant.one : participant.many}`;
   if (tournament.untieredParticipantCount > 0) {
     return {
       label: 'Tiers pending',
       tone: 'warning',
-      reasons: [`${tournament.untieredParticipantCount} golfer(s) without a tier`],
+      reasons: [`${participants(tournament.untieredParticipantCount)} without a tier`],
     };
   }
   if (!tournament.pricing || tournament.unpricedParticipantCount > 0) {
     return {
       label: 'Prices pending',
       tone: 'warning',
-      reasons: [tournament.pricing ? `${tournament.unpricedParticipantCount} golfer(s) without a price` : 'No prices assigned'],
+      reasons: [tournament.pricing ? `${participants(tournament.unpricedParticipantCount)} without a price` : 'No prices assigned'],
     };
   }
   return { label: 'Ready to release', tone: 'info', reasons: [] };
