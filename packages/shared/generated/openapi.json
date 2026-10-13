@@ -5615,7 +5615,7 @@
         ],
         "description": "Contest rules and entries-per-team limit, one shape per selection type. `selectionType` must match the contest's."
       },
-      "GolfEffectiveTierDto": {
+      "EffectiveTierDto": {
         "type": "object",
         "properties": {
           "tierKey": {
@@ -5641,21 +5641,21 @@
                 },
                 "participantId": {
                   "type": "string",
-                  "description": "Global golfer identity."
+                  "description": "Global participant identity."
                 },
                 "tierOrderIndex": {
                   "type": [
                     "integer",
                     "null"
                   ],
-                  "description": "Within-tier ordering position; null when the golfer has no explicit order."
+                  "description": "Within-tier ordering position; null when the participant has no explicit order."
                 },
                 "price": {
                   "type": [
                     "number",
                     "null"
                   ],
-                  "description": "Per-golfer budget price when the event defines one; null otherwise."
+                  "description": "Per-participant budget price when the event defines one; null otherwise."
                 }
               },
               "required": [
@@ -5665,9 +5665,9 @@
                 "price"
               ],
               "additionalProperties": false,
-              "description": "One golfer's inherited tier placement for the contest's linked event."
+              "description": "One participant's inherited tier placement for the contest's linked event."
             },
-            "description": "Golfers assigned to this tier, ordered by tierOrderIndex ascending."
+            "description": "Participants assigned to this tier, ordered by tierOrderIndex ascending."
           }
         },
         "required": [
@@ -5677,7 +5677,7 @@
           "assignments"
         ],
         "additionalProperties": false,
-        "description": "One inherited event tier and its golfer assignments."
+        "description": "One inherited event tier and its participant assignments."
       },
       "ContestManagementDetailDto": {
         "type": "object",
@@ -5840,21 +5840,21 @@
                       },
                       "participantId": {
                         "type": "string",
-                        "description": "Global golfer identity."
+                        "description": "Global participant identity."
                       },
                       "tierOrderIndex": {
                         "type": [
                           "integer",
                           "null"
                         ],
-                        "description": "Within-tier ordering position; null when the golfer has no explicit order."
+                        "description": "Within-tier ordering position; null when the participant has no explicit order."
                       },
                       "price": {
                         "type": [
                           "number",
                           "null"
                         ],
-                        "description": "Per-golfer budget price when the event defines one; null otherwise."
+                        "description": "Per-participant budget price when the event defines one; null otherwise."
                       }
                     },
                     "required": [
@@ -5864,9 +5864,9 @@
                       "price"
                     ],
                     "additionalProperties": false,
-                    "description": "One golfer's inherited tier placement for the contest's linked event."
+                    "description": "One participant's inherited tier placement for the contest's linked event."
                   },
-                  "description": "Golfers assigned to this tier, ordered by tierOrderIndex ascending."
+                  "description": "Participants assigned to this tier, ordered by tierOrderIndex ascending."
                 }
               },
               "required": [
@@ -5876,7 +5876,7 @@
                 "assignments"
               ],
               "additionalProperties": false,
-              "description": "One inherited event tier and its golfer assignments."
+              "description": "One inherited event tier and its participant assignments."
             },
             "description": "Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
           },
@@ -6245,21 +6245,21 @@
                           },
                           "participantId": {
                             "type": "string",
-                            "description": "Global golfer identity."
+                            "description": "Global participant identity."
                           },
                           "tierOrderIndex": {
                             "type": [
                               "integer",
                               "null"
                             ],
-                            "description": "Within-tier ordering position; null when the golfer has no explicit order."
+                            "description": "Within-tier ordering position; null when the participant has no explicit order."
                           },
                           "price": {
                             "type": [
                               "number",
                               "null"
                             ],
-                            "description": "Per-golfer budget price when the event defines one; null otherwise."
+                            "description": "Per-participant budget price when the event defines one; null otherwise."
                           }
                         },
                         "required": [
@@ -6269,9 +6269,9 @@
                           "price"
                         ],
                         "additionalProperties": false,
-                        "description": "One golfer's inherited tier placement for the contest's linked event."
+                        "description": "One participant's inherited tier placement for the contest's linked event."
                       },
-                      "description": "Golfers assigned to this tier, ordered by tierOrderIndex ascending."
+                      "description": "Participants assigned to this tier, ordered by tierOrderIndex ascending."
                     }
                   },
                   "required": [
@@ -6281,7 +6281,7 @@
                     "assignments"
                   ],
                   "additionalProperties": false,
-                  "description": "One inherited event tier and its golfer assignments."
+                  "description": "One inherited event tier and its participant assignments."
                 },
                 "description": "Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
               },
@@ -13408,7 +13408,7 @@
                 "pickedAt"
               ],
               "additionalProperties": false,
-              "description": "Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint."
+              "description": "Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint."
             },
             "description": "The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them."
           }
@@ -13577,7 +13577,7 @@
           "pickedAt"
         ],
         "additionalProperties": false,
-        "description": "Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint."
+        "description": "Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint."
       },
       "ParticipantScoringDefinitionId": {
         "type": "string",
@@ -13878,7 +13878,7 @@
           "type": {
             "type": "string",
             "enum": [
-              "BEST_N_GOLFERS"
+              "BEST_N"
             ],
             "description": "Sum the best N picks' totals for each entry."
           },
@@ -13919,7 +13919,7 @@
               "type": {
                 "type": "string",
                 "enum": [
-                  "BEST_N_GOLFERS"
+                  "BEST_N"
                 ],
                 "description": "Sum the best N picks' totals for each entry."
               },
@@ -14961,7 +14961,7 @@
                     "pickedAt"
                   ],
                   "additionalProperties": false,
-                  "description": "Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint."
+                  "description": "Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint."
                 },
                 "description": "The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them."
               }
@@ -15101,7 +15101,7 @@
                     "pickedAt"
                   ],
                   "additionalProperties": false,
-                  "description": "Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint."
+                  "description": "Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint."
                 },
                 "description": "The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them."
               }
@@ -15266,7 +15266,7 @@
                       "pickedAt"
                     ],
                     "additionalProperties": false,
-                    "description": "Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint."
+                    "description": "Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint."
                   },
                   "description": "The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them."
                 }
@@ -27552,7 +27552,7 @@
         "tags": [
           "Contests"
         ],
-        "description": "Returns a contest entry plus its picked participants. Golf scoring data is exposed by the Golf leaderboard endpoint rather than copied onto picks. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "Returns a contest entry plus its picked participants. Scores are exposed by the contest leaderboard endpoint rather than copied onto picks. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
           {
             "schema": {
@@ -27703,14 +27703,14 @@
         }
       }
     },
-    "/api/v1/contests/{contestId}/golf/leaderboard": {
+    "/api/v1/contests/{contestId}/leaderboard": {
       "get": {
-        "operationId": "getGolfContestLeaderboard",
-        "summary": "Get Golf contest leaderboard",
+        "operationId": "getContestLeaderboard",
+        "summary": "Get contest leaderboard",
         "tags": [
           "Contests"
         ],
-        "description": "Returns the member-facing leaderboard for a golf contest, as the cross-sport ContestLeaderboardResponse. While the contest is live, entry standings are computed from the event's standings and joined to entry picks in memory, so picks remain pointers into `participants` (the event's own field rows). Once the contest is COMPLETED, each entry's total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "Returns the member-facing leaderboard for a contest, as the cross-sport ContestLeaderboardResponse. While the contest is live, entry standings are computed from the event's standings and joined to entry picks in memory, so picks remain pointers into `participants` (the event's own field rows). Once the contest is COMPLETED, each entry's total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
           {
             "schema": {
@@ -27733,7 +27733,7 @@
             }
           },
           "400": {
-            "description": "CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).",
+            "description": "CONTEST_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).",
             "content": {
               "application/json": {
                 "schema": {

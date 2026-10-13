@@ -93,7 +93,7 @@ start, which is exactly that row. No jockey participants, no jockey picks.
 | Top 10 linear | 10, 9 ... 1 | Cycling, marathons default |
 
 - An entry's score is the sum of its counting picks, under the cross-sport `BEST_N` counting
-  rule that #604 renames from `BEST_N_GOLFERS`.
+  rule (renamed from `BEST_N_GOLFERS` in #604).
 - **Dead heats** (horse racing, photo finishes): every horse in the dead heat scores the full
   points for the place. Entry standings already allow ties (MVP decision).
 - **Official result:** a race's result counts when an admin marks it official. A later

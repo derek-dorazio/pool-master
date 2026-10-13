@@ -47,7 +47,7 @@ import { useContestLeaderboardQuery } from './use-contest-leaderboard';
  */
 
 const LEADERBOARD_ERROR_MESSAGES: ErrorCodeMessages = {
-  CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN:
+  CONTEST_LEADERBOARD_PICKS_HIDDEN:
     'Scores appear once picks are revealed. Until then, the contest board shows who has entered.',
   LEAGUE_MEMBERSHIP_REQUIRED: 'Only members of this league can see its contest leaderboards.',
   LEAGUE_MEMBERSHIP_INACTIVE:

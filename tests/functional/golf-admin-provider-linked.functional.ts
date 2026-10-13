@@ -578,7 +578,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
 /**
  * Builds a minimal ACTIVE golf ROSTER/TIERED contest against `sportEventId`
  * with one entry whose picks reference the three best-ranked golfers in
- * the (provider-loaded) field — mirroring golf-contest-settlement.integration
+ * the (provider-loaded) field — mirroring contest-settlement.integration
  * .ts's fixture. Settlement is driven by the real COMPLETED transition, not a
  * direct service call.
  */

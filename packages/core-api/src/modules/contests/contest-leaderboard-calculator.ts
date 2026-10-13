@@ -21,7 +21,7 @@ import type {
 } from '../../mappers/contests.mapper';
 
 export interface ContestCountingRule {
-  type: 'BEST_N_GOLFERS';
+  type: 'BEST_N';
   count: number;
 }
 
@@ -72,7 +72,7 @@ export function resolveContestCountingRule(
   }
 
   return {
-    type: 'BEST_N_GOLFERS',
+    type: 'BEST_N',
     count: countedScores,
   };
 }

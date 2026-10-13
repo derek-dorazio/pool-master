@@ -1146,7 +1146,7 @@ export interface paths {
         };
         /**
          * Get contest entry detail
-         * @description Returns a contest entry plus its picked participants. Golf scoring data is exposed by the Golf leaderboard endpoint rather than copied onto picks. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Returns a contest entry plus its picked participants. Scores are exposed by the contest leaderboard endpoint rather than copied onto picks. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["getContestEntry"];
         put?: never;
@@ -1161,7 +1161,7 @@ export interface paths {
         patch: operations["updateContestEntry"];
         trace?: never;
     };
-    "/api/v1/contests/{contestId}/golf/leaderboard": {
+    "/api/v1/contests/{contestId}/leaderboard": {
         parameters: {
             query?: never;
             header?: never;
@@ -1169,10 +1169,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Golf contest leaderboard
-         * @description Returns the member-facing leaderboard for a golf contest, as the cross-sport ContestLeaderboardResponse. While the contest is live, entry standings are computed from the event's standings and joined to entry picks in memory, so picks remain pointers into `participants` (the event's own field rows). Once the contest is COMPLETED, each entry's total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * Get contest leaderboard
+         * @description Returns the member-facing leaderboard for a contest, as the cross-sport ContestLeaderboardResponse. While the contest is live, entry standings are computed from the event's standings and joined to entry picks in memory, so picks remain pointers into `participants` (the event's own field rows). Once the contest is COMPLETED, each entry's total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
-        get: operations["getGolfContestLeaderboard"];
+        get: operations["getContestLeaderboard"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4336,23 +4336,23 @@ export interface components {
             /** @description Maximum entries a Team may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
         };
-        /** @description One inherited event tier and its golfer assignments. */
-        GolfEffectiveTierDto: {
+        /** @description One inherited event tier and its participant assignments. */
+        EffectiveTierDto: {
             /** @description Stable per-event tier key. */
             tierKey: string;
             /** @description Commissioner-facing tier label. */
             label: string;
             /** @description 1-based tier ordering. */
             tierNumber: number;
-            /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
+            /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
             assignments: {
                 /** @description Field entry the assignment belongs to. */
                 sportEventParticipantId: string;
-                /** @description Global golfer identity. */
+                /** @description Global participant identity. */
                 participantId: string;
-                /** @description Within-tier ordering position; null when the golfer has no explicit order. */
+                /** @description Within-tier ordering position; null when the participant has no explicit order. */
                 tierOrderIndex: number | null;
-                /** @description Per-golfer budget price when the event defines one; null otherwise. */
+                /** @description Per-participant budget price when the event defines one; null otherwise. */
                 price: number | null;
             }[];
         };
@@ -4406,15 +4406,15 @@ export interface components {
                 label: string;
                 /** @description 1-based tier ordering. */
                 tierNumber: number;
-                /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
+                /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
                 assignments: {
                     /** @description Field entry the assignment belongs to. */
                     sportEventParticipantId: string;
-                    /** @description Global golfer identity. */
+                    /** @description Global participant identity. */
                     participantId: string;
-                    /** @description Within-tier ordering position; null when the golfer has no explicit order. */
+                    /** @description Within-tier ordering position; null when the participant has no explicit order. */
                     tierOrderIndex: number | null;
-                    /** @description Per-golfer budget price when the event defines one; null otherwise. */
+                    /** @description Per-participant budget price when the event defines one; null otherwise. */
                     price: number | null;
                 }[];
             }[];
@@ -4547,15 +4547,15 @@ export interface components {
                     label: string;
                     /** @description 1-based tier ordering. */
                     tierNumber: number;
-                    /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
+                    /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
                     assignments: {
                         /** @description Field entry the assignment belongs to. */
                         sportEventParticipantId: string;
-                        /** @description Global golfer identity. */
+                        /** @description Global participant identity. */
                         participantId: string;
-                        /** @description Within-tier ordering position; null when the golfer has no explicit order. */
+                        /** @description Within-tier ordering position; null when the participant has no explicit order. */
                         tierOrderIndex: number | null;
-                        /** @description Per-golfer budget price when the event defines one; null otherwise. */
+                        /** @description Per-participant budget price when the event defines one; null otherwise. */
                         price: number | null;
                     }[];
                 }[];
@@ -7412,7 +7412,7 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
-        /** @description Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint. */
+        /** @description Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint. */
         ContestEntryParticipantDetailDto: {
             pickId: string;
             sportEventParticipantId: string;
@@ -7529,7 +7529,7 @@ export interface components {
              * @description Sum the best N picks' totals for each entry.
              * @enum {string}
              */
-            type: "BEST_N_GOLFERS";
+            type: "BEST_N";
             /** @description N: how many picks count toward each entry's total. */
             count: number;
         };
@@ -7550,7 +7550,7 @@ export interface components {
                  * @description Sum the best N picks' totals for each entry.
                  * @enum {string}
                  */
-                type: "BEST_N_GOLFERS";
+                type: "BEST_N";
                 /** @description N: how many picks count toward each entry's total. */
                 count: number;
             };
@@ -14233,7 +14233,7 @@ export interface operations {
             };
         };
     };
-    getGolfContestLeaderboard: {
+    getContestLeaderboard: {
         parameters: {
             query?: never;
             header?: never;
@@ -14253,7 +14253,7 @@ export interface operations {
                     "application/json": components["schemas"]["ContestLeaderboardResponse"];
                 };
             };
-            /** @description CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know). */
+            /** @description CONTEST_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know). */
             400: {
                 headers: {
                     [name: string]: unknown;

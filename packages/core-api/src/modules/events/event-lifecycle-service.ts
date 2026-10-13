@@ -107,7 +107,7 @@ export class EventLifecycleService {
     private readonly logger?: FastifyBaseLogger,
     private readonly mailDelivery?: MailDeliveryProvider,
     private readonly appBaseUrl = 'http://localhost:5173',
-    private readonly golfContestSettlement?: CompletedSportEventSettlement,
+    private readonly contestSettlement?: CompletedSportEventSettlement,
   ) {}
 
   async applySportEventStatusTransition(
@@ -160,11 +160,11 @@ export class EventLifecycleService {
   private async settleContestsForCompletedEvent(
     sportEvent: SportEvent,
   ): Promise<void> {
-    if (!this.golfContestSettlement) {
+    if (!this.contestSettlement) {
       return;
     }
 
-    await this.golfContestSettlement.settleCompletedSportEvent(sportEvent.id, {
+    await this.contestSettlement.settleCompletedSportEvent(sportEvent.id, {
       completedAt: sportEvent.endDate ?? sportEvent.startDate,
     });
   }

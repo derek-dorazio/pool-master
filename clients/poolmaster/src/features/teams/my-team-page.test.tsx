@@ -25,7 +25,7 @@ import { TeamPage } from './team-page';
 const createLeagueSquadMock = vi.fn();
 const createSquadOwnerInvitationMock = vi.fn();
 const getCurrentUserMock = vi.fn();
-const getGolfContestLeaderboardMock = vi.fn();
+const getContestLeaderboardMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
@@ -41,7 +41,7 @@ bindApiMocks({
   createLeagueSquad: createLeagueSquadMock,
   createSquadOwnerInvitation: createSquadOwnerInvitationMock,
   getUser: getCurrentUserMock,
-  getGolfContestLeaderboard: getGolfContestLeaderboardMock,
+  getContestLeaderboard: getContestLeaderboardMock,
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,
   getLeagueByCode: getLeagueByCodeMock,
@@ -190,7 +190,7 @@ afterEach(() => {
     createLeagueSquadMock, createSquadOwnerInvitationMock, getCurrentUserMock, getLeagueByCodeMock,
     listLeagueMembersMock, listLeagueSquadsMock, listSquadOwnerInvitationsMock, refreshTokenMock,
     replaceSquadOwnerMock, revokeSquadOwnerInvitationMock, updateLeagueSquadMock,
-    getGolfContestLeaderboardMock, listContestEntriesMock, listContestsMock,
+    getContestLeaderboardMock, listContestEntriesMock, listContestsMock,
   ]) {
     mock.mockReset();
   }
@@ -282,11 +282,11 @@ describe('My team › My entries', () => {
       [contest('c-live', 'Masters Pool', 'ACTIVE'), contest('c-other', 'Other Pool', 'ACTIVE')],
       { 'c-live': [teamEntry('c-live', 'SUBMITTED')], 'c-other': [teamEntry('c-other', 'SUBMITTED', 'team-9')] },
     );
-    getGolfContestLeaderboardMock.mockResolvedValue(apiSuccess({
+    getContestLeaderboardMock.mockResolvedValue(apiSuccess({
       contestId: 'c-live',
       sportEventId: 'event-c-live',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-      countingRule: { type: 'BEST_N_GOLFERS', count: 4 },
+      countingRule: { type: 'BEST_N', count: 4 },
       participants: [],
       entries: [
         { entryId: 'e-9', entryName: 'Leaders', entryNumber: 1, squadId: 'team-9', squadName: 'Leaders', status: 'SUBMITTED', position: 1, displayPosition: '1', countingPickLimit: 4, scoredPickCount: 0, golf: { totalScoreToPar: -8 }, picks: [] },
@@ -317,8 +317,8 @@ describe('My team › My entries', () => {
   it('says the team\'s place could not be checked when the live leaderboard read fails, not that it is unranked', async () => {
     primeTeam();
     primeContests([contest('c-live', 'Masters Pool', 'ACTIVE')], { 'c-live': [teamEntry('c-live', 'SUBMITTED')] });
-    getGolfContestLeaderboardMock.mockResolvedValue({
-      error: { error: { code: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN', message: 'Picks are hidden.' } },
+    getContestLeaderboardMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN', message: 'Picks are hidden.' } },
     });
 
     renderTeamRoutes();

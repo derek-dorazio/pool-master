@@ -10,7 +10,7 @@ import type {
   ContestManagementDetailDto,
   ContestConfigurationRequest,
   CreateContestRequest,
-  GolfEffectiveTierDto,
+  EffectiveTierDto,
   ApiErrorCode,
 } from '@poolmaster/shared/dto';
 import {
@@ -46,7 +46,7 @@ import {
   getTieredRosterSize,
   isContestFormatValidForTournamentFormat,
 } from '@poolmaster/shared/domain';
-import { toGolfEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
+import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
 import { evaluateEventOperationalState, hasSportEventStarted } from '../events/operational-timing';
 
 interface CreateContestManagementContext {
@@ -193,12 +193,12 @@ export class ContestManagementService {
    */
   private async resolveEffectiveTiers(
     sportEventId: string | null | undefined,
-  ): Promise<GolfEffectiveTierDto[]> {
+  ): Promise<EffectiveTierDto[]> {
     if (!sportEventId) {
       return [];
     }
     const tiers = await this.sportEventTierService.getEffectiveTiersForSportEvent(sportEventId);
-    return toGolfEffectiveTierDtoList(tiers);
+    return toEffectiveTierDtoList(tiers);
   }
 
   async getContest(contestId: string): Promise<ContestManagementDetailDto> {
@@ -640,7 +640,7 @@ async function syncDerivedScoring(
 /**
  * cutRule/playoffHandling/displayScoring/tiebreaker dropped (plans/124
  * §4.6a) — each was locked to exactly one possible value and had zero real
- * reads downstream (verified: nothing in golf-contest-settlement-service.ts
+ * reads downstream (verified: nothing in contest-settlement-service.ts
  * or contest-leaderboard-calculator.ts reads this config blob). The
  * participantScoringRule row is still created — syncDerivedScoring's
  * caller relies on the row existing — it just carries no config now.
@@ -669,7 +669,7 @@ function buildContestManagementDetail(
     configJson?: ContestSelectionConfig;
     maxEntriesPerSquad?: number | null;
   },
-  effectiveTiers: GolfEffectiveTierDto[],
+  effectiveTiers: EffectiveTierDto[],
 ): ContestManagementDetailDto {
   const configJson = ensureTypedConfiguration(configuration);
   return {

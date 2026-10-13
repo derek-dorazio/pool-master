@@ -746,7 +746,7 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
   // still open, so the leaderboard read refuses it and the page shows its error state.
   const leaderboardTab = await test.step('open the leaderboard page before the event starts', async () => {
     const tab = await openLeaderboardTab(page, run.leagueCode, state.contestId);
-    await expect(tab.getByTestId('contest-leaderboard-error-CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN')).toBeVisible();
+    await expect(tab.getByTestId('contest-leaderboard-error-CONTEST_LEADERBOARD_PICKS_HIDDEN')).toBeVisible();
     await page.bringToFront();
     return tab;
   });
@@ -769,7 +769,7 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
     await leaderboardTab.bringToFront();
     await expect(leaderboardTab.getByTestId(`contest-leaderboard-entry-${state.entryId}`))
       .toBeVisible({ timeout: LIVE_PAGE_TIMEOUT_MS });
-    await expect(leaderboardTab.getByTestId('contest-leaderboard-error-CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN'))
+    await expect(leaderboardTab.getByTestId('contest-leaderboard-error-CONTEST_LEADERBOARD_PICKS_HIDDEN'))
       .toHaveCount(0);
     await leaderboardTab.close();
   });
@@ -792,7 +792,7 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
     }
     // The board shows picks and never scores (#111). The leaderboard page rendering the entry
     // is asserted in the step above; this read checks every golfer has a round-1 score.
-    const leaderboard = await page.request.get(`/api/v1/contests/${state.contestId}/golf/leaderboard`);
+    const leaderboard = await page.request.get(`/api/v1/contests/${state.contestId}/leaderboard`);
     expect(leaderboard.ok(), `GET the leaderboard answered ${leaderboard.status()}`).toBe(true);
     const { participants } = (await leaderboard.json()) as {
       participants: { id: string; rounds?: { roundNumber: number; golf?: { strokes: number } | null }[] }[];
@@ -1179,8 +1179,8 @@ function dateTimeInput(date: Date): string {
   return `${dateInput(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-/** What act 5 reads off `getGolfContestLeaderboard`; everything else in the body is unused here. */
-type GolfContestLeaderboardBody = {
+/** What act 5 reads off `getContestLeaderboard`; everything else in the body is unused here. */
+type ContestLeaderboardBody = {
   countingRule: { count: number };
   participants: Array<{
     id: string;
@@ -1238,9 +1238,9 @@ type LeaderboardRead = {
  * browser context's cookies and needs no CSRF header.
  */
 async function readContestLeaderboard(page: Page, contestId: string, entryId: string): Promise<LeaderboardRead> {
-  const response = await page.request.get(`/api/v1/contests/${contestId}/golf/leaderboard`);
+  const response = await page.request.get(`/api/v1/contests/${contestId}/leaderboard`);
   expect(response.ok(), `GET the leaderboard answered ${response.status()}`).toBe(true);
-  const body = (await response.json()) as GolfContestLeaderboardBody;
+  const body = (await response.json()) as ContestLeaderboardBody;
 
   const standing = body.entries.find((candidate) => candidate.entryId === entryId);
   if (!standing) {

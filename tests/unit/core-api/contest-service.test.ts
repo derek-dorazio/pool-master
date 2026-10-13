@@ -953,10 +953,10 @@ describe('ContestService', () => {
         eventParticipants: { listEventParticipants },
       });
 
-      const result = await service.getGolfLeaderboard('contest-1', 'user-1');
+      const result = await service.getLeaderboard('contest-1', 'user-1');
 
       expect(result.scoringDefinitionId).toBe('GOLF_RELATIVE_TO_PAR_TOTAL');
-      expect(result.countingRule).toEqual({ type: 'BEST_N_GOLFERS', count: 2 });
+      expect(result.countingRule).toEqual({ type: 'BEST_N', count: 2 });
       expect(result.entries.map((entry) => [entry.entryId, entry.score, entry.position])).toEqual([
         ['entry-2', -9, 1],
         ['entry-1', -7, 2],
@@ -1599,9 +1599,9 @@ describe('ContestService', () => {
   });
 });
 
-// The golf leaderboard refuses what it cannot rank honestly, and a settled contest answers from
+// The contest leaderboard refuses what it cannot rank honestly, and a settled contest answers from
 // its frozen standings.
-describe('ContestService.getGolfLeaderboard — refusals and the settled read', () => {
+describe('ContestService.getLeaderboard — refusals and the settled read', () => {
   const member = () => createMockMembershipRepo({
     findByLeagueAndUser: jest.fn().mockResolvedValue(buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' })),
   });
@@ -1630,15 +1630,15 @@ describe('ContestService.getGolfLeaderboard — refusals and the settled read', 
   it.each([ContestStatus.DRAFT, ContestStatus.OPEN])('refuses to show a %s contest\'s leaderboard while picks are hidden', async (status) => {
     const service = buildService({ contests: contestRepoFor({ status }), memberships: member() });
 
-    await expect(service.getGolfLeaderboard('contest-1', 'user-1'))
-      .rejects.toMatchObject({ code: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN' });
+    await expect(service.getLeaderboard('contest-1', 'user-1'))
+      .rejects.toMatchObject({ code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN' });
   });
 
   it('refuses a contest with no sport event', async () => {
     const service = buildService({ contests: contestRepoFor({ sportEventId: undefined }), memberships: member() });
 
-    await expect(service.getGolfLeaderboard('contest-1', 'user-1'))
-      .rejects.toMatchObject({ code: 'CONTEST_GOLF_LEADERBOARD_EVENT_REQUIRED' });
+    await expect(service.getLeaderboard('contest-1', 'user-1'))
+      .rejects.toMatchObject({ code: 'CONTEST_LEADERBOARD_EVENT_REQUIRED' });
   });
 
   it('refuses a contest whose sport event no longer exists', async () => {
@@ -1648,8 +1648,8 @@ describe('ContestService.getGolfLeaderboard — refusals and the settled read', 
       sportEvents: fakeSportEventRepo({ findById: jest.fn().mockResolvedValue(null) }),
     });
 
-    await expect(service.getGolfLeaderboard('contest-1', 'user-1'))
-      .rejects.toMatchObject({ code: 'CONTEST_GOLF_LEADERBOARD_EVENT_REQUIRED' });
+    await expect(service.getLeaderboard('contest-1', 'user-1'))
+      .rejects.toMatchObject({ code: 'CONTEST_LEADERBOARD_EVENT_REQUIRED' });
   });
 
   it('refuses a contest whose configuration sets no count of golfers to score', async () => {
@@ -1660,8 +1660,8 @@ describe('ContestService.getGolfLeaderboard — refusals and the settled read', 
       scoringRules: rules(golfRule),
     });
 
-    await expect(service.getGolfLeaderboard('contest-1', 'user-1'))
-      .rejects.toMatchObject({ code: 'CONTEST_GOLF_LEADERBOARD_COUNTING_RULE_MISSING' });
+    await expect(service.getLeaderboard('contest-1', 'user-1'))
+      .rejects.toMatchObject({ code: 'CONTEST_LEADERBOARD_COUNTING_RULE_MISSING' });
   });
 
   it('refuses a contest whose scoring rule names a definition the registry does not know, rather than guessing a direction', async () => {
@@ -1672,8 +1672,8 @@ describe('ContestService.getGolfLeaderboard — refusals and the settled read', 
       scoringRules: rules([{ participantScoringDefinitionId: 'STABLEFORD_POINTS', sortOrder: 1, active: true }]),
     });
 
-    await expect(service.getGolfLeaderboard('contest-1', 'user-1'))
-      .rejects.toMatchObject({ code: 'CONTEST_GOLF_LEADERBOARD_SCORING_DEFINITION_UNKNOWN' });
+    await expect(service.getLeaderboard('contest-1', 'user-1'))
+      .rejects.toMatchObject({ code: 'CONTEST_LEADERBOARD_SCORING_DEFINITION_UNKNOWN' });
   });
 
   it('answers a COMPLETED contest from its frozen standings, not from the live scores', async () => {
@@ -1707,9 +1707,9 @@ describe('ContestService.getGolfLeaderboard — refusals and the settled read', 
       }),
     });
 
-    const result = await service.getGolfLeaderboard('contest-1', 'user-1');
+    const result = await service.getLeaderboard('contest-1', 'user-1');
 
-    expect(result.countingRule).toEqual({ type: 'BEST_N_GOLFERS', count: 4 });
+    expect(result.countingRule).toEqual({ type: 'BEST_N', count: 4 });
     expect(result.asOf).toEqual(settledAt);
     expect(result.entries.map((entry) => [entry.entryId, entry.position, entry.score])).toEqual([
       ['entry-2', 1, -9],
@@ -1726,9 +1726,9 @@ describe('ContestService.getGolfLeaderboard — refusals and the settled read', 
       standings: fakeContestEntryStandingRepo({ findByContest: jest.fn().mockResolvedValue([]) }),
     });
 
-    const result = await service.getGolfLeaderboard('contest-1', 'user-1');
+    const result = await service.getLeaderboard('contest-1', 'user-1');
 
-    expect(result.countingRule).toEqual({ type: 'BEST_N_GOLFERS', count: 2 });
+    expect(result.countingRule).toEqual({ type: 'BEST_N', count: 2 });
     expect(result.entries).toHaveLength(1);
     expect(result.entries[0]).toMatchObject({ score: null, position: null });
   });

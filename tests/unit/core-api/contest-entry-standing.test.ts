@@ -34,7 +34,7 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     const standing = buildContestEntryStanding(
       entry([pick('p1', 'sep-a'), pick('p2', 'sep-b'), pick('p3', 'sep-c'), pick('p4', 'sep-d')]),
       scores([['sep-a', 'Ana', 3], ['sep-b', 'Ben', -4], ['sep-c', 'Cal', 1], ['sep-d', 'Dee', -1]]),
-      { type: 'BEST_N_GOLFERS', count: 2 },
+      { type: 'BEST_N', count: 2 },
       'LOWER_IS_BETTER',
     );
 
@@ -53,7 +53,7 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     const standing = buildContestEntryStanding(
       entry([pick('p1', 'sep-a'), pick('p2', 'sep-b'), pick('p3', 'sep-c')]),
       scores([['sep-a', 'Ana', 10], ['sep-b', 'Ben', 30], ['sep-c', 'Cal', 20]]),
-      { type: 'BEST_N_GOLFERS', count: 2 },
+      { type: 'BEST_N', count: 2 },
       'HIGHER_IS_BETTER',
     );
 
@@ -65,7 +65,7 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     const standing = buildContestEntryStanding(
       entry([pick('p1', 'sep-a', 2), pick('p2', 'sep-b', 1), pick('p3', 'sep-c', 3)]),
       scores([['sep-a', 'Ana', -2], ['sep-b', 'Ben', null], ['sep-c', 'Cal', null]]),
-      { type: 'BEST_N_GOLFERS', count: 2 },
+      { type: 'BEST_N', count: 2 },
       'LOWER_IS_BETTER',
     );
 
@@ -82,7 +82,7 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     const standing = buildContestEntryStanding(
       entry([pick('p1', 'sep-a')]),
       scores([['sep-a', 'Ana', null]]),
-      { type: 'BEST_N_GOLFERS', count: 2 },
+      { type: 'BEST_N', count: 2 },
       'LOWER_IS_BETTER',
     );
 
@@ -94,7 +94,7 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     const standing = buildContestEntryStanding(
       entry([pick('p1', 'sep-a'), pick('p2', 'sep-b')]),
       scores([['sep-a', 'Ana', 0], ['sep-b', 'Ben', 0]]),
-      { type: 'BEST_N_GOLFERS', count: 2 },
+      { type: 'BEST_N', count: 2 },
       'LOWER_IS_BETTER',
     );
 
@@ -105,7 +105,7 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     const standing = buildContestEntryStanding(
       entry([pick('p1', 'sep-z'), pick('p2', 'sep-a'), pick('p3', 'sep-b')]),
       scores([['sep-z', 'Zed', -3], ['sep-a', 'Abe', 1], ['sep-b', 'Bo', 1]]),
-      { type: 'BEST_N_GOLFERS', count: 2 },
+      { type: 'BEST_N', count: 2 },
       'LOWER_IS_BETTER',
     );
 
@@ -121,7 +121,7 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     const standing = buildContestEntryStanding(
       entry([pick('p2', 'sep-a'), pick('p1', 'sep-b')]),
       scores([['sep-a', 'Same Name', 1], ['sep-b', 'Same Name', 1]]),
-      { type: 'BEST_N_GOLFERS', count: 1 },
+      { type: 'BEST_N', count: 1 },
       'LOWER_IS_BETTER',
     );
 
@@ -146,7 +146,7 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
       scores([
         ['sep-u', 'U', null], ['sep-c', 'C', null], ['sep-b', 'B', null], ['sep-a', 'A', null], ['sep-v', 'V', null], ['sep-s', 'S', 4],
       ]),
-      { type: 'BEST_N_GOLFERS', count: 4 },
+      { type: 'BEST_N', count: 4 },
       'LOWER_IS_BETTER',
     );
 
@@ -164,7 +164,7 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     const standing = buildContestEntryStanding(
       entry([pick('p1', 'sep-a'), pick('p2', 'sep-gone')]),
       scores([['sep-a', 'Ana', -1]]),
-      { type: 'BEST_N_GOLFERS', count: 2 },
+      { type: 'BEST_N', count: 2 },
       'LOWER_IS_BETTER',
     );
 
@@ -174,13 +174,13 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
 
   it('reports a DRAFT entry as DRAFT and a SUBMITTED entry as SUBMITTED', () => {
     const map = scores([]);
-    const rule = { type: 'BEST_N_GOLFERS' as const, count: 1 };
+    const rule = { type: 'BEST_N' as const, count: 1 };
     expect(buildContestEntryStanding(entry([], { status: 'DRAFT' }), map, rule, 'LOWER_IS_BETTER').status).toBe('DRAFT');
     expect(buildContestEntryStanding(entry([], { status: 'SUBMITTED' }), map, rule, 'LOWER_IS_BETTER').status).toBe('SUBMITTED');
   });
 
   it('carries the entry and squad names and leaves position for the ranking step', () => {
-    const standing = buildContestEntryStanding(entry([]), scores([]), { type: 'BEST_N_GOLFERS', count: 1 }, 'LOWER_IS_BETTER');
+    const standing = buildContestEntryStanding(entry([]), scores([]), { type: 'BEST_N', count: 1 }, 'LOWER_IS_BETTER');
 
     expect(standing).toMatchObject({
       entryId: 'entry-1',

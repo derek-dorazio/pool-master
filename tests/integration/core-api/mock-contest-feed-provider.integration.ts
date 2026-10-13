@@ -7,7 +7,7 @@ import { createEventLifecycleService } from '../../../packages/core-api/src/modu
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { IngestionScheduler, publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core';
-import { createGolfContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
+import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import type { IngestionScheduleConfig } from '../../../packages/shared/dto/config.dto';
 import { createScheduledEventReader } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
 import { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
@@ -444,7 +444,7 @@ async function createGolfLivePick(entryId: string, sportEventParticipantId: stri
 async function readGolfLeaderboard(contestId: string, headers: Record<string, string>) {
   const response = await getApp().inject({
     method: 'GET',
-    url: `/api/v1/contests/${contestId}/golf/leaderboard`,
+    url: `/api/v1/contests/${contestId}/leaderboard`,
     headers,
   });
   expect(response.statusCode).toBe(200);
@@ -864,10 +864,10 @@ describe('mock contest feed provider event-first verification', () => {
     const provider = new MockContestFeedAdapter(mockProvider.baseUrl);
     const registry = new ProviderRegistry();
     registry.register(Sport.GOLF, provider, 'PRIMARY');
-    const settlement = createGolfContestSettlementService(prisma);
+    const settlement = createContestSettlementService(prisma);
     const eventLifecycleService = createEventLifecycleService(prisma, {
       appBaseUrl: 'http://localhost:5173',
-      golfContestSettlement: settlement,
+      contestSettlement: settlement,
     });
     const persistence = new IngestionPersistence(prisma);
     const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(prisma));
