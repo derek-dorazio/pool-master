@@ -1,17 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { Sport } from '@poolmaster/shared/domain';
 import {
   golferRoundScore,
   seedDateOffsetDays,
   shiftedEventDates,
-  type GolfSeedFile,
 } from '../../../packages/core-api/scripts/seed-golf/seed-golf-data';
+import { parseSportDataFile, SportDataContent, type SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 
-function seedWithStarts(...startDates: string[]): GolfSeedFile {
+function seedWithStarts(...startDates: string[]): Pick<SportDataFile, 'sportLeagues'> {
   return {
-    season: 2026,
-    notes: '',
-    tours: [{
+    sportLeagues: [{
       name: 'Tour',
       players: [],
       events: startDates.map((startDate, index) => ({
@@ -23,7 +22,6 @@ function seedWithStarts(...startDates: string[]): GolfSeedFile {
         location: null,
         rounds: 4,
         roundsPar: 72,
-        winner: 'generated',
         field: [],
       })),
     }],
@@ -70,11 +68,19 @@ describe('golf seed round scores', () => {
 });
 
 describe('golf-2026.json', () => {
-  const seed = JSON.parse(readFileSync(join(__dirname, '../../../packages/core-api/scripts/seed-golf/golf-2026.json'), 'utf8')) as GolfSeedFile;
+  const seed = parseSportDataFile(
+    JSON.parse(readFileSync(join(__dirname, '../../../packages/core-api/scripts/seed-golf/golf-2026.json'), 'utf8')) as unknown,
+    { allowTestData: true },
+  );
+
+  it('is a 2026 golf test seed whose envelope names both tours and every kind of contents', () => {
+    expect(seed.scope).toEqual({ sport: Sport.GOLF, season: 2026, sportLeagues: ['PGA TOUR', 'LPGA Tour'], contents: Object.values(SportDataContent) });
+    expect(seed.testData).toBe(true);
+  });
 
   it('holds every 2026 PGA TOUR and LPGA Tour event, each field drawn from its own tour', () => {
-    expect(seed.tours.map((tour) => [tour.name, tour.events.length])).toEqual([['PGA TOUR', 45], ['LPGA Tour', 31]]);
-    for (const tour of seed.tours) {
+    expect(seed.sportLeagues.map((tour) => [tour.name, tour.events.length])).toEqual([['PGA TOUR', 45], ['LPGA Tour', 31]]);
+    for (const tour of seed.sportLeagues) {
       const keys = new Set(tour.players.map((player) => player.key));
       for (const event of tour.events) {
         expect(event.field.length).toBeGreaterThan(60);
@@ -85,10 +91,10 @@ describe('golf-2026.json', () => {
   });
 
   it('gives each event one outright winner and a full set of rounds to everyone who finished', () => {
-    for (const event of seed.tours.flatMap((tour) => tour.events)) {
+    for (const event of seed.sportLeagues.flatMap((tour) => tour.events)) {
       const finishers = event.field.filter((golfer) => !golfer.finish);
-      expect(finishers.every((golfer) => golfer.rounds.length === event.rounds)).toBe(true);
-      const totals = finishers.map((golfer) => golfer.rounds.reduce((sum, strokes) => sum + strokes, 0)).sort((a, b) => a - b);
+      expect(finishers.every((golfer) => golfer.rounds?.length === event.rounds)).toBe(true);
+      const totals = finishers.map((golfer) => (golfer.rounds ?? []).reduce((sum, strokes) => sum + strokes, 0)).sort((a, b) => a - b);
       if (event.winner === 'public') expect(totals[0]).toBeLessThan(totals[1]);
     }
   });

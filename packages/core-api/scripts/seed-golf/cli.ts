@@ -1,22 +1,30 @@
 /**
- * Runs the 2026 golf seed (seed-golf.ts) against a running PoolMaster as a root admin.
+ * Loads a sport data file (sport-data-file.ts) into a running PoolMaster as a root admin.
  *
  * Usage:
  *   POOLMASTER_SEED_BASE_URL=http://localhost:3000 \
  *   POOLMASTER_SEED_ADMIN_IDENTIFIER=poolmaster-admin \
  *   POOLMASTER_SEED_ADMIN_PASSWORD=... \
- *   npm run seed:golf
+ *   npm run seed:golf -- [--file golf-2026.json] [--mode dry-run|apply] [--allow-test-data] [--report report.md]
+ *
+ * --file is a path inside this folder (default golf-2026.json). --mode defaults to dry-run,
+ * which reads the site and reports what applying would change without writing anything.
+ * --allow-test-data lets a file with `testData: true` load; pass it only for a local or QA
+ * site. --report also writes the run's markdown report to that path.
  *
  * The base URL is the site root that serves /api/v1 (the API itself locally, the site on QA).
- * QA runs this through the "Seed QA golf data" workflow, never on deploy.
+ * QA runs this through the "Load sport data" workflow, never on deploy.
  */
 
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { dirname, isAbsolute, relative, resolve } from 'node:path';
+import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { createClient, createConfig, type Client } from '@poolmaster/shared/generated/hey-api/client';
 import { loginUser } from '@poolmaster/shared/generated/hey-api';
-import { seedGolf, type GolfSeedFile } from './seed-golf';
+import { formatLoadReport, LoadMode } from './load-report';
+import { loadSportData } from './seed-golf';
+import { parseSportDataFile } from './sport-data-file';
 
 // Access tokens last 15 minutes; sign in again well before that.
 const SIGN_IN_AGAIN_AFTER_MS = 10 * 60 * 1000;
@@ -40,7 +48,21 @@ async function main(): Promise<void> {
   const baseUrl = requireEnv('POOLMASTER_SEED_BASE_URL').replace(/\/$/, '');
   const identifier = requireEnv('POOLMASTER_SEED_ADMIN_IDENTIFIER');
   const password = requireEnv('POOLMASTER_SEED_ADMIN_PASSWORD');
-  const seed = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'golf-2026.json'), 'utf8')) as GolfSeedFile;
+  const { values } = parseArgs({
+    options: {
+      file: { type: 'string', default: 'golf-2026.json' },
+      mode: { type: 'string', default: 'dry-run' },
+      'allow-test-data': { type: 'boolean', default: false },
+      report: { type: 'string' },
+    },
+  });
+  const mode = values.mode === 'apply' ? LoadMode.APPLY : values.mode === 'dry-run' ? LoadMode.DRY_RUN : null;
+  if (mode === null) throw new Error(`--mode is ${values.mode}; use dry-run or apply.`);
+  const dataDir = dirname(fileURLToPath(import.meta.url));
+  const path = resolve(dataDir, values.file);
+  const inside = relative(dataDir, path);
+  if (inside.startsWith('..') || isAbsolute(inside)) throw new Error(`--file ${values.file} is outside ${dataDir}.`);
+  const file = parseSportDataFile(JSON.parse(readFileSync(path, 'utf8')) as unknown, { allowTestData: values['allow-test-data'] });
 
   let signedIn: { client: Client; at: number } | null = null;
   const getClient = async (): Promise<Client> => {
@@ -62,14 +84,11 @@ async function main(): Promise<void> {
     return client;
   };
 
-  const summaries = await seedGolf(seed, { getClient, now: new Date(), log: (line) => console.log(line) });
-  for (const summary of summaries) {
-    const drafts = summary.skipped.filter((skipped) => skipped.status === 'DRAFT');
-    console.log(`${summary.tour}: ${summary.created.length} created, ${summary.skipped.length} already there.`);
-    for (const draft of drafts) {
-      console.log(`  ${draft.name} exists as a draft. If an earlier seed run stopped on it, delete it and run the seed again.`);
-    }
-  }
+  console.log(`${mode === LoadMode.APPLY ? 'Loading' : 'Dry run of'} ${values.file} into ${baseUrl}.`);
+  const rows = await loadSportData(file, { getClient, now: new Date(), mode, log: (line) => console.log(line) });
+  const report = formatLoadReport(file, mode, rows);
+  console.log(report);
+  if (values.report) writeFileSync(values.report, report);
 }
 
 main().catch((error: unknown) => {

@@ -71,7 +71,7 @@ declare global {
       POOLMASTER_WEBAPP_GIT_SHA?: string;
       POOLMASTER_WEBAPP_VERSION?: string;
 
-      // golf seed CLI (packages/core-api/scripts/seed-golf/cli.ts, the "Seed QA golf data" workflow)
+      // sport data loader CLI (packages/core-api/scripts/seed-golf/cli.ts, the "Load sport data" workflow)
       POOLMASTER_SEED_BASE_URL?: string;
       POOLMASTER_SEED_ADMIN_IDENTIFIER?: string;
       POOLMASTER_SEED_ADMIN_PASSWORD?: string;
