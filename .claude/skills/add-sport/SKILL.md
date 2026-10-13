@@ -63,7 +63,9 @@ In order:
    one migration, and its `sports` reference row (and any contest templates) in the next one:
    Postgres refuses a new enum value inside the transaction that adds it
    (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Use the
-   `model-change` skill.
+   `model-change` skill. A sport whose presets differ by sport league seeds those leagues in
+   the same reference-data migration, and each template finds its league by sport and name
+   (same section).
 2. **Sport definition.** Add its `SportDefinition` to the sport registry: participant type,
    scoring family, tournament format, default rounds and tier layout, selection types, scoring
    definitions, vocabulary and round labels. Run `tsc`; every exhaustive map that lacks the sport now fails. Fix each.
@@ -110,7 +112,9 @@ In order:
    *Integration Test Depth Requirement*), and one end-to-end journey: create event, seed field,
    create contest, enter, score, settle (`rules/testing-rules.md` §6 *Functional and Browser
    E2E Rules*). A slice with no UI yet proves it as an SDK functional journey; once the
-   screens exist, a browser journey. The browser journey sets `JourneyRun.sport` and reuses the
+   screens exist, a browser journey. A sport that joins a family whose shared screens already
+   have a browser journey proves itself with an SDK journey, and words that differ with a
+   component test under its own sport. The browser journey sets `JourneyRun.sport` and reuses the
    golden journey's teardown (extend `JourneySport`), and tiers its field the realistic way:
    odds in the field grid, then auto-assign tiers from odds.
 10. **Docs and gates.** Update the docs the change touches in the same PR, then run the
@@ -151,6 +155,15 @@ down: a lesson that was true mid-series may not be by the end.
   things: horse racing has a "Rider" column and calls its top places "Win / Place / Show"
   (`vocabulary.rider`, `vocabulary.topPlaces`). A word that differs between sports of the same
   family belongs in the vocabulary, not hard-coded in the family's card or leaderboard.
+- **Family copy that names one sport's participant.** A message such as "every runner still in
+  the field" in a family's admin card reads wrong for the next sport. Error and hint copy reads
+  the vocabulary too, not only headings and column labels.
+- **League presets without their leagues.** A per-league template needs its league row, so the
+  league is reference data even though admins normally create leagues
+  (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Give each league's
+  templates their own keys and one default per league. The template's foreign key then keeps
+  those leagues through any test cleanup that empties sport leagues, and a test that counts
+  sports or leagues sees them.
 - **Looking up a sport league by its sport.** `SportLeagueDto` carries no `sport` (only
   `sportId`). Find a sport's leagues by listing with `?sport=`, not by filtering the DTOs.
 - **Applying race results with POST.** The finishing-order apply is a `PUT` (it replaces the

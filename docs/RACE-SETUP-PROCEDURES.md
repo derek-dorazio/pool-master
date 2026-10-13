@@ -5,6 +5,9 @@ contest, through the Manage pages. It is written for the first one, the **Pegasu
 on the **US Thoroughbred** circuit, and applies as it stands to any later race on that
 circuit (the Kentucky Derby, the Breeders' Cup Classic).
 
+An auto race (the Daytona 500, the Indy 500) follows the same steps with the differences in
+[Auto racing](#auto-racing) at the end.
+
 Golf works differently, through a simulated score feed: see
 [`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md).
 
@@ -235,3 +238,28 @@ Win / Place / Show preset an entry holding the winner and the third-placed horse
 
 The circuit and the horses already exist, so a later race starts at step 3. Each race is its
 own event (a Derby-day undercard race is a separate race).
+
+## Auto racing
+
+Car racing (NASCAR Cup Series, IndyCar) runs through the same steps under
+`/manage/sports/auto-racing/...`: in the side menu it is **Auto racing**, and its three lists
+are **Races**, **Drivers** and **Series**. What differs:
+
+- **The series already exist.** **NASCAR Cup Series** and **IndyCar** are created by the
+  migration that adds auto racing, because each one's points presets belong to it. Skip step 1
+  and choose the series when creating the race. Do not create a second series of the same name.
+- **Drivers, not horses.** Add each driver once (*Auto racing → Drivers*); a driver who races
+  in both series (Indy 500 and NASCAR) is one driver. Withdrawing one before the race reads
+  *Withdrawn*, not *Scratched*.
+- **Starts is the green flag.** It is the cutoff for release, contests and picks.
+- **Five tiers of eight.** *Auto-assign tiers from odds* fills them eight drivers at a time
+  from the favourite, so a full 40-car NASCAR field comes out 8/8/8/8/8 and a 33-car Indy 500
+  field 8/8/8/8/1. Move drivers by hand if the last tier is too thin.
+- **Presets per series.** On create contest, choose **Auto racing**, then the race. *Start
+  from* offers only that series' presets: the tiered one (one driver from each tier, five
+  counted) is the default, then budget (five drivers under the cap) and random draw (one
+  driver each). NASCAR's points table is 40, 35, 34 and one fewer per place down to 1 at 36th,
+  then 1 to 40th; IndyCar's is 50, 40, 35, 32, 30, 28, 26, 24, 22, 20, then 19 down to 6 for
+  11th to 24th, then 5 to 33rd. No stage or bonus points.
+- **The result names only the driver.** Leave `riderName` blank; the Result card has no
+  *Rider* column. `startPosition` is the grid slot. A car out of the race is `DNF`.

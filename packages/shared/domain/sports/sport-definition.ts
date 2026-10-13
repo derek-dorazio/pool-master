@@ -16,7 +16,8 @@ export interface SportVocabulary {
   event: SportNoun;
   /**
    * One sport league, the organiser whose events recur each year: "tour" / "tours" for golf (the
-   * PGA Tour), "circuit" / "circuits" for horse racing (US Thoroughbred).
+   * PGA Tour), "circuit" / "circuits" for horse racing (US Thoroughbred), "series" / "series" for
+   * auto racing (NASCAR Cup Series).
    */
   sportLeague: SportNoun;
   /** One scheduled stage of an event: "round" / "rounds". */

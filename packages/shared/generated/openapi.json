@@ -6220,7 +6220,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ],
             "description": "Sport this template applies to."
           },
@@ -6926,7 +6927,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ],
             "description": "Only templates for this sport."
           },
@@ -6971,7 +6973,8 @@
                   "type": "string",
                   "enum": [
                     "GOLF",
-                    "HORSE_RACING"
+                    "HORSE_RACING",
+                    "AUTO_RACING"
                   ],
                   "description": "Sport this template applies to."
                 },
@@ -7747,7 +7750,8 @@
                 "type": "string",
                 "enum": [
                   "GOLF",
-                  "HORSE_RACING"
+                  "HORSE_RACING",
+                  "AUTO_RACING"
                 ],
                 "description": "Sport this template applies to."
               },
@@ -9029,7 +9033,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ],
             "description": "The sport."
           },
@@ -9088,7 +9093,8 @@
                   "type": "string",
                   "enum": [
                     "GOLF",
-                    "HORSE_RACING"
+                    "HORSE_RACING",
+                    "AUTO_RACING"
                   ],
                   "description": "The sport."
                 },
@@ -9215,7 +9221,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ],
             "description": "Only sport leagues of this sport."
           },
@@ -9396,7 +9403,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ],
             "description": "The sport the new sport league belongs to."
           },
@@ -10274,7 +10282,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ],
             "description": "Sport the event belongs to."
           },
@@ -10539,7 +10548,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ],
             "description": "Only events of this sport."
           },
@@ -10597,7 +10607,8 @@
                   "type": "string",
                   "enum": [
                     "GOLF",
-                    "HORSE_RACING"
+                    "HORSE_RACING",
+                    "AUTO_RACING"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -10887,7 +10898,8 @@
                 "type": "string",
                 "enum": [
                   "GOLF",
-                  "HORSE_RACING"
+                  "HORSE_RACING",
+                  "AUTO_RACING"
                 ],
                 "description": "Sport the event belongs to."
               },
@@ -11322,7 +11334,8 @@
                   "type": "string",
                   "enum": [
                     "GOLF",
-                    "HORSE_RACING"
+                    "HORSE_RACING",
+                    "AUTO_RACING"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -15001,6 +15014,7 @@
             "enum": [
               "GOLF",
               "HORSE_RACING",
+              "AUTO_RACING",
               null
             ]
           },
@@ -15740,7 +15754,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ],
             "description": "Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with."
           },
@@ -16597,6 +16612,7 @@
                 "enum": [
                   "GOLF",
                   "HORSE_RACING",
+                  "AUTO_RACING",
                   null
                 ]
               },
@@ -16730,6 +16746,7 @@
                   "enum": [
                     "GOLF",
                     "HORSE_RACING",
+                    "AUTO_RACING",
                     null
                   ]
                 },
@@ -18270,7 +18287,8 @@
               "type": "string",
               "enum": [
                 "GOLF",
-                "HORSE_RACING"
+                "HORSE_RACING",
+                "AUTO_RACING"
               ]
             },
             "minItems": 1
@@ -18366,13 +18384,15 @@
               "type": "string",
               "enum": [
                 "GOLF",
-                "HORSE_RACING"
+                "HORSE_RACING",
+                "AUTO_RACING"
               ]
             },
             "minItems": 1,
             "default": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ],
             "description": "Sports that scheduled ingestion is allowed to run automatically."
           },
@@ -18474,7 +18494,8 @@
                     "type": "string",
                     "enum": [
                       "GOLF",
-                      "HORSE_RACING"
+                      "HORSE_RACING",
+                      "AUTO_RACING"
                     ]
                   },
                   "minItems": 1
@@ -18669,13 +18690,15 @@
                       "type": "string",
                       "enum": [
                         "GOLF",
-                        "HORSE_RACING"
+                        "HORSE_RACING",
+                        "AUTO_RACING"
                       ]
                     },
                     "minItems": 1,
                     "default": [
                       "GOLF",
-                      "HORSE_RACING"
+                      "HORSE_RACING",
+                      "AUTO_RACING"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -18777,7 +18800,8 @@
                             "type": "string",
                             "enum": [
                               "GOLF",
-                              "HORSE_RACING"
+                              "HORSE_RACING",
+                              "AUTO_RACING"
                             ]
                           },
                           "minItems": 1
@@ -18885,13 +18909,15 @@
                       "type": "string",
                       "enum": [
                         "GOLF",
-                        "HORSE_RACING"
+                        "HORSE_RACING",
+                        "AUTO_RACING"
                       ]
                     },
                     "minItems": 1,
                     "default": [
                       "GOLF",
-                      "HORSE_RACING"
+                      "HORSE_RACING",
+                      "AUTO_RACING"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -18993,7 +19019,8 @@
                             "type": "string",
                             "enum": [
                               "GOLF",
-                              "HORSE_RACING"
+                              "HORSE_RACING",
+                              "AUTO_RACING"
                             ]
                           },
                           "minItems": 1
@@ -19564,13 +19591,15 @@
                             "type": "string",
                             "enum": [
                               "GOLF",
-                              "HORSE_RACING"
+                              "HORSE_RACING",
+                              "AUTO_RACING"
                             ]
                           },
                           "minItems": 1,
                           "default": [
                             "GOLF",
-                            "HORSE_RACING"
+                            "HORSE_RACING",
+                            "AUTO_RACING"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -19672,7 +19701,8 @@
                                   "type": "string",
                                   "enum": [
                                     "GOLF",
-                                    "HORSE_RACING"
+                                    "HORSE_RACING",
+                                    "AUTO_RACING"
                                   ]
                                 },
                                 "minItems": 1
@@ -19780,13 +19810,15 @@
                             "type": "string",
                             "enum": [
                               "GOLF",
-                              "HORSE_RACING"
+                              "HORSE_RACING",
+                              "AUTO_RACING"
                             ]
                           },
                           "minItems": 1,
                           "default": [
                             "GOLF",
-                            "HORSE_RACING"
+                            "HORSE_RACING",
+                            "AUTO_RACING"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -19888,7 +19920,8 @@
                                   "type": "string",
                                   "enum": [
                                     "GOLF",
-                                    "HORSE_RACING"
+                                    "HORSE_RACING",
+                                    "AUTO_RACING"
                                   ]
                                 },
                                 "minItems": 1
@@ -20416,7 +20449,8 @@
                       "type": "string",
                       "enum": [
                         "GOLF",
-                        "HORSE_RACING"
+                        "HORSE_RACING",
+                        "AUTO_RACING"
                       ]
                     },
                     "minItems": 1,
@@ -20520,7 +20554,8 @@
                             "type": "string",
                             "enum": [
                               "GOLF",
-                              "HORSE_RACING"
+                              "HORSE_RACING",
+                              "AUTO_RACING"
                             ]
                           },
                           "minItems": 1
@@ -20867,13 +20902,15 @@
                       "type": "string",
                       "enum": [
                         "GOLF",
-                        "HORSE_RACING"
+                        "HORSE_RACING",
+                        "AUTO_RACING"
                       ]
                     },
                     "minItems": 1,
                     "default": [
                       "GOLF",
-                      "HORSE_RACING"
+                      "HORSE_RACING",
+                      "AUTO_RACING"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -20975,7 +21012,8 @@
                             "type": "string",
                             "enum": [
                               "GOLF",
-                              "HORSE_RACING"
+                              "HORSE_RACING",
+                              "AUTO_RACING"
                             ]
                           },
                           "minItems": 1
@@ -21083,13 +21121,15 @@
                       "type": "string",
                       "enum": [
                         "GOLF",
-                        "HORSE_RACING"
+                        "HORSE_RACING",
+                        "AUTO_RACING"
                       ]
                     },
                     "minItems": 1,
                     "default": [
                       "GOLF",
-                      "HORSE_RACING"
+                      "HORSE_RACING",
+                      "AUTO_RACING"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -21191,7 +21231,8 @@
                             "type": "string",
                             "enum": [
                               "GOLF",
-                              "HORSE_RACING"
+                              "HORSE_RACING",
+                              "AUTO_RACING"
                             ]
                           },
                           "minItems": 1
@@ -21720,13 +21761,15 @@
                             "type": "string",
                             "enum": [
                               "GOLF",
-                              "HORSE_RACING"
+                              "HORSE_RACING",
+                              "AUTO_RACING"
                             ]
                           },
                           "minItems": 1,
                           "default": [
                             "GOLF",
-                            "HORSE_RACING"
+                            "HORSE_RACING",
+                            "AUTO_RACING"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -21828,7 +21871,8 @@
                                   "type": "string",
                                   "enum": [
                                     "GOLF",
-                                    "HORSE_RACING"
+                                    "HORSE_RACING",
+                                    "AUTO_RACING"
                                   ]
                                 },
                                 "minItems": 1
@@ -21936,13 +21980,15 @@
                             "type": "string",
                             "enum": [
                               "GOLF",
-                              "HORSE_RACING"
+                              "HORSE_RACING",
+                              "AUTO_RACING"
                             ]
                           },
                           "minItems": 1,
                           "default": [
                             "GOLF",
-                            "HORSE_RACING"
+                            "HORSE_RACING",
+                            "AUTO_RACING"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -22044,7 +22090,8 @@
                                   "type": "string",
                                   "enum": [
                                     "GOLF",
-                                    "HORSE_RACING"
+                                    "HORSE_RACING",
+                                    "AUTO_RACING"
                                   ]
                                 },
                                 "minItems": 1
@@ -23295,7 +23342,8 @@
               "type": "string",
               "enum": [
                 "GOLF",
-                "HORSE_RACING"
+                "HORSE_RACING",
+                "AUTO_RACING"
               ]
             },
             "description": "Sports the provider covers that ingestion is scheduled for."
@@ -23370,7 +23418,8 @@
                     "type": "string",
                     "enum": [
                       "GOLF",
-                      "HORSE_RACING"
+                      "HORSE_RACING",
+                      "AUTO_RACING"
                     ]
                   },
                   "description": "Sports the provider covers that ingestion is scheduled for."
@@ -23419,7 +23468,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ]
           },
           "eventId": {
@@ -23494,7 +23544,8 @@
                     "type": "string",
                     "enum": [
                       "GOLF",
-                      "HORSE_RACING"
+                      "HORSE_RACING",
+                      "AUTO_RACING"
                     ]
                   },
                   "eventId": {
@@ -23649,7 +23700,8 @@
                     "type": "string",
                     "enum": [
                       "GOLF",
-                      "HORSE_RACING"
+                      "HORSE_RACING",
+                      "AUTO_RACING"
                     ]
                   },
                   "eventExternalId": {
@@ -23933,7 +23985,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ]
           },
           "status": {
@@ -23978,7 +24031,8 @@
                   "type": "string",
                   "enum": [
                     "GOLF",
-                    "HORSE_RACING"
+                    "HORSE_RACING",
+                    "AUTO_RACING"
                   ]
                 },
                 "eventId": {
@@ -24053,7 +24107,8 @@
                           "type": "string",
                           "enum": [
                             "GOLF",
-                            "HORSE_RACING"
+                            "HORSE_RACING",
+                            "AUTO_RACING"
                           ]
                         },
                         "eventId": {
@@ -24208,7 +24263,8 @@
                           "type": "string",
                           "enum": [
                             "GOLF",
-                            "HORSE_RACING"
+                            "HORSE_RACING",
+                            "AUTO_RACING"
                           ]
                         },
                         "eventExternalId": {
@@ -24497,7 +24553,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ]
           },
           "eventId": {
@@ -24535,7 +24592,8 @@
                   "type": "string",
                   "enum": [
                     "GOLF",
-                    "HORSE_RACING"
+                    "HORSE_RACING",
+                    "AUTO_RACING"
                   ]
                 },
                 "eventId": {
@@ -24610,7 +24668,8 @@
                           "type": "string",
                           "enum": [
                             "GOLF",
-                            "HORSE_RACING"
+                            "HORSE_RACING",
+                            "AUTO_RACING"
                           ]
                         },
                         "eventId": {
@@ -24765,7 +24824,8 @@
                           "type": "string",
                           "enum": [
                             "GOLF",
-                            "HORSE_RACING"
+                            "HORSE_RACING",
+                            "AUTO_RACING"
                           ]
                         },
                         "eventExternalId": {
@@ -25072,7 +25132,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ]
           }
         },
@@ -25112,7 +25173,8 @@
                   "type": "string",
                   "enum": [
                     "GOLF",
-                    "HORSE_RACING"
+                    "HORSE_RACING",
+                    "AUTO_RACING"
                   ]
                 }
               },
@@ -25148,7 +25210,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ]
           },
           "name": {
@@ -25232,7 +25295,8 @@
             "type": "string",
             "enum": [
               "GOLF",
-              "HORSE_RACING"
+              "HORSE_RACING",
+              "AUTO_RACING"
             ]
           },
           "sportLeagueId": {
@@ -25278,7 +25342,8 @@
                   "type": "string",
                   "enum": [
                     "GOLF",
-                    "HORSE_RACING"
+                    "HORSE_RACING",
+                    "AUTO_RACING"
                   ]
                 },
                 "name": {
@@ -30312,7 +30377,8 @@
               "type": "string",
               "enum": [
                 "GOLF",
-                "HORSE_RACING"
+                "HORSE_RACING",
+                "AUTO_RACING"
               ]
             },
             "in": "query",
@@ -30501,7 +30567,8 @@
               "type": "string",
               "enum": [
                 "GOLF",
-                "HORSE_RACING"
+                "HORSE_RACING",
+                "AUTO_RACING"
               ]
             },
             "in": "query",
@@ -33282,7 +33349,8 @@
               "type": "string",
               "enum": [
                 "GOLF",
-                "HORSE_RACING"
+                "HORSE_RACING",
+                "AUTO_RACING"
               ]
             },
             "in": "query",
@@ -34612,7 +34680,8 @@
               "type": "string",
               "enum": [
                 "GOLF",
-                "HORSE_RACING"
+                "HORSE_RACING",
+                "AUTO_RACING"
               ]
             },
             "in": "path",
@@ -34678,7 +34747,8 @@
               "type": "string",
               "enum": [
                 "GOLF",
-                "HORSE_RACING"
+                "HORSE_RACING",
+                "AUTO_RACING"
               ]
             },
             "in": "path",
@@ -34836,7 +34906,8 @@
               "type": "string",
               "enum": [
                 "GOLF",
-                "HORSE_RACING"
+                "HORSE_RACING",
+                "AUTO_RACING"
               ]
             },
             "in": "query",
@@ -34937,7 +35008,8 @@
               "type": "string",
               "enum": [
                 "GOLF",
-                "HORSE_RACING"
+                "HORSE_RACING",
+                "AUTO_RACING"
               ]
             },
             "in": "path",
@@ -35073,7 +35145,8 @@
               "type": "string",
               "enum": [
                 "GOLF",
-                "HORSE_RACING"
+                "HORSE_RACING",
+                "AUTO_RACING"
               ]
             },
             "in": "query",

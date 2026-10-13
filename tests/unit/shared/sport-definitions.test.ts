@@ -125,6 +125,31 @@ describe('sport registry', () => {
     expect(tierSize * (tierCount - 1)).toBeLessThan(8);
   });
 
+  it('scores auto racing by finishing place in races of a series, calls a driver a driver, and names no rider, top places or eliminated', () => {
+    const autoRacing = getSportDefinition(Sport.AUTO_RACING);
+
+    expect(autoRacing.name).toBe('Auto racing');
+    expect(autoRacing.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
+    expect(autoRacing.scoringDefinitions).toEqual(['FINISH_POSITION_POINTS']);
+    expect(autoRacing.vocabulary).toEqual({
+      participant: { one: 'driver', many: 'drivers' },
+      event: { one: 'race', many: 'races' },
+      sportLeague: { one: 'series', many: 'series' },
+      round: { one: 'race', many: 'races' },
+      withdrawn: 'Withdrawn',
+      eventStart: 'green flag',
+    });
+  });
+
+  it('gives a new auto race one round labelled Race, and five tiers of eight so a 40-car field fills each exactly', () => {
+    const autoRacing = getSportDefinition(Sport.AUTO_RACING);
+
+    expect(autoRacing.defaultRounds).toBe(1);
+    expect(autoRacing.roundLabel(1, 1)).toBe('Race');
+    expect(autoRacing.defaultTierLayout).toEqual({ tierCount: 5, tierSize: 8 });
+    expect(autoRacing.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
+  });
+
   it('gives a new golf event four rounds and six tiers of ten golfers', () => {
     const golf = getSportDefinition(Sport.GOLF);
 

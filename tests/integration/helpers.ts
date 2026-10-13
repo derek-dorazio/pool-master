@@ -649,8 +649,11 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.sportEventRound.deleteMany();
   await prisma.sportEvent.deleteMany();
   await prisma.eventSeries.deleteMany();
-  await prisma.sportLeague.deleteMany();
-  await prisma.sport.deleteMany();
+  // A sport league that a contest template names is reference data (auto racing's series, seeded
+  // with their points presets), and the template's foreign key restricts its delete: it stays, and
+  // so does its sport's row.
+  await prisma.sportLeague.deleteMany({ where: { contestConfigTemplates: { none: {} } } });
+  await prisma.sport.deleteMany({ where: { sportLeagues: { none: {} } } });
 
   await prisma.platformRuntimeConfig.deleteMany();
   await prisma.platformRuntimeConfigHistory.deleteMany();

@@ -41,9 +41,10 @@ function templateStore(rows: ContestConfigTemplate[]) {
   const repository: ContestConfigTemplateRepository = {
     findById: async (id) => store.get(id) ?? null,
     list: async (input = {}) => [...store.values()]
-      // No sport or format filter: every template is golf and ROSTER while those enums have one member.
+      // No format filter: every template is ROSTER while that enum has one member.
       .filter((row) =>
-        (input.eventType === undefined || row.eventType === input.eventType || row.eventType == null)
+        (input.sport === undefined || row.sport === input.sport)
+        && (input.eventType === undefined || row.eventType === input.eventType || row.eventType == null)
         && (input.sportLeagueId === undefined || row.sportLeagueId === input.sportLeagueId || row.sportLeagueId === null)
         && (input.active === undefined || row.active === input.active))
       .sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name)),
@@ -132,6 +133,34 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
 
     expect(store.get('major')?.isDefault).toBe(true);
     expect(store.get('any-default')?.isDefault).toBe(true);
+  });
+
+  it('keeps another sport league\'s default when a default is set for one league, so each series keeps its own preset', async () => {
+    const { store, service } = templateStore([
+      template({ id: 'indycar-tiered', sport: Sport.AUTO_RACING, sportLeagueId: 'indycar', isDefault: true }),
+      template({ id: 'nascar-tiered', sport: Sport.AUTO_RACING, sportLeagueId: 'nascar', isDefault: true }),
+      template({ id: 'nascar-budget', sport: Sport.AUTO_RACING, sportLeagueId: 'nascar', selectionType: SelectionType.BUDGET_PICK }),
+    ]);
+
+    await service.updateTemplate('nascar-budget', { isDefault: true });
+
+    expect(store.get('nascar-budget')?.isDefault).toBe(true);
+    expect(store.get('nascar-tiered')?.isDefault).toBe(false);
+    expect(store.get('indycar-tiered')?.isDefault).toBe(true);
+  });
+
+  it('keeps a sport league\'s default when a sport-wide default is set, and another sport\'s default too', async () => {
+    const { store, service } = templateStore([
+      template({ id: 'nascar-tiered', sport: Sport.AUTO_RACING, sportLeagueId: 'nascar', isDefault: true }),
+      template({ id: 'golf-default', isDefault: true }),
+      template({ id: 'auto-sport-wide', sport: Sport.AUTO_RACING }),
+    ]);
+
+    await service.updateTemplate('auto-sport-wide', { isDefault: true });
+
+    expect(store.get('auto-sport-wide')?.isDefault).toBe(true);
+    expect(store.get('nascar-tiered')?.isDefault).toBe(true);
+    expect(store.get('golf-default')?.isDefault).toBe(true);
   });
 
   it('takes the default off a template that is deactivated, even when the request also asks for default', async () => {

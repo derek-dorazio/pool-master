@@ -253,7 +253,7 @@ filling them in rather than by finding guards scattered through the code:
   participant scoring rule's `config`, typed per scoring definition by
   `PARTICIPANT_SCORING_SETTINGS_SCHEMAS` on write and read), returns each participant score
   with a detail keyed by family, and declares the one live-score category it accepts, or none.
-  Built: stroke play (golf) and finish position (horse racing). Finish position's admin
+  Built: stroke play (golf) and finish position (horse racing, auto racing). Finish position's admin
   results entry (the finishing order) lives in its folder; golf's score corrections predate the
   folders and live in `modules/golf`. Each refuses an event whose sport's family does not keep
   its results with 422 `EVENT_SCORING_FAMILY_MISMATCH`.
@@ -453,6 +453,11 @@ that it was already there.
   `sports` row, seeded by `20261004140000_seed_golf_sport_reference_row`.
 - A new sport needs code as well as a row, so its row arrives in the migration that adds its
   support — not in a list of every sport the `Sport` enum names.
+- A sport league that a seeded contest template names is reference data too, though leagues are
+  otherwise admin-created: insert it in the same migration, idempotent on its `(sport_id, name)`
+  unique, and let each template find its league by sport and name rather than by a fixed id
+  (`20261013190100_auto_racing_reference_data`). The template's foreign key restricts the
+  league's delete, so test cleanup that empties sport leagues must keep the ones a template names.
 
 **The test for "is this reference data" is whether the app breaks without it, not whether it is
 convenient to have.** A row the app merely starts empty without — `platform_runtime_configs`,
