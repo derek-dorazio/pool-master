@@ -1,28 +1,49 @@
-# Load the 2026 PGA TOUR and LPGA Tour seed into QA for manual league and contest testing.
+# Load a sport data file into QA: a real schedule and fields gathered by the load-sport-data
+# skill, or the 2026 PGA TOUR and LPGA Tour test seed for manual league and contest testing.
 #
-# workflow_dispatch only: seed data is test data, so it never rides a migration or a deploy.
-# It goes in through QA's public admin API as the E2E root admin, the same way the Manage
-# screens write it, so nothing touches the database directly. Safe to run again, including
-# straight after "Reset QA database": tournaments and golfers that already exist are skipped.
-# See docs/EVENT-SETUP-PROCEDURES.md, "Seeded 2026 tournaments".
-name: Seed QA golf data
+# workflow_dispatch only: sport data never rides a migration or a deploy. It goes in through
+# QA's public admin API as the E2E root admin, the same way the Manage screens write it, so
+# nothing touches the database directly. The file's envelope says what it holds and what a
+# run may change (packages/core-api/scripts/seed-golf/sport-data-file.ts).
+#
+# Dry run is the default: it reads QA and lists what applying would add, update, skip or
+# leave as a conflict, and writes nothing. Apply compares and fills in, so running the same
+# file again reports everything as a skip, including straight after "Reset QA database".
+# QA is the only target, so it takes test data; a prod target will not.
+# See docs/EVENT-SETUP-PROCEDURES.md, "Loading sport data".
+name: Load sport data
 
 on:
   workflow_dispatch:
+    inputs:
+      file:
+        description: Data file, a path inside packages/core-api/scripts/seed-golf/
+        type: string
+        default: golf-2026.json
+      mode:
+        description: dry-run reports what would change; apply writes it
+        type: choice
+        options:
+          - dry-run
+          - apply
+        default: dry-run
 
 concurrency:
   group: qa-seed-golf
   cancel-in-progress: false
 
 jobs:
-  seed:
-    name: seed
+  load:
+    name: load
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       POOLMASTER_SEED_BASE_URL: https://qa.ultimateofficepoolmanager.com
       POOLMASTER_SEED_ADMIN_IDENTIFIER: ${{ secrets.POOLMASTER_E2E_ADMIN_IDENTIFIER }}
       POOLMASTER_SEED_ADMIN_PASSWORD: ${{ secrets.POOLMASTER_E2E_ADMIN_PASSWORD }}
+      # Inputs go through the environment, never into the script text.
+      LOAD_FILE: ${{ inputs.file }}
+      LOAD_MODE: ${{ inputs.mode }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -32,18 +53,23 @@ jobs:
       - run: npm ci
       - name: Build the shared package the generated SDK resolves through
         run: npm run build --workspace @poolmaster/shared
-      # bash -o pipefail, so a failed seed fails the step rather than reporting tee's exit
-      # code, and stderr goes to the log the summary reads.
-      - name: Seed QA
+      # bash -o pipefail, so a failed load fails the step rather than reporting tee's exit
+      # code, and stderr goes to the log the summary falls back to.
+      - name: Load into QA
         shell: bash
-        run: npm run seed:golf 2>&1 | tee seed.log
+        run: npm run seed:golf -- --file "$LOAD_FILE" --mode "$LOAD_MODE" --allow-test-data --report load-report.md 2>&1 | tee load.log
       - name: Summary
         if: always()
+        shell: bash
         run: |
-          {
-            echo "### QA golf seed"
-            echo ""
-            echo '```'
-            grep -E "created|already there|exists as a draft|failed" seed.log || echo "(no seed output)"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -f load-report.md ]; then
+            cat load-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "### Load sport data failed"
+              echo ""
+              echo '```'
+              tail -n 40 load.log 2>/dev/null || echo "(no output)"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

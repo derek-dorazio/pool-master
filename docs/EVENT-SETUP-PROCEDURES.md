@@ -189,18 +189,54 @@ Final standings are built from the scores PoolMaster has already received.
   that mock event, which blocks the next tournament from using it. *Unlink score source*
   frees it. Simulated events are one per tournament and never need this.
 
-## Seeded 2026 tournaments
+## Loading sport data
 
-The seed loads the whole 2026 PGA TOUR (45 tournaments) and LPGA Tour (31) in one go, each
-ready for contests. It is test data, so no migration, deploy or reset loads it; you run it.
+Sport leagues, players, events and fields can be loaded from a data file instead of typed
+in. The `load-sport-data` skill gathers a real schedule or field from public sources,
+cross-checks it and writes the file; the 2026 test seed below is one too. Either way it goes
+in through the same admin API as these screens, and no migration, deploy or reset loads it.
 
-- **QA:** *Actions → Seed QA golf data → Run workflow*. It signs in as the E2E root admin
-  and goes through the same admin API as these screens.
+- **QA:** *Actions → Load sport data → Run workflow*, choosing the branch that has the file,
+  the `file` (a path inside `packages/core-api/scripts/seed-golf/`, default
+  `golf-2026.json`) and the `mode`. It signs in as the E2E root admin.
 - **Locally:** with the API running, `POOLMASTER_SEED_BASE_URL=http://localhost:3000
   POOLMASTER_SEED_ADMIN_IDENTIFIER=<root admin> POOLMASTER_SEED_ADMIN_PASSWORD=<password>
-  npm run seed:golf`.
+  npm run seed:golf -- --file golf-2026.json --mode apply --allow-test-data`.
 
-It takes about two minutes. What each tournament gets:
+**Dry run first.** `dry-run` (the default) reads the site and lists, per sport league,
+player, event and field, what applying would add, update, skip, or leave as a conflict. It
+writes nothing. The workflow's summary shows the list with the file's scope and sources.
+`apply` writes it.
+
+**What a run changes.** It compares the file with the site and fills in the difference:
+
+- A missing sport league, player, event or field entry is added. A player new to the
+  league joins at the file's ranking; one already on it keeps the ranking it has.
+- An event's name, dates, venue, location, rounds or par that differ are updated. An event
+  is found by name, or, when a sponsor renamed it, by a start within three days.
+- A field entry's ranking and seed (the file's order) are set. A player the file drops is
+  marked withdrawn, never removed.
+- An event that has started, finished, or was cancelled or postponed is never changed; a
+  difference there is listed as a conflict for an admin to look at.
+- A file only changes what its envelope's `contents` names: one without `SCHEDULE` never
+  edits an event, so a file with next week's fields cannot rewrite the schedule.
+
+Running the same file again lists everything as a skip. A real data file never releases an
+event or writes odds, tiers, prices or scores; those stay admin actions here.
+
+**The file says what it is.** Each file starts with an envelope: `schemaVersion`, a `scope`
+(sport from the sport registry, season, sport leagues, and `contents` from `SCHEDULE`,
+`PLAYERS`, `FIELDS`, `RESULTS`), a `testData` flag and its `provenance`. A run refuses the
+whole file before writing if anything strays outside the scope: an event outside the
+season, a league the scope does not name, made-up odds or scores in a real file, or test
+data on a target that does not take it. The filename is for people and is never read.
+The shape is in `packages/core-api/scripts/seed-golf/sport-data-file.ts`.
+
+## Seeded 2026 tournaments
+
+`golf-2026.json` is the test seed: the whole 2026 PGA TOUR (45 tournaments) and LPGA Tour
+(31), each ready for contests. Load it as above with `mode` `apply`. It takes about two
+minutes. Because its envelope says `testData`, each tournament also gets made-up parts:
 
 - **Released** (Scheduled) with automatic lifecycle off, on tours named `PGA TOUR` and
   `LPGA Tour`, created if missing.
@@ -220,11 +256,11 @@ Workflow card *Move to In Progress* (the contest goes live and its leaderboard s
 stored scores straight away) and *Move to Completed* (the contest settles). The scores are
 visible on the admin field page before that.
 
-Running it again is safe, including straight after *Reset QA database*: tours, golfers and
-tournaments that already exist are left alone and reported. A tournament left a draft by a
-run that stopped part-way is reported too; delete it and run again. A tournament you
-already created by hand or imported from the provider with the same tour, name and year is
-skipped, so reset QA first for a clean set.
+Running it again is safe, including straight after *Reset QA database*: a released
+tournament keeps its dates and is skipped. A tournament a run left a draft part-way is
+finished on the next run: moved to this run's dates, filled in and released. A tournament
+you already created by hand or imported from the provider with the same tour, name and year
+is treated as the seed's, so reset QA first for a clean set.
 
 The data file is `packages/core-api/scripts/seed-golf/golf-2026.json`, rebuilt by
 `npm run seed:golf:build` from the mock provider's tour files (same answer every time).

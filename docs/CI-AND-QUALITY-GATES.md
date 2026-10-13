@@ -840,8 +840,8 @@ usually faster than any targeted repair:
 3. The job prints the container's log: the rows destroyed, and a verification that the
    migration history came back clean.
 4. **Re-run the latest `main` run's failed jobs**, so `deploy-qa` rolls the release out.
-5. Optionally, **Actions -> Seed QA golf data -> Run workflow** to load the 2026 tournaments
-   for manual league and contest testing (`docs/EVENT-SETUP-PROCEDURES.md`, *Seeded 2026
+5. Optionally, **Actions -> Load sport data -> Run workflow** with mode `apply` to load the
+   2026 tournaments for manual league and contest testing (`docs/EVENT-SETUP-PROCEDURES.md`, *Seeded 2026
    tournaments*). A reset leaves none.
 
 The reset wipes every row, re-applies every migration — which restores the reference data,

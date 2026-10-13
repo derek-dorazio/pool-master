@@ -15,7 +15,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { GolfSeedEvent, GolfSeedFile, GolfSeedGolfer, GolfSeedPlayer, GolfSeedTour } from './seed-golf-data';
+import { Sport } from '@poolmaster/shared/domain';
+import { SPORT_DATA_SCHEMA_VERSION, SportDataContent, type SportDataEvent, type SportDataFieldEntry, type SportDataFile, type SportDataLeague, type SportDataPlayer } from './sport-data-file';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const toursDir = join(here, '../../../mock-contest-feed-provider/contest-feed-scenarios/tours');
@@ -74,6 +75,8 @@ const CUT_ROUND = 2;
 const CUT_SIZE = 65;
 const WITHDRAWALS_PER_EVENT = 2;
 const MAX_ODDS = 1000;
+/** When the winners above were last searched; the file's provenance date. */
+const GATHERED_AT = '2026-10-10';
 
 interface TourFile {
   tour: string;
@@ -124,7 +127,7 @@ function fieldSize(event: TourFile['events'][number], tourPlayers: number, rando
   return Math.min(tourPlayers, sizes[Math.floor(random() * sizes.length)]);
 }
 
-function buildEvent(tour: GolfSeedTour, event: TourFile['events'][number]): GolfSeedEvent {
+function buildEvent(tour: SportDataLeague, event: TourFile['events'][number]): SportDataEvent {
   const random = seededRandom(event.eventId);
   const roundsPar = tour.name === 'PGA TOUR' ? [70, 71, 72][Math.floor(random() * 3)] : 72;
   const winnerName = WINNERS[event.eventId];
@@ -142,7 +145,7 @@ function buildEvent(tour: GolfSeedTour, event: TourFile['events'][number]): Golf
   // Form this week: the ranking plus noise. Odds come from it; scores from it plus more noise.
   const golfers = chosen.map((player) => {
     const form = -2.2 + Math.log(player.ranking) * 0.55 + normal(random) * 0.6;
-    return { player, form, rounds: [] as number[], finish: undefined as GolfSeedGolfer['finish'], withdrawnThru: undefined as number | undefined };
+    return { player, form, rounds: [] as number[], finish: undefined as SportDataFieldEntry['finish'], withdrawnThru: undefined as number | undefined };
   });
   const weights = golfers.map((golfer) => Math.exp(-golfer.form * 1.6));
   const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
@@ -217,10 +220,10 @@ function buildEvent(tour: GolfSeedTour, event: TourFile['events'][number]): Golf
   };
 }
 
-function buildTour(scheduleFile: string, playersFile: string): GolfSeedTour {
+function buildTour(scheduleFile: string, playersFile: string): SportDataLeague {
   const schedule = readJson(scheduleFile) as TourFile;
   const ranked = (readJson(playersFile) as PlayersFile).players;
-  const players: GolfSeedPlayer[] = ranked.map((player) => ({
+  const players: SportDataPlayer[] = ranked.map((player) => ({
     key: player.playerId,
     name: player.name,
     countryCode: player.countryCode,
@@ -231,20 +234,36 @@ function buildTour(scheduleFile: string, playersFile: string): GolfSeedTour {
     players.push({ key: `${schedule.tourId}-${slug(extra.name)}`, name: extra.name, countryCode: extra.countryCode, ranking: nextRanking });
     nextRanking += 1;
   }
-  const tour: GolfSeedTour = { name: schedule.tour, players, events: [] };
+  const tour: SportDataLeague = { name: schedule.tour, players, events: [] };
   tour.events = schedule.events.map((event) => buildEvent(tour, event));
   return tour;
 }
 
-const seed: GolfSeedFile = {
-  season: 2026,
-  notes: 'Built by build-golf-2026.ts. Schedules and players from public sources; winners public where known (event.winner = "public"), every other result, field and odds made up. Not authoritative.',
-  tours: [
-    buildTour('pga-tour-2026.json', 'pga-tour-players.json'),
-    buildTour('lpga-tour-2026.json', 'lpga-tour-players.json'),
-  ],
+const sportLeagues = [
+  buildTour('pga-tour-2026.json', 'pga-tour-players.json'),
+  buildTour('lpga-tour-2026.json', 'lpga-tour-players.json'),
+];
+const seed: SportDataFile = {
+  schemaVersion: SPORT_DATA_SCHEMA_VERSION,
+  scope: {
+    sport: Sport.GOLF,
+    season: 2026,
+    sportLeagues: sportLeagues.map((league) => league.name),
+    contents: Object.values(SportDataContent),
+  },
+  // Every field, odds and score but the public winners is made up: a test seed, for QA and local only.
+  testData: true,
+  provenance: {
+    gatheredAt: GATHERED_AT,
+    gatheredBy: 'build-golf-2026.ts, from the mock provider tour files',
+    sources: [{
+      name: 'Mock provider tour files (schedules and players from public sources)',
+      url: 'https://github.com/derek-dorazio/pool-master/blob/main/packages/mock-contest-feed-provider/contest-feed-scenarios/tours/SOURCES.md',
+    }],
+  },
+  sportLeagues,
 };
 
 writeFileSync(outputPath, `${JSON.stringify(seed)}\n`);
-const events = seed.tours.flatMap((tour) => tour.events);
+const events = seed.sportLeagues.flatMap((league) => league.events);
 console.log(`Wrote ${outputPath}: ${events.length} events, ${events.reduce((sum, event) => sum + event.field.length, 0)} field rows.`);
