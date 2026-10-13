@@ -4,13 +4,13 @@
  * being dealt twice or half dealt.
  */
 import { randomUUID } from 'node:crypto';
-import type { Prisma, PrismaClient } from '@prisma/client';
 import {
   cleanupTestData,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { holdContestLocks, waitUntilBlockedBy } from '../contest-lock';
 import { ParticipantType, Sport } from '@poolmaster/shared/domain';
 import {
   ContestDrawAlreadyRunError,
@@ -187,49 +187,6 @@ describe('ContestEntryPickService.recordDraw', () => {
   });
 });
 
-/**
- * Holds the contest row lock in a transaction of the test's own, the way an entry write or a
- * draw holds it, does `work` inside it, and keeps it open until `release` is called. Resolves
- * with the holder's backend pid once the lock is held and `work` has run.
- */
-function holdContestLock(
-  prisma: PrismaClient,
-  contestId: string,
-  work: (tx: Prisma.TransactionClient) => Promise<unknown>,
-): { ready: Promise<number>; release: () => Promise<void> } {
-  let signalReady!: (pid: number) => void;
-  const ready = new Promise<number>((resolve) => { signalReady = resolve; });
-  let releaseHolder!: () => void;
-  const released = new Promise<void>((resolve) => { releaseHolder = resolve; });
-
-  const holder = prisma.$transaction(async (tx) => {
-    const [{ pid }] = await tx.$queryRaw<[{ pid: number }]>`SELECT pg_backend_pid() AS pid`;
-    await tx.$queryRaw`SELECT id FROM "contests" WHERE id = ${contestId}::uuid FOR UPDATE`;
-    await work(tx);
-    signalReady(pid);
-    await released;
-  }, { timeout: 20_000 });
-
-  return {
-    ready,
-    release: async () => {
-      releaseHolder();
-      await holder;
-    },
-  };
-}
-
-/** Waits until some other session is blocked behind the holder's transaction. */
-async function waitUntilBlockedBy(prisma: PrismaClient, holderPid: number): Promise<void> {
-  for (let attempt = 0; attempt < 500; attempt += 1) {
-    const [{ waiting }] = await prisma.$queryRaw<[{ waiting: bigint }]>`
-      SELECT count(*)::bigint AS waiting FROM pg_stat_activity WHERE ${holderPid}::int = ANY(pg_blocking_pids(pid))`;
-    if (waiting > 0n) return;
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  }
-  throw new Error(`Nothing waited on the contest lock held by backend ${String(holderPid)}`);
-}
-
 describe('a draw racing an entry write', () => {
   it('waits for an entry being created and then refuses the draw as entries changed, leaving no entry submitted without picks', async () => {
     const prisma = getPrisma();
@@ -237,12 +194,12 @@ describe('a draw racing an entry write', () => {
     const [first] = fixture.entryIds;
     const firstEntry = await prisma.contestEntry.findUniqueOrThrow({ where: { id: first } });
 
-    const holder = holdContestLock(prisma, fixture.contestId, (tx) => tx.contestEntry.create({
+    const holder = holdContestLocks(prisma, [fixture.contestId], (tx) => tx.contestEntry.create({
       data: { contestId: fixture.contestId, squadId: firstEntry.squadId, entryNumber: 2, name: 'Late Entry', status: 'DRAFT' },
     }));
     const holderPid = await holder.ready;
     const draw = new ContestEntryPickService(prisma).recordDraw(drawOf(fixture)).then(() => 'recorded', (error: unknown) => error);
-    await waitUntilBlockedBy(prisma, holderPid).finally(holder.release);
+    await waitUntilBlockedBy(prisma, holderPid).finally(() => holder.release());
 
     expect(await draw).toBeInstanceOf(ContestDrawEntriesChangedError);
     expect(await prisma.contestDraw.count({ where: { contestId: fixture.contestId } })).toBe(0);
@@ -256,7 +213,7 @@ describe('a draw racing an entry write', () => {
     const [first] = fixture.entryIds;
     const firstEntry = await prisma.contestEntry.findUniqueOrThrow({ where: { id: first } });
 
-    const holder = holdContestLock(prisma, fixture.contestId, (tx) => tx.contestDraw.create({
+    const holder = holdContestLocks(prisma, [fixture.contestId], (tx) => tx.contestDraw.create({
       data: { contestId: fixture.contestId, seed: 'held-seed', fieldOrder: [], entryOrder: [], drawnByUserId: fixture.userId },
     }));
     const holderPid = await holder.ready;
@@ -268,7 +225,7 @@ describe('a draw racing an entry write', () => {
       status: 'DRAFT',
       tiebreakerValue: null,
     });
-    await waitUntilBlockedBy(prisma, holderPid).finally(holder.release);
+    await waitUntilBlockedBy(prisma, holderPid).finally(() => holder.release());
 
     expect(await created).toEqual({ status: 'contestDrawn' });
     expect(await prisma.contestEntry.count({ where: { contestId: fixture.contestId } })).toBe(2);
@@ -279,12 +236,12 @@ describe('a draw racing an entry write', () => {
     const fixture = await seedRandomDrawContest();
     const [first] = fixture.entryIds;
 
-    const holder = holdContestLock(prisma, fixture.contestId, (tx) => tx.contestDraw.create({
+    const holder = holdContestLocks(prisma, [fixture.contestId], (tx) => tx.contestDraw.create({
       data: { contestId: fixture.contestId, seed: 'held-seed', fieldOrder: [], entryOrder: [], drawnByUserId: fixture.userId },
     }));
     const holderPid = await holder.ready;
     const deleted = new PrismaContestEntryRepository(prisma).delete(first);
-    await waitUntilBlockedBy(prisma, holderPid).finally(holder.release);
+    await waitUntilBlockedBy(prisma, holderPid).finally(() => holder.release());
 
     expect(await deleted).toEqual({ status: 'contestDrawn' });
     expect(await prisma.contestEntry.count({ where: { contestId: fixture.contestId } })).toBe(2);

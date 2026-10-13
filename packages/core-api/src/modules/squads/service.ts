@@ -14,6 +14,7 @@ import {
   TeamIconKey,
 } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
+import { lockContestRows } from '../../adapters';
 import { toSquadDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { SquadNotFoundError, SquadOperationError } from './errors';
 import { assertSquadNameAvailable, resolveAvailableDefaultSquadName } from './squad-name';
@@ -428,12 +429,11 @@ export class SquadService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      const entryIds = (
-        await tx.contestEntry.findMany({
-          where: { squadId },
-          select: { id: true },
-        })
-      ).map((entry) => entry.id);
+      // The contests' row locks come before any entry is touched, the order a random draw
+      // takes them in, so a delete racing a draw waits for it instead of deadlocking (#646).
+      const entries = await tx.contestEntry.findMany({ where: { squadId }, select: { id: true, contestId: true } });
+      await lockContestRows(tx, entries.map((entry) => entry.contestId));
+      const entryIds = entries.map((entry) => entry.id);
 
       if (entryIds.length > 0) {
         await tx.contestEntryPick.deleteMany({
