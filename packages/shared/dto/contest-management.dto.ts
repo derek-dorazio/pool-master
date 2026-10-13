@@ -7,6 +7,7 @@ import {
   ContestFormat,
   GolfCategoryKey,
   GolfCutRuleType,
+  RandomDrawContestRulesSchema,
   SelectionType,
   Sport,
   TieredContestRulesSchema,
@@ -82,6 +83,9 @@ export const CONTEST_BUDGET_UNFILLABLE = 'CONTEST_BUDGET_UNFILLABLE';
 /** Error code for budget rules counting more scores than the roster holds (#93). */
 export const CONTEST_BUDGET_FIELD_OUT_OF_RANGE = 'CONTEST_BUDGET_FIELD_OUT_OF_RANGE';
 
+/** Error code for random-draw rules counting more scores than the draw deals an entry (#601). */
+export const CONTEST_DRAW_FIELD_OUT_OF_RANGE = 'CONTEST_DRAW_FIELD_OUT_OF_RANGE';
+
 /** Error code for rules of another selection type than the contest's (#93). */
 export const CONTEST_RULES_SELECTION_TYPE_MISMATCH = 'CONTEST_RULES_SELECTION_TYPE_MISMATCH';
 
@@ -112,6 +116,7 @@ const persistedConfigurationFields = {
 export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType', [
   TieredContestRulesSchema.extend(persistedConfigurationFields),
   BudgetContestConfigSchema.extend(persistedConfigurationFields),
+  RandomDrawContestRulesSchema.extend(persistedConfigurationFields),
 ]).describe('Persisted commissioner-managed contest rules, one shape per selection type.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 

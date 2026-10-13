@@ -10,6 +10,7 @@ import {
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
   CONTEST_BUDGET_UNFILLABLE,
+  CONTEST_DRAW_FIELD_OUT_OF_RANGE,
   CONTEST_RULES_SELECTION_TYPE_MISMATCH,
   CONTEST_CONFIGURATION_LOCKED,
   CONTEST_CONFIGURATION_REQUIRED,
@@ -1279,5 +1280,58 @@ describe('ContestManagementService budget rules (#93)', () => {
       .rejects.toMatchObject({ code: CONTEST_BUDGET_UNFILLABLE, statusCode: 409 });
     expect(contestCoreRepo.transitionStatus).not.toHaveBeenCalled();
     expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('ContestManagementService random-draw rules (#601)', () => {
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(CONTEST_MANAGEMENT_TEST_NOW);
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  const drawRequest = (configuration: { picksPerEntry: number; countedScores: number }): CreateContestRequest => ({
+    name: 'Masters Sweepstake',
+    sportEventId: '11111111-1111-1111-1111-111111111111',
+    contestFormat: 'ROSTER',
+    selectionType: SelectionType.RANDOM_DRAW,
+    configuration: { selectionType: SelectionType.RANDOM_DRAW, maxEntriesPerSquad: 1, ...configuration },
+  });
+
+  function drawService() {
+    const contestCoreRepo = createContestRepo();
+    const contestConfigurationRepo = createContestConfigurationRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      contestConfigurationRepo,
+      createParticipantScoringRuleRepo(),
+      createSportEventTierServiceStub(),
+      undefined,
+      createSportEventReader({ salaryCap: null }),
+    );
+    return { contestCoreRepo, contestConfigurationRepo, service };
+  }
+
+  it('creates a golf random-draw contest storing how many golfers the draw deals each entry, with no prices or tiers needed', async () => {
+    const { contestConfigurationRepo, service } = drawService();
+
+    await service.createContest({ leagueId: 'league-1' }, drawRequest({ picksPerEntry: 3, countedScores: 2 }));
+
+    expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      selectionType: SelectionType.RANDOM_DRAW,
+      configJson: { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 3, countedScores: 2 },
+      maxEntriesPerSquad: 1,
+    }));
+  });
+
+  it('refuses more counted scores than the draw deals an entry with 422 CONTEST_DRAW_FIELD_OUT_OF_RANGE, writing nothing', async () => {
+    const { contestCoreRepo, service } = drawService();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, drawRequest({ picksPerEntry: 2, countedScores: 3 })))
+      .rejects.toMatchObject({ code: CONTEST_DRAW_FIELD_OUT_OF_RANGE, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 });

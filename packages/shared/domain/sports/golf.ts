@@ -7,7 +7,7 @@ export const golfSportDefinition: SportDefinition = {
   participantType: ParticipantType.INDIVIDUAL,
   scoringFamily: ScoringFamily.STROKE_PLAY,
   tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
-  selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK],
+  selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['GOLF_RELATIVE_TO_PAR_TOTAL'],
   vocabulary: {
     participant: { one: 'golfer', many: 'golfers' },

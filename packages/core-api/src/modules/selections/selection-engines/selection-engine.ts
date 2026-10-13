@@ -36,6 +36,8 @@ export type SelectionOutcomeKind = (typeof SelectionOutcomeKind)[keyof typeof Se
  * handler answers with, so the published codes do not change.
  */
 export const SelectionRejectCode = {
+  /** Any selection in a random-draw contest, whose picks only the draw deals (#601). */
+  DEALT_BY_DRAW: 'DEALT_BY_DRAW',
   /** A budget selection of a participant with no price to spend against the cap (#93). */
   PRICE_MISSING: 'PRICE_MISSING',
   /** The roster is full and the selection displaces nothing. */
@@ -48,6 +50,7 @@ export const SelectionRejectCode = {
 export type SelectionRejectCode = (typeof SelectionRejectCode)[keyof typeof SelectionRejectCode];
 
 export type SelectionRejection =
+  | { kind: typeof SelectionOutcomeKind.REJECT; code: typeof SelectionRejectCode.DEALT_BY_DRAW }
   | { kind: typeof SelectionOutcomeKind.REJECT; code: typeof SelectionRejectCode.ENTRY_COMPLETE }
   | { kind: typeof SelectionOutcomeKind.REJECT; code: typeof SelectionRejectCode.PRICE_MISSING }
   | { kind: typeof SelectionOutcomeKind.REJECT; code: typeof SelectionRejectCode.TIER_MISSING }

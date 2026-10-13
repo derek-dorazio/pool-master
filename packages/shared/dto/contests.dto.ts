@@ -32,7 +32,7 @@ export const CreateContestRequestSchema = z.object({
   contestFormat: z.literal(ContestFormat.ROSTER).describe(
     'First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.',
   ),
-  selectionType: z.enum([SelectionType.TIERED, SelectionType.BUDGET_PICK]).describe(
+  selectionType: z.nativeEnum(SelectionType).describe(
     'How an entry picks: the selection types with typed rules. It must match the template\'s selection type when a template is named, and the configuration\'s.',
   ),
   templateId: z.string().uuid().optional().describe('Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.'),

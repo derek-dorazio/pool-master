@@ -2,5 +2,7 @@ export {
   ContestEntryPickService,
   ContestEntryPickEntryMissingError,
   ContestEntryPickContestMissingError,
+  ContestDrawAlreadyRunError,
+  ContestDrawEntriesChangedError,
 } from './service';
-export type { ContestEntryPickInsertInput } from './types';
+export type { ContestDrawRecordInput, ContestEntryPickInsertInput } from './types';

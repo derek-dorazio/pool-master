@@ -100,6 +100,7 @@ export function toSelectionStateResponse(view: SelectionView): SelectionStateRes
     contestId: view.contest.id,
     contestName: view.contest.name,
     selectionType: view.contest.selectionType,
+    drawnAt: view.contest.drawnAt?.toISOString() ?? null,
     isCommissioner: view.isCommissioner,
     rosterSize: view.rosterSize,
     status: view.status,

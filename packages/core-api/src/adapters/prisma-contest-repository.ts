@@ -11,15 +11,19 @@ import type {
 } from '@poolmaster/shared/db';
 import type { Contest, ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
 
+/** What every contest read joins: its event's sport, and its draw when it has one (#601). */
+const CONTEST_INCLUDE = {
+  sportEvent: { select: { sport: true } },
+  draw: { select: { drawnAt: true } },
+} as const;
+
 export class PrismaContestRepository implements ContestRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async findById(id: string): Promise<Contest | null> {
     const row = await this.prisma.contest.findFirst({
       where: { id },
-      include: {
-        sportEvent: { select: { sport: true } },
-      },
+      include: CONTEST_INCLUDE,
     });
     return row ? mapToContest(row) : null;
   }
@@ -28,9 +32,7 @@ export class PrismaContestRepository implements ContestRepository {
     const rows = await this.prisma.contest.findMany({
       where: { leagueId },
       orderBy: { createdAt: 'desc' },
-      include: {
-        sportEvent: { select: { sport: true } },
-      },
+      include: CONTEST_INCLUDE,
     });
     return rows.map(mapToContest);
   }
@@ -50,9 +52,7 @@ export class PrismaContestRepository implements ContestRepository {
         }),
       },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-      include: {
-        sportEvent: { select: { sport: true } },
-      },
+      include: CONTEST_INCLUDE,
     });
     return rows.map(mapToContest);
   }
@@ -67,9 +67,7 @@ export class PrismaContestRepository implements ContestRepository {
         contestFormat: contest.contestFormat,
         selectionType: contest.selectionType,
       },
-      include: {
-        sportEvent: { select: { sport: true } },
-      },
+      include: CONTEST_INCLUDE,
     });
     return mapToContest(row);
   }
@@ -96,9 +94,7 @@ export class PrismaContestRepository implements ContestRepository {
         ...(updates.startsAt !== undefined && { startsAt: updates.startsAt }),
         ...(updates.endsAt !== undefined && { endsAt: updates.endsAt }),
       },
-      include: {
-        sportEvent: { select: { sport: true } },
-      },
+      include: CONTEST_INCLUDE,
     });
     return mapToContest(row);
   }
@@ -129,6 +125,7 @@ function mapToContest(row: {
   contestFormat: ContestFormat;
   selectionType: SelectionType;
   sportEvent?: { sport: Sport } | null;
+  draw?: { drawnAt: Date } | null;
   scoringStopsOnElimination: boolean;
   startsAt: Date | null;
   endsAt: Date | null;
@@ -147,6 +144,7 @@ function mapToContest(row: {
     scoringStopsOnElimination: row.scoringStopsOnElimination,
     startsAt: row.startsAt ?? undefined,
     endsAt: row.endsAt ?? undefined,
+    drawnAt: row.draw?.drawnAt ?? undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

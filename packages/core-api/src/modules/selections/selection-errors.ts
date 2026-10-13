@@ -162,6 +162,61 @@ export const selectionErrors = {
       'ENTRY_OVER_BUDGET',
       409,
     ),
+
+  /** In a random-draw contest nobody picks: the draw deals every pick (#601). */
+  dealtByDraw: (contestId: string) =>
+    new SelectionError(
+      `Contest ${contestId} is a random draw; its picks are dealt by the draw, not chosen`,
+      'SELECTION_DEALT_BY_DRAW',
+      409,
+    ),
+
+  /** Only a random-draw contest has a draw to run (#601). */
+  notRandomDraw: (contestId: string, selectionType: string) =>
+    new SelectionError(
+      `Contest ${contestId} is ${selectionType}; only a random-draw contest runs a draw`,
+      'CONTEST_NOT_RANDOM_DRAW',
+      409,
+    ),
+
+  /** A contest is drawn once, and the draw is final (#601). */
+  drawAlreadyRun: (contestId: string) =>
+    new SelectionError(`Contest ${contestId} has already been drawn`, 'CONTEST_DRAW_ALREADY_RUN', 409),
+
+  /** The draw deals to the entries of an OPEN contest: a DRAFT has none, and later is too late. */
+  drawNotOpen: (contestId: string, status: string) =>
+    new SelectionError(
+      `Contest ${contestId} is ${status}; the draw runs only while it is open`,
+      'CONTEST_DRAW_NOT_OPEN',
+      409,
+    ),
+
+  /** The draw must come before the golfers start playing. */
+  drawEventStarted: (contestId: string) =>
+    new SelectionError(
+      `Contest ${contestId}'s event has started; it can no longer be drawn`,
+      'CONTEST_EVENT_ALREADY_STARTED',
+      409,
+    ),
+
+  drawNoEntries: (contestId: string) =>
+    new SelectionError(`Contest ${contestId} has no entries to draw for`, 'CONTEST_DRAW_NO_ENTRIES', 409),
+
+  /** Every entry is dealt the same count, so the field must hold that many for each. */
+  drawFieldTooSmall: (contestId: string, fieldSize: number, entryCount: number, picksPerEntry: number) =>
+    new SelectionError(
+      `Contest ${contestId}'s field of ${fieldSize} cannot deal ${picksPerEntry} to each of ${entryCount} entries (${entryCount * picksPerEntry} needed)`,
+      'CONTEST_DRAW_FIELD_TOO_SMALL',
+      409,
+    ),
+
+  /** An entry was added or removed while the draw was dealing; nothing was dealt. */
+  drawEntriesChanged: (contestId: string) =>
+    new SelectionError(
+      `Contest ${contestId}'s entries changed while it was being drawn; nothing was dealt, so run the draw again`,
+      'CONTEST_DRAW_ENTRIES_CHANGED',
+      409,
+    ),
 } as const;
 
 function formatDollars(amount: number): string {

@@ -196,6 +196,11 @@ export interface Contest extends DomainEntity {
   startsAt?: Date;
   endsAt?: Date;
   scoringStopsOnElimination: boolean;
+  /**
+   * When a random-draw contest's draw dealt its picks (#601). Set only by the draw; from then
+   * on the contest takes no entry changes and its picks are public.
+   */
+  drawnAt?: Date;
 }
 
 /** Tier definition used for tiered contest-selection modes. */

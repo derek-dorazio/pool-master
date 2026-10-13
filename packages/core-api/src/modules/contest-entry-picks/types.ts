@@ -27,3 +27,16 @@ export interface ContestEntryPickInsertInput {
   /** Override the default `pickedAt` (now). Used by integration fixtures. */
   pickedAt?: Date;
 }
+
+/**
+ * A dealt random draw (#601), as the one transaction that records it takes it: the draw's
+ * audit record, and what each entry was dealt, in deal order.
+ */
+export interface ContestDrawRecordInput {
+  contestId: string;
+  seed: string;
+  fieldOrder: readonly string[];
+  entryOrder: readonly string[];
+  drawnByUserId: string | null;
+  entries: ReadonlyArray<{ entryId: string; sportEventParticipantIds: readonly string[] }>;
+}

@@ -769,6 +769,75 @@ describe('Contract verification (web)', () => {
     expect(SelectionStateResponseSchema.safeParse(stateRes.json()).success).toBe(true);
   });
 
+  it('POST /api/v1/selections/:contestId/draw matches SelectionStateResponseSchema, carrying when the draw ran', async () => {
+    const commissioner = await createTestUser({ displayName: 'Contract Draw Commissioner' });
+    const leagueRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.create,
+      headers: commissioner.headers,
+      payload: buildCreateLeaguePayload('Contract Draw League'),
+    });
+    const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
+
+    const prisma = getPrisma();
+    const contest = await prisma.contest.create({
+      data: {
+        leagueId,
+        name: 'Contract Draw Contest',
+        status: 'OPEN',
+        contestFormat: ContestFormat.ROSTER,
+        selectionType: SelectionType.RANDOM_DRAW,
+      },
+    });
+    await prisma.contestConfiguration.create({
+      data: {
+        contestId: contest.id,
+        selectionType: SelectionType.RANDOM_DRAW,
+        maxEntriesPerSquad: 1,
+        configJson: { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 1, countedScores: 1 },
+      },
+    });
+    // Entered before the contest has an event, so the entry does not wait on a loaded field.
+    await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.contests.myEntry(contest.id),
+      headers: withoutJsonBodyHeaders(commissioner.headers),
+    });
+
+    const sport = await prisma.sport.upsert({
+      where: { sport: Sport.GOLF },
+      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
+    });
+    const event = await prisma.sportEvent.create({
+      data: {
+        ...(await freshEventEdition(prisma)),
+        externalId: `contract-draw-${randomUUID().slice(0, 8)}`,
+        providerId: 'integration-test',
+        sport: Sport.GOLF,
+        name: 'Contract Draw Event',
+        startDate: new Date('2099-04-20T12:00:00.000Z'),
+        status: 'SCHEDULED',
+      },
+    });
+    const golfer = await prisma.participant.create({
+      data: { sportId: sport.id, name: 'Contract Draw Golfer', participantType: 'INDIVIDUAL', externalIds: {} },
+    });
+    await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id, isActive: true } });
+    await prisma.contest.update({ where: { id: contest.id }, data: { sportEventId: event.id } });
+
+    const drawRes = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/selections/${contest.id}/draw`,
+      headers: withoutJsonBodyHeaders(commissioner.headers),
+    });
+
+    expect(drawRes.statusCode).toBe(200);
+    const parsed = SelectionStateResponseSchema.safeParse(drawRes.json());
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.drawnAt).toEqual(expect.any(String));
+  });
+
   it('active negative routes match ErrorEnvelopeSchema', async () => {
     const owner = await createTestUser({ displayName: 'Contract Error Owner' });
 

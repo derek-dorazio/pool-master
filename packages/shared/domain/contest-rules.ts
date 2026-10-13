@@ -11,8 +11,10 @@ import { BUDGET_SALARY_CAP_MAX } from './budget-pricing';
  * - **Budget:** the entry picks `rosterSize` golfers whose prices fit under the salary cap. The
  *   cap is the event's (its field was priced against it), copied onto the contest when it is
  *   created or its rules change; the commissioner never sets it.
+ * - **Random draw:** nobody picks. The commissioner's draw deals each entry `picksPerEntry`
+ *   members of the field at random (#601).
  *
- * In both, the best `countedScores` golfer scores count toward the entry's total.
+ * In each, the best `countedScores` golfer scores count toward the entry's total.
  */
 
 /** The most golfers a budget roster may hold. */
@@ -37,10 +39,22 @@ export const BudgetContestRulesSchema = z.object({
 }).describe("Budget rules: pick a roster of golfers whose prices fit under the event's salary cap.");
 export type BudgetContestRules = z.infer<typeof BudgetContestRulesSchema>;
 
+/** The most field members a draw deals one entry: the budget roster's ceiling. */
+export const RANDOM_DRAW_PICKS_PER_ENTRY_MAX = BUDGET_ROSTER_SIZE_MAX;
+
+export const RandomDrawContestRulesSchema = z.object({
+  selectionType: z.literal(SelectionType.RANDOM_DRAW),
+  picksPerEntry: z.number().int().min(1).max(RANDOM_DRAW_PICKS_PER_ENTRY_MAX)
+    .describe('How many members of the field the draw deals each entry.'),
+  countedScores: countedScoresSchema,
+}).describe("Random-draw rules: the commissioner's draw deals every entry the same number of the field at random.");
+export type RandomDrawContestRules = z.infer<typeof RandomDrawContestRulesSchema>;
+
 /** The rules a commissioner chooses, and a template presets. */
 export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
   TieredContestRulesSchema,
   BudgetContestRulesSchema,
+  RandomDrawContestRulesSchema,
 ]);
 export type ContestRules = z.infer<typeof ContestRulesSchema>;
 
@@ -54,6 +68,7 @@ export type BudgetContestConfig = z.infer<typeof BudgetContestConfigSchema>;
 export const ContestSelectionConfigSchema = z.discriminatedUnion('selectionType', [
   TieredContestRulesSchema,
   BudgetContestConfigSchema,
+  RandomDrawContestRulesSchema,
 ]);
 export type ContestSelectionConfig = z.infer<typeof ContestSelectionConfigSchema>;
 
@@ -67,6 +82,7 @@ const maxEntriesPerSquadSchema = z.number().int().min(1).nullable().optional()
 export const ContestRulesWithEntryLimitSchema = z.discriminatedUnion('selectionType', [
   TieredContestRulesSchema.extend({ maxEntriesPerSquad: maxEntriesPerSquadSchema }),
   BudgetContestRulesSchema.extend({ maxEntriesPerSquad: maxEntriesPerSquadSchema }),
+  RandomDrawContestRulesSchema.extend({ maxEntriesPerSquad: maxEntriesPerSquadSchema }),
 ]);
 export type ContestRulesWithEntryLimit = z.infer<typeof ContestRulesWithEntryLimitSchema>;
 

@@ -1,6 +1,7 @@
 import { SelectionType } from '@poolmaster/shared/domain';
 import type { ContestConfiguration } from '@poolmaster/shared/domain';
 import { budgetPickSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/budget-pick';
+import { randomDrawSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/random-draw';
 import { getSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
 import {
   SelectionOutcomeKind,
@@ -405,5 +406,70 @@ describe('budget-pick selection engine', () => {
 
   it('shows a pick in the round of its place in the entry, ignoring tiers', () => {
     expect(budgetPickSelectionEngine.historyRound({ tierNumber: 2, entryPickIndex: 5 })).toBe(5);
+  });
+});
+
+describe('the random-draw engine (#601)', () => {
+  const drawConfiguration = configuration({
+    selectionType: SelectionType.RANDOM_DRAW,
+    configJson: { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 3, countedScores: 2 },
+  });
+
+  it('holds a roster of the draw\'s picks per entry, and none without random-draw rules', () => {
+    expect(randomDrawSelectionEngine.rosterSize({ configuration: drawConfiguration, tiers: [] })).toBe(3);
+    expect(randomDrawSelectionEngine.rosterSize({ configuration: configuration(), tiers: [] })).toBe(0);
+  });
+
+  it('refuses every selection as dealt by the draw, a golfer the entry already holds included', () => {
+    const request: SelectionRequest = {
+      participant: participant('p-a', null),
+      heldPick: null,
+      existingPicks: [],
+      tiers: [],
+      rosterSize: 3,
+    };
+    const refused = { kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.DEALT_BY_DRAW };
+
+    expect(randomDrawSelectionEngine.evaluate(request)).toEqual(refused);
+    expect(randomDrawSelectionEngine.evaluate({ ...request, heldPick: { id: 'pick-a', participantId: 'p-a' } })).toEqual(refused);
+  });
+
+  it('reports a lineup short until the draw has dealt it every pick, then nothing', () => {
+    const lineup = (count: number) => randomDrawSelectionEngine.findLineupIssues({
+      configuration: drawConfiguration,
+      rosterSize: 3,
+      tiers: [],
+      picks: Array.from({ length: count }, (_, index) => ({ participantId: `p-${index}` })),
+    });
+
+    expect(lineup(0)).toEqual([{ kind: LineupIssueKind.ROSTER_SHORT, pickCount: 0, rosterSize: 3 }]);
+    expect(lineup(3)).toEqual([]);
+  });
+
+  it('lists the whole field as one group in the field\'s order, with no lineup summary', () => {
+    const field = [participant('p-b', null), participant('p-a', null)];
+
+    expect(randomDrawSelectionEngine.groupField({ tiers: [], participants: field, rosterSize: 3 })).toEqual([{
+      groupId: 'field',
+      groupName: 'Field',
+      groupNumber: 1,
+      picksFromGroup: 3,
+      participants: field,
+    }]);
+    expect(randomDrawSelectionEngine.summarizeLineup({
+      configuration: drawConfiguration,
+      rosterSize: 3,
+      tiers: [],
+      picks: [],
+      openField: field,
+    })).toBeNull();
+  });
+
+  it('shows a dealt pick in the round of the deal it came in', () => {
+    expect(randomDrawSelectionEngine.historyRound({ tierNumber: 2, entryPickIndex: 3 })).toBe(3);
+  });
+
+  it('is the engine the registry serves for a random-draw contest', () => {
+    expect(getSelectionEngine(SelectionType.RANDOM_DRAW)).toBe(randomDrawSelectionEngine);
   });
 });

@@ -1,7 +1,8 @@
 /**
  * Selection module — REST routes for roster-based selection.
  *
- * The route surface serves every selection type through its engine (tiered and budget pick).
+ * The route surface serves every selection type through its engine (tiered, budget pick and
+ * random draw), plus the random draw's one commissioner action, running the draw.
  *
  * Path, method, schema refs and wiring only (`docs/LAYERS.md` §2.7). The operations are in
  * `service.ts`, actor resolution and DTO mapping in `handler.ts`, the selection rules in
@@ -15,7 +16,7 @@ import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaContestRepository, PrismaLeagueMembershipRepository } from '../../adapters';
-import { leagueOfContest, requireMemberOfLeague } from '../leagues/permissions';
+import { leagueOfContest, requireCommissionerForContest, requireMemberOfLeague } from '../leagues/permissions';
 import { createSelectionHandlers } from './handler';
 import { createSelectionService } from './wiring';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
@@ -54,10 +55,9 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
   }));
   // #291 — the selection room shows every entry's picks, so reading it needs membership of the
   // contest's league, as every other contest read does.
-  const requireContestLeagueMember = requireMemberOfLeague(
-    new PrismaLeagueMembershipRepository(prisma),
-    leagueOfContest(new PrismaContestRepository(prisma)),
-  );
+  const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
+  const contestRepo = new PrismaContestRepository(prisma);
+  const requireContestLeagueMember = requireMemberOfLeague(membershipRepo, leagueOfContest(contestRepo));
 
   fastify.get('/:contestId', {
     schema: {
@@ -108,5 +108,22 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
       },
     },
     handler: handlers.submitContestEntry,
+  });
+
+  fastify.post('/:contestId/draw', {
+    schema: {
+      tags: ['Selections'],
+      summary: 'Run a random draw',
+      description:
+        'Runs a random-draw contest\'s draw and returns the refreshed selection state. Commissioner of the contest\'s league only (root admins bypass): 403 otherwise. The draw shuffles the event\'s available field and deals it round-robin, so every entry gets the contest\'s picksPerEntry; field members left over are not dealt. Every entry is submitted, entries close (no entering, leaving or renaming), and every entry\'s picks are visible to the league from then on. Final: there is no undo or redraw. The seed and dealt order are kept so the draw can be replayed. 409 CONTEST_NOT_RANDOM_DRAW for another selection type, CONTEST_DRAW_ALREADY_RUN once drawn, CONTEST_DRAW_NOT_OPEN unless the contest is OPEN, CONTEST_EVENT_ALREADY_STARTED once its event\'s start time has passed, CONTEST_DRAW_NO_ENTRIES with no entries, CONTEST_DRAW_FIELD_TOO_SMALL when the available field cannot deal every entry its picks, CONTEST_DRAW_ENTRIES_CHANGED when an entry came or went while the draw ran (nothing is dealt; run it again).',
+      operationId: 'runContestDraw',
+      params: contestIdParams,
+      response: {
+        200: schemaRef('SelectionStateResponse'),
+        ...selectionErrorResponses(400, 401, 403, 404, 409),
+      },
+    },
+    preHandler: requireCommissionerForContest(contestRepo, membershipRepo),
+    handler: handlers.runContestDraw,
   });
 }

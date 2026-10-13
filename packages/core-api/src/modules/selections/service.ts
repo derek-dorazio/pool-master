@@ -29,6 +29,7 @@
  * converted, and the attempt landed "a Prisma mock in a logger slot".
  */
 
+import { randomBytes } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   ContestEntryStatus,
@@ -50,7 +51,11 @@ import type {
   SportEventRepository,
   SquadMembershipRepository,
 } from '@poolmaster/shared/db';
-import type { ContestEntryPickService } from '../contest-entry-picks';
+import {
+  ContestDrawAlreadyRunError,
+  ContestDrawEntriesChangedError,
+  type ContestEntryPickService,
+} from '../contest-entry-picks';
 import { contestPicksRevealed, type ContestService } from '../contests/service';
 import { areContestEntriesOpen } from '../contests/entry-window';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
@@ -65,6 +70,7 @@ import {
   mapContestStatusToSelectionStatus,
 } from './selection-rules';
 import { getSelectionEngine } from './selection-engines/registry';
+import { dealRandomDraw } from './selection-engines/random-draw';
 import {
   SelectionOutcomeKind,
   SelectionRejectCode,
@@ -109,6 +115,8 @@ export interface SelectionServiceDeps {
   /** Read for the event's start time, the cutoff for pick changes. */
   sportEvents: Pick<SportEventRepository, 'findById'>;
   now?: () => Date;
+  /** The seed a random draw shuffles by (#601); a fresh random one per draw unless given. */
+  drawSeed?: () => string;
   logger?: FastifyBaseLogger;
 }
 
@@ -129,6 +137,12 @@ export interface SubmitSelectionInput {
   entryId: string;
   /** A `SportEventParticipant` id — the field row, not the canonical participant. */
   participantId: string;
+  actorUserId?: string;
+}
+
+export interface RunDrawInput {
+  contestId: string;
+  /** The commissioner running the draw; the route's gate has already checked them. */
   actorUserId?: string;
 }
 
@@ -202,9 +216,7 @@ export class SelectionService {
         { action: 'selection.submitSelection.locked', data: { contestId, entryId, status: context.contest.status } },
         'Refused a pick change on a contest that no longer takes picks',
       );
-      throw context.contest.status === ContestStatus.OPEN
-        ? selectionErrors.selectionLockedByEventStart(contestId)
-        : selectionErrors.selectionLocked(contestId, context.contest.status);
+      throw lockedSelectionError(context, contestId);
     }
 
     const { tiers } = context;
@@ -329,9 +341,11 @@ export class SelectionService {
         { action: 'selection.submitEntry.locked', data: { contestId, entryId, status: context.contest.status } },
         'Refused to submit an entry on a contest that no longer takes picks',
       );
-      throw context.contest.status === ContestStatus.OPEN
-        ? selectionErrors.submitLockedByEventStart(contestId)
-        : selectionErrors.submitLocked(contestId, context.contest.status);
+      throw context.contest.drawnAt
+        ? selectionErrors.dealtByDraw(contestId)
+        : context.contest.status === ContestStatus.OPEN
+          ? selectionErrors.submitLockedByEventStart(contestId)
+          : selectionErrors.submitLocked(contestId, context.contest.status);
     }
 
     const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers: context.tiers });
@@ -369,6 +383,79 @@ export class SelectionService {
     }
 
     return this.buildRoomView({ context: submittedContext, engine, selectedEntryId: entryId, actorUserId });
+  }
+
+  /**
+   * Runs a random-draw contest's draw (#601): deals every entry its picks, submits every entry,
+   * and closes entries, then answers with the room. The commissioner's explicit release action;
+   * nothing runs it on a timer. Final: there is no undo and no redraw.
+   *
+   * Refused unless the contest is a random draw, not yet drawn, OPEN, before its event's start,
+   * with at least one entry, and with an available field that can deal every entry
+   * `picksPerEntry`. Withdrawn golfers are not dealt.
+   */
+  async runDraw(input: RunDrawInput): Promise<SelectionView> {
+    const { contestId, actorUserId } = input;
+    const context = await this.loadContext(contestId);
+    const { contest } = context;
+
+    if (contest.selectionType !== SelectionType.RANDOM_DRAW) {
+      throw selectionErrors.notRandomDraw(contestId, contest.selectionType);
+    }
+    if (contest.drawnAt) throw selectionErrors.drawAlreadyRun(contestId);
+    if (contest.status !== ContestStatus.OPEN) throw selectionErrors.drawNotOpen(contestId, contest.status);
+    if (!context.acceptsPicks) throw selectionErrors.drawEventStarted(contestId);
+    if (context.entries.length === 0) throw selectionErrors.drawNoEntries(contestId);
+
+    const engine = getSelectionEngine(contest.selectionType);
+    const picksPerEntry = engine.rosterSize({ configuration: context.configuration, tiers: context.tiers });
+    if (picksPerEntry <= 0) throw selectionErrors.selectionConfigInvalid(contestId);
+
+    const fieldIds = [...buildAvailableParticipantIds(context)];
+    if (fieldIds.length < context.entries.length * picksPerEntry) {
+      this.deps.logger?.warn(
+        {
+          action: 'selection.runDraw.fieldTooSmall',
+          data: { contestId, fieldSize: fieldIds.length, entryCount: context.entries.length, picksPerEntry },
+        },
+        'Refused a draw the field cannot deal',
+      );
+      throw selectionErrors.drawFieldTooSmall(contestId, fieldIds.length, context.entries.length, picksPerEntry);
+    }
+
+    const seed = this.deps.drawSeed?.() ?? randomBytes(16).toString('hex');
+    const deal = dealRandomDraw({
+      seed,
+      sportEventParticipantIds: fieldIds,
+      entryIds: context.entries.map((entry) => entry.id),
+      picksPerEntry,
+    });
+
+    try {
+      await this.deps.pickWrites.recordDraw({
+        contestId,
+        seed,
+        fieldOrder: deal.fieldOrder,
+        entryOrder: deal.entryOrder,
+        drawnByUserId: actorUserId ?? null,
+        entries: deal.entries,
+      });
+    } catch (error) {
+      if (error instanceof ContestDrawAlreadyRunError) throw selectionErrors.drawAlreadyRun(contestId);
+      if (error instanceof ContestDrawEntriesChangedError) throw selectionErrors.drawEntriesChanged(contestId);
+      throw error;
+    }
+
+    this.deps.logger?.info(
+      {
+        action: 'selection.runDraw.drawn',
+        data: { contestId, entryCount: context.entries.length, picksPerEntry, fieldSize: fieldIds.length },
+      },
+      'Ran a random draw',
+    );
+
+    const drawnContext = await this.loadContext(contestId);
+    return this.buildRoomView({ context: drawnContext, engine, actorUserId });
   }
 
   /** What stops the entry's lineup being submitted as of now, read fresh so it sees the latest pick write. */
@@ -514,7 +601,7 @@ export class SelectionService {
     // the contest's entry reads follow (`contestPicksRevealed`). The actor's teams are every
     // squad they are an active member of, co-owners included, not only the squad's first
     // member, which is who `entryUserIdMap` attributes an entry to.
-    const picksRevealed = contestPicksRevealed(contest.status);
+    const picksRevealed = contestPicksRevealed(contest);
     const actorSquadIds = new Set(
       actorUserId
         ? context.squadMemberships
@@ -699,6 +786,8 @@ function rejectionError(
   request: { contestId: string; entryId: string; participantId: string; rosterSize: number },
 ): SelectionError {
   switch (rejection.code) {
+    case SelectionRejectCode.DEALT_BY_DRAW:
+      return selectionErrors.dealtByDraw(request.contestId);
     case SelectionRejectCode.ENTRY_COMPLETE:
       return selectionErrors.entryComplete(request.entryId, request.rosterSize);
     case SelectionRejectCode.PRICE_MISSING:
@@ -708,6 +797,17 @@ function rejectionError(
     case SelectionRejectCode.TIER_NOT_FOUND:
       return selectionErrors.tierNotFound(rejection.tierLabel, request.contestId);
   }
+}
+
+/**
+ * Why the room refuses a pick change: a drawn contest's picks are the draw's (#601); otherwise
+ * the contest has left OPEN, or its event has started while it still says OPEN.
+ */
+function lockedSelectionError(context: SelectionContext, contestId: string): SelectionError {
+  if (context.contest.drawnAt) return selectionErrors.dealtByDraw(contestId);
+  return context.contest.status === ContestStatus.OPEN
+    ? selectionErrors.selectionLockedByEventStart(contestId)
+    : selectionErrors.selectionLocked(contestId, context.contest.status);
 }
 
 /** The context with one entry replaced by its freshly written row. */

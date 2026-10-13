@@ -292,6 +292,7 @@ enum PrismaContestStatus {
 enum PrismaSelectionType {
   TIERED
   BUDGET_PICK
+  RANDOM_DRAW
 }
 
 enum PrismaPrizePayoutType {
@@ -367,6 +368,7 @@ model User {
   squadOwnerInvitationsSent     SquadOwnerInvitation[] @relation("SquadOwnerInvitedBy")
   squadOwnerInvitationsAccepted SquadOwnerInvitation[] @relation("SquadOwnerAcceptedBy")
 
+  contestDraws  ContestDraw[]
   refreshTokens RefreshToken[]
 
   @@map("users")
@@ -686,6 +688,7 @@ model Contest {
   configuration  ContestConfiguration?
   entries        ContestEntry[]
   entryStandings ContestEntryStanding[]
+  draw           ContestDraw?
 
   @@index([leagueId])
   @@index([sportEventId])
@@ -835,6 +838,28 @@ model ContestEntryStanding {
 
   @@index([contestId, position])
   @@map("contest_entry_standings")
+}
+
+/// A random-draw contest's draw (#601): the commissioner's one explicit "Run draw", which dealt
+/// every entry its picks. Its existence closes the contest's entries and reveals its picks.
+///
+/// Kept so the draw can be shown and replayed: the seed, and the orders the seeded shuffle put
+/// the field (`sport_event_participants` ids) and the entries in. Dealing round-robin from
+/// those two orders reproduces every pick. One per contest; the unique key is what stops two
+/// presses racing from dealing twice.
+model ContestDraw {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId     String   @unique @map("contest_id") @db.Uuid
+  seed          String   @db.VarChar(64)
+  fieldOrder    String[] @map("field_order") @db.Uuid
+  entryOrder    String[] @map("entry_order") @db.Uuid
+  drawnByUserId String?  @map("drawn_by_user_id") @db.Uuid
+  drawnAt       DateTime @default(now()) @map("drawn_at") @db.Timestamptz
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  drawnBy User?   @relation(fields: [drawnByUserId], references: [id], onDelete: SetNull)
+
+  @@map("contest_draws")
 }
 
 /// Golf extension of ContestEntryStanding: the entry total its position was ranked from.
