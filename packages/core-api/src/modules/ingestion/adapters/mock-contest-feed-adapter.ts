@@ -397,7 +397,7 @@ function isEventWithinDateRange(startsAt: string, dateRange?: DateRange): boolea
 
 /**
  * The mock's sandbox scenario and event-id prefix (#402). Copies live in the mock's
- * scenario-store.ts and the web app's golf-tournament-score-source-card.tsx; rename all three.
+ * scenario-store.ts and the web app's sport-event-score-source-card.tsx; rename all three.
  */
 const sandboxScenarioId = 'golf-sandbox';
 const sandboxEventIdPrefix = 'sandbox-';

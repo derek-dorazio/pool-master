@@ -1155,7 +1155,7 @@ function loadJsonFile(filePath: string): ContestFeedScenarioRecord {
  * a JSON entry and without its dates having to match anything.
  */
 // Copies: core-api's mock-contest-feed-adapter.ts (both constants) and the web app's
-// golf-tournament-score-source-card.tsx (the prefix). Rename all three together.
+// sport-event-score-source-card.tsx (the prefix). Rename all three together.
 export const sandboxGolfScenarioId = 'golf-sandbox';
 export const sandboxEventIdPrefix = 'sandbox-';
 
