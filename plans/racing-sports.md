@@ -396,3 +396,64 @@ Derek's loop is refine, implement, reflect. **Derek approved the Refine and Refl
 
 The refinement table in §2.1 is a good template for step 0: every row is something a sport
 ticket has needed to decide.
+
+---
+
+## 9. Build slices for #622 and #623 (added 2026-10-13)
+
+Read from `main` at `b757b98`. Mapping the code turned up five places where the groundwork
+still assumes golf. Each slice below is green and mergeable on its own, and golf behaves the
+same after every one of them.
+
+1. **Web scoring-family registry (the web half of #606).** The contest leaderboard response
+   gains the event's `sport`. The web gets a `SCORING_FAMILY_UI` registry keyed by scoring
+   family. Stroke play's entry is today's golf leaderboard code, moved and unchanged. Round
+   labels come from the sport definition, which is the first step of #636.
+2. **Backend interface prep, golf only.**
+   - A family scores the field per contest, given that contest's scoring settings, because a
+     points table belongs to the contest. Settlement scores inside its per-contest loop.
+   - A participant score carries a per-family detail instead of golf's unplayed rounds.
+   - A family declares which live-score category it accepts, or none.
+   - The sport definition carries its default rounds and tier count instead of golf
+     constants.
+   - The golf score routes refuse an event of another scoring family.
+3. **Finish position plus horse racing, backend.**
+   - `HORSE_RACING` and a `RACE` tournament format.
+   - The race result and entry race standing tables, the `FINISH_POSITION_POINTS`
+     definition, and the module.
+   - The finishing-order results route, and the Win/Place/Show templates.
+   - The web's finish-position registry entry, a place-and-points leaderboard, which the
+     exhaustive map forces into the same slice.
+4. **Racing in the web admin and create flow.** The admin finishing-order card, a sport picker
+   on create contest, a points-table field, and sport vocabulary in the shared selection
+   screens. Includes one browser journey: event, field with odds, contest, entry, results,
+   settled standings.
+5. **Close-out.** The US Thoroughbred league and the Pegasus pilot event, set up through
+   admin. Docs, and the Reflect step on the add-sport skill.
+
+**Q9.1** Where does a contest's points table live? *Recommendation:* in the contest's
+participant scoring rule `config`, which exists today and is always `{}`. Each scoring
+definition gets its own typed schema for it: `FINISH_POSITION_POINTS` takes
+`{ pointsTable, didNotFinishPoints }`. Contest templates carry the presets the same way.
+
+**Q9.2** Tournament format for a race? *Recommendation:* a new `RACE` value. Stroke play would
+be wrong, and the validity matrix keys on it.
+
+**Q9.3** Vocabulary. The sport definition has no word for withdrawn (horse racing says
+"Scratched"), and racing has no "eliminated". *Recommendation:* add `withdrawn` to the
+vocabulary (golf "Withdrawn"), and make `eliminated` optional, absent for racing.
+
+**Q9.4** A live-score arm for racing? *Recommendation:* none until a racing feed exists
+(Jolpica-F1 is the first candidate). The family declares no live-score category, and the
+score publisher skips and warns on a mismatch. The add-sport skill's step 4 changes in the
+Reflect step to say a family adds a live-score variant only with a provider.
+
+**Q9.5** A scratched horse dealt in a random draw. Dealt picks are final (#601), so a
+scratched horse cannot be replaced. *Recommendation:* it scores as did-not-start (the table's
+"did not finish" value), as in a paper sweep. Tiered and budget entries can already swap a
+withdrawn pick until the start, which satisfies Q1.5.
+
+**Q9.6** The admin area is built as `/manage/golf/...`. *Recommendation:* decide inside slice 4
+after a closer look. The default is sport-generic event pages, `/manage/sports/:sport/...`,
+with the results card chosen through the scoring-family registry. The golf URLs redirect to
+them, so nobody keeps two copies of the event and field pages.
