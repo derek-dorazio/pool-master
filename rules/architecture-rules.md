@@ -249,6 +249,9 @@ filling them in rather than by finding guards scattered through the code:
   knockout advancement; races are finish position), and each family owns one set of result
   extension tables beside the cross-sport event core. Never one table set per sport. Each
   family's backend module lives in its own folder under `packages/core-api/src/modules/scoring-families/`.
+  On the web, how a family's results read on the shared contest screens is its entry in
+  `SCORING_FAMILY_UI` (`clients/poolmaster/src/features/contests/scoring-family-ui/`), also a
+  `Record<ScoringFamily, …>`, reached from a response's `sport` through its sport definition.
 
 The rules that keep it that way:
 

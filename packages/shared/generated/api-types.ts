@@ -7645,6 +7645,11 @@ export interface components {
             /** @description Sport event the contest runs on. */
             sportEventId: string;
             /**
+             * @description Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.
+             * @enum {string}
+             */
+            sport: "GOLF";
+            /**
              * @description The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
              * @enum {string}
              */

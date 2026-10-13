@@ -285,6 +285,7 @@ describe('My team › My entries', () => {
     getContestLeaderboardMock.mockResolvedValue(apiSuccess({
       contestId: 'c-live',
       sportEventId: 'event-c-live',
+      sport: 'GOLF',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 4 },
       participants: [],

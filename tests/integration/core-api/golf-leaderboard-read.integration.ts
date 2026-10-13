@@ -206,6 +206,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     expect(response.statusCode).toBe(200);
     const parsed = ContestLeaderboardResponseSchema.parse(response.json());
     expect(parsed.scoringDefinitionId).toBe('GOLF_RELATIVE_TO_PAR_TOTAL');
+    expect(parsed.sport).toBe(Sport.GOLF);
     expect(parsed.entries.map((entry) => [entry.entryId, entry.golf?.totalScoreToPar, entry.position])).toEqual([
       [entryTwo.id, -9, 1],
       [entryOne.id, -7, 2],
