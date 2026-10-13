@@ -12,6 +12,9 @@ export * from './sports';
 export { assertNever } from './assert-never';
 export {
   compareScores,
+  ContestScoringSettingsSchema,
+  FINISH_POSITION_POINTS_TABLE_MAX_PLACES,
+  FinishPositionPointsSettingsSchema,
   isRoundComplete,
   PARTICIPANT_SCORING_DEFINITIONS,
   PARTICIPANT_SCORING_SETTINGS_SCHEMAS,
@@ -22,12 +25,14 @@ export {
 export type {
   ContestScoringSettings,
   ContestScoringSettingsParse,
+  FinishPositionPointsSettings,
   ParticipantScoringSettings,
   ParticipantScoringDefinition,
   ParticipantRoundScore,
   ParticipantScoringDefinitionId,
   ScoreDirection,
   ScoreRank,
+  ScoreUnit,
 } from './contest-scoring';
 export type {
   ContestConfigTemplate,

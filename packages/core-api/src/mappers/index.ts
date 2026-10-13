@@ -9,6 +9,7 @@ export * from './sport-events.mapper';
 export * from './sport-catalog.mapper';
 export * from './sport-event-participants.mapper';
 export * from './golf-scores.mapper';
+export * from './race-results.mapper';
 export * from './contest-management.mapper';
 export * from './version.mapper';
 export * from './ingestion.mapper';

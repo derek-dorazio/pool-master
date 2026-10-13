@@ -2626,6 +2626,30 @@ export type ContestConfigurationRequest = {
      * Maximum entries a Team may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
+    /**
+     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     */
+    scoring?: {
+        participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+        config: {
+            [key: string]: never;
+        };
+    } | {
+        participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+        /**
+         * Finish-position points settings: the contest's points table and its "did not finish" value.
+         */
+        config: {
+            /**
+             * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+             */
+            pointsTable: Array<number>;
+            /**
+             * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+             */
+            didNotFinishPoints: number;
+        };
+    };
 } | {
     selectionType: 'BUDGET_PICK';
     /**
@@ -2640,6 +2664,30 @@ export type ContestConfigurationRequest = {
      * Maximum entries a Team may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
+    /**
+     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     */
+    scoring?: {
+        participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+        config: {
+            [key: string]: never;
+        };
+    } | {
+        participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+        /**
+         * Finish-position points settings: the contest's points table and its "did not finish" value.
+         */
+        config: {
+            /**
+             * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+             */
+            pointsTable: Array<number>;
+            /**
+             * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+             */
+            didNotFinishPoints: number;
+        };
+    };
 } | {
     selectionType: 'RANDOM_DRAW';
     /**
@@ -2654,6 +2702,30 @@ export type ContestConfigurationRequest = {
      * Maximum entries a Team may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
+    /**
+     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     */
+    scoring?: {
+        participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+        config: {
+            [key: string]: never;
+        };
+    } | {
+        participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+        /**
+         * Finish-position points settings: the contest's points table and its "did not finish" value.
+         */
+        config: {
+            /**
+             * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+             */
+            pointsTable: Array<number>;
+            /**
+             * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+             */
+            didNotFinishPoints: number;
+        };
+    };
 };
 
 /**
@@ -2857,7 +2929,7 @@ export type ContestConfigTemplateDto = {
     /**
      * Sport this template applies to.
      */
-    sport: 'GOLF';
+    sport: 'GOLF' | 'HORSE_RACING';
     /**
      * Optional event-type scope for the template.
      */
@@ -2915,6 +2987,30 @@ export type ContestConfigTemplateDto = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+        /**
+         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         */
+        scoring?: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            config: {
+                [key: string]: never;
+            };
+        } | {
+            participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+            /**
+             * Finish-position points settings: the contest's points table and its "did not finish" value.
+             */
+            config: {
+                /**
+                 * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                 */
+                pointsTable: Array<number>;
+                /**
+                 * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                 */
+                didNotFinishPoints: number;
+            };
+        };
     } | {
         selectionType: 'BUDGET_PICK';
         /**
@@ -2929,6 +3025,30 @@ export type ContestConfigTemplateDto = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+        /**
+         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         */
+        scoring?: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            config: {
+                [key: string]: never;
+            };
+        } | {
+            participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+            /**
+             * Finish-position points settings: the contest's points table and its "did not finish" value.
+             */
+            config: {
+                /**
+                 * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                 */
+                pointsTable: Array<number>;
+                /**
+                 * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                 */
+                didNotFinishPoints: number;
+            };
+        };
     } | {
         selectionType: 'RANDOM_DRAW';
         /**
@@ -2943,6 +3063,30 @@ export type ContestConfigTemplateDto = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+        /**
+         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         */
+        scoring?: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            config: {
+                [key: string]: never;
+            };
+        } | {
+            participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+            /**
+             * Finish-position points settings: the contest's points table and its "did not finish" value.
+             */
+            config: {
+                /**
+                 * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                 */
+                pointsTable: Array<number>;
+                /**
+                 * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                 */
+                didNotFinishPoints: number;
+            };
+        };
     };
 };
 
@@ -3109,7 +3253,7 @@ export type ListContestConfigTemplatesQuery = {
     /**
      * Only templates for this sport.
      */
-    sport?: 'GOLF';
+    sport?: 'GOLF' | 'HORSE_RACING';
     /**
      * Only templates for this contest format.
      */
@@ -3136,7 +3280,7 @@ export type ContestConfigTemplateListResponse = {
         /**
          * Sport this template applies to.
          */
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
         /**
          * Optional event-type scope for the template.
          */
@@ -3194,6 +3338,30 @@ export type ContestConfigTemplateListResponse = {
              * Maximum entries a Team may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
+            /**
+             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             */
+            scoring?: {
+                participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
+            } | {
+                participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+                /**
+                 * Finish-position points settings: the contest's points table and its "did not finish" value.
+                 */
+                config: {
+                    /**
+                     * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                     */
+                    pointsTable: Array<number>;
+                    /**
+                     * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                     */
+                    didNotFinishPoints: number;
+                };
+            };
         } | {
             selectionType: 'BUDGET_PICK';
             /**
@@ -3208,6 +3376,30 @@ export type ContestConfigTemplateListResponse = {
              * Maximum entries a Team may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
+            /**
+             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             */
+            scoring?: {
+                participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
+            } | {
+                participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+                /**
+                 * Finish-position points settings: the contest's points table and its "did not finish" value.
+                 */
+                config: {
+                    /**
+                     * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                     */
+                    pointsTable: Array<number>;
+                    /**
+                     * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                     */
+                    didNotFinishPoints: number;
+                };
+            };
         } | {
             selectionType: 'RANDOM_DRAW';
             /**
@@ -3222,6 +3414,30 @@ export type ContestConfigTemplateListResponse = {
              * Maximum entries a Team may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
+            /**
+             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             */
+            scoring?: {
+                participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
+            } | {
+                participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+                /**
+                 * Finish-position points settings: the contest's points table and its "did not finish" value.
+                 */
+                config: {
+                    /**
+                     * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                     */
+                    pointsTable: Array<number>;
+                    /**
+                     * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                     */
+                    didNotFinishPoints: number;
+                };
+            };
         };
     }>;
 };
@@ -3267,6 +3483,30 @@ export type UpdateContestConfigTemplateRequest = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+        /**
+         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         */
+        scoring?: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            config: {
+                [key: string]: never;
+            };
+        } | {
+            participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+            /**
+             * Finish-position points settings: the contest's points table and its "did not finish" value.
+             */
+            config: {
+                /**
+                 * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                 */
+                pointsTable: Array<number>;
+                /**
+                 * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                 */
+                didNotFinishPoints: number;
+            };
+        };
     } | {
         selectionType: 'BUDGET_PICK';
         /**
@@ -3281,6 +3521,30 @@ export type UpdateContestConfigTemplateRequest = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+        /**
+         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         */
+        scoring?: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            config: {
+                [key: string]: never;
+            };
+        } | {
+            participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+            /**
+             * Finish-position points settings: the contest's points table and its "did not finish" value.
+             */
+            config: {
+                /**
+                 * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                 */
+                pointsTable: Array<number>;
+                /**
+                 * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                 */
+                didNotFinishPoints: number;
+            };
+        };
     } | {
         selectionType: 'RANDOM_DRAW';
         /**
@@ -3295,6 +3559,30 @@ export type UpdateContestConfigTemplateRequest = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+        /**
+         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         */
+        scoring?: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            config: {
+                [key: string]: never;
+            };
+        } | {
+            participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+            /**
+             * Finish-position points settings: the contest's points table and its "did not finish" value.
+             */
+            config: {
+                /**
+                 * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                 */
+                pointsTable: Array<number>;
+                /**
+                 * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                 */
+                didNotFinishPoints: number;
+            };
+        };
     };
 };
 
@@ -3313,7 +3601,7 @@ export type ContestConfigTemplateResponse = {
         /**
          * Sport this template applies to.
          */
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
         /**
          * Optional event-type scope for the template.
          */
@@ -3371,6 +3659,30 @@ export type ContestConfigTemplateResponse = {
              * Maximum entries a Team may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
+            /**
+             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             */
+            scoring?: {
+                participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
+            } | {
+                participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+                /**
+                 * Finish-position points settings: the contest's points table and its "did not finish" value.
+                 */
+                config: {
+                    /**
+                     * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                     */
+                    pointsTable: Array<number>;
+                    /**
+                     * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                     */
+                    didNotFinishPoints: number;
+                };
+            };
         } | {
             selectionType: 'BUDGET_PICK';
             /**
@@ -3385,6 +3697,30 @@ export type ContestConfigTemplateResponse = {
              * Maximum entries a Team may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
+            /**
+             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             */
+            scoring?: {
+                participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
+            } | {
+                participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+                /**
+                 * Finish-position points settings: the contest's points table and its "did not finish" value.
+                 */
+                config: {
+                    /**
+                     * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                     */
+                    pointsTable: Array<number>;
+                    /**
+                     * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                     */
+                    didNotFinishPoints: number;
+                };
+            };
         } | {
             selectionType: 'RANDOM_DRAW';
             /**
@@ -3399,6 +3735,30 @@ export type ContestConfigTemplateResponse = {
              * Maximum entries a Team may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
+            /**
+             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             */
+            scoring?: {
+                participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
+            } | {
+                participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+                /**
+                 * Finish-position points settings: the contest's points table and its "did not finish" value.
+                 */
+                config: {
+                    /**
+                     * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                     */
+                    pointsTable: Array<number>;
+                    /**
+                     * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                     */
+                    didNotFinishPoints: number;
+                };
+            };
         };
     };
 };
@@ -3958,7 +4318,7 @@ export type SportDto = {
     /**
      * The sport.
      */
-    sport: 'GOLF';
+    sport: 'GOLF' | 'HORSE_RACING';
     /**
      * Whether the sport's competitors are individuals or teams.
      */
@@ -3966,7 +4326,7 @@ export type SportDto = {
     /**
      * Structural format of the sport's events; decides which contest formats are valid.
      */
-    tournamentFormat: 'STROKE_PLAY_TOURNAMENT';
+    tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE';
     /**
      * ISO 8601 datetime string.
      */
@@ -3992,7 +4352,7 @@ export type SportListResponse = {
         /**
          * The sport.
          */
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
         /**
          * Whether the sport's competitors are individuals or teams.
          */
@@ -4000,7 +4360,7 @@ export type SportListResponse = {
         /**
          * Structural format of the sport's events; decides which contest formats are valid.
          */
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT';
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE';
         /**
          * ISO 8601 datetime string.
          */
@@ -4065,7 +4425,7 @@ export type SportLeagueListQuery = {
     /**
      * Only sport leagues of this sport.
      */
-    sport?: 'GOLF';
+    sport?: 'GOLF' | 'HORSE_RACING';
     /**
      * Only active, or only inactive, sport leagues.
      */
@@ -4181,7 +4541,7 @@ export type CreateSportLeagueRequest = {
     /**
      * The sport the new sport league belongs to.
      */
-    sport: 'GOLF';
+    sport: 'GOLF' | 'HORSE_RACING';
     /**
      * Unique within the sport.
      */
@@ -4687,7 +5047,7 @@ export type SportEventDto = {
     /**
      * Sport the event belongs to.
      */
-    sport: 'GOLF';
+    sport: 'GOLF' | 'HORSE_RACING';
     /**
      * Event name shown in contest and event selectors.
      */
@@ -4826,7 +5186,7 @@ export type SportEventListQuery = {
     /**
      * Only events of this sport.
      */
-    sport?: 'GOLF';
+    sport?: 'GOLF' | 'HORSE_RACING';
     /**
      * Only events in this lifecycle status.
      */
@@ -4868,7 +5228,7 @@ export type SportEventListResponse = {
         /**
          * Sport the event belongs to.
          */
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
         /**
          * Event name shown in contest and event selectors.
          */
@@ -5024,7 +5384,7 @@ export type SportEventResponse = {
         /**
          * Sport the event belongs to.
          */
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
         /**
          * Event name shown in contest and event selectors.
          */
@@ -5271,7 +5631,7 @@ export type ImportSportEventYearFromProviderResponse = {
         /**
          * Sport the event belongs to.
          */
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
         /**
          * Event name shown in contest and event selectors.
          */
@@ -5929,7 +6289,7 @@ export type SportEventParticipantDto = {
         priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
     } | null;
     /**
-     * Null until the participant has a scored round.
+     * Null until the participant has a scored round, or a race result.
      */
     standing: {
         id: string;
@@ -5986,6 +6346,31 @@ export type SportEventParticipantDto = {
             thru: number | null;
         } | null;
     }>;
+    /**
+     * Present once a race result is entered for a finish-position event (a horse race); null otherwise.
+     */
+    race: {
+        /**
+         * Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered.
+         */
+        finishPosition: number | null;
+        /**
+         * Post position (or grid slot, or starting spot); null when not entered.
+         */
+        startPosition: number | null;
+        /**
+         * How the race ended for this runner. Every status but FINISHED scores the contest's "did not finish" points.
+         */
+        resultStatus: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START';
+        /**
+         * Whether the race's result is official. Contest scoring counts a result only once it is.
+         */
+        isOfficial: boolean;
+        /**
+         * The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation.
+         */
+        riderName: string | null;
+    } | null;
     /**
      * Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.)
      */
@@ -6149,7 +6534,7 @@ export type SportEventParticipantListResponse = {
             priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
         } | null;
         /**
-         * Null until the participant has a scored round.
+         * Null until the participant has a scored round, or a race result.
          */
         standing: {
             id: string;
@@ -6206,6 +6591,31 @@ export type SportEventParticipantListResponse = {
                 thru: number | null;
             } | null;
         }>;
+        /**
+         * Present once a race result is entered for a finish-position event (a horse race); null otherwise.
+         */
+        race: {
+            /**
+             * Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered.
+             */
+            finishPosition: number | null;
+            /**
+             * Post position (or grid slot, or starting spot); null when not entered.
+             */
+            startPosition: number | null;
+            /**
+             * How the race ended for this runner. Every status but FINISHED scores the contest's "did not finish" points.
+             */
+            resultStatus: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START';
+            /**
+             * Whether the race's result is official. Contest scoring counts a result only once it is.
+             */
+            isOfficial: boolean;
+            /**
+             * The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation.
+             */
+            riderName: string | null;
+        } | null;
         /**
          * Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.)
          */
@@ -6430,7 +6840,7 @@ export type SportEventParticipantResponse = {
             priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
         } | null;
         /**
-         * Null until the participant has a scored round.
+         * Null until the participant has a scored round, or a race result.
          */
         standing: {
             id: string;
@@ -6487,6 +6897,31 @@ export type SportEventParticipantResponse = {
                 thru: number | null;
             } | null;
         }>;
+        /**
+         * Present once a race result is entered for a finish-position event (a horse race); null otherwise.
+         */
+        race: {
+            /**
+             * Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered.
+             */
+            finishPosition: number | null;
+            /**
+             * Post position (or grid slot, or starting spot); null when not entered.
+             */
+            startPosition: number | null;
+            /**
+             * How the race ended for this runner. Every status but FINISHED scores the contest's "did not finish" points.
+             */
+            resultStatus: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START';
+            /**
+             * Whether the race's result is official. Contest scoring counts a result only once it is.
+             */
+            isOfficial: boolean;
+            /**
+             * The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation.
+             */
+            riderName: string | null;
+        } | null;
         /**
          * Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.)
          */
@@ -6658,6 +7093,30 @@ export type CreateContestRequest = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+        /**
+         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         */
+        scoring?: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            config: {
+                [key: string]: never;
+            };
+        } | {
+            participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+            /**
+             * Finish-position points settings: the contest's points table and its "did not finish" value.
+             */
+            config: {
+                /**
+                 * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                 */
+                pointsTable: Array<number>;
+                /**
+                 * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                 */
+                didNotFinishPoints: number;
+            };
+        };
     } | {
         selectionType: 'BUDGET_PICK';
         /**
@@ -6672,6 +7131,30 @@ export type CreateContestRequest = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+        /**
+         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         */
+        scoring?: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            config: {
+                [key: string]: never;
+            };
+        } | {
+            participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+            /**
+             * Finish-position points settings: the contest's points table and its "did not finish" value.
+             */
+            config: {
+                /**
+                 * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                 */
+                pointsTable: Array<number>;
+                /**
+                 * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                 */
+                didNotFinishPoints: number;
+            };
+        };
     } | {
         selectionType: 'RANDOM_DRAW';
         /**
@@ -6686,6 +7169,30 @@ export type CreateContestRequest = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+        /**
+         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         */
+        scoring?: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            config: {
+                [key: string]: never;
+            };
+        } | {
+            participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+            /**
+             * Finish-position points settings: the contest's points table and its "did not finish" value.
+             */
+            config: {
+                /**
+                 * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                 */
+                pointsTable: Array<number>;
+                /**
+                 * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                 */
+                didNotFinishPoints: number;
+            };
+        };
     };
 };
 
@@ -6737,7 +7244,7 @@ export type ContestDto = {
     selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
     leagueId: string;
     sportEventId?: string | null;
-    sport?: 'GOLF' | null;
+    sport?: 'GOLF' | 'HORSE_RACING' | null;
     /**
      * Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.
      */
@@ -6889,7 +7396,7 @@ export type ContestEntryParticipantDetailDto = {
     pickedAt: string;
 };
 
-export type ParticipantScoringDefinitionId = 'GOLF_RELATIVE_TO_PAR_TOTAL';
+export type ParticipantScoringDefinitionId = 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS';
 
 /**
  * Golf extension of a scored pick: the golfer's contest score and the rounds in it scored as 80 strokes.
@@ -6945,6 +7452,15 @@ export type ScoredContestEntryPickDto = {
          * Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none.
          */
         unplayedRoundNumbers: Array<number>;
+    } | null;
+    /**
+     * Present for a finish-position contest (a horse race); null otherwise.
+     */
+    race: {
+        /**
+         * The runner's points in this contest: the contest's points table at its finishing place (0 beyond the table), or its "did not finish" points when it did not finish, was disqualified, did not start or was scratched. Null until the race result is official.
+         */
+        points: number | null;
     } | null;
 };
 
@@ -7012,6 +7528,15 @@ export type ContestEntryStandingDto = {
         totalScoreToPar: number | null;
     } | null;
     /**
+     * Present for a finish-position contest (a horse race); null otherwise.
+     */
+    race: {
+        /**
+         * The entry's points: the sum of its counting picks' points (each pick's race.points). Null until a pick is scored.
+         */
+        totalPoints: number | null;
+    } | null;
+    /**
      * The entry's picks, counting picks first.
      */
     picks: Array<{
@@ -7052,6 +7577,15 @@ export type ContestEntryStandingDto = {
              */
             unplayedRoundNumbers: Array<number>;
         } | null;
+        /**
+         * Present for a finish-position contest (a horse race); null otherwise.
+         */
+        race: {
+            /**
+             * The runner's points in this contest: the contest's points table at its finishing place (0 beyond the table), or its "did not finish" points when it did not finish, was disqualified, did not start or was scratched. Null until the race result is official.
+             */
+            points: number | null;
+        } | null;
     }>;
 };
 
@@ -7084,11 +7618,11 @@ export type ContestLeaderboardResponse = {
     /**
      * Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.
      */
-    sport: 'GOLF';
+    sport: 'GOLF' | 'HORSE_RACING';
     /**
      * The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
      */
-    scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+    scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS';
     /**
      * How an entry's picks combine into its total.
      */
@@ -7247,7 +7781,7 @@ export type ContestLeaderboardResponse = {
             priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
         } | null;
         /**
-         * Null until the participant has a scored round.
+         * Null until the participant has a scored round, or a race result.
          */
         standing: {
             id: string;
@@ -7304,6 +7838,31 @@ export type ContestLeaderboardResponse = {
                 thru: number | null;
             } | null;
         }>;
+        /**
+         * Present once a race result is entered for a finish-position event (a horse race); null otherwise.
+         */
+        race: {
+            /**
+             * Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered.
+             */
+            finishPosition: number | null;
+            /**
+             * Post position (or grid slot, or starting spot); null when not entered.
+             */
+            startPosition: number | null;
+            /**
+             * How the race ended for this runner. Every status but FINISHED scores the contest's "did not finish" points.
+             */
+            resultStatus: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START';
+            /**
+             * Whether the race's result is official. Contest scoring counts a result only once it is.
+             */
+            isOfficial: boolean;
+            /**
+             * The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation.
+             */
+            riderName: string | null;
+        } | null;
         /**
          * Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.)
          */
@@ -7371,6 +7930,15 @@ export type ContestLeaderboardResponse = {
             totalScoreToPar: number | null;
         } | null;
         /**
+         * Present for a finish-position contest (a horse race); null otherwise.
+         */
+        race: {
+            /**
+             * The entry's points: the sum of its counting picks' points (each pick's race.points). Null until a pick is scored.
+             */
+            totalPoints: number | null;
+        } | null;
+        /**
          * The entry's picks, counting picks first.
          */
         picks: Array<{
@@ -7411,6 +7979,15 @@ export type ContestLeaderboardResponse = {
                  */
                 unplayedRoundNumbers: Array<number>;
             } | null;
+            /**
+             * Present for a finish-position contest (a horse race); null otherwise.
+             */
+            race: {
+                /**
+                 * The runner's points in this contest: the contest's points table at its finishing place (0 beyond the table), or its "did not finish" points when it did not finish, was disqualified, did not start or was scratched. Null until the race result is official.
+                 */
+                points: number | null;
+            } | null;
         }>;
     }>;
     /**
@@ -7434,7 +8011,7 @@ export type ContestResponse = {
         selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
         leagueId: string;
         sportEventId?: string | null;
-        sport?: 'GOLF' | null;
+        sport?: 'GOLF' | 'HORSE_RACING' | null;
         /**
          * Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.
          */
@@ -7475,7 +8052,7 @@ export type ContestListResponse = {
         selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
         leagueId: string;
         sportEventId?: string | null;
-        sport?: 'GOLF' | null;
+        sport?: 'GOLF' | 'HORSE_RACING' | null;
         /**
          * Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.
          */
@@ -8117,7 +8694,7 @@ export type BudgetPricingConfig = {
  * Partial ingestion scheduling override used for global updates and per-sport overrides.
  */
 export type IngestionScheduleConfigOverride = {
-    scheduledSports?: Array<'GOLF'>;
+    scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
     /**
      * Partial feed-scheduling override payload.
      */
@@ -8190,7 +8767,7 @@ export type IngestionScheduleConfig = {
     /**
      * Sports that scheduled ingestion is allowed to run automatically.
      */
-    scheduledSports?: Array<'GOLF'>;
+    scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
     /**
      * Scheduling policy for provider health checks.
      */
@@ -8259,7 +8836,7 @@ export type IngestionScheduleConfig = {
      */
     perSportOverrides: {
         [key: string]: {
-            scheduledSports?: Array<'GOLF'>;
+            scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
             /**
              * Partial feed-scheduling override payload.
              */
@@ -8387,7 +8964,7 @@ export type SettingsGroup = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports?: Array<'GOLF'>;
+        scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -8456,7 +9033,7 @@ export type SettingsGroup = {
          */
         perSportOverrides: {
             [key: string]: {
-                scheduledSports?: Array<'GOLF'>;
+                scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -8530,7 +9107,7 @@ export type SettingsGroup = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports?: Array<'GOLF'>;
+        scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -8599,7 +9176,7 @@ export type SettingsGroup = {
          */
         perSportOverrides: {
             [key: string]: {
-                scheduledSports?: Array<'GOLF'>;
+                scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -8911,7 +9488,7 @@ export type SettingsGroupList = {
             /**
              * Sports that scheduled ingestion is allowed to run automatically.
              */
-            scheduledSports?: Array<'GOLF'>;
+            scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -8980,7 +9557,7 @@ export type SettingsGroupList = {
              */
             perSportOverrides: {
                 [key: string]: {
-                    scheduledSports?: Array<'GOLF'>;
+                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
                     /**
                      * Partial feed-scheduling override payload.
                      */
@@ -9054,7 +9631,7 @@ export type SettingsGroupList = {
             /**
              * Sports that scheduled ingestion is allowed to run automatically.
              */
-            scheduledSports?: Array<'GOLF'>;
+            scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -9123,7 +9700,7 @@ export type SettingsGroupList = {
              */
             perSportOverrides: {
                 [key: string]: {
-                    scheduledSports?: Array<'GOLF'>;
+                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
                     /**
                      * Partial feed-scheduling override payload.
                      */
@@ -9403,7 +9980,7 @@ export type SettingsGroupUpdateRequest = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports: Array<'GOLF'>;
+        scheduledSports: Array<'GOLF' | 'HORSE_RACING'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -9472,7 +10049,7 @@ export type SettingsGroupUpdateRequest = {
          */
         perSportOverrides: {
             [key: string]: {
-                scheduledSports?: Array<'GOLF'>;
+                scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -9655,7 +10232,7 @@ export type SettingsChange = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports?: Array<'GOLF'>;
+        scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -9724,7 +10301,7 @@ export type SettingsChange = {
          */
         perSportOverrides: {
             [key: string]: {
-                scheduledSports?: Array<'GOLF'>;
+                scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -9798,7 +10375,7 @@ export type SettingsChange = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports?: Array<'GOLF'>;
+        scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -9867,7 +10444,7 @@ export type SettingsChange = {
          */
         perSportOverrides: {
             [key: string]: {
-                scheduledSports?: Array<'GOLF'>;
+                scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -10146,7 +10723,7 @@ export type SettingsChangeList = {
             /**
              * Sports that scheduled ingestion is allowed to run automatically.
              */
-            scheduledSports?: Array<'GOLF'>;
+            scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -10215,7 +10792,7 @@ export type SettingsChangeList = {
              */
             perSportOverrides: {
                 [key: string]: {
-                    scheduledSports?: Array<'GOLF'>;
+                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
                     /**
                      * Partial feed-scheduling override payload.
                      */
@@ -10289,7 +10866,7 @@ export type SettingsChangeList = {
             /**
              * Sports that scheduled ingestion is allowed to run automatically.
              */
-            scheduledSports?: Array<'GOLF'>;
+            scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -10358,7 +10935,7 @@ export type SettingsChangeList = {
              */
             perSportOverrides: {
                 [key: string]: {
-                    scheduledSports?: Array<'GOLF'>;
+                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING'>;
                     /**
                      * Partial feed-scheduling override payload.
                      */
@@ -10714,6 +11291,126 @@ export type UpdateGolfRoundScoreRequest = {
 };
 
 /**
+ * A race's finishing order, or a correction to it: one row per runner named. Runners not named keep the result already stored.
+ */
+export type RaceResultUploadRequest = {
+    /**
+     * Whether the race's result is official once applied. It is set on every result of the race, sent or already stored: a race is official as a whole. Contest scoring counts results only once they are official.
+     */
+    isOfficial: boolean;
+    rows: Array<{
+        participantId?: string;
+        externalId?: string;
+        playerName?: string;
+        /**
+         * How the race ended for this runner.
+         */
+        resultStatus: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START';
+        /**
+         * Finishing place, 1 for the winner. Runners in a dead heat share a place, and the next place skips (1, 2, 2, 4). Only a FINISHED runner has one; it is required for every FINISHED runner once the result is official.
+         */
+        finishPosition: number | null;
+        /**
+         * Post position (or grid slot); null when not known.
+         */
+        startPosition: number | null;
+        /**
+         * The jockey (or rider) for this start; null when not known.
+         */
+        riderName: string | null;
+    }>;
+};
+
+/**
+ * A dry run of a race result. Nothing is written.
+ */
+export type RaceResultPreviewResponse = {
+    /**
+     * One per row sent, in the order sent.
+     */
+    rows: Array<{
+        /**
+         * One runner's result. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event's field. Every value is stored exactly as sent.
+         */
+        row: {
+            participantId?: string;
+            externalId?: string;
+            playerName?: string;
+            /**
+             * How the race ended for this runner.
+             */
+            resultStatus: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START';
+            /**
+             * Finishing place, 1 for the winner. Runners in a dead heat share a place, and the next place skips (1, 2, 2, 4). Only a FINISHED runner has one; it is required for every FINISHED runner once the result is official.
+             */
+            finishPosition: number | null;
+            /**
+             * Post position (or grid slot); null when not known.
+             */
+            startPosition: number | null;
+            /**
+             * The jockey (or rider) for this start; null when not known.
+             */
+            riderName: string | null;
+        };
+        /**
+         * How an uploaded row resolved to a participant: one match, none, or several.
+         */
+        resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
+        /**
+         * The field row it resolved to; set only when MATCHED.
+         */
+        sportEventParticipantId: string | null;
+        participantName: string | null;
+        /**
+         * Why a resolved row cannot be applied. DUPLICATE_PARTICIPANT: another row names the same runner. POSITION_WITHOUT_FINISH: a finishing place on a runner that did not finish. FINISH_WITHOUT_POSITION: an official result for a FINISHED runner with no place.
+         */
+        rowError: 'DUPLICATE_PARTICIPANT' | 'POSITION_WITHOUT_FINISH' | 'FINISH_WITHOUT_POSITION' | null;
+        /**
+         * Null when the row cannot be applied: not MATCHED, or a row error.
+         */
+        change: 'CREATE' | 'UPDATE' | 'UNCHANGED' | null;
+        /**
+         * What is stored now; null when nothing is.
+         */
+        before: {
+            resultStatus: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START';
+            finishPosition: number | null;
+            startPosition: number | null;
+            riderName: string | null;
+            isOfficial: boolean;
+        } | null;
+        /**
+         * What is stored now; null when nothing is.
+         */
+        after: {
+            resultStatus: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START';
+            finishPosition: number | null;
+            startPosition: number | null;
+            riderName: string | null;
+            isOfficial: boolean;
+        } | null;
+    }>;
+    /**
+     * Problems with the race's result as a whole; empty when it can be applied as far as the order goes.
+     */
+    orderErrors: Array<'POSITIONS_INVALID' | 'FIELD_INCOMPLETE'>;
+    /**
+     * Counts by resolution.
+     */
+    rollup: {
+        total: number;
+        matched: number;
+        unresolved: number;
+        ambiguous: number;
+        /**
+         * Resolved rows with a row error.
+         */
+        invalid: number;
+    };
+};
+
+/**
  * Feed-aware event sync request.
  */
 export type EventSyncRequest = {
@@ -10758,7 +11455,7 @@ export type ProviderSummaryDto = {
     /**
      * Sports the provider covers that ingestion is scheduled for.
      */
-    sportsCovered: Array<'GOLF'>;
+    sportsCovered: Array<'GOLF' | 'HORSE_RACING'>;
     /**
      * The provider's events that are scheduled or in progress.
      */
@@ -10801,7 +11498,7 @@ export type ProviderListResponse = {
         /**
          * Sports the provider covers that ingestion is scheduled for.
          */
-        sportsCovered: Array<'GOLF'>;
+        sportsCovered: Array<'GOLF' | 'HORSE_RACING'>;
         /**
          * The provider's events that are scheduled or in progress.
          */
@@ -10819,7 +11516,7 @@ export type ProviderListResponse = {
 export type ProviderSyncRunDto = {
     id: string;
     providerId: string;
-    sport: 'GOLF';
+    sport: 'GOLF' | 'HORSE_RACING';
     /**
      * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
      */
@@ -10857,7 +11554,7 @@ export type ProviderSyncRunDto = {
          * The request that submitted the sync run.
          */
         requestPayload?: {
-            sport: 'GOLF';
+            sport: 'GOLF' | 'HORSE_RACING';
             /**
              * Provider event identifier the sync was asked for.
              */
@@ -10926,7 +11623,7 @@ export type ProviderSyncRunDto = {
              * Provider that executed the ingestion job.
              */
             providerId: string;
-            sport: 'GOLF';
+            sport: 'GOLF' | 'HORSE_RACING';
             /**
              * External event id for event-scoped jobs, when applicable.
              */
@@ -11083,7 +11780,7 @@ export type ProviderSyncRunDto = {
  */
 export type ProviderSyncRunListQuery = {
     providerId?: string;
-    sport?: 'GOLF';
+    sport?: 'GOLF' | 'HORSE_RACING';
     status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
     /**
      * Earliest submission time to include. Defaults to 6 hours before `to`.
@@ -11102,7 +11799,7 @@ export type ProviderSyncRunListResponse = {
     syncRuns: Array<{
         id: string;
         providerId: string;
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
         /**
          * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
          */
@@ -11140,7 +11837,7 @@ export type ProviderSyncRunListResponse = {
              * The request that submitted the sync run.
              */
             requestPayload?: {
-                sport: 'GOLF';
+                sport: 'GOLF' | 'HORSE_RACING';
                 /**
                  * Provider event identifier the sync was asked for.
                  */
@@ -11209,7 +11906,7 @@ export type ProviderSyncRunListResponse = {
                  * Provider that executed the ingestion job.
                  */
                 providerId: string;
-                sport: 'GOLF';
+                sport: 'GOLF' | 'HORSE_RACING';
                 /**
                  * External event id for event-scoped jobs, when applicable.
                  */
@@ -11366,7 +12063,7 @@ export type ProviderSyncRunListResponse = {
  * A manual sync submission. The runs execute asynchronously after the request is accepted.
  */
 export type ProviderManualSyncSubmissionResponse = {
-    sport: 'GOLF';
+    sport: 'GOLF' | 'HORSE_RACING';
     /**
      * Provider event identifier the submitted runs sync.
      */
@@ -11379,7 +12076,7 @@ export type ProviderManualSyncSubmissionResponse = {
     syncRuns: Array<{
         id: string;
         providerId: string;
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
         /**
          * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
          */
@@ -11417,7 +12114,7 @@ export type ProviderManualSyncSubmissionResponse = {
              * The request that submitted the sync run.
              */
             requestPayload?: {
-                sport: 'GOLF';
+                sport: 'GOLF' | 'HORSE_RACING';
                 /**
                  * Provider event identifier the sync was asked for.
                  */
@@ -11486,7 +12183,7 @@ export type ProviderManualSyncSubmissionResponse = {
                  * Provider that executed the ingestion job.
                  */
                 providerId: string;
-                sport: 'GOLF';
+                sport: 'GOLF' | 'HORSE_RACING';
                 /**
                  * External event id for event-scoped jobs, when applicable.
                  */
@@ -11653,7 +12350,7 @@ export type UnmappedProviderParticipantDto = {
      * The competitor's name as the provider reports it.
      */
     externalName: string;
-    sport: 'GOLF';
+    sport: 'GOLF' | 'HORSE_RACING';
 };
 
 /**
@@ -11671,7 +12368,7 @@ export type UnmappedProviderParticipantListResponse = {
          * The competitor's name as the provider reports it.
          */
         externalName: string;
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
     }>;
 };
 
@@ -11684,7 +12381,7 @@ export type ProviderEventDto = {
      */
     externalId: string;
     providerId: string;
-    sport: 'GOLF';
+    sport: 'GOLF' | 'HORSE_RACING';
     name: string;
     venue: string | null;
     location: string | null;
@@ -11712,7 +12409,7 @@ export type ProviderEventDto = {
  * Filters over a provider's live catalog.
  */
 export type ProviderCatalogEventListQuery = {
-    sport: 'GOLF';
+    sport: 'GOLF' | 'HORSE_RACING';
     /**
      * Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter.
      */
@@ -11738,7 +12435,7 @@ export type ProviderCatalogEventListResponse = {
          */
         externalId: string;
         providerId: string;
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
         name: string;
         venue: string | null;
         location: string | null;
@@ -14313,7 +15010,7 @@ export type ListContestConfigTemplatesData = {
         /**
          * Only templates for this sport.
          */
-        sport?: 'GOLF';
+        sport?: 'GOLF' | 'HORSE_RACING';
         /**
          * Only templates for this contest format.
          */
@@ -14402,7 +15099,7 @@ export type ListEventsData = {
         /**
          * Only events of this sport.
          */
-        sport?: 'GOLF';
+        sport?: 'GOLF' | 'HORSE_RACING';
         /**
          * Only events in this lifecycle status.
          */
@@ -15667,6 +16364,92 @@ export type UpdateEventParticipantGolfRoundScoreResponses = {
 
 export type UpdateEventParticipantGolfRoundScoreResponse = UpdateEventParticipantGolfRoundScoreResponses[keyof UpdateEventParticipantGolfRoundScoreResponses];
 
+export type PreviewEventRaceResultsData = {
+    body: RaceResultUploadRequest;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/race-results/preview';
+};
+
+export type PreviewEventRaceResultsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type PreviewEventRaceResultsError = PreviewEventRaceResultsErrors[keyof PreviewEventRaceResultsErrors];
+
+export type PreviewEventRaceResultsResponses = {
+    /**
+     * A dry run of a race result. Nothing is written.
+     */
+    200: RaceResultPreviewResponse;
+};
+
+export type PreviewEventRaceResultsResponse = PreviewEventRaceResultsResponses[keyof PreviewEventRaceResultsResponses];
+
+export type ApplyEventRaceResultsData = {
+    body: RaceResultUploadRequest;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/race-results';
+};
+
+export type ApplyEventRaceResultsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type ApplyEventRaceResultsError = ApplyEventRaceResultsErrors[keyof ApplyEventRaceResultsErrors];
+
+export type ApplyEventRaceResultsResponses = {
+    /**
+     * An event's field.
+     */
+    200: SportEventParticipantListResponse;
+};
+
+export type ApplyEventRaceResultsResponse = ApplyEventRaceResultsResponses[keyof ApplyEventRaceResultsResponses];
+
 export type ListSportsData = {
     body?: never;
     path?: never;
@@ -15690,7 +16473,7 @@ export type ListSportLeaguesData = {
         /**
          * Only sport leagues of this sport.
          */
-        sport?: 'GOLF';
+        sport?: 'GOLF' | 'HORSE_RACING';
         /**
          * Only active, or only inactive, sport leagues.
          */
@@ -16427,7 +17210,7 @@ export type UpdateIngestionScheduleResponse = UpdateIngestionScheduleResponses[k
 export type SetSportIngestionOverrideData = {
     body: IngestionScheduleConfigOverride;
     path: {
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
     };
     query?: never;
     url: '/api/v1/platform/ingestion-schedule/{sport}';
@@ -16462,7 +17245,7 @@ export type SetSportIngestionOverrideResponse = SetSportIngestionOverrideRespons
 export type ResetSportIngestionOverrideData = {
     body?: never;
     path: {
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
     };
     query?: never;
     url: '/api/v1/platform/ingestion-schedule/{sport}/reset';
@@ -16557,7 +17340,7 @@ export type ListProviderSyncRunsData = {
     path?: never;
     query?: {
         providerId?: string;
-        sport?: 'GOLF';
+        sport?: 'GOLF' | 'HORSE_RACING';
         status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
         /**
          * Earliest submission time to include. Defaults to 6 hours before `to`.
@@ -16596,7 +17379,7 @@ export type ListProviderSyncRunsResponse = ListProviderSyncRunsResponses[keyof L
 export type SubmitEventSyncData = {
     body: EventSyncRequest;
     path: {
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
         eventId: string;
     };
     query?: never;
@@ -16672,7 +17455,7 @@ export type ListProviderCatalogEventsData = {
         providerId: string;
     };
     query: {
-        sport: 'GOLF';
+        sport: 'GOLF' | 'HORSE_RACING';
         /**
          * Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter.
          */

@@ -326,6 +326,7 @@ function buildGolfFieldView(input: {
       round: { status: round.status, roundNumber: round.round },
       golf: { strokes: round.strokes, scoreToPar: round.scoreToPar, thru: round.thru },
     })),
+    raceResult: null,
     affiliatedWithSportLeague: true,
   };
 }
@@ -1043,7 +1044,7 @@ describe('ContestService', () => {
       // deleted displayValue did: strokes once complete, to par while in progress.
       expect(result.participants).toBe(await listEventParticipants.mock.results[0].value);
       const rory = result.participants.find((participant) => participant.entry.id === 'sep-1');
-      const { formatRound } = PARTICIPANT_SCORING_DEFINITIONS[result.scoringDefinitionId];
+      const formatRound = expectDefined(PARTICIPANT_SCORING_DEFINITIONS[result.scoringDefinitionId].formatRound);
       expect(rory?.rounds.map(({ round, golf }) => formatRound({ status: round.status, ...expectDefined(golf) })))
         .toEqual(['69', '-2']);
       // Entry order is the port's contract (entryNumber, then createdAt); only active entries count.

@@ -14,8 +14,13 @@ export interface SportVocabulary {
   participant: SportNoun;
   /** One scheduled stage of an event: "round" / "rounds". */
   round: SportNoun;
-  /** The label for a participant knocked out of an event (`ELIMINATED`): "Cut" for golf. */
-  eliminated: string;
+  /**
+   * The label for a participant knocked out of an event (`ELIMINATED`): "Cut" for golf. Absent
+   * for a sport where nobody is knocked out partway (a race): its readers handle the absence.
+   */
+  eliminated?: string;
+  /** The label for a participant withdrawn from an event (`WITHDRAWN`): "Withdrawn" for golf, "Scratched" for horse racing. */
+  withdrawn: string;
   /** What the moment entries close is called: "first tee time" for golf. */
   eventStart: string;
 }

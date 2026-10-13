@@ -258,6 +258,7 @@ enum ParticipantStandingStatus {
 /// const; a sport arrives with the migration and code that support it.
 enum PrismaSport {
   GOLF
+  HORSE_RACING
 }
 
 /// Tournament structural format — drives which contest types are valid
@@ -265,6 +266,18 @@ enum PrismaSport {
 /// (sport × pool format) compatibility matrix in shared/domain.
 enum PrismaTournamentFormat {
   STROKE_PLAY_TOURNAMENT
+  /// One race: one field, one finishing order (#623).
+  RACE
+}
+
+/// How one field member's race ended (#622). Mirrors the domain `RaceResultStatus`. Only a
+/// FINISHED runner has a finishing place; every other status scores the contest's
+/// "did not finish" points.
+enum RaceResultStatus {
+  FINISHED
+  DID_NOT_FINISH
+  DISQUALIFIED
+  DID_NOT_START
 }
 
 /// Contest format — the pool format applied to a SportEvent. Validity vs.
@@ -835,6 +848,7 @@ model ContestEntryStanding {
   contest      Contest                   @relation(fields: [contestId], references: [id], onDelete: Cascade)
   contestEntry ContestEntry              @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
   golf         ContestEntryGolfStanding?
+  race         ContestEntryRaceStanding?
 
   @@index([contestId, position])
   @@map("contest_entry_standings")
@@ -874,6 +888,20 @@ model ContestEntryGolfStanding {
   contestEntryStanding ContestEntryStanding @relation(fields: [contestEntryStandingId], references: [id], onDelete: Cascade)
 
   @@map("contest_entry_golf_standings")
+}
+
+/// Finish-position extension of ContestEntryStanding (#622): the points total its position was
+/// ranked from. Keyed 1:1 to the core standing row, beside the golf extension.
+model ContestEntryRaceStanding {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestEntryStandingId String   @unique @map("contest_entry_standing_id") @db.Uuid
+  totalPoints            Int?     @map("total_points")
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  contestEntryStanding ContestEntryStanding @relation(fields: [contestEntryStandingId], references: [id], onDelete: Cascade)
+
+  @@map("contest_entry_race_standings")
 }
 
 /// A pick on a contest entry — references a SportEventParticipant.
@@ -983,12 +1011,13 @@ model SportEventParticipant {
   createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime                   @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportEvent  SportEvent                      @relation(fields: [sportEventId], references: [id])
-  participant Participant                     @relation(fields: [participantId], references: [id])
+  sportEvent  SportEvent                       @relation(fields: [sportEventId], references: [id])
+  participant Participant                      @relation(fields: [participantId], references: [id])
   valuation   SportEventParticipantValuation?
   picks       ContestEntryPick[]
   rounds      SportEventParticipantRound[]
   standing    SportEventParticipantStanding?
+  raceResult  SportEventParticipantRaceResult?
 
   @@unique([sportEventId, participantId])
   @@index([sportEventId])
@@ -1101,6 +1130,28 @@ model SportEventParticipantGolfStanding {
   standing SportEventParticipantStanding @relation(fields: [standingId], references: [id])
 
   @@map("sport_event_participant_golf_standings")
+}
+
+/// Finish-position extension of a field row (#622): how one runner's race ended. Keyed 1:1 to
+/// SportEventParticipant, because a race is one result per runner. Written only by the admin's
+/// finishing order, which stores every value exactly as sent: `finishPosition` is null until
+/// one is entered and for every status but FINISHED (a CHECK constraint holds that), and a
+/// result counts in contest scoring only once `isOfficial`. `riderName` is the jockey for this
+/// one start; the trainer is the participant's `teamAffiliation`.
+model SportEventParticipantRaceResult {
+  id                      String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventParticipantId String           @unique @map("sport_event_participant_id") @db.Uuid
+  finishPosition          Int?             @map("finish_position")
+  startPosition           Int?             @map("start_position")
+  resultStatus            RaceResultStatus @map("result_status")
+  isOfficial              Boolean          @default(false) @map("is_official")
+  riderName               String?          @map("rider_name") @db.VarChar(255)
+  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id], onDelete: Cascade)
+
+  @@map("sport_event_participant_race_results")
 }
 
 /// Per-event tier definition, cross-sport. Event-level only — no contest

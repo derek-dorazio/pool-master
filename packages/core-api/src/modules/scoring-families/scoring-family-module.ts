@@ -3,7 +3,7 @@
  * its family; everything here is reached through the event's sport, never by comparing sports
  * (`rules/architecture-rules.md` §4 *Sport extension*).
  *
- * The shape was checked against the three families planned, though only stroke play is built:
+ * The shape was checked against the three families planned; stroke play and finish position are built:
  * - **Stroke play** (golf): strokes per round, a to-par total, unplayed rounds scored as 80.
  * - **Finish position** (racing): one finishing place per race (or per stage), scored from the
  *   contest's points table; a non-finisher scores the table's "did not finish" value.
@@ -25,8 +25,8 @@ import type { LiveScorePersistenceResult } from '../ingestion/core/score-publish
 /** What scoring a field reads off its event. */
 export type FieldScoringEvent = Pick<SportEvent, 'sport' | 'rounds' | 'roundsPar' | 'status'>;
 
-/** The family's extension on a settled entry standing: golf's `golf` block today. */
-export type EntryStandingDetail = Pick<ContestEntryStandingWrite, 'golf'>;
+/** The family's extension on a settled entry standing: its own block set, every other family's null. */
+export type EntryStandingDetail = Pick<ContestEntryStandingWrite, 'golf' | 'race'>;
 
 export interface LiveScoreWriteDeps {
   prisma: PrismaClient;

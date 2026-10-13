@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { SelectionType } from './enums';
 import { BUDGET_SALARY_CAP_MAX } from './budget-pricing';
+import { ContestScoringSettingsSchema } from './contest-scoring';
 
 /**
  * A contest's rules (#93): one shape per selection type, told apart by `selectionType`, which
@@ -75,14 +76,20 @@ export type ContestSelectionConfig = z.infer<typeof ContestSelectionConfigSchema
 const maxEntriesPerSquadSchema = z.number().int().min(1).nullable().optional()
   .describe('Maximum entries a Team may create. Null means unlimited.');
 
+const scoringSchema = ContestScoringSettingsSchema.optional()
+  .describe("The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.");
+
+const withEntryLimit = { maxEntriesPerSquad: maxEntriesPerSquadSchema, scoring: scoringSchema };
+
 /**
- * Rules with an entries-per-team limit: what a template presets, and what a commissioner sends
- * when creating a contest or changing its rules.
+ * Rules with an entries-per-team limit and, optionally, scoring settings: what a template
+ * presets, and what a commissioner sends when creating a contest or changing its rules. The
+ * scoring settings are stored as the contest's participant scoring rule, not in its rules.
  */
 export const ContestRulesWithEntryLimitSchema = z.discriminatedUnion('selectionType', [
-  TieredContestRulesSchema.extend({ maxEntriesPerSquad: maxEntriesPerSquadSchema }),
-  BudgetContestRulesSchema.extend({ maxEntriesPerSquad: maxEntriesPerSquadSchema }),
-  RandomDrawContestRulesSchema.extend({ maxEntriesPerSquad: maxEntriesPerSquadSchema }),
+  TieredContestRulesSchema.extend(withEntryLimit),
+  BudgetContestRulesSchema.extend(withEntryLimit),
+  RandomDrawContestRulesSchema.extend(withEntryLimit),
 ]);
 export type ContestRulesWithEntryLimit = z.infer<typeof ContestRulesWithEntryLimitSchema>;
 

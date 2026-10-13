@@ -2,7 +2,7 @@
  * Event-participant mapper (#236) — one field row's view (the row, its participant,
  * valuation, standing and rounds) → the canonical SportEventParticipantDto. At the
  * standing and each round the sport's extension is nested under its sport's key, the
- * shape the schema has. A field upload's dry run (#128) → its response, with the rollup
+ * shape the schema has; a race result (the finish-position extension) under `race`. A field upload's dry run (#128) → its response, with the rollup
  * the upload card shows.
  */
 
@@ -63,6 +63,15 @@ export function mapSportEventParticipantToDto(view: SportEventParticipantView): 
       completedAt: round.completedAt?.toISOString() ?? null,
       golf: golf ? { strokes: golf.strokes, scoreToPar: golf.scoreToPar, thru: golf.thru } : null,
     })),
+    race: view.raceResult
+      ? {
+          finishPosition: view.raceResult.finishPosition,
+          startPosition: view.raceResult.startPosition,
+          resultStatus: view.raceResult.resultStatus,
+          isOfficial: view.raceResult.isOfficial,
+          riderName: view.raceResult.riderName,
+        }
+      : null,
     affiliatedWithSportLeague: view.affiliatedWithSportLeague,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),

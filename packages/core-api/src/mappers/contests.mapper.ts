@@ -25,7 +25,11 @@ import {
   type ParticipantScoringDefinitionId,
   type SelectionType,
 } from '@poolmaster/shared/domain';
-import type { ContestCountingRule, ParticipantScore } from '../modules/contests/contest-leaderboard-calculator';
+import {
+  participantScoreDetailFor,
+  type ContestCountingRule,
+  type ParticipantScore,
+} from '../modules/contests/contest-leaderboard-calculator';
 import type { SportEventParticipantView } from '../modules/events/sport-event-participant-service';
 import { mapSportEventParticipantToDto } from './sport-event-participants.mapper';
 
@@ -236,16 +240,25 @@ type LeaderboardPickDto = LeaderboardEntryDto['picks'][number];
 
 /** How a scoring family's detail blocks appear on a leaderboard entry and its picks (#606). */
 interface LeaderboardFamilyDetailMapper {
-  entry(entry: ContestEntryStandingRow): Pick<LeaderboardEntryDto, 'golf'>;
-  pick(pick: ScoredContestEntryPickRow): Pick<LeaderboardPickDto, 'golf'>;
+  entry(entry: ContestEntryStandingRow): Pick<LeaderboardEntryDto, 'golf' | 'race'>;
+  pick(pick: ScoredContestEntryPickRow): Pick<LeaderboardPickDto, 'golf' | 'race'>;
 }
 
 const LEADERBOARD_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, LeaderboardFamilyDetailMapper>> = {
   [ScoringFamily.STROKE_PLAY]: {
-    entry: (entry) => ({ golf: { totalScoreToPar: entry.score } }),
+    entry: (entry) => ({ golf: { totalScoreToPar: entry.score }, race: null }),
     pick: (pick) => ({
-      golf: { scoreToPar: pick.participant.score, unplayedRoundNumbers: pick.participant.detail.unplayedRoundNumbers },
+      golf: {
+        scoreToPar: pick.participant.score,
+        unplayedRoundNumbers: participantScoreDetailFor(ScoringFamily.STROKE_PLAY, pick.participant.detail)
+          .unplayedRoundNumbers,
+      },
+      race: null,
     }),
+  },
+  [ScoringFamily.FINISH_POSITION]: {
+    entry: (entry) => ({ golf: null, race: { totalPoints: entry.score } }),
+    pick: (pick) => ({ golf: null, race: { points: pick.participant.score } }),
   },
 };
 

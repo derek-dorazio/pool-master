@@ -6,5 +6,7 @@
 export const ScoringFamily = {
   /** Lowest total wins, counted in strokes: golf. */
   STROKE_PLAY: 'STROKE_PLAY',
+  /** Points by finishing place from the contest's points table: horse racing (#622). */
+  FINISH_POSITION: 'FINISH_POSITION',
 } as const;
 export type ScoringFamily = (typeof ScoringFamily)[keyof typeof ScoringFamily];

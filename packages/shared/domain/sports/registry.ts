@@ -1,5 +1,6 @@
 import { Sport, type SelectionType } from '../enums';
 import { golfSportDefinition } from './golf';
+import { horseRacingSportDefinition } from './horse-racing';
 import type { SportDefinition } from './sport-definition';
 
 /**
@@ -9,6 +10,7 @@ import type { SportDefinition } from './sport-definition';
  */
 export const SPORT_DEFINITIONS: Readonly<Record<Sport, SportDefinition>> = {
   [Sport.GOLF]: golfSportDefinition,
+  [Sport.HORSE_RACING]: horseRacingSportDefinition,
 };
 
 /** Every supported sport, in enum order. */

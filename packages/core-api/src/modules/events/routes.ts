@@ -1,6 +1,7 @@
 /**
  * The SportEvent operation set and its children's — rounds, the field
- * (SportEventParticipant), tiers and valuations, and the golf score corrections (#236).
+ * (SportEventParticipant), tiers and valuations, the golf score corrections (#236), and a
+ * race's finishing order (#622).
  *
  * Before #236 everything here past `listEvents` was a golf-named admin operation under
  * /admin/sports/golf, and the event browser's participant list was a third projection of
@@ -17,6 +18,7 @@ import '@poolmaster/shared/dto/errors.dto';
 import '@poolmaster/shared/dto/ingestion.dto';
 import '@poolmaster/shared/dto/events.dto';
 import '@poolmaster/shared/dto/golf-scores.dto';
+import '@poolmaster/shared/dto/race-results.dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { requireRootAdmin } from '../../core/root-admin-guard';
@@ -534,5 +536,40 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       response: { 200: schemaRef('SportEventParticipantResponse'), ...errors(400, 401, 403, 404, 422) },
     },
     handler: handler.updateGolfRoundScore,
+  });
+
+  // --- Race results: the finishing order, which writes finish-position extension rows (#622) ---
+
+  fastify.post('/:eventId/race-results/preview', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Preview a race result',
+      description: 'Resolves each row against the event\'s field and reports what applying it would change, with each row\'s error and the order\'s as a whole. Writes nothing. '
+        + '422 EVENT_SCORING_FAMILY_MISMATCH when the event\'s sport is not scored by finishing place (its scoring family is not finish position). Root admin only.',
+      operationId: 'previewEventRaceResults',
+      params: EVENT_PARAMS,
+      body: schemaRef('RaceResultUploadRequest'),
+      response: { 200: schemaRef('RaceResultPreviewResponse'), ...errors(400, 401, 403, 404, 422) },
+    },
+    handler: handler.previewRaceResults,
+  });
+
+  fastify.put('/:eventId/race-results', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Apply a race result',
+      description: 'Stores each runner\'s result exactly as sent, all or none; runners not named keep theirs. The official flag is set on every result of the race. '
+        + 'Writes each runner\'s standing: its place (a dead heat sharing one, shown "T2"), COMPLETE once it started, WITHDRAWN when it did not start. '
+        + '422 RACE_RESULT_ROWS_INVALID when a row does not resolve to one runner or carries a row error; 422 RACE_RESULT_POSITIONS_INVALID when the places do not run 1, 2, 3 ... (a dead heat repeats a place and skips the next); '
+        + '422 RACE_RESULT_FIELD_INCOMPLETE when an official result leaves an active runner without a result or a finisher without a place; 422 EVENT_SCORING_FAMILY_MISMATCH when the event\'s sport is not scored by finishing place. '
+        + 'Returns the field. Root admin only.',
+      operationId: 'applyEventRaceResults',
+      params: EVENT_PARAMS,
+      body: schemaRef('RaceResultUploadRequest'),
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(400, 401, 403, 404, 422) },
+    },
+    handler: handler.applyRaceResults,
   });
 }

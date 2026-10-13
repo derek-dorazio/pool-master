@@ -95,6 +95,7 @@ export function fieldEntryFixture(
     valuation: null,
     standing: null,
     rounds: [],
+    race: null,
     affiliatedWithSportLeague: true,
     createdAt: '2026-04-01T10:00:00.000Z',
     updatedAt: '2026-04-01T11:00:00.000Z',

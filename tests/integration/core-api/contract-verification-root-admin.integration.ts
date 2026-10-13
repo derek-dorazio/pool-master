@@ -23,6 +23,7 @@ import {
   SportEventListResponseSchema,
   SportEventParticipantListResponseSchema,
   SportEventParticipantUploadPreviewResponseSchema,
+  RaceResultPreviewResponseSchema,
   SportEventLiveSimulationResponseSchema,
   SportEventResponseSchema,
   ImportSportEventYearFromProviderResponseSchema,
@@ -89,7 +90,7 @@ import type {
   SportEvent,
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
-import type { Sport } from '@poolmaster/shared/domain';
+import { SUPPORTED_SPORTS, type Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { freshEventEdition } from '../../support/event-edition';
 import type { z } from 'zod';
@@ -527,7 +528,8 @@ describe('Contract verification (root admin)', () => {
     });
     expect(ingestionReadRes.statusCode).toBe(200);
     expect(IngestionScheduleConfigSchema.safeParse(ingestionReadRes.json()).success).toBe(true);
-    expect(ingestionReadRes.json<IngestionScheduleConfig>().scheduledSports).toEqual(['GOLF']);
+    // Every supported sport is scheduled by default; one without a provider is skipped by the scheduler.
+    expect(ingestionReadRes.json<IngestionScheduleConfig>().scheduledSports).toEqual([...SUPPORTED_SPORTS]);
 
     const ingestionUpdateRes = await getApp().inject({
       method: 'PUT',
@@ -1735,5 +1737,91 @@ describe('Contract verification (root admin)', () => {
       await prisma.sportLeague.deleteMany({ where: { id: { in: created.sportLeagueIds } } });
       await app.close();
     }
+  });
+  it('previewEventRaceResults and applyEventRaceResults match their DTOs, and refuse with their stable error codes', async () => {
+    // #622 — the admin's finishing order for a horse race: a happy path for each operation, then
+    // every refusal the routes document, each as an error envelope with its code.
+    const prisma = getPrisma();
+    const rootAdmin = await createTestUser({ displayName: 'Root Admin Race Contract User', isRootAdmin: true });
+    const member = await createTestUser({ displayName: 'Race Contract Member' });
+    const stamp = Date.now().toString().slice(-8);
+    const horseRacing = await prisma.sport.upsert({
+      where: { sport: 'HORSE_RACING' },
+      create: { sport: 'HORSE_RACING', participantType: 'INDIVIDUAL', tournamentFormat: 'RACE' },
+      update: {},
+    });
+    const golf = await prisma.sport.upsert({
+      where: { sport: 'GOLF' },
+      create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
+    });
+    const createEvent = async (sport: 'HORSE_RACING' | 'GOLF', sportId: string, names: string[]) => {
+      const event = await prisma.sportEvent.create({
+        data: {
+          ...(await freshEventEdition(prisma)),
+          externalId: `race-contract-${sport}-${stamp}`,
+          providerId: 'manual-admin',
+          sport,
+          name: `Race Contract ${sport} ${stamp}`,
+          startDate: new Date('2026-05-02T22:00:00.000Z'),
+          status: 'SCHEDULED',
+        },
+      });
+      for (const name of names) {
+        const participant = await prisma.participant.create({ data: { sportId, name: `${name} ${stamp}`, participantType: 'INDIVIDUAL' } });
+        await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
+      }
+      return event;
+    };
+    const race = await createEvent('HORSE_RACING', horseRacing.id, ['Arrow', 'Bolt']);
+    const golfEvent = await createEvent('GOLF', golf.id, ['Golfer']);
+    const finisher = (name: string, finishPosition: number | null) => ({
+      playerName: `${name} ${stamp}`, resultStatus: 'FINISHED', finishPosition, startPosition: null, riderName: null,
+    });
+    const send = (method: 'POST' | 'PUT', eventId: string, payload: object, headers = rootAdmin.headers) => getApp().inject({
+      method,
+      url: method === 'POST' ? `/api/v1/events/${eventId}/race-results/preview` : `/api/v1/events/${eventId}/race-results`,
+      headers,
+      payload,
+    });
+    const expectRefusal = async (response: Awaited<ReturnType<typeof send>>, statusCode: number, code?: string) => {
+      expect(response.statusCode).toBe(statusCode);
+      expect(ErrorEnvelopeSchema.safeParse(response.json()).success).toBe(true);
+      if (code) expect(response.json<ErrorEnvelope>().error.code).toBe(code);
+    };
+
+    // --- previewEventRaceResults (200: RaceResultPreviewResponse) ---------------------------
+    const previewRes = await send('POST', race.id, {
+      isOfficial: true,
+      rows: [finisher('Arrow', 1), finisher('Nobody', 2)],
+    });
+    expect(previewRes.statusCode).toBe(200);
+    const preview = RaceResultPreviewResponseSchema.parse(previewRes.json());
+    expect(preview.rollup).toMatchObject({ total: 2, matched: 1, unresolved: 1 });
+    expect(preview.orderErrors).toEqual(['FIELD_INCOMPLETE']);
+
+    // --- applyEventRaceResults (200: SportEventParticipantListResponse) ---------------------
+    const applyRes = await send('PUT', race.id, { isOfficial: true, rows: [finisher('Arrow', 1), finisher('Bolt', 2)] });
+    expect(applyRes.statusCode).toBe(200);
+    const field = SportEventParticipantListResponseSchema.parse(applyRes.json());
+    expect(field.participants.map((row) => [row.race?.finishPosition, row.race?.isOfficial, row.standing?.displayPosition]))
+      .toEqual(expect.arrayContaining([[1, true, '1'], [2, true, '2']]));
+
+    // --- refusals ---------------------------------------------------------------------------
+    await expectRefusal(await send('PUT', race.id, { isOfficial: false, rows: [finisher('Nobody', 1)] }), 422, 'RACE_RESULT_ROWS_INVALID');
+    await expectRefusal(await send('PUT', race.id, { isOfficial: false, rows: [finisher('Bolt', 3)] }), 422, 'RACE_RESULT_POSITIONS_INVALID');
+    await expectRefusal(await send('PUT', race.id, { isOfficial: true, rows: [finisher('Bolt', null)] }), 422, 'RACE_RESULT_ROWS_INVALID');
+    await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: race.id,
+        participantId: (await prisma.participant.create({ data: { sportId: horseRacing.id, name: `Late ${stamp}`, participantType: 'INDIVIDUAL' } })).id,
+      },
+    });
+    await expectRefusal(await send('PUT', race.id, { isOfficial: true, rows: [finisher('Arrow', 1)] }), 422, 'RACE_RESULT_FIELD_INCOMPLETE');
+    await expectRefusal(await send('POST', golfEvent.id, { isOfficial: false, rows: [finisher('Golfer', 1)] }), 422, 'EVENT_SCORING_FAMILY_MISMATCH');
+    await expectRefusal(await send('PUT', golfEvent.id, { isOfficial: false, rows: [finisher('Golfer', 1)] }), 422, 'EVENT_SCORING_FAMILY_MISMATCH');
+    await expectRefusal(await send('PUT', '00000000-0000-4000-8000-000000000000', { isOfficial: false, rows: [finisher('Arrow', 1)] }), 404);
+    await expectRefusal(await send('PUT', race.id, { isOfficial: false, rows: [{ ...finisher('Arrow', 0) }] }), 400);
+    await expectRefusal(await send('PUT', race.id, { isOfficial: false, rows: [finisher('Arrow', 1)] }, member.headers), 403);
   });
 });

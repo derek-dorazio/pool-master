@@ -11,6 +11,7 @@ import { ScoringFamily, getSportDefinition, type Sport } from '@poolmaster/share
 
 const STORES_GOLF_ROUND_SCORES: Readonly<Record<ScoringFamily, boolean>> = {
   [ScoringFamily.STROKE_PLAY]: true,
+  [ScoringFamily.FINISH_POSITION]: false,
 };
 
 /** Whether an event of this sport stores golf round scores, by its sport's scoring family. */

@@ -6,7 +6,7 @@
  */
 
 import type { DomainEntity, Participant } from './types';
-import type { ParticipantRoundStatus, ParticipantStandingStatus, ValuationSource } from './enums';
+import type { ParticipantRoundStatus, ParticipantStandingStatus, RaceResultStatus, ValuationSource } from './enums';
 
 /** A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
 export interface SportLeague extends DomainEntity {
@@ -127,4 +127,21 @@ export interface GolfRoundResult {
 export interface GolfStandingResult {
   standing: SportEventParticipantStanding;
   golf: SportEventParticipantGolfStanding;
+}
+
+// --- Finish-position extension row (#622) -----------------------------------
+// Keyed 1:1 to a field row: a race is one result per runner.
+
+/**
+ * How one runner's race ended, as the admin entered it. `finishPosition` is set only for a
+ * FINISHED runner (1 is the winner; a dead heat repeats a place), and a result counts in contest
+ * scoring only once `isOfficial`. `riderName` is the jockey for this start.
+ */
+export interface SportEventParticipantRaceResult extends DomainEntity {
+  sportEventParticipantId: string;
+  finishPosition: number | null;
+  startPosition: number | null;
+  resultStatus: RaceResultStatus;
+  isOfficial: boolean;
+  riderName: string | null;
 }

@@ -14,6 +14,7 @@
  */
 export const Sport = {
   GOLF: 'GOLF',
+  HORSE_RACING: 'HORSE_RACING',
 } as const;
 export type Sport = (typeof Sport)[keyof typeof Sport];
 
@@ -83,8 +84,46 @@ export type ContestFormat = (typeof ContestFormat)[keyof typeof ContestFormat];
 /** Tournament structural format: decides which contest formats are valid for a sport's events. */
 export const TournamentFormat = {
   STROKE_PLAY_TOURNAMENT: 'STROKE_PLAY_TOURNAMENT',
+  /** One race: one field, one finishing order (#623). */
+  RACE: 'RACE',
 } as const;
 export type TournamentFormat = (typeof TournamentFormat)[keyof typeof TournamentFormat];
+
+/**
+ * How one field member's race ended (#622): the finish-position family's result status. Only a
+ * FINISHED runner has a finishing place; every other status scores the contest's "did not
+ * finish" points. A horse scratched before the start is WITHDRAWN on the field, not here.
+ */
+export const RaceResultStatus = {
+  FINISHED: 'FINISHED',
+  DID_NOT_FINISH: 'DID_NOT_FINISH',
+  DISQUALIFIED: 'DISQUALIFIED',
+  DID_NOT_START: 'DID_NOT_START',
+} as const;
+export type RaceResultStatus = (typeof RaceResultStatus)[keyof typeof RaceResultStatus];
+
+/** Why one row of a race's finishing order cannot be applied (#622). */
+export const RaceResultRowError = {
+  DUPLICATE_PARTICIPANT: 'DUPLICATE_PARTICIPANT',
+  POSITION_WITHOUT_FINISH: 'POSITION_WITHOUT_FINISH',
+  FINISH_WITHOUT_POSITION: 'FINISH_WITHOUT_POSITION',
+} as const;
+export type RaceResultRowError = (typeof RaceResultRowError)[keyof typeof RaceResultRowError];
+
+/** Why a race's finishing order as a whole cannot be applied (#622). */
+export const RaceResultOrderError = {
+  POSITIONS_INVALID: 'POSITIONS_INVALID',
+  FIELD_INCOMPLETE: 'FIELD_INCOMPLETE',
+} as const;
+export type RaceResultOrderError = (typeof RaceResultOrderError)[keyof typeof RaceResultOrderError];
+
+/** What applying one row of a finishing order would do to the runner's stored result (#622). */
+export const RaceResultChange = {
+  CREATE: 'CREATE',
+  UPDATE: 'UPDATE',
+  UNCHANGED: 'UNCHANGED',
+} as const;
+export type RaceResultChange = (typeof RaceResultChange)[keyof typeof RaceResultChange];
 
 /**
  * How an entry picks its lineup. Each value has a selection engine.

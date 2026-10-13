@@ -1,5 +1,6 @@
 import { expect } from '@jest/globals';
 import { z } from 'zod';
+import { SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import {
   AppSettingsService,
   SettingsConflictError,
@@ -350,7 +351,8 @@ describe('platform config services on the settings registry', () => {
     );
     await expect(service.resetDefaults('admin-1')).resolves.toEqual(
       expect.objectContaining({
-        scheduledSports: ['GOLF'],
+        // The default schedule allows every supported sport; one with no provider runs no feed.
+        scheduledSports: [...SUPPORTED_SPORTS],
         eventLiveScores: expect.objectContaining({ intervalSeconds: 300 }),
       }),
     );

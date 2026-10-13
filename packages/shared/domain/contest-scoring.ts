@@ -9,6 +9,7 @@ import { ParticipantRoundStatus } from './enums';
  */
 export const ParticipantScoringDefinitionIdSchema = z.enum([
   'GOLF_RELATIVE_TO_PAR_TOTAL',
+  'FINISH_POSITION_POINTS',
 ]);
 export type ParticipantScoringDefinitionId = z.infer<
   typeof ParticipantScoringDefinitionIdSchema
@@ -21,20 +22,24 @@ export type ParticipantScoringDefinitionId = z.infer<
  */
 export type ScoreDirection = 'LOWER_IS_BETTER' | 'HIGHER_IS_BETTER';
 
+/** What a scoring definition's number counts. */
+export type ScoreUnit = 'STROKES_TO_PAR' | 'POINTS';
+
 export interface ParticipantScoringDefinition {
   /** Direction of merit for the raw number this definition produces. */
   direction: ScoreDirection;
   /** What the number counts — for display, and to catch unit mismatches. */
-  unit: 'STROKES_TO_PAR';
+  unit: ScoreUnit;
   /** How one raw value renders. The only formatter for this measure, on every surface. */
   format: (value: number) => string;
   /**
    * How one participant's round renders under this measure — the per-round column of a
    * leaderboard. Here rather than in each client because the server no longer preformats it
    * (#248 deleted `displayType`/`displayValue`): a client reads the definition id off the
-   * leaderboard response and renders every round through this one function.
+   * leaderboard response and renders every round through this one function. Null for a measure
+   * with no per-round score (finish-position points: a race has one result, not round scores).
    */
-  formatRound: (round: ParticipantRoundScore) => string;
+  formatRound: ((round: ParticipantRoundScore) => string) | null;
 }
 
 /** One participant's scored round, as a formatter needs it. `status` is the round row's own. */
@@ -56,21 +61,57 @@ export const isRoundComplete = (round: Pick<ParticipantRoundScore, 'status'>): b
 const formatStrokesToPar = (value: number): string =>
   value === 0 ? 'E' : value > 0 ? `+${value}` : String(value);
 
-export const PARTICIPANT_SCORING_DEFINITIONS: Record<
-  ParticipantScoringDefinitionId,
-  ParticipantScoringDefinition
-> = {
+/**
+ * Exhaustive over the definition ids (`satisfies`), and typed per id, so a caller naming one
+ * definition gets its own formatters: golf's to-par total always formats rounds.
+ */
+export const PARTICIPANT_SCORING_DEFINITIONS = {
   GOLF_RELATIVE_TO_PAR_TOTAL: {
     direction: 'LOWER_IS_BETTER',
     unit: 'STROKES_TO_PAR',
     format: formatStrokesToPar,
     // Strokes once a round is complete, to par while it is still being played (or ended short:
     // a withdrawal or a missed cut shows where the golfer stood against par).
-    formatRound: (round) => (isRoundComplete(round)
+    formatRound: (round: ParticipantRoundScore): string => (isRoundComplete(round)
       ? String(round.strokes)
       : formatStrokesToPar(round.scoreToPar)),
   },
-};
+  /**
+   * Finish position (#622): the points a runner's finishing place earns from the contest's points
+   * table, more is better. A race has one result, so there is no per-round score.
+   */
+  FINISH_POSITION_POINTS: {
+    direction: 'HIGHER_IS_BETTER',
+    unit: 'POINTS',
+    format: (value: number): string => String(value),
+    formatRound: null,
+  },
+} as const satisfies Record<ParticipantScoringDefinitionId, ParticipantScoringDefinition>;
+
+/** The most places a finish-position points table may score. */
+export const FINISH_POSITION_POINTS_TABLE_MAX_PLACES = 50;
+
+/**
+ * A finish-position contest's settings (#622, plans/racing-sports.md Q9.1): `pointsTable[0]` is
+ * what first place scores, `pointsTable[1]` second, and so on; a place beyond the table scores 0.
+ * A runner that did not finish, was disqualified or did not start scores `didNotFinishPoints`.
+ * A better place never scores fewer points than a worse one.
+ */
+export const FinishPositionPointsSettingsSchema = z.object({
+  pointsTable: z.array(z.number().int().min(0))
+    .min(1)
+    .max(FINISH_POSITION_POINTS_TABLE_MAX_PLACES)
+    .refine(
+      (table) => table.every((points, index) => index === 0 || points <= table[index - 1]),
+      { message: 'A better finishing place cannot score fewer points than a worse one.' },
+    )
+    .describe(`Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most ${FINISH_POSITION_POINTS_TABLE_MAX_PLACES} places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].`),
+  // Required rather than defaulted: the settings travel inside a discriminated union, where a
+  // JSON Schema default is not applied, and a template states its 0 like every other value.
+  didNotFinishPoints: z.number().int().min(0)
+    .describe('What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.'),
+}).describe('Finish-position points settings: the contest\'s points table and its "did not finish" value.');
+export type FinishPositionPointsSettings = z.infer<typeof FinishPositionPointsSettingsSchema>;
 
 /**
  * What a contest may set for its scoring definition: the Zod schema of a participant scoring
@@ -86,6 +127,7 @@ export const PARTICIPANT_SCORING_DEFINITIONS: Record<
  */
 export const PARTICIPANT_SCORING_SETTINGS_SCHEMAS = {
   GOLF_RELATIVE_TO_PAR_TOTAL: z.object({}),
+  FINISH_POSITION_POINTS: FinishPositionPointsSettingsSchema,
 } as const satisfies Record<ParticipantScoringDefinitionId, z.ZodType>;
 
 /** One definition's settings, as its schema parses them. */
@@ -104,6 +146,27 @@ export type ContestScoringSettings = {
     config: ParticipantScoringSettings<Id>;
   };
 }[ParticipantScoringDefinitionId];
+
+/**
+ * A contest's scoring definition and settings as one schema, discriminated by the definition id:
+ * what a commissioner sends and a template presets. Its parse is `ContestScoringSettings`.
+ */
+export const ContestScoringSettingsSchema = z.discriminatedUnion('participantScoringDefinitionId', [
+  z.object({
+    participantScoringDefinitionId: z.literal('GOLF_RELATIVE_TO_PAR_TOTAL'),
+    config: PARTICIPANT_SCORING_SETTINGS_SCHEMAS.GOLF_RELATIVE_TO_PAR_TOTAL,
+  }),
+  z.object({
+    participantScoringDefinitionId: z.literal('FINISH_POSITION_POINTS'),
+    config: PARTICIPANT_SCORING_SETTINGS_SCHEMAS.FINISH_POSITION_POINTS,
+  }),
+]).describe("A contest's participant scoring definition with its settings. The definition must be one the event's sport offers; omitted, the contest takes its template's preset or its sport's default.");
+
+type SameType<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+// Compile-time proof that the schema above and `ContestScoringSettings` admit the same values: a
+// definition added to the settings record and not to the schema fails the typecheck here.
+const settingsSchemaMatchesType: SameType<ContestScoringSettings, z.infer<typeof ContestScoringSettingsSchema>> = true;
+void settingsSchemaMatchesType;
 
 /**
  * A stored rule's definition id and config, read back. A row can name a definition the registry
@@ -128,9 +191,10 @@ export function parseContestScoringSettings(
   if (!id.success) {
     return { success: false, reason: 'DEFINITION_UNKNOWN', participantScoringDefinitionId };
   }
-  const settings = PARTICIPANT_SCORING_SETTINGS_SCHEMAS[id.data].safeParse(config);
+  // Parsed as one value so the definition id and its settings stay correlated.
+  const settings = ContestScoringSettingsSchema.safeParse({ participantScoringDefinitionId: id.data, config });
   return settings.success
-    ? { success: true, data: { participantScoringDefinitionId: id.data, config: settings.data } }
+    ? { success: true, data: settings.data }
     : { success: false, reason: 'SETTINGS_INVALID', participantScoringDefinitionId };
 }
 

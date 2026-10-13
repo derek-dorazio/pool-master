@@ -60,11 +60,30 @@ export interface ContestLeaderboardEntryInput {
  * that scored it. One arm per family; the leaderboard mapper reads it into the family's pick
  * detail block.
  */
-export type ParticipantScoreDetail = {
-  scoringFamily: typeof ScoringFamily.STROKE_PLAY;
-  /** Rounds scored as a fixed 80 strokes because the golfer did not play them (#478). */
-  unplayedRoundNumbers: number[];
-};
+export type ParticipantScoreDetail =
+  | {
+    scoringFamily: typeof ScoringFamily.STROKE_PLAY;
+    /** Rounds scored as a fixed 80 strokes because the golfer did not play them (#478). */
+    unplayedRoundNumbers: number[];
+  }
+  | {
+    /** Finish position: the score is the runner's points, so there is nothing to add. */
+    scoringFamily: typeof ScoringFamily.FINISH_POSITION;
+  };
+
+/**
+ * A score's detail as the arm of the family that scored it. A contest's scores all come from its
+ * own sport's family, so another family's arm is a broken invariant and throws.
+ */
+export function participantScoreDetailFor<Family extends ScoringFamily>(
+  scoringFamily: Family,
+  detail: ParticipantScoreDetail,
+): Extract<ParticipantScoreDetail, { scoringFamily: Family }> {
+  if (detail.scoringFamily !== scoringFamily) {
+    throw new Error(`Expected ${scoringFamily} score detail, got ${detail.scoringFamily}`);
+  }
+  return detail as Extract<ParticipantScoreDetail, { scoringFamily: Family }>;
+}
 
 /** One field row's score under the contest's scoring definition, or null while unscored. */
 export interface ParticipantScore {

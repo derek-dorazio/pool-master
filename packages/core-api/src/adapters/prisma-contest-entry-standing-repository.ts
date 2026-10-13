@@ -1,6 +1,6 @@
 /**
  * Prisma adapter for ContestEntryStandingRepository: the frozen entry standing (#246), core row
- * plus golf extension, written and read together.
+ * plus its scoring family's extension (golf's, or a race's), written and read together.
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -16,7 +16,10 @@ export class PrismaContestEntryStandingRepository implements ContestEntryStandin
   async findByContest(contestId: string): Promise<ContestEntryStandingResult[]> {
     const rows = await this.prisma.contestEntryStanding.findMany({
       where: { contestId },
-      include: { golf: { select: { totalScoreToPar: true } } },
+      include: {
+        golf: { select: { totalScoreToPar: true } },
+        race: { select: { totalPoints: true } },
+      },
       orderBy: [{ position: { sort: 'asc', nulls: 'last' } }, { contestEntryId: 'asc' }],
     });
     return rows.map((row) => ({
@@ -30,15 +33,25 @@ export class PrismaContestEntryStandingRepository implements ContestEntryStandin
       asOf: row.asOf,
       settledAt: row.settledAt,
       golf: row.golf ? { totalScoreToPar: row.golf.totalScoreToPar } : null,
+      race: row.race ? { totalPoints: row.race.totalPoints } : null,
     }));
   }
 
   async upsert(write: ContestEntryStandingWrite): Promise<void> {
-    const { golf, contestEntryId, ...core } = write;
+    const { golf, race, contestEntryId, ...core } = write;
     await this.prisma.contestEntryStanding.upsert({
       where: { contestEntryId },
-      create: { contestEntryId, ...core, ...(golf && { golf: { create: golf } }) },
-      update: { ...core, ...(golf && { golf: { upsert: { create: golf, update: golf } } }) },
+      create: {
+        contestEntryId,
+        ...core,
+        ...(golf && { golf: { create: golf } }),
+        ...(race && { race: { create: race } }),
+      },
+      update: {
+        ...core,
+        ...(golf && { golf: { upsert: { create: golf, update: golf } } }),
+        ...(race && { race: { upsert: { create: race, update: race } } }),
+      },
     });
   }
 }

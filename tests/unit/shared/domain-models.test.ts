@@ -75,4 +75,10 @@ describe('formatParticipantStatusLabel', () => {
     expect(formatParticipantStatusLabel('WITHDRAWN', 'GOLF')).toBe('Withdrawn');
     expect(formatParticipantStatusLabel('IN_PROGRESS', 'GOLF')).toBe('In Progress');
   });
+
+  it('reads a withdrawn horse as Scratched, and ELIMINATED generically for horse racing, which has no word for it', () => {
+    expect(formatParticipantStatusLabel('WITHDRAWN', 'HORSE_RACING')).toBe('Scratched');
+    expect(formatParticipantStatusLabel('ELIMINATED', 'HORSE_RACING')).toBe('Eliminated');
+    expect(formatParticipantStatusLabel('WITHDRAWN', null)).toBe('Withdrawn');
+  });
 });

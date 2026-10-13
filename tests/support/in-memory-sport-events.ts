@@ -1,5 +1,5 @@
 /**
- * An in-memory implementation of the event-core and golf extension ports (#236), for
+ * An in-memory implementation of the event-core, golf and race extension ports (#236, #622), for
  * service tests that assert what a service leaves behind rather than which repository
  * calls it made (testing-rules §1D, the plan's test layering). The Prisma adapters
  * behind the same ports are tested against Postgres in sport-event-repositories.integration.
@@ -20,6 +20,7 @@ import type {
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
   SportEventParticipantPatch,
+  SportEventParticipantRaceResultRepository,
   SportEventParticipantRepository,
   SportEventParticipantRoundRepository,
   SportEventParticipantStandingRepository,
@@ -43,6 +44,7 @@ import type {
   SportEventParticipant,
   SportEventParticipantGolfRound,
   SportEventParticipantGolfStanding,
+  SportEventParticipantRaceResult,
   SportEventParticipantRound,
   SportEventParticipantStanding,
   SportEventParticipantValuation,
@@ -80,6 +82,7 @@ export class InMemorySportEvents {
   standingRows: SportEventParticipantStanding[] = [];
   golfRoundRows: SportEventParticipantGolfRound[] = [];
   golfStandingRows: SportEventParticipantGolfStanding[] = [];
+  raceResultRows: SportEventParticipantRaceResult[] = [];
 
   id(prefix: string): string {
     this.sequence += 1;
@@ -550,6 +553,44 @@ export class InMemorySportEvents {
           const standing = this.standingRows.find((row) => row.id === rank.standingId);
           if (!standing) throw new Error('unknown standing');
           Object.assign(standing, { position: rank.position, displayPosition: rank.displayPosition });
+        }
+      },
+    };
+  }
+
+  raceResultRepo(): SportEventParticipantRaceResultRepository {
+    const entryIdsOf = (sportEventId: string) => new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
+    return {
+      findBySportEvent: async (sportEventId) => {
+        const entryIds = entryIdsOf(sportEventId);
+        return this.raceResultRows
+          .filter((row) => entryIds.has(row.sportEventParticipantId))
+          .sort((left, right) => left.sportEventParticipantId.localeCompare(right.sportEventParticipantId))
+          .map((row) => ({ ...row }));
+      },
+      applyResults: async (sportEventId, { results, isOfficial, standings }) => {
+        const entryIds = entryIdsOf(sportEventId);
+        if ([...results, ...standings].some((write) => !entryIds.has(write.sportEventParticipantId))) {
+          throw new Error('unknown field row');
+        }
+        for (const { sportEventParticipantId, ...values } of results) {
+          let row = this.raceResultRows.find((candidate) => candidate.sportEventParticipantId === sportEventParticipantId);
+          if (!row) {
+            row = stamp({ id: this.id('race-result'), sportEventParticipantId, ...values, isOfficial });
+            this.raceResultRows.push(row);
+          }
+          Object.assign(row, values);
+        }
+        for (const row of this.raceResultRows) {
+          if (entryIds.has(row.sportEventParticipantId)) row.isOfficial = isOfficial;
+        }
+        for (const { sportEventParticipantId, ...values } of standings) {
+          let standing = this.standingRows.find((row) => row.sportEventParticipantId === sportEventParticipantId);
+          if (!standing) {
+            standing = stamp({ id: this.id('standing'), sportEventParticipantId, ...values });
+            this.standingRows.push(standing);
+          }
+          Object.assign(standing, values);
         }
       },
     };

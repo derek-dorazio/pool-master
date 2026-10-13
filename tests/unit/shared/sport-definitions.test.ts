@@ -50,10 +50,13 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     }
   });
 
-  it('has every vocabulary word filled in', () => {
-    const { participant, round, eliminated, eventStart } = definition.vocabulary;
-    for (const word of [participant.one, participant.many, round.one, round.many, eliminated, eventStart]) {
+  it('has every vocabulary word filled in, and an eliminated word that is either absent or filled in', () => {
+    const { participant, round, eliminated, withdrawn, eventStart } = definition.vocabulary;
+    for (const word of [participant.one, participant.many, round.one, round.many, withdrawn, eventStart]) {
       expect(word.trim()).not.toBe('');
+    }
+    if (eliminated !== undefined) {
+      expect(eliminated.trim()).not.toBe('');
     }
   });
 
@@ -76,6 +79,26 @@ describe('sport registry', () => {
     expect(golf.roundLabel(2, 4)).toBe('Round 2');
     expect(golf.vocabulary.eliminated).toBe('Cut');
     expect(golf.scoringFamily).toBe(ScoringFamily.STROKE_PLAY);
+  });
+
+  it('scores horse racing by finishing place, calls a withdrawn horse Scratched, and has no word for eliminated', () => {
+    const horseRacing = getSportDefinition(Sport.HORSE_RACING);
+
+    expect(horseRacing.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
+    expect(horseRacing.scoringDefinitions).toEqual(['FINISH_POSITION_POINTS']);
+    expect(horseRacing.vocabulary.withdrawn).toBe('Scratched');
+    expect(horseRacing.vocabulary.eliminated).toBeUndefined();
+    expect(horseRacing.vocabulary.participant).toEqual({ one: 'horse', many: 'horses' });
+  });
+
+  it('gives a new horse race one round labelled Race, and three tiers so an eight-runner field fills each', () => {
+    const horseRacing = getSportDefinition(Sport.HORSE_RACING);
+
+    expect(horseRacing.defaultRounds).toBe(1);
+    expect(horseRacing.roundLabel(1, 1)).toBe('Race');
+    const { tierCount, tierSize } = horseRacing.defaultTierLayout;
+    expect(tierCount).toBe(3);
+    expect(tierSize * (tierCount - 1)).toBeLessThan(8);
   });
 
   it('gives a new golf event four rounds and six tiers of ten golfers', () => {

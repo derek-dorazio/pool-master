@@ -15,6 +15,7 @@ export const golfSportDefinition: SportDefinition = {
     participant: { one: 'golfer', many: 'golfers' },
     round: { one: 'round', many: 'rounds' },
     eliminated: 'Cut',
+    withdrawn: 'Withdrawn',
     eventStart: 'first tee time',
   },
   roundLabel: (roundNumber) => `Round ${roundNumber}`,

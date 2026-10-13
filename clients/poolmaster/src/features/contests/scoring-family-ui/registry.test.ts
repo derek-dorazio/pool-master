@@ -39,6 +39,7 @@ const cutGolfer: SportEventParticipantDto = {
   valuation: null,
   standing: null,
   rounds: [],
+  race: null,
   affiliatedWithSportLeague: true,
   createdAt: '2026-04-01T00:00:00.000Z',
   updatedAt: '2026-04-01T00:00:00.000Z',
@@ -53,6 +54,7 @@ const unplayedPick: ScoredContestEntryPickDto = {
   isCounting: true,
   isDropped: false,
   golf: { scoreToPar: 16, unplayedRoundNumbers: [1, 2] },
+  race: null,
 };
 
 const entry: ContestEntryStandingDto = {
@@ -67,6 +69,7 @@ const entry: ContestEntryStandingDto = {
   countingPickLimit: 1,
   scoredPickCount: 1,
   golf: { totalScoreToPar: 16 },
+  race: null,
   picks: [unplayedPick],
 };
 

@@ -2,6 +2,7 @@ import { expect } from '@jest/globals';
 import {
   ContestFormat,
   ContestStatus,
+  type ContestScoringSettings,
   SelectionType,
   Sport,
   SportEventStatus,
@@ -17,6 +18,8 @@ import {
   CONTEST_EVENT_ALREADY_STARTED,
   CONTEST_EVENT_NOT_PRICED,
   CONTEST_NOT_DRAFT,
+  CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
+  CONTEST_SCORING_SETTINGS_REQUIRED,
   type CreateContestRequest,
 } from '@poolmaster/shared/dto';
 import type {
@@ -1330,5 +1333,136 @@ describe('ContestManagementService random-draw rules (#601)', () => {
     await expect(service.createContest({ leagueId: 'league-1' }, drawRequest({ picksPerEntry: 2, countedScores: 3 })))
       .rejects.toMatchObject({ code: CONTEST_DRAW_FIELD_OUT_OF_RANGE, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('ContestManagementService finish-position scoring (#622)', () => {
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(CONTEST_MANAGEMENT_TEST_NOW);
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  const WIN_PLACE_SHOW: ContestScoringSettings = {
+    participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
+    config: { pointsTable: [5, 3, 1], didNotFinishPoints: 0 },
+  };
+  const drawRules = { selectionType: SelectionType.RANDOM_DRAW, maxEntriesPerSquad: 1, picksPerEntry: 1, countedScores: 1 } as const;
+  // The draft the stub configuration repository holds is a tiered one.
+  const tieredRules = { selectionType: SelectionType.TIERED, maxEntriesPerSquad: 1, picksPerTier: 1, countedScores: 3 } as const;
+  const raceRequest = (overrides: Partial<CreateContestRequest> = {}): CreateContestRequest => ({
+    name: 'Derby Sweepstake',
+    sportEventId: '11111111-1111-1111-1111-111111111111',
+    contestFormat: 'ROSTER',
+    selectionType: SelectionType.RANDOM_DRAW,
+    configuration: drawRules,
+    ...overrides,
+  });
+
+  function raceService(storedScoring: ContestScoringSettings = WIN_PLACE_SHOW) {
+    const contestCoreRepo = createContestRepo();
+    const templateRepo = createContestConfigTemplateRepo();
+    jest.mocked(templateRepo.findById).mockResolvedValue({
+      id: '99999999-9999-4999-8999-999999999999',
+      sport: Sport.HORSE_RACING,
+      contestFormat: ContestFormat.ROSTER,
+      selectionType: SelectionType.RANDOM_DRAW,
+      templateKey: 'horse-racing-random-draw-win-place-show',
+      name: 'Random draw, Win/Place/Show',
+      description: 'Horse racing random draw',
+      sortOrder: 3,
+      isDefault: false,
+      active: true,
+      configJson: { ...drawRules, scoring: WIN_PLACE_SHOW },
+      schemaVersion: 1,
+      createdAt: new Date('2026-04-07T12:00:00.000Z'),
+      updatedAt: new Date('2026-04-07T12:00:00.000Z'),
+    });
+    const scoringRuleRepo = createParticipantScoringRuleRepo();
+    jest.mocked(scoringRuleRepo.findByContestConfiguration).mockResolvedValue([{
+      id: 'rule-old',
+      contestConfigurationId: 'config-1',
+      sortOrder: 1,
+      scoring: { success: true, data: storedScoring },
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }]);
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      templateRepo,
+      createContestConfigurationRepo(),
+      scoringRuleRepo,
+      createSportEventTierServiceStub(),
+      undefined,
+      createSportEventReader({ sport: Sport.HORSE_RACING, tournamentFormat: TournamentFormat.RACE }),
+    );
+    return { contestCoreRepo, scoringRuleRepo, service };
+  }
+
+  it('creates a horse racing contest scored by the points table it was sent', async () => {
+    const { scoringRuleRepo, service } = raceService();
+    const scoring: ContestScoringSettings = {
+      participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
+      config: { pointsTable: [10, 6, 3, 1], didNotFinishPoints: 0 },
+    };
+
+    await service.createContest({ leagueId: 'league-1' }, raceRequest({ configuration: { ...drawRules, scoring } }));
+
+    expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({ scoring }));
+  });
+
+  it('creates a horse racing contest from a template scored by the template\'s points table when no scoring is sent', async () => {
+    const { scoringRuleRepo, service } = raceService();
+
+    await service.createContest({ leagueId: 'league-1' }, raceRequest({
+      templateId: '99999999-9999-4999-8999-999999999999',
+      configuration: { ...drawRules, countedScores: 1 },
+    }));
+
+    expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({ scoring: WIN_PLACE_SHOW }));
+  });
+
+  it('refuses a horse racing contest with neither scoring nor a template with 422 CONTEST_SCORING_SETTINGS_REQUIRED, writing nothing', async () => {
+    const { contestCoreRepo, service } = raceService();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, raceRequest()))
+      .rejects.toMatchObject({ code: CONTEST_SCORING_SETTINGS_REQUIRED, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses golf\'s to-par scoring on a horse racing contest with 422 CONTEST_SCORING_DEFINITION_NOT_ALLOWED, writing nothing', async () => {
+    const { contestCoreRepo, service } = raceService();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, raceRequest({
+      configuration: { ...drawRules, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
+    }))).rejects.toMatchObject({ code: CONTEST_SCORING_DEFINITION_NOT_ALLOWED, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('keeps a draft\'s points table when a rules update sends no scoring', async () => {
+    const kept: ContestScoringSettings = {
+      participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
+      config: { pointsTable: [7, 2], didNotFinishPoints: 0 },
+    };
+    const { scoringRuleRepo, service } = raceService(kept);
+
+    await service.updateContestConfiguration('contest-1', tieredRules);
+
+    expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({ scoring: kept }));
+  });
+
+  it('replaces a draft\'s points table with the one a rules update sends', async () => {
+    const { scoringRuleRepo, service } = raceService();
+    const scoring: ContestScoringSettings = {
+      participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
+      config: { pointsTable: [3, 2, 1], didNotFinishPoints: 0 },
+    };
+
+    await service.updateContestConfiguration('contest-1', { ...tieredRules, scoring });
+
+    expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({ scoring }));
   });
 });

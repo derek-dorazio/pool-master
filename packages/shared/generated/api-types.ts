@@ -1738,6 +1738,46 @@ export interface paths {
         patch: operations["updateEventParticipantGolfRoundScore"];
         trace?: never;
     };
+    "/api/v1/events/{eventId}/race-results/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview a race result
+         * @description Resolves each row against the event's field and reports what applying it would change, with each row's error and the order's as a whole. Writes nothing. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by finishing place (its scoring family is not finish position). Root admin only.
+         */
+        post: operations["previewEventRaceResults"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{eventId}/race-results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Apply a race result
+         * @description Stores each runner's result exactly as sent, all or none; runners not named keep theirs. The official flag is set on every result of the race. Writes each runner's standing: its place (a dead heat sharing one, shown "T2"), COMPLETE once it started, WITHDRAWN when it did not start. 422 RACE_RESULT_ROWS_INVALID when a row does not resolve to one runner or carries a row error; 422 RACE_RESULT_POSITIONS_INVALID when the places do not run 1, 2, 3 ... (a dead heat repeats a place and skips the next); 422 RACE_RESULT_FIELD_INCOMPLETE when an official result leaves an active runner without a result or a finisher without a place; 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by finishing place. Returns the field. Root admin only.
+         */
+        put: operations["applyEventRaceResults"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sports/": {
         parameters: {
             query?: never;
@@ -4346,6 +4386,22 @@ export interface components {
             countedScores: number;
             /** @description Maximum entries a Team may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+            scoring?: {
+                /** @enum {string} */
+                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                config: Record<string, never>;
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                config: {
+                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                    pointsTable: number[];
+                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                    didNotFinishPoints: number;
+                };
+            };
         } | {
             /** @enum {string} */
             selectionType: "BUDGET_PICK";
@@ -4355,6 +4411,22 @@ export interface components {
             countedScores: number;
             /** @description Maximum entries a Team may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+            scoring?: {
+                /** @enum {string} */
+                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                config: Record<string, never>;
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                config: {
+                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                    pointsTable: number[];
+                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                    didNotFinishPoints: number;
+                };
+            };
         } | {
             /** @enum {string} */
             selectionType: "RANDOM_DRAW";
@@ -4364,6 +4436,22 @@ export interface components {
             countedScores: number;
             /** @description Maximum entries a Team may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+            scoring?: {
+                /** @enum {string} */
+                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                config: Record<string, never>;
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                config: {
+                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                    pointsTable: number[];
+                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                    didNotFinishPoints: number;
+                };
+            };
         };
         /** @description One inherited event tier and its participant assignments. */
         EffectiveTierDto: {
@@ -4489,7 +4577,7 @@ export interface components {
              * @description Sport this template applies to.
              * @enum {string}
              */
-            sport: "GOLF";
+            sport: "GOLF" | "HORSE_RACING";
             /** @description Optional event-type scope for the template. */
             eventType?: string | null;
             /**
@@ -4526,6 +4614,22 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                };
             } | {
                 /** @enum {string} */
                 selectionType: "BUDGET_PICK";
@@ -4535,6 +4639,22 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                };
             } | {
                 /** @enum {string} */
                 selectionType: "RANDOM_DRAW";
@@ -4544,6 +4664,22 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                };
             };
         };
         /** @description Managed-contest detail response. */
@@ -4648,7 +4784,7 @@ export interface components {
              * @description Only templates for this sport.
              * @enum {string}
              */
-            sport?: "GOLF";
+            sport?: "GOLF" | "HORSE_RACING";
             /**
              * @description Only templates for this contest format.
              * @enum {string}
@@ -4671,7 +4807,7 @@ export interface components {
                  * @description Sport this template applies to.
                  * @enum {string}
                  */
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
                 /** @description Optional event-type scope for the template. */
                 eventType?: string | null;
                 /**
@@ -4708,6 +4844,22 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    };
                 } | {
                     /** @enum {string} */
                     selectionType: "BUDGET_PICK";
@@ -4717,6 +4869,22 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    };
                 } | {
                     /** @enum {string} */
                     selectionType: "RANDOM_DRAW";
@@ -4726,6 +4894,22 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    };
                 };
             }[];
         };
@@ -4751,6 +4935,22 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                };
             } | {
                 /** @enum {string} */
                 selectionType: "BUDGET_PICK";
@@ -4760,6 +4960,22 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                };
             } | {
                 /** @enum {string} */
                 selectionType: "RANDOM_DRAW";
@@ -4769,6 +4985,22 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                };
             };
         };
         /** @description A single contest configuration template. */
@@ -4784,7 +5016,7 @@ export interface components {
                  * @description Sport this template applies to.
                  * @enum {string}
                  */
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
                 /** @description Optional event-type scope for the template. */
                 eventType?: string | null;
                 /**
@@ -4821,6 +5053,22 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    };
                 } | {
                     /** @enum {string} */
                     selectionType: "BUDGET_PICK";
@@ -4830,6 +5078,22 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    };
                 } | {
                     /** @enum {string} */
                     selectionType: "RANDOM_DRAW";
@@ -4839,6 +5103,22 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    };
                 };
             };
         };
@@ -5253,7 +5533,7 @@ export interface components {
              * @description The sport.
              * @enum {string}
              */
-            sport: "GOLF";
+            sport: "GOLF" | "HORSE_RACING";
             /**
              * @description Whether the sport's competitors are individuals or teams.
              * @enum {string}
@@ -5263,7 +5543,7 @@ export interface components {
              * @description Structural format of the sport's events; decides which contest formats are valid.
              * @enum {string}
              */
-            tournamentFormat: "STROKE_PLAY_TOURNAMENT";
+            tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "RACE";
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.
@@ -5288,7 +5568,7 @@ export interface components {
                  * @description The sport.
                  * @enum {string}
                  */
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
                 /**
                  * @description Whether the sport's competitors are individuals or teams.
                  * @enum {string}
@@ -5298,7 +5578,7 @@ export interface components {
                  * @description Structural format of the sport's events; decides which contest formats are valid.
                  * @enum {string}
                  */
-                tournamentFormat: "STROKE_PLAY_TOURNAMENT";
+                tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "RACE";
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -5352,7 +5632,7 @@ export interface components {
              * @description Only sport leagues of this sport.
              * @enum {string}
              */
-            sport?: "GOLF";
+            sport?: "GOLF" | "HORSE_RACING";
             /** @description Only active, or only inactive, sport leagues. */
             isActive?: boolean;
         };
@@ -5438,7 +5718,7 @@ export interface components {
              * @description The sport the new sport league belongs to.
              * @enum {string}
              */
-            sport: "GOLF";
+            sport: "GOLF" | "HORSE_RACING";
             /** @description Unique within the sport. */
             name: string;
             /** @description Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. "PGA TOUR") to use the event-year import. */
@@ -5836,7 +6116,7 @@ export interface components {
              * @description Sport the event belongs to.
              * @enum {string}
              */
-            sport: "GOLF";
+            sport: "GOLF" | "HORSE_RACING";
             /** @description Event name shown in contest and event selectors. */
             name: string;
             /** @description Venue name when known; null otherwise. */
@@ -5936,7 +6216,7 @@ export interface components {
              * @description Only events of this sport.
              * @enum {string}
              */
-            sport?: "GOLF";
+            sport?: "GOLF" | "HORSE_RACING";
             /**
              * @description Only events in this lifecycle status.
              * @enum {string}
@@ -5969,7 +6249,7 @@ export interface components {
                  * @description Sport the event belongs to.
                  * @enum {string}
                  */
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
                 /** @description Event name shown in contest and event selectors. */
                 name: string;
                 /** @description Venue name when known; null otherwise. */
@@ -6081,7 +6361,7 @@ export interface components {
                  * @description Sport the event belongs to.
                  * @enum {string}
                  */
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
                 /** @description Event name shown in contest and event selectors. */
                 name: string;
                 /** @description Venue name when known; null otherwise. */
@@ -6262,7 +6542,7 @@ export interface components {
                  * @description Sport the event belongs to.
                  * @enum {string}
                  */
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
                 /** @description Event name shown in contest and event selectors. */
                 name: string;
                 /** @description Venue name when known; null otherwise. */
@@ -6756,7 +7036,7 @@ export interface components {
                 /** @enum {string|null} */
                 priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
             } | null;
-            /** @description Null until the participant has a scored round. */
+            /** @description Null until the participant has a scored round, or a race result. */
             standing: {
                 /** Format: uuid */
                 id: string;
@@ -6807,6 +7087,22 @@ export interface components {
                     thru: number | null;
                 } | null;
             }[];
+            /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
+            race: {
+                /** @description Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered. */
+                finishPosition: number | null;
+                /** @description Post position (or grid slot, or starting spot); null when not entered. */
+                startPosition: number | null;
+                /**
+                 * @description How the race ended for this runner. Every status but FINISHED scores the contest's "did not finish" points.
+                 * @enum {string}
+                 */
+                resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
+                /** @description Whether the race's result is official. Contest scoring counts a result only once it is. */
+                isOfficial: boolean;
+                /** @description The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation. */
+                riderName: string | null;
+            } | null;
             /** @description Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.) */
             affiliatedWithSportLeague: boolean;
             /**
@@ -6938,7 +7234,7 @@ export interface components {
                     /** @enum {string|null} */
                     priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
                 } | null;
-                /** @description Null until the participant has a scored round. */
+                /** @description Null until the participant has a scored round, or a race result. */
                 standing: {
                     /** Format: uuid */
                     id: string;
@@ -6989,6 +7285,22 @@ export interface components {
                         thru: number | null;
                     } | null;
                 }[];
+                /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
+                race: {
+                    /** @description Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered. */
+                    finishPosition: number | null;
+                    /** @description Post position (or grid slot, or starting spot); null when not entered. */
+                    startPosition: number | null;
+                    /**
+                     * @description How the race ended for this runner. Every status but FINISHED scores the contest's "did not finish" points.
+                     * @enum {string}
+                     */
+                    resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
+                    /** @description Whether the race's result is official. Contest scoring counts a result only once it is. */
+                    isOfficial: boolean;
+                    /** @description The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation. */
+                    riderName: string | null;
+                } | null;
                 /** @description Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.) */
                 affiliatedWithSportLeague: boolean;
                 /**
@@ -7159,7 +7471,7 @@ export interface components {
                     /** @enum {string|null} */
                     priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
                 } | null;
-                /** @description Null until the participant has a scored round. */
+                /** @description Null until the participant has a scored round, or a race result. */
                 standing: {
                     /** Format: uuid */
                     id: string;
@@ -7210,6 +7522,22 @@ export interface components {
                         thru: number | null;
                     } | null;
                 }[];
+                /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
+                race: {
+                    /** @description Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered. */
+                    finishPosition: number | null;
+                    /** @description Post position (or grid slot, or starting spot); null when not entered. */
+                    startPosition: number | null;
+                    /**
+                     * @description How the race ended for this runner. Every status but FINISHED scores the contest's "did not finish" points.
+                     * @enum {string}
+                     */
+                    resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
+                    /** @description Whether the race's result is official. Contest scoring counts a result only once it is. */
+                    isOfficial: boolean;
+                    /** @description The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation. */
+                    riderName: string | null;
+                } | null;
                 /** @description Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.) */
                 affiliatedWithSportLeague: boolean;
                 /**
@@ -7352,6 +7680,22 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                };
             } | {
                 /** @enum {string} */
                 selectionType: "BUDGET_PICK";
@@ -7361,6 +7705,22 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                };
             } | {
                 /** @enum {string} */
                 selectionType: "RANDOM_DRAW";
@@ -7370,6 +7730,22 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                };
             };
         };
         /** @description Patch payload for updating editable contest metadata. */
@@ -7410,7 +7786,7 @@ export interface components {
             leagueId: string;
             sportEventId?: string | null;
             /** @enum {string|null} */
-            sport?: "GOLF" | null;
+            sport?: "GOLF" | "HORSE_RACING" | null;
             /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
             entryCount?: number;
             /** @description The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself. */
@@ -7534,7 +7910,7 @@ export interface components {
             pickedAt: string;
         };
         /** @enum {string} */
-        ParticipantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+        ParticipantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS";
         /** @description Golf extension of a scored pick: the golfer's contest score and the rounds in it scored as 80 strokes. */
         ScoredContestEntryPickGolfDto: {
             /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
@@ -7565,6 +7941,11 @@ export interface components {
                 scoreToPar: number | null;
                 /** @description Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
                 unplayedRoundNumbers: number[];
+            } | null;
+            /** @description Present for a finish-position contest (a horse race); null otherwise. */
+            race: {
+                /** @description The runner's points in this contest: the contest's points table at its finishing place (0 beyond the table), or its "did not finish" points when it did not finish, was disqualified, did not start or was scratched. Null until the race result is official. */
+                points: number | null;
             } | null;
         };
         /** @description Golf extension of a contest entry standing: the total its position was ranked from. */
@@ -7602,6 +7983,11 @@ export interface components {
                 /** @description The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored. */
                 totalScoreToPar: number | null;
             } | null;
+            /** @description Present for a finish-position contest (a horse race); null otherwise. */
+            race: {
+                /** @description The entry's points: the sum of its counting picks' points (each pick's race.points). Null until a pick is scored. */
+                totalPoints: number | null;
+            } | null;
             /** @description The entry's picks, counting picks first. */
             picks: {
                 /** @description ContestEntryPick row identifier. */
@@ -7626,6 +8012,11 @@ export interface components {
                     /** @description Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
                     unplayedRoundNumbers: number[];
                 } | null;
+                /** @description Present for a finish-position contest (a horse race); null otherwise. */
+                race: {
+                    /** @description The runner's points in this contest: the contest's points table at its finishing place (0 beyond the table), or its "did not finish" points when it did not finish, was disqualified, did not start or was scratched. Null until the race result is official. */
+                    points: number | null;
+                } | null;
             }[];
         };
         /** @description How an entry's picks combine into its total. */
@@ -7648,12 +8039,12 @@ export interface components {
              * @description Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.
              * @enum {string}
              */
-            sport: "GOLF";
+            sport: "GOLF" | "HORSE_RACING";
             /**
              * @description The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
              * @enum {string}
              */
-            scoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+            scoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS";
             /** @description How an entry's picks combine into its total. */
             countingRule: {
                 /**
@@ -7780,7 +8171,7 @@ export interface components {
                     /** @enum {string|null} */
                     priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
                 } | null;
-                /** @description Null until the participant has a scored round. */
+                /** @description Null until the participant has a scored round, or a race result. */
                 standing: {
                     /** Format: uuid */
                     id: string;
@@ -7831,6 +8222,22 @@ export interface components {
                         thru: number | null;
                     } | null;
                 }[];
+                /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
+                race: {
+                    /** @description Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered. */
+                    finishPosition: number | null;
+                    /** @description Post position (or grid slot, or starting spot); null when not entered. */
+                    startPosition: number | null;
+                    /**
+                     * @description How the race ended for this runner. Every status but FINISHED scores the contest's "did not finish" points.
+                     * @enum {string}
+                     */
+                    resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
+                    /** @description Whether the race's result is official. Contest scoring counts a result only once it is. */
+                    isOfficial: boolean;
+                    /** @description The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation. */
+                    riderName: string | null;
+                } | null;
                 /** @description Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.) */
                 affiliatedWithSportLeague: boolean;
                 /**
@@ -7874,6 +8281,11 @@ export interface components {
                     /** @description The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored. */
                     totalScoreToPar: number | null;
                 } | null;
+                /** @description Present for a finish-position contest (a horse race); null otherwise. */
+                race: {
+                    /** @description The entry's points: the sum of its counting picks' points (each pick's race.points). Null until a pick is scored. */
+                    totalPoints: number | null;
+                } | null;
                 /** @description The entry's picks, counting picks first. */
                 picks: {
                     /** @description ContestEntryPick row identifier. */
@@ -7898,6 +8310,11 @@ export interface components {
                         /** @description Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
                         unplayedRoundNumbers: number[];
                     } | null;
+                    /** @description Present for a finish-position contest (a horse race); null otherwise. */
+                    race: {
+                        /** @description The runner's points in this contest: the contest's points table at its finishing place (0 beyond the table), or its "did not finish" points when it did not finish, was disqualified, did not start or was scratched. Null until the race result is official. */
+                        points: number | null;
+                    } | null;
                 }[];
             }[];
             /**
@@ -7921,7 +8338,7 @@ export interface components {
                 leagueId: string;
                 sportEventId?: string | null;
                 /** @enum {string|null} */
-                sport?: "GOLF" | null;
+                sport?: "GOLF" | "HORSE_RACING" | null;
                 /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
                 entryCount?: number;
                 /** @description The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself. */
@@ -7963,7 +8380,7 @@ export interface components {
                 leagueId: string;
                 sportEventId?: string | null;
                 /** @enum {string|null} */
-                sport?: "GOLF" | null;
+                sport?: "GOLF" | "HORSE_RACING" | null;
                 /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
                 entryCount?: number;
                 /** @description The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself. */
@@ -8441,7 +8858,7 @@ export interface components {
         };
         /** @description Partial ingestion scheduling override used for global updates and per-sport overrides. */
         IngestionScheduleConfigOverride: {
-            scheduledSports?: "GOLF"[];
+            scheduledSports?: ("GOLF" | "HORSE_RACING")[];
             /** @description Partial feed-scheduling override payload. */
             healthCheck?: {
                 /** @description Whether the feed should be scheduled automatically. */
@@ -8481,10 +8898,11 @@ export interface components {
             /**
              * @description Sports that scheduled ingestion is allowed to run automatically.
              * @default [
-             *       "GOLF"
+             *       "GOLF",
+             *       "HORSE_RACING"
              *     ]
              */
-            scheduledSports: "GOLF"[];
+            scheduledSports: ("GOLF" | "HORSE_RACING")[];
             /** @description Scheduling policy for provider health checks. */
             healthCheck: {
                 /** @description Whether the feed should be scheduled automatically. */
@@ -8521,7 +8939,7 @@ export interface components {
             /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
             perSportOverrides: {
                 [key: string]: {
-                    scheduledSports?: "GOLF"[];
+                    scheduledSports?: ("GOLF" | "HORSE_RACING")[];
                     /** @description Partial feed-scheduling override payload. */
                     healthCheck?: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -8606,10 +9024,11 @@ export interface components {
                 /**
                  * @description Sports that scheduled ingestion is allowed to run automatically.
                  * @default [
-                 *       "GOLF"
+                 *       "GOLF",
+                 *       "HORSE_RACING"
                  *     ]
                  */
-                scheduledSports: "GOLF"[];
+                scheduledSports: ("GOLF" | "HORSE_RACING")[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -8646,7 +9065,7 @@ export interface components {
                 /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                 perSportOverrides: {
                     [key: string]: {
-                        scheduledSports?: "GOLF"[];
+                        scheduledSports?: ("GOLF" | "HORSE_RACING")[];
                         /** @description Partial feed-scheduling override payload. */
                         healthCheck?: {
                             /** @description Whether the feed should be scheduled automatically. */
@@ -8688,10 +9107,11 @@ export interface components {
                 /**
                  * @description Sports that scheduled ingestion is allowed to run automatically.
                  * @default [
-                 *       "GOLF"
+                 *       "GOLF",
+                 *       "HORSE_RACING"
                  *     ]
                  */
-                scheduledSports: "GOLF"[];
+                scheduledSports: ("GOLF" | "HORSE_RACING")[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -8728,7 +9148,7 @@ export interface components {
                 /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                 perSportOverrides: {
                     [key: string]: {
-                        scheduledSports?: "GOLF"[];
+                        scheduledSports?: ("GOLF" | "HORSE_RACING")[];
                         /** @description Partial feed-scheduling override payload. */
                         healthCheck?: {
                             /** @description Whether the feed should be scheduled automatically. */
@@ -8933,10 +9353,11 @@ export interface components {
                     /**
                      * @description Sports that scheduled ingestion is allowed to run automatically.
                      * @default [
-                     *       "GOLF"
+                     *       "GOLF",
+                     *       "HORSE_RACING"
                      *     ]
                      */
-                    scheduledSports: "GOLF"[];
+                    scheduledSports: ("GOLF" | "HORSE_RACING")[];
                     /** @description Scheduling policy for provider health checks. */
                     healthCheck: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -8973,7 +9394,7 @@ export interface components {
                     /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                     perSportOverrides: {
                         [key: string]: {
-                            scheduledSports?: "GOLF"[];
+                            scheduledSports?: ("GOLF" | "HORSE_RACING")[];
                             /** @description Partial feed-scheduling override payload. */
                             healthCheck?: {
                                 /** @description Whether the feed should be scheduled automatically. */
@@ -9015,10 +9436,11 @@ export interface components {
                     /**
                      * @description Sports that scheduled ingestion is allowed to run automatically.
                      * @default [
-                     *       "GOLF"
+                     *       "GOLF",
+                     *       "HORSE_RACING"
                      *     ]
                      */
-                    scheduledSports: "GOLF"[];
+                    scheduledSports: ("GOLF" | "HORSE_RACING")[];
                     /** @description Scheduling policy for provider health checks. */
                     healthCheck: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -9055,7 +9477,7 @@ export interface components {
                     /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                     perSportOverrides: {
                         [key: string]: {
-                            scheduledSports?: "GOLF"[];
+                            scheduledSports?: ("GOLF" | "HORSE_RACING")[];
                             /** @description Partial feed-scheduling override payload. */
                             healthCheck?: {
                                 /** @description Whether the feed should be scheduled automatically. */
@@ -9233,7 +9655,7 @@ export interface components {
             /** @description The whole new value. */
             value: {
                 /** @description Sports that scheduled ingestion is allowed to run automatically. */
-                scheduledSports: "GOLF"[];
+                scheduledSports: ("GOLF" | "HORSE_RACING")[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -9270,7 +9692,7 @@ export interface components {
                 /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                 perSportOverrides: {
                     [key: string]: {
-                        scheduledSports?: "GOLF"[];
+                        scheduledSports?: ("GOLF" | "HORSE_RACING")[];
                         /** @description Partial feed-scheduling override payload. */
                         healthCheck?: {
                             /** @description Whether the feed should be scheduled automatically. */
@@ -9394,10 +9816,11 @@ export interface components {
                 /**
                  * @description Sports that scheduled ingestion is allowed to run automatically.
                  * @default [
-                 *       "GOLF"
+                 *       "GOLF",
+                 *       "HORSE_RACING"
                  *     ]
                  */
-                scheduledSports: "GOLF"[];
+                scheduledSports: ("GOLF" | "HORSE_RACING")[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -9434,7 +9857,7 @@ export interface components {
                 /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                 perSportOverrides: {
                     [key: string]: {
-                        scheduledSports?: "GOLF"[];
+                        scheduledSports?: ("GOLF" | "HORSE_RACING")[];
                         /** @description Partial feed-scheduling override payload. */
                         healthCheck?: {
                             /** @description Whether the feed should be scheduled automatically. */
@@ -9476,10 +9899,11 @@ export interface components {
                 /**
                  * @description Sports that scheduled ingestion is allowed to run automatically.
                  * @default [
-                 *       "GOLF"
+                 *       "GOLF",
+                 *       "HORSE_RACING"
                  *     ]
                  */
-                scheduledSports: "GOLF"[];
+                scheduledSports: ("GOLF" | "HORSE_RACING")[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -9516,7 +9940,7 @@ export interface components {
                 /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                 perSportOverrides: {
                     [key: string]: {
-                        scheduledSports?: "GOLF"[];
+                        scheduledSports?: ("GOLF" | "HORSE_RACING")[];
                         /** @description Partial feed-scheduling override payload. */
                         healthCheck?: {
                             /** @description Whether the feed should be scheduled automatically. */
@@ -9700,10 +10124,11 @@ export interface components {
                     /**
                      * @description Sports that scheduled ingestion is allowed to run automatically.
                      * @default [
-                     *       "GOLF"
+                     *       "GOLF",
+                     *       "HORSE_RACING"
                      *     ]
                      */
-                    scheduledSports: "GOLF"[];
+                    scheduledSports: ("GOLF" | "HORSE_RACING")[];
                     /** @description Scheduling policy for provider health checks. */
                     healthCheck: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -9740,7 +10165,7 @@ export interface components {
                     /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                     perSportOverrides: {
                         [key: string]: {
-                            scheduledSports?: "GOLF"[];
+                            scheduledSports?: ("GOLF" | "HORSE_RACING")[];
                             /** @description Partial feed-scheduling override payload. */
                             healthCheck?: {
                                 /** @description Whether the feed should be scheduled automatically. */
@@ -9782,10 +10207,11 @@ export interface components {
                     /**
                      * @description Sports that scheduled ingestion is allowed to run automatically.
                      * @default [
-                     *       "GOLF"
+                     *       "GOLF",
+                     *       "HORSE_RACING"
                      *     ]
                      */
-                    scheduledSports: "GOLF"[];
+                    scheduledSports: ("GOLF" | "HORSE_RACING")[];
                     /** @description Scheduling policy for provider health checks. */
                     healthCheck: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -9822,7 +10248,7 @@ export interface components {
                     /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                     perSportOverrides: {
                         [key: string]: {
-                            scheduledSports?: "GOLF"[];
+                            scheduledSports?: ("GOLF" | "HORSE_RACING")[];
                             /** @description Partial feed-scheduling override payload. */
                             healthCheck?: {
                                 /** @description Whether the feed should be scheduled automatically. */
@@ -10070,6 +10496,100 @@ export interface components {
              */
             completedAt?: string | null;
         };
+        /** @description A race's finishing order, or a correction to it: one row per runner named. Runners not named keep the result already stored. */
+        RaceResultUploadRequest: {
+            /** @description Whether the race's result is official once applied. It is set on every result of the race, sent or already stored: a race is official as a whole. Contest scoring counts results only once they are official. */
+            isOfficial: boolean;
+            rows: {
+                participantId?: string;
+                externalId?: string;
+                playerName?: string;
+                /**
+                 * @description How the race ended for this runner.
+                 * @enum {string}
+                 */
+                resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
+                /** @description Finishing place, 1 for the winner. Runners in a dead heat share a place, and the next place skips (1, 2, 2, 4). Only a FINISHED runner has one; it is required for every FINISHED runner once the result is official. */
+                finishPosition: number | null;
+                /** @description Post position (or grid slot); null when not known. */
+                startPosition: number | null;
+                /** @description The jockey (or rider) for this start; null when not known. */
+                riderName: string | null;
+            }[];
+        };
+        /** @description A dry run of a race result. Nothing is written. */
+        RaceResultPreviewResponse: {
+            /** @description One per row sent, in the order sent. */
+            rows: {
+                /** @description One runner's result. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event's field. Every value is stored exactly as sent. */
+                row: {
+                    participantId?: string;
+                    externalId?: string;
+                    playerName?: string;
+                    /**
+                     * @description How the race ended for this runner.
+                     * @enum {string}
+                     */
+                    resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
+                    /** @description Finishing place, 1 for the winner. Runners in a dead heat share a place, and the next place skips (1, 2, 2, 4). Only a FINISHED runner has one; it is required for every FINISHED runner once the result is official. */
+                    finishPosition: number | null;
+                    /** @description Post position (or grid slot); null when not known. */
+                    startPosition: number | null;
+                    /** @description The jockey (or rider) for this start; null when not known. */
+                    riderName: string | null;
+                };
+                /**
+                 * @description How an uploaded row resolved to a participant: one match, none, or several.
+                 * @enum {string}
+                 */
+                resolution: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
+                /**
+                 * Format: uuid
+                 * @description The field row it resolved to; set only when MATCHED.
+                 */
+                sportEventParticipantId: string | null;
+                participantName: string | null;
+                /**
+                 * @description Why a resolved row cannot be applied. DUPLICATE_PARTICIPANT: another row names the same runner. POSITION_WITHOUT_FINISH: a finishing place on a runner that did not finish. FINISH_WITHOUT_POSITION: an official result for a FINISHED runner with no place.
+                 * @enum {string|null}
+                 */
+                rowError: "DUPLICATE_PARTICIPANT" | "POSITION_WITHOUT_FINISH" | "FINISH_WITHOUT_POSITION" | null;
+                /**
+                 * @description Null when the row cannot be applied: not MATCHED, or a row error.
+                 * @enum {string|null}
+                 */
+                change: "CREATE" | "UPDATE" | "UNCHANGED" | null;
+                /** @description What is stored now; null when nothing is. */
+                before: {
+                    /** @enum {string} */
+                    resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
+                    finishPosition: number | null;
+                    startPosition: number | null;
+                    riderName: string | null;
+                    isOfficial: boolean;
+                } | null;
+                /** @description What is stored now; null when nothing is. */
+                after: {
+                    /** @enum {string} */
+                    resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
+                    finishPosition: number | null;
+                    startPosition: number | null;
+                    riderName: string | null;
+                    isOfficial: boolean;
+                } | null;
+            }[];
+            /** @description Problems with the race's result as a whole; empty when it can be applied as far as the order goes. */
+            orderErrors: ("POSITIONS_INVALID" | "FIELD_INCOMPLETE")[];
+            /** @description Counts by resolution. */
+            rollup: {
+                total: number;
+                matched: number;
+                unresolved: number;
+                ambiguous: number;
+                /** @description Resolved rows with a row error. */
+                invalid: number;
+            };
+        };
         /** @description Feed-aware event sync request. */
         EventSyncRequest: {
             /** @description Feed types to run for a specific event sync request. */
@@ -10101,7 +10621,7 @@ export interface components {
              */
             lastEventAt: string | null;
             /** @description Sports the provider covers that ingestion is scheduled for. */
-            sportsCovered: "GOLF"[];
+            sportsCovered: ("GOLF" | "HORSE_RACING")[];
             /** @description The provider's events that are scheduled or in progress. */
             activeEventCount: number;
             /** @description True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can. */
@@ -10129,7 +10649,7 @@ export interface components {
                  */
                 lastEventAt: string | null;
                 /** @description Sports the provider covers that ingestion is scheduled for. */
-                sportsCovered: "GOLF"[];
+                sportsCovered: ("GOLF" | "HORSE_RACING")[];
                 /** @description The provider's events that are scheduled or in progress. */
                 activeEventCount: number;
                 /** @description True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can. */
@@ -10141,7 +10661,7 @@ export interface components {
             id: string;
             providerId: string;
             /** @enum {string} */
-            sport: "GOLF";
+            sport: "GOLF" | "HORSE_RACING";
             /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
             eventId: string | null;
             /** @enum {string} */
@@ -10175,7 +10695,7 @@ export interface components {
                 /** @description The request that submitted the sync run. */
                 requestPayload?: {
                     /** @enum {string} */
-                    sport: "GOLF";
+                    sport: "GOLF" | "HORSE_RACING";
                     /** @description Provider event identifier the sync was asked for. */
                     eventId: string;
                     /**
@@ -10231,7 +10751,7 @@ export interface components {
                     /** @description Provider that executed the ingestion job. */
                     providerId: string;
                     /** @enum {string} */
-                    sport: "GOLF";
+                    sport: "GOLF" | "HORSE_RACING";
                     /** @description External event id for event-scoped jobs, when applicable. */
                     eventExternalId?: string;
                     /**
@@ -10341,7 +10861,7 @@ export interface components {
         ProviderSyncRunListQuery: {
             providerId?: string;
             /** @enum {string} */
-            sport?: "GOLF";
+            sport?: "GOLF" | "HORSE_RACING";
             /** @enum {string} */
             status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
             /**
@@ -10361,7 +10881,7 @@ export interface components {
                 id: string;
                 providerId: string;
                 /** @enum {string} */
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
                 /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
                 eventId: string | null;
                 /** @enum {string} */
@@ -10395,7 +10915,7 @@ export interface components {
                     /** @description The request that submitted the sync run. */
                     requestPayload?: {
                         /** @enum {string} */
-                        sport: "GOLF";
+                        sport: "GOLF" | "HORSE_RACING";
                         /** @description Provider event identifier the sync was asked for. */
                         eventId: string;
                         /**
@@ -10451,7 +10971,7 @@ export interface components {
                         /** @description Provider that executed the ingestion job. */
                         providerId: string;
                         /** @enum {string} */
-                        sport: "GOLF";
+                        sport: "GOLF" | "HORSE_RACING";
                         /** @description External event id for event-scoped jobs, when applicable. */
                         eventExternalId?: string;
                         /**
@@ -10561,7 +11081,7 @@ export interface components {
         /** @description A manual sync submission. The runs execute asynchronously after the request is accepted. */
         ProviderManualSyncSubmissionResponse: {
             /** @enum {string} */
-            sport: "GOLF";
+            sport: "GOLF" | "HORSE_RACING";
             /** @description Provider event identifier the submitted runs sync. */
             eventId: string;
             requestedFeeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
@@ -10574,7 +11094,7 @@ export interface components {
                 id: string;
                 providerId: string;
                 /** @enum {string} */
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
                 /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
                 eventId: string | null;
                 /** @enum {string} */
@@ -10608,7 +11128,7 @@ export interface components {
                     /** @description The request that submitted the sync run. */
                     requestPayload?: {
                         /** @enum {string} */
-                        sport: "GOLF";
+                        sport: "GOLF" | "HORSE_RACING";
                         /** @description Provider event identifier the sync was asked for. */
                         eventId: string;
                         /**
@@ -10664,7 +11184,7 @@ export interface components {
                         /** @description Provider that executed the ingestion job. */
                         providerId: string;
                         /** @enum {string} */
-                        sport: "GOLF";
+                        sport: "GOLF" | "HORSE_RACING";
                         /** @description External event id for event-scoped jobs, when applicable. */
                         eventExternalId?: string;
                         /**
@@ -10780,7 +11300,7 @@ export interface components {
             /** @description The competitor's name as the provider reports it. */
             externalName: string;
             /** @enum {string} */
-            sport: "GOLF";
+            sport: "GOLF" | "HORSE_RACING";
         };
         /** @description Every unmapped competitor across the scheduled sports of every provider. */
         UnmappedProviderParticipantListResponse: {
@@ -10792,7 +11312,7 @@ export interface components {
                 /** @description The competitor's name as the provider reports it. */
                 externalName: string;
                 /** @enum {string} */
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
             }[];
         };
         /** @description An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it. */
@@ -10801,7 +11321,7 @@ export interface components {
             externalId: string;
             providerId: string;
             /** @enum {string} */
-            sport: "GOLF";
+            sport: "GOLF" | "HORSE_RACING";
             name: string;
             venue: string | null;
             location: string | null;
@@ -10826,7 +11346,7 @@ export interface components {
         /** @description Filters over a provider's live catalog. */
         ProviderCatalogEventListQuery: {
             /** @enum {string} */
-            sport: "GOLF";
+            sport: "GOLF" | "HORSE_RACING";
             /** @description Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter. */
             sportLeagueId?: string;
             /**
@@ -10848,7 +11368,7 @@ export interface components {
                 externalId: string;
                 providerId: string;
                 /** @enum {string} */
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
                 name: string;
                 venue: string | null;
                 location: string | null;
@@ -14550,7 +15070,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Only templates for this sport. */
-                sport?: "GOLF";
+                sport?: "GOLF" | "HORSE_RACING";
                 /** @description Only templates for this contest format. */
                 contestFormat?: "ROSTER";
                 /** @description Templates for this event type, plus the ones that apply to any event type. */
@@ -14668,7 +15188,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Only events of this sport. */
-                sport?: "GOLF";
+                sport?: "GOLF" | "HORSE_RACING";
                 /** @description Only events in this lifecycle status. */
                 status?: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /** @description Only events of this sport league's series. */
@@ -16620,6 +17140,148 @@ export interface operations {
             };
         };
     };
+    previewEventRaceResults: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RaceResultUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description A dry run of a race result. Nothing is written. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RaceResultPreviewResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    applyEventRaceResults: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RaceResultUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description An event's field. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     listSports: {
         parameters: {
             query?: never;
@@ -16644,7 +17306,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Only sport leagues of this sport. */
-                sport?: "GOLF";
+                sport?: "GOLF" | "HORSE_RACING";
                 /** @description Only active, or only inactive, sport leagues. */
                 isActive?: boolean;
             };
@@ -17637,7 +18299,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
             };
             cookie?: never;
         };
@@ -17690,7 +18352,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
             };
             cookie?: never;
         };
@@ -17814,7 +18476,7 @@ export interface operations {
         parameters: {
             query?: {
                 providerId?: string;
-                sport?: "GOLF";
+                sport?: "GOLF" | "HORSE_RACING";
                 status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
                 /** @description Earliest submission time to include. Defaults to 6 hours before `to`. */
                 from?: string;
@@ -17861,7 +18523,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
                 eventId: string;
             };
             cookie?: never;
@@ -17969,7 +18631,7 @@ export interface operations {
     listProviderCatalogEvents: {
         parameters: {
             query: {
-                sport: "GOLF";
+                sport: "GOLF" | "HORSE_RACING";
                 /** @description Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter. */
                 sportLeagueId?: string;
                 /** @description Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today. */

@@ -253,6 +253,12 @@ filling them in rather than by finding guards scattered through the code:
   participant scoring rule's `config`, typed per scoring definition by
   `PARTICIPANT_SCORING_SETTINGS_SCHEMAS` on write and read), returns each participant score
   with a detail keyed by family, and declares the one live-score category it accepts, or none.
+  Built: stroke play (golf) and finish position (horse racing). Finish position's admin
+  results entry (the finishing order) lives in its folder; golf's score corrections predate the
+  folders and live in `modules/golf`. Each refuses an event whose sport's family does not keep
+  its results with 422 `EVENT_SCORING_FAMILY_MISMATCH`.
+  Settings a definition cannot default (a points table) are required on contest setup rather
+  than invented.
   On the web, how a family's results read on the shared contest screens is its entry in
   `SCORING_FAMILY_UI` (`clients/poolmaster/src/features/contests/scoring-family-ui/`), also a
   `Record<ScoringFamily, …>`, reached from a response's `sport` through its sport definition.
@@ -433,6 +439,9 @@ that it was already there.
   of #340. `20261004140000_seed_golf_sport_reference_row` calls `gen_random_uuid()` by hand
   because `sports.id` had no default when it was written; it stays exactly as it is, because it
   is applied, but a new reference-data migration can simply omit the column.
+- A row that uses an enum value goes in a later migration than the one that adds the value:
+  Postgres refuses a new enum value inside the transaction that adds it. The HORSE_RACING row and
+  templates (`20261013120100_horse_racing_reference_data`) follow the migration adding the value.
 - Change it in a *later* migration, never by editing an applied one: Prisma records applied
   migrations by checksum, and an edited migration makes the next `migrate deploy` fail.
 - Two examples are in the tree: `contest_config_templates`, seeded by

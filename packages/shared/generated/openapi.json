@@ -5565,6 +5565,74 @@
                 ],
                 "minimum": 1,
                 "description": "Maximum entries a Team may create. Null means unlimited."
+              },
+              "scoring": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "GOLF_RELATIVE_TO_PAR_TOTAL"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "FINISH_POSITION_POINTS"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "pointsTable": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "minItems": 1,
+                            "maxItems": 50,
+                            "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                          },
+                          "didNotFinishPoints": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                          }
+                        },
+                        "required": [
+                          "pointsTable",
+                          "didNotFinishPoints"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  }
+                ],
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
               }
             },
             "required": [
@@ -5602,6 +5670,74 @@
                 ],
                 "minimum": 1,
                 "description": "Maximum entries a Team may create. Null means unlimited."
+              },
+              "scoring": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "GOLF_RELATIVE_TO_PAR_TOTAL"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "FINISH_POSITION_POINTS"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "pointsTable": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "minItems": 1,
+                            "maxItems": 50,
+                            "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                          },
+                          "didNotFinishPoints": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                          }
+                        },
+                        "required": [
+                          "pointsTable",
+                          "didNotFinishPoints"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  }
+                ],
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
               }
             },
             "required": [
@@ -5639,6 +5775,74 @@
                 ],
                 "minimum": 1,
                 "description": "Maximum entries a Team may create. Null means unlimited."
+              },
+              "scoring": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "GOLF_RELATIVE_TO_PAR_TOTAL"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "FINISH_POSITION_POINTS"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "pointsTable": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "minItems": 1,
+                            "maxItems": 50,
+                            "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                          },
+                          "didNotFinishPoints": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                          }
+                        },
+                        "required": [
+                          "pointsTable",
+                          "didNotFinishPoints"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  }
+                ],
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
               }
             },
             "required": [
@@ -6015,7 +6219,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ],
             "description": "Sport this template applies to."
           },
@@ -6098,6 +6303,74 @@
                     ],
                     "minimum": 1,
                     "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                   }
                 },
                 "required": [
@@ -6135,6 +6408,74 @@
                     ],
                     "minimum": 1,
                     "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                   }
                 },
                 "required": [
@@ -6172,6 +6513,74 @@
                     ],
                     "minimum": 1,
                     "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                   }
                 },
                 "required": [
@@ -6507,7 +6916,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ],
             "description": "Only templates for this sport."
           },
@@ -6546,7 +6956,8 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF"
+                    "GOLF",
+                    "HORSE_RACING"
                   ],
                   "description": "Sport this template applies to."
                 },
@@ -6629,6 +7040,74 @@
                           ],
                           "minimum": 1,
                           "description": "Maximum entries a Team may create. Null means unlimited."
+                        },
+                        "scoring": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GOLF_RELATIVE_TO_PAR_TOTAL"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "FINISH_POSITION_POINTS"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {
+                                    "pointsTable": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "minItems": 1,
+                                      "maxItems": 50,
+                                      "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                                    },
+                                    "didNotFinishPoints": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                                    }
+                                  },
+                                  "required": [
+                                    "pointsTable",
+                                    "didNotFinishPoints"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ],
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                         }
                       },
                       "required": [
@@ -6666,6 +7145,74 @@
                           ],
                           "minimum": 1,
                           "description": "Maximum entries a Team may create. Null means unlimited."
+                        },
+                        "scoring": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GOLF_RELATIVE_TO_PAR_TOTAL"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "FINISH_POSITION_POINTS"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {
+                                    "pointsTable": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "minItems": 1,
+                                      "maxItems": 50,
+                                      "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                                    },
+                                    "didNotFinishPoints": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                                    }
+                                  },
+                                  "required": [
+                                    "pointsTable",
+                                    "didNotFinishPoints"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ],
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                         }
                       },
                       "required": [
@@ -6703,6 +7250,74 @@
                           ],
                           "minimum": 1,
                           "description": "Maximum entries a Team may create. Null means unlimited."
+                        },
+                        "scoring": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GOLF_RELATIVE_TO_PAR_TOTAL"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "FINISH_POSITION_POINTS"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {
+                                    "pointsTable": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "minItems": 1,
+                                      "maxItems": 50,
+                                      "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                                    },
+                                    "didNotFinishPoints": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                                    }
+                                  },
+                                  "required": [
+                                    "pointsTable",
+                                    "didNotFinishPoints"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ],
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                         }
                       },
                       "required": [
@@ -6799,6 +7414,74 @@
                     ],
                     "minimum": 1,
                     "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                   }
                 },
                 "required": [
@@ -6836,6 +7519,74 @@
                     ],
                     "minimum": 1,
                     "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                   }
                 },
                 "required": [
@@ -6873,6 +7624,74 @@
                     ],
                     "minimum": 1,
                     "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                   }
                 },
                 "required": [
@@ -6904,7 +7723,8 @@
               "sport": {
                 "type": "string",
                 "enum": [
-                  "GOLF"
+                  "GOLF",
+                  "HORSE_RACING"
                 ],
                 "description": "Sport this template applies to."
               },
@@ -6987,6 +7807,74 @@
                         ],
                         "minimum": 1,
                         "description": "Maximum entries a Team may create. Null means unlimited."
+                      },
+                      "scoring": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "GOLF_RELATIVE_TO_PAR_TOTAL"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "FINISH_POSITION_POINTS"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {
+                                  "pointsTable": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 50,
+                                    "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                                  },
+                                  "didNotFinishPoints": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                                  }
+                                },
+                                "required": [
+                                  "pointsTable",
+                                  "didNotFinishPoints"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ],
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                       }
                     },
                     "required": [
@@ -7024,6 +7912,74 @@
                         ],
                         "minimum": 1,
                         "description": "Maximum entries a Team may create. Null means unlimited."
+                      },
+                      "scoring": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "GOLF_RELATIVE_TO_PAR_TOTAL"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "FINISH_POSITION_POINTS"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {
+                                  "pointsTable": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 50,
+                                    "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                                  },
+                                  "didNotFinishPoints": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                                  }
+                                },
+                                "required": [
+                                  "pointsTable",
+                                  "didNotFinishPoints"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ],
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                       }
                     },
                     "required": [
@@ -7061,6 +8017,74 @@
                         ],
                         "minimum": 1,
                         "description": "Maximum entries a Team may create. Null means unlimited."
+                      },
+                      "scoring": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "GOLF_RELATIVE_TO_PAR_TOTAL"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "FINISH_POSITION_POINTS"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {
+                                  "pointsTable": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 50,
+                                    "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                                  },
+                                  "didNotFinishPoints": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                                  }
+                                },
+                                "required": [
+                                  "pointsTable",
+                                  "didNotFinishPoints"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ],
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                       }
                     },
                     "required": [
@@ -7972,7 +8996,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ],
             "description": "The sport."
           },
@@ -7987,7 +9012,8 @@
           "tournamentFormat": {
             "type": "string",
             "enum": [
-              "STROKE_PLAY_TOURNAMENT"
+              "STROKE_PLAY_TOURNAMENT",
+              "RACE"
             ],
             "description": "Structural format of the sport's events; decides which contest formats are valid."
           },
@@ -8029,7 +9055,8 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF"
+                    "GOLF",
+                    "HORSE_RACING"
                   ],
                   "description": "The sport."
                 },
@@ -8044,7 +9071,8 @@
                 "tournamentFormat": {
                   "type": "string",
                   "enum": [
-                    "STROKE_PLAY_TOURNAMENT"
+                    "STROKE_PLAY_TOURNAMENT",
+                    "RACE"
                   ],
                   "description": "Structural format of the sport's events; decides which contest formats are valid."
                 },
@@ -8154,7 +9182,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ],
             "description": "Only sport leagues of this sport."
           },
@@ -8334,7 +9363,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ],
             "description": "The sport the new sport league belongs to."
           },
@@ -9211,7 +10241,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ],
             "description": "Sport the event belongs to."
           },
@@ -9475,7 +10506,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ],
             "description": "Only events of this sport."
           },
@@ -9532,7 +10564,8 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF"
+                    "GOLF",
+                    "HORSE_RACING"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -9821,7 +10854,8 @@
               "sport": {
                 "type": "string",
                 "enum": [
-                  "GOLF"
+                  "GOLF",
+                  "HORSE_RACING"
                 ],
                 "description": "Sport the event belongs to."
               },
@@ -10255,7 +11289,8 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF"
+                    "GOLF",
+                    "HORSE_RACING"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -11714,7 +12749,7 @@
               "golf"
             ],
             "additionalProperties": false,
-            "description": "Null until the participant has a scored round."
+            "description": "Null until the participant has a scored round, or a race result."
           },
           "rounds": {
             "type": "array",
@@ -11792,6 +12827,60 @@
             },
             "description": "By round number."
           },
+          "race": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "finishPosition": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "description": "Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered."
+              },
+              "startPosition": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "description": "Post position (or grid slot, or starting spot); null when not entered."
+              },
+              "resultStatus": {
+                "type": "string",
+                "enum": [
+                  "FINISHED",
+                  "DID_NOT_FINISH",
+                  "DISQUALIFIED",
+                  "DID_NOT_START"
+                ],
+                "description": "How the race ended for this runner. Every status but FINISHED scores the contest's \"did not finish\" points."
+              },
+              "isOfficial": {
+                "type": "boolean",
+                "description": "Whether the race's result is official. Contest scoring counts a result only once it is."
+              },
+              "riderName": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation."
+              }
+            },
+            "required": [
+              "finishPosition",
+              "startPosition",
+              "resultStatus",
+              "isOfficial",
+              "riderName"
+            ],
+            "additionalProperties": false,
+            "description": "Present once a race result is entered for a finish-position event (a horse race); null otherwise."
+          },
           "affiliatedWithSportLeague": {
             "type": "boolean",
             "description": "Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.)"
@@ -11820,6 +12909,7 @@
           "valuation",
           "standing",
           "rounds",
+          "race",
           "affiliatedWithSportLeague",
           "createdAt",
           "updatedAt"
@@ -12191,7 +13281,7 @@
                     "golf"
                   ],
                   "additionalProperties": false,
-                  "description": "Null until the participant has a scored round."
+                  "description": "Null until the participant has a scored round, or a race result."
                 },
                 "rounds": {
                   "type": "array",
@@ -12269,6 +13359,60 @@
                   },
                   "description": "By round number."
                 },
+                "race": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "finishPosition": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "description": "Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered."
+                    },
+                    "startPosition": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "description": "Post position (or grid slot, or starting spot); null when not entered."
+                    },
+                    "resultStatus": {
+                      "type": "string",
+                      "enum": [
+                        "FINISHED",
+                        "DID_NOT_FINISH",
+                        "DISQUALIFIED",
+                        "DID_NOT_START"
+                      ],
+                      "description": "How the race ended for this runner. Every status but FINISHED scores the contest's \"did not finish\" points."
+                    },
+                    "isOfficial": {
+                      "type": "boolean",
+                      "description": "Whether the race's result is official. Contest scoring counts a result only once it is."
+                    },
+                    "riderName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation."
+                    }
+                  },
+                  "required": [
+                    "finishPosition",
+                    "startPosition",
+                    "resultStatus",
+                    "isOfficial",
+                    "riderName"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Present once a race result is entered for a finish-position event (a horse race); null otherwise."
+                },
                 "affiliatedWithSportLeague": {
                   "type": "boolean",
                   "description": "Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.)"
@@ -12297,6 +13441,7 @@
                 "valuation",
                 "standing",
                 "rounds",
+                "race",
                 "affiliatedWithSportLeague",
                 "createdAt",
                 "updatedAt"
@@ -12818,7 +13963,7 @@
                   "golf"
                 ],
                 "additionalProperties": false,
-                "description": "Null until the participant has a scored round."
+                "description": "Null until the participant has a scored round, or a race result."
               },
               "rounds": {
                 "type": "array",
@@ -12896,6 +14041,60 @@
                 },
                 "description": "By round number."
               },
+              "race": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "finishPosition": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered."
+                  },
+                  "startPosition": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Post position (or grid slot, or starting spot); null when not entered."
+                  },
+                  "resultStatus": {
+                    "type": "string",
+                    "enum": [
+                      "FINISHED",
+                      "DID_NOT_FINISH",
+                      "DISQUALIFIED",
+                      "DID_NOT_START"
+                    ],
+                    "description": "How the race ended for this runner. Every status but FINISHED scores the contest's \"did not finish\" points."
+                  },
+                  "isOfficial": {
+                    "type": "boolean",
+                    "description": "Whether the race's result is official. Contest scoring counts a result only once it is."
+                  },
+                  "riderName": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation."
+                  }
+                },
+                "required": [
+                  "finishPosition",
+                  "startPosition",
+                  "resultStatus",
+                  "isOfficial",
+                  "riderName"
+                ],
+                "additionalProperties": false,
+                "description": "Present once a race result is entered for a finish-position event (a horse race); null otherwise."
+              },
               "affiliatedWithSportLeague": {
                 "type": "boolean",
                 "description": "Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.)"
@@ -12924,6 +14123,7 @@
               "valuation",
               "standing",
               "rounds",
+              "race",
               "affiliatedWithSportLeague",
               "createdAt",
               "updatedAt"
@@ -13356,6 +14556,74 @@
                     ],
                     "minimum": 1,
                     "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                   }
                 },
                 "required": [
@@ -13393,6 +14661,74 @@
                     ],
                     "minimum": 1,
                     "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                   }
                 },
                 "required": [
@@ -13430,6 +14766,74 @@
                     ],
                     "minimum": 1,
                     "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
                   }
                 },
                 "required": [
@@ -13564,6 +14968,7 @@
             ],
             "enum": [
               "GOLF",
+              "HORSE_RACING",
               null
             ]
           },
@@ -13911,7 +15316,8 @@
       "ParticipantScoringDefinitionId": {
         "type": "string",
         "enum": [
-          "GOLF_RELATIVE_TO_PAR_TOTAL"
+          "GOLF_RELATIVE_TO_PAR_TOTAL",
+          "FINISH_POSITION_POINTS"
         ]
       },
       "ScoredContestEntryPickGolfDto": {
@@ -13999,6 +15405,26 @@
             ],
             "additionalProperties": false,
             "description": "Present for a golf contest; null otherwise."
+          },
+          "race": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "points": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "The runner's points in this contest: the contest's points table at its finishing place (0 beyond the table), or its \"did not finish\" points when it did not finish, was disqualified, did not start or was scratched. Null until the race result is official."
+              }
+            },
+            "required": [
+              "points"
+            ],
+            "additionalProperties": false,
+            "description": "Present for a finish-position contest (a horse race); null otherwise."
           }
         },
         "required": [
@@ -14008,7 +15434,8 @@
           "slot",
           "isCounting",
           "isDropped",
-          "golf"
+          "golf",
+          "race"
         ],
         "additionalProperties": false,
         "description": "One pick on a contest entry, with whether it counts."
@@ -14106,6 +15533,26 @@
             "additionalProperties": false,
             "description": "Present for a golf contest; null otherwise."
           },
+          "race": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "totalPoints": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "The entry's points: the sum of its counting picks' points (each pick's race.points). Null until a pick is scored."
+              }
+            },
+            "required": [
+              "totalPoints"
+            ],
+            "additionalProperties": false,
+            "description": "Present for a finish-position contest (a horse race); null otherwise."
+          },
           "picks": {
             "type": "array",
             "items": {
@@ -14167,6 +15614,26 @@
                   ],
                   "additionalProperties": false,
                   "description": "Present for a golf contest; null otherwise."
+                },
+                "race": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "points": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "description": "The runner's points in this contest: the contest's points table at its finishing place (0 beyond the table), or its \"did not finish\" points when it did not finish, was disqualified, did not start or was scratched. Null until the race result is official."
+                    }
+                  },
+                  "required": [
+                    "points"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Present for a finish-position contest (a horse race); null otherwise."
                 }
               },
               "required": [
@@ -14176,7 +15643,8 @@
                 "slot",
                 "isCounting",
                 "isDropped",
-                "golf"
+                "golf",
+                "race"
               ],
               "additionalProperties": false,
               "description": "One pick on a contest entry, with whether it counts."
@@ -14196,6 +15664,7 @@
           "countingPickLimit",
           "scoredPickCount",
           "golf",
+          "race",
           "picks"
         ],
         "additionalProperties": false,
@@ -14238,14 +15707,16 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ],
             "description": "Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with."
           },
           "scoringDefinitionId": {
             "type": "string",
             "enum": [
-              "GOLF_RELATIVE_TO_PAR_TOTAL"
+              "GOLF_RELATIVE_TO_PAR_TOTAL",
+              "FINISH_POSITION_POINTS"
             ],
             "description": "The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds."
           },
@@ -14633,7 +16104,7 @@
                     "golf"
                   ],
                   "additionalProperties": false,
-                  "description": "Null until the participant has a scored round."
+                  "description": "Null until the participant has a scored round, or a race result."
                 },
                 "rounds": {
                   "type": "array",
@@ -14711,6 +16182,60 @@
                   },
                   "description": "By round number."
                 },
+                "race": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "finishPosition": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "description": "Finishing place, 1 for the winner; runners in a dead heat share a place. Set only when resultStatus is FINISHED; null until entered."
+                    },
+                    "startPosition": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "description": "Post position (or grid slot, or starting spot); null when not entered."
+                    },
+                    "resultStatus": {
+                      "type": "string",
+                      "enum": [
+                        "FINISHED",
+                        "DID_NOT_FINISH",
+                        "DISQUALIFIED",
+                        "DID_NOT_START"
+                      ],
+                      "description": "How the race ended for this runner. Every status but FINISHED scores the contest's \"did not finish\" points."
+                    },
+                    "isOfficial": {
+                      "type": "boolean",
+                      "description": "Whether the race's result is official. Contest scoring counts a result only once it is."
+                    },
+                    "riderName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation."
+                    }
+                  },
+                  "required": [
+                    "finishPosition",
+                    "startPosition",
+                    "resultStatus",
+                    "isOfficial",
+                    "riderName"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Present once a race result is entered for a finish-position event (a horse race); null otherwise."
+                },
                 "affiliatedWithSportLeague": {
                   "type": "boolean",
                   "description": "Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.)"
@@ -14739,6 +16264,7 @@
                 "valuation",
                 "standing",
                 "rounds",
+                "race",
                 "affiliatedWithSportLeague",
                 "createdAt",
                 "updatedAt"
@@ -14826,6 +16352,26 @@
                   "additionalProperties": false,
                   "description": "Present for a golf contest; null otherwise."
                 },
+                "race": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "totalPoints": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "description": "The entry's points: the sum of its counting picks' points (each pick's race.points). Null until a pick is scored."
+                    }
+                  },
+                  "required": [
+                    "totalPoints"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Present for a finish-position contest (a horse race); null otherwise."
+                },
                 "picks": {
                   "type": "array",
                   "items": {
@@ -14887,6 +16433,26 @@
                         ],
                         "additionalProperties": false,
                         "description": "Present for a golf contest; null otherwise."
+                      },
+                      "race": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "points": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "description": "The runner's points in this contest: the contest's points table at its finishing place (0 beyond the table), or its \"did not finish\" points when it did not finish, was disqualified, did not start or was scratched. Null until the race result is official."
+                          }
+                        },
+                        "required": [
+                          "points"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Present for a finish-position contest (a horse race); null otherwise."
                       }
                     },
                     "required": [
@@ -14896,7 +16462,8 @@
                       "slot",
                       "isCounting",
                       "isDropped",
-                      "golf"
+                      "golf",
+                      "race"
                     ],
                     "additionalProperties": false,
                     "description": "One pick on a contest entry, with whether it counts."
@@ -14916,6 +16483,7 @@
                 "countingPickLimit",
                 "scoredPickCount",
                 "golf",
+                "race",
                 "picks"
               ],
               "additionalProperties": false,
@@ -14996,6 +16564,7 @@
                 ],
                 "enum": [
                   "GOLF",
+                  "HORSE_RACING",
                   null
                 ]
               },
@@ -15128,6 +16697,7 @@
                   ],
                   "enum": [
                     "GOLF",
+                    "HORSE_RACING",
                     null
                   ]
                 },
@@ -16679,7 +18249,8 @@
             "items": {
               "type": "string",
               "enum": [
-                "GOLF"
+                "GOLF",
+                "HORSE_RACING"
               ]
             },
             "minItems": 1
@@ -16774,12 +18345,14 @@
             "items": {
               "type": "string",
               "enum": [
-                "GOLF"
+                "GOLF",
+                "HORSE_RACING"
               ]
             },
             "minItems": 1,
             "default": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ],
             "description": "Sports that scheduled ingestion is allowed to run automatically."
           },
@@ -16880,7 +18453,8 @@
                   "items": {
                     "type": "string",
                     "enum": [
-                      "GOLF"
+                      "GOLF",
+                      "HORSE_RACING"
                     ]
                   },
                   "minItems": 1
@@ -17074,12 +18648,14 @@
                     "items": {
                       "type": "string",
                       "enum": [
-                        "GOLF"
+                        "GOLF",
+                        "HORSE_RACING"
                       ]
                     },
                     "minItems": 1,
                     "default": [
-                      "GOLF"
+                      "GOLF",
+                      "HORSE_RACING"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -17180,7 +18756,8 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF"
+                              "GOLF",
+                              "HORSE_RACING"
                             ]
                           },
                           "minItems": 1
@@ -17287,12 +18864,14 @@
                     "items": {
                       "type": "string",
                       "enum": [
-                        "GOLF"
+                        "GOLF",
+                        "HORSE_RACING"
                       ]
                     },
                     "minItems": 1,
                     "default": [
-                      "GOLF"
+                      "GOLF",
+                      "HORSE_RACING"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -17393,7 +18972,8 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF"
+                              "GOLF",
+                              "HORSE_RACING"
                             ]
                           },
                           "minItems": 1
@@ -17963,12 +19543,14 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF"
+                              "GOLF",
+                              "HORSE_RACING"
                             ]
                           },
                           "minItems": 1,
                           "default": [
-                            "GOLF"
+                            "GOLF",
+                            "HORSE_RACING"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -18069,7 +19651,8 @@
                                 "items": {
                                   "type": "string",
                                   "enum": [
-                                    "GOLF"
+                                    "GOLF",
+                                    "HORSE_RACING"
                                   ]
                                 },
                                 "minItems": 1
@@ -18176,12 +19759,14 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF"
+                              "GOLF",
+                              "HORSE_RACING"
                             ]
                           },
                           "minItems": 1,
                           "default": [
-                            "GOLF"
+                            "GOLF",
+                            "HORSE_RACING"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -18282,7 +19867,8 @@
                                 "items": {
                                   "type": "string",
                                   "enum": [
-                                    "GOLF"
+                                    "GOLF",
+                                    "HORSE_RACING"
                                   ]
                                 },
                                 "minItems": 1
@@ -18809,7 +20395,8 @@
                     "items": {
                       "type": "string",
                       "enum": [
-                        "GOLF"
+                        "GOLF",
+                        "HORSE_RACING"
                       ]
                     },
                     "minItems": 1,
@@ -18912,7 +20499,8 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF"
+                              "GOLF",
+                              "HORSE_RACING"
                             ]
                           },
                           "minItems": 1
@@ -19258,12 +20846,14 @@
                     "items": {
                       "type": "string",
                       "enum": [
-                        "GOLF"
+                        "GOLF",
+                        "HORSE_RACING"
                       ]
                     },
                     "minItems": 1,
                     "default": [
-                      "GOLF"
+                      "GOLF",
+                      "HORSE_RACING"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -19364,7 +20954,8 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF"
+                              "GOLF",
+                              "HORSE_RACING"
                             ]
                           },
                           "minItems": 1
@@ -19471,12 +21062,14 @@
                     "items": {
                       "type": "string",
                       "enum": [
-                        "GOLF"
+                        "GOLF",
+                        "HORSE_RACING"
                       ]
                     },
                     "minItems": 1,
                     "default": [
-                      "GOLF"
+                      "GOLF",
+                      "HORSE_RACING"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -19577,7 +21170,8 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF"
+                              "GOLF",
+                              "HORSE_RACING"
                             ]
                           },
                           "minItems": 1
@@ -20105,12 +21699,14 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF"
+                              "GOLF",
+                              "HORSE_RACING"
                             ]
                           },
                           "minItems": 1,
                           "default": [
-                            "GOLF"
+                            "GOLF",
+                            "HORSE_RACING"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -20211,7 +21807,8 @@
                                 "items": {
                                   "type": "string",
                                   "enum": [
-                                    "GOLF"
+                                    "GOLF",
+                                    "HORSE_RACING"
                                   ]
                                 },
                                 "minItems": 1
@@ -20318,12 +21915,14 @@
                           "items": {
                             "type": "string",
                             "enum": [
-                              "GOLF"
+                              "GOLF",
+                              "HORSE_RACING"
                             ]
                           },
                           "minItems": 1,
                           "default": [
-                            "GOLF"
+                            "GOLF",
+                            "HORSE_RACING"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -20424,7 +22023,8 @@
                                 "items": {
                                   "type": "string",
                                   "enum": [
-                                    "GOLF"
+                                    "GOLF",
+                                    "HORSE_RACING"
                                   ]
                                 },
                                 "minItems": 1
@@ -21233,6 +22833,364 @@
         "additionalProperties": false,
         "description": "A correction to one golfer's round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored."
       },
+      "RaceResultUploadRequest": {
+        "type": "object",
+        "properties": {
+          "isOfficial": {
+            "type": "boolean",
+            "description": "Whether the race's result is official once applied. It is set on every result of the race, sent or already stored: a race is official as a whole. Contest scoring counts results only once they are official."
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "participantId": {
+                  "type": "string"
+                },
+                "externalId": {
+                  "type": "string"
+                },
+                "playerName": {
+                  "type": "string"
+                },
+                "resultStatus": {
+                  "type": "string",
+                  "enum": [
+                    "FINISHED",
+                    "DID_NOT_FINISH",
+                    "DISQUALIFIED",
+                    "DID_NOT_START"
+                  ],
+                  "description": "How the race ended for this runner."
+                },
+                "finishPosition": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "description": "Finishing place, 1 for the winner. Runners in a dead heat share a place, and the next place skips (1, 2, 2, 4). Only a FINISHED runner has one; it is required for every FINISHED runner once the result is official."
+                },
+                "startPosition": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "description": "Post position (or grid slot); null when not known."
+                },
+                "riderName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 255,
+                  "x-transform": [
+                    "trim"
+                  ],
+                  "description": "The jockey (or rider) for this start; null when not known."
+                }
+              },
+              "required": [
+                "resultStatus",
+                "finishPosition",
+                "startPosition",
+                "riderName"
+              ],
+              "additionalProperties": false,
+              "description": "One runner's result. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event's field. Every value is stored exactly as sent."
+            },
+            "minItems": 1,
+            "maxItems": 200
+          }
+        },
+        "required": [
+          "isOfficial",
+          "rows"
+        ],
+        "additionalProperties": false,
+        "description": "A race's finishing order, or a correction to it: one row per runner named. Runners not named keep the result already stored."
+      },
+      "RaceResultPreviewResponse": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "row": {
+                  "type": "object",
+                  "properties": {
+                    "participantId": {
+                      "type": "string"
+                    },
+                    "externalId": {
+                      "type": "string"
+                    },
+                    "playerName": {
+                      "type": "string"
+                    },
+                    "resultStatus": {
+                      "type": "string",
+                      "enum": [
+                        "FINISHED",
+                        "DID_NOT_FINISH",
+                        "DISQUALIFIED",
+                        "DID_NOT_START"
+                      ],
+                      "description": "How the race ended for this runner."
+                    },
+                    "finishPosition": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "description": "Finishing place, 1 for the winner. Runners in a dead heat share a place, and the next place skips (1, 2, 2, 4). Only a FINISHED runner has one; it is required for every FINISHED runner once the result is official."
+                    },
+                    "startPosition": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "description": "Post position (or grid slot); null when not known."
+                    },
+                    "riderName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 255,
+                      "x-transform": [
+                        "trim"
+                      ],
+                      "description": "The jockey (or rider) for this start; null when not known."
+                    }
+                  },
+                  "required": [
+                    "resultStatus",
+                    "finishPosition",
+                    "startPosition",
+                    "riderName"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One runner's result. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event's field. Every value is stored exactly as sent."
+                },
+                "resolution": {
+                  "type": "string",
+                  "enum": [
+                    "MATCHED",
+                    "UNRESOLVED",
+                    "AMBIGUOUS"
+                  ],
+                  "description": "How an uploaded row resolved to a participant: one match, none, or several."
+                },
+                "sportEventParticipantId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "The field row it resolved to; set only when MATCHED."
+                },
+                "participantName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "rowError": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "DUPLICATE_PARTICIPANT",
+                    "POSITION_WITHOUT_FINISH",
+                    "FINISH_WITHOUT_POSITION",
+                    null
+                  ],
+                  "description": "Why a resolved row cannot be applied. DUPLICATE_PARTICIPANT: another row names the same runner. POSITION_WITHOUT_FINISH: a finishing place on a runner that did not finish. FINISH_WITHOUT_POSITION: an official result for a FINISHED runner with no place."
+                },
+                "change": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "CREATE",
+                    "UPDATE",
+                    "UNCHANGED",
+                    null
+                  ],
+                  "description": "Null when the row cannot be applied: not MATCHED, or a row error."
+                },
+                "before": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "resultStatus": {
+                      "type": "string",
+                      "enum": [
+                        "FINISHED",
+                        "DID_NOT_FINISH",
+                        "DISQUALIFIED",
+                        "DID_NOT_START"
+                      ]
+                    },
+                    "finishPosition": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "startPosition": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "riderName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "isOfficial": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "resultStatus",
+                    "finishPosition",
+                    "startPosition",
+                    "riderName",
+                    "isOfficial"
+                  ],
+                  "additionalProperties": false,
+                  "description": "What is stored now; null when nothing is."
+                },
+                "after": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "resultStatus": {
+                      "type": "string",
+                      "enum": [
+                        "FINISHED",
+                        "DID_NOT_FINISH",
+                        "DISQUALIFIED",
+                        "DID_NOT_START"
+                      ]
+                    },
+                    "finishPosition": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "startPosition": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "riderName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "isOfficial": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "resultStatus",
+                    "finishPosition",
+                    "startPosition",
+                    "riderName",
+                    "isOfficial"
+                  ],
+                  "additionalProperties": false,
+                  "description": "What is stored now; null when nothing is."
+                }
+              },
+              "required": [
+                "row",
+                "resolution",
+                "sportEventParticipantId",
+                "participantName",
+                "rowError",
+                "change",
+                "before",
+                "after"
+              ],
+              "additionalProperties": false,
+              "description": "What applying one row would do."
+            },
+            "description": "One per row sent, in the order sent."
+          },
+          "orderErrors": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "POSITIONS_INVALID",
+                "FIELD_INCOMPLETE"
+              ],
+              "description": "Why the race's result as a whole cannot be applied. POSITIONS_INVALID: the finishing places, with the ones already stored for runners not named, do not run 1, 2, 3 ... with only a dead heat repeating a place and skipping the next. FIELD_INCOMPLETE: an official result leaves an active runner on the field with no result, or a FINISHED runner with no place."
+            },
+            "description": "Problems with the race's result as a whole; empty when it can be applied as far as the order goes."
+          },
+          "rollup": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "matched": {
+                "type": "integer"
+              },
+              "unresolved": {
+                "type": "integer"
+              },
+              "ambiguous": {
+                "type": "integer"
+              },
+              "invalid": {
+                "type": "integer",
+                "description": "Resolved rows with a row error."
+              }
+            },
+            "required": [
+              "total",
+              "matched",
+              "unresolved",
+              "ambiguous",
+              "invalid"
+            ],
+            "additionalProperties": false,
+            "description": "Counts by resolution."
+          }
+        },
+        "required": [
+          "rows",
+          "orderErrors",
+          "rollup"
+        ],
+        "additionalProperties": false,
+        "description": "A dry run of a race result. Nothing is written."
+      },
       "EventSyncRequest": {
         "type": "object",
         "properties": {
@@ -21316,7 +23274,8 @@
             "items": {
               "type": "string",
               "enum": [
-                "GOLF"
+                "GOLF",
+                "HORSE_RACING"
               ]
             },
             "description": "Sports the provider covers that ingestion is scheduled for."
@@ -21390,7 +23349,8 @@
                   "items": {
                     "type": "string",
                     "enum": [
-                      "GOLF"
+                      "GOLF",
+                      "HORSE_RACING"
                     ]
                   },
                   "description": "Sports the provider covers that ingestion is scheduled for."
@@ -21438,7 +23398,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ]
           },
           "eventId": {
@@ -21512,7 +23473,8 @@
                   "sport": {
                     "type": "string",
                     "enum": [
-                      "GOLF"
+                      "GOLF",
+                      "HORSE_RACING"
                     ]
                   },
                   "eventId": {
@@ -21666,7 +23628,8 @@
                   "sport": {
                     "type": "string",
                     "enum": [
-                      "GOLF"
+                      "GOLF",
+                      "HORSE_RACING"
                     ]
                   },
                   "eventExternalId": {
@@ -21949,7 +23912,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ]
           },
           "status": {
@@ -21993,7 +23957,8 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF"
+                    "GOLF",
+                    "HORSE_RACING"
                   ]
                 },
                 "eventId": {
@@ -22067,7 +24032,8 @@
                         "sport": {
                           "type": "string",
                           "enum": [
-                            "GOLF"
+                            "GOLF",
+                            "HORSE_RACING"
                           ]
                         },
                         "eventId": {
@@ -22221,7 +24187,8 @@
                         "sport": {
                           "type": "string",
                           "enum": [
-                            "GOLF"
+                            "GOLF",
+                            "HORSE_RACING"
                           ]
                         },
                         "eventExternalId": {
@@ -22509,7 +24476,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ]
           },
           "eventId": {
@@ -22546,7 +24514,8 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF"
+                    "GOLF",
+                    "HORSE_RACING"
                   ]
                 },
                 "eventId": {
@@ -22620,7 +24589,8 @@
                         "sport": {
                           "type": "string",
                           "enum": [
-                            "GOLF"
+                            "GOLF",
+                            "HORSE_RACING"
                           ]
                         },
                         "eventId": {
@@ -22774,7 +24744,8 @@
                         "sport": {
                           "type": "string",
                           "enum": [
-                            "GOLF"
+                            "GOLF",
+                            "HORSE_RACING"
                           ]
                         },
                         "eventExternalId": {
@@ -23080,7 +25051,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ]
           }
         },
@@ -23119,7 +25091,8 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF"
+                    "GOLF",
+                    "HORSE_RACING"
                   ]
                 }
               },
@@ -23154,7 +25127,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ]
           },
           "name": {
@@ -23237,7 +25211,8 @@
           "sport": {
             "type": "string",
             "enum": [
-              "GOLF"
+              "GOLF",
+              "HORSE_RACING"
             ]
           },
           "sportLeagueId": {
@@ -23282,7 +25257,8 @@
                 "sport": {
                   "type": "string",
                   "enum": [
-                    "GOLF"
+                    "GOLF",
+                    "HORSE_RACING"
                   ]
                 },
                 "name": {
@@ -28315,7 +30291,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF"
+                "GOLF",
+                "HORSE_RACING"
               ]
             },
             "in": "query",
@@ -28493,7 +30470,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF"
+                "GOLF",
+                "HORSE_RACING"
               ]
             },
             "in": "query",
@@ -31052,6 +33030,192 @@
         }
       }
     },
+    "/api/v1/events/{eventId}/race-results/preview": {
+      "post": {
+        "operationId": "previewEventRaceResults",
+        "summary": "Preview a race result",
+        "tags": [
+          "Events"
+        ],
+        "description": "Resolves each row against the event's field and reports what applying it would change, with each row's error and the order's as a whole. Writes nothing. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by finishing place (its scoring family is not finish position). Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RaceResultUploadRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A dry run of a race result. Nothing is written.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RaceResultPreviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/race-results": {
+      "put": {
+        "operationId": "applyEventRaceResults",
+        "summary": "Apply a race result",
+        "tags": [
+          "Events"
+        ],
+        "description": "Stores each runner's result exactly as sent, all or none; runners not named keep theirs. The official flag is set on every result of the race. Writes each runner's standing: its place (a dead heat sharing one, shown \"T2\"), COMPLETE once it started, WITHDRAWN when it did not start. 422 RACE_RESULT_ROWS_INVALID when a row does not resolve to one runner or carries a row error; 422 RACE_RESULT_POSITIONS_INVALID when the places do not run 1, 2, 3 ... (a dead heat repeats a place and skips the next); 422 RACE_RESULT_FIELD_INCOMPLETE when an official result leaves an active runner without a result or a finisher without a place; 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by finishing place. Returns the field. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RaceResultUploadRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventParticipantListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sports/": {
       "get": {
         "operationId": "listSports",
@@ -31087,7 +33251,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF"
+                "GOLF",
+                "HORSE_RACING"
               ]
             },
             "in": "query",
@@ -32416,7 +34581,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF"
+                "GOLF",
+                "HORSE_RACING"
               ]
             },
             "in": "path",
@@ -32481,7 +34647,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF"
+                "GOLF",
+                "HORSE_RACING"
               ]
             },
             "in": "path",
@@ -32638,7 +34805,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF"
+                "GOLF",
+                "HORSE_RACING"
               ]
             },
             "in": "query",
@@ -32738,7 +34906,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF"
+                "GOLF",
+                "HORSE_RACING"
               ]
             },
             "in": "path",
@@ -32873,7 +35042,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GOLF"
+                "GOLF",
+                "HORSE_RACING"
               ]
             },
             "in": "query",
