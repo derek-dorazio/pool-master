@@ -66,7 +66,7 @@ export function RootAdminParticipantCreatePage() {
     onSuccess: () => navigate(listPath),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.player.create.failed', err: error },
+        { action: 'participant.create.failed', err: error },
         'Participant creation was rejected',
       );
     },

@@ -68,8 +68,8 @@ export function SportEventWorkflowCard({
     onSuccess: () => setTransitionTarget(null),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tournament.transition.failed', err: error },
-        'Golf tournament transition was rejected',
+        { action: 'event.transition.failed', err: error },
+        'Event transition was rejected',
       );
     },
   });
@@ -89,8 +89,8 @@ export function SportEventWorkflowCard({
     onSuccess: () => setAutoToggleOpen(false),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tournament.auto-lifecycle.failed', err: error },
-        'Golf tournament auto-lifecycle toggle was rejected',
+        { action: 'event.auto-lifecycle.failed', err: error },
+        'Event auto-lifecycle toggle was rejected',
       );
     },
   });

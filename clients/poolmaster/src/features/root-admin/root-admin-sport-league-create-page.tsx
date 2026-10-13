@@ -55,7 +55,7 @@ export function RootAdminSportLeagueCreatePage() {
     onSuccess: () => navigate(listPath),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tour.create.failed', err: error },
+        { action: 'sportLeague.create.failed', err: error },
         'Sport league creation was rejected',
       );
     },

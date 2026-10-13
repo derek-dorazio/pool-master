@@ -154,7 +154,7 @@ describe('RootAdminRunEventSyncPage', () => {
     ).toHaveTextContent('golf-masters-2026');
   });
 
-  it('offers only events linked to a provider event, and explains the empty list when none is linked', async () => {
+  it('offers only events linked to a provider event, names the sport by its display name, and explains the empty list when none is linked', async () => {
     listEventsMock.mockResolvedValue({
       data: {
         events: [
@@ -180,7 +180,8 @@ describe('RootAdminRunEventSyncPage', () => {
 
     renderPage();
 
-    expect(await screen.findByText(/No linked GOLF events match this preset/)).toBeInTheDocument();
+    expect(await screen.findByText(/No linked golf events match this preset/)).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Golf' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /Unlinked Golf Tournament/ })).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
   });

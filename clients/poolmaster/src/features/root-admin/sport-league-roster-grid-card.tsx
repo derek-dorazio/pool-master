@@ -173,8 +173,8 @@ export function SportLeagueRosterGridCard({
     onSuccess: () => setDraft({}),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tour.roster.save.failed', err: error },
-        'Golf tour roster save was rejected',
+        { action: 'sportLeague.roster.save.failed', err: error },
+        'Sport league roster save was rejected',
       );
     },
   });
@@ -186,7 +186,7 @@ export function SportLeagueRosterGridCard({
         body: { participantId },
       });
       if (!response.data?.affiliation) {
-        throwApiError(response.error, 'Add golfer response is missing data.');
+        throwApiError(response.error, 'Add participant response is missing data.');
       }
       return response.data.affiliation;
     },
@@ -203,8 +203,8 @@ export function SportLeagueRosterGridCard({
     },
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tour.roster.add.failed', err: error },
-        'Add golfer to tour roster was rejected',
+        { action: 'sportLeague.roster.add.failed', err: error },
+        'Add participant to sport league roster was rejected',
       );
     },
   });
@@ -226,8 +226,8 @@ export function SportLeagueRosterGridCard({
     onSuccess: () => setRemoveTarget(null),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tour.roster.remove.failed', err: error },
-        'Remove golfer from tour roster was rejected',
+        { action: 'sportLeague.roster.remove.failed', err: error },
+        'Remove participant from sport league roster was rejected',
       );
     },
   });

@@ -173,6 +173,7 @@ describe('pool-master-3dg sport-admin-utils: deriveEventAutoTransition', () => {
 
 describe('sport-admin-utils: deriveSportEventReadiness', () => {
   const base = {
+    sport: 'GOLF' as const,
     status: 'DRAFT' as const,
     loadedParticipantCount: 120,
     tierCount: 6,
@@ -197,7 +198,7 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
     expect(deriveSportEventReadiness({ ...base, untieredParticipantCount: 4 })).toEqual({
       label: 'Tiers pending',
       tone: 'warning',
-      reasons: ['4 golfer(s) without a tier'],
+      reasons: ['4 golfers without a tier'],
     });
   });
 
@@ -207,7 +208,13 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
       tone: 'warning',
       reasons: ['No prices assigned'],
     });
-    expect(deriveSportEventReadiness({ ...base, unpricedParticipantCount: 2 }).reasons).toEqual(['2 golfer(s) without a price']);
+    expect(deriveSportEventReadiness({ ...base, unpricedParticipantCount: 2 }).reasons).toEqual(['2 golfers without a price']);
+  });
+
+  it('counts a horse race\'s untiered and unpriced runners as horses, one horse singular', () => {
+    const race = { ...base, sport: 'HORSE_RACING' as const };
+    expect(deriveSportEventReadiness({ ...race, untieredParticipantCount: 1 }).reasons).toEqual(['1 horse without a tier']);
+    expect(deriveSportEventReadiness({ ...race, unpricedParticipantCount: 3 }).reasons).toEqual(['3 horses without a price']);
   });
 
   it('reports Ready to release for a fully tiered and priced draft, and Released, Live and Completed after', () => {

@@ -111,7 +111,7 @@ export function SportEventScoreSourceCard({
     },
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tournament.score-source.link.failed', err: error },
+        { action: 'event.score-source.link.failed', err: error },
         'Score-source link was rejected',
       );
     },
@@ -132,7 +132,7 @@ export function SportEventScoreSourceCard({
     onSuccess: () => setUnlinkOpen(false),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tournament.score-source.unlink.failed', err: error },
+        { action: 'event.score-source.unlink.failed', err: error },
         'Score-source unlink was rejected',
       );
     },

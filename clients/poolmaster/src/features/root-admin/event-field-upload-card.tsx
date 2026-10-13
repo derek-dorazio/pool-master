@@ -63,7 +63,7 @@ export function EventFieldUploadCard({
     },
     invalidates: [],
     onError: (error) => {
-      logger.warn({ action: 'golf.fieldUpload.preview.failed', err: error }, 'Golf field upload preview was rejected');
+      logger.warn({ action: 'event.fieldUpload.preview.failed', err: error }, 'Field upload preview was rejected');
     },
   });
 
@@ -83,7 +83,7 @@ export function EventFieldUploadCard({
       QueryKeys.rootAdmin.manageSport.tiers(eventId),
     ],
     onError: (error) => {
-      logger.warn({ action: 'golf.fieldUpload.apply.failed', err: error }, 'Field upload was rejected');
+      logger.warn({ action: 'event.fieldUpload.apply.failed', err: error }, 'Field upload was rejected');
     },
   });
 

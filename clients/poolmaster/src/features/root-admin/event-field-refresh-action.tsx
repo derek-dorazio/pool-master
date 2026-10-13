@@ -50,7 +50,7 @@ export function EventFieldRefreshAction({
     },
     onError: (error) => {
       logger.warn(
-        { action: 'golf.field.refresh.failed', err: error },
+        { action: 'event.field.refresh.failed', err: error },
         'Field refresh was rejected',
       );
     },

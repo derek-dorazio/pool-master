@@ -15,10 +15,10 @@ import { getScoringFamilyAdminUi } from './scoring-family-admin';
  * Par per round shows only for a family that scores unplayed rounds against it.
  */
 export function SportEventDetailsSection({
-  tourName,
+  sportLeagueName,
   tournament,
 }: {
-  tourName: string | undefined;
+  sportLeagueName: string | undefined;
   tournament: SportEventDto;
 }) {
   const { vocabulary } = getSportDefinition(tournament.sport);
@@ -55,7 +55,7 @@ export function SportEventDetailsSection({
             to={buildSportLeaguePath(tournament.sport, tournament.sportLeagueId)}
             variant="ghost"
           >
-            {tourName ?? `Open ${vocabulary.sportLeague.one}`}
+            {sportLeagueName ?? `Open ${vocabulary.sportLeague.one}`}
           </LinkButton>
         )}
       />

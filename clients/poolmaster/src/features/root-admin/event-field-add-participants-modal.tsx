@@ -111,7 +111,7 @@ export function EventFieldAddParticipantsModal({
     },
     onError: (error) => {
       logger.warn(
-        { action: 'golf.field.bulkAdd.failed', err: error },
+        { action: 'event.field.bulkAdd.failed', err: error },
         'Bulk add participants to field was rejected',
       );
     },

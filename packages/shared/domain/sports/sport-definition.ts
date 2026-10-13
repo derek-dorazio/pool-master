@@ -30,6 +30,16 @@ export interface SportVocabulary {
   withdrawn: string;
   /** What the moment entries close is called: "first tee time" for golf. */
   eventStart: string;
+  /**
+   * Who rides or drives each participant, as a race result's column header: "Rider" for horse
+   * racing. Absent for a sport whose result names nobody besides the participant (golf).
+   */
+  rider?: string;
+  /**
+   * What the audience calls the first three finishing places, as the points table's hint:
+   * "Win / Place / Show" for horse racing. Absent for a sport with no such name.
+   */
+  topPlaces?: string;
 }
 
 /** How a new event's pick tiers are laid out before an admin edits them. */

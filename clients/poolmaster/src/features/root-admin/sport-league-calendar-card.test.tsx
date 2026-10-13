@@ -44,21 +44,21 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-const TOUR = sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: 2026 });
+const SPORT_LEAGUE = sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: 2026 });
 const EVENTS = [
   sportEventFixture({ id: 'masters-2025', name: 'The Masters', eventYear: 2025, sportLeagueId: 'pga' }),
   sportEventFixture({ id: 'masters-2026', name: 'The Masters', eventYear: 2026, sportLeagueId: 'pga' }),
   sportEventFixture({ id: 'open-2026', name: 'The Open', eventYear: 2026, sportLeagueId: 'pga' }),
 ];
 
-function renderCard(tour = TOUR) {
+function renderCard(sportLeague = SPORT_LEAGUE) {
   listEventsMock.mockResolvedValue({ data: { events: EVENTS } });
   listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] } });
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <MemoryRouter initialEntries={[`/manage/sports/golf/leagues/${tour.id}`]}>
+      <MemoryRouter initialEntries={[`/manage/sports/golf/leagues/${sportLeague.id}`]}>
         <Routes>
-          <Route element={<SportLeagueCalendarCard tour={tour} />} path="/manage/sports/:sport/leagues/:leagueId" />
+          <Route element={<SportLeagueCalendarCard sportLeague={sportLeague} />} path="/manage/sports/:sport/leagues/:leagueId" />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -86,7 +86,7 @@ describe('plans/147 SportLeagueCalendarCard', () => {
   });
 
   it('sets another year with tournaments as current, in one update to the tour', async () => {
-    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: { ...TOUR, currentEventYear: 2025 } } });
+    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: { ...SPORT_LEAGUE, currentEventYear: 2025 } } });
     renderCard();
     await screen.findByTestId('root-admin-sport-league-event-row-masters-2026');
 

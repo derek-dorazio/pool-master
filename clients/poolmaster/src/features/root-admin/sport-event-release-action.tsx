@@ -49,14 +49,14 @@ export function SportEventReleaseAction({
     ],
     onSuccess: () => {
       logger.info(
-        { action: 'golf.tournament.release.succeeded', data: { eventId } },
+        { action: 'event.release.succeeded', data: { eventId } },
         'Released event for contests',
       );
       setIsConfirmOpen(false);
     },
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tournament.release.failed', data: { eventId }, err: error },
+        { action: 'event.release.failed', data: { eventId }, err: error },
         'Event release was rejected',
       );
     },

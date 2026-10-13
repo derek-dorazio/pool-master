@@ -530,8 +530,8 @@ export function CreateContestPage() {
         {scoringSettingsUi.Fields ? (
           <scoringSettingsUi.Fields
             onChange={(next) => setFormValues({ ...next, selectedTemplateId: '' })}
-            participant={participant}
             values={values}
+            vocabulary={sportDefinition.vocabulary}
           />
         ) : null}
         {parsedScoring.error !== null ? (

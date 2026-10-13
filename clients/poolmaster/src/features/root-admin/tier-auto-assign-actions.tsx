@@ -53,7 +53,7 @@ export function TierAutoAssignActions({
     onSuccess: () => setTierSource(null),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tiers.autoAssign.failed', err: error },
+        { action: 'event.tiers.autoAssign.failed', err: error },
         'Tier auto-assign was rejected',
       );
     },

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { SportEventSyncScope } from '@poolmaster/shared/domain';
+import { getSportDefinition, SportEventSyncScope } from '@poolmaster/shared/domain';
 import { listProviders, submitEventSync, listEvents, type SportEventDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
@@ -294,7 +294,7 @@ export function RootAdminRunEventSyncPage() {
             >
               {supportedSyncSports.map((sport) => (
                 <option key={sport} value={sport}>
-                  {sport}
+                  {getSportDefinition(sport).name}
                 </option>
               ))}
             </Select>
@@ -366,7 +366,7 @@ export function RootAdminRunEventSyncPage() {
 
           {!eventsQuery.isLoading && !eventsQuery.isError && selectableEvents.length === 0 ? (
             <Alert>
-              No linked {eventSyncSport} events match this preset. Link a tournament to a score
+              No linked {getSportDefinition(eventSyncSport).name.toLowerCase()} events match this preset. Link an event to a score
               source on its page first; an unlinked event has nothing to sync.
             </Alert>
           ) : null}

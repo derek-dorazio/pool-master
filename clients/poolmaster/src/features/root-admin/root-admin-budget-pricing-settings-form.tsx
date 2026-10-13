@@ -36,8 +36,8 @@ const BudgetPricingFormSchema = z.object({
 const NUMBER_FIELDS = [
   { key: 'salaryCap', label: 'Salary cap ($)', step: '1' },
   { key: 'unit', label: 'Round prices to ($)', step: '1' },
-  { key: 'topSharePercent', label: 'Best golfer (% of cap)', step: 'any' },
-  { key: 'floorSharePercent', label: 'Worst golfer (% of cap)', step: 'any' },
+  { key: 'topSharePercent', label: 'Best participant (% of cap)', step: 'any' },
+  { key: 'floorSharePercent', label: 'Worst participant (% of cap)', step: 'any' },
   { key: 'steepness', label: 'Steepness', step: 'any' },
 ] as const;
 
@@ -99,8 +99,8 @@ export function BudgetPricingSettingsForm({ group }: { group: BudgetPricingSetti
       onSubmit={(event) => void form.handleSubmit((values) => saveMutation.mutate(values))(event)}
     >
       <p className="text-sm text-muted-foreground">
-        Prices fall from the best golfer&apos;s share of the cap to the worst&apos;s, in seed order.
-        Changing a profile doesn&apos;t re-price a tournament: each keeps the values it was priced with.
+        Prices fall from the best participant&apos;s share of the cap to the worst&apos;s, in seed order.
+        Changing a profile doesn&apos;t re-price an event: each keeps the values it was priced with.
       </p>
       {profiles.fields.map((profile, index) => {
         const profileErrors = errors.profiles?.[index];

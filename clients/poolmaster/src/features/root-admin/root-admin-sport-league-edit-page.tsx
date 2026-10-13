@@ -22,25 +22,25 @@ const editSchema = z.object({
 
 type EditValues = z.infer<typeof editSchema>;
 
-function SportLeagueEditForm({ tour }: { tour: SportLeagueDto }) {
+function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const logger = getLogger().child({
     feature: 'root-admin-sport-league-edit-page',
   });
   const navigate = useNavigate();
   const { sport, definition } = useManagedSport();
-  const { sportLeague } = definition.vocabulary;
-  const homePath = buildSportLeaguePath(sport, tour.id);
+  const { sportLeague: sportLeagueNoun } = definition.vocabulary;
+  const homePath = buildSportLeaguePath(sport, sportLeague.id);
 
   const form = useForm<EditValues>({
     resolver: zodResolver(editSchema),
-    defaultValues: { name: tour.name, matchKeyword: tour.matchKeyword ?? '' },
+    defaultValues: { name: sportLeague.name, matchKeyword: sportLeague.matchKeyword ?? '' },
     mode: 'onChange',
   });
 
   const updateMutation = useInvalidatingMutation({
     mutationFn: async (values: EditValues) => {
       const response = await updateSportLeague({
-        path: { sportLeagueId: tour.id },
+        path: { sportLeagueId: sportLeague.id },
         body: { name: values.name, matchKeyword: values.matchKeyword?.trim() ?? '' },
       });
       if (!response.data?.sportLeague) {
@@ -52,7 +52,7 @@ function SportLeagueEditForm({ tour }: { tour: SportLeagueDto }) {
     onSuccess: () => navigate(homePath),
     onError: (error) => {
       logger.warn(
-        { action: 'golf.tour.update.failed', err: error },
+        { action: 'sportLeague.update.failed', err: error },
         'Sport league update was rejected',
       );
     },
@@ -62,18 +62,18 @@ function SportLeagueEditForm({ tour }: { tour: SportLeagueDto }) {
     <FormPage
       cancelTo={homePath}
       errorMessage={updateMutation.isError
-        ? extractErrorMessage(updateMutation.error, { fallback: `We could not save this ${sportLeague.one}.` })
+        ? extractErrorMessage(updateMutation.error, { fallback: `We could not save this ${sportLeagueNoun.one}.` })
         : undefined}
       isPending={updateMutation.isPending}
       isSubmitDisabled={!form.formState.isValid}
       onSubmit={(event) => void form.handleSubmit((values) => updateMutation.mutate(values))(event)}
       pendingLabel="Saving..."
-      submitLabel={`Save ${sportLeague.one}`}
+      submitLabel={`Save ${sportLeagueNoun.one}`}
       submitTestId="root-admin-sport-league-edit-save"
       testId="root-admin-sport-league-edit-page"
       title="Edit details"
     >
-      <FormField error={form.formState.errors.name?.message} label={`${capitalize(sportLeague.one)} name`}>
+      <FormField error={form.formState.errors.name?.message} label={`${capitalize(sportLeagueNoun.one)} name`}>
         <Input data-testid="root-admin-sport-league-edit-name" {...form.register('name')} />
       </FormField>
       <FormField
@@ -90,26 +90,26 @@ function SportLeagueEditForm({ tour }: { tour: SportLeagueDto }) {
 export function RootAdminSportLeagueEditPage() {
   const { leagueId = '' } = useParams<{ leagueId: string }>();
   const { sport, definition } = useManagedSport();
-  const { sportLeague } = definition.vocabulary;
+  const { sportLeague: sportLeagueNoun } = definition.vocabulary;
   const leaguesQuery = useSportLeaguesQuery(sport);
-  const tour = useMemo(
+  const sportLeague = useMemo(
     () => leaguesQuery.data?.find((candidate) => candidate.id === leagueId),
     [leaguesQuery.data, leagueId],
   );
 
-  useManageBreadcrumbOverride(leagueId || undefined, tour?.name);
+  useManageBreadcrumbOverride(leagueId || undefined, sportLeague?.name);
 
   return (
     <AsyncPage
-      emptyBody={`This ${sportLeague.one} does not exist or has been removed.`}
-      emptyTitle={`${capitalize(sportLeague.one)} not found`}
+      emptyBody={`This ${sportLeagueNoun.one} does not exist or has been removed.`}
+      emptyTitle={`${capitalize(sportLeagueNoun.one)} not found`}
       errorBody={extractErrorMessage(leaguesQuery.error, {
-        fallback: `We could not load this ${sportLeague.one} right now.`,
+        fallback: `We could not load this ${sportLeagueNoun.one} right now.`,
       })}
-      loadingBody={`Loading ${sportLeague.one}...`}
-      state={leaguesQuery.isLoading ? 'loading' : leaguesQuery.isError ? 'error' : tour ? 'ready' : 'empty'}
+      loadingBody={`Loading ${sportLeagueNoun.one}...`}
+      state={leaguesQuery.isLoading ? 'loading' : leaguesQuery.isError ? 'error' : sportLeague ? 'ready' : 'empty'}
     >
-      {tour ? <SportLeagueEditForm tour={tour} /> : null}
+      {sportLeague ? <SportLeagueEditForm sportLeague={sportLeague} /> : null}
     </AsyncPage>
   );
 }

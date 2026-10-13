@@ -186,6 +186,24 @@ describe('RootAdminContentConfigurationDetailPage', () => {
     expect(identity).toHaveTextContent('Default');
   });
 
+  it('labels a horse-racing draw template\'s size "Horses per entry" and says tiers are set per race', async () => {
+    const raceTemplate = {
+      ...buildTemplate(),
+      sport: 'HORSE_RACING',
+      selectionType: 'RANDOM_DRAW',
+      templateKey: 'horse-racing-random-draw-3',
+      configuration: { selectionType: 'RANDOM_DRAW', picksPerEntry: 3, countedScores: 3 },
+    };
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [raceTemplate] } });
+    renderPage('horse-racing-random-draw-3');
+
+    expect(await screen.findByLabelText('Horses per entry')).toHaveValue(3);
+    expect(screen.getByText('The draw deals each entry this many horses at random.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Tiers, prices and horse assignments are set per race, not per template — see the race\'s Tiers page.'),
+    ).toBeInTheDocument();
+  });
+
   it('says the template was not found when no template has the key in the address', async () => {
     seedTemplates();
     renderPage('no-such-template');
