@@ -154,8 +154,8 @@ export function CreateContestPage() {
   const { participant } = sportDefinition.vocabulary;
   const scoringSettingsUi = SCORING_SETTINGS_UI[scoringDefinitionId];
   const [isNameEdited, setIsNameEdited] = useState(false);
-  // The sport whose default preset has been applied: each sport's is applied once, when its
-  // presets first arrive; after that, Custom stays Custom.
+  // The sport whose default preset was applied last: a sport's default is applied when its
+  // presets arrive and again on switching back to it; while the sport stays, Custom stays Custom.
   const defaultPresetAppliedFor = useRef<Sport | null>(null);
 
   const setFormValues = useCallback((next: Partial<CreateContestFormValues>) => {
@@ -278,7 +278,7 @@ export function CreateContestPage() {
     }
   }, [eligibleEvents, setFormValues, sportEventId]);
 
-  // Each sport's default preset is chosen once; after that, Custom stays Custom.
+  // A newly chosen sport starts on its default preset; while it stays, Custom stays Custom.
   useEffect(() => {
     if (defaultPresetAppliedFor.current === sport || !presets.length) {
       return;
