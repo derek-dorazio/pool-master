@@ -1328,3 +1328,87 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
     );
   });
 });
+
+describe('ContestEntryPage — a random-draw entry', () => {
+  afterEach(() => {
+    getContestMock.mockReset();
+    getSelectionStateMock.mockReset();
+    getEventMock.mockReset();
+    getLeagueMock.mockReset();
+    listContestEntriesMock.mockReset();
+    submitContestEntryMock.mockReset();
+    submitContestSelectionMock.mockReset();
+    updateContestEntryMock.mockReset();
+  });
+
+  const NAMES: Record<string, string> = { 'sep-1': 'Scottie Scheffler', 'sep-2': 'Rory McIlroy', 'sep-3': 'Jordan Spieth' };
+
+  function drawState(dealtIds: string[], drawnAt: string | null) {
+    const field = {
+      groupId: 'field',
+      groupName: 'Field',
+      groupNumber: 1,
+      picksFromGroup: 2,
+      selectedParticipantIds: dealtIds,
+      participants: Object.keys(NAMES).map((id, index) =>
+        buildGolfParticipant(id, NAMES[id] ?? id, index + 1, dealtIds.includes(id))),
+    };
+    return {
+      ...buildSelectionState([field]),
+      selectionType: 'RANDOM_DRAW',
+      drawnAt,
+      entries: [
+        { id: 'entry-1', userId: 'user-1', name: 'Birdie Hunters Entry 1', status: drawnAt ? 'SUBMITTED' : 'DRAFT' },
+      ],
+    };
+  }
+
+  function primeDrawMocks(dealtIds: string[], drawnAt: string | null) {
+    primeCommonMocks();
+    getContestMock.mockResolvedValue({
+      data: {
+        contest: {
+          id: 'contest-1',
+          leagueId: 'league-1',
+          name: 'Masters Sweepstake',
+          status: 'OPEN',
+          contestType: 'ROSTER',
+          selectionType: 'RANDOM_DRAW',
+        },
+      },
+    });
+    getSelectionStateMock.mockResolvedValue({ data: drawState(dealtIds, drawnAt) });
+  }
+
+  it('before the draw, says the commissioner\'s draw will deal the entry its golfers and offers nothing to pick or submit', async () => {
+    primeDrawMocks([], null);
+
+    renderContestEntryPage();
+
+    const pending = await screen.findByTestId('contest-entry-draw-pending');
+    expect(pending).toHaveTextContent('There is nothing to pick in this contest.');
+    expect(pending).toHaveTextContent('the commissioner runs the draw, which deals this entry 2 golfers at random and enters it.');
+    expect(screen.getByTestId('contest-entry-draw-status')).toHaveTextContent('Not yet run');
+    expect(screen.getByText('Open until the draw', { selector: 'span' })).toBeInTheDocument();
+    expect(screen.queryByText('Scottie Scheffler')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /submit/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-not-submitted')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-name-input')).not.toBeInTheDocument();
+  });
+
+  it('after the draw, lists only the golfers the entry was dealt, read-only, with entries closed', async () => {
+    primeDrawMocks(['sep-1', 'sep-3'], '2026-04-08T15:00:00.000Z');
+
+    renderContestEntryPage();
+
+    const dealt = await screen.findByRole('list', { name: 'Dealt golfers' });
+    expect(within(dealt).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Scottie Scheffler', 'Jordan Spieth']);
+    expect(screen.queryByText('Rory McIlroy')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-draw-done')).toHaveTextContent('The draw is final.');
+    expect(screen.getByTestId('contest-entry-draw-status')).toHaveTextContent('Done');
+    expect(screen.getByRole('heading', { name: 'Dealt golfers' })).toBeInTheDocument();
+    expect(screen.getAllByText('Entries closed').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-draw-pending')).not.toBeInTheDocument();
+  });
+});

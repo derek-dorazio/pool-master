@@ -42,6 +42,7 @@ const editContestFormSchema = z.object({
   contestName: z.string().trim().min(1, 'Contest name is required.'),
   countedScores: z.string(),
   maxEntriesPerTeam: z.string(),
+  picksPerEntry: z.string(),
   picksPerTier: z.string(),
   rosterSize: z.string(),
   unlimitedEntries: z.boolean(),

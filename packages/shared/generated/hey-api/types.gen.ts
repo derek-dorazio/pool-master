@@ -6757,6 +6757,10 @@ export type ContestDto = {
     } | null;
     startsAt?: string | null;
     endsAt?: string | null;
+    /**
+     * When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.
+     */
+    drawnAt?: string | null;
     createdAt?: string;
     updatedAt?: string;
 };
@@ -7446,6 +7450,10 @@ export type ContestResponse = {
         } | null;
         startsAt?: string | null;
         endsAt?: string | null;
+        /**
+         * When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.
+         */
+        drawnAt?: string | null;
         createdAt?: string;
         updatedAt?: string;
     };
@@ -7483,6 +7491,10 @@ export type ContestListResponse = {
         } | null;
         startsAt?: string | null;
         endsAt?: string | null;
+        /**
+         * When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.
+         */
+        drawnAt?: string | null;
         createdAt?: string;
         updatedAt?: string;
     }>;

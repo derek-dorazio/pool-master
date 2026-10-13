@@ -4,6 +4,7 @@ import type {
   ContestEntryDto,
   ContestManagementDetailDto,
   EffectiveTierDto,
+  SelectionStateResponse,
   SportEventDto,
 } from '@/lib/api';
 
@@ -112,6 +113,26 @@ export function buildContestEntry(overrides: Partial<ContestEntryDto> = {}): Con
     picksCount: 6,
     createdAt: '2026-04-02T00:00:00.000Z',
     updatedAt: '2026-04-02T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+/** A contest's room as the commissioner reads it, no entry named: what the draw state comes from. */
+export function buildSelectionState(overrides: Partial<SelectionStateResponse> = {}): SelectionStateResponse {
+  return {
+    contestId: 'contest-1',
+    contestName: 'Masters Sweepstake',
+    selectionType: SelectionType.RANDOM_DRAW,
+    drawnAt: null,
+    isCommissioner: true,
+    rosterSize: 3,
+    status: 'LIVE',
+    myEntryId: null,
+    entries: [],
+    pickHistories: [],
+    availableParticipantIds: [],
+    selectionGroups: [],
+    isComplete: false,
     ...overrides,
   };
 }

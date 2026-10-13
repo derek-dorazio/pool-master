@@ -1,4 +1,4 @@
-import { CONTEST_BUDGET_UNFILLABLE, CONTEST_EVENT_NOT_PRICED } from '@poolmaster/shared/dto';
+import { CONTEST_BUDGET_UNFILLABLE, CONTEST_DRAW_FIELD_OUT_OF_RANGE, CONTEST_EVENT_NOT_PRICED } from '@poolmaster/shared/dto';
 import type { ErrorCodeMessages } from '@/lib/errors';
 
 /**
@@ -15,4 +15,6 @@ export const CONTEST_RELEASE_CODE_MESSAGES: ErrorCodeMessages = {
   [CONTEST_EVENT_NOT_PRICED]: 'This event’s golfers have no prices yet, so it cannot hold a budget contest.',
   [CONTEST_BUDGET_UNFILLABLE]:
     'Even the cheapest golfers for every place cost more than the salary cap, so nobody could enter. Pick fewer golfers per entry.',
+  [CONTEST_DRAW_FIELD_OUT_OF_RANGE]:
+    'More scores count than the draw deals each entry. Lower Scores that count, or deal more golfers per entry.',
 };

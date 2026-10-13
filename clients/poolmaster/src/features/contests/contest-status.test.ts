@@ -2,6 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  areContestEntriesOpen,
   CONTEST_POLL_INTERVAL_MS,
   CONTEST_STATUS_LABELS,
   CONTEST_STATUS_TONES,
@@ -66,5 +67,19 @@ describe('contest status helpers', () => {
     refreshOnContestStatusChange(queryClient, contestKey, 'COMPLETED', dependentKey);
     expect(invalidate).toHaveBeenCalledTimes(1);
     expect(invalidate).toHaveBeenCalledWith({ queryKey: dependentKey });
+  });
+});
+
+describe('areContestEntriesOpen', () => {
+  const now = new Date('2026-04-01T12:00:00.000Z');
+  const teeOff = '2026-04-09T12:00:00.000Z';
+
+  it('keeps an open contest open for entries until its tee-off', () => {
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN, drawnAt: null }, teeOff, now)).toBe(true);
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN, drawnAt: null }, '2026-03-31T12:00:00.000Z', now)).toBe(false);
+  });
+
+  it('closes a random-draw contest\'s entries once its draw has run, though it is still open until tee-off', () => {
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN, drawnAt: '2026-04-01T10:00:00.000Z' }, teeOff, now)).toBe(false);
   });
 });

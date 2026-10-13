@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { SelectionType } from '@poolmaster/shared/domain';
 import { listContestConfigTemplates, updateContestConfigTemplate, type ContestConfigTemplateDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import { LayoutTemplate } from 'lucide-react';
@@ -18,6 +17,8 @@ import {
 } from '@/features/shared/ui';
 import {
   cloneContestTemplate,
+  getTemplateSize,
+  TEMPLATE_SIZE_FIELDS,
   toPositiveNumber,
   type ContestConfigTemplate,
   updateTemplateRules,
@@ -234,31 +235,17 @@ export function RootAdminContentConfigurationDetailPage() {
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {draft.configuration.selectionType === SelectionType.BUDGET_PICK ? (
-                  <FormField helperText="Every budget contest's salary cap is its tournament's." label="Golfers per entry">
-                    <Input
-                      data-testid="root-admin-content-config-roster-size"
-                      onChange={(event) => updateDraft((current) =>
-                        updateTemplateRules(current, {
-                          rosterSize: toPositiveNumber(event.target.value),
-                        }))}
-                      type="number"
-                      value={draft.configuration.rosterSize}
-                    />
-                  </FormField>
-                ) : (
-                  <FormField label="Picks per tier">
-                    <Input
-                      data-testid="root-admin-content-config-picks-per-tier"
-                      onChange={(event) => updateDraft((current) =>
-                        updateTemplateRules(current, {
-                          picksPerTier: toPositiveNumber(event.target.value),
-                        }))}
-                      type="number"
-                      value={draft.configuration.picksPerTier}
-                    />
-                  </FormField>
-                )}
+                <FormField helperText={TEMPLATE_SIZE_FIELDS[draft.configuration.selectionType].helperText} label={TEMPLATE_SIZE_FIELDS[draft.configuration.selectionType].label}>
+                  <Input
+                    data-testid={TEMPLATE_SIZE_FIELDS[draft.configuration.selectionType].testId}
+                    onChange={(event) => updateDraft((current) =>
+                      updateTemplateRules(current, {
+                        [TEMPLATE_SIZE_FIELDS[draft.configuration.selectionType].key]: toPositiveNumber(event.target.value),
+                      }))}
+                    type="number"
+                    value={getTemplateSize(draft.configuration)}
+                  />
+                </FormField>
                 <FormField label="Scores that count">
                   <Input
                     data-testid="root-admin-content-config-counted-scores"

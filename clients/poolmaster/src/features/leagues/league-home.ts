@@ -21,7 +21,7 @@ export function pickUpNextContest(
 ): UpNextContest | null {
   const candidates = contests.flatMap((contest) => {
     const startsAt = listedContestStartsAt(contest);
-    if (contest.status !== ContestStatus.OPEN || !areContestEntriesOpen(contest.status, startsAt, now)) {
+    if (contest.status !== ContestStatus.OPEN || !areContestEntriesOpen(contest, startsAt, now)) {
       return [];
     }
     return startsAt ? [{ contest, closesAt: startsAt }] : [];

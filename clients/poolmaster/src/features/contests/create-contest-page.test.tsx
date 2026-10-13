@@ -606,3 +606,98 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
     )).toBeInTheDocument();
   });
 });
+
+describe('Commissioner tools › Contests › Create contest › Random draw format', () => {
+  const DRAW_TEMPLATES = [
+    {
+      id: '66666666-6666-4666-8666-666666666666',
+      sport: 'GOLF',
+      contestFormat: 'ROSTER',
+      selectionType: 'RANDOM_DRAW',
+      templateKey: 'golf-random-draw-1',
+      name: 'Draw 1 golfer each',
+      description: 'Golf sweepstake',
+      sortOrder: 5,
+      isDefault: false,
+      active: true,
+      schemaVersion: 1,
+      configuration: { maxEntriesPerSquad: 1, selectionType: 'RANDOM_DRAW', picksPerEntry: 1, countedScores: 1 },
+    },
+    {
+      id: '77777777-7777-4777-8777-777777777777',
+      sport: 'GOLF',
+      contestFormat: 'ROSTER',
+      selectionType: 'RANDOM_DRAW',
+      templateKey: 'golf-random-draw-3-best-2',
+      name: 'Draw 3 golfers each, 2 count',
+      description: 'Golf sweepstake, best two of three',
+      sortOrder: 6,
+      isDefault: false,
+      active: true,
+      schemaVersion: 1,
+      configuration: { maxEntriesPerSquad: 1, selectionType: 'RANDOM_DRAW', picksPerEntry: 3, countedScores: 2 },
+    },
+  ];
+
+  async function primeDrawMocks() {
+    primeCommonMocks();
+    const { data } = await (listContestConfigTemplatesMock.getMockImplementation()?.() as Promise<{ data: { templates: unknown[] } }>);
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [...data.templates, ...DRAW_TEMPLATES] } });
+  }
+
+  afterEach(() => {
+    createContestMock.mockReset();
+    getLeagueByCodeMock.mockReset();
+    listContestConfigTemplatesMock.mockReset();
+    listEventsMock.mockReset();
+  });
+
+  it('switches to Random draw with its sweepstake presets, and creates random-draw rules with golfers dealt per entry', async () => {
+    await primeDrawMocks();
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-draw' } } });
+
+    renderCreateContestPage();
+
+    await waitForStartingChoices();
+    fireEvent.click(screen.getByTestId('contest-format-RANDOM_DRAW'));
+
+    expect(screen.getByTestId('contest-format-RANDOM_DRAW')).toHaveTextContent('Random draw');
+    expect(screen.getByTestId('contest-template-golf-random-draw-1')).toBeChecked();
+    expect(screen.getByTestId('contest-template-golf-random-draw-1')).toHaveAccessibleName('Draw 1, all count');
+    expect(screen.getByTestId('contest-template-golf-random-draw-3-best-2')).toHaveAccessibleName('Draw 3, best 2');
+    expect(screen.getByLabelText('Golfers per entry')).toHaveValue(1);
+
+    fireEvent.click(screen.getByTestId('contest-template-golf-random-draw-3-best-2'));
+    expect(screen.getByLabelText('Golfers per entry')).toHaveValue(3);
+    expect(screen.getByLabelText('Scores that count')).toHaveValue(2);
+    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Sweepstake'));
+    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
+      'The draw deals each entry 3 golfers at random. The best 2 scores count. 1 entry per team.',
+    );
+
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+    expect(submittedBody()).toEqual({
+      name: 'Masters Tournament Sweepstake',
+      sportEventId: 'event-1',
+      contestFormat: 'ROSTER',
+      selectionType: 'RANDOM_DRAW',
+      templateId: '77777777-7777-4777-8777-777777777777',
+      configuration: { selectionType: 'RANDOM_DRAW', picksPerEntry: 3, countedScores: 2, maxEntriesPerSquad: 1 },
+    });
+  });
+
+  it('keeps Create contest disabled and says why when more scores count than the draw deals each entry', async () => {
+    await primeDrawMocks();
+
+    renderCreateContestPage();
+
+    await waitForStartingChoices();
+    fireEvent.click(screen.getByTestId('contest-format-RANDOM_DRAW'));
+    fireEvent.change(screen.getByLabelText('Scores that count'), { target: { value: '2' } });
+
+    expect(screen.getByTestId('contest-rules-error')).toHaveTextContent('Scores that count must be between 1 and the 1 golfer dealt.');
+    expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
+  });
+});

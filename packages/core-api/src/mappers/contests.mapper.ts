@@ -40,6 +40,7 @@ interface ContestRow {
   sport?: Contest['sport'] | null;
   startsAt?: Date | null;
   endsAt?: Date | null;
+  drawnAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -136,6 +137,7 @@ export function toContestDto(
     }),
     startsAt: contest.startsAt?.toISOString() ?? null,
     endsAt: contest.endsAt?.toISOString() ?? null,
+    drawnAt: contest.drawnAt?.toISOString() ?? null,
     createdAt: contest.createdAt.toISOString(),
     updatedAt: contest.updatedAt.toISOString(),
   };

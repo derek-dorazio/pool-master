@@ -1,4 +1,4 @@
-import { ContestEntryStatus, ContestStatus } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, SelectionType } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import { Check, X } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -8,9 +8,12 @@ import {
   buildLeagueContestLeaderboardPath,
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
-import { DateDisplay, LinkButton } from '@/features/shared/ui';
+import { DateDisplay, formatDateTimeDisplay, LinkButton } from '@/features/shared/ui';
 import { OpenContestAction } from './open-contest-action';
 import { formatTimeUntil, getContestReadinessChecks } from './contest-readiness';
+import { pluralize } from './contest-rules';
+import { RunDrawAction } from './run-draw-action';
+import { useContestDrawState } from './use-contest-draw';
 import { fetchContestEntries } from './use-contest-entries';
 
 function StatusCardFrame({
@@ -140,16 +143,97 @@ function OpenCard({
         Entries close at the first tee time, <DateDisplay className="text-on-inverse-muted" value={event.startDate} />.
         The contest goes live then and is final when the event ends.
       </p>
-      <div>
-        <LinkButton
-          className={inverseLinkClassName}
-          data-testid="contest-view-in-league"
-          state={{ leagueCode }}
-          to={buildLeagueContestPath(leagueCode, contestId)}
-          variant="secondary"
-        >
-          View in league
-        </LinkButton>
+      <ViewInLeagueLink contestId={contestId} leagueCode={leagueCode} />
+    </StatusCardFrame>
+  );
+}
+
+/** Every entry, submitted or not: before a draw no entry is submitted, and the draw deals to all. */
+function useEntryCount(contestId: string) {
+  return useQuery({
+    queryKey: QueryKeys.contestEntries.byContest(contestId),
+    queryFn: () => fetchContestEntries(contestId),
+    retry: false,
+    select: (response) => response.entries.length,
+  });
+}
+
+function ViewInLeagueLink({ contestId, leagueCode }: { contestId: string; leagueCode: string }) {
+  return (
+    <div>
+      <LinkButton
+        className={inverseLinkClassName}
+        data-testid="contest-view-in-league"
+        state={{ leagueCode }}
+        to={buildLeagueContestPath(leagueCode, contestId)}
+        variant="secondary"
+      >
+        View in league
+      </LinkButton>
+    </div>
+  );
+}
+
+/**
+ * An open random-draw contest: entries waiting for the commissioner's draw, with Run draw, or
+ * once it has run, when it ran and that entries are closed.
+ */
+function DrawOpenCard({
+  contest,
+  event,
+  leagueCode,
+}: {
+  contest: ContestDto;
+  event: SportEventDto;
+  leagueCode: string;
+}) {
+  const entryCount = useEntryCount(contest.id).data;
+  const drawState = useContestDrawState(contest.id);
+  const drawnAt = drawState.data?.drawnAt ?? null;
+
+  if (drawnAt) {
+    return (
+      <StatusCardFrame eyebrow="Drawn · entries closed" title="The draw has run">
+        <p className="text-sm text-on-inverse-muted" data-testid="contest-draw-ran">
+          {`Drawn ${formatDateTimeDisplay(drawnAt)}. Every entry has its golfers, and everyone in the league can see who drew whom. `}
+          The contest goes live at the first tee time, <DateDisplay className="text-on-inverse-muted" value={event.startDate} />.
+        </p>
+        <ViewInLeagueLink contestId={contest.id} leagueCode={leagueCode} />
+      </StatusCardFrame>
+    );
+  }
+
+  return (
+    <StatusCardFrame
+      eyebrow="Open for entries · waiting for the draw"
+      title={entryCount === undefined ? 'Open for entries' : `${pluralize(entryCount, 'entry', 'entries')} waiting for the draw`}
+    >
+      {entryCount !== undefined ? (
+        <div className="flex flex-wrap gap-2.5">
+          <Stat label="Entries" testId="contest-stat-entries" value={entryCount} />
+          <Stat label="Until tee-off" testId="contest-stat-until-close" value={formatTimeUntil(event.startDate)} />
+        </div>
+      ) : null}
+      <p className="text-sm text-on-inverse-muted">
+        Run the draw once everyone has entered, before the first tee time,{' '}
+        <DateDisplay className="text-on-inverse-muted" value={event.startDate} />. It deals each entry its golfers at
+        random, enters every entry and closes entries.
+      </p>
+      {drawState.isError ? (
+        <p className="text-sm text-on-inverse-muted" data-testid="contest-draw-state-error">
+          We couldn&apos;t check whether the draw has run. Try again in a moment.
+        </p>
+      ) : null}
+      <div className="flex flex-wrap gap-3">
+        {drawState.data && entryCount !== undefined ? (
+          <RunDrawAction
+            contestId={contest.id}
+            entryCount={entryCount}
+            leagueId={contest.leagueId}
+            picksPerEntry={drawState.data.rosterSize}
+          />
+        ) : null}
+        <ViewInLeagueLink contestId={contest.id} leagueCode={leagueCode} />
       </div>
     </StatusCardFrame>
   );
@@ -192,7 +276,8 @@ function PlayedCard({
 
 /**
  * What a contest needs from its commissioner now, by status: before opening, the readiness checks
- * and Open to league; while open, how many teams have entered; once live or final, the way to
+ * and Open to league; while open, how many teams have entered (or, for a random draw, Run draw
+ * and then when it ran); once live or final, the way to
  * its leaderboard.
  */
 export function ContestStatusCard({
@@ -210,7 +295,9 @@ export function ContestStatusCard({
     case ContestStatus.DRAFT:
       return <NotOpenCard contest={contest} event={event} leagueCode={leagueCode} />;
     case ContestStatus.OPEN:
-      return <OpenCard contestId={contest.id} event={event} leagueCode={leagueCode} teamCount={teamCount} />;
+      return contest.selectionType === SelectionType.RANDOM_DRAW
+        ? <DrawOpenCard contest={contest} event={event} leagueCode={leagueCode} />
+        : <OpenCard contestId={contest.id} event={event} leagueCode={leagueCode} teamCount={teamCount} />;
     case ContestStatus.ACTIVE:
       return <PlayedCard contestId={contest.id} isFinal={false} leagueCode={leagueCode} />;
     case ContestStatus.COMPLETED:

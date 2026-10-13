@@ -84,6 +84,7 @@ export const ContestDtoSchema = z.object({
   sportEvent: ContestEventSummaryDtoSchema.nullable().optional().describe('The sport event\'s name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself.'),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
+  drawnAt: z.string().datetime().nullable().optional().describe('When a random-draw contest\'s draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.'),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
 }).describe('A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields).');

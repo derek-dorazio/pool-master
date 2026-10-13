@@ -32,6 +32,7 @@ import {
   type SelectionGroup,
 } from './contest-entry-selection';
 import { BudgetLineupBuilder, LockedBudgetLineup } from './contest-entry-budget';
+import { DrawEntryMetrics, DrawLineup } from './contest-entry-draw';
 import {
   buildPickedAtById,
   CONTEST_ENTRY_CODE_MESSAGES,
@@ -68,7 +69,9 @@ function formatGolfersStillToPick(count: number): string {
 // does on every contest page.
 function getContestPhaseLabel(contest: ContestDto, entriesOpen: boolean) {
   if (entriesOpen) {
-    return 'Editable until the event starts';
+    return contest.selectionType === SelectionType.RANDOM_DRAW
+      ? 'Open until the draw'
+      : 'Editable until the event starts';
   }
   // Still OPEN past its start means the event has teed off and the In Progress update is late.
   return contest.status === ContestStatus.OPEN ? 'Entries closed' : contestStatusLabel(contest.status);
@@ -529,7 +532,9 @@ export function ContestEntryPage() {
   const entrySummary = contestEntriesQuery.data?.entries.find((entry) => entry.id === entryId) ?? null;
   const myEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
   const isMyEntry = myEntryIds.includes(entryId);
-  const isEditable = areContestEntriesOpen(contest.status, schedule?.startsAt);
+  const isRandomDraw = contest.selectionType === SelectionType.RANDOM_DRAW;
+  // A random draw closes entries when it deals, even though the contest stays open until tee-off.
+  const isEditable = areContestEntriesOpen({ status: contest.status, drawnAt: contest.drawnAt ?? selectionState.drawnAt }, schedule?.startsAt);
   // Before the contest locks, the server answers the viewer's own entry when another team's is
   // asked for, so a different selected entry means this one's picks are not ours to see yet.
   const picksHidden = selectionState.selectedEntryId !== entryId;
@@ -637,6 +642,7 @@ export function ContestEntryPage() {
         titleTestId="contest-entry-heading"
       />
 
+      {isRandomDraw ? <DrawEntryMetrics isEditable={isEditable} selectionState={selectionState} /> : (
       <Tile>
         <MetricGrid className="md:grid-cols-4">
           {isBudget ? (
@@ -693,6 +699,7 @@ export function ContestEntryPage() {
           />
         </MetricGrid>
       </Tile>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-6">
@@ -712,7 +719,9 @@ export function ContestEntryPage() {
             />
 
             {isMyEntry ? (
-              isEditable ? (
+              // A random-draw entry has no lineup to submit, so nothing here saves: the draw
+              // sets its golfers and there is no tiebreaker to show.
+              isRandomDraw ? null : isEditable ? (
                 <Tile className="mt-5 space-y-4" padding="sm" radius="lg" variant="subtle">
                   <FormField label="Entry name">
                     <Input
@@ -725,7 +734,10 @@ export function ContestEntryPage() {
                   </FormField>
                   {saveEntryDetailsMutation.isError ? (
                     <Alert tone="danger">
-                      {extractErrorMessage(saveEntryDetailsMutation.error, { fallback: 'We could not save this entry right now.' })}
+                      {extractErrorMessage(saveEntryDetailsMutation.error, {
+                        codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
+                        fallback: 'We could not save this entry right now.',
+                      })}
                     </Alert>
                   ) : null}
                 </Tile>
@@ -751,8 +763,15 @@ export function ContestEntryPage() {
 
         <Tile>
           <h3 className="text-xl font-semibold" data-testid="contest-entry-builder-heading">
-            {isEditable ? 'Build your lineup' : 'Saved lineup detail'}
+            {isRandomDraw
+              ? selectionState.drawnAt ? 'Dealt golfers' : 'Golfers'
+              : isEditable ? 'Build your lineup' : 'Saved lineup detail'}
           </h3>
+          {isRandomDraw ? (
+            <div className="mt-5">
+              <DrawLineup selectionState={selectionState} />
+            </div>
+          ) : (
           <div className="mt-5 space-y-5">
             {picksHidden ? (
               <Alert data-testid="contest-entry-picks-hidden">
@@ -871,6 +890,7 @@ export function ContestEntryPage() {
               />
             ) : null}
           </div>
+          )}
         </Tile>
       </div>
     </section>

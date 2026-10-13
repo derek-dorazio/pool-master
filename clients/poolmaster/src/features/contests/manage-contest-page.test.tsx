@@ -1,3 +1,4 @@
+import { SelectionType } from '@poolmaster/shared/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -22,6 +23,7 @@ import {
   buildContest,
   buildContestEntry,
   buildManagedContest,
+  buildSelectionState,
   buildSportEvent,
   buildTier,
 } from './test/contest-admin-fixtures';
@@ -31,6 +33,8 @@ const getContestConfigurationMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getEventMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
+const getSelectionStateMock = vi.fn();
+const runContestDrawMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
@@ -45,6 +49,8 @@ bindApiMocks({
   getEvent: getEventMock,
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
+  getSelectionState: getSelectionStateMock,
+  runContestDraw: runContestDrawMock,
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,
   listLeagueSquads: listLeagueSquadsMock,
@@ -111,6 +117,7 @@ function primeMocks({
 afterEach(() => {
   for (const mock of [
     deleteContestMock, getContestConfigurationMock, getCurrentUserMock, getEventMock, getLeagueByCodeMock,
+    getSelectionStateMock, runContestDrawMock,
     listContestEntriesMock, listContestsMock, listLeagueSquadsMock, openContestMock, refreshTokenMock,
     updateContestConfigurationMock, updateContestMock,
   ]) {
@@ -296,6 +303,101 @@ describe('Commissioner tools › Contests › one contest', () => {
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
     expect(await screen.findByTestId('manage-contest-not-found')).toHaveTextContent("This contest isn't in this league");
+  });
+});
+
+describe('Commissioner tools › Contests › one random-draw contest', () => {
+  const DRAWN_AT = '2099-04-08T15:00:00.000Z';
+
+  function primeDrawMocks(drawnAt: string | null = null) {
+    primeMocks({
+      contest: buildContest({ name: 'Masters Sweepstake', selectionType: SelectionType.RANDOM_DRAW, status: 'OPEN' }),
+      managedContest: buildManagedContest({
+        status: 'OPEN',
+        configuration: {
+          id: 'config-contest-1',
+          contestId: 'contest-1',
+          maxEntriesPerSquad: 1,
+          selectionType: SelectionType.RANDOM_DRAW,
+          picksPerEntry: 3,
+          countedScores: 2,
+        },
+      }),
+    });
+    listContestEntriesMock.mockResolvedValue(apiSuccess({
+      contestId: 'contest-1',
+      total: 2,
+      picksRevealed: false,
+      entries: [
+        buildContestEntry({ id: 'entry-1', squadId: 'team-1', status: 'DRAFT', picksCount: 0 }),
+        buildContestEntry({ id: 'entry-2', squadId: 'team-2', status: 'DRAFT', picksCount: 0 }),
+      ],
+    }));
+    getSelectionStateMock.mockResolvedValue(apiSuccess(buildSelectionState({ drawnAt })));
+  }
+
+  it('reads the random-draw rules and offers Run draw for an open contest not yet drawn', async () => {
+    primeDrawMocks();
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByText('2 entries waiting for the draw')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Run draw' })).toBeInTheDocument();
+    expect(screen.getByTestId('manage-contest-format')).toHaveTextContent('Random draw');
+    expect(screen.getByTestId('manage-contest-rules')).toHaveTextContent('The draw deals each entry 3 golfers at random. The best 2 scores count.');
+    expect(screen.getByTestId('manage-contest-event-row')).toHaveTextContent('Entries close when you run the draw');
+  });
+
+  it('runs the draw only after a confirm that says it is final and closes entries, then shows when it ran', async () => {
+    primeDrawMocks();
+    runContestDrawMock.mockResolvedValue(apiSuccess(buildSelectionState({ drawnAt: DRAWN_AT })));
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Run draw' }));
+    const dialog = within(await screen.findByTestId('contest-run-draw-dialog'));
+    expect(dialog.getByText(/deals each of the 2 entries 3 golfers at random/)).toBeInTheDocument();
+    expect(dialog.getByText(/It’s final: it can’t be undone or run again. Entries close/)).toBeInTheDocument();
+    expect(runContestDrawMock).not.toHaveBeenCalled();
+
+    getSelectionStateMock.mockResolvedValue(apiSuccess(buildSelectionState({ drawnAt: DRAWN_AT })));
+    fireEvent.click(dialog.getByTestId('contest-run-draw-confirm'));
+
+    await waitFor(() => expect(runContestDrawMock).toHaveBeenCalledWith(
+      expect.objectContaining({ path: { contestId: 'contest-1' } }),
+    ));
+    expect(await screen.findByText('The draw has run')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-draw-ran')).toHaveTextContent(/^Drawn .+ Every entry has its golfers/);
+    expect(screen.queryByRole('button', { name: 'Run draw' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-run-draw-dialog')).not.toBeInTheDocument();
+  });
+
+  it('keeps the draw dialog open with plain copy when the draw is refused because the field is too small', async () => {
+    primeDrawMocks();
+    runContestDrawMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_DRAW_FIELD_TOO_SMALL', message: 'server sentence' } },
+      status: 409,
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Run draw' }));
+    fireEvent.click(await screen.findByTestId('contest-run-draw-confirm'));
+
+    expect(await screen.findByTestId('contest-run-draw-error')).toHaveTextContent(
+      'The field doesn’t have enough golfers to deal every entry its share, so nothing was dealt.',
+    );
+    expect(screen.getByTestId('contest-run-draw-dialog')).toBeInTheDocument();
+  });
+
+  it('shows a drawn contest as drawn with no Run draw', async () => {
+    primeDrawMocks(DRAWN_AT);
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByText('The draw has run')).toBeInTheDocument();
+    expect(screen.getByText('Drawn · entries closed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Run draw' })).not.toBeInTheDocument();
   });
 });
 

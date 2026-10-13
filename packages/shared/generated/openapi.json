@@ -13608,6 +13608,14 @@
             ],
             "format": "date-time"
           },
+          "drawnAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -15024,6 +15032,14 @@
                 ],
                 "format": "date-time"
               },
+              "drawnAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type."
+              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time"
@@ -15147,6 +15163,14 @@
                     "null"
                   ],
                   "format": "date-time"
+                },
+                "drawnAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "description": "When a random-draw contest's draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type."
                 },
                 "createdAt": {
                   "type": "string",
