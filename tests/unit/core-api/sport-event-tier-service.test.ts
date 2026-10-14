@@ -118,6 +118,41 @@ describe('SportEventTierService — assignment', () => {
     expect(groups.map((group) => group.participants.length)).toEqual([3, 3, 8]);
   });
 
+  // Each sport's own default tiers, created as a new event gets them, on the field sizes its
+  // definition was designed around: the layout where it reaches every tier, else an even spread.
+  it.each([
+    { sport: Sport.AUTO_RACING, fieldSize: 40, expected: [8, 8, 8, 8, 8], what: 'a full 40-car NASCAR field fills five tiers of eight exactly' },
+    { sport: Sport.AUTO_RACING, fieldSize: 33, expected: [8, 8, 8, 8, 1], what: 'the 33-car Indy 500 field leaves the fifth tier the short one' },
+    { sport: Sport.AUTO_RACING, fieldSize: 24, expected: [5, 5, 5, 5, 4], what: 'a 24-car field, too small for five tiers of eight, is spread evenly' },
+    { sport: Sport.CYCLING, fieldSize: 176, expected: [10, 10, 10, 10, 136], what: 'a Grand Tour field of 176 puts ten contenders in each of four tiers and the rest in the fifth' },
+    { sport: Sport.CYCLING, fieldSize: 35, expected: [7, 7, 7, 7, 7], what: 'a 35-rider field, too small for four tiers of ten, is spread evenly' },
+    { sport: Sport.RUNNING, fieldSize: 30, expected: [6, 6, 6, 12], what: 'an elite marathon field of 30 puts six favourites in each of three tiers and the rest in the fourth' },
+    { sport: Sport.RUNNING, fieldSize: 15, expected: [4, 4, 4, 3], what: 'a 15-runner field, too small for three tiers of six, is spread evenly' },
+  ])('auto-assigns a $sport event\'s default tiers when no size is sent: $what', async ({ sport, fieldSize, expected }) => {
+    const { store, service } = setup();
+    const event = store.addEvent({ status: SportEventStatus.DRAFT, sport });
+    await service.ensureDefaultTiers(event.id, sport);
+    addFieldByOdds(store, event.id, fieldSize);
+
+    const groups = await service.autoAssignTiers({ sportEventId: event.id, source: TierSource.ODDS });
+
+    expect(groups.map((group) => group.participants.length)).toEqual(expected);
+  });
+
+  it('orders by odds first when asked to, falling back to ranking on equal odds and to participant id when both tie', async () => {
+    const { store, event, service } = setup();
+    await store.tierRepo().createMany(event.id, [TWO_TIERS[0]]);
+    store.addToField(event.id, 'p-d', { ranking: 2, oddsToWin: 10 });
+    store.addToField(event.id, 'p-c', { ranking: 2, oddsToWin: 10 });
+    store.addToField(event.id, 'p-z', { ranking: 1, oddsToWin: 10 });
+    store.addToField(event.id, 'p-a', { ranking: 9, oddsToWin: 5 });
+
+    const [group] = await service.autoAssignTiers({ sportEventId: event.id, source: TierSource.ODDS });
+
+    expect(group.participants.map((placement) => placement.participantId)).toEqual(['p-a', 'p-z', 'p-c', 'p-d']);
+    expect(store.valuationRows[0].tierAssignedSource).toBe('AUTO_ODDS');
+  });
+
   it('spreads a field too small for the sport\'s layout evenly on the default tiers so release finds no empty tier: 6 horses on three tiers is 2/2/2, 30 golfers on six is 5 each', async () => {
     const { store, event, service } = setup();
     const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING });
