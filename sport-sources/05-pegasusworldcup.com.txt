@@ -1,0 +1,155 @@
+Source: https://www.pegasusworldcup.com/
+Final URL: https://www.pegasusworldcup.com/
+HTTP 200
+Fetched: 2026-10-14T22:28:04.702Z
+
+World Class Horse Racing In South Florida | Pegasus World Cup
+We value your privacy
+We use cookies to enhance your browsing experience, serve personalised ads or content, and analyse our traffic. By clicking "Accept All", you consent to our use of cookies.
+Customise Reject All Accept All
+Powered by
+Customise Consent Preferences
+We use cookies to help you navigate efficiently and perform certain functions. You will find detailed information about all cookies under each consent category below.
+The cookies that are categorised as "Necessary" are stored on your browser as they are essential for enabling the basic functionalities of the site. ... Show more
+Necessary Always Active
+Necessary cookies are required to enable the basic features of this site, such as providing secure log-in or adjusting your consent preferences. These cookies do not store any personally identifiable data.
+No cookies to display.
+Functional
+Functional cookies help perform certain functionalities like sharing the content of the website on social media platforms, collecting feedback, and other third-party features.
+No cookies to display.
+Analytics
+Analytical cookies are used to understand how visitors interact with the website. These cookies help provide information on metrics such as the number of visitors, bounce rate, traffic source, etc.
+No cookies to display.
+Performance
+Performance cookies are used to understand and analyse the key performance indexes of the website which helps in delivering a better user experience for the visitors.
+No cookies to display.
+Advertisement
+Advertisement cookies are used to provide visitors with customised advertisements based on the pages you visited previously and to analyse the effectiveness of the ad campaigns.
+No cookies to display.
+Reject All Save My Preferences Accept All
+Powered by
+Results
+About Pegasus
+Our Legacy
+FASHION & STYLE
+Photo Gallery
+Archives
+Baccarat Pegasus Trophies
+News
+FAQ
+Contact Us
+1/ST BET
+Results
+About Pegasus
+Our Legacy
+FASHION & STYLE
+Photo Gallery
+Archives
+Baccarat Pegasus Trophies
+News
+FAQ
+Contact Us
+1/ST BET
+1
+2
+3
+January 30, 2027
+2026 Winners
+SKIPPYLONGSTOCKING
+PEGASUS WORLD CUP INVITATIONAL DIRT (G1) CHAMPION
+Skippylongstocking claimed victory in the 2026 Pegasus World Cup Invitational Stakes at Gulfstream Park
+TEST SCORE
+Pegasus World Cup Turf Invitational (G1) Champion
+Test Score won the 2026 Pegasus World Cup Turf Invitational Stakes at Gulfstream Park, finishing ahead of stablemate One Stripe in the Grade 1 event
+DESTINO D'ORO
+Pegasus Filly and Mare Turf Invitational (G2) Champion
+Destino d’Oro won the 2026 Pegasus World Cup Filly & Mare Turf with a late-closing effort at Gulfstream Park
+SATURDAY
+JAN 30, 2027
+GULFSTREAM
+PARK
+A
+DECADE OF
+CHAMPIONS
+The Pegasus World Cup Legacy
+View Our Legacy
+In the past ten years, Pegasus World Cup has quickly established itself as South Florida’s leading luxury sports and lifestyle event of the year. Nationally broadcast on NBC and distributed globally, Pegasus World Cup attracts A-list celebrity attendees, fashion icons, influencers and avid fans to catch a glimpse of the sport’s most iconic event of the year.
+Launched in 2017 as part of 1/ST’s mission to excite, energize and modernize the sport of racing for a new generation of fans, the Pegasus World Cup provides lucrative opportunities for Thoroughbred owners and trainers.
+The 2026 Pegasus World Cup race day set a $48.5 million record handle, surpassing the previous 2024 record of $47 million. In total, the 164 horses competed in the 13-race card including multiple graded stakes winners, international contenders, and championship-level runners. The event was broadcast nationally on NBC and Peacock, with full-day coverage one FanDuel TV and global distribution via HBA Media. The 2026 Pegasus World Cup reached audiences in more than 150 territories worldwide.
+Our partners
+1/ST BET
+Spendthrift
+Visit Park
+TAA
+Prevagen
+Bacarrat
+Stella Artois
+Don Julio
+Woodford
+Jack Daniels
+Celsius
+Pepsi
+Nutrl
+Pommery
+visit ft laud
+NBC Sports
+Caliwater
+Cloud23
+Smash Kitchen
+LFD
+Coolmore
+My Racehorse
+1/ST BET
+Spendthrift
+Visit Park
+TAA
+Prevagen
+Bacarrat
+Stella Artois
+Don Julio
+Woodford
+Jack Daniels
+Celsius
+Pepsi
+Nutrl
+Pommery
+visit ft laud
+NBC Sports
+Caliwater
+Cloud23
+Smash Kitchen
+LFD
+Coolmore
+My Racehorse
+1/ST BET
+Spendthrift
+Visit Park
+TAA
+Prevagen
+1
+2
+3
+4
+5
+Gulfstream Park
+901 S. Federal Highway, Hallandale Beach, FL 33009
+Info@pegasusworldcup.com
+T (954) 457-6201
+Responsible Gaming
+Privacy
+A-Z Event Guide
+Ticketing FAQ
+Media Requests
+1/ST
+1/ST BET
+Gulfstream Park
+Facebook
+Instagram
+Twitter
+Youtube
+Site By
+X
+X
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@graph":[{"@type":"BreadcrumbList","@id":"https:\/\/www.pegasusworldcup.com\/#breadcrumblist","itemListElement":[{"@type":"ListItem","@id":"https:\/\/www.pegasusworldcup.com#listItem","position":1,"name":"Home"}]},{"@type":"Organization","@id":"https:\/\/www.pegasusworldcup.com\/#organization","name":"Pegasus World Cup","description":"Pegasus World Cup","url":"https:\/\/www.pegasusworldcup.com\/"},{"@type":"WebPage","@id":"https:\/\/www.pegasusworldcup.com\/#webpage","url":"https:\/\/www.pegasusworldcup.com\/","name":"World Class Horse Racing In South Florida | Pegasus World Cup","description":"Located in Hallandale Beach, The Pegasus World Cup is South Florida's premiere horse racing experience live from Gulfstream Park Racing and Casino.","inLanguage":"en-US","isPartOf":{"@id":"https:\/\/www.pegasusworldcup.com\/#website"},"breadcrumb":{"@id":"https:\/\/www.pegasusworldcup.com\/#breadcrumblist"},"datePublished":"2019-04-01T11:17:27+00:00","dateModified":"2026-10-05T19:52:06+00:00"},{"@type":"WebSite","@id":"https:\/\/www.pegasusworldcup.com\/#website","url":"https:\/\/www.pegasusworldcup.com\/","name":"Pegasus World Cup","description":"Pegasus World Cup","inLanguage":"en-US","publisher":{"@id":"https:\/\/www.pegasusworldcup.com\/#organization"}}]}

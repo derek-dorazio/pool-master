@@ -1,0 +1,54 @@
+{
+  "fetchedAt": "2026-10-14T22:28:08.110Z",
+  "results": [
+    {
+      "url": "https://en.wikipedia.org/wiki/Pegasus_World_Cup",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "01-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://www.equibase.com/stakes/calendar.cfm",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
+      "file": "02-equibase.com.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2027_Pegasus_World_Cup",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
+      "file": "03-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://www.gulfstreampark.com/racing/pegasus-world-cup",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "04-gulfstreampark.com.txt"
+    },
+    {
+      "url": "https://www.pegasusworldcup.com/",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "05-pegasusworldcup.com.txt"
+    },
+    {
+      "url": "https://www.equibase.com/stakes/calendar.cfm",
+      "rendered": true,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
+      "file": "06-equibase.com.txt"
+    },
+    {
+      "url": "https://www.gulfstreampark.com/racing/stakes-schedule",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "07-gulfstreampark.com.txt"
+    }
+  ]
+}
