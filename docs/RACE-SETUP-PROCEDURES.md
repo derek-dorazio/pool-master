@@ -8,6 +8,9 @@ circuit (the Kentucky Derby, the Breeders' Cup Classic).
 An auto race (the Daytona 500, the Indy 500) follows the same steps with the differences in
 [Auto racing](#auto-racing) at the end.
 
+A cycling race (the Tour de France, a one-day Monument) does too, with the differences in
+[Cycling](#cycling) at the end.
+
 Golf works differently, through a simulated score feed: see
 [`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md).
 
@@ -283,3 +286,38 @@ A Grand Prix runs through the same steps in the **Formula 1** series. What diffe
 - **F1 points.** 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 for the top ten, nothing below tenth, and 0
   for a car that does not finish. Enter the Grand Prix result only: the sprint race and the
   fastest lap are not scored.
+
+## Cycling
+
+Road racing (UCI WorldTour, UCI Women's WorldTour) runs through the same steps under
+`/manage/sports/cycling/...`: in the side menu it is **Cycling**, and its three lists are
+**Races**, **Riders** and **Tours**. What differs:
+
+- **The tours already exist.** **UCI WorldTour** and **UCI Women's WorldTour** are created by
+  the migration that adds cycling, because each one's presets belong to it. Skip step 1 and
+  choose the tour when creating the race. Do not create a second tour of the same name.
+- **One race, one result.** A Grand Tour is one race with one round, whatever its stage count:
+  its result is the **final overall classification** (GC), entered once after the last stage.
+  Stages are not entered and not scored. A one-day race has the same shape.
+- **Riders, not horses.** Add each rider once (*Cycling → Riders*). A rider who does not start
+  is withdrawn from the field and reads *Withdrawn*. **Starts** is the start of the race (the
+  first stage of a Grand Tour), the cutoff for release, contests and picks; copy reads
+  "Entries close at the start".
+- **Odds to win overall.** Give every rider their odds to win the race overall (*Bulk upload*
+  with `oddsToWin` suits a field of about 175). Odds alone price an unseeded field.
+- **Five tiers of ten.** *Auto-assign tiers from odds* fills them ten riders at a time from the
+  favourite, the last tier taking the rest: a 176-rider field comes out 10/10/10/10/136. The four
+  tiers of contenders hold 40 riders; move riders by hand if a tier looks wrong.
+- **Presets per tour.** On create contest, choose **Cycling**, then the race. *Start from*
+  offers only that tour's presets: the tiered one (one rider from each tier, five counted) is
+  the default, then budget (five riders under the cap) and random draw (one rider each). All
+  three score **Top 10 points**: 10 for the winner, 9 for second, down to 1 for tenth, and 0
+  below that.
+- **The result names only the rider.** The Result card heads its columns *Finish*, *Rider*
+  (the cyclist) and *Start*, with no jockey column; leave `riderName` and `startPosition`
+  blank. Give every rider who reached the finish their overall place, 1 to N, not just the top
+  ten. A rider who **abandoned** mid-race, or was eliminated outside the time limit, is `DNF`
+  and scores 0; a disqualified rider is `DQ`.
+- **Keep it In Progress for the three weeks.** Move the race to In Progress at the start and to
+  Completed only once the final classification is official. A provisional GC after a stage
+  shows on the leaderboard but scores nothing until the official result.

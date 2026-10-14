@@ -155,6 +155,9 @@ down: a lesson that was true mid-series may not be by the end.
   things: horse racing has a "Rider" column and calls its top places "Win / Place / Show"
   (`vocabulary.rider`, `vocabulary.topPlaces`). A word that differs between sports of the same
   family belongs in the vocabulary, not hard-coded in the family's card or leaderboard.
+- **Vocabulary words read inside a sentence.** Copy puts each word into a sentence of its own:
+  `eventStart` follows "the" ("Entries close at the post time"), so "the start" would read "at
+  the the start". Read where a word is used before choosing it, not only how the audience says it.
 - **Family copy that names one sport's participant.** A message such as "every runner still in
   the field" in a family's admin card reads wrong for the next sport. Error and hint copy reads
   the vocabulary too, not only headings and column labels.

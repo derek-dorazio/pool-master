@@ -17,7 +17,7 @@ export interface SportVocabulary {
   /**
    * One sport league, the organiser whose events recur each year: "tour" / "tours" for golf (the
    * PGA Tour), "circuit" / "circuits" for horse racing (US Thoroughbred), "series" / "series" for
-   * auto racing (NASCAR Cup Series).
+   * auto racing (NASCAR Cup Series), "tour" / "tours" for cycling (UCI WorldTour).
    */
   sportLeague: SportNoun;
   /** One scheduled stage of an event: "round" / "rounds". */
@@ -29,7 +29,10 @@ export interface SportVocabulary {
   eliminated?: string;
   /** The label for a participant withdrawn from an event (`WITHDRAWN`): "Withdrawn" for golf, "Scratched" for horse racing. */
   withdrawn: string;
-  /** What the moment entries close is called: "first tee time" for golf. */
+  /**
+   * What the moment entries close is called: "first tee time" for golf, "start" for cycling. Copy
+   * reads it after "the" ("Entries close at the first tee time"), so it carries no article.
+   */
   eventStart: string;
   /**
    * Who rides or drives each participant, as a race result's column header: "Rider" for horse

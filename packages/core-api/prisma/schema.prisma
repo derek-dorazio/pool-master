@@ -260,6 +260,7 @@ enum PrismaSport {
   GOLF
   HORSE_RACING
   AUTO_RACING
+  CYCLING
 }
 
 /// Tournament structural format — drives which contest types are valid

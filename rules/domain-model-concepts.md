@@ -69,7 +69,7 @@ A UI Label, Not A Domain Term*.
 
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
-| `Sport` | sport | Golf, horse racing and auto racing, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
+| `Sport` | sport | Golf, horse racing, auto racing and cycling, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
 | `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA | `League`, the office pool |
 | `EventSeries` | (series) | A recurring named event, "The Masters", across all years | One year's edition, which is the `SportEvent` |
 | `SportEvent` | tournament, event | One edition of a series in one `eventYear`, with a start date, round count and status | `Contest`, which is the pool's game played on it |
@@ -112,6 +112,12 @@ A UI Label, Not A Domain Term*.
 - **Driver**: an auto racing `Participant`, one per person whichever series they race in. An
   auto racing result names only the driver, so its `riderName` stays empty.
 - **Series**: what auto racing calls a `SportLeague` (NASCAR Cup Series, IndyCar, Formula 1).
+- **Rider (cycling)**: a cycling `Participant`. Not the result's `riderName`, which is horse
+  racing's jockey: a cycling result names only the rider, so its `riderName` stays empty. A rider
+  who abandons mid-race is a `DID_NOT_FINISH` result, not a withdrawal.
+- **Tour (cycling)**: what cycling calls a `SportLeague` (UCI WorldTour, UCI Women's WorldTour).
+  A Grand Tour (the Tour de France) is one `SportEvent` with one round; its result is the final
+  overall classification, and its stages are not rounds.
 - **Scratched, withdrawn**: a runner taken out of a race before the start is a field member made
   inactive with `inactiveReason` `WITHDRAWN`; horse racing shows it as "Scratched". A runner
   that did not start is a result (`DID_NOT_START`), which also leaves it `WITHDRAWN` in the standing.
