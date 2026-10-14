@@ -359,7 +359,31 @@ league and the Indy 500 event with the NASCAR ticket; it costs only data.
 
 ---
 
-## 4. Cycling (later)
+## 4. Cycling
+
+**Status (2026-10-14, #626).** The sport is built as `CYCLING`, "Cycling". It reuses the
+finish-position family and the `RACE` format, so it needed no new tables. Q4.1 is answered: the
+final overall classification only, so the table below is superseded where it says stages are
+rounds:
+
+- A Grand Tour is one event with one result, the final overall (GC) order entered once after the
+  last stage. The sport definition gives a new race one round; the 21 stages are not modelled. A
+  one-day Monument has the same shape. Stage scoring waits for a results feed.
+- The sport definition: rider / riders, race / races, tour / tours, "Withdrawn" (a non-starter),
+  and "start" as the event start ("Entries close at the start"). The result names only the rider,
+  so there is no Rider column word and no name for the top places. A rider who abandons is
+  entered as `DNF`, so nothing is called "Abandoned". Five tiers of ten: four tiers of contenders
+  hold 40 riders, and the last tier takes the rest of a ~175-rider field.
+- The reference-data migration seeds the sports row and two sport leagues, **UCI WorldTour** and
+  **UCI Women's WorldTour**, idempotently on the (sport, name) unique, as auto racing's are.
+- Six templates, three per tour, each with its own key: `uci-worldtour-tiered-top-10` (the
+  default), `uci-worldtour-budget-top-10`, `uci-worldtour-random-draw-top-10`, and the same three
+  as `uci-womens-worldtour-...`. Tiered picks one rider per tier and counts five; budget picks
+  five; the draw deals one. All score Top 10 linear (10, 9 ... 1 over ten places), with 0 below
+  that and for an abandon.
+
+The Tour de France (July 2027) is loaded later through the sport data loader, with a dry run
+first; the setup by hand is `docs/RACE-SETUP-PROCEDURES.md`.
 
 | Question | Answer |
 |---|---|
@@ -373,7 +397,8 @@ league and the Indy 500 event with the NASCAR ticket; it costs only data.
 | Scoring | Final overall (GC) position with the Top 10 preset; stage scoring later (Q4.1) |
 | Vocabulary | rider / riders; stage; "Abandoned" for DNF |
 
-**Q4.1** Score only the final overall standings, or each stage too? *Recommendation:* final
+**Q4.1** (**Answered 2026-10-14 in the #626 refinement: final overall only, as recommended.**)
+Score only the final overall standings, or each stage too? *Recommendation:* final
 overall only. Stage scoring makes a livelier leaderboard over three weeks but needs 21 results
 entered per race; it is the case for a feed, not for admin entry. The live leaderboard can
 still show the riders' overall position after each stage if the admin enters it.

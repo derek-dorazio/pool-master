@@ -167,3 +167,77 @@ describe('Seeded contest templates and their sport leagues', () => {
     ]);
   });
 });
+
+// Cycling's tours and their Top 10 presets (#626), checked value by value.
+const CYCLING_TOP_10_POINTS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+
+describe('Seeded cycling tours and their Top 10 templates', () => {
+  it('seeds cycling\'s two tours, each with a tiered default, a budget and a random-draw template of its own', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.CYCLING },
+      include: { sportLeague: { include: { sport: true } } },
+      orderBy: [{ templateKey: 'asc' }],
+    });
+
+    expect(templates.map((template) => [
+      template.sportLeague?.name,
+      template.templateKey,
+      template.selectionType,
+      template.isDefault,
+      template.active,
+    ])).toEqual([
+      ["UCI Women's WorldTour", 'uci-womens-worldtour-budget-top-10', SelectionType.BUDGET_PICK, false, true],
+      ["UCI Women's WorldTour", 'uci-womens-worldtour-random-draw-top-10', SelectionType.RANDOM_DRAW, false, true],
+      ["UCI Women's WorldTour", 'uci-womens-worldtour-tiered-top-10', SelectionType.TIERED, true, true],
+      ['UCI WorldTour', 'uci-worldtour-budget-top-10', SelectionType.BUDGET_PICK, false, true],
+      ['UCI WorldTour', 'uci-worldtour-random-draw-top-10', SelectionType.RANDOM_DRAW, false, true],
+      ['UCI WorldTour', 'uci-worldtour-tiered-top-10', SelectionType.TIERED, true, true],
+    ]);
+    expect(new Set(templates.map((template) => template.sportLeague?.sport.sport))).toEqual(new Set([Sport.CYCLING]));
+  });
+
+  it('presets Top 10 points (10 down to 1, 0 for an abandon) on every cycling template, each a valid template configuration', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { sport: Sport.CYCLING } });
+
+    expect(templates).toHaveLength(6);
+    for (const template of templates) {
+      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
+      expect(rules.selectionType).toBe(template.selectionType);
+      expect(rules.maxEntriesPerSquad).toBe(1);
+      expect(rules.scoring).toEqual({
+        participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
+        config: { pointsTable: CYCLING_TOP_10_POINTS, didNotFinishPoints: 0 },
+      });
+    }
+  });
+
+  it('counts five riders in the tiered and budget presets and one in the random draw', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.CYCLING },
+      orderBy: { templateKey: 'asc' },
+    });
+
+    const shapes = templates.map((template) => {
+      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
+      switch (rules.selectionType) {
+        case SelectionType.TIERED:
+          return [template.templateKey, rules.picksPerTier, rules.countedScores];
+        case SelectionType.BUDGET_PICK:
+          return [template.templateKey, rules.rosterSize, rules.countedScores];
+        case SelectionType.RANDOM_DRAW:
+          return [template.templateKey, rules.picksPerEntry, rules.countedScores];
+        default:
+          return assertNever(rules, 'selection type');
+      }
+    });
+
+    expect(shapes).toEqual([
+      ['uci-womens-worldtour-budget-top-10', 5, 5],
+      ['uci-womens-worldtour-random-draw-top-10', 1, 1],
+      ['uci-womens-worldtour-tiered-top-10', 1, 5],
+      ['uci-worldtour-budget-top-10', 5, 5],
+      ['uci-worldtour-random-draw-top-10', 1, 1],
+      ['uci-worldtour-tiered-top-10', 1, 5],
+    ]);
+  });
+});

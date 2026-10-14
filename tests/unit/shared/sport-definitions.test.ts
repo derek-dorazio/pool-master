@@ -150,6 +150,31 @@ describe('sport registry', () => {
     expect(autoRacing.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
+  it('scores cycling by final overall place in races of a tour, calls a rider a rider, and names no rider column, top places or eliminated', () => {
+    const cycling = getSportDefinition(Sport.CYCLING);
+
+    expect(cycling.name).toBe('Cycling');
+    expect(cycling.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
+    expect(cycling.scoringDefinitions).toEqual(['FINISH_POSITION_POINTS']);
+    expect(cycling.vocabulary).toEqual({
+      participant: { one: 'rider', many: 'riders' },
+      event: { one: 'race', many: 'races' },
+      sportLeague: { one: 'tour', many: 'tours' },
+      round: { one: 'race', many: 'races' },
+      withdrawn: 'Withdrawn',
+      eventStart: 'start',
+    });
+  });
+
+  it('gives a new cycling race one round labelled Race, not one per stage, and five tiers of ten with the last taking the rest', () => {
+    const cycling = getSportDefinition(Sport.CYCLING);
+
+    expect(cycling.defaultRounds).toBe(1);
+    expect(cycling.roundLabel(1, 1)).toBe('Race');
+    expect(cycling.defaultTierLayout).toEqual({ tierCount: 5, tierSize: 10 });
+    expect(cycling.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
+  });
+
   it('gives a new golf event four rounds and six tiers of ten golfers', () => {
     const golf = getSportDefinition(Sport.GOLF);
 
