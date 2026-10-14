@@ -301,6 +301,34 @@ describe('SportEventService.releaseEvent (#431)', () => {
     });
   });
 
+  it('refuses a draft with a tier no active participant is in with 422 SPORT_EVENT_NOT_READY, naming the empty tier in the sport\'s words', async () => {
+    const { store, service } = setup(Sport.AUTO_RACING);
+    const event = await draftWithField(store, 3, 3, { sport: Sport.AUTO_RACING });
+    await store.tierRepo().createMany(event.id, [{ tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 }]);
+
+    await expect(service.releaseEvent(event.id)).rejects.toMatchObject({
+      code: 'SPORT_EVENT_NOT_READY',
+      statusCode: 422,
+      message: expect.stringContaining('Tier 2 has no drivers'),
+    });
+    expect(store.events[0].status).toBe(SportEventStatus.DRAFT);
+  });
+
+  it('counts a tier holding only a withdrawn participant as empty, so the draft is not released', async () => {
+    const { store, service } = setup();
+    const event = await draftWithField(store, 2, 2);
+    await store.tierRepo().createMany(event.id, [{ tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 }]);
+    const withdrawn = store.addToField(event.id, 'participant-withdrawn');
+    withdrawn.isActive = false;
+    const tier2Id = store.tierRows.filter((tier) => tier.tierKey === 'tier-2').map((tier) => tier.id)[0];
+    await store.valuationRepo().assignTiers([{ sportEventParticipantId: withdrawn.id, sportEventTierId: tier2Id, tierOrderIndex: 3, source: 'MANUAL' }]);
+
+    await expect(service.releaseEvent(event.id)).rejects.toMatchObject({
+      code: 'SPORT_EVENT_NOT_READY',
+      message: expect.stringContaining('Tier 2 has no golfers'),
+    });
+  });
+
   it('refuses a draft whose prices were never assigned with 422 SPORT_EVENT_NOT_READY (#93)', async () => {
     const { store, service } = setup();
     const event = await draftWithField(store, 3, 3, {}, null);
@@ -357,7 +385,7 @@ describe('SportEventService — read, update, delete', () => {
 
     const [summary] = await service.listEvents({});
 
-    expect(summary).toMatchObject({ loadedParticipantCount: 1, untieredParticipantCount: 1, tierCount: 0, contestCount: 2 });
+    expect(summary).toMatchObject({ loadedParticipantCount: 1, untieredParticipantCount: 1, tierCount: 0, emptyTierLabels: [], contestCount: 2 });
     await expect(service.getEvent('missing')).resolves.toBeNull();
   });
 
