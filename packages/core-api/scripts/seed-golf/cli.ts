@@ -6,11 +6,16 @@
  *   POOLMASTER_SEED_ADMIN_IDENTIFIER=poolmaster-admin \
  *   POOLMASTER_SEED_ADMIN_PASSWORD=... \
  *   npm run seed:golf -- [--file golf-2026.json] [--mode dry-run|apply] [--allow-test-data] [--report report.md]
+ *                        [--event "<event name>"] [--replace-field]
  *
  * --file is a path inside this folder (default golf-2026.json). --mode defaults to dry-run,
  * which reads the site and reports what applying would change without writing anything.
  * --allow-test-data lets a file with `testData: true` load; pass it only for a local or QA
  * site. --report also writes the run's markdown report to that path.
+ *
+ * --event names the event a test slate (test-slates/) fills; only a slate takes it, and a
+ * slate needs it. --replace-field removes field rows the slate does not list instead of
+ * withdrawing them.
  *
  * The base URL is the site root that serves /api/v1 (the API itself locally, the site on QA).
  * QA runs this through the "Load sport data" workflow, never on deploy.
@@ -54,6 +59,8 @@ async function main(): Promise<void> {
       mode: { type: 'string', default: 'dry-run' },
       'allow-test-data': { type: 'boolean', default: false },
       report: { type: 'string' },
+      event: { type: 'string' },
+      'replace-field': { type: 'boolean', default: false },
     },
   });
   const mode = values.mode === 'apply' ? LoadMode.APPLY : values.mode === 'dry-run' ? LoadMode.DRY_RUN : null;
@@ -85,7 +92,14 @@ async function main(): Promise<void> {
   };
 
   console.log(`${mode === LoadMode.APPLY ? 'Loading' : 'Dry run of'} ${values.file} into ${baseUrl}.`);
-  const rows = await loadSportData(file, { getClient, now: new Date(), mode, log: (line) => console.log(line) });
+  const rows = await loadSportData(file, {
+    getClient,
+    now: new Date(),
+    mode,
+    log: (line) => console.log(line),
+    ...(values.event ? { event: values.event } : {}),
+    replaceField: values['replace-field'],
+  });
   const report = formatLoadReport(file, mode, rows);
   console.log(report);
   if (values.report) writeFileSync(values.report, report);

@@ -1,6 +1,6 @@
 import { Sport } from '@poolmaster/shared/domain';
 import { formatLoadReport, LoadAction, LoadMode, LoadSubject } from '../../../packages/core-api/scripts/seed-golf/load-report';
-import { parseSportDataFile, SportDataFileError } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
+import { isTestSlate, parseSportDataFile, SportDataFileError } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 
 // A sport data file carries its scope in an envelope; the loader refuses a file whose data
 // strays outside it, before it reads or writes the site.
@@ -67,9 +67,9 @@ describe('sport data file envelope', () => {
     expect(problemsOf(edited((file) => { file.scope.sport = 'CURLING'; }))).toEqual(['scope.sport CURLING is not a sport in the sport registry.']);
   });
 
-  it('refuses a registry sport the loader has no data shape for yet', () => {
+  it('refuses events for a registry sport the loader has no event shape for yet', () => {
     expect(problemsOf(edited((file) => { file.scope.sport = 'HORSE_RACING'; }))).toEqual([
-      'scope.sport HORSE_RACING has no data shape in this loader yet; it loads GOLF.',
+      'scope.sport HORSE_RACING has no event shape in this loader yet; it loads GOLF, and a test slate of any sport.',
     ]);
   });
 
@@ -130,10 +130,53 @@ describe('sport data file envelope', () => {
     });
 
     expect(problemsOf(testFile, false)).toEqual([
-      'testData needs every kind of contents; missing RESULTS.',
+      'testData needs every kind of contents (a test seed), or just PLAYERS and FIELDS (a test slate); missing RESULTS.',
       'testData is true, and this target does not take test data.',
     ]);
-    expect(problemsOf(testFile, true)).toEqual(['testData needs every kind of contents; missing RESULTS.']);
+    expect(problemsOf(testFile, true)).toEqual(['testData needs every kind of contents (a test seed), or just PLAYERS and FIELDS (a test slate); missing RESULTS.']);
+  });
+});
+
+describe('sport data test slate', () => {
+  function slate(): Record<string, unknown> {
+    return {
+      schemaVersion: 1,
+      scope: { sport: 'AUTO_RACING', season: 2025, sportLeagues: ['Formula 1'], contents: ['PLAYERS', 'FIELDS'] },
+      testData: true,
+      provenance: { gatheredAt: '2026-10-14', gatheredBy: 'test', sources: [{ name: 'F1 2025', url: 'https://example.com/f1' }] },
+      sportLeagues: [{ name: 'Formula 1', players: [{ key: 'f1-a', name: 'Driver A', countryCode: 'GB', ranking: 1 }], events: [] }],
+    };
+  }
+
+  it('reads a test slate of any registry sport, with players and no events, as a slate', () => {
+    const file = parseSportDataFile(slate(), { allowTestData: true });
+
+    expect(file.scope.sport).toBe(Sport.AUTO_RACING);
+    expect(isTestSlate(file)).toBe(true);
+  });
+
+  it('does not treat a test seed or a real field file as a slate', () => {
+    expect(isTestSlate({ testData: true, scope: { contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'] } })).toBe(false);
+    expect(isTestSlate({ testData: false, scope: { contents: ['PLAYERS', 'FIELDS'] } })).toBe(false);
+  });
+
+  it('refuses a slate with events, with no players, or with more than one sport league, and one on a target without test data', () => {
+    const withEvents = slate() as { sportLeagues: Array<{ name: string; players: unknown[]; events: unknown[] }>; scope: { season: number; sportLeagues: string[] } };
+    withEvents.sportLeagues[0].events.push({
+      key: 'bahrain', name: 'Bahrain Grand Prix', startDate: '2025-04-11', endDate: '2025-04-13', venue: null, location: null, rounds: 1, roundsPar: null, field: [],
+    });
+    expect(problemsOf(withEvents, true)).toContain('Formula 1: a test slate has no events; the run names the event it fills.');
+
+    const empty = slate() as { sportLeagues: Array<{ players: unknown[] }> };
+    empty.sportLeagues[0].players = [];
+    expect(problemsOf(empty, true)).toEqual(['Formula 1: a test slate needs players.']);
+
+    const two = slate() as { scope: { sportLeagues: string[] }; sportLeagues: Array<Record<string, unknown>> };
+    two.scope.sportLeagues.push('IndyCar');
+    two.sportLeagues.push({ name: 'IndyCar', players: [{ key: 'indy-a', name: 'Driver B', countryCode: 'US', ranking: 1 }], events: [] });
+    expect(problemsOf(two, true)).toEqual(['A test slate holds one sport league; this one has 2.']);
+
+    expect(problemsOf(slate(), false)).toEqual(['testData is true, and this target does not take test data.']);
   });
 });
 

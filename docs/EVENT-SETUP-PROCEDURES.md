@@ -235,6 +235,25 @@ season, a league the scope does not name, made-up odds or scores in a real file,
 data on a target that does not take it. The filename is for people and is never read.
 The shape is in `packages/core-api/scripts/seed-golf/sport-data-file.ts`.
 
+### Test slates: a test field on an event that is already there
+
+A test slate fills the field of one event on the site with a fixed list of players, for
+trying contests before the real field is announced. There is one per sport league in
+`packages/core-api/scripts/seed-golf/test-slates/`: `pga-tour.json` and `lpga-tour.json`
+(the test seed's ranked golfers) and `formula-1.json` (every driver who started a 2025 race).
+Its envelope says `testData` with `contents` `PLAYERS` and `FIELDS` and no events; any sport
+in the registry can have one.
+
+Run *Load sport data* with the slate as `file` (`test-slates/pga-tour.json`) and the event's
+name in `event`. The sport league and the event must already exist; a slate never creates
+either, and only touches an event that has not started. Its players join the league if they
+are new and fill the field in the file's order, at their rankings. Without `replace_field` it
+fills in like any field load: a player the slate leaves out is withdrawn. With
+`replace_field` ticked, every field row the slate does not list is removed instead, except
+one a contest entry has picked, which is withdrawn so the entry keeps its pick. Such a row
+stays in the field, so every later replace run lists it as removed and withdraws it again;
+that is expected, not a failure. Dry run first, as always.
+
 ## Seeded 2026 tournaments
 
 `golf-2026.json` is the test seed: the whole 2026 PGA TOUR (45 tournaments) and LPGA Tour

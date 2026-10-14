@@ -8,7 +8,7 @@ import {
   type SportDataFieldEntry,
   type SportDataFile,
 } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext } from './builders';
 import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 
@@ -345,5 +345,105 @@ describe('Loading a real golf schedule and fields through the admin API', () => 
     const heritage = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === name('Heritage presented by Sponsor')));
     expect((await fieldOf(heritage.id)).get(`${prefix} Golfer 3`)).toMatchObject({ isActive: true, inactiveReason: null, seedNumber: 4 });
     expect(changes(await loadSportData(parsed(recommitted), { getClient, now: NOW, mode: LoadMode.APPLY })).filter((row) => row.subject === LoadSubject.FIELD)).toEqual([]);
+  });
+});
+
+describe('Filling an event from a test slate through the admin API', () => {
+  const prefix = `${RUN}-slate`;
+  const tour = `Slate Tour ${prefix}`;
+  const eventName = `${prefix} Invitational`;
+  const getClient = () => Promise.resolve(admin.client);
+  const roster = players(prefix, 6);
+  const slate = (keys: readonly number[]): SportDataFile => ({
+    schemaVersion: 1,
+    scope: { sport: Sport.GOLF, season: 2026, sportLeagues: [tour], contents: [SportDataContent.PLAYERS, SportDataContent.FIELDS] },
+    testData: true,
+    provenance: provenance(),
+    sportLeagues: [{ name: tour, players: keys.map((key) => roster[key - 1]), events: [] }],
+  });
+  const fieldRow = (detail: string): LoadRow => ({ sportLeague: tour, subject: LoadSubject.FIELD, action: LoadAction.UPDATE, name: eventName, detail });
+  let eventId = '';
+
+  beforeAll(async () => {
+    // A real schedule file puts the event on the site with a field of golfers 1 to 3.
+    const schedule: SportDataFile = {
+      schemaVersion: 1,
+      scope: { sport: Sport.GOLF, season: 2027, sportLeagues: [tour], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS] },
+      testData: false,
+      provenance: provenance(),
+      sportLeagues: [{
+        name: tour,
+        players: roster.slice(0, 3),
+        events: [{
+          key: 'invitational', name: eventName, startDate: '2027-05-06', endDate: '2027-05-09', venue: null, location: null, rounds: 4, roundsPar: 72,
+          field: [1, 2, 3].map((index) => ({ player: `${prefix}-p${index}`, ranking: index })),
+        }],
+      }],
+    };
+    await loadSportData(parsed(schedule), { getClient, now: NOW, mode: LoadMode.APPLY });
+    const league = expectDefined(await leagueNamed(tour));
+    eventId = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === eventName)).id;
+  });
+
+  it('refuses a slate run without an event, a file with its own events given one, and an event the sport league does not have', async () => {
+    await expect(loadSportData(parsed(slate([1])), { getClient, now: NOW, mode: LoadMode.DRY_RUN })).rejects.toThrow('A test slate fills one event: name it (--event).');
+    await expect(loadSportData(parsed(slate([1])), { getClient, now: NOW, mode: LoadMode.DRY_RUN, event: `${prefix} Nowhere` })).rejects.toThrow(`No ${tour} event named ${prefix} Nowhere.`);
+    const seedFile = parsed(slate([1]));
+    seedFile.testData = false;
+    await expect(loadSportData(seedFile, { getClient, now: NOW, mode: LoadMode.DRY_RUN, event: eventName })).rejects.toThrow('--event and --replace-field go with a test slate');
+  });
+
+  it('fills the named event with the slate in seed order, withdrawing a player it leaves out, after a dry run that writes nothing, then skips on a second run', async () => {
+    const file = parsed(slate([4, 2, 5]));
+    const expected = fieldRow(`2 added (${prefix} Golfer 4, ${prefix} Golfer 5); 2 withdrawn (${prefix} Golfer 1, ${prefix} Golfer 3)`);
+
+    const dryRun = await loadSportData(file, { getClient, now: NOW, mode: LoadMode.DRY_RUN, event: eventName });
+    expect(changes(dryRun)).toEqual([
+      { sportLeague: tour, subject: LoadSubject.PLAYER, action: LoadAction.ADD, name: `${prefix} Golfer 4`, detail: 'ranked 4' },
+      { sportLeague: tour, subject: LoadSubject.PLAYER, action: LoadAction.ADD, name: `${prefix} Golfer 5`, detail: 'ranked 5' },
+      expected,
+    ]);
+    expect((await fieldOf(eventId)).size).toBe(3);
+
+    expect(changes(await loadSportData(file, { getClient, now: NOW, mode: LoadMode.APPLY, event: eventName }))).toContainEqual(expected);
+    const field = await fieldOf(eventId);
+    expect(field.get(`${prefix} Golfer 4`)).toMatchObject({ seedNumber: 1, ranking: 4, isActive: true });
+    expect(field.get(`${prefix} Golfer 2`)).toMatchObject({ seedNumber: 2, isActive: true });
+    expect(field.get(`${prefix} Golfer 5`)).toMatchObject({ seedNumber: 3, isActive: true });
+    expect(field.get(`${prefix} Golfer 1`)).toMatchObject({ isActive: false, inactiveReason: 'WITHDRAWN' });
+
+    expect(changes(await loadSportData(file, { getClient, now: NOW, mode: LoadMode.APPLY, event: eventName }))).toEqual([]);
+  });
+
+  it('replaces the field when asked: removes every row the slate leaves out, but withdraws one a contest entry has picked', async () => {
+    const db = getFunctionalPrisma();
+    const { league, commissioner } = await buildLeagueWithCommissioner({ displayName: 'Slate Commissioner', leagueName: `Slate League ${prefix}` });
+    const { contestId } = await seedContestFixture(league.id, { name: `Slate Contest ${prefix}`, selectionType: 'TIERED' });
+    const squad = await db.squad.create({ data: { leagueId: league.id, createdBy: commissioner.userId, name: `Slate Squad ${prefix}` } });
+    const entry = await db.contestEntry.create({ data: { contestId, squadId: squad.id, entryNumber: 1, name: `Slate Entry ${prefix}`, status: 'SUBMITTED' } });
+    const picked = expectDefined((await fieldOf(eventId)).get(`${prefix} Golfer 2`));
+    await db.contestEntryPick.create({ data: { entryId: entry.id, sportEventParticipantId: picked.id, contestFormat: 'ROSTER', slot: 1 } });
+
+    try {
+      const file = parsed(slate([6, 4]));
+      const dryRun = await loadSportData(file, { getClient, now: NOW, mode: LoadMode.DRY_RUN, event: eventName, replaceField: true });
+      expect(changes(dryRun)).toContainEqual(fieldRow(
+        `1 added (${prefix} Golfer 6); 1 re-ranked or re-seeded; 4 removed (${prefix} Golfer 1, ${prefix} Golfer 2, ${prefix} Golfer 3, ${prefix} Golfer 5); any a contest entry has picked are withdrawn instead`,
+      ));
+
+      const applied = await loadSportData(file, { getClient, now: NOW, mode: LoadMode.APPLY, event: eventName, replaceField: true });
+      expect(changes(applied)).toContainEqual(fieldRow(`1 withdrawn, not removed, because a contest entry picked them (${prefix} Golfer 2)`));
+      const field = await fieldOf(eventId);
+      expect([...field.keys()].sort()).toEqual([`${prefix} Golfer 2`, `${prefix} Golfer 4`, `${prefix} Golfer 6`]);
+      expect(field.get(`${prefix} Golfer 6`)).toMatchObject({ seedNumber: 1, isActive: true });
+      expect(field.get(`${prefix} Golfer 4`)).toMatchObject({ seedNumber: 2, isActive: true });
+      expect(field.get(`${prefix} Golfer 2`)).toMatchObject({ isActive: false, inactiveReason: 'WITHDRAWN' });
+    } finally {
+      await db.contestEntryPick.deleteMany({ where: { entryId: entry.id } });
+      await db.contestEntry.delete({ where: { id: entry.id } });
+      await db.contestConfiguration.deleteMany({ where: { contestId } });
+      await db.contest.delete({ where: { id: contestId } });
+      await db.squad.delete({ where: { id: squad.id } });
+    }
   });
 });

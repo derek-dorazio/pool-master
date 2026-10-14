@@ -3,7 +3,7 @@
  * event and event field, and the markdown the workflow summary shows. No I/O.
  */
 
-import type { SportDataFile } from './sport-data-file';
+import { isTestSlate, type SportDataFile } from './sport-data-file';
 
 export const LoadMode = {
   /** Reads the site and reports what applying would change; writes nothing. */
@@ -62,7 +62,7 @@ export function formatLoadReport(file: SportDataFile, mode: LoadMode, rows: read
   const lines = [
     `### Load sport data (${mode === LoadMode.APPLY ? 'apply' : 'dry run, nothing written'})`,
     '',
-    `${file.scope.sport} ${file.scope.season}: ${file.scope.sportLeagues.join(', ')}. Contents: ${file.scope.contents.join(', ')}.${file.testData ? ' Test data.' : ''}`,
+    `${file.scope.sport} ${file.scope.season}: ${file.scope.sportLeagues.join(', ')}. Contents: ${file.scope.contents.join(', ')}.${isTestSlate(file) ? ' Test slate.' : file.testData ? ' Test data.' : ''}`,
     `Gathered ${file.provenance.gatheredAt} by ${file.provenance.gatheredBy} from ${file.provenance.sources.map((source) => `[${source.name}](${source.url})`).join(', ')}.`,
     '',
     `| | ${ACTION_ORDER.join(' | ')} |`,
