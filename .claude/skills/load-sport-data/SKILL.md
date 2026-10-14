@@ -36,9 +36,9 @@ of it are fine.
 
 ## Step 2 — gather from two sources
 
-Use the source list below, primary first. A cloud session cannot reach any of them, and
-the tour pages fill in their schedules and fields with scripts, so a plain page fetch has
-nothing in it. Dispatch the "Fetch sport sources" workflow on your branch: JSON feeds and
+Use the sources in `docs/SPORT-DATA-SOURCES.md`, primary first. A cloud session cannot
+reach any of them, and league sites fill in their schedules and fields with scripts, so a
+plain page fetch has nothing in it. Dispatch the "Fetch sport sources" workflow on your branch: JSON feeds and
 plain pages in `urls`, script-filled pages (tour field pages) in `rendered_urls`, which it
 loads in headless Chromium. Then pull the branch and read `sport-sources/`; `index.json`
 says which fetches failed.
@@ -99,21 +99,12 @@ scope, and the unit tests in `tests/unit/core-api/` show how to call it.
 
 ## Sources per sport
 
-| Sport | Schedule | Field | Second source | Rankings | Field is set |
-|---|---|---|---|---|---|
-| Golf (PGA TOUR, LPGA Tour) | ESPN's scoreboard feed (`site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard`, `lpga` likewise): the season calendar, each event's name and dates, no venue | The same feed's current event competitors, once announced | The tour's schedule page, rendered (pgatour.com/schedule): dates, course, city, purse. Field: the tour's field page, rendered | owgr.com, rolexrankings.com | PGA TOUR: Friday 5 p.m. ET before the event |
-
-Checked 2026-10-14: the ESPN scoreboard returned all 49 events of the 2026 calendar with
-dates; the rendered pgatour.com schedule carried every event's course and city. The LPGA
-feed and lpga.com are not yet checked. Venues come
-only from the tour page, so a venue is a single-source fact: load it, and say so.
-
-ESPN's feed is public but undocumented: it can change without notice, which is what the
-second source catches. Confirm a feed URL returns what you expect before building a file
-on it, and correct this table when it does not.
-
-Adding a sport adds its row here (the `add-sport` skill's reflect step), and its data shape
-to the loader.
+`docs/SPORT-DATA-SOURCES.md` lists the primary and second source for each sport's schedule,
+fields and rankings, when each field is set, and which sources have been checked. ESPN's
+feed is the primary for most sports; it is public but undocumented, so confirm a source
+returns what the page says before building a file on it, and correct the page when it does
+not. Adding a sport adds its row there (the `add-sport` skill's reflect step), and its data
+shape to the loader.
 
 ## Where this goes wrong
 
