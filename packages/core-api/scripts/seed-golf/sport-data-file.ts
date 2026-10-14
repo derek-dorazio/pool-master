@@ -6,9 +6,14 @@
  * before it reads the site, so a file whose data strays outside its scope writes nothing.
  * The filename is for people and is never parsed.
  *
- * Only golf loads so far, so the data shape below is golf's: rounds and par on each event,
- * stroke rounds on each field entry of a test seed. Another sport adds its own shape here,
- * chosen by `scope.sport`.
+ * Only golf loads events so far, so the event shape below is golf's: rounds and par on each
+ * event, stroke rounds on each field entry of a test seed. Another sport adds its own shape
+ * here, chosen by `scope.sport`.
+ *
+ * A test slate is the one file any sport in the registry may have: one sport league's players
+ * and no events, loaded as the field of an event already on the site that the run names
+ * (isTestSlate). It is test data, for trying contests on an event before its real field is
+ * announced.
  */
 
 import { z } from 'zod';
@@ -30,7 +35,7 @@ export const SportDataContent = {
 } as const;
 export type SportDataContent = (typeof SportDataContent)[keyof typeof SportDataContent];
 
-/** The sports this loader has a data shape for. */
+/** The sports this loader has an event shape for. A test slate carries no events, so any sport may have one. */
 const LOADABLE_SPORTS: readonly Sport[] = [Sport.GOLF];
 
 const IsoDaySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'must be a YYYY-MM-DD date');
@@ -122,6 +127,18 @@ export interface ParseSportDataFileOptions {
 
 const TEST_ONLY_FIELD_KEYS = ['oddsToWin', 'rounds', 'finish', 'withdrawnThru'] as const;
 
+const TEST_SLATE_CONTENTS: readonly SportDataContent[] = [SportDataContent.PLAYERS, SportDataContent.FIELDS];
+
+/**
+ * A test slate: test data that holds only PLAYERS and FIELDS. Its one sport league's players,
+ * in file order, become the field of the event a run names (`--event`).
+ */
+export function isTestSlate(file: { testData: boolean; scope: { contents: readonly SportDataContent[] } }): boolean {
+  return file.testData
+    && file.scope.contents.length === TEST_SLATE_CONTENTS.length
+    && TEST_SLATE_CONTENTS.every((content) => file.scope.contents.includes(content));
+}
+
 function isSport(value: string): value is Sport {
   return (SUPPORTED_SPORTS as readonly string[]).includes(value);
 }
@@ -190,19 +207,29 @@ export function parseSportDataFile(json: unknown, options: ParseSportDataFileOpt
   const file = parsed.data;
   const problems: string[] = [];
   const { sport } = file.scope;
+  const slate = isTestSlate(file);
   if (!isSport(sport)) {
     problems.push(`scope.sport ${sport} is not a sport in the sport registry.`);
-  } else if (!LOADABLE_SPORTS.includes(sport)) {
-    problems.push(`scope.sport ${sport} has no data shape in this loader yet; it loads ${LOADABLE_SPORTS.join(', ')}.`);
+  } else if (!slate && !LOADABLE_SPORTS.includes(sport)) {
+    problems.push(`scope.sport ${sport} has no event shape in this loader yet; it loads ${LOADABLE_SPORTS.join(', ')}, and a test slate of any sport.`);
   }
 
   const contents = new Set(file.scope.contents);
   if (contents.has(SportDataContent.FIELDS) && !contents.has(SportDataContent.PLAYERS)) {
     problems.push('scope.contents has FIELDS without PLAYERS: a field names its players, so the file carries them.');
   }
+  if (slate) {
+    if (file.sportLeagues.length !== 1) problems.push(`A test slate holds one sport league; this one has ${file.sportLeagues.length}.`);
+    for (const league of file.sportLeagues) {
+      if (league.events.length > 0) problems.push(`${league.name}: a test slate has no events; the run names the event it fills.`);
+      if (league.players.length === 0) problems.push(`${league.name}: a test slate needs players.`);
+    }
+  }
   if (file.testData) {
     const missing = Object.values(SportDataContent).filter((content) => !contents.has(content));
-    if (missing.length > 0) problems.push(`testData needs every kind of contents; missing ${missing.join(', ')}.`);
+    if (!slate && missing.length > 0) {
+      problems.push(`testData needs every kind of contents (a test seed), or just PLAYERS and FIELDS (a test slate); missing ${missing.join(', ')}.`);
+    }
     if (!options.allowTestData) problems.push('testData is true, and this target does not take test data.');
   } else if (contents.has(SportDataContent.RESULTS)) {
     problems.push('scope.contents has RESULTS, which only test data may.');

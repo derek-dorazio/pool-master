@@ -23,9 +23,15 @@
  * still a draft gets odds, tiers, prices and stored scores and is released for contests. A
  * draft that an earlier run stopped part-way through is finished the same way. A real file
  * never releases an event, writes odds, tiers, prices or scores, or deletes anything.
+ *
+ * A test slate (isTestSlate) fills the field of one event already on the site, named by the
+ * run, with the slate's players in file order; it never creates a sport league or an event.
+ * It is re-entrant the same way, unless the run asks to replace the field: then every field
+ * row the slate does not list is removed, and one a contest entry has picked is withdrawn
+ * instead, because removing it would break that entry.
  */
 
-import { findSportRow, type Sport } from '@poolmaster/shared/domain';
+import { findSportRow, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type {
   AutoAssignSportEventPricesRequest,
@@ -51,12 +57,13 @@ import {
   listSportLeagues,
   listSports,
   releaseEvent,
+  removeEventParticipant,
   updateEvent,
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
 import { golferRoundScore, seedDateOffsetDays, shiftedEventDates } from './seed-golf-data';
-import { SportDataContent, type SportDataEvent, type SportDataFile, type SportDataLeague } from './sport-data-file';
+import { isTestSlate, SportDataContent, type SportDataEvent, type SportDataFieldEntry, type SportDataFile, type SportDataLeague } from './sport-data-file';
 
 export interface LoadSportDataOptions {
   /** A root-admin client. Called before each event, so a long run can sign in again. */
@@ -64,11 +71,17 @@ export interface LoadSportDataOptions {
   now: Date;
   mode: LoadMode;
   log?: (line: string) => void;
+  /** A test slate's target: the name of an event already on the site, in the slate's sport league. */
+  event?: string;
+  /** A test slate only: remove field rows the slate does not list, rather than withdraw them. */
+  replaceField?: boolean;
 }
 
 type StoredEvent = SportEventListResponse['events'][number];
 type StoredFieldRow = SportEventParticipantResponse['participant'];
 type FieldPatch = UpdateSportEventParticipantsRequest['participants'][number];
+/** What a field is written from: a file event's field, or a test slate's players. */
+type FieldSource = Pick<SportDataEvent, 'name' | 'field'>;
 
 /** An event that has started, or will not run as scheduled: the loader leaves it alone. */
 const EDITABLE_STATUSES: ReadonlySet<StoredEvent['status']> = new Set(['DRAFT', 'SCHEDULED']);
@@ -125,12 +138,17 @@ class Loader {
   private readonly contents: ReadonlySet<SportDataContent>;
   private readonly offsetDays: number;
   private readonly log: (line: string) => void;
+  /** A test seed's withdrawals come from its made-up scores, so it never reinstates a player. */
+  private readonly testSeed: boolean;
+  private readonly replaceField: boolean;
 
   constructor(private readonly file: SportDataFile, private readonly options: LoadSportDataOptions, private readonly sportId: string) {
     this.apply = options.mode === LoadMode.APPLY;
     this.contents = new Set(file.scope.contents);
-    this.offsetDays = file.testData ? seedDateOffsetDays(file, options.now) : 0;
+    this.testSeed = file.testData && this.contents.has(SportDataContent.RESULTS);
+    this.offsetDays = this.testSeed ? seedDateOffsetDays(file, options.now) : 0;
     this.log = options.log ?? (() => {});
+    this.replaceField = options.replaceField ?? false;
   }
 
   private get sport(): Sport {
@@ -185,7 +203,7 @@ class Loader {
         if (this.apply) {
           const created = await must(createParticipant({
             client,
-            body: { sportId: this.sportId, participantType: 'INDIVIDUAL', name: player.name, externalId: player.key, nationality: player.countryCode, ...splitName(player.name) },
+            body: { sportId: this.sportId, participantType: getSportDefinition(this.sport).participantType, name: player.name, externalId: player.key, nationality: player.countryCode, ...splitName(player.name) },
           }), `Create player ${player.name}`);
           id = created.participant.id;
           joins.push({ participantId: id, ranking: player.ranking });
@@ -290,12 +308,14 @@ class Loader {
    * What the file would change on an event's field: players to add (by participant id; null
    * for a player a dry run would create), row patches for ranking, seed and (test data) odds,
    * reinstatements for withdrawn rows the file lists again, and withdrawals for active rows
-   * the file no longer lists.
+   * the file no longer lists. When the run replaces the field, every row the file does not
+   * list is to be removed instead.
    */
-  private fieldChanges(league: SportDataLeague, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>, storedField: readonly StoredFieldRow[]): {
+  private fieldChanges(league: SportDataLeague, event: FieldSource, participantIds: ReadonlyMap<string, string | null>, storedField: readonly StoredFieldRow[]): {
     add: Array<{ name: string; participantId: string | null }>;
     patches: Array<{ participantId: string; patch: Omit<FieldPatch, 'sportEventParticipantId'> }>;
     withdrawn: StoredFieldRow[];
+    removed: StoredFieldRow[];
     changes: string[];
   } {
     const players = new Map(league.players.map((player) => [player.key, player.name]));
@@ -314,15 +334,17 @@ class Loader {
       if (entry.ranking !== undefined && row?.ranking !== entry.ranking) patch.ranking = entry.ranking;
       if (row?.seedNumber !== index + 1) patch.seedNumber = index + 1;
       if (entry.oddsToWin !== undefined && row?.oddsToWin !== entry.oddsToWin) patch.oddsToWin = entry.oddsToWin;
-      // Back in the field after a withdrawal (a re-commitment). A test seed's withdrawals come from its scores, so it never reinstates.
-      if (!this.file.testData && row && !row.isActive && row.inactiveReason === 'WITHDRAWN') {
+      // Back in the field after a withdrawal (a re-commitment).
+      if (!this.testSeed && row && !row.isActive && row.inactiveReason === 'WITHDRAWN') {
         patch.isActive = true;
         patch.inactiveReason = null;
         reinstated.push(name);
       }
       if (participantId !== null && Object.keys(patch).length > 0) patches.push({ participantId, patch });
     });
-    const withdrawn = storedField.filter((row) => row.isActive && !listed.has(row.participantId));
+    const unlisted = storedField.filter((row) => !listed.has(row.participantId));
+    const removed = this.replaceField ? unlisted : [];
+    const withdrawn = this.replaceField ? [] : unlisted.filter((row) => row.isActive);
     const addedIds = new Set(add.map((entry) => entry.participantId));
     const updated = patches.filter((entry) => !addedIds.has(entry.participantId) && entry.patch.isActive === undefined).length;
     const changes = [
@@ -330,8 +352,9 @@ class Loader {
       ...(updated > 0 ? [`${updated} re-ranked or re-seeded`] : []),
       ...(reinstated.length > 0 ? [`${reinstated.length} reinstated (${names(reinstated)})`] : []),
       ...(withdrawn.length > 0 ? [`${withdrawn.length} withdrawn (${names(withdrawn.map((row) => row.participant.name))})`] : []),
+      ...(removed.length > 0 ? [`${removed.length} removed (${names(removed.map((row) => row.participant.name))}); one a contest entry has picked is withdrawn instead`] : []),
     ];
-    return { add, patches, withdrawn, changes };
+    return { add, patches, withdrawn, removed, changes };
   }
 
   private async loadEvent(client: Client, input: {
@@ -412,9 +435,19 @@ class Loader {
     if (finishesDraft) await this.finishTestEvent(client, stored.id, event, participantIds);
   }
 
-  private async writeField(client: Client, eventId: string, league: SportDataLeague, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>, storedField: readonly StoredFieldRow[]): Promise<void> {
+  /** Writes the field; returns the names of rows it withdrew because a contest entry had picked them. */
+  private async writeField(client: Client, eventId: string, league: SportDataLeague, event: FieldSource, participantIds: ReadonlyMap<string, string | null>, storedField: readonly StoredFieldRow[]): Promise<string[]> {
     const path = { eventId };
     const plan = this.fieldChanges(league, event, participantIds, storedField);
+    const picked: StoredFieldRow[] = [];
+    for (const row of plan.removed) {
+      const result = await removeEventParticipant({ client, path: { eventId, sportEventParticipantId: row.id } });
+      if (result.error?.error.code === 'EVENT_PARTICIPANT_HAS_PICKS') {
+        picked.push(row);
+      } else if (result.error !== undefined || !result.response.ok) {
+        throw new Error(`Remove ${row.participant.name} from the field of ${event.name} failed (HTTP ${result.response.status}): ${JSON.stringify(result.error)}`);
+      }
+    }
     if (plan.add.length > 0) {
       const ids = plan.add.map((entry) => found(entry.participantId ?? undefined, `${event.name}: the participant id for ${entry.name}`));
       await must(addEventParticipants({ client, path, body: { participantIds: ids } }), `Add players to the field of ${event.name}`);
@@ -426,10 +459,52 @@ class Loader {
         sportEventParticipantId: found(rowByParticipant.get(participantId), `${event.name}: the field row for ${participantId}`),
         ...patch,
       })),
-      ...plan.withdrawn.map((row) => ({ sportEventParticipantId: row.id, isActive: false, inactiveReason: 'WITHDRAWN' as const })),
+      ...[...plan.withdrawn, ...picked.filter((row) => row.isActive)]
+        .map((row) => ({ sportEventParticipantId: row.id, isActive: false, inactiveReason: 'WITHDRAWN' as const })),
     ];
     if (participants.length > 0) {
       await must(updateEventParticipants({ client, path, body: { participants } }), `Set the field of ${event.name}`);
+    }
+    return picked.map((row) => row.participant.name);
+  }
+
+  /**
+   * Fills the named event's field from the slate's one sport league: its players in file
+   * order, each at their ranking. The sport league and the event must already be on the site.
+   */
+  async runSlate(eventName: string): Promise<void> {
+    const league = found(this.file.sportLeagues[0], 'The test slate\'s sport league');
+    const client = await this.options.getClient();
+    const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: this.sport } }), 'List sport leagues');
+    const sportLeague = sportLeagues.find((candidate) => candidate.name.toLowerCase() === league.name.toLowerCase());
+    if (!sportLeague) throw new Error(`No ${league.name} sport league on the site; a test slate fills an event that is already there.`);
+    const { events } = await must(listEvents({ client, query: { sportLeagueId: sportLeague.id } }), `List ${league.name} events`);
+    const named = events.filter((candidate) => candidate.name.toLowerCase() === eventName.trim().toLowerCase());
+    const editable = named.filter((candidate) => EDITABLE_STATUSES.has(candidate.status));
+    const at = { sportLeague: league.name, name: eventName };
+    if (named.length === 0) throw new Error(`No ${league.name} event named ${eventName}.`);
+    if (editable.length > 1) {
+      throw new Error(`${editable.length} ${league.name} events not yet started are named ${eventName} (${editable.map((event) => event.eventYear).join(', ')}); rename one so the name picks one event.`);
+    }
+    if (editable.length === 0) {
+      this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: `${named.map((event) => event.status).join(', ')}, so its field is not changed` });
+      return;
+    }
+    const stored = editable[0];
+
+    this.report({ sportLeague: league.name, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.SKIP, name: league.name, detail: null });
+    const participantIds = await this.ensurePlayers(client, league, sportLeague.id);
+    const slate: FieldSource = {
+      name: stored.name,
+      field: league.players.map((player): SportDataFieldEntry => ({ player: player.key, ranking: player.ranking })),
+    };
+    const { participants: storedField } = await must(listEventParticipants({ client, path: { eventId: stored.id } }), `Read the field of ${stored.name}`);
+    const plan = this.fieldChanges(league, slate, participantIds, storedField);
+    this.report({ ...at, name: stored.name, subject: LoadSubject.FIELD, action: plan.changes.length > 0 ? LoadAction.UPDATE : LoadAction.SKIP, detail: plan.changes.join('; ') || null });
+    if (!this.apply || plan.changes.length === 0) return;
+    const picked = await this.writeField(client, stored.id, league, slate, participantIds, storedField);
+    if (picked.length > 0) {
+      this.report({ ...at, name: stored.name, subject: LoadSubject.FIELD, action: LoadAction.UPDATE, detail: `${picked.length} withdrawn, not removed, because a contest entry picked them (${names(picked)})` });
     }
   }
 
@@ -458,6 +533,14 @@ export async function loadSportData(file: SportDataFile, options: LoadSportDataO
   const sportRow = findSportRow(sports, file.scope.sport);
   if (!sportRow) throw new Error(`No ${file.scope.sport} sport row; the reference-data migration has not run.`);
   const loader = new Loader(file, options, sportRow.id);
-  await loader.run();
+  if (isTestSlate(file)) {
+    if (!options.event?.trim()) throw new Error('A test slate fills one event: name it (--event).');
+    await loader.runSlate(options.event);
+  } else {
+    if (options.event !== undefined || options.replaceField) {
+      throw new Error('--event and --replace-field go with a test slate; this file carries its own events.');
+    }
+    await loader.run();
+  }
   return loader.rows;
 }

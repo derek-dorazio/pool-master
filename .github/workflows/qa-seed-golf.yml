@@ -10,6 +10,11 @@
 # leave as a conflict, and writes nothing. Apply compares and fills in, so running the same
 # file again reports everything as a skip, including straight after "Reset QA database".
 # QA is the only target, so it takes test data; a prod target will not.
+#
+# A test slate (test-slates/<sport league>.json) fills the field of one event already on the
+# site, named in `event`, for trying contests before the real field is out. With
+# `replace_field` it removes every field row the slate does not list rather than withdrawing
+# it; a row a contest entry has picked is withdrawn instead.
 # See docs/EVENT-SETUP-PROCEDURES.md, "Loading sport data".
 name: Load sport data
 
@@ -27,6 +32,14 @@ on:
           - dry-run
           - apply
         default: dry-run
+      event:
+        description: Test slate only, the name of the event whose field it fills
+        type: string
+        default: ''
+      replace_field:
+        description: Test slate only, replace the participant field instead of filling it in
+        type: boolean
+        default: false
 
 # It only reads the checkout; QA is written through the API with the admin secrets.
 permissions:
@@ -48,6 +61,8 @@ jobs:
       # Inputs go through the environment, never into the script text.
       LOAD_FILE: ${{ inputs.file }}
       LOAD_MODE: ${{ inputs.mode }}
+      LOAD_EVENT: ${{ inputs.event }}
+      LOAD_REPLACE_FIELD: ${{ inputs.replace_field }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -61,7 +76,11 @@ jobs:
       # code, and stderr goes to the log the summary falls back to.
       - name: Load into QA
         shell: bash
-        run: npm run seed:golf -- --file "$LOAD_FILE" --mode "$LOAD_MODE" --allow-test-data --report load-report.md 2>&1 | tee load.log
+        run: |
+          args=(--file "$LOAD_FILE" --mode "$LOAD_MODE" --allow-test-data --report load-report.md)
+          if [ -n "$LOAD_EVENT" ]; then args+=(--event "$LOAD_EVENT"); fi
+          if [ "$LOAD_REPLACE_FIELD" = "true" ]; then args+=(--replace-field); fi
+          npm run seed:golf -- "${args[@]}" 2>&1 | tee load.log
       - name: Summary
         if: always()
         shell: bash

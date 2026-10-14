@@ -97,6 +97,15 @@ scope, and the unit tests in `tests/unit/core-api/` show how to call it.
    `apply`. Running it again should report everything as a skip; say so if it does not.
 5. Open a PR for the data file, so the next load starts from it.
 
+## Test slates
+
+When the ask is a test field rather than real data, use a test slate instead of gathering:
+one sport league's fixed player list, loaded into one event already on the site, named at
+run time. `docs/EVENT-SETUP-PROCEDURES.md` *Test slates* says how to run one. A new slate
+is a file in `test-slates/` with `testData: true`, `contents` `PLAYERS` and `FIELDS`, one
+sport league and no events. Its players may come from memory or an old list, because it is
+test data: say so in its `provenance`, and never load it as a real field.
+
 ## Sources per sport
 
 `docs/SPORT-DATA-SOURCES.md` lists the primary and second source for each sport's schedule,

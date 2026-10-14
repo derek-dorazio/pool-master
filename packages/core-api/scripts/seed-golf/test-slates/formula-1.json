@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "AUTO_RACING",
+    "season": 2025,
+    "sportLeagues": [
+      "Formula 1"
+    ],
+    "contents": [
+      "PLAYERS",
+      "FIELDS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-14",
+    "gatheredBy": "load-sport-data test slate, every driver who started a 2025 race, ranked by final standings from memory (unchecked)",
+    "sources": [
+      {
+        "name": "2025 Formula One World Championship (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2025_Formula_One_World_Championship"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "Formula 1",
+      "players": [
+        {
+          "key": "formula-1-lando-norris",
+          "name": "Lando Norris",
+          "countryCode": "GB",
+          "ranking": 1
+        },
+        {
+          "key": "formula-1-max-verstappen",
+          "name": "Max Verstappen",
+          "countryCode": "NL",
+          "ranking": 2
+        },
+        {
+          "key": "formula-1-oscar-piastri",
+          "name": "Oscar Piastri",
+          "countryCode": "AU",
+          "ranking": 3
+        },
+        {
+          "key": "formula-1-george-russell",
+          "name": "George Russell",
+          "countryCode": "GB",
+          "ranking": 4
+        },
+        {
+          "key": "formula-1-charles-leclerc",
+          "name": "Charles Leclerc",
+          "countryCode": "MC",
+          "ranking": 5
+        },
+        {
+          "key": "formula-1-lewis-hamilton",
+          "name": "Lewis Hamilton",
+          "countryCode": "GB",
+          "ranking": 6
+        },
+        {
+          "key": "formula-1-andrea-kimi-antonelli",
+          "name": "Andrea Kimi Antonelli",
+          "countryCode": "IT",
+          "ranking": 7
+        },
+        {
+          "key": "formula-1-alexander-albon",
+          "name": "Alexander Albon",
+          "countryCode": "TH",
+          "ranking": 8
+        },
+        {
+          "key": "formula-1-carlos-sainz",
+          "name": "Carlos Sainz",
+          "countryCode": "ES",
+          "ranking": 9
+        },
+        {
+          "key": "formula-1-fernando-alonso",
+          "name": "Fernando Alonso",
+          "countryCode": "ES",
+          "ranking": 10
+        },
+        {
+          "key": "formula-1-nico-hulkenberg",
+          "name": "Nico Hülkenberg",
+          "countryCode": "DE",
+          "ranking": 11
+        },
+        {
+          "key": "formula-1-isack-hadjar",
+          "name": "Isack Hadjar",
+          "countryCode": "FR",
+          "ranking": 12
+        },
+        {
+          "key": "formula-1-oliver-bearman",
+          "name": "Oliver Bearman",
+          "countryCode": "GB",
+          "ranking": 13
+        },
+        {
+          "key": "formula-1-liam-lawson",
+          "name": "Liam Lawson",
+          "countryCode": "NZ",
+          "ranking": 14
+        },
+        {
+          "key": "formula-1-esteban-ocon",
+          "name": "Esteban Ocon",
+          "countryCode": "FR",
+          "ranking": 15
+        },
+        {
+          "key": "formula-1-lance-stroll",
+          "name": "Lance Stroll",
+          "countryCode": "CA",
+          "ranking": 16
+        },
+        {
+          "key": "formula-1-yuki-tsunoda",
+          "name": "Yuki Tsunoda",
+          "countryCode": "JP",
+          "ranking": 17
+        },
+        {
+          "key": "formula-1-pierre-gasly",
+          "name": "Pierre Gasly",
+          "countryCode": "FR",
+          "ranking": 18
+        },
+        {
+          "key": "formula-1-gabriel-bortoleto",
+          "name": "Gabriel Bortoleto",
+          "countryCode": "BR",
+          "ranking": 19
+        },
+        {
+          "key": "formula-1-franco-colapinto",
+          "name": "Franco Colapinto",
+          "countryCode": "AR",
+          "ranking": 20
+        },
+        {
+          "key": "formula-1-jack-doohan",
+          "name": "Jack Doohan",
+          "countryCode": "AU",
+          "ranking": 21
+        }
+      ],
+      "events": []
+    }
+  ]
+}
