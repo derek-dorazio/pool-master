@@ -126,7 +126,11 @@ In order:
     in `docs/` (odds, tiers, prices, release, results: screen names, paths, buttons, what to do
     when a result changes). Walking it is how a missing admin step shows up before the first
     real event does. If the event needs something the loader's one event shape cannot carry,
-    add it to the loader here rather than sending an admin to type it.
+    add it to the loader here rather than sending an admin to type it. Pipeline support for a
+    sport is three things, all in this PR: its row in `docs/SPORT-DATA-SOURCES.md` with each
+    source checked by one fetch, its first season's schedule file, and a test slate per sport
+    league in `test-slates/` so contests can be tried before a real field is out. The fetch
+    and load workflows themselves are shared by every sport and need no change.
 
 ## Step 3 — reflect
 

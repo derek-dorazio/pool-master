@@ -41,6 +41,9 @@ it with one fetch before building a file on it, and update this table either way
 | Auto racing · NASCAR Cup Series | `racing/nascar-premier` | nascar.com schedule; Wikipedia | Entry list: nascar.com · jayski.com | Entry list mid-week before the race | No |
 | Auto racing · IndyCar | `racing/irl` | indycar.com schedule; Wikipedia | Entry list: indycar.com · Wikipedia race page | Entry list the week of the race | No |
 | Horse racing · US Thoroughbred | None (ESPN has no racing calendar) | Primary: the race's own site (pegasusworldcup.com, Breeders' Cup, Churchill Downs); second: Wikipedia's race page for venue and city. The race's site is often the only source for next year's date | equibase.com entries · the track's entries page; list runners in morning-line order | Post-position draw, usually 2 to 5 days before | 2026-10-14: pegasusworldcup.com (2027 date, Gulfstream Park); Wikipedia race page (venue, city). gulfstreampark.com's Pegasus page still showed 2026; equibase.com/stakes/calendar.cfm and stakes.cfm returned 404 |
+| Auto racing · Formula 1 | `racing/f1` | formula1.com/en/racing/2027 (rendered); Wikipedia | formula1.com entry list · Wikipedia season page (driver line-up is set for the season) | Season line-up; confirm the week of each race | No |
+| Cycling · UCI WorldTour, UCI Women's WorldTour | None useful | Primary: procyclingstats.com race calendar; second: the race's site (letour.fr) or UCI calendar | procyclingstats.com start list · the race's site | Start list a few days before a Grand Tour | No |
+| Running · World Marathon Majors (men), (women) | None | Primary: worldmarathonmajors.com; second: each race's site, Wikipedia | Elite field announcements on the race's site · World Athletics | Elite field announced weeks before | No |
 
 Venue for golf comes only from the tour page, so it is a single-source fact: load it and say
 so (the skill's cross-check step).
@@ -49,9 +52,6 @@ so (the skill's cross-check step).
 
 | Sport · sport league | ESPN path | Second source, schedule | Field: primary · second | Field is set | Checked |
 |---|---|---|---|---|---|
-| Auto racing · Formula 1 (#625) | `racing/f1` | formula1.com/en/racing/2027 (rendered); Wikipedia | formula1.com entry list · Wikipedia season page (driver line-up is set for the season) | Season line-up; confirm the week of each race | No |
-| Cycling (#626) | None useful | Primary: procyclingstats.com race calendar; second: the race's site (letour.fr) or UCI calendar | procyclingstats.com start list · the race's site | Start list a few days before a Grand Tour | No |
-| Running · World Marathon Majors (#627) | None | Primary: worldmarathonmajors.com; second: each race's site, Wikipedia | Elite field announcements on the race's site · World Athletics | Elite field announced weeks before | No |
 | Tennis · ATP, WTA (later) | `tennis/atp`, `tennis/wta` | atptour.com / wtatennis.com calendars; Wikipedia | Draw: the Slam's own site (ausopen.com) · ESPN | Draw the day or two before main draw starts | No |
 | Team sports for pick'em: NFL, college football, NBA, men's college basketball, MLB, NHL, soccer | `football/nfl`, `football/college-football`, `basketball/nba`, `basketball/mens-college-basketball`, `baseball/mlb`, `hockey/nhl`, `soccer/<league code>` | The league's own schedule page; Wikipedia | Teams come with each game in the ESPN feed | Fixed with the schedule | No |
 
