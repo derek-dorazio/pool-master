@@ -111,7 +111,7 @@ A UI Label, Not A Domain Term*.
   The jockey is the result's `riderName`, not a participant.
 - **Driver**: an auto racing `Participant`, one per person whichever series they race in. An
   auto racing result names only the driver, so its `riderName` stays empty.
-- **Series**: what auto racing calls a `SportLeague` (NASCAR Cup Series, IndyCar).
+- **Series**: what auto racing calls a `SportLeague` (NASCAR Cup Series, IndyCar, Formula 1).
 - **Scratched, withdrawn**: a runner taken out of a race before the start is a field member made
   inactive with `inactiveReason` `WITHDRAWN`; horse racing shows it as "Scratched". A runner
   that did not start is a result (`DID_NOT_START`), which also leaves it `WITHDRAWN` in the standing.

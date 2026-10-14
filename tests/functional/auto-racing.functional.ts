@@ -18,6 +18,7 @@ import {
   listSports,
   openContest,
   releaseEvent,
+  replaceEventTiers,
   submitContestEntry,
   submitContestSelection,
   transitionEvent,
@@ -36,7 +37,8 @@ import { standardEventPricing } from '../support/budget-pricing';
 // and loads its field's odds by upload, a commissioner runs a contest from the series' default
 // tiered template (its NASCAR points table comes with it), two entries pick one driver from each
 // of the five tiers, the admin enters the official finishing order, and the board and the settled
-// contest score each entry by NASCAR Cup Series points.
+// contest score each entry by NASCAR Cup Series points. Then Formula 1 (#625): a race set to four
+// tiers, a contest from the series' default budget template, scored by F1 points.
 
 const RUN = `auto-${Date.now()}`;
 const NASCAR_CUP_POINTS = [40, 35, ...Array.from({ length: 34 }, (_, index) => 34 - index), 1, 1, 1, 1];
@@ -88,7 +90,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
 
     // --- The seeded series, a race in it, and its field ----------------------------------------
     const series = expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AUTO_RACING } })).data).sportLeagues;
-    expect(series.map((league) => league.name).sort()).toEqual(['IndyCar', 'NASCAR Cup Series']);
+    expect(series.map((league) => league.name).sort()).toEqual(['Formula 1', 'IndyCar', 'NASCAR Cup Series']);
     const nascar = expectDefined(series.find((league) => league.name === 'NASCAR Cup Series'));
 
     const race = await createEvent({
@@ -211,5 +213,146 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const settled = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(standingsOf(settled.entries)).toEqual(expected);
+  });
+});
+
+const FORMULA_1_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+// Eight drivers, shortest odds first, so the first is priced highest and the last five lowest.
+const F1_DRIVERS = ['Verstappen', 'Leclerc', 'Norris', 'Piastri', 'Hamilton', 'Russell', 'Sainz', 'Alonso'];
+// Norris wins (25), Piastri second (18), Verstappen third (15), Leclerc fourth (12), Russell
+// fifth (10), Alonso sixth (8), Hamilton seventh (6), and Sainz does not finish (0).
+const F1_FINISH: Record<string, number | null> = {
+  Norris: 1, Piastri: 2, Verstappen: 3, Leclerc: 4, Russell: 5, Alonso: 6, Hamilton: 7, Sainz: null,
+};
+
+describe('SDK Functional: Auto racing Formula 1 points', () => {
+  it('scores and settles two budget entries by F1 points from the Formula 1 default template, on a race set to four tiers', async () => {
+    const admin = await buildRegisteredUser({ displayName: 'Race Director' });
+    await promoteToRootAdmin(admin);
+    const a = admin.client;
+    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.AUTO_RACING)).id;
+    const series = expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AUTO_RACING } })).data).sportLeagues;
+    const formula1 = expectDefined(series.find((league) => league.name === 'Formula 1'), 'the seeded Formula 1 series');
+
+    // --- A grand prix, its field, four tiers and prices -------------------------------------------
+    const race = await createEvent({
+      client: a,
+      body: { sportLeagueId: formula1.id, eventYear: 2099, name: `Harbour Grand Prix ${RUN}`, startDate: '2099-05-24T13:00:00.000Z', autoLifecycleEnabled: false },
+    });
+    expect(race.response.status).toBe(201);
+    const eventId = expectDefined(race.data).event.id;
+    created.sportEventIds.add(eventId);
+
+    const driverIds: string[] = [];
+    for (const driver of F1_DRIVERS) {
+      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'INDIVIDUAL', name: `${driver} ${RUN}` } });
+      const id = expectDefined(participant.data).participant.id;
+      created.participantIds.add(id);
+      driverIds.push(id);
+    }
+    expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: driverIds } })).data?.added).toBe(8);
+    expect((await applyEventParticipantUpload({
+      client: a,
+      path: { eventId },
+      body: { rows: F1_DRIVERS.map((driver, index) => ({ playerName: `${driver} ${RUN}`, oddsToWin: 2 + index * 3 })) },
+    })).response.status).toBe(200);
+
+    // A Formula 1 race is set to four tiers on the event's Tiers card, over the sport's five.
+    const fourTiers = await replaceEventTiers({
+      client: a,
+      path: { eventId },
+      body: { tiers: [1, 2, 3, 4].map((n) => ({ tierKey: `tier-${n}`, label: `Tier ${n}`, tierNumber: n })) },
+    });
+    expect(fourTiers.response.status).toBe(200);
+    expect(expectDefined(fourTiers.data).tiers).toHaveLength(4);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
+
+    const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
+    const fieldRowOf = (driver: string) => expectDefined(field.find((row) => row.participant.name === `${driver} ${RUN}`));
+    expect(new Set(F1_DRIVERS.map((driver) => fieldRowOf(driver).valuation?.sportEventTierId)).size).toBe(4);
+
+    // --- A contest from the Formula 1 default: the budget preset ---------------------------------
+    const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Team Principal', leagueName: `Paddock ${RUN}` });
+    const member = await buildRegisteredUser({ displayName: 'Race Engineer' });
+    const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
+    await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
+
+    const templates = expectDefined((await listContestConfigTemplates({
+      client: commissioner.client,
+      query: { sport: Sport.AUTO_RACING, sportLeagueId: formula1.id, contestFormat: ContestFormat.ROSTER, active: true },
+    })).data).templates;
+    expect(templates.map((template) => template.templateKey).sort()).toEqual([
+      'formula-1-budget-points', 'formula-1-random-draw-points', 'formula-1-tiered-points',
+    ]);
+    const budgetTemplate = expectDefined(templates.find((template) => template.isDefault), 'the Formula 1 default');
+    expect(budgetTemplate.templateKey).toBe('formula-1-budget-points');
+
+    const contest = await createContest({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: {
+        name: `Harbour Grand Prix Picks ${RUN}`,
+        sportEventId: eventId,
+        contestFormat: ContestFormat.ROSTER,
+        selectionType: SelectionType.BUDGET_PICK,
+        templateId: budgetTemplate.id,
+      },
+    });
+    expect(contest.response.status).toBe(201);
+    const contestId = expectDefined(contest.data).contest.id;
+    const scoringRule = await getFunctionalPrisma().participantContestScoringRule.findFirstOrThrow({
+      where: { contestConfiguration: { contestId } },
+    });
+    expect(scoringRule.config).toEqual({ pointsTable: FORMULA_1_POINTS, didNotFinishPoints: 0 });
+    expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
+
+    // --- Two five-driver entries under the $50,000 cap -------------------------------------------
+    const enterWith = async (client: typeof a, lineup: string[]) => {
+      const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
+      for (const driver of lineup) {
+        const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(driver).id } });
+        expect(pick.response.status).toBe(200);
+      }
+      expect((await submitContestEntry({ client, path: { contestId, entryId } })).response.status).toBe(200);
+      return entryId;
+    };
+    // The five cheapest, and the favourite in place of Piastri.
+    const commissionerEntryId = await enterWith(commissioner.client, ['Piastri', 'Hamilton', 'Russell', 'Sainz', 'Alonso']);
+    const memberEntryId = await enterWith(member.client, ['Verstappen', 'Hamilton', 'Russell', 'Sainz', 'Alonso']);
+
+    // --- The grand prix runs, and its classification goes in --------------------------------------
+    expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
+    const official = await applyEventRaceResults({
+      client: a,
+      path: { eventId },
+      body: {
+        isOfficial: true,
+        rows: F1_DRIVERS.map((driver) => ({
+          playerName: `${driver} ${RUN}`,
+          resultStatus: F1_FINISH[driver] === null ? 'DID_NOT_FINISH' as const : 'FINISHED' as const,
+          finishPosition: F1_FINISH[driver],
+          startPosition: null,
+          riderName: null,
+        })),
+      },
+    });
+    expect(official.response.status).toBe(200);
+
+    // Commissioner: 18 + 6 + 10 + 0 + 8 = 42. Member: Verstappen third for 15, so 39.
+    const expected = {
+      [commissionerEntryId]: { totalPoints: 42, displayPosition: '1' },
+      [memberEntryId]: { totalPoints: 39, displayPosition: '2' },
+    };
+    const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; race: { totalPoints: number | null } | null }>) =>
+      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalPoints: entry.race?.totalPoints, displayPosition: entry.displayPosition }]));
+
+    expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
+    expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
+    const settled = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
+    expect(settled.scoringDefinitionId).toBe('FINISH_POSITION_POINTS');
+    expect(standingsOf(settled.entries)).toEqual(expected);
+    expect(settled.entries.map((entry) => entry.entryId)).toEqual([commissionerEntryId, memberEntryId]);
   });
 });

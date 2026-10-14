@@ -241,20 +241,21 @@ own event (a Derby-day undercard race is a separate race).
 
 ## Auto racing
 
-Car racing (NASCAR Cup Series, IndyCar) runs through the same steps under
+Car racing (NASCAR Cup Series, IndyCar, Formula 1) runs through the same steps under
 `/manage/sports/auto-racing/...`: in the side menu it is **Auto racing**, and its three lists
 are **Races**, **Drivers** and **Series**. What differs:
 
-- **The series already exist.** **NASCAR Cup Series** and **IndyCar** are created by the
-  migration that adds auto racing, because each one's points presets belong to it. Skip step 1
-  and choose the series when creating the race. Do not create a second series of the same name.
+- **The series already exist.** **NASCAR Cup Series**, **IndyCar** and **Formula 1** are
+  created by migrations, because each one's points presets belong to it. Skip step 1 and choose
+  the series when creating the race. Do not create a second series of the same name.
 - **Drivers, not horses.** Add each driver once (*Auto racing → Drivers*); a driver who races
   in both series (Indy 500 and NASCAR) is one driver. Withdrawing one before the race reads
   *Withdrawn*, not *Scratched*.
 - **Starts is the green flag.** It is the cutoff for release, contests and picks.
 - **Five tiers of eight.** *Auto-assign tiers from odds* fills them eight drivers at a time
   from the favourite, so a full 40-car NASCAR field comes out 8/8/8/8/8 and a 33-car Indy 500
-  field 8/8/8/8/1. Move drivers by hand if the last tier is too thin.
+  field 8/8/8/8/1. Move drivers by hand if the last tier is too thin. A Formula 1 race is the
+  exception: see below.
 - **Presets per series.** On create contest, choose **Auto racing**, then the race. *Start
   from* offers only that series' presets: the tiered one (one driver from each tier, five
   counted) is the default, then budget (five drivers under the cap) and random draw (one
@@ -263,3 +264,22 @@ are **Races**, **Drivers** and **Series**. What differs:
   11th to 24th, then 5 to 33rd. No stage or bonus points.
 - **The result names only the driver.** Leave `riderName` blank; the Result card has no
   *Rider* column. `startPosition` is the grid slot. A car out of the race is `DNF`.
+
+### Formula 1
+
+A Grand Prix runs through the same steps in the **Formula 1** series. What differs:
+
+- **Set four tiers, then even them out by hand.** The sport starts every race on five tiers of
+  eight, which a 22-car F1 field cannot fill. On the race's *Tiers* page, press the delete
+  button beside *Tier 5* in the *Tiers* card and confirm *Delete tier*, so four remain. *Auto-assign tiers from odds*
+  still fills eight at a time from the favourite, so it gives 8/8/6 and leaves Tier 4 empty:
+  move the slowest drivers down with the select on each driver's card until the tiers read
+  6/6/5/5, then *Save changes*. An empty tier would leave a tiered contest with nobody to pick
+  there. The F1 tiered preset counts four picks, one per tier.
+- **Budget is the default.** On create contest, an F1 race starts on *Budget* with the
+  `Pick 5 drivers under the cap, F1 points` preset (five drivers, five counted). *Tiered*
+  (one driver from each of the four tiers) and *Random draw* (one driver each) are the
+  alternatives. Budget needs the field priced: until it is, the page starts on *Tiered*.
+- **F1 points.** 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 for the top ten, nothing below tenth, and 0
+  for a car that does not finish. Enter the Grand Prix result only: the sprint race and the
+  fastest lap are not scored.

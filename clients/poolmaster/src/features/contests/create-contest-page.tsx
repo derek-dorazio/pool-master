@@ -128,6 +128,15 @@ function defaultPresetOf<Preset extends Pick<ContestConfigTemplateDto, 'isDefaul
     ?? presets.at(0);
 }
 
+/**
+ * The format of the event's sport league's own default template, when it has one in a format the
+ * page creates. A league has at most one default, so this is the format its races start on.
+ */
+function leagueDefaultFormatOf(templates: ContestConfigTemplateDto[]): CreatableSelectionType | null {
+  const leagueDefault = templates.find((template) => template.isDefault && template.sportLeagueId !== null);
+  return FORMAT_CHOICES.find((choice) => choice.selectionType === leagueDefault?.selectionType)?.selectionType ?? null;
+}
+
 function sortEventsBySoonest(events: SportEventDto[]) {
   return [...events].sort((left, right) => Date.parse(left.startDate) - Date.parse(right.startDate));
 }
@@ -293,10 +302,24 @@ export function CreateContestPage() {
   }, [eligibleEvents, setFormValues, sportEventId]);
 
   // A newly chosen sport or sport league starts on its default preset; while both stay, Custom
-  // stays Custom.
+  // stays Custom. A sport league whose own default is another format starts on that format (the
+  // Formula 1 default is a budget contest, #625), unless the sport does not offer it or the event
+  // has no prices for it yet.
   useEffect(() => {
     const presetsKey: `${Sport}/${string}` = `${sport}/${sportLeagueId ?? ''}`;
-    if (defaultPresetAppliedFor.current === presetsKey || !presets.length) {
+    if (defaultPresetAppliedFor.current === presetsKey) {
+      return;
+    }
+    const leagueDefaultFormat = leagueDefaultFormatOf(templatesQuery.data ?? []);
+    if (leagueDefaultFormat
+      && leagueDefaultFormat !== form.getValues('selectionType')
+      && sportAllowsSelectionType(getSportDefinition(sport), leagueDefaultFormat)
+      && !(leagueDefaultFormat === SelectionType.BUDGET_PICK && isBudgetUnavailable)) {
+      defaultPresetAppliedFor.current = presetsKey;
+      selectFormat(leagueDefaultFormat);
+      return;
+    }
+    if (!presets.length) {
       return;
     }
     defaultPresetAppliedFor.current = presetsKey;
@@ -304,7 +327,7 @@ export function CreateContestPage() {
     if (defaultPreset) {
       selectPreset(defaultPreset.id);
     }
-  }, [presets, selectPreset, sport, sportLeagueId]);
+  }, [form, isBudgetUnavailable, presets, selectFormat, selectPreset, sport, sportLeagueId, templatesQuery.data]);
 
   // A tiered contest's "Scores that count" starts at the default for the chosen event's tiers. A
   // preset whose picks per tier the form still holds keeps its own count over the formula.
