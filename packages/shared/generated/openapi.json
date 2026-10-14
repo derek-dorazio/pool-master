@@ -6222,7 +6222,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ],
             "description": "Sport this template applies to."
           },
@@ -6930,7 +6931,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ],
             "description": "Only templates for this sport."
           },
@@ -6977,7 +6979,8 @@
                     "GOLF",
                     "HORSE_RACING",
                     "AUTO_RACING",
-                    "CYCLING"
+                    "CYCLING",
+                    "RUNNING"
                   ],
                   "description": "Sport this template applies to."
                 },
@@ -7755,7 +7758,8 @@
                   "GOLF",
                   "HORSE_RACING",
                   "AUTO_RACING",
-                  "CYCLING"
+                  "CYCLING",
+                  "RUNNING"
                 ],
                 "description": "Sport this template applies to."
               },
@@ -9039,7 +9043,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ],
             "description": "The sport."
           },
@@ -9100,7 +9105,8 @@
                     "GOLF",
                     "HORSE_RACING",
                     "AUTO_RACING",
-                    "CYCLING"
+                    "CYCLING",
+                    "RUNNING"
                   ],
                   "description": "The sport."
                 },
@@ -9229,7 +9235,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ],
             "description": "Only sport leagues of this sport."
           },
@@ -9412,7 +9419,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ],
             "description": "The sport the new sport league belongs to."
           },
@@ -10292,7 +10300,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ],
             "description": "Sport the event belongs to."
           },
@@ -10559,7 +10568,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ],
             "description": "Only events of this sport."
           },
@@ -10619,7 +10629,8 @@
                     "GOLF",
                     "HORSE_RACING",
                     "AUTO_RACING",
-                    "CYCLING"
+                    "CYCLING",
+                    "RUNNING"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -10911,7 +10922,8 @@
                   "GOLF",
                   "HORSE_RACING",
                   "AUTO_RACING",
-                  "CYCLING"
+                  "CYCLING",
+                  "RUNNING"
                 ],
                 "description": "Sport the event belongs to."
               },
@@ -11348,7 +11360,8 @@
                     "GOLF",
                     "HORSE_RACING",
                     "AUTO_RACING",
-                    "CYCLING"
+                    "CYCLING",
+                    "RUNNING"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -15029,6 +15042,7 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
+              "RUNNING",
               null
             ]
           },
@@ -15770,7 +15784,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ],
             "description": "Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with."
           },
@@ -16629,6 +16644,7 @@
                   "HORSE_RACING",
                   "AUTO_RACING",
                   "CYCLING",
+                  "RUNNING",
                   null
                 ]
               },
@@ -16764,6 +16780,7 @@
                     "HORSE_RACING",
                     "AUTO_RACING",
                     "CYCLING",
+                    "RUNNING",
                     null
                   ]
                 },
@@ -18306,7 +18323,8 @@
                 "GOLF",
                 "HORSE_RACING",
                 "AUTO_RACING",
-                "CYCLING"
+                "CYCLING",
+                "RUNNING"
               ]
             },
             "minItems": 1
@@ -18404,7 +18422,8 @@
                 "GOLF",
                 "HORSE_RACING",
                 "AUTO_RACING",
-                "CYCLING"
+                "CYCLING",
+                "RUNNING"
               ]
             },
             "minItems": 1,
@@ -18412,7 +18431,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ],
             "description": "Sports that scheduled ingestion is allowed to run automatically."
           },
@@ -18516,7 +18536,8 @@
                       "GOLF",
                       "HORSE_RACING",
                       "AUTO_RACING",
-                      "CYCLING"
+                      "CYCLING",
+                      "RUNNING"
                     ]
                   },
                   "minItems": 1
@@ -18713,7 +18734,8 @@
                         "GOLF",
                         "HORSE_RACING",
                         "AUTO_RACING",
-                        "CYCLING"
+                        "CYCLING",
+                        "RUNNING"
                       ]
                     },
                     "minItems": 1,
@@ -18721,7 +18743,8 @@
                       "GOLF",
                       "HORSE_RACING",
                       "AUTO_RACING",
-                      "CYCLING"
+                      "CYCLING",
+                      "RUNNING"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -18825,7 +18848,8 @@
                               "GOLF",
                               "HORSE_RACING",
                               "AUTO_RACING",
-                              "CYCLING"
+                              "CYCLING",
+                              "RUNNING"
                             ]
                           },
                           "minItems": 1
@@ -18935,7 +18959,8 @@
                         "GOLF",
                         "HORSE_RACING",
                         "AUTO_RACING",
-                        "CYCLING"
+                        "CYCLING",
+                        "RUNNING"
                       ]
                     },
                     "minItems": 1,
@@ -18943,7 +18968,8 @@
                       "GOLF",
                       "HORSE_RACING",
                       "AUTO_RACING",
-                      "CYCLING"
+                      "CYCLING",
+                      "RUNNING"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -19047,7 +19073,8 @@
                               "GOLF",
                               "HORSE_RACING",
                               "AUTO_RACING",
-                              "CYCLING"
+                              "CYCLING",
+                              "RUNNING"
                             ]
                           },
                           "minItems": 1
@@ -19620,7 +19647,8 @@
                               "GOLF",
                               "HORSE_RACING",
                               "AUTO_RACING",
-                              "CYCLING"
+                              "CYCLING",
+                              "RUNNING"
                             ]
                           },
                           "minItems": 1,
@@ -19628,7 +19656,8 @@
                             "GOLF",
                             "HORSE_RACING",
                             "AUTO_RACING",
-                            "CYCLING"
+                            "CYCLING",
+                            "RUNNING"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -19732,7 +19761,8 @@
                                     "GOLF",
                                     "HORSE_RACING",
                                     "AUTO_RACING",
-                                    "CYCLING"
+                                    "CYCLING",
+                                    "RUNNING"
                                   ]
                                 },
                                 "minItems": 1
@@ -19842,7 +19872,8 @@
                               "GOLF",
                               "HORSE_RACING",
                               "AUTO_RACING",
-                              "CYCLING"
+                              "CYCLING",
+                              "RUNNING"
                             ]
                           },
                           "minItems": 1,
@@ -19850,7 +19881,8 @@
                             "GOLF",
                             "HORSE_RACING",
                             "AUTO_RACING",
-                            "CYCLING"
+                            "CYCLING",
+                            "RUNNING"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -19954,7 +19986,8 @@
                                     "GOLF",
                                     "HORSE_RACING",
                                     "AUTO_RACING",
-                                    "CYCLING"
+                                    "CYCLING",
+                                    "RUNNING"
                                   ]
                                 },
                                 "minItems": 1
@@ -20484,7 +20517,8 @@
                         "GOLF",
                         "HORSE_RACING",
                         "AUTO_RACING",
-                        "CYCLING"
+                        "CYCLING",
+                        "RUNNING"
                       ]
                     },
                     "minItems": 1,
@@ -20590,7 +20624,8 @@
                               "GOLF",
                               "HORSE_RACING",
                               "AUTO_RACING",
-                              "CYCLING"
+                              "CYCLING",
+                              "RUNNING"
                             ]
                           },
                           "minItems": 1
@@ -20939,7 +20974,8 @@
                         "GOLF",
                         "HORSE_RACING",
                         "AUTO_RACING",
-                        "CYCLING"
+                        "CYCLING",
+                        "RUNNING"
                       ]
                     },
                     "minItems": 1,
@@ -20947,7 +20983,8 @@
                       "GOLF",
                       "HORSE_RACING",
                       "AUTO_RACING",
-                      "CYCLING"
+                      "CYCLING",
+                      "RUNNING"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -21051,7 +21088,8 @@
                               "GOLF",
                               "HORSE_RACING",
                               "AUTO_RACING",
-                              "CYCLING"
+                              "CYCLING",
+                              "RUNNING"
                             ]
                           },
                           "minItems": 1
@@ -21161,7 +21199,8 @@
                         "GOLF",
                         "HORSE_RACING",
                         "AUTO_RACING",
-                        "CYCLING"
+                        "CYCLING",
+                        "RUNNING"
                       ]
                     },
                     "minItems": 1,
@@ -21169,7 +21208,8 @@
                       "GOLF",
                       "HORSE_RACING",
                       "AUTO_RACING",
-                      "CYCLING"
+                      "CYCLING",
+                      "RUNNING"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -21273,7 +21313,8 @@
                               "GOLF",
                               "HORSE_RACING",
                               "AUTO_RACING",
-                              "CYCLING"
+                              "CYCLING",
+                              "RUNNING"
                             ]
                           },
                           "minItems": 1
@@ -21804,7 +21845,8 @@
                               "GOLF",
                               "HORSE_RACING",
                               "AUTO_RACING",
-                              "CYCLING"
+                              "CYCLING",
+                              "RUNNING"
                             ]
                           },
                           "minItems": 1,
@@ -21812,7 +21854,8 @@
                             "GOLF",
                             "HORSE_RACING",
                             "AUTO_RACING",
-                            "CYCLING"
+                            "CYCLING",
+                            "RUNNING"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -21916,7 +21959,8 @@
                                     "GOLF",
                                     "HORSE_RACING",
                                     "AUTO_RACING",
-                                    "CYCLING"
+                                    "CYCLING",
+                                    "RUNNING"
                                   ]
                                 },
                                 "minItems": 1
@@ -22026,7 +22070,8 @@
                               "GOLF",
                               "HORSE_RACING",
                               "AUTO_RACING",
-                              "CYCLING"
+                              "CYCLING",
+                              "RUNNING"
                             ]
                           },
                           "minItems": 1,
@@ -22034,7 +22079,8 @@
                             "GOLF",
                             "HORSE_RACING",
                             "AUTO_RACING",
-                            "CYCLING"
+                            "CYCLING",
+                            "RUNNING"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -22138,7 +22184,8 @@
                                     "GOLF",
                                     "HORSE_RACING",
                                     "AUTO_RACING",
-                                    "CYCLING"
+                                    "CYCLING",
+                                    "RUNNING"
                                   ]
                                 },
                                 "minItems": 1
@@ -23391,7 +23438,8 @@
                 "GOLF",
                 "HORSE_RACING",
                 "AUTO_RACING",
-                "CYCLING"
+                "CYCLING",
+                "RUNNING"
               ]
             },
             "description": "Sports the provider covers that ingestion is scheduled for."
@@ -23468,7 +23516,8 @@
                       "GOLF",
                       "HORSE_RACING",
                       "AUTO_RACING",
-                      "CYCLING"
+                      "CYCLING",
+                      "RUNNING"
                     ]
                   },
                   "description": "Sports the provider covers that ingestion is scheduled for."
@@ -23519,7 +23568,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ]
           },
           "eventId": {
@@ -23596,7 +23646,8 @@
                       "GOLF",
                       "HORSE_RACING",
                       "AUTO_RACING",
-                      "CYCLING"
+                      "CYCLING",
+                      "RUNNING"
                     ]
                   },
                   "eventId": {
@@ -23753,7 +23804,8 @@
                       "GOLF",
                       "HORSE_RACING",
                       "AUTO_RACING",
-                      "CYCLING"
+                      "CYCLING",
+                      "RUNNING"
                     ]
                   },
                   "eventExternalId": {
@@ -24039,7 +24091,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ]
           },
           "status": {
@@ -24086,7 +24139,8 @@
                     "GOLF",
                     "HORSE_RACING",
                     "AUTO_RACING",
-                    "CYCLING"
+                    "CYCLING",
+                    "RUNNING"
                   ]
                 },
                 "eventId": {
@@ -24163,7 +24217,8 @@
                             "GOLF",
                             "HORSE_RACING",
                             "AUTO_RACING",
-                            "CYCLING"
+                            "CYCLING",
+                            "RUNNING"
                           ]
                         },
                         "eventId": {
@@ -24320,7 +24375,8 @@
                             "GOLF",
                             "HORSE_RACING",
                             "AUTO_RACING",
-                            "CYCLING"
+                            "CYCLING",
+                            "RUNNING"
                           ]
                         },
                         "eventExternalId": {
@@ -24611,7 +24667,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ]
           },
           "eventId": {
@@ -24651,7 +24708,8 @@
                     "GOLF",
                     "HORSE_RACING",
                     "AUTO_RACING",
-                    "CYCLING"
+                    "CYCLING",
+                    "RUNNING"
                   ]
                 },
                 "eventId": {
@@ -24728,7 +24786,8 @@
                             "GOLF",
                             "HORSE_RACING",
                             "AUTO_RACING",
-                            "CYCLING"
+                            "CYCLING",
+                            "RUNNING"
                           ]
                         },
                         "eventId": {
@@ -24885,7 +24944,8 @@
                             "GOLF",
                             "HORSE_RACING",
                             "AUTO_RACING",
-                            "CYCLING"
+                            "CYCLING",
+                            "RUNNING"
                           ]
                         },
                         "eventExternalId": {
@@ -25194,7 +25254,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ]
           }
         },
@@ -25236,7 +25297,8 @@
                     "GOLF",
                     "HORSE_RACING",
                     "AUTO_RACING",
-                    "CYCLING"
+                    "CYCLING",
+                    "RUNNING"
                   ]
                 }
               },
@@ -25274,7 +25336,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ]
           },
           "name": {
@@ -25360,7 +25423,8 @@
               "GOLF",
               "HORSE_RACING",
               "AUTO_RACING",
-              "CYCLING"
+              "CYCLING",
+              "RUNNING"
             ]
           },
           "sportLeagueId": {
@@ -25408,7 +25472,8 @@
                     "GOLF",
                     "HORSE_RACING",
                     "AUTO_RACING",
-                    "CYCLING"
+                    "CYCLING",
+                    "RUNNING"
                   ]
                 },
                 "name": {
@@ -30444,7 +30509,8 @@
                 "GOLF",
                 "HORSE_RACING",
                 "AUTO_RACING",
-                "CYCLING"
+                "CYCLING",
+                "RUNNING"
               ]
             },
             "in": "query",
@@ -30635,7 +30701,8 @@
                 "GOLF",
                 "HORSE_RACING",
                 "AUTO_RACING",
-                "CYCLING"
+                "CYCLING",
+                "RUNNING"
               ]
             },
             "in": "query",
@@ -33418,7 +33485,8 @@
                 "GOLF",
                 "HORSE_RACING",
                 "AUTO_RACING",
-                "CYCLING"
+                "CYCLING",
+                "RUNNING"
               ]
             },
             "in": "query",
@@ -34750,7 +34818,8 @@
                 "GOLF",
                 "HORSE_RACING",
                 "AUTO_RACING",
-                "CYCLING"
+                "CYCLING",
+                "RUNNING"
               ]
             },
             "in": "path",
@@ -34818,7 +34887,8 @@
                 "GOLF",
                 "HORSE_RACING",
                 "AUTO_RACING",
-                "CYCLING"
+                "CYCLING",
+                "RUNNING"
               ]
             },
             "in": "path",
@@ -34978,7 +35048,8 @@
                 "GOLF",
                 "HORSE_RACING",
                 "AUTO_RACING",
-                "CYCLING"
+                "CYCLING",
+                "RUNNING"
               ]
             },
             "in": "query",
@@ -35081,7 +35152,8 @@
                 "GOLF",
                 "HORSE_RACING",
                 "AUTO_RACING",
-                "CYCLING"
+                "CYCLING",
+                "RUNNING"
               ]
             },
             "in": "path",
@@ -35219,7 +35291,8 @@
                 "GOLF",
                 "HORSE_RACING",
                 "AUTO_RACING",
-                "CYCLING"
+                "CYCLING",
+                "RUNNING"
               ]
             },
             "in": "query",

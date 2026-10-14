@@ -10,11 +10,12 @@ import {
 } from './manage-navigation';
 
 describe('Manage sport paths (plans/racing-sports.md Q9.6)', () => {
-  it('writes each sport as a lower-case, hyphenated URL segment: golf, horse-racing, auto-racing and cycling', () => {
+  it('writes each sport as a lower-case, hyphenated URL segment: golf, horse-racing, auto-racing, cycling and running', () => {
     expect(sportPathSegment(Sport.GOLF)).toBe('golf');
     expect(sportPathSegment(Sport.HORSE_RACING)).toBe('horse-racing');
     expect(sportPathSegment(Sport.AUTO_RACING)).toBe('auto-racing');
     expect(sportPathSegment(Sport.CYCLING)).toBe('cycling');
+    expect(sportPathSegment(Sport.RUNNING)).toBe('running');
   });
 
   it('reads every supported sport back from its own segment, so no two sports share a URL', () => {
@@ -48,6 +49,7 @@ describe('Manage menu and breadcrumbs per sport', () => {
       ['Horse racing', true],
       ['Auto racing', false],
       ['Cycling', false],
+      ['Running', false],
     ]);
   });
 
@@ -56,6 +58,13 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(getManageBreadcrumbLabel(['sports', 'cycling', 'events'], 2)).toBe('Races');
     expect(getManageBreadcrumbLabel(['sports', 'cycling', 'participants'], 2)).toBe('Riders');
     expect(getManageBreadcrumbLabel(['sports', 'cycling', 'leagues'], 2)).toBe('Tours');
+  });
+
+  it('names a running trail in running words: Running, Races, Runners, Series', () => {
+    expect(getManageBreadcrumbLabel(['sports', 'running', 'events'], 1)).toBe('Running');
+    expect(getManageBreadcrumbLabel(['sports', 'running', 'events'], 2)).toBe('Races');
+    expect(getManageBreadcrumbLabel(['sports', 'running', 'participants'], 2)).toBe('Runners');
+    expect(getManageBreadcrumbLabel(['sports', 'running', 'leagues'], 2)).toBe('Series');
   });
 
   it('names an auto racing trail in racing words: Auto racing, Races, Drivers, Series', () => {

@@ -405,7 +405,32 @@ still show the riders' overall position after each stage if the admin enters it.
 
 ---
 
-## 5. Marathons (later)
+## 5. Marathons
+
+**Status (2026-10-14, #627).** The sport is built as `RUNNING`, "Running". It reuses the
+finish-position family and the `RACE` format, so it needed no new tables:
+
+- A marathon is one event with one round, its official finishing order. Gun time is not stored.
+- The sport definition: runner / runners, race / races, series / series, "Withdrawn" (a
+  non-starter), and "start" as the event start ("Entries close at the start"). The result names
+  only the runner, so there is no Rider column word and no name for the top places; a runner who
+  drops out is entered as `DNF`. Four tiers of six: three tiers of favourites hold 18 runners,
+  and the last tier takes the rest of an elite field of 20 to 40.
+- Seeding needs no odds: the field upload carries each runner's World Athletics ranking as
+  `ranking` and the same order as `seedNumber`, *Auto-assign tiers from ranking* tiers the field
+  and *Auto-assign prices* prices it by seed. The SDK journey proves a field with no odds tiers,
+  prices and releases.
+- The reference-data migration seeds the sports row and two sport leagues, **World Marathon
+  Majors (men)** and **World Marathon Majors (women)**, idempotently on the (sport, name)
+  unique, as cycling's are.
+- Six templates, three per series, each with its own key: `wmm-men-tiered-top-10` (the
+  default), `wmm-men-budget-top-10`, `wmm-men-random-draw-top-10`, and the same three as
+  `wmm-women-...`. Tiered picks one runner from each of the four tiers and counts four; budget
+  picks four; the draw deals one. All score Top 10 linear (10, 9 ... 1 over ten places), with 0
+  below that and for a DNF.
+
+Boston (April 2027) and New York (November 2027) are loaded later through the sport data
+loader, with a dry run first; the setup by hand is `docs/RACE-SETUP-PROCEDURES.md`.
 
 | Question | Answer |
 |---|---|
@@ -413,10 +438,10 @@ still show the riders' overall position after each stage if the admin enters it.
 | Sport leagues | World Marathon Majors (men), World Marathon Majors (women) |
 | Events first | Boston (April) and New York (November); the other Majors (Tokyo, London, Sydney, Berlin, Chicago) on request |
 | Field | Elite field of 20 to 40 per race; the mass field is not modelled |
-| Seeding | Thin odds; World Athletics ranking or manual valuations fill in |
-| Selection | Tiered |
+| Seeding | Thin odds; World Athletics ranking as `ranking` and `seedNumber`, odds optional |
+| Selection | Tiered (the default), budget, random draw |
 | Scoring | Top 10 preset |
-| Vocabulary | runner / runners; race; "DNF" |
+| Vocabulary | runner / runners; race; series; a runner who drops out is a DNF |
 
 **Q5.1** Triathlon (Ironman World Championship, T100) follows the same pattern as running.
 *Recommendation:* no ticket until someone asks; it is a new sport value plus data.

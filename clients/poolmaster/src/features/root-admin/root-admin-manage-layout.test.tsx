@@ -56,6 +56,7 @@ describe('RootAdminManageLayout', () => {
       'Horse racing',
       'Auto racing',
       'Cycling',
+      'Running',
       'Content Configuration',
       'Events',
       'Sync',

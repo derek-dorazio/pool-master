@@ -402,3 +402,51 @@ describe('RootAdminSportEventResultsPage for a cycling race', () => {
     );
   });
 });
+
+describe('RootAdminSportEventResultsPage for a running race', () => {
+  const marathon = sportEventFixture({ ...race, sport: 'RUNNING', name: 'Boston Marathon', venue: 'Boston' });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    mockLogger.child.mockReturnValue(mockLogger);
+  });
+
+  it('heads the finishing order Finish, Runner and Start with no rider column, and shows a dropout as Did not finish', async () => {
+    getEventMock.mockResolvedValue({ data: { event: marathon } });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: [
+      { ...journalism, race: { finishPosition: null, startPosition: null, resultStatus: 'DID_NOT_FINISH', isOfficial: true, riderName: null } },
+      { ...sovereignty, race: { finishPosition: 1, startPosition: null, resultStatus: 'FINISHED', isOfficial: true, riderName: null } },
+    ] } });
+    renderPage();
+
+    const table = await screen.findByTestId('root-admin-race-result-table');
+    expect(within(table).getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['Finish', 'Runner', 'Start']);
+    expect(within(table).getAllByRole('row').slice(1).map((row) => row.textContent)).toEqual([
+      '1stSovereignty—',
+      'Did not finishJournalism—',
+    ]);
+  });
+
+  it('asks for a place for each runner that finished, and says every runner needs a result when the server refuses an incomplete official result', async () => {
+    getEventMock.mockResolvedValue({ data: { event: marathon } });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: [sovereignty, journalism] } });
+    previewEventRaceResultsMock.mockResolvedValue(preview([previewRow('Sovereignty', 'sep-1', 1)]));
+    applyEventRaceResultsMock.mockResolvedValue({
+      error: { error: { code: 'RACE_RESULT_FIELD_INCOMPLETE', message: 'Field incomplete' } },
+      response: { status: 422 },
+    });
+    renderPage();
+
+    await pasteAndPreview('playerName,finishPosition\nSovereignty,1');
+    expect(screen.getByTestId('root-admin-race-results-panel')).toHaveTextContent(
+      'Paste or upload the race\'s result: a place for each runner that finished, or DNF, DQ or DNS.',
+    );
+    const apply = screen.getByTestId('root-admin-race-result-upload-apply');
+    await waitFor(() => expect(apply).toBeEnabled());
+    await userEvent.click(apply);
+
+    expect(await screen.findByTestId('root-admin-race-result-upload-apply-error')).toHaveTextContent(
+      'An official result needs every runner still in the field: a place for each finisher, or how its race ended.',
+    );
+  });
+});
