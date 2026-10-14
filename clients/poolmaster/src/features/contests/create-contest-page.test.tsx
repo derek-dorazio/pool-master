@@ -1013,4 +1013,57 @@ describe('Commissioner tools › Contests › Create contest for a Formula 1 rac
     expect(screen.getByTestId('contest-format-BUDGET_PICK')).toBeDisabled();
     expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(4);
   });
+
+  it('switches to each series\' own default format when the commissioner moves between a NASCAR race and a Formula 1 race', async () => {
+    const NASCAR_LEAGUE_ID = '62400000-0000-4000-8000-000000000001';
+    primeFormula1Mocks(PRICING);
+    const [f1Race] = (singleEvent({
+      id: 'f1-race-1',
+      sport: 'AUTO_RACING',
+      sportLeagueId: FORMULA_1_LEAGUE_ID,
+      name: 'Monaco Grand Prix',
+      startDate: '2099-05-30T13:00:00.000Z',
+      participantCount: 22,
+      tierCount: 4,
+      pricing: PRICING,
+    }).data.events);
+    const [nascarRace] = (singleEvent({
+      id: 'nascar-race-1',
+      sport: 'AUTO_RACING',
+      sportLeagueId: NASCAR_LEAGUE_ID,
+      name: 'Daytona 500',
+      startDate: '2099-02-21T19:30:00.000Z',
+      participantCount: 40,
+      tierCount: 5,
+      pricing: PRICING,
+    }).data.events);
+    const nascarTiered = {
+      ...formula1Preset('62400000-0000-4000-8000-000000000011', 'nascar-cup-tiered-points', 1, true,
+        { selectionType: 'TIERED', picksPerTier: 1, countedScores: 5 }),
+      sportLeagueId: NASCAR_LEAGUE_ID,
+    };
+    const golfEvents: ((options: unknown) => unknown) | undefined = listEventsMock.getMockImplementation();
+    const f1Templates: ((options: unknown) => unknown) | undefined = listContestConfigTemplatesMock.getMockImplementation();
+    listEventsMock.mockImplementation((options: { query?: { sport?: string } }) => (
+      options.query?.sport === 'AUTO_RACING' ? { data: { events: [nascarRace, f1Race] } } : golfEvents?.(options)
+    ));
+    listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string; sportLeagueId?: string } }) => (
+      options.query?.sportLeagueId === NASCAR_LEAGUE_ID ? { data: { templates: [nascarTiered] } } : f1Templates?.(options)
+    ));
+
+    renderCreateContestPage();
+
+    await waitForStartingChoices();
+    fireEvent.click(screen.getByTestId('contest-sport-AUTO_RACING'));
+    await waitFor(() => expect(screen.getByTestId('contest-template-nascar-cup-tiered-points')).toBeChecked());
+    expect(screen.getByTestId('contest-format-TIERED')).toBeChecked();
+
+    fireEvent.click(screen.getByTestId('contest-event-f1-race-1'));
+    await waitFor(() => expect(screen.getByTestId('contest-template-formula-1-budget-points')).toBeChecked());
+    expect(screen.getByTestId('contest-format-BUDGET_PICK')).toBeChecked();
+
+    fireEvent.click(screen.getByTestId('contest-event-nascar-race-1'));
+    await waitFor(() => expect(screen.getByTestId('contest-template-nascar-cup-tiered-points')).toBeChecked());
+    expect(screen.getByTestId('contest-format-TIERED')).toBeChecked();
+  });
 });
