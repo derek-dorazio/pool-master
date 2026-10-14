@@ -391,11 +391,11 @@ first; the setup by hand is `docs/RACE-SETUP-PROCEDURES.md`.
 | Sport leagues | UCI WorldTour (men), UCI Women's WorldTour, split like PGA Tour and LPGA Tour |
 | Events first | Tour de France (July); Giro and Vuelta on request; one-day Monuments on request |
 | Field | ~175 riders (23 teams of 8); riders abandon during the race |
-| Rounds | A Grand Tour is 21 stages, each a `SportEventRound` |
+| Rounds | One race, one round: the final overall classification (stages are not rounds; Q4.1) |
 | Seeding | Odds for the overall win (deep market for the Tour); UCI ranking as league ranking |
 | Selection | Budget (the official Tour fantasy game is budget-based), tiered |
 | Scoring | Final overall (GC) position with the Top 10 preset; stage scoring later (Q4.1) |
-| Vocabulary | rider / riders; stage; "Abandoned" for DNF |
+| Vocabulary | rider / riders; race; tour; a rider who abandons is a DNF |
 
 **Q4.1** (**Answered 2026-10-14 in the #626 refinement: final overall only, as recommended.**)
 Score only the final overall standings, or each stage too? *Recommendation:* final
