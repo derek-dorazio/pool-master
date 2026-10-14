@@ -1,0 +1,353 @@
+Source: https://www.gulfstreampark.com/pegasus-world-cup
+Final URL: https://www.gulfstreampark.com/event/entertainment/pegasus-world-cup/
+HTTP 200
+Fetched: 2026-10-14T22:30:35.095Z
+
+Pegasus World Cup | Gulfstream Park
+We use cookies to personalise content and ads, and analyse traffic. Click "Accept All" to consent.
+Customize Reject All Accept All
+Powered by
+Customise Consent Preferences
+We use cookies to help you navigate efficiently and perform certain functions. You will find detailed information about all cookies under each consent category below.
+The cookies that are categorised as "Necessary" are stored on your browser as they are essential for enabling the basic functionalities of the site. ... Show more
+Necessary Always Active
+Necessary cookies are required to enable the basic features of this site, such as providing secure log-in or adjusting your consent preferences. These cookies do not store any personally identifiable data.
+Cookie
+__cf_bm
+Duration
+1 hour
+Description
+This cookie, set by Cloudflare, is used to support Cloudflare Bot Management.
+Cookie
+_GRECAPTCHA
+Duration
+6 months
+Description
+Google Recaptcha service sets this cookie to identify bots to protect the website against malicious spam attacks.
+Cookie
+cookieyes-*
+Duration
+1 year
+Description
+CookieYes sets this cookie for consent solution management.
+Cookie
+cookietest
+Duration
+session
+Description
+The cookietest cookie is typically used to determine whether the user's browser accepts cookies, essential for website functionality and user experience.
+Functional
+Functional cookies help perform certain functionalities like sharing the content of the website on social media platforms, collecting feedback, and other third-party features.
+Cookie
+_attn_
+Duration
+1 year 24 days
+Description
+Attn.tv sets this cookie to promote SMS opt-in and produce personalised SMS messaging.
+Cookie
+__attentive_id
+Duration
+1 year 24 days
+Description
+Attn.tv sets this cookie to promote SMS opt-in and produce personalised SMS messaging.
+Cookie
+__attentive_cco
+Duration
+1 year 24 days
+Description
+Attn.tv sets this cookie to promote SMS opt-in and produce personalised SMS messaging.
+Cookie
+__attentive_pv
+Duration
+1 hour
+Description
+Attn.tv sets this cookie to promote SMS opt-in and produce personalised SMS messaging.
+Cookie
+__attentive_ss_referrer
+Duration
+1 hour
+Description
+Attn.tv sets this cookie to promote SMS opt-in and produce personalised SMS messaging.
+Cookie
+__attentive_dv
+Duration
+1 day
+Description
+Attn.tv sets this cookie to promote SMS opt-in and produce personalised SMS messaging.
+Cookie
+S
+Duration
+1 hour
+Description
+Used by Yahoo to provide ads, content or analytics.
+Analytics
+Analytical cookies are used to understand how visitors interact with the website. These cookies help provide information on metrics such as the number of visitors, bounce rate, traffic source, etc.
+Cookie
+_ga
+Duration
+1 year 1 month 4 days
+Description
+Google Analytics sets this cookie to calculate visitor, session and campaign data and track site usage for the site's analytics report. The cookie stores information anonymously and assigns a randomly generated number to recognise unique visitors.
+Cookie
+_gid
+Duration
+1 day
+Description
+Google Analytics sets this cookie to store information on how visitors use a website while also creating an analytics report of the website's performance. Some of the collected data includes the number of visitors, their source, and the pages they visit anonymously.
+Cookie
+_gat_gtag_UA_*
+Duration
+1 minute
+Description
+Google Analytics sets this cookie to store a unique user ID.
+Cookie
+__hstc
+Duration
+6 months
+Description
+Hubspot set this main cookie for tracking visitors. It contains the domain, initial timestamp (first visit), last timestamp (last visit), current timestamp (this visit), and session number (increments for each subsequent session).
+Cookie
+hubspotutk
+Duration
+6 months
+Description
+HubSpot sets this cookie to keep track of the visitors to the website. This cookie is passed to HubSpot on form submission and used when deduplicating contacts.
+Cookie
+__hssrc
+Duration
+session
+Description
+HubSpot cookie sets this cookie to determine if the visitor has restarted their browser. If this cookie does not exist when HubSpot manages cookies, it is considered a new session.
+Cookie
+__hssc
+Duration
+1 hour
+Description
+HubSpot sets this cookie to keep track of sessions. This is used to determine if HubSpot should increment the session number and timestamps in the __hstc cookie. It contains the domain, viewCount (which increments with each pageview in a session), and session start timestamp.
+Cookie
+_ga_*
+Duration
+1 year 1 month 4 days
+Description
+Google Analytics sets this cookie to store and count page views.
+Cookie
+_clck
+Duration
+1 year
+Description
+Microsoft Clarity sets this cookie to retain the browser's Clarity User ID and settings exclusive to that website. This guarantees that actions taken during subsequent visits to the same website will be linked to the same user ID.
+Cookie
+_clsk
+Duration
+1 day
+Description
+Microsoft Clarity sets this cookie to store and consolidate a user's pageviews into a single session recording.
+Performance
+Performance cookies are used to understand and analyse the key performance indexes of the website which helps in delivering a better user experience for the visitors.
+Cookie
+session_id
+Duration
+Never Expires
+Description
+This cookie is used to get or set the session id for the current session.
+Cookie
+_uetsid
+Duration
+1 day
+Description
+Bing Ads sets this cookie to engage with a user that has previously visited the website.
+Cookie
+_uetvid
+Duration
+1 year 24 days
+Description
+Bing Ads sets this cookie to engage with a user that has previously visited the website.
+Advertisement
+Advertisement cookies are used to provide visitors with customised advertisements based on the pages you visited previously and to analyse the effectiveness of the ad campaigns.
+Cookie
+_gcl_au
+Duration
+3 months
+Description
+Google Tag Manager sets this cookie to experiment advertisement efficiency of websites using their services.
+Cookie
+_ttp
+Duration
+3 months
+Description
+TikTok set this cookie to track and improve the performance of advertising campaigns, as well as to personalise the user experience.
+Cookie
+personalization_id
+Duration
+1 year 1 month 4 days
+Description
+Twitter sets this cookie to integrate and share features for social media and also store information about how the user uses the website, for tracking and targeting.
+Cookie
+muc_ads
+Duration
+1 year 1 month 4 days
+Description
+Twitter sets this cookie to collect user behaviour and interaction data to optimize the website.
+Cookie
+test_cookie
+Duration
+15 minutes
+Description
+doubleclick.net sets this cookie to determine if the user's browser supports cookies.
+Cookie
+_tt_enable_cookie
+Duration
+3 months
+Description
+Tiktok set this cookie to collect data about behaviour and activities on the website and to measure the effectiveness of the advertising.
+Cookie
+ttcsid_*
+Duration
+3 months
+Description
+TikTok sets this cookie as a session identification cookie to support user tracking and session continuity across a website.
+Cookie
+_fbp
+Duration
+3 months
+Description
+Facebook sets this cookie to store and track interactions.
+Cookie
+COMPASS
+Duration
+1 hour
+Description
+The COMPASS cookie is used by Yahoo to deliver targeted advertising based on user's online behavior.
+Cookie
+NID
+Duration
+6 months
+Description
+Google sets the cookie for advertising purposes; to limit the number of times the user sees an ad, to unwanted mute ads, and to measure the effectiveness of ads.
+Cookie
+MUID
+Duration
+1 year 24 days
+Description
+Bing sets this cookie to recognise unique web browsers visiting Microsoft sites. This cookie is used for advertising, site analytics, and other operations.
+Cookie
+IDE
+Duration
+1 year 24 days
+Description
+Google DoubleClick IDE cookies store information about how the user uses the website to present them with relevant ads according to the user profile.
+Uncategorised
+Other uncategorised cookies are those that are being analysed and have not been classified into a category as yet.
+Cookie
+__Host-authjs.csrf-token
+Duration
+session
+Description
+Description is currently not available.
+Cookie
+__Secure-authjs.callback-url
+Duration
+session
+Description
+Description is currently not available.
+Cookie
+_zitok
+Duration
+1 year
+Description
+Description is currently not available.
+Cookie
+_twpid
+Duration
+1 year 24 days
+Description
+Description is currently not available.
+Cookie
+scgrg
+Duration
+1 year 1 month 4 days
+Description
+Description is currently not available.
+Cookie
+ttcsid
+Duration
+3 months
+Description
+Description is currently not available.
+Cookie
+__attentive_session_id
+Duration
+1 hour
+Description
+Description is currently not available.
+Reject All Save My Preferences Accept All
+Powered by
+Gulfstream Park
+Login
+SUNSHINE MEET • LIVE RACING FRIDAY - SUNDAY • FIRST POST 12:20 PM EDT •
+SUNSHINE MEET • LIVE RACING FRIDAY - SUNDAY • FIRST POST 12:20 PM EDT •
+SUNSHINE MEET • LIVE RACING FRIDAY - SUNDAY • FIRST POST 12:20 PM EDT •
+SUNSHINE MEET • LIVE RACING FRIDAY - SUNDAY • FIRST POST 12:20 PM EDT •
+SUNSHINE MEET • LIVE RACING FRIDAY - SUNDAY • FIRST POST 12:20 PM EDT •
+Racing
+Wagering
+Casino
+Events
+Dining
+Shopping
+Discover
+En Español
+Gulfstream Park
+FREE DRF PAST PERFORMANCES
+DOWNLOAD NOW
+Gulfstream Park
+Hotel Discounts
+Available
+Pegasus World Cup
+PEGASUS 2026
+TICKETS ON SALE NOW
+on:
+GET TICKETS
+PEGASUS WORLD CUP 2026
+GET TICKETS
+VISIT WEBSITE
+EVENTS/TICKETING
+Upcoming events
+Family Day at the Races & Kids Club Fall Fest
+Oct 17, 2026
+Learn More
+Taste at the Track - Rum & Caribbean
+Oct 24, 2026
+GET TICKETS
+Creepy Carnival Clowns Halloween Celebration
+Oct 24, 2026
+Learn More
+Breeders' Cup Viewing in Ten Palms
+Oct 30, 2026
+RSVP HERE
+©2026 1/ST
+Privacy Policy
+Careers
+Contact Us
+FREQUENTLY ASKED QUESTIONS
+Press Room
+Download 1/ST Bet
+Leasing Info
+Responsible Gaming
+Site By
+Site Map
+Racing
+Events
+Dining
+Shopping
+Subscribe
+Directions
+
+--- embedded JSON ---
+{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://www.gulfstreampark.com/#organization","name":"Gulfstream Park","url":"https://www.gulfstreampark.com/","logo":{"@type":"ImageObject","url":"https://www.gulfstreampark.com/GSP/Header/BarLogo/icon-gulfstream.png"},"image":["https://www.gulfstreampark.com/GSP/og.jpg"],"description":"Gulfstream Park is an entertainment destination in Hallandale Beach, Florida featuring thoroughbred horse racing, casino gaming, shopping, dining, and major events including the Pegasus World Cup.","telephone":"+1-954-454-7000","address":{"@type":"PostalAddress","streetAddress":"901 S Federal Hwy","addressLocality":"Hallandale Beach","addressRegion":"FL","postalCode":"33009","addressCountry":"US"},"sameAs":["https://www.instagram.com/gulfstreampark/","https://x.com/GulfstreamPark","https://www.facebook.com/gulfstreampark","https://www.youtube.com/@gulfstreampark","https://www.wikidata.org/wiki/Q5614446"],"foundingDate":"1939","slogan":"South Florida's Home of Thoroughbred Racing","knowsAbout":["Thoroughbred Horse Racing","Casino Gaming","Horse Racing Events","Florida Derby","Pegasus World Cup","The Village at Gulfstream Park"],"subOrganization":[{"@type":"Casino","name":"The Casino at Gulfstream Park","url":"https://www.gulfstreamcasino.com/","sameAs":"https://www.gulfstreampark.com/casino/"}],"hasOfferCatalog":{"@type":"OfferCatalog","name":"Gulfstream Park Experiences","itemListElement":[{"@type":"Offer","name":"General Admission — Race Days","price":"0","priceCurrency":"USD"},{"@type":"Offer","name":"Self-Parking","price":"0","priceCurrency":"USD"},{"@type":"Offer","name":"Valet Parking","price":"25","priceCurrency":"USD"}]}},{"@type":"SportsActivityLocation","@id":"https://www.gulfstreampark.com/#place","name":"Gulfstream Park","url":"https://www.gulfstreampark.com/","description":"A South Florida destination for live thoroughbred racing, casino gaming, dining, shopping, and entertainment.","telephone":"+1-954-454-7000","address":{"@type":"PostalAddress","streetAddress":"901 S Federal Hwy","addressLocality":"Hallandale Beach","addressRegion":"FL","postalCode":"33009","addressCountry":"US"},"geo":{"@type":"GeoCoordinates","latitude":25.9792582,"longitude":-80.1378232},"containsPlace":[{"@type":"Casino","name":"The Casino at Gulfstream Park","url":"https://www.gulfstreamcasino.com/","telephone":"+1-954-454-7000","address":{"@type":"PostalAddress","streetAddress":"901 S Federal Hwy","addressLocality":"Hallandale Beach","addressRegion":"FL","postalCode":"33009","addressCountry":"US"}}],"amenityFeature":[{"@type":"LocationFeatureSpecification","name":"Live Thoroughbred Racing","value":true},{"@type":"LocationFeatureSpecification","name":"Casino Gaming","value":true},{"@type":"LocationFeatureSpecification","name":"Dining","value":true},{"@type":"LocationFeatureSpecification","name":"Shopping","value":true}],"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","name":"Casino — Daily","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"opens":"10:00","closes":"04:00"},{"@type":"OpeningHoursSpecification","name":"Live Racing — Thursday–Sunday (seasonal)","dayOfWeek":["Thursday","Friday","Saturday","Sunday"],"opens":"11:00","closes":"18:00"}],"additionalProperty":[{"@type":"PropertyValue","name":"distanceToFortLauderdaleAirport","value":"3 miles from Fort Lauderdale Hollywood International Airport (FLL)"}]},{"@type":"WebSite","@id":"https://www.gulfstreampark.com/#website","url":"https://www.gulfstreampark.com/","name":"Gulfstream Park","publisher":{"@id":"https://www.gulfstreampark.com/#organization"},"inLanguage":"en-US","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://www.gulfstreampark.com/search?q={search_term_string}"},"query-input":"required name=search_term_string"}}]}
+
+--- embedded JSON ---
+{"@context":"https://schema.org","@type":"SportsEvent","@id":"https://www.gulfstreampark.com/event/entertainment/pegasus-world-cup/#event","name":"Pegasus World Cup","sport":"Horse racing","description":"The Pegasus World Cup is a major thoroughbred racing event and South Florida sports and lifestyle experience held at Gulfstream Park in Hallandale Beach, Florida, featuring graded stakes racing and entertainment.","startDate":"2026-01-24T12:00:00-05:00","endDate":"2026-01-24T20:00:00-05:00","eventAttendanceMode":"https://schema.org/OfflineEventAttendanceMode","url":"https://www.gulfstreampark.com/event/entertainment/pegasus-world-cup/","image":["https://images.ctfassets.net/71tzd15sgbj0/75KNb7DH5bEfsNk7MQpFiH/9ce7be9a2bfa823db059adb07bd460b4/P10_Web-Banner_Get_tickets_V3-1280x461.jpg"],"location":{"@type":"EventVenue","name":"Gulfstream Park","url":"https://www.gulfstreampark.com/","address":{"@type":"PostalAddress","streetAddress":"901 S Federal Hwy","addressLocality":"Hallandale Beach","addressRegion":"FL","postalCode":"33009","addressCountry":"US"}},"offers":{"@type":"Offer","name":"GET TICKETS","priceCurrency":"USD","availability":"https://schema.org/OutOfStock","url":"https://www.ticketmaster.com/event/0D0063438B1718E3","validFrom":"2025-09-26T10:00:00-04:00","price":"0"},"organizer":{"@id":"https://www.gulfstreampark.com/#organization"}}
+
+--- embedded JSON ---
+{"@context":"https://schema.org","@type":"BreadcrumbList","@id":"https://www.gulfstreampark.com/event/entertainment/pegasus-world-cup/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.gulfstreampark.com/"},{"@type":"ListItem","position":2,"name":"Events","item":"https://www.gulfstreampark.com/events/"},{"@type":"ListItem","position":3,"name":"Pegasus World Cup","item":"https://www.gulfstreampark.com/event/entertainment/pegasus-world-cup/"}]}

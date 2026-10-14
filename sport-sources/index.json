@@ -1,54 +1,61 @@
 {
-  "fetchedAt": "2026-10-14T22:28:08.110Z",
+  "fetchedAt": "2026-10-14T22:30:53.982Z",
   "results": [
     {
-      "url": "https://en.wikipedia.org/wiki/Pegasus_World_Cup",
+      "url": "https://en.wikipedia.org/wiki/2026_Pegasus_World_Cup",
       "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
       "file": "01-en.wikipedia.org.txt"
     },
     {
-      "url": "https://www.equibase.com/stakes/calendar.cfm",
+      "url": "https://en.wikipedia.org/wiki/Gulfstream_Park",
       "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 404,
-      "file": "02-equibase.com.txt"
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/2027_Pegasus_World_Cup",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 404,
-      "file": "03-en.wikipedia.org.txt"
+      "url": "https://www.gulfstreampark.com/pegasus-world-cup",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "03-gulfstreampark.com.txt"
     },
     {
-      "url": "https://www.gulfstreampark.com/racing/pegasus-world-cup",
+      "url": "https://www.gulfstreampark.com/racing/racing-calendar",
       "rendered": true,
       "status": "OK",
       "httpStatus": 200,
       "file": "04-gulfstreampark.com.txt"
     },
     {
-      "url": "https://www.pegasusworldcup.com/",
+      "url": "https://www.1st.com/racing/pegasus-world-cup",
       "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "05-pegasusworldcup.com.txt"
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
+      "file": "05-1st.com.txt"
     },
     {
-      "url": "https://www.equibase.com/stakes/calendar.cfm",
+      "url": "https://www.equibase.com/stakes.cfm",
       "rendered": true,
       "status": "HTTP_ERROR",
       "httpStatus": 404,
       "file": "06-equibase.com.txt"
     },
     {
-      "url": "https://www.gulfstreampark.com/racing/stakes-schedule",
+      "url": "https://www.bloodhorse.com/horse-racing/articles/search?q=pegasus%20world%20cup%202027",
       "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "07-gulfstreampark.com.txt"
+      "file": "07-bloodhorse.com.txt"
+    },
+    {
+      "url": "https://www.pegasusworldcup.com/faq",
+      "rendered": true,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
+      "file": "08-pegasusworldcup.com.txt"
     }
   ]
 }

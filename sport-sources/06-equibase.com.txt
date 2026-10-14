@@ -1,7 +1,7 @@
-Source: https://www.equibase.com/stakes/calendar.cfm
-Final URL: https://www.equibase.com/stakes/calendar.cfm
+Source: https://www.equibase.com/stakes.cfm
+Final URL: https://www.equibase.com/stakes.cfm
 HTTP 404
-Fetched: 2026-10-14T22:28:05.767Z
+Fetched: 2026-10-14T22:30:44.843Z
 
 System Error
 Content
