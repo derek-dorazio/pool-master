@@ -56,12 +56,17 @@ start and end dates, venue, location, rounds, par; each player in a field and th
 - **A feed returns nothing or a changed shape:** say so; do not fall back to search
   snippets for data you load.
 
-Odds are not loaded: they move daily and differ by book, so two sources rarely agree.
+Odds are not loaded: they move daily and differ by book, so two sources rarely agree. A horse
+race's field carries its morning line as order instead: runners favourite first, each with
+its place as `ranking`, so the field is seeded and tiered in market order
+(`docs/RACE-SETUP-PROCEDURES.md` *Load the race and its field*).
 
 ## Step 4 — write the data file
 
 Write it next to `golf-2026.json` in `packages/core-api/scripts/seed-golf/`. The shape is
-`sport-data-file.ts` there; read it rather than copying an old file. The envelope:
+`sport-data-file.ts` there; read it rather than copying an old file. Every sport uses the
+one event shape; par is golf's alone, and `startsAt` carries a race's post time once it is
+announced. The envelope:
 
 ```json
 {
@@ -112,8 +117,9 @@ test data: say so in its `provenance`, and never load it as a real field.
 fields and rankings, when each field is set, and which sources have been checked. ESPN's
 feed is the primary for most sports; it is public but undocumented, so confirm a source
 returns what the page says before building a file on it, and correct the page when it does
-not. Adding a sport adds its row there (the `add-sport` skill's reflect step), and its data
-shape to the loader.
+not. Adding a sport adds its row there (the `add-sport` skill's reflect step). The loader
+already takes every sport in the registry; a sport needs loader work only when its events
+carry something the one event shape has no field for.
 
 ## Where this goes wrong
 

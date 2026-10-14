@@ -46,6 +46,26 @@ describe('golf seed dates', () => {
   });
 });
 
+describe('event dates for the API', () => {
+  it('starts an event at noon UTC on its start date and ends it by 23:00 UTC on its end date when no start time is given', () => {
+    expect(shiftedEventDates({ startDate: '2027-11-18', endDate: '2027-11-21' }, 0)).toEqual({
+      startDate: '2027-11-18T12:00:00.000Z',
+      endDate: '2027-11-21T23:00:00.000Z',
+    });
+  });
+
+  it('starts a race at its post time, and ends a one-day race no earlier than an evening post time', () => {
+    expect(shiftedEventDates({ startDate: '2027-01-30', endDate: '2027-01-30', startsAt: '2027-01-30T17:40:00-05:00' }, 0)).toEqual({
+      startDate: '2027-01-30T22:40:00.000Z',
+      endDate: '2027-01-30T23:00:00.000Z',
+    });
+    expect(shiftedEventDates({ startDate: '2027-05-01', endDate: '2027-05-01', startsAt: '2027-05-01T18:57:00-05:00' }, 0)).toEqual({
+      startDate: '2027-05-01T23:57:00.000Z',
+      endDate: '2027-05-01T23:57:00.000Z',
+    });
+  });
+});
+
 describe('golf seed round scores', () => {
   const golfer = { player: 'p', ranking: 1, oddsToWin: 5, rounds: [70, 75] };
 
@@ -97,5 +117,19 @@ describe('golf-2026.json', () => {
       const totals = finishers.map((golfer) => (golfer.rounds ?? []).reduce((sum, strokes) => sum + strokes, 0)).sort((a, b) => a - b);
       if (event.winner === 'public') expect(totals[0]).toBeLessThan(totals[1]);
     }
+  });
+});
+
+describe('horse-racing-2027.json', () => {
+  it('is a real 2027 US Thoroughbred schedule holding the Pegasus World Cup as a one-race event with no par', () => {
+    const file = parseSportDataFile(
+      JSON.parse(readFileSync(join(__dirname, '../../../packages/core-api/scripts/seed-golf/horse-racing-2027.json'), 'utf8')) as unknown,
+      { allowTestData: false },
+    );
+
+    expect(file.scope).toEqual({ sport: Sport.HORSE_RACING, season: 2027, sportLeagues: ['US Thoroughbred'], contents: [SportDataContent.SCHEDULE] });
+    expect(file.sportLeagues[0].events.map((event) => [event.name, event.startDate, event.rounds, event.roundsPar])).toEqual([
+      ['Pegasus World Cup', '2027-01-30', 1, null],
+    ]);
   });
 });

@@ -119,10 +119,14 @@ In order:
    odds in the field grid, then auto-assign tiers from odds.
 10. **Docs and gates.** Update the docs the change touches in the same PR, then run the
     `release-check` skill.
-11. **Go live.** Set up the sport's first sport league and event through the Manage pages, the
-    way an admin will, and write that setup down as a procedure in `docs/` (screen names,
-    paths, buttons, what to do when a result changes). Walking it is how a missing admin
-    step shows up before the first real event does.
+11. **Go live.** Put the sport's first real event on the site through the data pipeline, not
+    the Manage pages: gather its schedule with the `load-sport-data` skill and commit the data
+    file in this PR, so the sport league and event are loaded, and the field later, without
+    anyone signing in to type them. Then write down what stays an admin's job as a procedure
+    in `docs/` (odds, tiers, prices, release, results: screen names, paths, buttons, what to do
+    when a result changes). Walking it is how a missing admin step shows up before the first
+    real event does. If the event needs something the loader's one event shape cannot carry,
+    add it to the loader here rather than sending an admin to type it.
 
 ## Step 3 — reflect
 

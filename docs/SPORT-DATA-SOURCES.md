@@ -40,7 +40,7 @@ it with one fetch before building a file on it, and update this table either way
 | Golf · LPGA Tour | `golf/lpga` | lpga.com tournaments page (rendered); Wikipedia | ESPN competitors · lpga.com field page (rendered) | About a week before; recheck Tuesday | No |
 | Auto racing · NASCAR Cup Series | `racing/nascar-premier` | nascar.com schedule; Wikipedia | Entry list: nascar.com · jayski.com | Entry list mid-week before the race | No |
 | Auto racing · IndyCar | `racing/irl` | indycar.com schedule; Wikipedia | Entry list: indycar.com · Wikipedia race page | Entry list the week of the race | No |
-| Horse racing · US Thoroughbred | None (ESPN has no racing calendar) | Primary: the track's or race's site (Breeders' Cup, Churchill Downs, Gulfstream for the Pegasus); second: equibase.com stakes schedule | equibase.com entries · the track's entries page | Post-position draw, usually 2 to 5 days before | No |
+| Horse racing · US Thoroughbred | None (ESPN has no racing calendar) | Primary: the race's own site (pegasusworldcup.com, Breeders' Cup, Churchill Downs); second: Wikipedia's race page for venue and city. The race's site is often the only source for next year's date | equibase.com entries · the track's entries page; list runners in morning-line order | Post-position draw, usually 2 to 5 days before | 2026-10-14: pegasusworldcup.com (2027 date, Gulfstream Park); Wikipedia race page (venue, city). gulfstreampark.com's Pegasus page still showed 2026; equibase.com/stakes/calendar.cfm and stakes.cfm returned 404 |
 
 Venue for golf comes only from the tour page, so it is a single-source fact: load it and say
 so (the skill's cross-check step).

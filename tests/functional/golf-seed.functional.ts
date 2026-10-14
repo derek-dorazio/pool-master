@@ -81,8 +81,8 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-async function leagueNamed(name: string): Promise<{ id: string; matchKeyword: string | null } | undefined> {
-  const { sportLeagues } = expectDefined((await listSportLeagues({ client: admin.client, query: { sport: 'GOLF' } })).data);
+async function leagueNamed(name: string, sport: Sport = Sport.GOLF): Promise<{ id: string; matchKeyword: string | null } | undefined> {
+  const { sportLeagues } = expectDefined((await listSportLeagues({ client: admin.client, query: { sport } })).data);
   return sportLeagues.find((league) => league.name === name);
 }
 
@@ -345,6 +345,50 @@ describe('Loading a real golf schedule and fields through the admin API', () => 
     const heritage = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === name('Heritage presented by Sponsor')));
     expect((await fieldOf(heritage.id)).get(`${prefix} Golfer 3`)).toMatchObject({ isActive: true, inactiveReason: null, seedNumber: 4 });
     expect(changes(await loadSportData(parsed(recommitted), { getClient, now: NOW, mode: LoadMode.APPLY })).filter((row) => row.subject === LoadSubject.FIELD)).toEqual([]);
+  });
+});
+
+describe('Loading a real horse racing schedule and field through the admin API', () => {
+  const prefix = `${RUN}-race`;
+  const circuit = `Circuit ${prefix}`;
+  const race = `${prefix} Pegasus World Cup`;
+  const getClient = () => Promise.resolve(admin.client);
+  const file = (startsAt: string, field: SportDataFieldEntry[] = []): SportDataFile => ({
+    schemaVersion: 1,
+    scope: { sport: Sport.HORSE_RACING, season: 2027, sportLeagues: [circuit], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS] },
+    testData: false,
+    provenance: provenance(),
+    sportLeagues: [{
+      name: circuit,
+      players: [
+        { key: `${prefix}-h1`, name: `${prefix} Horse 1`, countryCode: 'US', ranking: 1 },
+        { key: `${prefix}-h2`, name: `${prefix} Horse 2`, countryCode: 'US', ranking: 2 },
+      ],
+      events: [{
+        key: 'pegasus', name: race, startDate: '2027-01-30', endDate: '2027-01-30', startsAt, venue: 'Gulfstream Park', location: 'Hallandale Beach, Florida', rounds: 1, roundsPar: null, field,
+      }],
+    }],
+  });
+
+  it('creates the circuit and a draft race at its post time, with no par and the lifecycle run by hand so it never settles on no result', async () => {
+    const rows = await loadSportData(parsed(file('2027-01-30T12:00:00-05:00')), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    expect(counts(rows)).toMatchObject({ 'SPORT_LEAGUE ADD': 1, 'EVENT ADD': 1 });
+    const league = expectDefined(await leagueNamed(circuit, Sport.HORSE_RACING));
+    const [stored] = await eventsOf(league.id, 2027);
+    expect(stored).toMatchObject({ name: race, status: 'DRAFT', startDate: '2027-01-30T17:00:00.000Z', venue: 'Gulfstream Park', rounds: 1, roundsPar: null, autoLifecycleEnabled: false });
+  });
+
+  it('moves the post time on the same day, and adds the field once it is drawn, in post-position order', async () => {
+    const rows = await loadSportData(parsed(file('2027-01-30T17:40:00-05:00', [{ player: `${prefix}-h2` }, { player: `${prefix}-h1` }])), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    expect(changes(rows).map((row) => `${row.subject} ${row.action}`)).toEqual(expect.arrayContaining(['EVENT UPDATE']));
+    const league = expectDefined(await leagueNamed(circuit, Sport.HORSE_RACING));
+    const [stored] = await eventsOf(league.id, 2027);
+    expect(stored.startDate).toBe('2027-01-30T22:40:00.000Z');
+    const field = await fieldOf(stored.id);
+    expect(field.get(`${prefix} Horse 2`)).toMatchObject({ seedNumber: 1, isActive: true });
+    expect(field.get(`${prefix} Horse 1`)).toMatchObject({ seedNumber: 2, isActive: true });
   });
 });
 

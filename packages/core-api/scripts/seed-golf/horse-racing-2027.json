@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "scope": { "sport": "HORSE_RACING", "season": 2027, "sportLeagues": ["US Thoroughbred"], "contents": ["SCHEDULE"] },
+  "testData": false,
+  "provenance": {
+    "gatheredAt": "2026-10-14",
+    "gatheredBy": "load-sport-data skill",
+    "sources": [
+      { "name": "Pegasus World Cup official site (date: Saturday, Jan 30, 2027; Gulfstream Park)", "url": "https://www.pegasusworldcup.com/" },
+      { "name": "Wikipedia, Pegasus World Cup (venue and city)", "url": "https://en.wikipedia.org/wiki/Pegasus_World_Cup" },
+      { "name": "Wikipedia, Gulfstream Park (city)", "url": "https://en.wikipedia.org/wiki/Gulfstream_Park" }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "US Thoroughbred",
+      "players": [],
+      "events": [
+        {
+          "key": "pegasus-world-cup",
+          "name": "Pegasus World Cup",
+          "startDate": "2027-01-30",
+          "endDate": "2027-01-30",
+          "venue": "Gulfstream Park",
+          "location": "Hallandale Beach, Florida",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        }
+      ]
+    }
+  ]
+}

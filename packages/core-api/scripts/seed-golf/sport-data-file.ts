@@ -6,9 +6,10 @@
  * before it reads the site, so a file whose data strays outside its scope writes nothing.
  * The filename is for people and is never parsed.
  *
- * Only golf loads events so far, so the event shape below is golf's: rounds and par on each
- * event, stroke rounds on each field entry of a test seed. Another sport adds its own shape
- * here, chosen by `scope.sport`.
+ * Every sport in the registry loads a real schedule and fields in the one event shape below:
+ * name, dates, venue, location and rounds, plus par for a stroke-play sport (golf) and an
+ * optional start time for a sport whose cutoff is a set moment (a race's post time). A test
+ * seed is golf's alone, because its made-up results are stroke rounds.
  *
  * A test slate is the one file any sport in the registry may have: one sport league's players
  * and no events, loaded as the field of an event already on the site that the run names
@@ -17,7 +18,7 @@
  */
 
 import { z } from 'zod';
-import { Sport, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { getSportDefinition, ScoringFamily, type Sport, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 
 /** The one envelope version this loader reads; any other is refused rather than misread. */
 export const SPORT_DATA_SCHEMA_VERSION = 1;
@@ -34,9 +35,6 @@ export const SportDataContent = {
   RESULTS: 'RESULTS',
 } as const;
 export type SportDataContent = (typeof SportDataContent)[keyof typeof SportDataContent];
-
-/** The sports this loader has an event shape for. A test slate carries no events, so any sport may have one. */
-const LOADABLE_SPORTS: readonly Sport[] = [Sport.GOLF];
 
 const IsoDaySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'must be a YYYY-MM-DD date');
 
@@ -69,9 +67,16 @@ const EventSchema = z.object({
   /** The event's real dates. A test seed moves them forward (shiftedEventDates). */
   startDate: IsoDaySchema,
   endDate: IsoDaySchema,
+  /**
+   * The exact start, with its UTC offset, when it is known: a race's post time. It is the
+   * entry cutoff, so a file gives it once the track or organiser announces it. Without it the
+   * event starts at noon UTC on its start date.
+   */
+  startsAt: z.string().datetime({ offset: true }).optional(),
   venue: z.string().min(1).nullable(),
   location: z.string().min(1).nullable(),
   rounds: z.number().int().min(1).max(6),
+  /** Par per round: a stroke-play sport's only, null for every other. */
   roundsPar: z.number().int().min(60).max(80).nullable(),
   /** Test data only: whether the made-up winner is the public one. */
   winner: z.enum(['public', 'generated']).optional(),
@@ -153,7 +158,7 @@ function duplicates(values: readonly string[]): string[] {
   return [...repeated];
 }
 
-function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, problems: string[]): void {
+function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar: boolean, problems: string[]): void {
   const contents = new Set(file.scope.contents);
   for (const key of duplicates(league.players.map((player) => player.key))) {
     problems.push(`${league.name}: player key ${key} appears more than once.`);
@@ -168,6 +173,10 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, problem
       problems.push(`${where}: starts ${event.startDate}, outside the ${file.scope.season} season.`);
     }
     if (event.endDate < event.startDate) problems.push(`${where}: ends ${event.endDate}, before it starts.`);
+    if (event.startsAt !== undefined && event.startsAt.slice(0, 10) !== event.startDate) {
+      problems.push(`${where}: startsAt ${event.startsAt} is not on its start date ${event.startDate}.`);
+    }
+    if (!hasPar && event.roundsPar !== null) problems.push(`${where}: has a par, which only a stroke-play sport has.`);
     if (event.field.length > 0 && !contents.has(SportDataContent.FIELDS)) {
       problems.push(`${where}: has a field, but the scope's contents leave out FIELDS.`);
     }
@@ -192,7 +201,7 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, problem
 
 /**
  * Reads a parsed JSON file as sport data, or throws SportDataFileError listing every problem:
- * an unknown schema version, a sport outside the registry or not loadable yet, data outside
+ * an unknown schema version, a sport outside the registry, a test seed of a sport other than golf, data outside
  * the envelope's scope, made-up data in a real file, or test data where it is not allowed.
  */
 export function parseSportDataFile(json: unknown, options: ParseSportDataFileOptions): SportDataFile {
@@ -210,8 +219,10 @@ export function parseSportDataFile(json: unknown, options: ParseSportDataFileOpt
   const slate = isTestSlate(file);
   if (!isSport(sport)) {
     problems.push(`scope.sport ${sport} is not a sport in the sport registry.`);
-  } else if (!slate && !LOADABLE_SPORTS.includes(sport)) {
-    problems.push(`scope.sport ${sport} has no event shape in this loader yet; it loads ${LOADABLE_SPORTS.join(', ')}, and a test slate of any sport.`);
+  }
+  const strokePlay = isSport(sport) && getSportDefinition(sport).scoringFamily === ScoringFamily.STROKE_PLAY;
+  if (isSport(sport) && file.testData && !slate && !strokePlay) {
+    problems.push(`scope.sport ${sport} cannot have a test seed: its made-up results are stroke rounds, so only golf has one. Use a real file or a test slate.`);
   }
 
   const contents = new Set(file.scope.contents);
@@ -246,7 +257,8 @@ export function parseSportDataFile(json: unknown, options: ParseSportDataFileOpt
   for (const name of duplicates(file.sportLeagues.map((league) => league.name))) {
     problems.push(`Sport league ${name} appears more than once.`);
   }
-  for (const league of file.sportLeagues) checkLeague(league, file, problems);
+  // An unknown sport is already refused; its par is not worth a second problem.
+  for (const league of file.sportLeagues) checkLeague(league, file, strokePlay || !isSport(sport), problems);
 
   if (problems.length > 0 || !isSport(sport)) throw new SportDataFileError(problems);
   return { ...file, scope: { ...file.scope, sport } };

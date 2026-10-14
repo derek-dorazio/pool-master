@@ -230,6 +230,14 @@ alone. A withdrawn player the file lists again is reinstated.
 Running the same file again lists everything as a skip. A real data file never releases an
 event or writes odds, tiers, prices or scores; those stay admin actions here.
 
+**Any sport.** A real file may be any sport in the registry: rounds are the sport's count
+(1 for a race), and par is golf's alone (`null` for every other sport). An event may give
+`startsAt`, its exact start with a UTC offset (a race's post time), which is the entry cutoff;
+without it an event starts at noon UTC on its start date. An event of a sport whose finishing
+order an admin enters (every racing sport) is created with automatic lifecycle off, so it
+never completes, and settles, before its result is in. A test seed is golf's only, because
+its made-up results are stroke rounds; any sport may have a test slate.
+
 **The file says what it is.** Each file starts with an envelope: `schemaVersion`, a `scope`
 (sport from the sport registry, season, sport leagues, and `contents` from `SCHEDULE`,
 `PLAYERS`, `FIELDS`, `RESULTS`), a `testData` flag and its `provenance`. A run refuses the
