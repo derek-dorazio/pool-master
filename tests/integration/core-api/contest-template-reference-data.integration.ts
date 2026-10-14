@@ -14,8 +14,8 @@ import {
 // The contest templates the migrations seed, read back from real Postgres. A template with a
 // sport league is offered only for that league's events, so a template pointing at a league of
 // another sport would be offered nowhere it can be used: checked for every sport, so a mis-seeded
-// row of any future sport fails here. Auto racing's series and their points presets (#624) are
-// checked value by value. No mocks.
+// row of any future sport fails here. Auto racing's series and their points presets (#624, and
+// Formula 1 in #625) are checked value by value. No mocks.
 
 beforeAll(async () => {
   await setupIntegrationTests();
@@ -32,6 +32,12 @@ const INDYCAR_POINTS = [
   ...Array.from({ length: 14 }, (_, index) => 19 - index),
   ...Array.from({ length: 9 }, () => 5),
 ];
+const FORMULA_1_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+const POINTS_BY_SERIES: Record<string, number[]> = {
+  'NASCAR Cup Series': NASCAR_CUP_POINTS,
+  IndyCar: INDYCAR_POINTS,
+  'Formula 1': FORMULA_1_POINTS,
+};
 
 async function leagueTemplates() {
   return getPrisma().contestConfigTemplate.findMany({
@@ -63,7 +69,7 @@ describe('Seeded contest templates and their sport leagues', () => {
     expect([...defaults].filter(([, count]) => count > 1)).toEqual([]);
   });
 
-  it('seeds auto racing\'s two series, each with a tiered default, a budget and a random-draw template of its own', async () => {
+  it('seeds auto racing\'s three series, each with one default, a budget, a tiered and a random-draw template of its own, budget being the Formula 1 default', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { sport: Sport.AUTO_RACING },
       include: { sportLeague: { include: { sport: true } } },
@@ -77,6 +83,9 @@ describe('Seeded contest templates and their sport leagues', () => {
       template.isDefault,
       template.active,
     ])).toEqual([
+      ['Formula 1', 'formula-1-budget-points', SelectionType.BUDGET_PICK, true, true],
+      ['Formula 1', 'formula-1-random-draw-points', SelectionType.RANDOM_DRAW, false, true],
+      ['Formula 1', 'formula-1-tiered-points', SelectionType.TIERED, false, true],
       ['IndyCar', 'indycar-budget-points', SelectionType.BUDGET_PICK, false, true],
       ['IndyCar', 'indycar-random-draw-points', SelectionType.RANDOM_DRAW, false, true],
       ['IndyCar', 'indycar-tiered-points', SelectionType.TIERED, true, true],
@@ -87,7 +96,20 @@ describe('Seeded contest templates and their sport leagues', () => {
     expect(new Set(templates.map((template) => template.sportLeague?.sport.sport))).toEqual(new Set([Sport.AUTO_RACING]));
   });
 
-  it('presets NASCAR Cup Series points over 40 places and IndyCar points over 33, each a valid template configuration', async () => {
+  it('sorts the Formula 1 budget default first among the Formula 1 templates', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.AUTO_RACING, sportLeague: { name: 'Formula 1' } },
+      orderBy: { sortOrder: 'asc' },
+    });
+
+    expect(templates.map((template) => template.templateKey)).toEqual([
+      'formula-1-budget-points',
+      'formula-1-tiered-points',
+      'formula-1-random-draw-points',
+    ]);
+  });
+
+  it('presets NASCAR Cup Series points over 40 places, IndyCar points over 33 and Formula 1 points over 10, each a valid template configuration', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { sport: Sport.AUTO_RACING },
       include: { sportLeague: true },
@@ -95,6 +117,9 @@ describe('Seeded contest templates and their sport leagues', () => {
 
     expect(NASCAR_CUP_POINTS).toHaveLength(40);
     expect(INDYCAR_POINTS).toHaveLength(33);
+    expect(FORMULA_1_POINTS).toHaveLength(10);
+    expect(new Set(templates.map((template) => template.sportLeague?.name)))
+      .toEqual(new Set(Object.keys(POINTS_BY_SERIES)));
     for (const template of templates) {
       const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
       expect(rules.selectionType).toBe(template.selectionType);
@@ -102,14 +127,14 @@ describe('Seeded contest templates and their sport leagues', () => {
       expect(rules.scoring).toEqual({
         participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
         config: {
-          pointsTable: template.sportLeague?.name === 'IndyCar' ? INDYCAR_POINTS : NASCAR_CUP_POINTS,
+          pointsTable: POINTS_BY_SERIES[template.sportLeague?.name ?? ''],
           didNotFinishPoints: 0,
         },
       });
     }
   });
 
-  it('counts five drivers in the tiered and budget presets and one in the random draw', async () => {
+  it('counts five drivers in the budget presets, five in the NASCAR and IndyCar tiered presets, four in the Formula 1 tiered preset and one in the random draw', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { sport: Sport.AUTO_RACING },
       orderBy: { templateKey: 'asc' },
@@ -130,6 +155,9 @@ describe('Seeded contest templates and their sport leagues', () => {
     });
 
     expect(shapes).toEqual([
+      ['formula-1-budget-points', 5, 5],
+      ['formula-1-random-draw-points', 1, 1],
+      ['formula-1-tiered-points', 1, 4],
       ['indycar-budget-points', 5, 5],
       ['indycar-random-draw-points', 1, 1],
       ['indycar-tiered-points', 1, 5],

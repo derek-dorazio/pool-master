@@ -259,8 +259,8 @@ no new tables:
 - Setting a template as the default now clears only the defaults of its own sport league, so
   each series keeps its own default preset.
 
-Formula 1 (#625) adds its league and preset the same way. The Daytona 500 and the Indy 500 are
-created by an admin through the Manage pages (`docs/RACE-SETUP-PROCEDURES.md`).
+Formula 1 (#625) added its league and presets the same way (§3.3). The Daytona 500 and the Indy
+500 are created by an admin through the Manage pages (`docs/RACE-SETUP-PROCEDURES.md`).
 
 ### 3.1 One sport or three?
 
@@ -294,7 +294,8 @@ What was built: `contest_config_templates.sport_league_id`, nullable, so every e
 stays sport-wide. The template list takes an optional `sportLeagueId` and answers that league's
 templates plus the sport-wide ones, never another league's. The create-contest page asks for the
 chosen event's league and starts each format on the league's own default, then the sport-wide
-default, then the first preset. Creating a contest from another league's template is refused with
+default, then the first preset; since #625 it also starts on the format of the league's own
+default. Creating a contest from another league's template is refused with
 422 `CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH`. Root admins still edit templates but cannot yet set
 a template's league; a league's presets arrive in the reference-data migration that seeds the
 league itself (auto racing's, above).
@@ -323,9 +324,33 @@ league itself (auto racing's, above).
 | Events first | 2027 opens in **Bahrain on March 14** (Australia moves to round 3, April 4); then Monaco and the US races (Miami, Austin, Las Vegas) |
 | Vocabulary | driver / drivers; Grand Prix; "DNF"; "Lights out" for the start |
 
-**Q3.3** F1 is dominated by a few teams, so a pick-one-per-tier pool can feel decided.
-*Recommendation:* default F1 contests to budget selection with the points preset, and offer
-tiered as the alternative. Treat this as a product default, not a rule.
+**Q3.3** (**Answered in the #625 refinement: budget default, as recommended.**) F1 is dominated
+by a few teams, so a pick-one-per-tier pool can feel decided. *Recommendation:* default F1
+contests to budget selection with the points preset, and offer tiered as the alternative. Treat
+this as a product default, not a rule.
+
+**Status (2026-10-14, #625).** Derek resumed the racing work on 2026-10-14 and Formula 1 is built
+as data, the way #624 built NASCAR and IndyCar:
+
+- One reference-data migration seeds the **Formula 1** sport league under auto racing
+  (idempotent on the (sport, name) unique) and three templates scoped to it:
+  `formula-1-budget-points` (the F1 default, sorted first; five drivers under the cap, five
+  counted), `formula-1-tiered-points` (one driver per tier, four counted) and
+  `formula-1-random-draw-points` (one driver dealt). Each carries the Grand Prix table 25, 18,
+  15, 12, 10, 8, 6, 4, 2, 1, nothing below tenth, and 0 for a non-finisher. Sprint races and
+  the fastest lap are not scored.
+- The sport's tier layout stays five tiers of eight. An F1 race is set to four tiers on the
+  event's Tiers card (6/6/5/5 for 22 drivers), which is what the tiered preset's four counted
+  scores assume. Auto-assign from odds still fills eight per tier (the sport's tier size), so
+  on four tiers it gives 8/8/6/0 and the admin evens the tiers out by hand; a per-league tier
+  layout would remove that step if F1 pools find it a chore.
+- The create-contest page used to start every event on Tiered and apply that format's default,
+  so an F1 race opened on the tiered preset. It now starts on the format of the event's sport
+  league's own default template (budget for F1) when the sport offers it and the event is
+  priced, and otherwise as before. NASCAR and IndyCar, whose defaults are tiered, are
+  unchanged.
+- Events, the Jolpica-F1 feed and loader support stay follow-ups; races are created by an admin
+  (`docs/RACE-SETUP-PROCEDURES.md`).
 
 ### 3.4 IndyCar (sport league, for the Indy 500 only)
 

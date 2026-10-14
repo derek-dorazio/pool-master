@@ -902,3 +902,115 @@ describe('Commissioner tools › Contests › Create contest for a horse race', 
     expect(createContestMock).not.toHaveBeenCalled();
   });
 });
+
+describe('Commissioner tools › Contests › Create contest for a Formula 1 race', () => {
+  const FORMULA_1_LEAGUE_ID = '62500000-0000-4000-8000-000000000001';
+  const PRICING = { profileName: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+  const FORMULA_1_SCORING = {
+    participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
+    config: { pointsTable: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], didNotFinishPoints: 0 },
+  };
+  const formula1Preset = (
+    id: string,
+    templateKey: string,
+    sortOrder: number,
+    isDefault: boolean,
+    configuration: { selectionType: string; [setting: string]: unknown },
+  ) => ({
+    id,
+    sport: 'AUTO_RACING',
+    sportLeagueId: FORMULA_1_LEAGUE_ID,
+    contestFormat: 'ROSTER',
+    selectionType: configuration.selectionType,
+    templateKey,
+    name: templateKey,
+    description: 'Formula 1 points',
+    sortOrder,
+    isDefault,
+    active: true,
+    schemaVersion: 1,
+    configuration: { maxEntriesPerSquad: 1, ...configuration, scoring: FORMULA_1_SCORING },
+  });
+  // The series' presets as the migration seeds them: budget is the default and sorts first.
+  const FORMULA_1_PRESETS = [
+    formula1Preset('62500000-0000-4000-8000-000000000011', 'formula-1-budget-points', 1, true,
+      { selectionType: 'BUDGET_PICK', rosterSize: 5, countedScores: 5 }),
+    formula1Preset('62500000-0000-4000-8000-000000000012', 'formula-1-tiered-points', 2, false,
+      { selectionType: 'TIERED', picksPerTier: 1, countedScores: 4 }),
+    formula1Preset('62500000-0000-4000-8000-000000000013', 'formula-1-random-draw-points', 3, false,
+      { selectionType: 'RANDOM_DRAW', picksPerEntry: 1, countedScores: 1 }),
+  ];
+
+  /** Golf's catalog as before, and one released Formula 1 race, priced or not, set to 4 tiers. */
+  function primeFormula1Mocks(pricing: typeof PRICING | null) {
+    primeCommonMocks();
+    const golfEvents: ((options: unknown) => unknown) | undefined = listEventsMock.getMockImplementation();
+    const golfTemplates: ((options: unknown) => unknown) | undefined = listContestConfigTemplatesMock.getMockImplementation();
+    listEventsMock.mockImplementation((options: { query?: { sport?: string } }) => (
+      options.query?.sport === 'AUTO_RACING'
+        ? singleEvent({
+          id: 'f1-race-1',
+          sport: 'AUTO_RACING',
+          sportLeagueId: FORMULA_1_LEAGUE_ID,
+          name: 'Monaco Grand Prix',
+          participantCount: 22,
+          tierCount: 4,
+          pricing,
+        })
+        : golfEvents?.(options)
+    ));
+    listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string; sportLeagueId?: string } }) => (
+      options.query?.sport === 'AUTO_RACING'
+        ? { data: { templates: options.query.sportLeagueId === FORMULA_1_LEAGUE_ID ? FORMULA_1_PRESETS : [] } }
+        : golfTemplates?.(options)
+    ));
+  }
+
+  afterEach(() => {
+    createContestMock.mockReset();
+    getLeagueByCodeMock.mockReset();
+    listContestConfigTemplatesMock.mockReset();
+    listEventsMock.mockReset();
+  });
+
+  it('starts a Formula 1 race on Budget with the series\' default budget preset and its F1 points table, not on Tiered', async () => {
+    primeFormula1Mocks(PRICING);
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-f1' } } });
+
+    renderCreateContestPage();
+
+    await waitForStartingChoices();
+    fireEvent.click(screen.getByTestId('contest-sport-AUTO_RACING'));
+
+    await waitFor(() => expect(screen.getByTestId('contest-event-f1-race-1')).toBeChecked());
+    await waitFor(() => expect(screen.getByTestId('contest-template-formula-1-budget-points')).toBeChecked());
+    expect(screen.getByTestId('contest-format-BUDGET_PICK')).toBeChecked();
+    expect(screen.getByTestId('contest-format-TIERED')).not.toBeChecked();
+    expect(screen.getByTestId('contest-budget-roster-size')).toHaveValue(5);
+    expect(screen.getByTestId('contest-budget-counted-scores')).toHaveValue(5);
+    expect(screen.getByTestId('contest-scoring-points-table')).toHaveValue('25, 18, 15, 12, 10, 8, 6, 4, 2, 1');
+
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+    expect(submittedBody()).toMatchObject({
+      sportEventId: 'f1-race-1',
+      selectionType: 'BUDGET_PICK',
+      templateId: '62500000-0000-4000-8000-000000000011',
+    });
+  });
+
+  it('starts a Formula 1 race that has no prices yet on Tiered with the series\' tiered preset, since Budget is unavailable', async () => {
+    primeFormula1Mocks(null);
+
+    renderCreateContestPage();
+
+    await waitForStartingChoices();
+    fireEvent.click(screen.getByTestId('contest-sport-AUTO_RACING'));
+
+    await waitFor(() => expect(screen.getByTestId('contest-template-formula-1-tiered-points')).toBeChecked());
+    expect(screen.getByTestId('contest-format-TIERED')).toBeChecked();
+    expect(screen.getByTestId('contest-format-BUDGET_PICK')).toBeDisabled();
+    expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(4);
+  });
+});
