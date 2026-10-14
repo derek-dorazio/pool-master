@@ -250,8 +250,9 @@ either, and only touches an event that has not started. Its players join the lea
 are new and fill the field in the file's order, at their rankings. Without `replace_field` it
 fills in like any field load: a player the slate leaves out is withdrawn. With
 `replace_field` ticked, every field row the slate does not list is removed instead, except
-one a contest entry has picked, which is withdrawn so the entry keeps its pick. Dry run
-first, as always.
+one a contest entry has picked, which is withdrawn so the entry keeps its pick. Such a row
+stays in the field, so every later replace run lists it as removed and withdraws it again;
+that is expected, not a failure. Dry run first, as always.
 
 ## Seeded 2026 tournaments
 

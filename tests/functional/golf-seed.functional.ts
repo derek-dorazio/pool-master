@@ -428,7 +428,7 @@ describe('Filling an event from a test slate through the admin API', () => {
       const file = parsed(slate([6, 4]));
       const dryRun = await loadSportData(file, { getClient, now: NOW, mode: LoadMode.DRY_RUN, event: eventName, replaceField: true });
       expect(changes(dryRun)).toContainEqual(fieldRow(
-        `1 added (${prefix} Golfer 6); 1 re-ranked or re-seeded; 4 removed (${prefix} Golfer 1, ${prefix} Golfer 2, ${prefix} Golfer 3, ${prefix} Golfer 5); one a contest entry has picked is withdrawn instead`,
+        `1 added (${prefix} Golfer 6); 1 re-ranked or re-seeded; 4 removed (${prefix} Golfer 1, ${prefix} Golfer 2, ${prefix} Golfer 3, ${prefix} Golfer 5); any a contest entry has picked are withdrawn instead`,
       ));
 
       const applied = await loadSportData(file, { getClient, now: NOW, mode: LoadMode.APPLY, event: eventName, replaceField: true });

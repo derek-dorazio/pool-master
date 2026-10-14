@@ -352,7 +352,7 @@ class Loader {
       ...(updated > 0 ? [`${updated} re-ranked or re-seeded`] : []),
       ...(reinstated.length > 0 ? [`${reinstated.length} reinstated (${names(reinstated)})`] : []),
       ...(withdrawn.length > 0 ? [`${withdrawn.length} withdrawn (${names(withdrawn.map((row) => row.participant.name))})`] : []),
-      ...(removed.length > 0 ? [`${removed.length} removed (${names(removed.map((row) => row.participant.name))}); one a contest entry has picked is withdrawn instead`] : []),
+      ...(removed.length > 0 ? [`${removed.length} removed (${names(removed.map((row) => row.participant.name))}); any a contest entry has picked are withdrawn instead`] : []),
     ];
     return { add, patches, withdrawn, removed, changes };
   }
@@ -444,8 +444,9 @@ class Loader {
       const result = await removeEventParticipant({ client, path: { eventId, sportEventParticipantId: row.id } });
       if (result.error?.error.code === 'EVENT_PARTICIPANT_HAS_PICKS') {
         picked.push(row);
-      } else if (result.error !== undefined || !result.response.ok) {
-        throw new Error(`Remove ${row.participant.name} from the field of ${event.name} failed (HTTP ${result.response.status}): ${JSON.stringify(result.error)}`);
+      } else if (result.error !== undefined || !(result.response as Response | undefined)?.ok) {
+        // Typed as always present, but hey-api leaves the response undefined when the fetch itself throws.
+        throw new Error(`Remove ${row.participant.name} from the field of ${event.name} failed (HTTP ${(result.response as Response | undefined)?.status ?? 'none'}): ${JSON.stringify(result.error)}`);
       }
     }
     if (plan.add.length > 0) {
