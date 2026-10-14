@@ -169,8 +169,9 @@ down: a lesson that was true mid-series may not be by the end.
   sports or leagues sees them.
 - **A league that plays differently from the sport's layout.** The tier layout belongs to the
   sport, not the league. The sport's tier size is used only while an event keeps the sport's
-  tier count; on any other count *Auto-assign tiers from odds* spreads the field evenly (an F1
-  field of 22 on four tiers comes out 6/6/5/5), and release refuses an event with an empty tier.
+  tier count and the field fills every tier at that size; otherwise *Auto-assign tiers from
+  odds* spreads the field evenly (an F1 field of 22 on four tiers comes out 6/6/5/5), and release
+  refuses an event with an empty tier.
   So a league on fewer tiers needs only the tier deletion in its setup procedure, and its tiered
   preset must count the tiers it plays. A league default in a format other than tiered is fine:
   the create-contest page starts on the format of the league's own default.

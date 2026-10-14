@@ -161,9 +161,10 @@ export class SportEventTierService {
    * Sorts the active field by `source`, then fills the tiers in tier order. With a `tierSize`,
    * each tier takes that many and the last tier takes everyone left. With none, an event that
    * keeps its sport's default tier count gets the sport's designed layout (golf's six tiers of
-   * ten, horse racing's three, three and the rest); any other tier count gets the field spread
-   * evenly, larger tiers first (22 drivers on four tiers is 6/6/5/5), so no tier is left empty
-   * unless the field is smaller than the tier count. Recomputed from the current tiers and
+   * ten, horse racing's three, three and the rest) while that layout reaches every tier; any
+   * other tier count, or a field too small for the layout, gets the field spread evenly, larger
+   * tiers first (22 drivers on four tiers is 6/6/5/5, 6 horses on three is 2/2/2), so no tier is
+   * left empty unless the field is smaller than the tier count. Recomputed from the current tiers and
    * field every run — nothing persisted to drift (plans/124 §4.5a).
    */
   async autoAssignTiers(input: { sportEventId: string; source: TierSource; tierSize?: number }): Promise<SportEventTierGroup[]> {
@@ -177,7 +178,8 @@ export class SportEventTierService {
     const ordered = [...active].sort((left, right) => compareForTiering(left, right, input.source));
     const source = input.source === TierSource.RANKING ? ValuationSource.AUTO_RANKING : ValuationSource.AUTO_ODDS;
     const layout = getSportDefinition(event.sport).defaultTierLayout;
-    const tierSize = input.tierSize ?? (tiers.length === layout.tierCount ? layout.tierSize : undefined);
+    const fitsLayout = tiers.length === layout.tierCount && ordered.length > (tiers.length - 1) * layout.tierSize;
+    const tierSize = input.tierSize ?? (fitsLayout ? layout.tierSize : undefined);
     const tierIndexAt = tierSize === undefined
       ? evenSpreadTierIndex(ordered.length, tiers.length)
       : (index: number) => Math.min(Math.floor(index / tierSize), tiers.length - 1);
