@@ -101,7 +101,11 @@ scope, and the unit tests in `tests/unit/core-api/` show how to call it.
 
 | Sport | Schedule | Field | Second source | Rankings | Field is set |
 |---|---|---|---|---|---|
-| Golf (PGA TOUR, LPGA Tour) | ESPN's public JSON feed (`site.api.espn.com/apis/site/v2/sports/golf/pga/...`, `lpga` likewise) | The same feed's competitors | Schedule: the season's Wikipedia article. Field: the tour's field page (pgatour.com, lpga.com), rendered | owgr.com, rolexrankings.com | PGA TOUR: Friday 5 p.m. ET before the event |
+| Golf (PGA TOUR, LPGA Tour) | ESPN's scoreboard feed (`site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard`, `lpga` likewise): the season calendar, each event's name and dates, no venue | The same feed's current event competitors, once announced | The tour's schedule page, rendered (pgatour.com/schedule): dates, course, city, purse. Field: the tour's field page, rendered | owgr.com, rolexrankings.com | PGA TOUR: Friday 5 p.m. ET before the event |
+
+Checked 2026-10-14: the ESPN scoreboard returned all 49 events of the 2026 calendar with
+dates; the rendered pgatour.com schedule carried every event's course and city. Venues come
+only from the tour page, so a venue is a single-source fact: load it, and say so.
 
 ESPN's feed is public but undocumented: it can change without notice, which is what the
 second source catches. Confirm a feed URL returns what you expect before building a file

@@ -118,13 +118,14 @@ async function renderOne(index, url, outputDir, browser) {
 }
 
 /** Fetches `fetchUrls` directly and loads `renderUrls` in headless Chromium, in that order. */
-export async function fetchSportSources(outputDir, { fetchUrls = [], renderUrls = [] }) {
+export async function fetchSportSources(outputDir, { fetchUrls = [], renderUrls = [], log = () => {} }) {
   const total = fetchUrls.length + renderUrls.length;
   if (total === 0) throw new Error('No URLs given.');
   if (total > MAX_URLS) throw new Error(`${total} URLs given; at most ${MAX_URLS} per run.`);
   mkdirSync(outputDir, { recursive: true });
   const jobs = [...fetchUrls.map((raw) => ({ raw, render: false })), ...renderUrls.map((raw) => ({ raw, render: true }))];
   // Only loaded when a page needs rendering, so a feeds-only run needs no browser.
+  if (renderUrls.length > 0) log('Starting headless Chromium...');
   const browser = renderUrls.length > 0 ? await (await import('@playwright/test')).chromium.launch() : null;
   const results = [];
   try {
@@ -132,13 +133,19 @@ export async function fetchSportSources(outputDir, { fetchUrls = [], renderUrls 
       const checked = checkUrl(raw);
       if (!checked.ok) {
         results.push({ url: raw, rendered: render, status: 'REFUSED', reason: checked.reason, file: null });
+        log(`[${index + 1}/${total}] REFUSED ${raw} (${checked.reason})`);
         continue;
       }
+      log(`[${index + 1}/${total}] ${render ? 'Rendering' : 'Fetching'} ${checked.url.href}`);
+      const started = Date.now();
       try {
         const saved = render ? await renderOne(index, checked.url, outputDir, browser) : await fetchOne(index, checked.url, outputDir);
         results.push({ url: checked.url.href, rendered: render, ...saved });
+        log(`[${index + 1}/${total}] ${saved.status} HTTP ${saved.httpStatus} in ${Math.round((Date.now() - started) / 1000)}s -> ${saved.file}`);
       } catch (error) {
-        results.push({ url: checked.url.href, rendered: render, status: 'FAILED', reason: error instanceof Error ? error.message : String(error), file: null });
+        const reason = error instanceof Error ? error.message : String(error);
+        results.push({ url: checked.url.href, rendered: render, status: 'FAILED', reason, file: null });
+        log(`[${index + 1}/${total}] FAILED after ${Math.round((Date.now() - started) / 1000)}s (${reason})`);
       }
     }
   } finally {
@@ -155,7 +162,8 @@ function splitUrls(value) {
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const { positionals, values } = parseArgs({ allowPositionals: true, options: { fetch: { type: 'string' }, render: { type: 'string' } } });
   try {
-    const results = await fetchSportSources(positionals[0], { fetchUrls: splitUrls(values.fetch), renderUrls: splitUrls(values.render) });
+    const results = await fetchSportSources(positionals[0], { fetchUrls: splitUrls(values.fetch), renderUrls: splitUrls(values.render), log: (line) => console.log(line) });
+    console.log('\nSummary:');
     for (const result of results) console.log(`${result.status} ${result.url}${result.file ? ` -> ${result.file}` : ''}${result.reason ? ` (${result.reason})` : ''}`);
     if (results.every((result) => result.status !== 'OK')) process.exit(1);
   } catch (error) {
