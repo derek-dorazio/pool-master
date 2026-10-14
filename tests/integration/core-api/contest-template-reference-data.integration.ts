@@ -241,3 +241,78 @@ describe('Seeded cycling tours and their Top 10 templates', () => {
     ]);
   });
 });
+
+// Running's series and their Top 10 presets (#627), checked value by value.
+const RUNNING_TOP_10_POINTS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+
+describe('Seeded running series and their Top 10 templates', () => {
+  it('seeds running\'s two World Marathon Majors series, each with a tiered default, a budget and a random-draw template of its own', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.RUNNING },
+      include: { sportLeague: { include: { sport: true } } },
+      orderBy: [{ templateKey: 'asc' }],
+    });
+
+    expect(templates.map((template) => [
+      template.sportLeague?.name,
+      template.templateKey,
+      template.selectionType,
+      template.isDefault,
+      template.active,
+      template.name,
+    ])).toEqual([
+      ['World Marathon Majors (men)', 'wmm-men-budget-top-10', SelectionType.BUDGET_PICK, false, true, 'Pick 4 runners under the cap, Top 10 points'],
+      ['World Marathon Majors (men)', 'wmm-men-random-draw-top-10', SelectionType.RANDOM_DRAW, false, true, 'Draw 1 runner each, Top 10 points'],
+      ['World Marathon Majors (men)', 'wmm-men-tiered-top-10', SelectionType.TIERED, true, true, 'Pick 1 runner from each tier, Top 10 points'],
+      ['World Marathon Majors (women)', 'wmm-women-budget-top-10', SelectionType.BUDGET_PICK, false, true, 'Pick 4 runners under the cap, Top 10 points'],
+      ['World Marathon Majors (women)', 'wmm-women-random-draw-top-10', SelectionType.RANDOM_DRAW, false, true, 'Draw 1 runner each, Top 10 points'],
+      ['World Marathon Majors (women)', 'wmm-women-tiered-top-10', SelectionType.TIERED, true, true, 'Pick 1 runner from each tier, Top 10 points'],
+    ]);
+    expect(new Set(templates.map((template) => template.sportLeague?.sport.sport))).toEqual(new Set([Sport.RUNNING]));
+  });
+
+  it('presets Top 10 points (10 down to 1, 0 for a runner who drops out) on every running template, each a valid template configuration', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { sport: Sport.RUNNING } });
+
+    expect(templates).toHaveLength(6);
+    for (const template of templates) {
+      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
+      expect(rules.selectionType).toBe(template.selectionType);
+      expect(rules.maxEntriesPerSquad).toBe(1);
+      expect(rules.scoring).toEqual({
+        participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
+        config: { pointsTable: RUNNING_TOP_10_POINTS, didNotFinishPoints: 0 },
+      });
+    }
+  });
+
+  it('counts four runners in the tiered (one from each of four tiers) and budget presets and one in the random draw', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.RUNNING },
+      orderBy: { templateKey: 'asc' },
+    });
+
+    const shapes = templates.map((template) => {
+      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
+      switch (rules.selectionType) {
+        case SelectionType.TIERED:
+          return [template.templateKey, rules.picksPerTier, rules.countedScores];
+        case SelectionType.BUDGET_PICK:
+          return [template.templateKey, rules.rosterSize, rules.countedScores];
+        case SelectionType.RANDOM_DRAW:
+          return [template.templateKey, rules.picksPerEntry, rules.countedScores];
+        default:
+          return assertNever(rules, 'selection type');
+      }
+    });
+
+    expect(shapes).toEqual([
+      ['wmm-men-budget-top-10', 4, 4],
+      ['wmm-men-random-draw-top-10', 1, 1],
+      ['wmm-men-tiered-top-10', 1, 4],
+      ['wmm-women-budget-top-10', 4, 4],
+      ['wmm-women-random-draw-top-10', 1, 1],
+      ['wmm-women-tiered-top-10', 1, 4],
+    ]);
+  });
+});

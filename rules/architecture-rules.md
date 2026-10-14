@@ -253,7 +253,7 @@ filling them in rather than by finding guards scattered through the code:
   participant scoring rule's `config`, typed per scoring definition by
   `PARTICIPANT_SCORING_SETTINGS_SCHEMAS` on write and read), returns each participant score
   with a detail keyed by family, and declares the one live-score category it accepts, or none.
-  Built: stroke play (golf) and finish position (horse racing, auto racing, cycling). Finish position's admin
+  Built: stroke play (golf) and finish position (horse racing, auto racing, cycling, running). Finish position's admin
   results entry (the finishing order) lives in its folder; golf's score corrections predate the
   folders and live in `modules/golf`. Each refuses an event whose sport's family does not keep
   its results with 422 `EVENT_SCORING_FAMILY_MISMATCH`.

@@ -175,6 +175,32 @@ describe('sport registry', () => {
     expect(cycling.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
+  it('scores running by finishing place in races of a series, calls a runner a runner, and names no rider column, top places or eliminated', () => {
+    const running = getSportDefinition(Sport.RUNNING);
+
+    expect(running.name).toBe('Running');
+    expect(running.participantType).toBe('INDIVIDUAL');
+    expect(running.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
+    expect(running.scoringDefinitions).toEqual(['FINISH_POSITION_POINTS']);
+    expect(running.vocabulary).toEqual({
+      participant: { one: 'runner', many: 'runners' },
+      event: { one: 'race', many: 'races' },
+      sportLeague: { one: 'series', many: 'series' },
+      round: { one: 'race', many: 'races' },
+      withdrawn: 'Withdrawn',
+      eventStart: 'start',
+    });
+  });
+
+  it('gives a new running race one round labelled Race, and four tiers of six with the last taking the rest of an elite field', () => {
+    const running = getSportDefinition(Sport.RUNNING);
+
+    expect(running.defaultRounds).toBe(1);
+    expect(running.roundLabel(1, 1)).toBe('Race');
+    expect(running.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 6 });
+    expect(running.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
+  });
+
   it('gives a new golf event four rounds and six tiers of ten golfers', () => {
     const golf = getSportDefinition(Sport.GOLF);
 

@@ -51,7 +51,7 @@ so (the skill's cross-check step).
 |---|---|---|---|---|---|
 | Auto racing · Formula 1 (#625) | `racing/f1` | formula1.com/en/racing/2027 (rendered); Wikipedia | formula1.com entry list · Wikipedia season page (driver line-up is set for the season) | Season line-up; confirm the week of each race | No |
 | Cycling (#626) | None useful | Primary: procyclingstats.com race calendar; second: the race's site (letour.fr) or UCI calendar | procyclingstats.com start list · the race's site | Start list a few days before a Grand Tour | No |
-| Marathons (#627) | None | Primary: worldmarathonmajors.com; second: each race's site, Wikipedia | Elite field announcements on the race's site · World Athletics | Elite field announced weeks before | No |
+| Running · World Marathon Majors (#627) | None | Primary: worldmarathonmajors.com; second: each race's site, Wikipedia | Elite field announcements on the race's site · World Athletics | Elite field announced weeks before | No |
 | Tennis · ATP, WTA (later) | `tennis/atp`, `tennis/wta` | atptour.com / wtatennis.com calendars; Wikipedia | Draw: the Slam's own site (ausopen.com) · ESPN | Draw the day or two before main draw starts | No |
 | Team sports for pick'em: NFL, college football, NBA, men's college basketball, MLB, NHL, soccer | `football/nfl`, `football/college-football`, `basketball/nba`, `basketball/mens-college-basketball`, `baseball/mlb`, `hockey/nhl`, `soccer/<league code>` | The league's own schedule page; Wikipedia | Teams come with each game in the ESPN feed | Fixed with the schedule | No |
 
@@ -62,6 +62,7 @@ so (the skill's cross-check step).
 | Golf, men | owgr.com | ESPN or the tour's FedEx Cup standings |
 | Golf, women | rolexrankings.com | lpga.com CME standings |
 | Tennis | atptour.com, wtatennis.com rankings | ESPN |
-| Racing, cycling, marathons | Season standings on the league site | Wikipedia season page |
+| Racing, cycling | Season standings on the league site | Wikipedia season page |
+| Running (marathons) | worldathletics.org world rankings (marathon), loaded as each runner's `ranking` and `seedNumber` | The race's elite field announcement |
 
 Odds are not loaded (the skill says why), so no odds source is listed.

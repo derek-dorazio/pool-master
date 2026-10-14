@@ -11,6 +11,8 @@ An auto race (the Daytona 500, the Indy 500) follows the same steps with the dif
 A cycling race (the Tour de France, a one-day Monument) does too, with the differences in
 [Cycling](#cycling) at the end.
 
+So does a marathon (Boston, New York), with the differences in [Running](#running) at the end.
+
 Golf works differently, through a simulated score feed: see
 [`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md).
 
@@ -321,3 +323,36 @@ Road racing (UCI WorldTour, UCI Women's WorldTour) runs through the same steps u
 - **Keep it In Progress for the three weeks.** Move the race to In Progress at the start and to
   Completed only once the final classification is official. A provisional GC after a stage
   shows on the leaderboard but scores nothing until the official result.
+
+## Running
+
+Marathons (World Marathon Majors) run through the same steps under
+`/manage/sports/running/...`: in the side menu it is **Running**, and its three lists are
+**Races**, **Runners** and **Series**. What differs:
+
+- **The series already exist.** **World Marathon Majors (men)** and **World Marathon Majors
+  (women)** are created by the migration that adds running, because each one's presets belong
+  to it. Skip step 1 and choose the series when creating the race. Do not create a second series
+  of the same name.
+- **One race, one result.** A marathon is one race with one round. Its result is the official
+  finishing order; gun and chip times are not entered.
+- **Elite field only.** Add each runner once (*Running → Runners*), and put only the elite
+  field on the race: 20 to 40 runners, never the mass start. A runner who does not start is
+  withdrawn from the field and reads *Withdrawn*. **Starts** is the elite start, the cutoff for
+  release, contests and picks; copy reads "Entries close at the start".
+- **Ranking and seed, not odds.** Odds are thin for marathons, so *Bulk upload* each runner's
+  World Athletics ranking as `ranking` and the same order as `seedNumber`. Odds are optional:
+  ranking and seed alone tier and price the field.
+- **Four tiers of six, from ranking.** On *Tiers*, press *Auto-assign tiers from ranking* (not
+  from odds). It fills the tiers six runners at a time from the top-ranked, the last tier taking
+  the rest: a 30-runner field comes out 6/6/6/12. *Auto-assign prices* then prices by seed, best
+  seed first.
+- **Presets per series.** On create contest, choose **Running**, then the race. *Start from*
+  offers only that series' presets: the tiered one (one runner from each of the four tiers, all
+  four counted) is the default, then budget (four runners under the cap) and random draw (one
+  runner each). All three score **Top 10 points**: 10 for the winner, 9 for second, down to 1
+  for tenth, and 0 below that.
+- **The result names only the runner.** The Result card heads its columns *Finish*, *Runner*
+  and *Start*, with no jockey column; leave `riderName` and `startPosition` blank. Give every
+  runner who finished their place, 1 to N, not just the top ten. A runner who **dropped out** is
+  `DNF` and scores 0; a disqualified runner is `DQ`.
