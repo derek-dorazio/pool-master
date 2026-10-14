@@ -8,6 +8,10 @@ design; no slices filed. Builds on the sport extension architecture proposal (th
 and scoring families, #602 to #606) and `plans/next-sport-adoption.md` (#599). Open questions
 sit under the section they belong to, each with a recommendation; nothing waits on them.
 
+*2026-10-14:* the domain model for pick'em (and for knockout pools, built first) is now
+`plans/knockout-and-pickem-design.md`; where the two differ, that doc is newer. This plan keeps
+the sport research and the style catalog.
+
 ---
 
 ## TL;DR
