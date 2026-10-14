@@ -34,7 +34,7 @@ import { standardEventPricing } from '../support/budget-pricing';
 
 // Running end to end over HTTP (#627): an admin builds a marathon in the seeded World Marathon
 // Majors (men) series and loads its elite field by upload with each runner's World Athletics
-// ranking and the same order as seed, and no odds: the refinement makes odds optional for running,
+// ranking and the same order as seed, and no odds: odds are optional for every sport,
 // so tiers come from ranking and prices from seed alone. A commissioner runs a contest from the
 // series' default tiered template (its Top 10 points table comes with it), two entries pick one
 // runner from each of the four tiers, the admin enters the official finishing order with one
