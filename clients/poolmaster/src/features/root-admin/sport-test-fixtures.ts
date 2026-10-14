@@ -32,6 +32,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     participantCount: null,
     loadedParticipantCount: 0,
     untieredParticipantCount: 0,
+    emptyTierLabels: [],
     unpricedParticipantCount: 0,
     pricing: { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
     readinessStatus: 'NOT_RELEASED',

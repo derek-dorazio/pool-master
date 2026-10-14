@@ -130,7 +130,10 @@ export function resolveEventLifecycleStage(status: SportEventDtoStatus): EventLi
  * the server makes. Empty when it is ready, or when it is not a draft.
  */
 export function describeEventReleaseBlockers(
-  tournament: Pick<SportEventDto, 'sport' | 'status' | 'startDate' | 'loadedParticipantCount' | 'untieredParticipantCount' | 'unpricedParticipantCount' | 'pricing'>,
+  tournament: Pick<
+    SportEventDto,
+    'sport' | 'status' | 'startDate' | 'loadedParticipantCount' | 'untieredParticipantCount' | 'unpricedParticipantCount' | 'emptyTierLabels' | 'pricing'
+  >,
   now: Date = new Date(),
 ): string[] {
   if (tournament.status !== SportEventStatus.DRAFT) {
@@ -150,6 +153,10 @@ export function describeEventReleaseBlockers(
         ? `Put the 1 active ${participant.one} without a tier into a tier.`
         : `Put the ${tournament.untieredParticipantCount} active ${participant.many} without a tier into tiers.`,
     );
+  }
+  // No entry could pick from a tier nobody is in, so a tiered contest on it could never be completed.
+  for (const label of tournament.emptyTierLabels) {
+    blockers.push(`${label} has no ${participant.many}. Move ${participant.many} into it or delete it.`);
   }
   if (!tournament.pricing) {
     blockers.push('Assign prices on the Tiers page.');
@@ -244,7 +251,7 @@ export type SportEventReadiness = {
 export function deriveSportEventReadiness(
   tournament: Pick<
     SportEventDto,
-    'sport' | 'status' | 'loadedParticipantCount' | 'tierCount' | 'untieredParticipantCount' | 'unpricedParticipantCount' | 'pricing'
+    'sport' | 'status' | 'loadedParticipantCount' | 'tierCount' | 'untieredParticipantCount' | 'unpricedParticipantCount' | 'emptyTierLabels' | 'pricing'
   >,
 ): SportEventReadiness {
   if (tournament.status === SportEventStatus.COMPLETED) {
@@ -281,6 +288,13 @@ export function deriveSportEventReadiness(
       label: 'Tiers pending',
       tone: 'warning',
       reasons: [`${participants(tournament.untieredParticipantCount)} without a tier`],
+    };
+  }
+  if (tournament.emptyTierLabels.length > 0) {
+    return {
+      label: 'Tiers pending',
+      tone: 'warning',
+      reasons: tournament.emptyTierLabels.map((label) => `${label} has no ${participant.many}`),
     };
   }
   if (!tournament.pricing || tournament.unpricedParticipantCount > 0) {

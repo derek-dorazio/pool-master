@@ -70,7 +70,10 @@ export interface SportDefinition {
   tournamentFormat: TournamentFormat;
   /** How many rounds an admin-authored event gets when the admin gives no count. */
   defaultRounds: number;
-  /** The tiers a new event gets, and the tier size auto-assignment uses when none is sent. */
+  /**
+   * The tiers a new event gets, and the tier size auto-assignment uses when none is sent and
+   * the event still has this many tiers (any other count is spread evenly).
+   */
   defaultTierLayout: SportTierLayout;
   /** Selection types a commissioner may choose for this sport. Each has an engine. */
   selectionTypes: readonly [SelectionType, ...SelectionType[]];

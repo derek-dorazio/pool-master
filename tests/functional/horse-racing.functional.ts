@@ -122,14 +122,15 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: horseIds } })).data?.added).toBe(4);
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const horseByFieldRow = new Map(field.map((row) => [row.id, row.participant.name.replace(` ${RUN}`, '')]));
-    // Release needs every runner tiered and priced: the admin enters each horse's odds, and tiers
-    // and prices follow from them.
+    // Release needs every runner tiered and priced and no tier empty: the admin enters each horse's
+    // odds, and tiers and prices follow from them. Four runners can't fill three tiers of three, so
+    // auto-assign spreads them 2/1/1.
     await updateEventParticipants({
       client: a,
       path: { eventId },
       body: { participants: field.map((row, index) => ({ sportEventParticipantId: row.id, oddsToWin: 2 + index * 3 })) },
     });
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 3 } })).response.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS' } })).response.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 

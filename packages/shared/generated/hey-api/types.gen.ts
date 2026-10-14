@@ -5178,6 +5178,10 @@ export type SportEventDto = {
      */
     tierCount: number;
     /**
+     * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.)
+     */
+    emptyTierLabels: Array<string>;
+    /**
      * Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)
      */
     contestCount: number;
@@ -5359,6 +5363,10 @@ export type SportEventListResponse = {
          */
         tierCount: number;
         /**
+         * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.)
+         */
+        emptyTierLabels: Array<string>;
+        /**
          * Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)
          */
         contestCount: number;
@@ -5514,6 +5522,10 @@ export type SportEventResponse = {
          * Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier.
          */
         tierCount: number;
+        /**
+         * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.)
+         */
+        emptyTierLabels: Array<string>;
         /**
          * Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)
          */
@@ -5762,6 +5774,10 @@ export type ImportSportEventYearFromProviderResponse = {
          */
         tierCount: number;
         /**
+         * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.)
+         */
+        emptyTierLabels: Array<string>;
+        /**
          * Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)
          */
         contestCount: number;
@@ -6000,7 +6016,7 @@ export type AutoAssignSportEventTiersRequest = {
      */
     source: 'ODDS' | 'RANKING';
     /**
-     * Participants per tier; the last tier takes the rest. Default: the sport's tier size (10 for golf).
+     * Participants per tier; the last tier takes the rest. Omitted: an event with its sport's default tier count gets the sport's tier size (10 for golf); any other tier count gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5).
      */
     tierSize?: number;
 };
@@ -15448,7 +15464,7 @@ export type ReleaseEventErrors = {
      */
     409: ErrorEnvelope;
     /**
-     * SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, or prices are not assigned or miss an active participant.
+     * SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, or prices are not assigned or miss an active participant.
      */
     422: ErrorEnvelope;
 };

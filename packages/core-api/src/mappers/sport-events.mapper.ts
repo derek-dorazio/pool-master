@@ -39,6 +39,7 @@ export function mapSportEventToDto({
   untieredParticipantCount,
   unpricedParticipantCount,
   tierCount,
+  emptyTierLabels,
   contestCount,
 }: SportEventSummary): SportEventDto {
   const operationalState = evaluateEventOperationalState({
@@ -74,6 +75,7 @@ export function mapSportEventToDto({
     syncScope: event.syncScope,
     autoLifecycleEnabled: event.autoLifecycleEnabled,
     tierCount,
+    emptyTierLabels,
     contestCount,
     allowedTransitions: genericTransitionsFrom(event.status),
     createdAt: event.createdAt.toISOString(),

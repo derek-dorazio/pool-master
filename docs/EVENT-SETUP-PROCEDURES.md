@@ -110,13 +110,16 @@ with the provider's again, as it does grid edits (#415).
 *Tiers* (`/manage/sports/golf/events/:id/tiers`), then *Auto-assign tiers from ranking*. A golf
 event starts with six tiers. Auto-assign fills them in ranking order, ten golfers at a time,
 and the last tier takes everyone left. The mock's 80 golfers therefore come out as
-10/10/10/10/10/30. A tier-pick contest's configuration is checked against this tier count.
+10/10/10/10/10/30. If you add or delete tiers first, auto-assign instead spreads the field
+evenly over them from the top, larger tiers first: the same 80 golfers on five tiers come out
+16/16/16/16/16. A tier-pick contest's configuration is checked against this tier count.
 
 ## 6. Release it for contests
 
 On the tournament's home page, the Workflow card's *Release for contests*, then confirm. The
-button stays disabled, with a list of what is missing, until the field is loaded and every
-active golfer has a tier. Release moves the tournament from Draft to Scheduled, and
+button stays disabled, with a list of what is missing, until the field is loaded, every
+active golfer has a tier, and every tier has an active golfer in it ("Tier 6 has no golfers":
+no entry could pick from an empty tier, so move golfers into it or delete it). Release moves the tournament from Draft to Scheduled, and
 commissioners can now pick it. It also **locks the tiers and prices for good**: the tier
 board and price cells turn read-only. Rankings, odds and withdrawals stay editable, and a
 golfer added after release stays untiered and can't be picked (#431).

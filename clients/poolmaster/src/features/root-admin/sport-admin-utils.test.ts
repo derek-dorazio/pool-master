@@ -79,6 +79,7 @@ describe('sport-admin-utils: describeEventReleaseBlockers', () => {
     loadedParticipantCount: 120,
     untieredParticipantCount: 0,
     unpricedParticipantCount: 0,
+    emptyTierLabels: [] as string[],
     pricing: STANDARD_PRICING,
   };
 
@@ -113,6 +114,16 @@ describe('sport-admin-utils: describeEventReleaseBlockers', () => {
     ]);
     expect(describeEventReleaseBlockers({ ...ready, unpricedParticipantCount: 2 }, now)).toEqual([
       'Price the 2 active golfers without a price.',
+    ]);
+  });
+
+  it('names each tier no active participant is in, in the sport\'s words, so a race with an empty Tier 4 cannot be released', () => {
+    expect(describeEventReleaseBlockers({ ...ready, sport: 'AUTO_RACING', emptyTierLabels: ['Tier 4'] }, now)).toEqual([
+      'Tier 4 has no drivers. Move drivers into it or delete it.',
+    ]);
+    expect(describeEventReleaseBlockers({ ...ready, emptyTierLabels: ['Tier 5', 'Tier 6'] }, now)).toEqual([
+      'Tier 5 has no golfers. Move golfers into it or delete it.',
+      'Tier 6 has no golfers. Move golfers into it or delete it.',
     ]);
   });
 
@@ -179,6 +190,7 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
     tierCount: 6,
     untieredParticipantCount: 0,
     unpricedParticipantCount: 0,
+    emptyTierLabels: [] as string[],
     pricing: STANDARD_PRICING,
   };
 
@@ -199,6 +211,14 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
       label: 'Tiers pending',
       tone: 'warning',
       reasons: ['4 golfers without a tier'],
+    });
+  });
+
+  it('reports Tiers pending, naming the empty tier, while a draft has a tier no active participant is in', () => {
+    expect(deriveSportEventReadiness({ ...base, sport: 'AUTO_RACING', tierCount: 4, emptyTierLabels: ['Tier 4'] })).toEqual({
+      label: 'Tiers pending',
+      tone: 'warning',
+      reasons: ['Tier 4 has no drivers'],
     });
   });
 

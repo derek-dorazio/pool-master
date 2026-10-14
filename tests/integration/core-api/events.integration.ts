@@ -400,6 +400,34 @@ describe('events routes', () => {
       expect(stored.status).toBe('DRAFT');
     });
 
+    it('refuses to release a tiered, priced draft that has an empty tier with 422 SPORT_EVENT_NOT_READY naming the tier, and leaves it a draft', async () => {
+      const admin = await createTestUser({ displayName: 'Release Empty Tier Admin', isRootAdmin: true });
+      const eventId = await seedDraftGolfEvent({ tiered: true });
+      await getPrisma().sportEventTier.create({
+        data: { sportEventId: eventId, tierKey: 'B', label: 'Tier B', tierNumber: 2 },
+      });
+      const pricesRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        headers: admin.headers,
+        payload: standardEventPricing(),
+      });
+      expect(pricesRes.statusCode).toBe(200);
+
+      const res = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/release`,
+        headers: withoutJsonBodyHeaders(admin.headers),
+      });
+
+      expect(res.statusCode).toBe(422);
+      const body = res.json<{ error: { code: string; message: string } }>();
+      expect(body.error.code).toBe('SPORT_EVENT_NOT_READY');
+      expect(body.error.message).toContain('Tier B has no golfers');
+      const stored = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: eventId } });
+      expect(stored.status).toBe('DRAFT');
+    });
+
     it('refuses a release from a user who is not a root admin with 403 and leaves the event a draft', async () => {
       const viewer = await createTestUser({ displayName: 'Release Route Member' });
       const eventId = await seedDraftGolfEvent({ tiered: true });

@@ -131,8 +131,9 @@ before release even when every contest on the race will be a random draw.
 ### Release
 
 On the race's page, the Workflow card's *Release for contests*, then confirm. The button
-stays disabled, with a list of what is missing, until the field has horses and every horse
-still in it has a tier and a price. Release moves the race to Scheduled, commissioners can
+stays disabled, with a list of what is missing, until the field has horses, every horse
+still in it has a tier and a price, and no tier is empty ("Tier 3 has no horses": move horses
+into it or delete it, since no entry could pick from it). Release moves the race to Scheduled, commissioners can
 pick it, and **tiers and prices lock for good**. Odds, seeds and scratches stay editable.
 
 ## 5. Contests and entries
@@ -259,8 +260,8 @@ are **Races**, **Drivers** and **Series**. What differs:
 - **Starts is the green flag.** It is the cutoff for release, contests and picks.
 - **Five tiers of eight.** *Auto-assign tiers from odds* fills them eight drivers at a time
   from the favourite, so a full 40-car NASCAR field comes out 8/8/8/8/8 and a 33-car Indy 500
-  field 8/8/8/8/1. Move drivers by hand if the last tier is too thin. A Formula 1 race is the
-  exception: see below.
+  field 8/8/8/8/1. Move drivers by hand if the last tier is too thin. A race whose tier count
+  you change is spread evenly instead (see Formula 1 below).
 - **Presets per series.** On create contest, choose **Auto racing**, then the race. *Start
   from* offers only that series' presets: the tiered one (one driver from each tier, five
   counted) is the default, then budget (five drivers under the cap) and random draw (one
@@ -274,13 +275,11 @@ are **Races**, **Drivers** and **Series**. What differs:
 
 A Grand Prix runs through the same steps in the **Formula 1** series. What differs:
 
-- **Set four tiers, then even them out by hand.** The sport starts every race on five tiers of
-  eight, which a 22-car F1 field cannot fill. On the race's *Tiers* page, press the delete
-  button beside *Tier 5* in the *Tiers* card and confirm *Delete tier*, so four remain. *Auto-assign tiers from odds*
-  still fills eight at a time from the favourite, so it gives 8/8/6 and leaves Tier 4 empty:
-  move the slowest drivers down with the select on each driver's card until the tiers read
-  6/6/5/5, then *Save changes*. An empty tier would leave a tiered contest with nobody to pick
-  there. The F1 tiered preset counts four picks, one per tier.
+- **Set four tiers.** The sport starts every race on five tiers of eight, which a 22-car F1
+  field cannot fill. On the race's *Tiers* page, press the delete button beside *Tier 5* in the
+  *Tiers* card and confirm *Delete tier*, so four remain. *Auto-assign tiers from odds* then
+  spreads the field evenly from the favourite, larger tiers first: 22 drivers come out 6/6/5/5.
+  The F1 tiered preset counts four picks, one per tier.
 - **Budget is the default.** On create contest, an F1 race starts on *Budget* with the
   `Pick 5 drivers under the cap, F1 points` preset (five drivers, five counted). *Tiered*
   (one driver from each of the four tiers) and *Random draw* (one driver each) are the

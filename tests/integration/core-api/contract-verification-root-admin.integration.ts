@@ -1340,6 +1340,20 @@ describe('Contract verification (root admin)', () => {
       expect(ErrorEnvelopeSchema.safeParse(releaseRefusedRes.json()).success).toBe(true);
       expect(releaseRefusedRes.json<ErrorEnvelope>().error.code).toBe('SPORT_EVENT_NOT_READY');
 
+      // Two golfers can't fill six tiers, and release refuses an empty tier: play two.
+      const twoTiersRes = await getApp().inject({
+        method: 'PUT',
+        url: `/api/v1/events/${eventId}/tiers`,
+        headers: rootAdmin.headers,
+        payload: {
+          tiers: [
+            { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
+            { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
+          ],
+        },
+      });
+      expect(twoTiersRes.statusCode).toBe(200);
+
       const autoTierRes = await getApp().inject({
         method: 'POST',
         url: `/api/v1/events/${eventId}/tiers/auto-assign`,

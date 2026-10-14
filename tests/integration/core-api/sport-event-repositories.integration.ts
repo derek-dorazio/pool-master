@@ -164,6 +164,26 @@ describe('SportEventRepository — writes', () => {
     expect(fixture.contestId).toBeDefined();
   });
 
+  it('lists, in tier order, the labels of the tiers no active participant is in — a tier holding only a withdrawn one counts as empty', async () => {
+    const { events, tiers, field, valuations } = repos();
+    const event = await createEvent('Empty Tiers');
+    const bare = await createEvent('No Tiers');
+    await tiers.createMany(event.id, [...TIERS, { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3 }]);
+    const [active, withdrawn] = await createParticipants(['Active Golfer', 'Withdrawn Golfer']);
+    await field.createMany(event.id, [{ participantId: active.id }, { participantId: withdrawn.id }]);
+    await getPrisma().sportEventParticipant.updateMany({ where: { participantId: withdrawn.id }, data: { isActive: false } });
+    const entries = await field.findBySportEvent(event.id);
+    const [tier1, tier2] = await tiers.findBySportEvent(event.id);
+    await valuations.assignTiers(entries.map((entry) => ({
+      sportEventParticipantId: entry.id,
+      sportEventTierId: entry.participantId === active.id ? tier1.id : tier2.id,
+      tierOrderIndex: 1,
+      source: 'MANUAL',
+    })));
+
+    expect(await events.findEmptyTierLabels([event.id, bare.id])).toEqual(new Map([[event.id, ['Tier 2', 'Tier 3']], [bare.id, []]]));
+  });
+
   it('finds the lifecycle scheduler\'s candidates: auto lifecycle on and scheduled or in progress, linked to a provider or not', async () => {
     const { events } = repos();
     const scheduled = await createEvent('Scheduled');

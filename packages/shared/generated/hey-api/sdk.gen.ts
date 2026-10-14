@@ -1026,7 +1026,7 @@ export const createEventFromProviderEvent = <ThrowOnError extends boolean = fals
 /**
  * Release a draft sport event for contests
  *
- * DRAFT → SCHEDULED. Commissioners can then see the event and build contests on it, and its tiers and prices are locked for good. Refused unless the field is loaded, every active participant has a tier, and the start time has not passed. Root admin only.
+ * DRAFT → SCHEDULED. Commissioners can then see the event and build contests on it, and its tiers and prices are locked for good. Refused unless the field is loaded, every active participant has a tier, every tier has an active participant, and the start time has not passed. Root admin only.
  */
 export const releaseEvent = <ThrowOnError extends boolean = false>(options: Options<ReleaseEventData, ThrowOnError>) => (options.client ?? client).post<ReleaseEventResponses, ReleaseEventErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

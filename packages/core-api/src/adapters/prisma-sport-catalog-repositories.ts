@@ -321,6 +321,22 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
   }
 
+  async findEmptyTierLabels(sportEventIds: readonly string[]): Promise<Map<string, string[]>> {
+    const rows = await this.prisma.sportEventTier.findMany({
+      where: {
+        sportEventId: { in: [...sportEventIds] },
+        valuations: { none: { sportEventParticipant: { isActive: true } } },
+      },
+      select: { sportEventId: true, label: true },
+      orderBy: { tierNumber: 'asc' },
+    });
+    const labels = new Map<string, string[]>(sportEventIds.map((id) => [id, []]));
+    for (const row of rows) {
+      labels.get(row.sportEventId)?.push(row.label);
+    }
+    return labels;
+  }
+
   async countContests(sportEventIds: readonly string[]): Promise<Map<string, number>> {
     const groups = await this.prisma.contest.groupBy({
       by: ['sportEventId'],

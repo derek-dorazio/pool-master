@@ -13,7 +13,7 @@ function releaseCodeMessages(event: SportNoun, participant: SportNoun): ErrorCod
   return {
     SPORT_EVENT_NOT_DRAFT: `This ${event.one} has already been released.`,
     SPORT_EVENT_ALREADY_STARTED: `This ${event.one} has already started, so it can no longer be released.`,
-    SPORT_EVENT_NOT_READY: `This ${event.one} is not ready yet: load its field, put every active ${participant.one} in a tier and assign prices.`,
+    SPORT_EVENT_NOT_READY: `This ${event.one} is not ready yet: load its field, put every active ${participant.one} in a tier, leave no tier empty and assign prices.`,
   };
 }
 
