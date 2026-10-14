@@ -341,9 +341,10 @@ as data, the way #624 built NASCAR and IndyCar:
   the fastest lap are not scored.
 - The sport's tier layout stays five tiers of eight. An F1 race is set to four tiers on the
   event's Tiers card (6/6/5/5 for 22 drivers), which is what the tiered preset's four counted
-  scores assume. Auto-assign from odds still fills eight per tier (the sport's tier size), so
-  on four tiers it gives 8/8/6/0 and the admin evens the tiers out by hand; a per-league tier
-  layout would remove that step if F1 pools find it a chore.
+  scores assume. Auto-assign from odds first filled eight per tier (the sport's tier size) on
+  any tier count, so four tiers came out 8/8/6/0 and needed evening out by hand. It now uses the
+  sport's tier size only while the event keeps the sport's tier count and otherwise spreads the
+  field evenly, larger tiers first (6/6/5/5), and release refuses an event with an empty tier.
 - The create-contest page used to start every event on Tiered and apply that format's default,
   so an F1 race opened on the tiered preset. It now starts on the format of the event's sport
   league's own default template (budget for F1) when the sport offers it and the event is

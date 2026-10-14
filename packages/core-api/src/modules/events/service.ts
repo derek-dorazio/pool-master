@@ -51,6 +51,8 @@ export interface SportEventSummary {
   /** Active participants with no price: a DRAFT event can't be released while any remain (#93). */
   unpricedParticipantCount: number;
   tierCount: number;
+  /** Labels of the tiers no active participant is in, in tier order: a DRAFT event can't be released while any remain. */
+  emptyTierLabels: string[];
   contestCount: number;
 }
 
@@ -358,7 +360,8 @@ export class SportEventService {
    * contests on the event and its tiers and prices are locked for good. 409
    * SPORT_EVENT_NOT_DRAFT once released; 409 SPORT_EVENT_ALREADY_STARTED once its start time
    * has passed; 422 SPORT_EVENT_NOT_READY while its field is empty, any active participant
-   * has no tier, or its prices are not assigned or miss an active participant (#93).
+   * has no tier, any tier has no active participant (no entry could pick from it), or its
+   * prices are not assigned or miss an active participant (#93).
    */
   async releaseEvent(sportEventId: string): Promise<SportEventSummary> {
     const summary = await this.requireSummary(sportEventId);
@@ -390,6 +393,7 @@ export class SportEventService {
           loadedParticipantCount: summary.loadedParticipantCount,
           untieredParticipantCount: summary.untieredParticipantCount,
           unpricedParticipantCount: summary.unpricedParticipantCount,
+          emptyTierLabels: summary.emptyTierLabels,
           isPriced: summary.event.pricingConfig !== undefined,
         },
         'Refused to release a sport event that is not ready',
@@ -478,11 +482,12 @@ export class SportEventService {
 
   private async summarize(events: SportEvent[]): Promise<SportEventSummary[]> {
     const ids = events.map((event) => event.id);
-    const [participants, untiered, unpriced, tiers, contests] = await Promise.all([
+    const [participants, untiered, unpriced, tiers, emptyTiers, contests] = await Promise.all([
       this.deps.sportEvents.countParticipants(ids),
       this.deps.sportEvents.countUntieredActiveParticipants(ids),
       this.deps.sportEvents.countUnpricedActiveParticipants(ids),
       this.deps.sportEvents.countTiers(ids),
+      this.deps.sportEvents.findEmptyTierLabels(ids),
       this.deps.sportEvents.countContests(ids),
     ]);
     return events.map((event) => ({
@@ -491,6 +496,7 @@ export class SportEventService {
       untieredParticipantCount: untiered.get(event.id) ?? 0,
       unpricedParticipantCount: unpriced.get(event.id) ?? 0,
       tierCount: tiers.get(event.id) ?? 0,
+      emptyTierLabels: emptyTiers.get(event.id) ?? [],
       contestCount: contests.get(event.id) ?? 0,
     }));
   }
@@ -504,6 +510,10 @@ function describeReleaseBlockers(summary: SportEventSummary): string[] {
   }
   if (summary.untieredParticipantCount > 0) {
     blockers.push(`${summary.untieredParticipantCount} active participant(s) have no tier`);
+  }
+  const { participant } = getSportDefinition(summary.event.sport).vocabulary;
+  for (const label of summary.emptyTierLabels) {
+    blockers.push(`${label} has no ${participant.many}`);
   }
   if (!summary.event.pricingConfig) {
     blockers.push('its prices have not been assigned');

@@ -26,7 +26,7 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
 }
 
 function summary(sportEvent: SportEvent, loadedParticipantCount: number, untieredParticipantCount = 0) {
-  return { event: sportEvent, loadedParticipantCount, untieredParticipantCount, unpricedParticipantCount: 0, tierCount: 0, contestCount: 0 };
+  return { event: sportEvent, loadedParticipantCount, untieredParticipantCount, unpricedParticipantCount: 0, tierCount: 0, emptyTierLabels: [] as string[], contestCount: 0 };
 }
 
 describe('SportEvent pricing on the wire (#93)', () => {
@@ -98,9 +98,10 @@ describe('SportEvent readiness on the wire', () => {
 
 describe('SportEvent next statuses on the wire', () => {
   it('carries the declared transitions from the event\'s current status, and its counts', () => {
-    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), loadedParticipantCount: 0, untieredParticipantCount: 0, unpricedParticipantCount: 0, tierCount: 6, contestCount: 2 })).toMatchObject({
+    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), loadedParticipantCount: 0, untieredParticipantCount: 0, unpricedParticipantCount: 0, tierCount: 6, emptyTierLabels: ['Tier 6'], contestCount: 2 })).toMatchObject({
       allowedTransitions: ['IN_PROGRESS', 'POSTPONED', 'CANCELLED'],
       tierCount: 6,
+      emptyTierLabels: ['Tier 6'],
       contestCount: 2,
     });
     expect(mapSportEventToDto(summary(event({ status: 'COMPLETED' }), 0)).allowedTransitions).toEqual([]);

@@ -1,8 +1,10 @@
 /**
  * The pure rules for turning a golf data file into API calls: how far a test seed's dates
- * move, and what each stored round looks like. No I/O, so it is unit tested alone.
+ * move, what each stored round looks like, and the tier size a made-up field is tiered with.
+ * No I/O, so it is unit tested alone.
  */
 
+import { getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import type { SportDataEvent, SportDataFieldEntry, SportDataFile } from './sport-data-file';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -45,4 +47,18 @@ export function golferRoundScore(golfer: Pick<SportDataFieldEntry, 'rounds' | 'f
   }
   const status: RoundStatus = isLast && golfer.finish === 'MC' ? 'MISSED_CUT' : 'COMPLETED';
   return { strokes, scoreToPar: strokes - roundsPar, thru: 18, status };
+}
+
+/**
+ * The tier size a test event's auto-assign sends: none (the sport's layout, or an even spread on
+ * a changed tier count) unless the sport's tier size would leave a default tier empty, which
+ * release refuses. A made-up field that small goes the same number to each tier, the last tier
+ * taking the rest.
+ */
+export function testTierSize(sport: Sport, tierCount: number, activeCount: number): { tierSize?: number } {
+  const layout = getSportDefinition(sport).defaultTierLayout;
+  if (tierCount !== layout.tierCount || activeCount > (tierCount - 1) * layout.tierSize) {
+    return {};
+  }
+  return { tierSize: Math.max(1, Math.floor(activeCount / tierCount)) };
 }

@@ -191,14 +191,14 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       tags: TAGS,
       summary: 'Release a draft sport event for contests',
       description: 'DRAFT → SCHEDULED. Commissioners can then see the event and build contests on it, and its tiers and prices are locked for good. '
-        + 'Refused unless the field is loaded, every active participant has a tier, and the start time has not passed. Root admin only.',
+        + 'Refused unless the field is loaded, every active participant has a tier, every tier has an active participant, and the start time has not passed. Root admin only.',
       operationId: 'releaseEvent',
       params: EVENT_PARAMS,
       response: {
         200: schemaRef('SportEventResponse'),
         ...errors(401, 403, 404),
         409: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_DRAFT: the event has already been released. SPORT_EVENT_ALREADY_STARTED: its start time has passed.' },
-        422: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, or prices are not assigned or miss an active participant.' },
+        422: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, or prices are not assigned or miss an active participant.' },
       },
     },
     handler: handler.releaseEvent,

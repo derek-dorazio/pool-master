@@ -131,6 +131,12 @@ export interface SportEventRepository {
   countUnpricedActiveParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Tiers per event, for each id asked about (0 where none). */
   countTiers(sportEventIds: readonly string[]): Promise<Map<string, number>>;
+  /**
+   * The labels of the tiers no active participant is in, per event, in tier order, for each id
+   * asked about (empty where none). An event can't be released while any remain: no entry could
+   * pick from them.
+   */
+  findEmptyTierLabels(sportEventIds: readonly string[]): Promise<Map<string, string[]>>;
   /** Contests run on each event, for each id asked about (0 where none). */
   countContests(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Events per sport league, through their series, for each id asked about (0 where none). */

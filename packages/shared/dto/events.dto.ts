@@ -75,6 +75,7 @@ export const SportEventDtoSchema = z.object({
   syncScope: z.nativeEnum(SportEventSyncScope).describe(`How much provider data this event accepts on sync. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
   tierCount: z.number().int().describe('Pick tiers defined for the event. A tiered contest\'s entry picks this many tiers times the contest\'s picksPerTier.'),
+  emptyTierLabels: z.array(z.string()).describe(`Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. ${ADMIN_ONLY}`),
   contestCount: z.number().int().describe(`Contests run on the event, across every league; an event with any cannot be deleted. ${ADMIN_ONLY}`),
   allowedTransitions: z.array(EventStatusDtoSchema).describe(`Statuses the event may move to next, from the declared transition map. ${ADMIN_ONLY}`),
   createdAt: DateTimeSchema.describe('When the event row was created.'),
@@ -262,7 +263,7 @@ export type ReplaceSportEventTiersRequest = z.infer<typeof ReplaceSportEventTier
 
 export const AutoAssignSportEventTiersRequestSchema = z.object({
   source: z.nativeEnum(TierSource).describe('What the active field is ordered by before the tiers are filled.'),
-  tierSize: z.number().int().min(1).optional().describe('Participants per tier; the last tier takes the rest. Default: the sport\'s tier size (10 for golf).'),
+  tierSize: z.number().int().min(1).optional().describe('Participants per tier; the last tier takes the rest. Omitted: an event with its sport\'s default tier count gets the sport\'s tier size (10 for golf); any other tier count gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5).'),
 }).describe('Fills the event\'s tiers from the active field.');
 export type AutoAssignSportEventTiersRequest = z.infer<typeof AutoAssignSportEventTiersRequestSchema>;
 

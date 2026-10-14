@@ -206,6 +206,19 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
       expect(screen.getByTestId('root-admin-sport-event-release')).toBeDisabled();
     });
 
+    it('names an empty tier and keeps the button disabled while a draft race has a tier with no drivers', async () => {
+      seedDefaults();
+      getEventMock.mockResolvedValue({
+        data: { event: tournament({ sport: 'AUTO_RACING', status: 'DRAFT', allowedTransitions: ['CANCELLED'], tierCount: 4, emptyTierLabels: ['Tier 4'] }) },
+      });
+      renderPage();
+
+      expect(await screen.findByTestId('root-admin-sport-event-release-missing')).toHaveTextContent(
+        'Tier 4 has no drivers. Move drivers into it or delete it.',
+      );
+      expect(screen.getByTestId('root-admin-sport-event-release')).toBeDisabled();
+    });
+
     it('releases a ready draft after the admin confirms', async () => {
       seedDefaults();
       getEventMock.mockResolvedValue({

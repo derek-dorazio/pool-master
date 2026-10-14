@@ -19,7 +19,7 @@ export const autoRacingSportDefinition: SportDefinition = {
   defaultRounds: 1,
   // Five tiers of eight: a full NASCAR field of 40 fills them exactly, and the 33-car Indy 500
   // field leaves the last tier the short one (8/8/8/8/1). A Formula 1 field of about 22 is set to
-  // four tiers on the event's Tiers card instead; the layout is only the starting point.
+  // four tiers on the event's Tiers card instead, and auto-assign spreads it evenly (6/6/5/5).
   defaultTierLayout: { tierCount: 5, tierSize: 8 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],

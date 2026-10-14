@@ -51,6 +51,7 @@ import {
   createSportLeague,
   getSettingsGroup,
   listEventParticipants,
+  listEventTiers,
   listParticipantLeagueAffiliations,
   listEvents,
   listParticipants,
@@ -62,7 +63,7 @@ import {
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
-import { golferRoundScore, seedDateOffsetDays, shiftedEventDates } from './seed-golf-data';
+import { golferRoundScore, seedDateOffsetDays, shiftedEventDates, testTierSize } from './seed-golf-data';
 import { isTestSlate, SportDataContent, type SportDataEvent, type SportDataFieldEntry, type SportDataFile, type SportDataLeague } from './sport-data-file';
 
 export interface LoadSportDataOptions {
@@ -512,7 +513,11 @@ class Loader {
   /** The made-up parts of a test seed: tiers by odds, default prices, stored scores, release. */
   private async finishTestEvent(client: Client, eventId: string, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>): Promise<void> {
     const path = { eventId };
-    await must(autoAssignEventTiers({ client, path, body: { source: 'ODDS' } }), `Assign tiers for ${event.name}`);
+    const [{ tiers }, { participants }] = await Promise.all([
+      must(listEventTiers({ client, path }), `Read the tiers of ${event.name}`),
+      must(listEventParticipants({ client, path }), `Read the field of ${event.name}`),
+    ]);
+    await must(autoAssignEventTiers({ client, path, body: { source: 'ODDS', ...testTierSize(this.sport, tiers.length, participants.filter((row) => row.isActive).length) } }), `Assign tiers for ${event.name}`);
     await must(autoAssignEventPrices({ client, path, body: await defaultPricing(client) }), `Assign prices for ${event.name}`);
     for (let roundNumber = 1; roundNumber <= event.rounds; roundNumber += 1) {
       const rows = event.field.flatMap((entry) => {
@@ -545,3 +550,4 @@ export async function loadSportData(file: SportDataFile, options: LoadSportDataO
   }
   return loader.rows;
 }
+

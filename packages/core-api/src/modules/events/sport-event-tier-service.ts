@@ -158,14 +158,16 @@ export class SportEventTierService {
   }
 
   /**
-   * Sorts the active field by `source`, then fills the tiers in tier order, `tierSize`
-   * each (the sport's default tier size when none is sent), with the last tier taking
-   * everyone left. Recomputed from the current tiers and
+   * Sorts the active field by `source`, then fills the tiers in tier order. With a `tierSize`,
+   * each tier takes that many and the last tier takes everyone left. With none, an event that
+   * keeps its sport's default tier count gets the sport's designed layout (golf's six tiers of
+   * ten, horse racing's three, three and the rest); any other tier count gets the field spread
+   * evenly, larger tiers first (22 drivers on four tiers is 6/6/5/5), so no tier is left empty
+   * unless the field is smaller than the tier count. Recomputed from the current tiers and
    * field every run — nothing persisted to drift (plans/124 §4.5a).
    */
   async autoAssignTiers(input: { sportEventId: string; source: TierSource; tierSize?: number }): Promise<SportEventTierGroup[]> {
     const event = await this.requireEditableEvent(input.sportEventId);
-    const tierSize = input.tierSize ?? getSportDefinition(event.sport).defaultTierLayout.tierSize;
     const tiers = await this.deps.tiers.findBySportEvent(input.sportEventId);
     if (tiers.length === 0) {
       this.deps.logger?.warn({ sportEventId: input.sportEventId }, 'Cannot auto-assign tiers — the event has no tiers yet');
@@ -174,17 +176,28 @@ export class SportEventTierService {
     const active = (await this.deps.field.findBySportEvent(input.sportEventId)).filter((entry) => entry.isActive);
     const ordered = [...active].sort((left, right) => compareForTiering(left, right, input.source));
     const source = input.source === TierSource.RANKING ? ValuationSource.AUTO_RANKING : ValuationSource.AUTO_ODDS;
-    const lastTierIndex = tiers.length - 1;
+    const layout = getSportDefinition(event.sport).defaultTierLayout;
+    const tierSize = input.tierSize ?? (tiers.length === layout.tierCount ? layout.tierSize : undefined);
+    const tierIndexAt = tierSize === undefined
+      ? evenSpreadTierIndex(ordered.length, tiers.length)
+      : (index: number) => Math.min(Math.floor(index / tierSize), tiers.length - 1);
 
     await this.deps.valuations.assignTiers(ordered.map((entry, index) => ({
       sportEventParticipantId: entry.id,
-      sportEventTierId: tiers[Math.min(Math.floor(index / tierSize), lastTierIndex)].id,
+      sportEventTierId: tiers[tierIndexAt(index)].id,
       tierOrderIndex: index + 1,
       source,
     })));
 
     this.deps.logger?.info(
-      { sportEventId: input.sportEventId, source: input.source, tierSize, assignedCount: ordered.length },
+      {
+        sportEventId: input.sportEventId,
+        source: input.source,
+        tierSize: tierSize ?? null,
+        spread: tierSize === undefined ? 'EVEN' : 'FIXED_SIZE',
+        tierCount: tiers.length,
+        assignedCount: ordered.length,
+      },
       'Auto-assigned tiers',
     );
     return this.getEffectiveTiersForSportEvent(input.sportEventId);
@@ -337,4 +350,17 @@ function compareForTiering(left: SportEventParticipant, right: SportEventPartici
   const byOdds = compareNullsLast(left.oddsToWin, right.oddsToWin);
   const [first, second] = source === TierSource.RANKING ? [byRanking, byOdds] : [byOdds, byRanking];
   return first || second || left.participantId.localeCompare(right.participantId, undefined, { sensitivity: 'base' });
+}
+
+/**
+ * The tier index of the participant at `index` when `fieldSize` participants are spread evenly
+ * over `tierCount` tiers in order, the first `fieldSize % tierCount` tiers taking one more.
+ */
+function evenSpreadTierIndex(fieldSize: number, tierCount: number): (index: number) => number {
+  const smallSize = Math.floor(fieldSize / tierCount);
+  const largeTierCount = fieldSize % tierCount;
+  const inLargeTiers = largeTierCount * (smallSize + 1);
+  return (index) => (index < inLargeTiers
+    ? Math.floor(index / (smallSize + 1))
+    : largeTierCount + Math.floor((index - inLargeTiers) / smallSize));
 }

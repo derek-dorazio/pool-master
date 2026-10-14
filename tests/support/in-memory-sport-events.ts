@@ -294,6 +294,13 @@ export class InMemorySportEvents {
         && !this.valuationRows.some((valuation) => valuation.sportEventParticipantId === row.id && valuation.price !== null)
       )).length),
       countTiers: async (ids) => count(ids, (id) => this.tierRows.filter((row) => row.sportEventId === id).length),
+      findEmptyTierLabels: async (ids) => new Map(ids.map((id) => [id, this.tierRows
+        .filter((tier) => tier.sportEventId === id && !this.valuationRows.some((valuation) => (
+          valuation.sportEventTierId === tier.id
+          && this.field.some((row) => row.id === valuation.sportEventParticipantId && row.isActive)
+        )))
+        .sort((left, right) => left.tierNumber - right.tierNumber)
+        .map((tier) => tier.label)])),
       countContests: async (ids) => count(ids, (id) => this.contestsByEvent.get(id) ?? 0),
       countBySportLeagues: async (ids, filters = {}) => count(ids, (id) => this.events.filter((row) => (
         row.sportLeagueId === id && (filters.eventYear === undefined || row.eventYear === filters.eventYear)

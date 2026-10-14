@@ -5,6 +5,7 @@ import {
   golferRoundScore,
   seedDateOffsetDays,
   shiftedEventDates,
+  testTierSize,
 } from '../../../packages/core-api/scripts/seed-golf/seed-golf-data';
 import { parseSportDataFile, SportDataContent, type SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 
@@ -97,5 +98,20 @@ describe('golf-2026.json', () => {
       const totals = finishers.map((golfer) => (golfer.rounds ?? []).reduce((sum, strokes) => sum + strokes, 0)).sort((a, b) => a - b);
       if (event.winner === 'public') expect(totals[0]).toBeLessThan(totals[1]);
     }
+  });
+});
+
+describe('testTierSize: tiering a made-up test field so release finds no empty tier', () => {
+  it('sends no size when the sport\'s ten per tier fills golf\'s six default tiers, or the tier count was changed', () => {
+    expect(testTierSize(Sport.GOLF, 6, 72)).toEqual({});
+    expect(testTierSize(Sport.GOLF, 6, 51)).toEqual({});
+    expect(testTierSize(Sport.GOLF, 4, 8)).toEqual({});
+  });
+
+  it('sends a size that reaches every default tier when the field is too small for ten per tier: 12 golfers go two a tier, 8 one a tier with the last taking the rest', () => {
+    expect(testTierSize(Sport.GOLF, 6, 50)).toEqual({ tierSize: 8 });
+    expect(testTierSize(Sport.GOLF, 6, 12)).toEqual({ tierSize: 2 });
+    expect(testTierSize(Sport.GOLF, 6, 8)).toEqual({ tierSize: 1 });
+    expect(testTierSize(Sport.GOLF, 6, 3)).toEqual({ tierSize: 1 });
   });
 });

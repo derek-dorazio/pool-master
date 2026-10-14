@@ -167,13 +167,13 @@ down: a lesson that was true mid-series may not be by the end.
   templates their own keys and one default per league. The template's foreign key then keeps
   those leagues through any test cleanup that empties sport leagues, and a test that counts
   sports or leagues sees them.
-- **A league that plays differently from the sport's layout.** The tier layout and the
-  auto-assign tier size belong to the sport, not the league: on fewer tiers, *Auto-assign tiers
-  from odds* still fills the sport's tier size per tier and can leave the last tier empty (an F1
-  field of 22 on four tiers comes out 8/8/6/0). Make the league's tiered preset count what its
-  tiers hold, and write the hand moves into the setup procedure. A league default in a format
-  other than tiered is fine: the create-contest page starts on the format of the league's own
-  default.
+- **A league that plays differently from the sport's layout.** The tier layout belongs to the
+  sport, not the league. The sport's tier size is used only while an event keeps the sport's
+  tier count; on any other count *Auto-assign tiers from odds* spreads the field evenly (an F1
+  field of 22 on four tiers comes out 6/6/5/5), and release refuses an event with an empty tier.
+  So a league on fewer tiers needs only the tier deletion in its setup procedure, and its tiered
+  preset must count the tiers it plays. A league default in a format other than tiered is fine:
+  the create-contest page starts on the format of the league's own default.
 - **Looking up a sport league by its sport.** `SportLeagueDto` carries no `sport` (only
   `sportId`). Find a sport's leagues by listing with `?sport=`, not by filtering the DTOs.
 - **Applying race results with POST.** The finishing-order apply is a `PUT` (it replaces the
