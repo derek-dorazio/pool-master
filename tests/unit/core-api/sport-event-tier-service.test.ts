@@ -144,12 +144,12 @@ describe('SportEventTierService — assignment', () => {
     await store.tierRepo().createMany(event.id, [TWO_TIERS[0]]);
     store.addToField(event.id, 'p-d', { ranking: 2, oddsToWin: 10 });
     store.addToField(event.id, 'p-c', { ranking: 2, oddsToWin: 10 });
-    store.addToField(event.id, 'p-b', { ranking: 1, oddsToWin: 10 });
+    store.addToField(event.id, 'p-z', { ranking: 1, oddsToWin: 10 });
     store.addToField(event.id, 'p-a', { ranking: 9, oddsToWin: 5 });
 
     const [group] = await service.autoAssignTiers({ sportEventId: event.id, source: TierSource.ODDS });
 
-    expect(group.participants.map((placement) => placement.participantId)).toEqual(['p-a', 'p-b', 'p-c', 'p-d']);
+    expect(group.participants.map((placement) => placement.participantId)).toEqual(['p-a', 'p-z', 'p-c', 'p-d']);
     expect(store.valuationRows[0].tierAssignedSource).toBe('AUTO_ODDS');
   });
 
