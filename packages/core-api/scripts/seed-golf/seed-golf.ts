@@ -31,7 +31,7 @@
  * instead, because removing it would break that entry.
  */
 
-import { findSportRow, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
+import { findSportRow, getSportDefinition, ScoringFamily, type Sport } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type {
   AutoAssignSportEventPricesRequest,
@@ -153,6 +153,15 @@ class Loader {
 
   private get sport(): Sport {
     return this.file.scope.sport;
+  }
+
+  /**
+   * A finishing order comes from no feed: an admin enters it. Automatic lifecycle would
+   * complete such an event at its end time and settle its contests on no result, so the loader
+   * creates it with the lifecycle run by hand (docs/RACE-SETUP-PROCEDURES.md).
+   */
+  private get resultsEnteredByHand(): boolean {
+    return getSportDefinition(this.sport).scoringFamily === ScoringFamily.FINISH_POSITION;
   }
 
   private report(row: LoadRow): void {
@@ -277,13 +286,29 @@ class Loader {
     }
     // A released test event keeps the dates its own run gave it; only a draft moves to this run's.
     const compareDates = !this.file.testData || stored.status === 'DRAFT';
-    if (compareDates && day(stored.startDate) !== day(dates.startDate)) {
+    // A file that gives the exact start (a post time) moves a start on the same day too.
+    const startChanged = event.startsAt === undefined
+      ? day(stored.startDate) !== day(dates.startDate)
+      : Date.parse(stored.startDate) !== Date.parse(dates.startDate);
+    if (compareDates && startChanged) {
       body.startDate = dates.startDate;
-      changes.push(`start ${day(stored.startDate)} → ${day(dates.startDate)}`);
+      changes.push(event.startsAt === undefined
+        ? `start ${day(stored.startDate)} → ${day(dates.startDate)}`
+        : `start ${stored.startDate} → ${dates.startDate}`);
     }
-    if (compareDates && day(stored.endDate) !== day(dates.endDate)) {
+    // With an exact start the end can sit at the start (an evening post time), so it moves with it.
+    const endChanged = event.startsAt === undefined
+      ? day(stored.endDate) !== day(dates.endDate)
+      : stored.endDate === null || Date.parse(stored.endDate) !== Date.parse(dates.endDate);
+    if (compareDates && endChanged) {
       body.endDate = dates.endDate;
-      changes.push(`end ${day(stored.endDate) ?? 'none'} → ${day(dates.endDate)}`);
+      changes.push(event.startsAt === undefined
+        ? `end ${day(stored.endDate) ?? 'none'} → ${day(dates.endDate)}`
+        : `end ${stored.endDate ?? 'none'} → ${dates.endDate}`);
+    }
+    if (this.resultsEnteredByHand && stored.autoLifecycleEnabled) {
+      body.autoLifecycleEnabled = false;
+      changes.push('automatic lifecycle → off');
     }
     if (stored.venue !== event.venue) {
       body.venue = event.venue;
@@ -392,7 +417,7 @@ class Loader {
           ...(event.location ? { location: event.location } : {}),
           ...shiftedEventDates(event, this.offsetDays),
           rounds: event.rounds,
-          ...(this.file.testData ? { autoLifecycleEnabled: false } : {}),
+          ...(this.file.testData || this.resultsEnteredByHand ? { autoLifecycleEnabled: false } : {}),
         },
       }), `Create ${event.name}`);
       if (event.roundsPar !== null) {

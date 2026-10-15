@@ -29,6 +29,38 @@ function realFile(): Record<string, unknown> {
   };
 }
 
+interface HorseRacingFile {
+  testData: boolean;
+  scope: { contents: string[] };
+  sportLeagues: Array<{ events: Array<{ roundsPar: number | null; startsAt?: string }> }>;
+}
+
+function horseRacingFile(): HorseRacingFile {
+  const file = {
+    schemaVersion: 1,
+    scope: { sport: 'HORSE_RACING', season: 2027, sportLeagues: ['US Thoroughbred'], contents: ['SCHEDULE'] },
+    testData: false,
+    provenance: { gatheredAt: '2026-10-14', gatheredBy: 'load-sport-data skill', sources: [{ name: 'Pegasus World Cup', url: 'https://www.pegasusworldcup.com/' }] },
+    sportLeagues: [{
+      name: 'US Thoroughbred',
+      players: [],
+      events: [{
+        key: 'pegasus-world-cup',
+        name: 'Pegasus World Cup',
+        startDate: '2027-01-30',
+        endDate: '2027-01-30',
+        startsAt: '2027-01-30T17:40:00-05:00',
+        venue: 'Gulfstream Park',
+        location: 'Hallandale Beach, Florida',
+        rounds: 1,
+        roundsPar: null,
+        field: [],
+      }],
+    }],
+  };
+  return file as HorseRacingFile;
+}
+
 function problemsOf(json: unknown, allowTestData = false): readonly string[] {
   try {
     parseSportDataFile(json, { allowTestData });
@@ -67,10 +99,33 @@ describe('sport data file envelope', () => {
     expect(problemsOf(edited((file) => { file.scope.sport = 'CURLING'; }))).toEqual(['scope.sport CURLING is not a sport in the sport registry.']);
   });
 
-  it('refuses events for a registry sport the loader has no event shape for yet', () => {
-    expect(problemsOf(edited((file) => { file.scope.sport = 'HORSE_RACING'; }))).toEqual([
-      'scope.sport HORSE_RACING has no event shape in this loader yet; it loads GOLF, and a test slate of any sport.',
+  it('reads a real horse racing schedule whose race has a post time and no par', () => {
+    const file = parseSportDataFile(horseRacingFile(), { allowTestData: false });
+
+    expect(file.scope.sport).toBe(Sport.HORSE_RACING);
+    expect(file.sportLeagues[0].events[0]).toMatchObject({ name: 'Pegasus World Cup', startsAt: '2027-01-30T17:40:00-05:00', roundsPar: null });
+  });
+
+  it('refuses a par on a sport that is not stroke play, and a post time on another day than the start', () => {
+    const file = horseRacingFile();
+    const race = file.sportLeagues[0].events[0];
+    race.roundsPar = 72;
+    race.startsAt = '2027-01-31T17:40:00-05:00';
+
+    expect(problemsOf(file)).toEqual([
+      'US Thoroughbred, Pegasus World Cup: startsAt 2027-01-31T17:40:00-05:00 is not on its start date 2027-01-30.',
+      'US Thoroughbred, Pegasus World Cup: has a par, which only a stroke-play sport has.',
     ]);
+  });
+
+  it('refuses a test seed of a sport other than golf, whose made-up results are stroke rounds', () => {
+    const file = horseRacingFile();
+    file.testData = true;
+    file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'];
+
+    expect(problemsOf(file, true)).toContain(
+      'scope.sport HORSE_RACING cannot have a test seed: its made-up results are stroke rounds, so only golf has one. Use a real file or a test slate.',
+    );
   });
 
   it('refuses a contents value outside the closed list and a key the shape does not have', () => {

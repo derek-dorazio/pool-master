@@ -33,9 +33,40 @@ under *Sports*, and its three lists are **Races**, **Horses** and **Circuits**.
 - **Contests settle once, when the race moves to Completed.** A settled contest keeps its
   standings, so enter and check the official finishing order *before* completing the race.
 
+## Load the race and its field, don't type them
+
+Steps 1 to 4's circuit, horses, race and runners come from data files through the *Load sport
+data* workflow, the same way golf's schedules and fields do
+([`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md) *Loading sport data*; the
+`load-sport-data` skill gathers and writes the files). Only the screens from *Morning-line
+odds* on need an admin signed in.
+
+1. **The schedule.** `horse-racing-2027.json` (in `packages/core-api/scripts/seed-golf/`)
+   holds the 2027 US Thoroughbred races, so far the Pegasus World Cup on Saturday,
+   January 30, 2027 at Gulfstream Park. Run the workflow with it, dry run first. It creates
+   the **US Thoroughbred** circuit if the site has none and each race as a **draft**, with
+   *Races* `1` and automatic lifecycle **off**: no feed sends a finishing order, so a race
+   that completed itself would settle its contests on no result.
+2. **Post time.** Until the file gives one, a race starts at noon UTC on its day, which closes
+   picks early that morning. Once the track announces post time, add it to the race as
+   `startsAt` with its offset (`"2027-01-30T17:40:00-05:00"`) and run the file again: it moves
+   *Starts*, and so the release, contest and picks cutoff.
+3. **The field.** After the post-position draw, a field file (`contents` `PLAYERS` and
+   `FIELDS`) lists the runners **in morning-line order, favourite first**, each with its place
+   in that order as `ranking`. Horses the site has never seen are added. The file's order
+   becomes each horse's seed, so the field is seeded in market order and prices correctly
+   from seed alone; post position is entered with the result (step 7). Run it again after
+   scratches: a horse it no longer lists is marked scratched.
+
+Then carry on at *Tiers* in step 4: *Auto-assign tiers from ranking* tiers the field by
+morning line without typing any odds. Enter the odds as in *Morning-line odds* only if you
+want them shown or tiered from.
+
+Steps 1 to 4 below are the same work by hand, for a race no file covers.
+
 ## 1. Create the US Thoroughbred circuit
 
-Once only. *Horse racing → Circuits* (`/manage/sports/horse-racing/leagues`), then
+Once only, and only by hand: a schedule file creates it. *Horse racing → Circuits* (`/manage/sports/horse-racing/leagues`), then
 *New circuit*.
 
 | Field | Set it to |
@@ -242,7 +273,8 @@ Win / Place / Show preset an entry holding the winner and the third-placed horse
 
 ## Later races
 
-The circuit and the horses already exist, so a later race starts at step 3. Each race is its
+The circuit and the horses already exist, so a later race only needs its line in the schedule
+file and its field file (or, by hand, starts at step 3). Each race is its
 own event (a Derby-day undercard race is a separate race).
 
 ## Auto racing

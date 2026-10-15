@@ -72,6 +72,10 @@ async function cleanup(): Promise<void> {
 let admin: RegisteredUserContext;
 
 beforeAll(async () => {
+  // The migrations' reference rows, restored in case an earlier suite cleared the sports table.
+  const db = getFunctionalPrisma();
+  await db.sport.upsert({ where: { sport: Sport.GOLF }, create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.HORSE_RACING }, create: { sport: Sport.HORSE_RACING, participantType: 'INDIVIDUAL', tournamentFormat: 'RACE' }, update: {} });
   admin = await buildRegisteredUser({ displayName: 'Load Admin' });
   await promoteToRootAdmin(admin);
 });
@@ -81,8 +85,8 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-async function leagueNamed(name: string): Promise<{ id: string; matchKeyword: string | null } | undefined> {
-  const { sportLeagues } = expectDefined((await listSportLeagues({ client: admin.client, query: { sport: 'GOLF' } })).data);
+async function leagueNamed(name: string, sport: Sport = Sport.GOLF): Promise<{ id: string; matchKeyword: string | null } | undefined> {
+  const { sportLeagues } = expectDefined((await listSportLeagues({ client: admin.client, query: { sport } })).data);
   return sportLeagues.find((league) => league.name === name);
 }
 
@@ -345,6 +349,76 @@ describe('Loading a real golf schedule and fields through the admin API', () => 
     const heritage = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === name('Heritage presented by Sponsor')));
     expect((await fieldOf(heritage.id)).get(`${prefix} Golfer 3`)).toMatchObject({ isActive: true, inactiveReason: null, seedNumber: 4 });
     expect(changes(await loadSportData(parsed(recommitted), { getClient, now: NOW, mode: LoadMode.APPLY })).filter((row) => row.subject === LoadSubject.FIELD)).toEqual([]);
+  });
+});
+
+describe('Loading a real horse racing schedule and field through the admin API', () => {
+  const prefix = `${RUN}-race`;
+  const circuit = `Circuit ${prefix}`;
+  const race = `${prefix} Pegasus World Cup`;
+  const getClient = () => Promise.resolve(admin.client);
+  const file = (startsAt: string, field: SportDataFieldEntry[] = []): SportDataFile => ({
+    schemaVersion: 1,
+    scope: { sport: Sport.HORSE_RACING, season: 2027, sportLeagues: [circuit], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS] },
+    testData: false,
+    provenance: provenance(),
+    sportLeagues: [{
+      name: circuit,
+      players: [
+        { key: `${prefix}-h1`, name: `${prefix} Horse 1`, countryCode: 'US', ranking: 1 },
+        { key: `${prefix}-h2`, name: `${prefix} Horse 2`, countryCode: 'US', ranking: 2 },
+      ],
+      events: [{
+        key: 'pegasus', name: race, startDate: '2027-01-30', endDate: '2027-01-30', startsAt, venue: 'Gulfstream Park', location: 'Hallandale Beach, Florida', rounds: 1, roundsPar: null, field,
+      }],
+    }],
+  });
+
+  it('creates the circuit and a draft race at its post time, with no par and the lifecycle run by hand so it never settles on no result', async () => {
+    const rows = await loadSportData(parsed(file('2027-01-30T12:00:00-05:00')), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    expect(counts(rows)).toMatchObject({ 'SPORT_LEAGUE ADD': 1, 'EVENT ADD': 1 });
+    const league = expectDefined(await leagueNamed(circuit, Sport.HORSE_RACING));
+    const [stored] = await eventsOf(league.id, 2027);
+    expect(stored).toMatchObject({ name: race, status: 'DRAFT', startDate: '2027-01-30T17:00:00.000Z', venue: 'Gulfstream Park', rounds: 1, roundsPar: null, autoLifecycleEnabled: false });
+  });
+
+  it('moves the post time on the same day, and adds the field once it is drawn, in post-position order', async () => {
+    const rows = await loadSportData(parsed(file('2027-01-30T17:40:00-05:00', [{ player: `${prefix}-h2` }, { player: `${prefix}-h1` }])), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    expect(changes(rows).map((row) => `${row.subject} ${row.action}`)).toEqual(expect.arrayContaining(['EVENT UPDATE']));
+    const league = expectDefined(await leagueNamed(circuit, Sport.HORSE_RACING));
+    const [stored] = await eventsOf(league.id, 2027);
+    expect(stored.startDate).toBe('2027-01-30T22:40:00.000Z');
+    const field = await fieldOf(stored.id);
+    expect(field.get(`${prefix} Horse 2`)).toMatchObject({ seedNumber: 1, isActive: true });
+    expect(field.get(`${prefix} Horse 1`)).toMatchObject({ seedNumber: 2, isActive: true });
+  });
+
+  it('keeps a race ending no earlier than its start when an evening post time past 23:00 UTC moves later on the same day', async () => {
+    const race2 = (startsAt: string): SportDataFile => {
+      const loaded = file(startsAt);
+      loaded.sportLeagues[0].events[0] = { ...loaded.sportLeagues[0].events[0], key: 'classic', name: `${prefix} Classic`, startDate: '2027-11-06', endDate: '2027-11-06' };
+      return loaded;
+    };
+    await loadSportData(parsed(race2('2027-11-06T23:20:00Z')), { getClient, now: NOW, mode: LoadMode.APPLY });
+    await loadSportData(parsed(race2('2027-11-06T23:50:00Z')), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    const league = expectDefined(await leagueNamed(circuit, Sport.HORSE_RACING));
+    const classic = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === `${prefix} Classic`));
+    expect(classic.startDate).toBe('2027-11-06T23:50:00.000Z');
+    expect(Date.parse(expectDefined(classic.endDate))).toBeGreaterThanOrEqual(Date.parse(classic.startDate));
+  });
+
+  it('turns automatic lifecycle off on a race an admin had already created with it on', async () => {
+    const league = expectDefined(await leagueNamed(circuit, Sport.HORSE_RACING));
+    const stored = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === race));
+    await getFunctionalPrisma().sportEvent.update({ where: { id: stored.id }, data: { autoLifecycleEnabled: true } });
+
+    const rows = await loadSportData(parsed(file('2027-01-30T17:40:00-05:00', [{ player: `${prefix}-h2` }, { player: `${prefix}-h1` }])), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    expect(changes(rows).find((row) => row.subject === LoadSubject.EVENT && row.name === race)?.detail).toContain('automatic lifecycle → off');
+    expect(expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === race)).autoLifecycleEnabled).toBe(false);
   });
 });
 

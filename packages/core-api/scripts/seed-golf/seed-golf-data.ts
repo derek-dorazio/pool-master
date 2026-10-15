@@ -1,5 +1,5 @@
 /**
- * The pure rules for turning a golf data file into API calls: how far a test seed's dates
+ * The pure rules for turning a sport data file into API calls: how far a test seed's dates
  * move, and what each stored round looks like. No I/O, so it is unit tested alone.
  */
 
@@ -19,12 +19,15 @@ export function seedDateOffsetDays(file: Pick<SportDataFile, 'sportLeagues'>, no
 }
 
 /**
- * A tournament's dates after the offset (0 for real data): first tee at 12:00 UTC, last putt
- * by 23:00 UTC.
+ * An event's dates after the offset (0 for real data): it starts at `startsAt` when the file
+ * gives one (a race's post time), else at 12:00 UTC, and ends by 23:00 UTC on its end date, or
+ * at its start if that is later (an evening post time on a one-day race).
  */
-export function shiftedEventDates(event: Pick<SportDataEvent, 'startDate' | 'endDate'>, offsetDays: number): { startDate: string; endDate: string } {
-  const shift = (day: string, time: string) => new Date(Date.parse(`${day}T${time}Z`) + offsetDays * DAY_MS).toISOString();
-  return { startDate: shift(event.startDate, '12:00:00'), endDate: shift(event.endDate, '23:00:00') };
+export function shiftedEventDates(event: Pick<SportDataEvent, 'startDate' | 'endDate' | 'startsAt'>, offsetDays: number): { startDate: string; endDate: string } {
+  const shift = (instant: number) => new Date(instant + offsetDays * DAY_MS).toISOString();
+  const start = event.startsAt === undefined ? Date.parse(`${event.startDate}T12:00:00Z`) : Date.parse(event.startsAt);
+  const end = Math.max(Date.parse(`${event.endDate}T23:00:00Z`), start);
+  return { startDate: shift(start), endDate: shift(end) };
 }
 
 type RoundStatus = 'COMPLETED' | 'MISSED_CUT' | 'DNF';
