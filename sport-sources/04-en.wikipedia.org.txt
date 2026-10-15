@@ -1,9 +1,9 @@
-Source: https://en.wikipedia.org/wiki/Kentucky_Derby
-Final URL: https://en.wikipedia.org/wiki/Kentucky_Derby
+Source: https://en.wikipedia.org/wiki/Cape_Town_Marathon
+Final URL: https://en.wikipedia.org/wiki/Cape_Town_Marathon
 HTTP 200
-Fetched: 2026-10-15T02:20:12.777Z
+Fetched: 2026-10-15T02:24:11.542Z
 
-Kentucky Derby - Wikipedia
+Cape Town Marathon - Wikipedia
 Jump to content
 Main menu
 Main menu
@@ -39,80 +39,29 @@ hide
 (Top)
 1
 History
-Toggle History subsection
-1.1
-Attendance
-1.2
-Sponsorship
 2
-Traditions
-Toggle Traditions subsection
-2.1
-Riders Up!
-2.2
-National Anthem performers
-2.3
-Festival
+Abbott World Marathon Majors candidacy
 3
-Records
-Toggle Records subsection
-3.1
-Horse records
-3.2
-Jockey records
-3.3
-Trainer records
-3.4
-Owner records
-3.5
-"Oaks/Derby Double"
+Organisation and sponsorship
 4
-Winners
+Course
 5
-Sire lines
-Toggle Sire lines subsection
-5.1
-Darley Arabian line
-5.2
-Byerley Turk line
-5.3
-Godolphin Arabian line
-5.4
-Kentucky Derby winners with male-line descendants including other Kentucky Derby winners
+Other races
 6
-See also
+Results
 7
-References
+See also
 8
-Further reading
+Notes
 9
+References
+10
 External links
 Toggle the table of contents
-Kentucky Derby
-24 languages
-العربية
-Dansk
+Cape Town Marathon
+3 languages
 Deutsch
-Esperanto
-Español
-فارسی
-Suomi
 Français
-Gaeilge
-עברית
-Interlingua
-Italiano
-日本語
-ქართული
-한국어
-Nederlands
-Polski
-Português
-Русский
-Simple English
-Svenska
-Türkçe
-Українська
 中文
 Edit links
 Article
@@ -148,2036 +97,89 @@ Appearance
 move to sidebar
 hide
 From Wikipedia, the free encyclopedia
-American stakes race for Thoroughbreds, part of the Triple Crown
-For the season point system, see Road to the Kentucky Derby .
-<br />[[File:Kentucky Derby race, Louisville, Kentucky.jpg|250px]]"},"caption":{"wt":"'''\"The Most Exciting Two Minutes in Sports\"<br />\"The Run for the Roses\"''' <br/>'''\"The First Jewel of the Triple Crown\"'''"},"class":{"wt":"Grade I"},"location":{"wt":"[[Churchill Downs]]<br />[[Louisville, Kentucky]], U.S."},"inaugurated":{"wt":"{{start date and age|1875|05|17|p=y}}"},"race type":{"wt":"[[Thoroughbred]]"},"sponsor":{"wt":"{{nowrap|[[Woodford Reserve]]<ref name=Woodford/> ([[Brown–Forman]])}}"},"website":{"wt":"{{URL|https://www.kentuckyderby.com/|kentuckyderby.com}}"},"distance":{"wt":"{{convert|1+1/4|mi|furlong km|0}}"},"record":{"wt":"1:59.4, [[Secretariat (horse)|Secretariat]] ([[1973 Kentucky Derby|1973]]) ''[[#Records|more]]''"},"surface":{"wt":"Dirt"},"track":{"wt":"Left-handed"},"qualification":{"wt":"3-year-old"},"weight":{"wt":"[[Colt (horse)|Colt]]/[[Gelding]]: [[Pound (mass)|126 lbs]] (57.2 kg)<br />[[Filly]]: {{convert|121|lb|kg|abbr=on}}"},"purse":{"wt":"US$5 million<ref name=\"Frakes-2024\">{{cite news |last=Frakes |first=Jason |title=2024 Kentucky Derby to feature record $5 million purse. Here are payouts for 150th running |url=https://www.courier-journal.com/story/sports/horses/kentucky-derby/2024/01/10/kentucky-derby-2024-purse-increase-payouts-churchill-downs-spring-meet/72178410007/ |date=January 10, 2024 |work=[[Courier Journal]] |access-date=January 19, 2024 |archive-date=January 28, 2024 |archive-url=https://web.archive.org/web/20240128043012/https://www.courier-journal.com/story/sports/horses/kentucky-derby/2024/01/10/kentucky-derby-2024-purse-increase-payouts-churchill-downs-spring-meet/72178410007/ |url-status=live}}</ref><br />1st: $3.1 million"},"bonuses":{"wt":""}},"i":0}}]}'>Horse race
-Kentucky Derby Previous: 2026 Kentucky Derby
-May 2, 2026 ( 2026-05-02 )
-Next: 2027 Kentucky Derby
-May 1, 2027 ( 2027-05-01 )
-"The Most Exciting Two Minutes in Sports"
-"The Run for the Roses"
-"The First Jewel of the Triple Crown"
-Class Grade I
-Location Churchill Downs
-Louisville, Kentucky , U.S.
-Inaugurated May 17, 1875 (151 years ago) ( 1875-05-17 )
-Race type Thoroughbred
-Sponsor Woodford Reserve [ 1 ] ( Brown–Forman )
-Website kentuckyderby.com
-Race information
-Distance 1 + 1 ⁄ 4 miles (10 furlongs; 2 km)
-Record 1:59.4, Secretariat ( 1973 ) more
-Surface Dirt
-Track Left-handed
-Qualification 3-year-old
-Weight Colt / Gelding : 126 lbs (57.2 kg)
-Filly : 121 lb (55 kg)
-Purse US$5 million [ 2 ]
-1st: $3.1 million
-The Kentucky Derby ( / ˈ d ɜːr b i / ) is an American Grade I stakes race run at Churchill Downs in Louisville, Kentucky . The race is run by three-year-old Thoroughbreds at a distance of 1 + 1 ⁄ 4 miles (10 furlongs; 2,012 metres) . Colts and geldings carry 126 pounds (57 kilograms) and fillies 121 pounds (55 kilograms) . [ 3 ]
-Held annually on the first Saturday in May, the Derby is the first leg of the Triple Crown and will be the first race in the planned Thoroughbred Championship Series from Churchill Downs and New York Racing Association. It is preceded by the two-week-long Kentucky Derby Festival . [ 4 ] The race is known as "The Run for the Roses", as the winning horse is draped in a blanket of roses. [ 5 ] [ 6 ] Lasting approximately two minutes, the Derby has been alternately called "The Most Exciting Two Minutes in Sports", [ 7 ] [ 8 ] "The Fastest Two Minutes in Sports", [ 9 ] [ 10 ] or "The Greatest Two Minutes in Sports", coined by Churchill Downs president Matt Winn . [ 11 ] [ 12 ] At least two of these descriptions are thought to be derived from the words of sportswriter Grantland Rice , when in 1935 he said "Those two minutes and a second or so of derby running carry more emotional thrills, per second, than anything sport can show." [ 6 ] [ 13 ]
-The race was first run in 1875. Unlike the other, older races of the Triple Crown—the Preakness Stakes and the Belmont Stakes —along with the Travers Stakes (the oldest comparable stakes race in the US), the Kentucky Derby and its sibling race, the Kentucky Oaks , have been run every year since inception. Further, the Derby and the Oaks are the oldest major sporting events in the US held annually since their beginning, although they were twice rescheduled within the same year, the first time due to World War II in 1945 , and the second time due to the COVID-19 pandemic in 2020 . [ 5 ] [ 14 ] Among thoroughbred stakes races, they are the oldest that have been held annually on the same track every year. [ 5 ]
-The Derby is the most-watched and most-attended horse race in the United States. The 152nd took place on Saturday, May 2, 2026, with Golden Tempo winning the event.
+Annual marathon held in Cape Town, South Africa
+Women: '''2:22:22''' ([[Glenrose Xaba]], 2024)<br />Wheelchair men: '''1:30:20''' ([[David Weir (wheelchair athlete)|David Weir]], 2026)<br />Wheelchair women: '''1:43:25''' ([[Manuela Schär]], 2026)"},"homepage":{"wt":"{{URL|https://capetownmarathon.com/|Cape Town Marathon}}"},"current":{"wt":"Yes"}},"i":0}}]}'> Cape Town Marathon
+Date May
+Location Cape Town , South Africa
+Event type Road
+Distance Marathon
+Primary sponsor Sanlam
+Established 1994 ; 32 years ago ( 1994 )
+Course records Men: 2:04:55 ( Mohamed Esa , 2026)
+Women: 2:22:22 ( Glenrose Xaba , 2024)
+Wheelchair men: 1:30:20 ( David Weir , 2026)
+Wheelchair women: 1:43:25 ( Manuela Schär , 2026)
+Official site Cape Town Marathon
+2026 Cape Town Marathon
+The Cape Town Marathon [ a ] is an annual marathon held in Cape Town , South Africa. The race has developed into one of Africa's leading standard-distance road marathons and was confirmed as a Abbott World Marathon Major in 2026. [ 1 ] [ 2 ] [ 3 ]
+The marathon is run on a road course centred on Green Point and the Cape Town Stadium precinct. In addition to the marathon, the event weekend includes shorter road races and trail running events. The race has hosted the South African marathon championships. [ 4 ] [ 5 ]
 History
 [ edit ]
-See also: Churchill Downs § History
-In 1872, Col. Meriwether Lewis Clark Jr. , grandson of William Clark of the Lewis and Clark Expedition , traveled to England, visiting Epsom in Surrey where The Derby had been running annually since 1780. [ 15 ] From there, Clark went on to Paris where a group of racing enthusiasts had formed the French Jockey Club in 1863. They had organized the Grand Prix de Paris at Longchamp , which at the time was the greatest race in France. Returning home to Kentucky, Clark organized the Louisville Jockey Club and Driving Park Association to raise money for building quality racing facilities just outside the city. [ 16 ] First known as the Louisville Jockey Club grounds, [ 17 ] seven years later the track was commonly referred to as Churchill Downs, named for John and Henry Churchill, who provided the land for the racetrack. [ 18 ] [ 19 ] The naming went official in 1937. [ 20 ]
-Alan-A-Dale , ridden by jockey Jimmy Winkfield won the Derby in 1902 .
-The Kentucky Derby was first run at 1 + 1 ⁄ 2 miles (12 furlongs ; 2.4 km) the same distance as the Epsom Derby, before changing lengths in 1896 to its current 1 + 1 ⁄ 4 miles (10 furlongs; 2 km). On May 17, 1875, in front of an estimated crowd of 10,000 people, a field of 15 three-year-old horses contested the first Derby. Under jockey Oliver Lewis , a colt named Aristides , who was trained by future Hall of Famer Ansel Williamson , won the inaugural Derby. Later that year, Lewis rode Aristides to a second-place finish in the Belmont Stakes.
-In these early decades, Black jockeys were very influential at the Derby. [ 21 ] Horses, including race horses, had been cared for, trained and exercised by Blacks in the ante-bellum slave-holding states and this expertise laid the groundwork for future racing standards. [ 22 ] Jockeying was seen as activity unsuitable for Whites during that era and in the decades after the Civil War when it was becoming lucrative. [ 23 ] [ 24 ] Black jockeys dominated the Derby in all the years before 1894, except for one. [ 25 ] In 1886 the track, which had been successful, ran into financial difficulties when a protracted, gambling-related horseman boycott removed it from the upper echelons of racing until just after the turn of the 20th century. [ 26 ] In 1894 the New Louisville Jockey Club was incorporated with new capital and improved facilities. [ 27 ] The rise of on-track betting and increasing audience sizes brought larger purse sizes, and this began to attract White jockeys to the profession. [ 21 ] [ 28 ] White jockeys on tracks everywhere began to use violence to attack and intimidate Black jockeys and the horses they rode. [ 29 ] [ 30 ] This caused horse owners to stop hiring Black jockeys. [ 31 ] Though they were consistent Derby winners, Black jockeys began to disappear from the Derby after 1894. [ 32 ] [ 31 ] Jimmy Winkfield was the last Black jockey to win the derby and Black jockeys were gone by 1911. [ 33 ] But they had instituted innovations now universal in the sport. [ 28 ] Willie Simms won the Derby in 1896 and 1898 on the shortened stirrups he evolved from those used by Black jockeys before him. [ 34 ] After his racing career, Oliver Lewis began collecting and analyzing racing data, developing a system very much like the ones used today. [ 35 ]
-Initially a successful venue, the track ran into financial difficulties due to a protracted, gambling-related horseman boycott removing it from the upper echelons of racing that would last until just after the turn of the 20th century. [ 26 ] In 1894 the New Louisville Jockey Club was incorporated with the new capital and improved facilities. [ 27 ] Despite this, the business floundered until 1902, when a syndicate led by Col. Matt Winn of Louisville acquired the facility. Under Winn, Churchill Downs prospered, and the Kentucky Derby then became the preeminent stakes race for three-year-old thoroughbred horses in North America. [ 36 ]
-Thoroughbred owners began sending their successful Derby horses to compete in two other races. These two are the Preakness Stakes at the Pimlico Race Course , in Baltimore , and the Belmont Stakes in Elmont, New York . The three races offered large purses, and in 1919 , Sir Barton became the first horse to win all three races. However, the term " Triple Crown " did not come into use for another eleven years. In 1930 , when Gallant Fox became the second horse to win all three races, sportswriter Charles Hatton brought the phrase into American usage. Fueled by the media, public interest in the possibility of a "superhorse" that could win the Triple Crown began in the weeks leading up to the Derby. Two years after the term went in use, the race (until that time ran in mid-May since inception) changed the date to the first Saturday in May. This change allows for a specific schedule for the Triple Crown races. Since 1931, the order of Triple Crown races has been the Kentucky Derby first, followed by the Preakness Stakes and then the Belmont Stakes. Before 1931, eleven times the Preakness was run before the Derby. On May 12, 1917, and again on May 13, 1922, the Preakness and the Derby took place on the same day. On eleven occasions the Belmont Stakes was run before the Preakness Stakes, and in 2020, the Belmont was run first, then the Kentucky Derby, and the Preakness Stakes last.
-Churchill Downs in 1901
-On May 16, 1925, the first live radio broadcast of the Kentucky Derby aired on WHAS as well as on WGN in Chicago. [ 37 ] On May 7, 1949, the first television coverage of the Kentucky Derby took place, produced by WAVE-TV , the NBC affiliate in Louisville. This coverage was aired live in the Louisville market and sent to NBC as a kinescope newsreel recording for national broadcast. On May 3, 1952, the first national television coverage of the Kentucky Derby took place, aired from then- CBS affiliate WHAS-TV . [ 38 ] In 1954, the purse exceeded US$100,000 for the first time. In 1968, Dancer's Image became the first horse to win the race and then face disqualification. A urine test revealed traces of phenylbutazone (an anti-inflammatory painkiller drug) inside Dancer's Image. Forward Pass won after a protracted legal battle by the owners of Dancer's Image (which they lost). Forward Pass thus became the eighth winner for Calumet Farm . Unexpectedly, the regulations at Kentucky thoroughbred race tracks were changed some years later, allowing horses to run on phenylbutazone. In 1970, Diane Crump became the first female jockey to ride in the Derby, finishing 15th aboard Fathom. [ 39 ]
-The fastest time ever run in the Derby was in 1973 at 1:59.4 minutes, when Secretariat broke the record set by Northern Dancer in 1964 . Also during that race, Secretariat did something unique in Triple Crown races: for each successive quarter run, his times were faster. Although the races do not record times for non-winners, in 1973 Sham finished second, two and a half lengths behind Secretariat in the same race. Using the thoroughbred racing convention of one length equaling one-fifth of a second to calculate Sham 's time, he also finished in under two minutes. Another sub-two-minute finish, only the third, was set in 2001 by Monarchos at 1:59.97, the first year the race used hundredths of seconds instead of fifths in timing. [ 40 ]
-In 2005, the purse distribution for the Derby changed, so that horses finishing fifth would henceforth receive a share of the purse; previously only the first four finishers did so. [ 41 ]
-The Kentucky Derby began offering $3 million in purse money in 2019. Churchill Downs officials have cited the success of historical race wagering terminals at their Derby City Gaming facility in Louisville as a factor behind the purse increase. The Derby first offered a $1 million purse in 1996; it was doubled to $2 million in 2005. [ 42 ]
-In 2020, the Derby was postponed from May 2 to September 5 due to the COVID-19 pandemic. [ 43 ] This was the second time in history the race had been postponed, the other being in 1945. [ 5 ] Churchill Downs used a new singular 20-stall starting gate for the 2020 Kentucky Derby, replacing the previous arrangement that used a standard 14-stall gate and an auxiliary six-stall gate. [ 44 ] The old setup contributed to congestion at the start of the race, especially in the gap between the two gates. [ 44 ]
-Rich Strike , a reserve who only made it into the final field after a late scratching, won the race in 2022 at final odds of 80:1 and parimutuel betting payouts were even larger. [ 45 ]
-Churchill Downs sign for the 2024 Kentucky Derby , its 150th running, with one of the twin spires in the background
-In January 2024, the purse for the Kentucky Derby was increased to $5 million. [ 2 ]
-In the 2026 Kentucky Derby , Cherie DeVaux became the first woman trainer to ever win the Kentucky Derby, as the trainer of Golden Tempo . [ 46 ]
-On August 5, 2026, Churchill Downs Incorporated and the New York Racing Association (NYRA) announced the Thoroughbred Championship Series (TCS), a six-race series for three-year-old thoroughbreds that is set to begin in 2027. The Kentucky Derby was designated as the first race of the new series. [ 47 ]
-Attendance
+The Cape Town Marathon traces its history to 1994, when the event was organised by Celtic Harriers and staged from Mutual Park in Pinelands . The race continued in that form until the early 2000s, before a second phase from 2005 to 2013 under Western Province Athletics and Athletics South Africa . [ 4 ]
+In 2014, the race entered its Sanlam-sponsored era, with Sanlam becoming naming-rights sponsor and the race being renamed the Sanlam Cape Town Marathon. [ 6 ] ASEM Running, and later Faces, became involved in the organisation of the event. [ 4 ] In 2017, it became the first marathon in Africa to receive IAAF Gold Label status. [ 5 ]
+The in-person 2020 edition was cancelled because of the COVID-19 pandemic . [ 7 ] The 2025 marathon was cancelled on race day after severe winds damaged event infrastructure and made the route unsafe. [ 8 ] [ 9 ]
+Abbott World Marathon Majors candidacy
 [ edit ]
-Millions of people worldwide bet at various live tracks and online sportsbooks. [ 48 ] In 2017, a crowd of 158,070 watched Always Dreaming win the Derby, making it the seventh biggest attendance in the history of the racetrack. The track reported a wagering total of $209.2 million from all the sources on all the races on the Kentucky Derby Day program. It was a 9% increase compared to the total of $192.6 million in 2016 and an increase of 8% over the previous record set in 2015 of $194.3 million. [ 49 ] TwinSpires, a platform for betting online and a partner of the Kentucky Derby and the Breeders' Cup, recorded $32.8 million in handle on the Churchill Down races for the Kentucky Derby Day program. This record was a 22% increase over the preceding year. On the Kentucky Derby race alone, the handle of TwinSpires was $20.1 million, which is a 22% rise compared to the prior year. [ 50 ]
-The race often draws celebrities. HM Queen Elizabeth II , on a visit to the United States, joined the racegoers at Churchill Downs in 2007. [ 51 ]
-Sponsorship
+The Cape Town Marathon was named as a candidate for the first African race admitted to the Abbott World Marathon Majors in 2021, beginning a multi-year assessment process. [ 3 ] Its candidacy became a central part of the event's recent development, influencing its international positioning, elite field and race-week operations. [ 2 ]
+After the 2024 race, Abbott World Marathon Majors announced that Cape Town had passed the first stage of its assessment and would proceed to the second stage. [ 10 ] Reuters reported that the 2025 edition was intended to meet the second-stage assessment criteria. [ 11 ] The cancellation of the 2025 marathon delayed the race's opportunity to complete that part of the assessment process and placed renewed attention on its World Marathon Majors bid. [ 12 ]
+In 2026, the race entered what was reported as the final phase of its Abbott World Marathon Majors candidacy. [ 13 ] [ 14 ]
+In June 2026, the Cape Town Marathon was confirmed as the first African Abbott World Marathon Major. [ 1 ]
+Organisation and sponsorship
 [ edit ]
-The 2004 Kentucky Derby marked the first time that jockeys—as a result of a court order —were allowed to wear corporate advertising logos on their clothing. [ 52 ] [ 53 ]
-Norman Adams has been the designer of the Kentucky Derby Logo since 2002. On February 1, 2006, the Louisville-based fast-food company Yum! Brands, Inc. announced a corporate sponsorship deal to call the race "The Kentucky Derby presented by Yum! Brands." [ 54 ] In 2018, Woodford Reserve replaced Yum! Brands as the presenting sponsor. [ 1 ]
-The Swiss watchmaker Longines is the official sponsor timekeeper of the Kentucky Derby. [ 55 ]
-Traditions
+The event is staged through a partnership involving Western Province Athletics, ASEM Running and the City of Cape Town. [ 15 ] Sanlam became naming-rights sponsor in 2014. [ 6 ] In 2026, Sanlam renewed its title sponsorship for a further five years. [ 16 ]
+Course
 [ edit ]
-In addition to the race itself, several traditions play a significant role in the Derby atmosphere. The mint julep —an iced drink consisting of bourbon , mint , and sugar syrup—is the traditional beverage of the race. The historic beverage comes served in an ice-frosted silver julep cup. However, most Churchill Downs patrons sip theirs from souvenir glasses (first offered in 1939 and available in revised form each year since) printed with all previous Derby winners. [ 56 ] Also, burgoo , a thick stew of beef, chicken, pork, and vegetables, is a popular Kentucky dish served at the Derby. [ 57 ]
-Louisville Clock (often called the Louisville Derby Clock), which was dismantled in 2015
-The infield —a spectator area inside the track—offers general admission prices but little chance of seeing much of the race, particularly before the jumbotron installation in 2014. [ 58 ] [ 59 ] Instead, revelers show up in the infield to party with abandon. By contrast, "Millionaire's Row" refers to the expensive box seats that attract the rich, the famous and the well-connected. Women appear in elegant outfits lavishly accessorized with large, elaborate hats. Following the Call to the Post played on bugle by Steve Buttleman, as the horses start to parade before the grandstands, the University of Louisville Cardinal Marching Band plays Stephen Foster 's " My Old Kentucky Home " while sung by the University of Louisville Cardinal Singers , except in 2020 when the song was played on bugle by Buttleman. This song is a tradition which began in 1921. [ 60 ] The event attracts spectators from a large area, flying in hundreds of private aircraft to Louisville Muhammad Ali International Airport . [ 61 ]
-The Derby is frequently referred to as " The Run for the Roses ", because a lush blanket of 554 red roses is awarded to the Kentucky Derby winner each year. [ 62 ] New York sports columnist and future Churchill Downs president Bill Corum in 1925 began describing the race thusly, [ 6 ] but the tradition originated in 1883 when New York City socialite E. Berry Wall presented roses to ladies at a post-Derby party. The Churchill Downs founder and president, Col. Meriwether Lewis Clark Jr., attended that event. This gesture is believed to have led Clark to the idea of making the rose the race's official flower. However, it was not until 1896 that any recorded account referred to draping roses on the Derby winner. [ 62 ] The Governor of Kentucky and the Chairman of Churchill Downs Incorporated present the garland and the Kentucky Derby Trophy to the winner. Pop vocalist Dan Fogelberg composed the song " Run for the Roses ", released in time for the 1980 running of the race. [ 63 ]
-Riders Up!
+The Cape Town Marathon has used several route versions since its early editions, but its modern course is centred on Green Point and the Cape Town Stadium precinct. [ 4 ] The current route starts near Cape Town Stadium and takes runners through the city centre, Woodstock, Salt River, Mowbray and the southern suburbs before returning through the central city and finishing in Green Point. [ 17 ]
+The course passes a number of Cape Town landmarks, including Rondebosch Common , the University of Cape Town area, the Castle of Good Hope , Cape Town City Hall , St George's Cathedral , the Company's Garden , the Victoria & Alfred Waterfront and the Sea Point Promenade. [ 18 ] A late 6.43 km section of the route takes runners past the finish area at around 35 km before heading out towards Sea Point and returning to Green Point. The section is informally known among local runners as the "Loop of Death", a reference to its position in the closing stages of the race and to runners having to pass the finish area before completing the final loop. [ 19 ]
+Other races
 [ edit ]
-"Riders Up!" is the traditional command from the Paddock Judge for jockeys to mount their horses in advance of the upcoming race. This command typically occurs across from Stall 1 in the Saddling Paddock around 19 minutes in advance of the start of the race. After the command, jockeys receive a leg up on their mounts and immediately turn right to the Paddock Runway, which leads to the racetrack. Since 2012, a celebrity attendee recites this phrase. [ 64 ] [ 65 ]
-Celebrity "Riders Up" announcers
-2012: John Calipari
-2013: Charlie Strong
-2014: Julius Erving
-2015: Teddy Bridgewater
-2016: Sean Payton
-2017: Jeff Bridges
-2018: Laila Ali
-2019: Baker Mayfield
-2020: No announcer due to COVID-19 pandemic
-2021: D. Wayne Lukas
-2022: Jack Harlow
-2023: Patrick Mahomes
-2024: Martha Stewart
-2025: Simone Biles
-2026: Pat Day
-National Anthem performers
+The Cape Town Marathon event programme expanded in 2014 with the addition of the 10 km Peace Run and trail races over 22 km and 11 km. A longer trail marathon was added to the programme in 2021. [ 4 ]
+The current event weekend includes the marathon, the 10 km and 5 km Peace Runs, and the Cape Town Trail Marathon events, including longer and shorter trail distances. [ 20 ]
+Results
 [ edit ]
-The following artists have performed the National Anthem at the Derby: [ 66 ]
-2009: LeAnn Rimes
-2010: Rascal Flatts
-2011: Jordin Sparks
-2012: Mary J. Blige
-2013: Martina McBride
-2014: Jo Dee Messina
-2015: Josh Groban
-2016: Lady Antebellum
-2017: Harry Connick Jr.
-2018: Pentatonix
-2019: Jennifer Nettles
-2021: Tori Kelly
-2022: Brittney Spencer
-2023: Carly Pearce
-2024: Wynonna Judd (accompanied by drummer and husband Cactus Moser)
-2025: Grace Potter
-2026: Susan Tedeschi and Derek Trucks of Tedeschi Trucks Band
-Festival
-[ edit ]
-Main article: Kentucky Derby Festival
-In the weeks preceding the race, numerous activities took place for the Kentucky Derby Festival. Thunder Over Louisville —an airshow and fireworks display—generally begins the festivities in earnest two weeks before the Derby.
-Records
-[ edit ]
-This section needs more citations . Please help improve this section by adding citations to reliable sources . Unsourced material may be challenged and removed . ( February 2026 ) ( Learn how and when to remove this message )
-Horse records
-[ edit ]
-Secretariat set the record for speed in 1973 with a time of 1:59.4. During its first two decades when the Derby was run at 1 + 1 ⁄ 2 miles, the record was 2:34.5, set by Spokane in 1889.
-Four different horses won by 8 lengths: Old Rosebud in 1914, Johnstown in 1939, Whirlaway in 1941, and Assault in 1946.
-The highest odds of a winning horse were 91 to 1 for Donerail in 1913. The second-highest odds occurred in 2022, when Rich Strike went off at 80 to 1 and won the race.
-Three horses have won the Kentucky Derby without competing as a two-year-old: Apollo (1882), Justify (2018), and Mage (2023). [ 67 ]
-Jockey records
-[ edit ]
-107 jockeys have won the Kentucky Derby, with 27 doing so multiple times. Isaac Murphy (1890–91), Jimmy Winkfield (1901–02), Ron Turcotte (1972–73), Eddie Delahoussaye (1982–83), Calvin Borel (2009–10), and Victor Espinoza (2014–15) are the only jockeys to win the Derby in back-to-back years. Borel is the only jockey with three wins in a four-year span (2007, 2009–10). [ 68 ]
-Multi-time Kentucky Derby-winning jockeys
-Jockey
-Wins
-Mounts
-Years won
-Eddie Arcaro
-5
-21
-1938, 1941, 1945, 1948, 1952
-Bill Hartack
-12
-1957, 1960, 1962, 1964, 1969
-Bill Shoemaker
-4
-26
-1955, 1959, 1965, 1986
-Isaac Murphy
-3
-11
-1884, 1890, 1891
-Earl Sande
-8
-1923, 1925, 1930
-Ángel Cordero Jr.
-17
-1974, 1976, 1985
-Gary Stevens
-22
-1988, 1995, 1997
-Kent Desormeaux
-22
-1998, 2000, 2008
-Calvin Borel
-12
-2007, 2009, 2010
-Victor Espinoza
-10
-2002, 2014, 2015
-John Velazquez
-24
-2011, 2017, 2020
-Willie Simms
-2
-2
-1896, 1898
-Jimmy Winkfield
-4
-1901, 1902
-Johnny Loftus
-6
-1916, 1919
-Albert Johnson
-7
-1922, 1926
-Linus McAtee
-7
-1927, 1929
-Charley Kurtsinger
-4
-1931, 1937
-Conn McCreary
-10
-1944, 1951
-Ismael Valenzuela
-8
-1958, 1968
-Ron Turcotte
-5
-1972, 1973
-Jacinto Vásquez
-8
-1975, 1980
-Eddie Delahoussaye
-13
-1982, 1983
-Chris McCarron
-18
-1987, 1994
-Chris Antley
-17
-1991, 1999
-Jerry Bailey
-8
-1993, 1996
-Mike Smith
-28
-2005, 2018
-Mario Gutierrez
-3
-2012, 2016
-Trainer records
-[ edit ]
-116 trainers have won the Kentucky Derby, with 19 doing so multiple times. Six trainers have won the Derby in back-to-back years: Herbert J. Thompson (1932–33), Ben Jones (1948–49), Jimmy Jones (1957–58), Lucien Laurin (1972–73), D. Wayne Lukas (1995–96), and Bob Baffert (1997–98).
-Multi-time Kentucky Derby-winning trainers
-Trainer
-Wins
-Starts
-Years won
-Ben Jones
-6
-11
-1938, 1941, 1944, 1948, 1949, 1952
-Bob Baffert
-24
-1997, 1998, 2002, 2015, 2018, 2020
-Herbert J. Thompson
-4
-26
-1921, 1926, 1932, 1933
-D. Wayne Lukas
-49
-1988, 1995, 1996, 1999
-James Fitzsimmons
-3
-11
-1930, 1935, 1939
-Max Hirsch
-14
-1936, 1946, 1950
-James Rowe Sr.
-2
-17
-1881, 1915
-Jimmy Jones
-4
-1957, 1958
-Horatio Luro
-4
-1962, 1964
-Henry Forrest
-2
-1966, 1968
-Lucien Laurin
-5
-1972, 1973
-Laz Barrera
-5
-1976, 1978
-LeRoy Jolley
-13
-1975, 1980
-Woody Stephens
-14
-1974, 1984
-Charlie Whittingham
-7
-1986, 1989
-Nick Zito
-26
-1991, 1994
-Carl Nafzger
-3
-1990, 2007
-Doug O'Neill
-8
-2012, 2016
-Todd Pletcher
-62
-2010, 2017
-William I. Mott
-6
-2019, 2025
-Owner records
-[ edit ]
-Seventeen owners have won the Kentucky Derby multiple times with horses they fully or partially owned.
-Owner
-Wins
-Starts
-Years won
-Calumet Farm
-8
-28
-1941, 1944, 1948, 1949, 1952, 1957, 1958, 1968
-Edward R. Bradley
-4
-28
-1921, 1926, 1932, 1933
-Belair Stud
-3
-8
-1930, 1935, 1939
-Bashford Manor Stable
-2
-11
-1892, 1906
-Harry Payne Whitney
-19
-1915, 1927
-Greentree Stable
-19
-1931, 1942
-Fannie Hertz
-3
-1928, 1943
-King Ranch
-5
-1946, 1950
-Darby Dan Farm
-7
-1963, 1967
-Meadow Stable
-4
-1972, 1973
-Arthur B. Hancock III *
-6
-1982, 1989
-William J. Condren*
-4
-1991, 1994
-Joseph M. Cornacchia*
-3
-1991, 1994
-Bob & Beverly Lewis
-9
-1997, 1999
-J. Paul Reddam
-7
-2012, 2016
-WinStar Farm *
-23
-2010, 2018
-Starlight Racing*
-13
-2018, 2020
-* Partnered with other entities in an ownership group for one or more winning horses.
-"Oaks/Derby Double"
-[ edit ]
-Jockeys, trainers, and owners competing in the Kentucky Derby often will compete in the Kentucky Oaks, a race for fillies held the day before the Derby. Winning both these races in the same year is referred to as an "Oaks/Derby Double;" 8 jockeys, 3 trainers, and 5 owners have accomplished this feat:
-Year
-Kentucky Oaks winner
-Kentucky Derby winner
-Jockey
-Trainer
-Owner
-1884*
-Modesty
-Buchanan
-Isaac Murphy
-different
-different
-1933*
-Barn Swallow
-Brokers Tip
-Don Meade
-Herbert J. Thompson
-Edward R. Bradley
-1949
-Wistful
-Ponder
-different
-Ben Jones
-different
-1950
-Ari's Mona
-Middleground
-Bill Boland
-different
-different
-1952
-Real Delight
-Hill Gail
-Eddie Arcaro
-Ben Jones
-Calumet Farm
-1966
-Native Street
-Kauai King
-Don Brumfield
-different
-different
-1993
-Dispute
-Sea Hero
-Jerry Bailey
-different
-different
-2009
-Rachel Alexandra
-Mine That Bird
-Calvin Borel
-different
-different
-2018
-Monomoy Girl
-Justify
-different
-different
-Head of Plains Partners/Monomoy Stables
-2024
-Thorpedo Anna
-Mystik Dan
-Brian Hernandez Jr.
-Kenneth G. McPeek
-different
-2025
-Good Cheer
-Sovereignty
-different
-different
-Godolphin
-2026
-Always a Runner
-Golden Tempo
-José Ortiz
-different
-different
-* Until the 1950s, the Oaks was held several days or weeks after the Derby.
-Winners
-[ edit ]
-See also: Highest combined Triple Crown finish
-Triple Crown winners are in bold and highlighted with gold.
-Kentucky Derby winners [ 69 ]
-Year
-Winner
-Jockey
-Trainer
-Owner
-Distance
-(miles)
-Track
-condition
-Time [ a ]
-1875
-Aristides
-Oliver Lewis
-Ansel Williamson
-Hal Price McGrath
-1 + 1 ⁄ 2
-Fast
-2:37.75
-1876
-Vagrant
-Robert Swim
-James Williams
-William Astor Jr.
-1 + 1 ⁄ 2
-Fast
-2:38.25
-1877
-Baden-Baden
-Billy Walker
-Ed Brown
-Daniel Swigert
-1 + 1 ⁄ 2
-Fast
-2:38.00
-1878
-Day Star
-Jimmy Carter
-Lee Paul
-Thomas J. Nichols
-1 + 1 ⁄ 2
-Fast
-2:37.25
-1879
-Lord Murphy
-Charlie Shauer
-George Rice
-George W. Darden & Co.
-1 + 1 ⁄ 2
-Fast
-2:37.00
-1880
-Fonso
-George Lewis
-Tice Hutsell
-J.S. Shawhan
-1 + 1 ⁄ 2
-Fast
-2:37.50
-1881
-Hindoo † ‡
-Jim McLaughlin
-James Rowe Sr.
-Dwyer Brothers
-1 + 1 ⁄ 2
-Fast
-2:40.00
-1882
-Apollo
-Babe Hurd
-Green B. Morris
-Green B. Morris, James D. Patton
-1 + 1 ⁄ 2
-Fast
-2:40.25
-1883
-Leonatus
-William Donohue
-Raleigh Colston Sr.
-Jack P. Chinn, George Morgan
-1 + 1 ⁄ 2
-Heavy
-2:43.00
-1884
-Buchanan
-Isaac Murphy
-William Bird
-William Cottrill, Sam S. Brown
-1 + 1 ⁄ 2
-Good
-2:40.25
-1885
-Joe Cotton
-Erskine Henderson
-Abraham Perry
-James T. Williams
-1 + 1 ⁄ 2
-Good
-2:37.25
-1886
-Ben Ali
-Paul Duffy
-Jim Murphy
-James B. Haggin
-1 + 1 ⁄ 2
-Fast
-2:36.50
-1887
-Montrose
-Isaac Lewis
-John McGinty
-Labold Brothers
-1 + 1 ⁄ 2
-Fast
-2:39.25
-1888
-Macbeth II
-George Covington
-John Campbell
-Chicago Stable
-1 + 1 ⁄ 2
-Fast
-2:38.25
-1889
-Spokane
-Thomas Kiley
-John Rodegap
-Noah Armstrong
-1 + 1 ⁄ 2
-Fast
-2:34.50
-1890
-Riley
-Isaac Murphy
-Edward Corrigan
-Edward Corrigan
-1 + 1 ⁄ 2
-Muddy
-2:45.00
-1891
-Kingman
-Isaac Murphy
-Dudley Allen
-Jacobin Stable
-1 + 1 ⁄ 2
-Fast
-2:52.25
-1892
-Azra
-Alonzo Clayton
-John Morris
-Bashford Manor Stable
-1 + 1 ⁄ 2
-Heavy
-2:41.50
-1893
-Lookout
-Eddie Kunze
-William McDaniel
-J.E. Cushin, J. Orth
-1 + 1 ⁄ 2
-Fast
-2:39.25
-1894
-Chant
-Frank Goodale
-Eugene Leigh
-Eugene Leigh , Robert Rose
-1 + 1 ⁄ 2
-Fast
-2:41.00
-1895
-Halma
-James Perkins
-Byron McClelland
-Byron McClelland
-1 + 1 ⁄ 2
-Fast
-2:37.50
-1896
-Ben Brush † ‡
-Willie Simms
-Hardy Campbell
-Mike F. Dwyer
-1 + 1 ⁄ 4
-Fast
-2:07.75
-1897
-Typhoon II
-Buttons Garner
-Julius C. Cahn
-Julius C. Cahn
-1 + 1 ⁄ 4
-Heavy
-2:12.50
-1898
-Plaudit
-Willie Simms
-John E. Madden
-John E. Madden
-1 + 1 ⁄ 4
-Good
-2:09.00
-1899
-Manuel
-Fred Taral
-Robert Walden
-A. H. & D. H. Morris
-1 + 1 ⁄ 4
-Fast
-2:12.00
-1900
-Lieut. Gibson
-Jimmy Boland
-Charles Hughes
-Charles H. Smith
-1 + 1 ⁄ 4
-Fast
-2:06.25
-1901
-His Eminence
-Jimmy Winkfield
-Frank B. Van Meter
-Frank B. Van Meter
-1 + 1 ⁄ 4
-Fast
-2:07.75
-1902
-Alan-a-Dale
-Jimmy Winkfield
-Thomas Clay McDowell
-Thomas Clay McDowell
-1 + 1 ⁄ 4
-Fast
-2:08.75
-1903
-Judge Himes
-Harold Booker
-John P. Mayberry
-Charles R. Ellison
-1 + 1 ⁄ 4
-Fast
-2:09.00
-1904
-Elwood
-Shorty Prior
-Charles Durnell
-Laska Durnell
-1 + 1 ⁄ 4
-Fast
-2:08.50
-1905
-Agile
-Jack Martin
-Robert Tucker
-Samuel S. Brown
-1 + 1 ⁄ 4
-Heavy
-2:10.75
-1906
-Sir Huon
-Roscoe Troxler
-Peter Coyne
-Bashford Manor Stable
-1 + 1 ⁄ 4
-Fast
-2:08.80
-1907
-Pink Star
-Andy Minder
-William H. Fizer
-J. Hal Woodford
-1 + 1 ⁄ 4
-Heavy
-2:12.60
-1908
-Stone Street
-Arthur Pickens
-John Hall
-C. E. & J. W. Hamilton
-1 + 1 ⁄ 4
-Heavy
-2:15.20
-1909
-Wintergreen
-Vincent Powers
-Charles Mack
-Jerome B. Respess
-1 + 1 ⁄ 4
-Slow
-2:08.20
-1910
-Donau
-Frederick Herbert
-George Ham
-William Gerst
-1 + 1 ⁄ 4
-Fast
-2:06.40
-1911
-Meridian
-George Archibald
-Albert Ewing
-Richard F. Carman
-1 + 1 ⁄ 4
-Fast
-2:05.00
-1912
-Worth
-Carroll Shilling
-Frank Taylor
-Harry Hallenbeck
-1 + 1 ⁄ 4
-Muddy
-2:09.40
-1913
-Donerail
-Roscoe Goose
-Thomas P. Hayes
-Thomas P. Hayes
-1 + 1 ⁄ 4
-Fast
-2:04.80
-1914
-Old Rosebud † ‡
-John McCabe
-Frank Weir
-Hamilton Applegate
-1 + 1 ⁄ 4
-Fast
-2:03.40
-1915
-Regret # † ‡
-Joe Notter
-James Rowe Sr.
-Harry Payne Whitney
-1 + 1 ⁄ 4
-Fast
-2:05.40
-1916
-George Smith
-Johnny Loftus
-Hollie Hughes
-John Sanford
-1 + 1 ⁄ 4
-Fast
-2:04.00
-1917
-Omar Khayyam
-Charles Borel
-Charles T. Patterson
-C.K.G. Billings, Frederick Johnson
-1 + 1 ⁄ 4
-Fast
-2:04.60
-1918
-Exterminator † ‡
-Willie Knapp
-Henry McDaniel
-Willis Sharpe Kilmer
-1 + 1 ⁄ 4
-Muddy
-2:10.80
-1919
-Sir Barton † ‡
-Johnny Loftus
-H. Guy Bedwell
-J. K. L. Ross
-1 + 1 ⁄ 4
-Heavy
-2:09.80
-1920
-Paul Jones
-Ted Rice
-William Garth
-Ral Parr
-1 + 1 ⁄ 4
-Slow
-2:09.00
-1921
-Behave Yourself
-Charles Thompson
-Herbert J. Thompson
-Edward R. Bradley
-1 + 1 ⁄ 4
-Fast
-2:04.20
-1922
-Morvich
-Albert Johnson
-Fred Burlew
-Ben Block
-1 + 1 ⁄ 4
-Fast
-2:04.60
-1923
-Zev † ‡
-Earl Sande
-David Leary
-Rancocas Stable
-1 + 1 ⁄ 4
-Fast
-2:05.40
-1924
-Black Gold † ‡
-John Mooney
-Hanley Webb
-Rosa Hoots
-1 + 1 ⁄ 4
-Fast
-2:05.20
-1925
-Flying Ebony
-Earl Sande
-William Duke
-Gifford Cochran
-1 + 1 ⁄ 4
-Sloppy
-2:07.60
-1926
-Bubbling Over
-Albert Johnson
-Herbert J. Thompson
-Edward R. Bradley (Idle Hour Stock Farm)
-1 + 1 ⁄ 4
-Fast
-2:03.80
-1927
-Whiskery
-Linus McAtee
-Fred Hopkins
-Harry Payne Whitney
-1 + 1 ⁄ 4
-Slow
-2:06.00
-1928
-Reigh Count † ‡
-Chick Lang
-Bert Michell
-Fannie Hertz
-1 + 1 ⁄ 4
-Heavy
-2:10.40
-1929
-Clyde Van Dusen
-Linus McAtee
-Clyde Van Dusen
-Herbert Gardner
-1 + 1 ⁄ 4
-Muddy
-2:10.8
-1930
-Gallant Fox † ‡
-Earl Sande
-Jim Fitzsimmons
-Belair Stud
-1 + 1 ⁄ 4
-Good
-2:07.60
-1931
-Twenty Grand † ‡
-Charley Kurtsinger
-James Rowe Jr.
-Greentree Stable
-1 + 1 ⁄ 4
-Fast
-2:01.80
-1932
-Burgoo King
-Eugene James
-Herbert J. Thompson
-Edward R. Bradley
-1 + 1 ⁄ 4
-Fast
-2:05.20
-1933
-Brokers Tip
-Don Meade
-Herbert J. Thompson
-Edward R. Bradley
-1 + 1 ⁄ 4
-Good
-2:06.80
-1934
-Cavalcade † ‡
-Mack Garner
-Bob Smith
-Brookmeade Stable
-1 + 1 ⁄ 4
-Fast
-2:04.00
-1935
-Omaha † ‡
-Willie Saunders
-Jim Fitzsimmons
-Belair Stud
-1 + 1 ⁄ 4
-Good
-2:05.00
-1936
-Bold Venture
-Ira Hanford
-Max Hirsch
-Morton Schwartz
-1 + 1 ⁄ 4
-Fast
-2:03.60
-1937
-War Admiral † ‡
-Charley Kurtsinger
-George Conway
-Glen Riddle Farms
-1 + 1 ⁄ 4
-Fast
-2:03.20
-1938
-Lawrin
-Eddie Arcaro
-Ben Jones
-Woolford Farm
-1 + 1 ⁄ 4
-Fast
-2:04.80
-1939
-Johnstown † ‡
-James Stout
-Jim Fitzsimmons
-Belair Stud
-1 + 1 ⁄ 4
-Fast
-2:03.40
-1940
-Gallahadion
-Carroll Bierman
-Roy Waldron
-Milky Way Farm
-1 + 1 ⁄ 4
-Fast
-2:05.00
-1941
-Whirlaway ‡
-Eddie Arcaro
-Ben Jones
-Calumet Farm
-1 + 1 ⁄ 4
-Fast
-2:01.40
-1942
-Shut Out
-Wayne Wright
-John Gaver Sr.
-Greentree Stable
-1 + 1 ⁄ 4
-Fast
-2:04.40
-1943
-Count Fleet ‡
-Johnny Longden
-Don Cameron
-Fannie Hertz
-1 + 1 ⁄ 4
-Fast
-2:04.00
-1944
-Pensive
-Conn McCreary
-Ben Jones
-Calumet Farm
-1 + 1 ⁄ 4
-Good
-2:04.20
-1945
-Hoop Jr.
-Eddie Arcaro
-Ivan Parke
-Fred Hooper
-1 + 1 ⁄ 4
-Muddy
-2:07.00
-1946
-Assault † ‡
-Warren Mehrtens
-Max Hirsch
-King Ranch
-1 + 1 ⁄ 4
-Slow
-2:06.60
-1947
-Jet Pilot
-Eric Guerin
-Tom Smith
-Maine Chance Farm
-1 + 1 ⁄ 4
-Slow
-2:06.80
-1948
-Citation † ‡
-Eddie Arcaro
-Ben Jones
-Calumet Farm
-1 + 1 ⁄ 4
-Sloppy
-2:05.40
-1949
-Ponder
-Steve Brooks
-Ben Jones
-Calumet Farm
-1 + 1 ⁄ 4
-Fast
-2:04.20
-1950
-Middleground
-William Boland
-Max Hirsch
-King Ranch
-1 + 1 ⁄ 4
-Fast
-2:01.60
-1951
-Count Turf
-Conn McCreary
-Sol Rutchick
-Jack Amiel
-1 + 1 ⁄ 4
-Fast
-2:02.60
-1952
-Hill Gail
-Eddie Arcaro
-Ben Jones
-Calumet Farm
-1 + 1 ⁄ 4
-Fast
-2:01.60
-1953
-Dark Star
-Henry Moreno
-Eddie Hayward
-Cain Hoy Stable
-1 + 1 ⁄ 4
-Fast
-2:02.00
-1954
-Determine
-Raymond York
-William Molter
-Andy Crevolin
-1 + 1 ⁄ 4
-Fast
-2:03.00
-1955
-Swaps † ‡
-Bill Shoemaker
-Mesh Tenney
-Rex Ellsworth
-1 + 1 ⁄ 4
-Fast
-2:01.80
-1956
-Needles † ‡
-David Erb
-Hugh Fontaine
-D & H Stable
-1 + 1 ⁄ 4
-Fast
-2:03.40
-1957
-Iron Liege
-Bill Hartack
-Jimmy Jones
-Calumet Farm
-1 + 1 ⁄ 4
-Fast
-2:02.20
-1958
-Tim Tam † ‡
-Ismael Valenzuela
-Jimmy Jones
-Calumet Farm
-1 + 1 ⁄ 4
-Muddy
-2:05.00
-1959
-Tomy Lee
-Bill Shoemaker
-Frank Childs
-Fred & Juliette Turner Jr.
-1 + 1 ⁄ 4
-Fast
-2:02.20
-1960
-Venetian Way
-Bill Hartack
-Victor Sovinski
-Sunny Blue Farm
-1 + 1 ⁄ 4
-Good
-2:02.40
-1961
-Carry Back † ‡
-Johnny Sellers
-Jack Price
-Katherine Price
-1 + 1 ⁄ 4
-Good
-2:04.00
-1962
-Decidedly
-Bill Hartack
-Horatio Luro
-El Peco Ranch
-1 + 1 ⁄ 4
-Fast
-2:00.40
-1963
-Chateaugay
-Braulio Baeza
-James P. Conway
-Darby Dan Farm
-1 + 1 ⁄ 4
-Fast
-2:01.80
-1964
-Northern Dancer † ‡
-Bill Hartack
-Horatio Luro
-Windfields Farm
-1 + 1 ⁄ 4
-Fast
-2:00.00
-1965
-Lucky Debonair
-Bill Shoemaker
-Frank Catrone
-Ada Rice
-1 + 1 ⁄ 4
-Fast
-2:01.20
-1966
-Kauai King
-Don Brumfield
-Henry Forrest
-Ford Stable
-1 + 1 ⁄ 4
-Fast
-2:02.00
-1967
-Proud Clarion
-Bobby Ussery
-Loyd Gentry Jr.
-Darby Dan Farm
-1 + 1 ⁄ 4
-Fast
-2:00.60
-1968
-Forward Pass [ b ]
-Ismael Valenzuela
-Henry Forrest
-Calumet Farm
-1 + 1 ⁄ 4
-Fast
-2:02.20
-1969
-Majestic Prince † ‡
-Bill Hartack
-Johnny Longden
-Frank McMahon
-1 + 1 ⁄ 4
-Fast
-2:01.80
-1970
-Dust Commander
-Mike Manganello
-Don Combs
-Robert E. Lehmann
-1 + 1 ⁄ 4
-Good
-2:03.40
-1971
-Canonero II
-Gustavo Ávila
-Juan Arias
-Edgar Caibett
-1 + 1 ⁄ 4
-Fast
-2:03.20
-1972
-Riva Ridge † ‡
-Ron Turcotte
-Lucien Laurin
-Meadow Stable
-1 + 1 ⁄ 4
-Fast
-2:01.80
-1973
-Secretariat † ‡
-Ron Turcotte
-Lucien Laurin
-Meadow Stable
-1 + 1 ⁄ 4
-Fast
-1:59.40
-1974
-Cannonade
-Ángel Cordero Jr.
-Woody Stephens
-John Olin
-1 + 1 ⁄ 4
-Fast
-2:04.00
-1975
-Foolish Pleasure † ‡
-Jacinto Vásquez
-LeRoy Jolley
-John Greer
-1 + 1 ⁄ 4
-Fast
-2:02.00
-1976
-Bold Forbes
-Ángel Cordero Jr.
-Laz Barrera
-E. Rodriguez Tizol
-1 + 1 ⁄ 4
-Fast
-2:01.60
-1977
-Seattle Slew † ‡
-Jean Cruguet
-Billy Turner Jr.
-Karen Taylor
-1 + 1 ⁄ 4
-Fast
-2:02.20
-1978
-Affirmed † ‡
-Steve Cauthen
-Laz Barrera
-Harbor View Farm
-1 + 1 ⁄ 4
-Fast
-2:01.20
-1979
-Spectacular Bid † ‡
-Ronnie Franklin
-Bud Delp
-Hawksworth Farm
-1 + 1 ⁄ 4
-Fast
-2:02.40
-1980
-Genuine Risk # ‡
-Jacinto Vásquez
-LeRoy Jolley
-Diana M. Firestone
-1 + 1 ⁄ 4
-Fast
-2:02.00
-1981
-Pleasant Colony
-Jorge Velásquez
-John Campo
-Buckland Farm
-1 + 1 ⁄ 4
-Fast
-2:02.00
-1982
-Gato Del Sol
-Eddie Delahoussaye
-Edwin Gregson
-Arthur B. Hancock III , Leone J. Peters
-1 + 1 ⁄ 4
-Fast
-2:02.40
-1983
-Sunny's Halo
-Eddie Delahoussaye
-David Cross Jr.
-D.J. Foster Racing Stable
-1 + 1 ⁄ 4
-Fast
-2:02.20
-1984
-Swale
-Laffit Pincay Jr.
-Woody Stephens
-Claiborne Farm
-1 + 1 ⁄ 4
-Fast
-2:02.40
-1985
-Spend a Buck
-Ángel Cordero Jr.
-Cam Gambolati
-Hunter Farm
-1 + 1 ⁄ 4
-Fast
-2:00.20
-1986
-Ferdinand
-Bill Shoemaker
-Charlie Whittingham
-Elizabeth Keck
-1 + 1 ⁄ 4
-Fast
-2:02.80
-1987
-Alysheba † ‡
-Chris McCarron
-Jack Van Berg
-Dorothy & Pamela Scharbauer
-1 + 1 ⁄ 4
-Fast
-2:03.40
-1988
-Winning Colors # ‡
-Gary Stevens
-D. Wayne Lukas
-Eugene Klein
-1 + 1 ⁄ 4
-Fast
-2:02.20
-1989
-Sunday Silence † ‡
-Pat Valenzuela
-Charlie Whittingham
-H-G-W Partners
-1 + 1 ⁄ 4
-Muddy
-2:05.00
-1990
-Unbridled
-Craig Perret
-Carl Nafzger
-Frances A. Genter Stable
-1 + 1 ⁄ 4
-Good
-2:02.00
-1991
-Strike the Gold
-Chris Antley
-Nick Zito
-Bill Condren, Joe Cornacchia, B. Giles Brophy
-1 + 1 ⁄ 4
-Fast
-2:03.00
-1992
-Lil E. Tee
-Pat Day
-Lynn Whiting
-Cal Partee
-1 + 1 ⁄ 4
-Fast
-2:03.04
-1993
-Sea Hero
-Jerry Bailey
-MacKenzie Miller
-Rokeby Stables
-1 + 1 ⁄ 4
-Fast
-2:02.40
-1994
-Go for Gin
-Chris McCarron
-Nick Zito
-Bill Condren, Joe Cornacchia
-1 + 1 ⁄ 4
-Sloppy
-2:03.60
-1995
-Thunder Gulch
-Gary Stevens
-D. Wayne Lukas
-Michael Tabor
-1 + 1 ⁄ 4
-Fast
-2:01.20
-1996
-Grindstone
-Jerry Bailey
-D. Wayne Lukas
-Overbrook Farm
-1 + 1 ⁄ 4
-Fast
-2:01.00
-1997
-Silver Charm ‡
-Gary Stevens
-Bob Baffert
-Bob & Beverly Lewis
-1 + 1 ⁄ 4
-Fast
-2:02.40
-1998
-Real Quiet
-Kent Desormeaux
-Bob Baffert
-Michael E. Pegram
-1 + 1 ⁄ 4
-Fast
-2:02.20
-1999
-Charismatic †
-Chris Antley
-D. Wayne Lukas
-Bob & Beverly Lewis
-1 + 1 ⁄ 4
-Fast
-2:03.20
-2000
-Fusaichi Pegasus
-Kent Desormeaux
-Neil Drysdale
-Fusao Sekiguchi
-1 + 1 ⁄ 4
-Fast
-2:01.00
-2001
-Monarchos
-Jorge Chavez
-John Ward Jr.
-John Oxley
-1 + 1 ⁄ 4
-Fast
-1:59.97
-2002
-War Emblem
-Victor Espinoza
-Bob Baffert
-The Thoroughbred Corp.
-1 + 1 ⁄ 4
-Fast
-2:01.13
-2003
-Funny Cide
-José Santos
-Barclay Tagg
-Sackatoga Stable
-1 + 1 ⁄ 4
-Fast
-2:01.19
-2004
-Smarty Jones
-Stewart Elliott
-John Servis
-Someday Farm
-1 + 1 ⁄ 4
-Sloppy
-2:04.06
-2005
-Giacomo
-Mike Smith
-John Shirreffs
-Jerry & Ann Moss
-1 + 1 ⁄ 4
-Fast
-2:02.75
-2006
-Barbaro
-Edgar Prado
-Michael Matz
-Lael Stables
-1 + 1 ⁄ 4
-Fast
-2:01.36
-2007
-Street Sense
-Calvin Borel
-Carl Nafzger
-Jim Tafel
-1 + 1 ⁄ 4
-Fast
-2:02.17
-2008
-Big Brown
-Kent Desormeaux
-Rick Dutrow Jr.
-IEAH Stables , Paul Pompa Jr.
-1 + 1 ⁄ 4
-Fast
-2:01.82
-2009
-Mine That Bird
-Calvin Borel
-Bennie Woolley Jr.
-Double Eagle Ranch, Buena Suerte Equine
-1 + 1 ⁄ 4
-Sloppy
-2:02.66
-2010
-Super Saver
-Calvin Borel
-Todd Pletcher
-WinStar Farm
-1 + 1 ⁄ 4
-Sloppy
-2:04.45
-2011
-Animal Kingdom
-John Velazquez
-Graham Motion
-Team Valor International
-1 + 1 ⁄ 4
-Fast
-2:02.04
-2012
-I'll Have Another
-Mario Gutierrez
-Doug O'Neill
-Reddam Racing
-1 + 1 ⁄ 4
-Fast
-2:01.83
-2013
-Orb
-Joel Rosario
-Claude McGaughey III
-Stuart S. Janney III, Phipps Stable
-1 + 1 ⁄ 4
-Sloppy
-2:02.89
-2014
-California Chrome † ‡
-Victor Espinoza
-Art Sherman
-Steve Coburn & Perry Martin
-1 + 1 ⁄ 4
-Fast
-2:03.66
-2015
-American Pharoah † ‡
-Victor Espinoza
-Bob Baffert
-Zayat Stables
-1 + 1 ⁄ 4
-Fast
-2:03.02
-2016
-Nyquist
-Mario Gutierrez
-Doug O'Neill
-Reddam Racing
-1 + 1 ⁄ 4
-Fast
-2:01.31
-2017
-Always Dreaming
-John Velazquez
-Todd Pletcher
-MeB Racing, Brooklyn Boyz, Teresa Viola , St. Elias , Siena Farm, West Point Thoroughbreds
-1 + 1 ⁄ 4
-Wet Fast (sealed)
-2:03.59
-2018
-Justify † ‡
-Mike Smith
-Bob Baffert
-China Horse Club , Head of Plains Partners, Starlight Racing, WinStar Farm
-1 + 1 ⁄ 4
-Sloppy
-2:04.20
-2019
-Country House [ c ]
-Flavien Prat
-William I. Mott
-Mrs. J.V. Shields Jr., E. J. M. McFadden Jr., LNJ Foxwoods
-1 + 1 ⁄ 4
-Sloppy
-2:03.93
-2020
-Authentic †
-John Velazquez
-Bob Baffert
-Spendthrift Farm , MyRaceHorse Stable, Madaket Stables , Starlight Racing
-1 + 1 ⁄ 4
-Fast
-2:00.61
-2021
-Mandaloun [ d ]
-Florent Geroux
-Brad Cox
-Juddmonte
-1 + 1 ⁄ 4
-Fast
-2:01.02
-2022
-Rich Strike
-Sonny Leon
-Eric Reed
-RED TR-Racing
-1 + 1 ⁄ 4
-Fast
-2:02.61
-2023
-Mage
-Javier Castellano
-Gustavo Delgado
-OGMA Investments, Ramiro Restrepo, Sterling Racing, CMNWLTH [ 70 ]
-1 + 1 ⁄ 4
-Fast
-2:01.57
-2024
-Mystik Dan
-Brian Hernandez Jr.
-Kenneth G. McPeek
-Lance Gasaway, 4 G Racing (Brent Gasaway), Daniel Hamby III, Valley View Farm
-1 + 1 ⁄ 4
-Fast
-2:03.34
-2025
-Sovereignty †
-Junior Alvarado
-William I. Mott
-Godolphin
-1 + 1 ⁄ 4
-Sloppy
-2:02.31
-2026
-Golden Tempo
-José Ortiz
-Cherie DeVaux
-Phipps Stable , St. Elias Stable
-1 + 1 ⁄ 4
-Fast
-2:02.27
-Notes
-# Designates a filly .
-† Designates a horse that won American Horse of the Year in the same year they won the Derby.
-‡ Designates a horse that was inducted in subsequent years into the National Racing Hall of Fame .
-↑ The race was timed to 1 ⁄ 4 second from 1875 to 1905, to 1 ⁄ 5 second from 1906 to 2000, and to 0.01 second since 2001.
-↑ Dancer's Image , ridden by Bobby Ussery , trained by Lou Cavalaris Jr. , and owned by Peter D. Fuller , finished first, but was disqualified after a post-race urine sample revealed traces of a banned drug in the horse. The drug in question – phenylbutazone – is now legal for use on racehorses in many states, including Kentucky.
-↑ Maximum Security crossed the finish line first, but was disqualified for interference.
-↑ Medina Spirit crossed the finish line first, but was disqualified due to a positive test for betamethasone .
-Sire lines
-[ edit ]
-Winners of the Kentucky Derby can be connected to each other due to the practice of arranging horse breeding based on their previous success. All of the horses can be traced back to the three foundational sires, with Godolphin Arabian the ancestor of 7 winners, Byerley Turk the ancestor of 11 winners, and Darley Arabian the ancestor of 134 winners, including all winners since 1938.
-The Curlin direct sire line has produced 3 of the last 5 Kentucky Derby winners, most recently Golden Tempo in 2026.
-The Into Mischief direct sire line has produced 4 of the last 7 Kentucky Derby winners, most recently Sovereignty in 2025.
-Darley Arabian line
-[ edit ]
-The Darley Arabian (1700c) sire line (all branched through the Eclipse (1764) line) [ 71 ] produced 134 Derby winners (126 colts, 5 geldings, 3 fillies), including all winners from 1938 to present. [ 72 ] The main branches of this sire line are:
-the King Fergus (1775) branch (all branched through the Voltigeur (1847) line), produced 14 winners. His sire line continued primarily through his son Vedette (1854) with 12 winners, due to his sons Speculum (1865) with 6 winners (nearly exclusively through Sundridge (1898) with 5 winners, most recently Count Turf in 1951) and Galopin (1872) with 6 winners (exclusively through St. Simon (1881), most recently Go for Gin in 1994). [ 73 ] [ 74 ] [ 75 ]
-the Potoooooooo (1773) branch [ 76 ] produced 120 winners (all branched through the Waxy (1790) line), including all winners from 1995 to present. The primary branch of this sire line is through Whalebone (1807), which has produced 115 winners. In turn, the primary branch continues through Sir Hercules (1826), which has produced 93 winners (including all winners since 2006), and then the Birdcatcher (1833) branch [ 77 ] which produced 81 winners. From Birdcatcher, the branch of The Baron (1842) has produced 71 winners, of which 69 winners trace to Stockwell (1849). [ 78 ] Stockwell's son Doncaster (1870) sired Bend Or (1877), whose sire line accounts for 67 winners. [ 79 ] The main branch of the Bend Or sire line continued through his son Bona Vista (1889) with 58 winners, exclusively through the Phalaris (1913) line, which has dominated in the last several decades (including all winners from 2006 to present) through the following sons: [ 80 ] [ 81 ]
-the Pharamond (1925) branch (4 winners all through the Tom Fool (1949) line, most recently Silver Charm in 1997). [ 80 ]
-the Sickle (1924) branch, (25 winners all branched through the Native Dancer (1950) line, nearly exclusively through Raise a Native (1961) with 24 winners, continued primarily through Mr Prospector (1970) with 17 winners through 8 different sons: Fusaichi Pegasus, winner of the 2000 Kentucky Derby, and 7 other sons through their progeny (most recently Golden Tempo in 2026, with his son Fappiano (1977) accounting for 6 winners, nearly exclusively through his son Unbridled with 5 winners, including his win in the 1990 Kentucky Derby and 4 other winners (most recently Always Dreaming in 2017)).
-the Pharos (1920) branch (29 winners all branched through the Nearco (1935) line, through his sons Royal Charger (1942), Nearctic (1954), and Nasrullah (1940)), which includes all winners from 2024 to present. The Royal Charger branch (exclusively through his son Turn-To (1951)) produced 5 winners (most recently Barbaro in 2006), the Nearctic branch produced 10 winners (including all winners from 2024 to present), exclusively through his son Northern Dancer (1961) with his win in the 1964 Kentucky Derby, and direct male progeny of 9 winners, including 6 winners through his son Storm Bird (nearly exclusively through his son Storm Cat with 5 winners (including all winners from 2024 to present), most recently Sovereignty in 2025), while the Nasrullah branch produced 14 winners (most recently Nyquist in 2016) primarily through his son Bold Ruler (1954) with 10 winners (most recently California Chrome in 2014).
-special notes:
-the Waxy (1790) branch produced two main lines: the primary branch of Whalebone (1807), and the secondary branch of Whisker (1812) which produced 5 winners (exclusively through the King Tom (1851) line), most recently 1909 Kentucky Derby winner Wintergreen. [ 82 ]
-the Whalebone (1807) branch produced two main lines, the primary branch of Sir Hercules (1826), and the secondary branch of Camel (1822) (18 winners exclusively through the Touchstone (1831) line), including 2005 Kentucky Derby winner Giacomo through his grandson Orlando 's (1841) branch. [ 83 ] [ 84 ] Since then, each winner of the Kentucky Derby has gone through Whalebone's more frequent sire line branch of Sir Herecules (1826). The Orlando branch (6 winners exclusively through the Himyar (1875) line) is the less common of the two branches derived through Camel. Orlando's brother Newminster (1848) produced 12 winners (primarily through the Hyperion (1930) line with 8 winners), most recently Chateaugay in 1963. [ 85 ]
-the Sir Hercules (1826) branch produced two main lines: the primary branch of Birdcatcher (1833), and the secondary branch of Faugh-a-Ballagh (1841) which produced 12 winners (exclusively through the Leamington (1853) line), most recently 1908 Kentucky Derby winner Stone Street. [ 86 ]
-the Birdcatcher (1833) branch produced two main lines: the primary branch of The Baron (1842), and the secondary branch of Oxford (1857) which produced 10 winners (primarily through the Swynford (1907) line with 8 winners, with his son St. Germans producing 5 winners), most recently 1965 Kentucky Derby winner Lucky Debonair. [ 87 ]
-the Bend Or (1877) branch produced two main lines: the primary branch of Bona Vista (1889), and the secondary branch of Ormonde (1883) which produced 8 winners (exclusively through the Teddy (1913) line, with his son Sir Gallahad producing 5 winners, most recently Hoop Jr. in 1945), most recently 1957 Kentucky Derby winner Iron Liege. [ 88 ]
-Byerley Turk line
-[ edit ]
-The Byerley Turk (1680c) sire line [ 89 ] [ 90 ] [ 91 ] produced 11 winners (8 colts, 3 geldings). The main branches of this sire (all branched through the Herod (1758) line) are:
-the Highflyer (1774) branch produced 1 winner, most recently Macbeth II in 1888. [ 92 ]
-the Florizel (1768) branch produced 3 winners (all branched through the Lexington (1850) line), most recently Manuel in 1899. [ 93 ] [ 94 ] [ 95 ]
-the Woodpecker (1773) branch produced 7 winners (all branched through the Buzzard (1787) line). The main branches of this sire line are:
-the Castrel (1801) branch produced 1 winner, most recently Kingman in 1891. [ 96 ]
-the Selim (1802) branch produced 6 winners (all branched through the Glencoe (1831) line). The main branches of this sire line are:
-the Star Davis (1849) branch produced 1 winner, most recently Day Star in 1878. [ 97 ]
-the Vandal (1850) branch produced 5 winners (all branched through the Virgil (1864) line), most recently Alan-a-Dale in 1902. [ 98 ] [ 99 ] [ 100 ] [ 101 ] [ 102 ]
-Godolphin Arabian line
-[ edit ]
-The Godolphin Arabian (1724c) sire line [ 103 ] produced 7 winners (6 colts, 1 gelding). [ 72 ] The main branches of this sire (all branched through the West Australian (1850) line) are:
-the Solon (1861) branch produced 3 winners, including:
-the Barcaldine (1878) branch produced 1 winner, most recently Omar Khayyam in 1917 [ 104 ]
-the Arbitrator (1874) branch produced 2 winners (all branched through The Finn (1912) line), most recently Flying Ebony in 1925 [ 105 ] [ 106 ]
-the Australian (1858) branch produced 4 winners, including:
-Baden-Baden (1874), winner of the 1877 Kentucky Derby [ 107 ]
-the Waverly (1870) branch produced 1 winner, most recently Montrose in 1887 [ 108 ]
-the Spendthrift (1876) branch produced 2 winners (all branched through the Man o' War (1917) line), most recently War Admiral in 1937 [ 109 ] [ 110 ]
-Kentucky Derby winners with male-line descendants including other Kentucky Derby winners
-[ edit ]
-Northern Dancer ( 1964 winner ) – 9 colts; most recently Sovereignty ( 2025 ) [ 111 ] [ 112 ] [ 113 ] [ 114 ] [ 115 ] [ 116 ] [ 117 ]
-Ben Brush ( 1896 winner ) – 3 winners (2 colts, 1 filly); most recently Whiskery ( 1927 ) [ 76 ] [ 118 ] [ 119 ] [ 120 ]
-Seattle Slew ( 1977 winner ) – 3 colts; most recently California Chrome ( 2014 ) [ 121 ] [ 122 ] [ 123 ]
-Unbridled ( 1990 winner ) – 3 winners (2 colts, 1 gelding); most recently American Pharoah ( 2015 ) [ 124 ] [ 125 ] [ 126 ]
-Hindoo ( 1881 winner ) – 2 colts; most recently Alan-a-Dale ( 1902 ) [ 91 ]
-Bold Venture ( 1936 winner ) – 2 colts; most recently Middleground ( 1950 ) [ 127 ] [ 128 ]
-Reigh Count ( 1928 winner ) – 2 colts; most recently Count Turf ( 1951 ) [ 129 ] [ 130 ]
-Pensive ( 1944 winner ) – 2 colts; most recently Needles ( 1956 ) [ 131 ] [ 132 ]
-Majestic Prince ( 1969 winner ) – 2 colts; most recently Super Saver ( 2010 ) [ 133 ] [ 134 ]
-Halma ( 1895 winner ) – 1 colt; Alan-a-Dale (1902) [ 91 ]
-Leonatus ( 1883 winner ) – 1 colt; Pink Star ( 1907 ) [ 135 ]
-Bubbling Over ( 1926 winner ) – 1 colt; Burgoo King ( 1932 ) [ 136 ]
-Gallant Fox ( 1930 winner ) – 1 colt; Omaha ( 1935 ) [ 137 ]
-Count Fleet ( 1943 winner ) – 1 colt; Count Turf (1951) [ 130 ]
-Ponder ( 1949 winner ) – 1 colt; Needles (1956) [ 132 ]
-Determine ( 1954 winner ) – 1 colt; Decidedly ( 1962 ) [ 138 ]
-Swaps ( 1955 winner ) – 1 colt; Chateaugay ( 1963 ) [ 85 ]
-Grindstone ( 1996 winner ) – 1 gelding; Mine That Bird ( 2009 ) [ 125 ]
+Main article: List of winners of the Cape Town Marathon
+The current men's course record is 2:04:55, set by Mohamed Esa in 2026, and the women's course record is 2:22:22, set by Glenrose Xaba in 2024. [ 2 ] [ 21 ] Wheelchair races form part of the modern event programme, with the current wheelchair course records set in 2026 by David Weir and Manuela Schär. [ 2 ] [ 22 ]
 See also
 [ edit ]
-Horses portal
-Kentucky portal
-Sports portal
-United States portal
-American thoroughbred racing top attended events
-Grand Slam of Thoroughbred racing
-" The Kentucky Derby Is Decadent and Depraved ", by Hunter S. Thompson
-Kentucky Derby top four finishers
-List of attractions and events in the Louisville metropolitan area
-List of graded stakes at Churchill Downs
-List of Kentucky Derby broadcasters
-Triple Crown Productions
+Sport in South Africa
+Cape Town Trail Marathon
+List of winners of the Cape Town Marathon
+Notes
+[ edit ]
+↑ Known as the Sanlam Cape Town Marathon for sponsorship reasons.
 References
 [ edit ]
-1 2 "Woodford Reserve is New Kentucky Derby Sponsor" . BloodHorse.com . Archived from the original on April 15, 2018 . Retrieved April 15, 2018 .
-1 2 Frakes, Jason (January 10, 2024). "2024 Kentucky Derby to feature record $5 million purse. Here are payouts for 150th running" . Courier Journal . Archived from the original on January 28, 2024 . Retrieved January 19, 2024 .
-↑ "Tenth Race Churchill May 1, 2004" . May 1, 2004. Daily Racing Forum. Accessed on May 9, 2006.
-↑ "What is the Derby Festival®? – Our Story" . Kentucky Derby Festival . Archived from the original on January 31, 2024 . Retrieved January 31, 2024 . The Festival blasts off each year with the Opening Ceremonies – Thunder Over Louisville, one of the nation's largest annual fireworks extravaganzas! The ensuing two weeks of excitement and entertainment promise something for everyone.
-1 2 3 4 Renau, Lynn S. (2001). "Kentucky Derby". In Kleber, John E. (ed.). The Encyclopedia of Louisville . Lexington, Kentucky : University Press of Kentucky . pp. 467– 470. ISBN 0-8131-2100-0 . OCLC 247857447 . Archived from the original on March 13, 2023 . Retrieved January 19, 2024 .
-1 2 3 Rossingh, Danielle (May 3, 2019). "The Kentucky Derby: five reasons why you shouldn't miss it" . CNN . Archived from the original on May 30, 2024 . Retrieved May 29, 2024 .
-↑ Forde, Pat (May 3, 2007). "Most exciting two minutes? Derby proves it every year" . ESPN . Archived from the original on May 21, 2023 . Retrieved May 29, 2024 .
-↑ Henderson, Cydney (May 3, 2024). "How long is the Kentucky Derby? How many miles is the race at Churchill Downs?" . USA Today . Archived from the original on May 16, 2024 . Retrieved May 29, 2024 .
-↑ Wakefield, Kirk (April 26, 2021). "The Kentucky Derby Makes The Fastest Two Minutes In Sports A Year-Round Party" . Forbes . Archived from the original on May 30, 2024 . Retrieved May 29, 2024 .
-↑ Molski, Max (April 29, 2024). "Everything you need to know about the 2024 Kentucky Derby" . nbcnewyork.com . Archived from the original on May 5, 2024 . Retrieved May 29, 2024 .
-↑ Sowers, Richard (2014). The Kentucky Derby, Preakness and Belmont Stakes: A Comprehensive History . Jefferson, North Carolina: McFarland & Company . p. 7.
-↑ Adams, Kirby (April 3, 2024). "Why this famous Churchill Downs feature is only used once at the Kentucky Derby" . Courier Journal . Archived from the original on May 30, 2024 . Retrieved May 29, 2024 .
-↑ Rice, Grantland (May 4, 1935). "Kentucky Derby Has 50,000 Visitors Lifted to the Boiling Point" . Des Moines Tribune . p. 6. Archived from the original on May 30, 2024 . Retrieved May 30, 2024 – via newspapers.com .
-↑ Harris, Beth (May 4, 2024). "The Kentucky Derby is turning 150 years old. It's survived world wars and controversies of all kinds" . nbcwashington.com. Associated Press. Archived from the original on May 10, 2024 . Retrieved May 29, 2024 .
-↑ "Racing for the Roses – History of Kentucky Derby" . February 15, 2014. Archived from the original on March 6, 2014 . Retrieved February 22, 2014 .
-↑ "Louisville Jockey Club and Driving Park Association" . The Courier-Journal . July 4, 1874. p. 4. Archived from the original on January 12, 2026 . Retrieved November 12, 2025 .
-↑ "For the Spring Races" . Weekly Courier-Journal . March 3, 1875. p. 2. Archived from the original on January 2, 2026 . Retrieved November 12, 2025 .
-↑ "Pointers and Pooling" . The Courier-Journal . May 16, 1884. p. 6. Archived from the original on December 19, 2025 . Retrieved November 12, 2025 .
-↑ Ward, Arch (April 30, 1936). "Talking It Over" . Chicago Tribune . Archived from the original on July 25, 2012 . Retrieved May 5, 2012 . (subscription required)
-↑ "History Of Churchill Downs" . Churchill Downs. Archived from the original on March 1, 2014 . Retrieved February 23, 2014 .
-1 2 "When Black Jockeys Dominated American Horse Racing" . HISTORY . May 2, 2025. Archived from the original on May 24, 2025 . Retrieved November 14, 2025 .
-↑ The Legacy of Black Horsemen . Archived from the original on August 16, 2025 . Retrieved November 14, 2025 – via www.pbs.org.
-↑ Wiggins, David (1997). Glory bound : Black athletes in a White America . Syracuse, N.Y: Syracuse University Press. p. 32. OCLC 35650773 . Archived from the original on January 1, 2026 . Retrieved November 14, 2025 .
-↑ Davis, Timothy (Spring 2008). "Race and Sports in America: An Historical Overview" . Virginia Sports and Entertainment Law Journal . Archived from the original on September 27, 2022.
-↑ Leeds, Michael; Rockoff, Hugh (January 2019). "BEATING THE ODDS: BLACK JOCKEYS IN THE KENTUCKY DERBY, 1870–1911" (PDF) . nber.org . Page 19, table 1. Archived from the original (PDF) on August 1, 2024 . Retrieved November 14, 2025 .
-1 2 "Faded Glory: The Kentucky Derby's Forgotten Winners (Ben Ali, 1886)" . Archived from the original on December 17, 2025 . Retrieved November 12, 2025 .
-1 2 "History of Churchill Downs Incorporated" . FundingUniverse . Archived from the original on October 12, 2025 . Retrieved November 12, 2025 .
-1 2 "HISTORY'S CHANGING FACE OF JOCKEYS" . The Press Democrat . August 6, 2006. Archived from the original on November 13, 2025 . Retrieved November 14, 2025 .
-↑ Leeds, Michael; Rockoff, Hugh (December 2020). Jim Crow in the Saddle: The Expulsion of African American Jockeys from American Racing (Report). Cambridge, MA: National Bureau of Economic Research. doi : 10.3386/w28167 . Archived from the original on December 7, 2020.
-↑ "Inside the overlooked history of black horse race jockeys" . New York Post . May 6, 2023. Archived from the original on April 5, 2025 . Retrieved November 14, 2025 .
-1 2 Menderski, Maggie (February 2, 2024). "7 things you didn't know about the trailblazing Black jockeys at the Kentucky Derby" . Courier Journal . Retrieved July 29, 2026 . {{ cite news }} : CS1 maint: deprecated archival service ( link )
-↑ "The sad history of racism in American racing, Part 1" . Thoroughbred Racing Commentary . Archived from the original on August 8, 2022 . Retrieved November 26, 2025 .
-↑ "Jockey Records, Kentucky Derby 1875–2024" (PDF) . kentuckyderby.com . p. 4. Archived from the original (PDF) on April 25, 2025 . Retrieved November 14, 2025 .
-↑ "Preakness Lore: Simms Made History And Changed The Way Jockeys Ride" . paulickreport.com . Archived from the original on May 15, 2021 . Retrieved November 14, 2025 .
-↑ "Oliver Lewis (1856–1924)" . BlackPast . November 30, 2010. Archived from the original on May 23, 2019 . Retrieved November 14, 2025 .
-↑ Renau, Lynn S. (2001). "Winn, Martin J.". In Kleber, John E. (ed.). The Encyclopedia of Louisville . Lexington, Kentucky : University Press of Kentucky . pp. 946– 947. ISBN 0-8131-2100-0 . OCLC 247857447 . Archived from the original on March 13, 2023 . Retrieved January 20, 2024 .
-↑ "Derby To Go On The Air", The New York Times , May 16, 1925, p. 11
-↑ "Kentucky Derby History" . Kentucky Derby Info. Archived from the original on October 29, 2012 . Retrieved December 29, 2011 .
-↑ McKenzie, Sheena. "Jockey who refused to stay in the kitchen" . CNN . Archived from the original on February 2, 2018 . Retrieved February 2, 2018 .
-↑ Dandrea, Phil (2010). Sham: Great Was Second Best . Acanthus Publishing. Archived from the original on December 1, 2018 . Retrieved May 8, 2020 .
-↑ "Horse Racing – Kentucky Derby purse doubled to $2 million" . ESPN . Archived from the original on May 1, 2018 . Retrieved April 30, 2018 .
-↑ Angst, Frank (January 10, 2019). "Kentucky Derby Purse Increased to $3 Million" . bloodhorse.com . The Bloodhorse. Archived from the original on January 11, 2019 . Retrieved January 10, 2019 .
-↑ Hadden, Joey; Casado, Laura (April 10, 2020). "Here are the latest major events that have been canceled or postponed because of the coronavirus outbreak, including the 2020 Tokyo Olympics, Burning Man, and the 74th Annual Tony Awards" . Business Insider . Archived from the original on April 12, 2020 . Retrieved May 10, 2024 .
-1 2 "Churchill to Debut 20-Horse Derby Gate Sept. 1" . BloodHorse.com . Archived from the original on January 28, 2024 . Retrieved September 1, 2020 .
-↑ "Kentucky Derby Payouts Guide – Horses for Win, Place & Show" . kentuckyderbybettingsites.net . Archived from the original on May 1, 2024 . Retrieved May 1, 2024 .
-↑ Jordan, Bob (May 2, 2026). "Who is Cherie Devaux? Her horse Golden Tempo just won an historic Kentucky Derby" . Asbury Park Press . Retrieved May 2, 2026 .
-↑ Kuzydym, Stephanie (August 3, 2026). "Churchill Downs, NYRA announce new Thoroughbred Championship Series" . Courier Journal . Retrieved August 5, 2026 .
-↑ "Record betting reported on 2017 Kentucky Derby" . The Courier-Journal . Archived from the original on January 28, 2024 . Retrieved April 4, 2018 .
-↑ "How Much Money is Wagered on the Kentucky Derby Each Year?" . betfirm.com . Archived from the original on April 4, 2018 . Retrieved April 4, 2018 .
-↑ Finley, Marty (May 9, 2016). "The 2016 Kentucky Derby: By the numbers" . bizjournals.com . Archived from the original on March 23, 2017 . Retrieved April 4, 2018 .
-↑ Hopkins, Andrea. "Kentucky Derby, Queen Elizabeth draw festive crowd" . U.S . Archived from the original on May 1, 2018 . Retrieved April 30, 2018 .
-↑ "Derby jockeys can wear ads" . UPI . Archived from the original on May 1, 2018 . Retrieved April 30, 2018 .
-↑ Green, Marcus. "Jockey advertising at Kentucky tracks remains rare a decade after ruling" . Archived from the original on May 1, 2018 . Retrieved April 30, 2018 .
-↑ Isidore, Chris (May 5, 2006). "Kentucky Derby including Yum Brands in its name" . Archived from the original on May 17, 2006 . Retrieved May 10, 2010 .
-↑ Dweck, Sophie (April 30, 2025). "Longines and Equestrian Timekeeping Go Way Back" . Town & Country . Archived from the original on June 21, 2025 . Retrieved July 25, 2025 .
-↑ Sneed, Tierney. "The Origin of Your Favorite Kentucky Derby Traditions" . usnews.com . Archived from the original on October 24, 2016 . Retrieved July 3, 2016 .
-↑ Fred, Smith (May 1, 1961). "Bluegrass, Bourbon and Burgoo" . Sports Illustrated – Vault . Archived from the original on October 27, 2018 . Retrieved October 26, 2018 .
-↑ "Giant screen at Churchill Downs gives everyone at Kentucky Derby a front-row view" . kentucky . Archived from the original on May 1, 2018 . Retrieved April 30, 2018 .
-↑ "Panasonic Announces Installation of World's Largest 4K Video Board at Churchill Downs | | Churchill Downs Racetrack | Home of the Kentucky Derby" . churchilldowns.com . Archived from the original on May 1, 2018 . Retrieved April 30, 2018 .
-↑ "My Old Kentucky Home" . Archived from the original on May 3, 2013 . Retrieved April 29, 2013 .
-↑ Epstein, Curt (May 5, 2015). "Derby, Boxing Match Fuel Atlantic's Best Day Ever" . Aviation International News . Archived from the original on May 9, 2015 . Retrieved May 6, 2015 .
-1 2 Tran, Daniel (May 5, 2022). "2022 Kentucky Derby: Traditions, food, drinks and other iconic customs for Derby Day" . NBC Sports . Archived from the original on May 30, 2024 . Retrieved May 29, 2024 .
-↑ "Dan Fogelberg Prodigy Chat transcript Treehouse.org" . Archived from the original on March 7, 2015 . Retrieved October 16, 2014 .
-↑ Adams, Kirby (April 16, 2025). "Simone Biles, Livvy Dunne will command 'Riders Up' for 2025 Kentucky Derby, Oaks" . Courier Journal . Retrieved April 29, 2026 .
-↑ Adams, Kirby; Hancock, Amanda (May 1, 2026). "Here's who will say 'Riders Up' ahead of the 2026 Kentucky Derby" . Courier Journal . Retrieved May 2, 2026 .
-↑ Adams, Kirby (April 28, 2026). "Here's who will sing the national anthem at the 2026 Kentucky Derby" . Courier Journal . Retrieved April 29, 2026 .
-↑ Mellisa Hoppert (May 6, 2018). "Justify Wins Kentucky Derby, Conquering Rain, Mud and a 136-Year Curse" . The New York Times . Archived from the original on May 6, 2018 . Retrieved May 6, 2018 .
-↑ "Super Saver wins the 2010 Kentucky Derby – Kentucky Derby" . archive.org . Archived from the original on May 14, 2010.
-↑ "Past Winners | Kentucky Derby History" . kentuckyderby.com . Archived from the original on April 16, 2024 . Retrieved April 28, 2026 .
-↑ "Mage runs down Two Phil's in stretch for Kentucky Derby victory" . drf.com . Archived from the original on May 7, 2023 . Retrieved May 7, 2023 .
-↑ "Sire Lines" . bloodlines.net . Archived from the original on April 22, 2021 . Retrieved April 20, 2021 .
-1 2 "SIRE LINES OF KENTUCKY DERBY WINNERS, 1921–2020" (PDF) . Archived (PDF) from the original on April 23, 2021 . Retrieved April 23, 2021 .
-↑ "Sire Lines King Fergus" . bloodlines.net . Archived from the original on February 3, 2021 . Retrieved April 20, 2021 .
-↑ "St. Simon Sire Line" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
-↑ "Go for Gin Horse Pedigree" . pedigreequery.com . Archived from the original on May 22, 2021 . Retrieved May 22, 2021 .
-1 2 "Pot8os Sire Line" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
-↑ "Birdcatcher Sire Line" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
-↑ "Stockwell Sire Line" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
-↑ "Bend Or Sire Line" . bloodlines.net . Archived from the original on April 1, 2022 . Retrieved April 20, 2021 .
-1 2 "Phalaris Sire Line" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
-↑ "Nearco Sire Line" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
-↑ "Wintergreen Horse Pedigree" . pedigreequery.com . Archived from the original on May 21, 2021 . Retrieved July 16, 2021 .
-↑ "Camel Sire Line" . bloodlines.net . Archived from the original on April 22, 2021 . Retrieved May 23, 2021 .
-↑ "Himyar's Other Line" . cs.bloodhorse.com . Archived from the original on May 23, 2021 . Retrieved May 23, 2021 .
-1 2 "Chateaugay Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Stone Street Horse Pedigree" . pedigreequery.com . Archived from the original on May 21, 2021 . Retrieved June 27, 2021 .
-↑ "Lucky Debonair Horse Pedigree" . pedigreequery.com . Archived from the original on May 21, 2021 . Retrieved June 27, 2021 .
-↑ "Iron Liege Horse Pedigree" . pedigreequery.com . Archived from the original on July 31, 2021 . Retrieved June 27, 2021 .
-↑ "Thoroughbred Bloodlines Sire Lines Byerley Turk" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
-↑ "Thoroughbred Bloodlines Sire Lines Byerley Turk King Herod" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
-1 2 3 "Thoroughbred Bloodlines Sire Lines Byerley Turk King Herod Buzzard Selim" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
-↑ "Macbeth Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Lord Murphy Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Apollo Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Manuel Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Kingman Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Day Star Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Vagrant Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Hindoo Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Ben Ali Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Halma Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Alan-a-dale Horse Pedigree" . pedigreequery.com . Archived from the original on April 20, 2021 . Retrieved April 22, 2021 .
-↑ "Matchem Sire Line" . bloodlines.net . Archived from the original on February 26, 2021 . Retrieved April 20, 2021 .
-↑ "Omar Khayyam Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Zev Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Flying Ebony Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Baden-baden Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Montrose Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "Clyde Van Dusen Horse Pedigree" . pedigreequery.com . Archived from the original on April 22, 2021 . Retrieved April 22, 2021 .
-↑ "War Admiral Horse Pedigree" . pedigreequery.com . Archived from the original on April 21, 2021 . Retrieved April 22, 2021 .
-↑ "Ferdinand Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Sea Hero Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Charismatic Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Big Brown Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Justify Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Authentic Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Mandaloun Horse Pedigree" . pedigreequery.com . Archived from the original on March 26, 2023 . Retrieved May 7, 2022 .
-↑ "Meridian Horse Pedigree" . pedigreequery.com . Archived from the original on April 24, 2021 . Retrieved April 24, 2021 .
-↑ "Regret Horse Pedigree" . pedigreequery.com . Archived from the original on April 24, 2021 . Retrieved April 24, 2021 .
-↑ "Whiskery Horse Pedigree" . pedigreequery.com . Archived from the original on April 24, 2021 . Retrieved April 24, 2021 .
-↑ "Swale Horse Pedigree" . pedigreequery.com . Archived from the original on May 10, 2022 . Retrieved April 19, 2021 .
-↑ "Orb Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "California Chrome Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Grindstone Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-1 2 "Mine That Bird Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "American Pharoah Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Assault Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Middleground Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Count Fleet Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-1 2 "Count Turf Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Ponder Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-1 2 "Needles Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Monarchos Horse Pedigree" . pedigreequery.com . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
-↑ "Super Saver Horse Pedigree" . pedigreequery.com . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
-↑ "Pink Star Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Burgoo King Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Omaha Horse Pedigree" . pedigreequery.com . Archived from the original on April 19, 2021 . Retrieved April 19, 2021 .
-↑ "Decidedly Horse Pedigree" . pedigreequery.com . Archived from the original on January 28, 2024 . Retrieved April 19, 2021 .
-Further reading
-[ edit ]
-Nicholson, James C. (2012). The Kentucky Derby: How the Run for the Roses Became America's Premier Sporting Event . Lexington, Kentucky: University Press of Kentucky.
+1 2 Brophy, Selene (10 June 2026). "BREAKING NEWS: Cape Town makes history as Africa's first World Marathon Major" . Time Out Cape Town . Retrieved 10 June 2026 .
+1 2 3 4 Ullyett, Sue (24 May 2026). "Fastest Marathon on African Soil as Cape Town Marathon Records Shattered" . Runner's World South Africa . Retrieved 25 May 2026 .
+1 2 "Cape Town Marathon becomes Abbott World Marathon Majors Candidate Race" . Abbott World Marathon Majors . 3 November 2021 . Retrieved 25 May 2026 .
+1 2 3 4 5 Stewart, Kendra (13 February 2026). "History of the Sanlam Cape Town Marathon" . Sanlam Cape Town Marathon . Retrieved 25 May 2026 .
+1 2 "Cape Town Marathon awarded global Gold Label status" . TeamSA . 7 March 2017 . Retrieved 25 May 2026 .
+1 2 "Sanlam to sponsor renamed Cape Town Marathon" . Bizcommunity . 22 July 2014 . Retrieved 25 May 2026 .
+↑ "Sanlam Cape Town Marathon cancelled; virtual race to go ahead as planned" . Sanlam Cape Town Marathon . 20 February 2021 . Retrieved 25 May 2026 .
+↑ Singh, Kaveel (19 October 2025). "Cape Town Marathon cancelled for safety reasons after 'winds overnight wreaked havoc' " . News24 . Retrieved 25 May 2026 .
+↑ "Cape Town Marathon cancelled, deemed unsafe after wind damages structures" . Daily Maverick . 19 October 2025 . Retrieved 25 May 2026 .
+↑ "Cape Town takes a step towards the Majors" . Abbott World Marathon Majors . 21 October 2024 . Retrieved 25 May 2026 .
+↑ "Sumo comes to London, while Cape Town's marathon steps up" . Reuters . 17 October 2025 . Retrieved 25 May 2026 .
+↑ Butler, Lynn (20 October 2025). "Devastated Cape Town Marathon 'not giving up' on historic World Major Marathon bid" . News24 . Retrieved 25 May 2026 .
+↑ "Results from the 2026 Cape Town Marathon" . Runner's World . 24 May 2026 . Retrieved 25 May 2026 .
+↑ Hemmonsbey, Keanan (25 May 2026). "Cape Town Marathon edges closer to World Major status after record-breaking weekend" . News24 . Retrieved 25 May 2026 .
+↑ "The Sanlam Cape Town Marathon" . Top Events . Retrieved 25 May 2026 .
+↑ "Sanlam renews title sponsorship of the Sanlam Cape Town Marathon through to 2031" . Sanlam . 10 February 2026 . Retrieved 25 May 2026 .
+↑ "Course Map: Cape Town Marathon" . Watch Athletics . Retrieved 25 May 2026 .
+↑ "Cape Town Marathon: Route, Landmarks, Destinations and Feature Views" (PDF) . Sanlam Cape Town Marathon . 11 February 2026 . Retrieved 25 May 2026 .
+↑ Cupido, Gerry (18 May 2026). "Not running the Sanlam Cape Town Marathon? Here's how to turn race day into the ultimate Cape Town outing" . Cape Times . Retrieved 25 May 2026 .
+↑ "World Class Field Promises Record Times at 2026 Sanlam Cape Town Marathon" . Sanlam Cape Town Marathon . 21 May 2026 . Retrieved 25 May 2026 .
+↑ Hemmonsbey, Keanan (24 May 2026). "WRAP | Cape Town Marathon: Records tumble on a perfect day for rapid running" . News24 . Retrieved 25 May 2026 .
+↑ "Fastest marathon on African soil run in Cape Town" . Modern Athlete . 24 May 2026 . Retrieved 25 May 2026 .
 External links
 [ edit ]
-Wikimedia Commons has media related to The Kentucky Derby .
-Look up run for the roses in Wiktionary, the free dictionary.
 Official website
-Kentucky Derby Museum
-The Courier-Journal ' s Derby Site
-"The History of the Kentucky Derby" , Past the Wire
-Kentucky Derby News from DRF
+Wikimedia Commons has media related to Cape Town Marathon .
 v
 t
 e
-Kentucky Derby
-Races
-1875
-1876
-1877
-1878
-1879
-1880
-1881
-1882
-1883
-1884
-1885
-1886
-1887
-1888
-1889
-1890
-1891
-1892
-1893
-1894
-1895
-1896
-1897
-1898
-1899
-1900
-1901
-1902
-1903
-1904
-1905
-1906
-1907
-1908
-1909
-1910
-1911
-1912
-1913
-1914
-1915
-1916
-1917
-1918
-1919
-1920
-1921
-1922
-1923
-1924
-1925
-1926
-1927
-1928
-1929
-1930
-1931
-1932
-1933
-1934
-1935
-1936
-1937
-1938
-1939
-1940
-1941
-1942
-1943
-1944
-1945
-1946
-1947
-1948
-1949
-1950
-1951
-1952
-1953
-1954
-1955
-1956
-1957
-1958
-1959
-1960
-1961
-1962
-1963
-1964
-1965
-1966
-1967
-1968
-1969
-1970
-1971
-1972
-1973
-1974
-1975
-1976
-1977
-1978
-1979
-1980
-1981
-1982
-1983
-1984
-1985
-1986
-1987
-1988
-1989
-1990
-1991
-1992
-1993
-1994
-1995
-1996
-1997
-1998
-1999
-2000
-2001
-2002
-2003
-2004
-2005
-2006
-2007
+World Athletics Label Road Races
+Editions
 2008
 2009
 2010
@@ -2197,536 +199,1100 @@ Races
 2024
 2025
 2026
-Festival
-Great Steamboat Race
-Thunder Over Louisville
-Related
-Churchill Downs
-Top 4 finishers
-Museum
-Road to the Kentucky Derby
-" My Old Kentucky Home "
-" Run for the Roses "
-Triple Crown
-Trophy
-Mint julep
-Derby pie
-Kentucky Oaks
-Broadcasters
-" The Kentucky Derby Is Decadent and Depraved "
-Category
-Kentucky portal
-v
-t
-e
-Kentucky Derby winners
-1870s
-1875 Aristides
-1876 Vagrant
-1877 Baden-Baden
-1878 Day Star
-1879 Lord Murphy
-1880s
-1880 Fonso
-1881 Hindoo
-1882 Apollo
-1883 Leonatus
-1884 Buchanan
-1885 Joe Cotton
-1886 Ben Ali
-1887 Montrose
-1888 Macbeth II
-1889 Spokane
-1890s
-1890 Riley
-1891 Kingman
-1892 Azra
-1893 Lookout
-1894 Chant
-1895 Halma
-1896 Ben Brush
-1897 Typhoon II
-1898 Plaudit
-1899 Manuel
-1900s
-1900 Lieut. Gibson
-1901 His Eminence
-1902 Alan-a-Dale
-1903 Judge Himes
-1904 Elwood
-1905 Agile
-1906 Sir Huon
-1907 Pink Star
-1908 Stone Street
-1909 Wintergreen
-1910s
-1910 Donau
-1911 Meridian
-1912 Worth
-1913 Donerail
-1914 Old Rosebud
-1915 Regret ♥
-1916 George Smith
-1917 Omar Khayyam
-1918 Exterminator
-1919 Sir Barton ₩
-1920s
-1920 Paul Jones
-1921 Behave Yourself
-1922 Morvich
-1923 Zev
-1924 Black Gold
-1925 Flying Ebony
-1926 Bubbling Over
-1927 Whiskery
-1928 Reigh Count
-1929 Clyde Van Dusen
-1930s
-1930 Gallant Fox ₩
-1931 Twenty Grand
-1932 Burgoo King
-1933 Brokers Tip
-1934 Cavalcade
-1935 Omaha ₩
-1936 Bold Venture
-1937 War Admiral ₩
-1938 Lawrin
-1939 Johnstown
-1940s
-1940 Gallahadion
-1941 Whirlaway ₩
-1942 Shut Out
-1943 Count Fleet ₩
-1944 Pensive
-1945 Hoop Jr.
-1946 Assault ₩
-1947 Jet Pilot
-1948 Citation ₩
-1949 Ponder
-1950s
-1950 Middleground
-1951 Count Turf
-1952 Hill Gail
-1953 Dark Star
-1954 Determine
-1955 Swaps
-1956 Needles
-1957 Iron Liege
-1958 Tim Tam
-1959 Tomy Lee
-1960s
-1960 Venetian Way
-1961 Carry Back
-1962 Decidedly
-1963 Chateaugay
-1964 Northern Dancer
-1965 Lucky Debonair
-1966 Kauai King
-1967 Proud Clarion
-1968 Forward Pass ( Dancer's Image disqualified)
-1969 Majestic Prince
-1970s
-1970 Dust Commander
-1971 Canonero II
-1972 Riva Ridge
-1973 Secretariat ₩
-1974 Cannonade
-1975 Foolish Pleasure
-1976 Bold Forbes
-1977 Seattle Slew ₩
-1978 Affirmed ₩
-1979 Spectacular Bid
-1980s
-1980 Genuine Risk ♥
-1981 Pleasant Colony
-1982 Gato Del Sol
-1983 Sunny's Halo
-1984 Swale
-1985 Spend a Buck
-1986 Ferdinand
-1987 Alysheba
-1988 Winning Colors ♥
-1989 Sunday Silence
-1990s
-1990 Unbridled
-1991 Strike the Gold
-1992 Lil E. Tee
-1993 Sea Hero
-1994 Go for Gin
-1995 Thunder Gulch
-1996 Grindstone
-1997 Silver Charm
-1998 Real Quiet
-1999 Charismatic
-2000s
-2000 Fusaichi Pegasus
-2001 Monarchos
-2002 War Emblem
-2003 Funny Cide
-2004 Smarty Jones
-2005 Giacomo
-2006 Barbaro
-2007 Street Sense
-2008 Big Brown
-2009 Mine That Bird
-2010s
-2010 Super Saver
-2011 Animal Kingdom
-2012 I'll Have Another
-2013 Orb
-2014 California Chrome
-2015 American Pharoah ₩
-2016 Nyquist
-2017 Always Dreaming
-2018 Justify ₩
-2019 Country House ( Maximum Security disqualified)
-2020s
-2020 Authentic
-2021 Mandaloun ( Medina Spirit disqualified )
-2022 Rich Strike
-2023 Mage
-2024 Mystik Dan
-2025 Sovereignty
-2026 Golden Tempo
-Legend – ₩ = Triple Crown winners, ♥ = Filly
-v
-t
-e
-Triple Crowns and Grand Slams of horse racing
-Thoroughbreds
-England
-Triple Crown
-2000 Guineas Stakes
-Epsom Derby
-St Leger Stakes
-Fillies
-1,000 Guineas Stakes
-Epsom Oaks
-St. Leger Stakes
-Stayers
-Ascot Gold Cup
-Goodwood Cup
-Doncaster Cup
-United States
-Triple Crown
-Kentucky Derby
-Preakness Stakes
-Belmont Stakes
-Grand Slam
-Triple Crown and Travers Stakes or Breeders' Cup Classic
-Fillies
-Kentucky Oaks
-Black-Eyed Susan Stakes
-Acorn Stakes
-Triple Tiara
-Acorn Stakes
-Mother Goose Stakes
-Coaching Club American Oaks
-Handicap
-Metropolitan Handicap
-Brooklyn Handicap
-Suburban Handicap
-Turf Trinity
-Belmont Derby
-Saratoga Derby Invitational Stakes
-Jockey Club Derby
-Turf Tiara
-Belmont Oaks
-Saratoga Oaks Invitational Stakes
-Jockey Club Oaks
-Grand Slam
-of Grass
-Colonial Turf Cup
-Virginia Derby
-Secretariat Stakes
-Breeders' Cup Turf
-Australia
-Australia
-Randwick Guineas
-Rosehill Guineas
-Australian Derby
-Spring Grand
-Slam
-Caulfield Cup
-Cox Plate
-Melbourne Cup
-Two Year Old
-Golden Slipper Stakes
-Sires Produce Stakes
-Champagne Stakes
-Canada
-Triple Crown
-King's Plate
-Prince of Wales Stakes
-Breeders' Stakes
-Triple Tiara
-Woodbine Oaks
-Bison City Stakes
-Wonder Where Stakes
-France
-Triple Crown
-Poule d'Essai des Poulains
-Prix du Jockey Club
-Grand Prix de Paris
-Fillies
-Poule d'Essai des Pouliches
-Prix de Diane
-Prix Vermeille
-Germany
-Triple Crown
-Mehl-Mülhens-Rennen
-Deutsches Derby
-Deutsches St. Leger
+Platinum
+Marathon
+Amsterdam
+Berlin
+Boston
+Chicago
+London
+Nagoya Women's
+New York City
+Osaka Women's
+Seoul
+Shanghai
+Sydney
+Tokyo
+Valencia
+Xiamen
+Half marathon
+Bangsaen
+Guadalajara
+Gold
+Marathon
+Barcelona
+Beijing
+Buriram
+Daegu
+Doha
+Guangzhou
+Hangzhou
 Hong Kong
-Triple Crown
-Hong Kong Stewards' Cup
-Hong Kong Gold Cup
-Hong Kong Champions & Chater Cup
-Speed
-Centenary Sprint Cup
-Queen's Silver Jubilee Cup
-Chairman's Sprint Prize
-Four Year Old
-Hong Kong Classic Mile
-Hong Kong Classic Cup
-Hong Kong Derby
-Ireland
-Triple Crown
-Irish 2,000 Guineas
-Irish Derby
-Irish St. Leger
-Italy
-Triple Crown
-Premio Parioli
-Derby Italiano
-St. Leger Italiano
-Fillies
-Premio Regina Elena
-Japan
-Triple Crown
-Satsuki Shō
-Tokyo Yūshun
-Kikuka-shō
-Fillies
-Oka Shō
-Yushun Himba
-Shūka Shō
-Dirt Triple
-Crown
-Haneda Hai
-Tokyo Derby
-Japan Dirt Classic
-New Zealand
-Triple Crown
-Tarzino Trophy
-Horlicks Plate
-Livamol Spring Classic
-WFA
-Zabeel Classic
-Herbie Dyke Stakes
-New Zealand Stakes
-Sprint
-Railway Stakes
-Telegraph Stakes
-Waikato Sprint
-Fillies & Mares
-Cuddle Stakes
-Breeders Stakes
-Travis Stakes
-Uruguay
-Triple Crown
-Gran Premio Polla de Potrillos
-Gran Premio Jockey Club
-Gran Premio Nacional
-Others
-Americas
-Argentina
-Gran Premio Polla de Potrillos
-Barbados
-Brazil
-Chile
-Dominican Republic
-Clásico El Ensayo
-Ecuador
-Jamaica
-Mexico
-Panama
-Peru
-Derby Nacional
-Puerto Rico
-Trinidad and Tobago
-Venezuela
-Africa
-Kenya
-Asia
-India
-Indian Derby
-Indonesia
-Indonesia Derby
-Macau
-Philippines
-Europe
-Belgium
-Denmark
-Hungary
-The Netherlands
-Norway
-Poland
-Spain
-Switzerland
-Sweden
-Turkey
-Gazi Derby
-Harness
-United States
-Pacers
-Cane Pace
-Messenger Stakes
-Little Brown Jug
-Trotters
-Hambletonian
-Yonkers Trot
-Kentucky Futurity
-France
-Trotters
-Prix d'Amérique
-Undefeated Winners • Individual Winners • Back-to-Back Winning Jockeys • Winningest Jockeys
+Houston
+İstanbul
+Lagos
+Ljubljana
+Mexico City
+Mumbai
+New Taipei
+Osaka
+Rotterdam
+Singapore
+Taipei
+Half Marathon
+Barcelona
+Copenhagen
+Gifu
+Houston
+Istanbul
+New Delhi
+Ras Al Khaimah
+Valencia
+Yangzhou
+10K
+Bengaluru
+Port-Gentil
+San Silvestre Vallecana (Madrid)
+Elite
+Marathon
+Abu Dhabi
+Bali
+Bangsaen
+Beppu-Oita
+Dublin
+Enschede
+Frankfurt
+Fukuoka
+Hōfu
+Honolulu
+Huangpu (China)
+Kigali International
+Lisbon
+Mersin
+Nanjing
+Paris
+Prague
+Riyadh
+Rome
+Seville
+Tallinn
+Toronto Waterfront
+Vienna
+Half marathon
+Antrim Coast (Northern Ireland)
+Berlin
+Bogotá
+Cardiff
+Lisbon
+Marugame
+Prague
+Tallinn
+10K
+Beach to Beacon (Maine)
+Brașov
+Prague Grand Prix
+Label
+Marathon
+Athens
+Bangkok
+Belfast
+Belgrade
+Bengaluru
+Bratislava
+Bucharest
+Buenos Aires
+Cape Town
+Castellón
+Copenhagen
+Cholpon-Ata
+Dubai
+Durban
+Geneva
+Gold Coast
+Guadalajara
+Hannover
+Hyderabad
+İzmir
+Jakarta
+Kobe
+Košice
+Kuala Lumpur
+Madrid
+Málaga
+Marrakesh
+Milan
+Nairobi
+Ottawa
+Pattaya
+Porto
+Rabat
+Riga
+Rio de Janeiro
+Sao Paulo
+Sapporo
+Sofia
+Stockholm
+Sunshine Coast
+Tashkent
+Tel Aviv
+Tunis
+Venice
+Vilnius
+Warsaw
+Zagreb
+20km / Half Marathon
+Bangkok
+Belfast
+Buenos Aires
+České Budějovice
+Chicago
+Gold Coast
+Hamburg
+Karlovy Vary
+Málaga
+Madrid
+New York City
+Olomouc
+Paris Semi
+Paris 20k
+Pattaya
+Perth
+Pittsburgh
+Porto
+Pune
+Riga
+Roma-Ostia
+Great North Run (South Shields, UK)
+Stockholm
+Ústí nad Labem
+Warsaw
+10km (one 11.3 km)
+Atlanta (July)
+Bangkok
+Boston
+Boulder
+Castelbuono
+Castellón
+Falmouth (Cape Cod, Massachusetts) (11.3km)
+Great Ethiopian Run (Addis Ababa)
+Madrid
+Pattaya
+Riga
+Valencia
+5-8km
+Manchester (Connecticut) - 8km
+Riga - 5km
+1 mile
+Fifth Avenue Mile (New York City)
+Riga
 v
 t
 e
-City of Louisville and metro area
-History
-Timeline
-Historic places
-Founder: George Rogers Clark
-Corn Island
-Fort Nelson
-Bloody Monday religious riots (1855)
-Civil War
-Southern Exposition (1883–87)
-1890 tornado
-1937 flood
-1968 riots
-1973 Kentucky Derby ( Secretariat )
-1974 tornadoes
-Louisville Cardinals men's basketball
-Championships in 1980 / 1986 / 2013 [vacated ]
-2015 scandal
-Standard Gravure shooting (1989)
-Ohio River Bridges Project (2002–16)
-Breonna Taylor
-Killing (2020)
-Protests
-2023 bank shooting
-Geography
-Downtown
-Cityscape
-Tallest buildings
-Climate
-Local landmarks
-Neighborhoods
-Parks
-Preservation districts ( Old Louisville )
+Cape Town
+City of Cape Town
+Natural environment
+Cape Flats
+Cape Peninsula
+Geology
+Helderberg
+Bays
+Bantry Bay
+Camps Bay
+False Bay
+Gordon's Bay
+Granger Bay
+Hout Bay
+Simon's Bay
+Smitswinkel Bay
+Table Bay
+Beaches
+Bloubergstrand
+Boulders Beach
+Camps Bay
+Clifton
+Glen Beach
+Melkbosstrand
+Muizenberg
+Sandy Bay
+Strand
+Hills
+Blaauwberg
+Skapenberg
+Signal Hill
+Tygerberg
+Mountains
+Chapman's Peak
+Constantiaberg
+Devil's Peak
+Helderberg
+Hottentots Holland Mountains
+Lion's Head
+Table Mountain
+Twelve Apostles
+Islands
+Duiker Island
+Robben Island
+Seal Island
+Headlands
+Cape of Good Hope
+Cape Point
+Miller's Point
+Rivers and wetlands
+Bokramspruit
+Buffels River
+Eerste River
+Kuils River
+Diep River
+Else River
+Hout Bay River
+Krom River
+Lourens River
+Modder River
+Salt River
+Black River
+Elsieskraal River
+Liesbeek River
+Sand River
+Schusters River
+Silvermine River
+Sir Lowry’s Pass River
+Sout River
+Steenbras River
+Zandvlei
+Zeekoevlei
+Climate and weather
+Cape Town water crisis
+Cape Doctor
+Berg wind
+World heritage sites
+Cape Floristic Region
+Table Mountain National Park
+Robben Island
+Biodiversity
+of Cape Town
+Nature reserves in Cape Town
+Helderberg Marine Protected Area
+Robben Island Marine Protected Area
+Table Mountain National Park
+Table Mountain National Park Marine Protected Area
+Vegetation
+types
+Atlantis Sand Fynbos
+Boland Granite Fynbos
+Cape Flats Dune Strandveld
+Cape Flats Sand Fynbos
+Cape Lowland Freshwater Wetland
+Cape Winelands Shale Fynbos
+Hangklip Sand Fynbos
+Kogelberg Sandstone Fynbos
+Lourensford Alluvium Fynbos
+Peninsula Granite Fynbos
+Peninsula Sandstone Fynbos
+Southern Afrotemperate Forest
+Peninsula Shale Renosterveld
+Swartland Alluvium Fynbos
+Swartland Shale Renosterveld
+Parks and
+gardens
+Arderne Gardens
+Company's Garden
+Choo choo park
+De Waal Park
+Green Point Common
+Helderberg Nature Reserve
+Keurboom Park
+Kirstenbosch National Botanical Garden
+Rondebosch Common
+Rondebosch Park
+Tokai Arboretum
+Tokai Park
+Westridge Gardens
+Wynberg Park
+Nature reserves
+Blaauwberg Conservation Area
+Bracken Nature Reserve
+Cecilia
+De Hel Nature Area
+Dick Dent Bird Sanctuary
+Die Oog Conservation Area
+Diep River Fynbos Corridor
+Durbanville Nature Reserve
+Edith Stephens Wetland Park
+Glencairn Wetland
+Harmony Flats Nature Reserve
+Helderberg Nature Reserve
+Kenilworth Racecourse Conservation Area
+Koeberg Nature Reserve
+Kogelberg Nature Reserve
+Lourens River Protected Natural Environment
+Lower Silvermine River Wetlands
+Macassar Dunes Conservation Area
+Mamre Nature Garden
+Meadowridge Common
+Milnerton Racecourse Nature Reserve
+Raapenberg Bird Sanctuary
+Rietvlei Wetland Reserve
+Rondebosch Common
+Rondevlei Nature Reserve
+Silwerboomkloof Natural Heritage Site
+Tygerberg Nature Reserve
+Uitkamp Wetlands
+Witzands Aquifer Conservation Area
+Wolfgat Nature Reserve
+Zoarvlei Wetlands
+Zandvlei Estuary Nature Reserve
+Zeekoevlei Nature Reserve
+Communities
+Atlantic Seaboard
+Bakoven
+Bantry Bay
+Camps Bay
+Clifton
+Fresnaye
+Green Point
+Llandudno
+Mouille Point
+Sea Point
+Three Anchor Bay
+Blaauwberg
+Atlantis
+Bloubergstrand
+Brooklyn
+Century City
+Dunoon
+Duynefontein
+Joe Slovo Park
+Killarney Gardens
+Mamre
+Melkbosstrand
+Milnerton
+Montague Gardens
+Paarden Eiland
+Parklands
+Rugby
+Summer Greens
+Table View
+West Beach
+Ysterplaat
+Cape Flats
+(Klipfontein district)
+Athlone
+Belgravia
+Bishop Lavis
+Crawford
+Crossroads
+Gugulethu
+Hanover Park
+Heideveld
+Kalksteenfontein
+Kenwyn
+Lansdowne
+Lavender Hill
+Manenberg
+Matroosfontein
+Nyanga
+Ottery
+Philippi
+Browns Farm
+Philippi Horticultural
+Philippi East
+Samora Machel
+Rondebosch East
+Rylands
+Strandfontein
+Valhalla Park
+Khayelitsha
+Bongweni
+Harare/Holimisa
+Ikwezi Park
+Mandela Park
+Griffiths Mxenge
+QQ Section
+Silver Town
+Victoria Merge
+Mitchells Plain
+Rocklands
+Westridge
+Portlands
+Tafelsig
+Eastridge
+Beacon Valley
+Lentegeur
+Woodlands
+Weltevreden Valley
+Colorado
+Mandalay
+Montclair
+Watergate Developments
+Heinz Park
+Morgans Village
+Rondevlei
+Westgate
+Montrose Park
+Lost City
+City Bowl
+Bo-Kaap
+Cape Town CBD
+De Waterkant
+Devil's Peak Estate
+District Six
+Foreshore
+Gardens
+Higgovale
+Lower Vrede
+Oranjezicht
+Robben Island
+Schotsche Kloof
+Tamboerskloof
+University Estate
+Vredehoek
+Walmer Estate
+Woodstock
+Zonnebloem
+Helderberg
+Eerste River
+Faure
+Firgrove
+Gordon's Bay
+Macassar
+Sir Lowry's Pass Village
+Somerset West
+Parel Vallei
+Strand
+Lwandle
+Nomzamo
+Northern Suburbs
+Acacia Park
+Belhar
+Bellville
+Boston
+Eversdal
+Kenridge
+Stellenberg
+Blue Downs
+Bonteheuwel
+Bothasig
+Brackenfell
+Delft
+Blikkiesdorp
+Durbanville
+Edgemead
+Elsie's River
+Fisantekraal
+Goodwood
+Joostenbergvlakte
+Kensington
+Kraaifontein
+Kuils River
+Loevenstein
+Maitland
+Mfuleni
+Monte Vista
+Ndabeni
+Norwood
+Panorama
+Parow
+Philadelphia
+Plattekloof
+Ravensmead
+Richwood
+Scottsdene
+Sonnestraal
+Tygerberg
+Tyger Valley
+Wallacedene
+Southern Suburbs
+Bergvliet
+Kreupelbosch
+Bishopscourt
+Claremont
+Harfield Village
+Constantia
+Diep River
+Epping
+Grassy Park
+Pelican Park
+Heathfield
+Kenilworth
+Kirstenhof
+Langa
+Joe Slovo
+Lakeside
+Lotus River
+Marina da Gama
+Meadowridge
+Mowbray
+Muizenberg
+Newlands
+Observatory
+Pinelands
+Plumstead
+Retreat
+Rondebosch
+Rosebank
+Salt River
+Southfield
+Steenberg
+Thornton
+Tokai
+Westlake
+Wetton
+Wynberg
+South Peninsula
+Capri Village
+Clovelly
+Da Gama Park
+Fish Hoek
+Glencairn
+Hangberg
+Hout Bay
+Imizamo Yethu
+Kalk Bay
+Kommetjie
+Masiphumelele
+Noordhoek
+Ocean View
+Scarborough
+Simon's Town
+St James
+Sunnydale
+Sun Valley
+Vrygrond
+Neighbourhoods
+Victoria & Alfred Waterfront
+Built environment
+Maclear's Beacon
+Foreshore Freeway Bridge
+Grand Parade
+Greenmarket Square
+Adderley Street
+Long Street
+Strand Street
+Chapman's Peak Drive
+Hospital Bend
+Kloof Nek Road
+Metropolitan Routes in Cape Town
+M3
+M4
+M5
+M6
+M7
+M8
+M9
+M10
+M11
+M12
+National roads
+N1
+N2
+N7
+Regional roads
+R27
+R44
+R101
+R102
+R300
+R302
+R310
+Sir Lowry's Pass
+Ou Kaapse Weg
+Peninsula Expressway (Cape Town)
+Skyscrapers
+List of tallest buildings in Cape Town
+1 Thibault Square
+Atterbury House
+Cape Town Civic Centre
+Metlife Centre
+Mutual Building
+Naspers Centre
+Portside Tower
+Triangle House
 Government
-Mayor ( Craig Greenberg )
-Metro Council ( President : Brent Ackerson)
-Transportation
-Airports
-Muhammad Ali International
-Bowman Field
-Clark Regional
-Bridges
-Lewis and Clark
-Big Four
-Lincoln
-Kennedy
-Clark/2nd St.
-14th St.
-K&I
-Sherman Minton
-Louisville Bus Station
-McAlpine Locks and Dam
-Roads
-TARC
-Union Station
-Other subject
-areas
-Attractions and events
-Cuisine
-Economy
-Education
-Media
-People
-Performing arts
-Public art
-Religion
-Sports
-Top subjects
-Muhammad Ali
-Muhammad Ali Center
-Cave Hill Cemetery
-Falls of the Ohio
-Farmington
-Kentucky Derby ( Festival )
-KFC
+National government
+Parliament of South Africa
+Houses of Parliament
+Genadendal Residence
+Highstead
+Tuynhuys
+Defence
+Air Force Base Ysterplaat
+Naval Base Simon's Town
+SAS Wingfield
+South African Naval College
+Provincial government
+Leeuwenhof
+City of Cape Town
+Government of Cape Town
+Mayor
+Deputy Mayor
+Cape Town City Hall
+Cape Town Civic Centre
+Cape Town Partnership
+Coat of arms of Cape Town
+Flag of Cape Town
+Elections
+2018 Cape Town mayoral election
+Erasmus Commission
+Wards
+Law and enforcement
+Western Cape Division of the High Court of South Africa
+Municipal Police
+Pollsmoor Prison
 History
-Colonel Sanders
-L&N
-Louisville Slugger
-Speed Art Museum
-University of Louisville ( Cardinals )
-National Historic
-Landmarks
-Belle of Louisville
-Churchill Downs
-Historic Locust Grove
-Mayor Andrew Broaddus
-Old Bank
-Zachary Taylor House
-United States Marine Hospital
-Water Tower
-Prominent suburbs
-(over 10K pop.)
-Clarksville
-Jeffersontown
-Jeffersonville
-Lyndon
-Mount Washington
-New Albany
-St. Matthews
-Shelbyville
-Shepherdsville
-Shively
-Category (city)
-Category (metro area)
-WikiProject
-Authority control databases
-International VIAF
-GND
-National United States
-Retrieved from " https://en.wikipedia.org/w/index.php?title=Kentucky_Derby&oldid=1378597334 "
-Categories : Kentucky Derby
-United States Triple Crown of Thoroughbred Racing
-Grade 1 stakes races in the United States
-Flat horse races for three-year-olds
-Churchill Downs horse races
-Horse races established in 1875
-1875 establishments in Kentucky
-May in sports
-Culture of Kentucky
-Tourism in Louisville, Kentucky
+Invasion of the Cape Colony
+Battle of Blaauwberg
+Anglo-Dutch Treaty of 1814
+Noon Gun
+Convict crisis
+Timeline of Cape Town
+Fortifications
+Amsterdam Battery
+Castle of Good Hope
+Chavonnes Battery
+Fort de Goede Hoop
+Redoubt Duijnhoop
+Monuments and memorials
+Artillery Memorial, Cape Town
+Japanese Lantern Monument
+Rhodes Memorial
+The Cenotaph
+Treaty Tree
+Van Riebeeck's Hedge
+Lists of heritage sites
+Near Cape Town
+Bo-Kaap
+CBD and the Waterfront
+Simon's Town
+Helderberg
+Bellville
+Table Mountain
+Wynberg district
+Historical buildings
+African Theatre
+Alhambra Theatre
+Breakwater Lodge
+Church Square
+Coornhoop
+Graaff Electric Lighting Works
+Culture
+Demographics
+Languages
+Afrikaans
+South African English
+Xhosa
+Cuisine
+Cape Town wine
+Constantia (wine)
+Gatsby (sandwich)
+Performance
+art
+Cape Town City Ballet
+Musical ensembles
+Cape Town Opera
+Cape Town Philharmonia Choir
+Cape Town Philharmonic Orchestra
+Theatres
+Artscape Theatre Centre
+Baxter Theatre Centre
+Labia Theatre
+Little Theatre
+Magnet Theatre
+Maynardville Open-Air Theatre
+Space Theatre
+The Independent Armchair Theatre
+Theatre on the Bay
+Events and
+festivals
+Cape Town Book Fair
+Cape Town International Jazz Festival
+Kaapse Klopse
+Museums and
+art galleries
+Air Force Museum
+Bertram House
+Chavonnes Battery
+Cape Town Science Centre
+District Six Museum
+Gallery Mau Mau
+Groote Schuur
+Heart of Cape Town Museum
+Hout Bay Museum
+Holocaust Centre
+Koopmans-de Wet House
+Maximum Security Prison, Robben Island
+Medical Museum
+Mostert's Mill
+Simon's Town Museum
+Naval Museum
+South African Sendinggestig Museum
+Waterworks Museum
+Zeitz Museum of Contemporary Art Africa
+Iziko Museums
+Bertram House
+Bo-Kaap Museum
+Groot Constantia
+Koopmans-de Wet House
+Michaelis Collection at the Old Town House
+Rust en Vreugd
+Slave Lodge
+Social History Centre
+SAS Somerset
+South African Museum
+National Gallery
+William Fehr Collection at the Castle of Good Hope
+Public art
+Statues
+Nelson Mandela
+Cecil Rhodes
+Nobel Square
+George Grey
+Jan Hendrik Hofmeyer
+Jan van Riebeeck
+Maria van Riebeeck
+Bartolomeu Dias
+Religion
+Anglican Diocese of Cape Town
+Roman Catholic Archdiocese of Cape Town
+Religious buildings
+Auwal Mosque
+Gardens Shul
+Greek Orthodox Cathedral of St George
+Groote Kerk
+Lutheran Church in Strand Street
+Nurul Islam Mosque
+Palm Tree Mosque
+Queen Victoria Mosque
+St. George's Cathedral
+St. James Church
+St. Mary's Cathedral
+Secular
+architecture
+Cape Dutch architecture
+Tallest buildings in Cape Town
+Athlone Power Station
+Atterbury House
+Bertram House
+Boshofpoort
+Cape Town City Hall
+Cape Town Civic Centre
+Castle of Good Hope
+Centre for the Book
+Coornhoop
+Disa Park
+Egyptian Building
+Genadendal Residence
+Hawthorndon House
+Houses of Parliament
+Huguenot Memorial Building
+Leeuwenhof
+Mandela Rhodes Building
+Metlife Centre
+Mutual Building
+Naspers Centre
+Portside Tower
+Rhodes Memorial
+Royal Observatory
+Triangle House
+Media
+Newspapers
+Cape Times
+The Cape Messenger
+Radio and television
+Bush Radio
+CapeTalk
+Cape Town TV
+Fine Music Radio
+Good Hope FM
+Kfm 94.5
+UCT Radio
+Voice of the Cape
+Economy
+Entrepreneurship and innovation
+Silicon Cape Initiative
+Companies based
+in Cape Town
+Naspers
+Travelstart
+MWEB
+Sanlam
+Woolworths Holdings Limited
+Of historical interest:
+Garlicks
+Hotels and resorts
+Belmond Mount Nelson Hotel
+Protea Hotels by Marriott
+The Vineyard Hotel
+Shopping areas,
+malls and markets
+Canal Walk
+Cavendish Square
+Constantia Emporium
+Golden Acre
+Greenmarket Square
+N1 City
+Tygerberg Mall
+Somerset Mall
+Victoria & Alfred Waterfront
+Exhibition centres
+Cape Town International Convention Centre
+Good Hope Centre
+Restaurants and cafés
+Café Caprice
+Perseverance Tavern
+Tourism
+Beaches of Cape Town
+Cape of Good Hope
+Table Mountain Aerial Cableway
+Groot Constantia
+Mariner's Wharf
+Nature reserves in Cape Town
+Ratanga Junction
+Two Oceans Aquarium
+Victoria & Alfred Waterfront
+World of Birds Wildlife Sanctuary and Monkey Park
+Transport
+Air transport
+Airports in Cape Town
+Air Force Base Ysterplaat
+Cape Town International Airport
+Cape Winelands Airfield
+Wingfield Aerodrome
+Maritime transport
+Port of Cape Town
+Safmarine
+Road transport
+Buses in Cape Town
+Golden Arrow Bus Services
+MyCiTi
+MyCiTi bus stations
+Roads in Cape Town
+Trolleybuses in Cape Town
+Rail transport
+Blue Train
+Commuter rail lines
+Metrorail Western Cape
+Cape Flats Line
+Central Line
+Northern Line
+Southern Line
+Railway stations
+Bellville
+Cape Town
+Century City
+Claremont
+Crawford
+Kenilworth
+Mowbray
+Muizenberg
+Mutual
+Newlands
+Observatory
+Pinelands
+Retreat
+Rondebosch
+Rosebank
+Salt River
+Simon's Town
+Steenberg
+Woodstock
+Wynberg
+Trams in Cape Town
+Sports
+Soccer
+Cape Town Spurs F.C.
+Cape Town City F.C.
+Rugby
+Western Province
+Ikey Tigers
+Cricket
+Cape Cobras
+Other Cape Town Tigers (basketball)
+Sports events
+2010 FIFA World Cup
+Cape Town Cycle Tour
+Cape Town Open
+Cape Town Ladies Open
+Cape Town Marathon
+South Africa Sevens
+Two Oceans Marathon
+Sports venues
+Athlone Stadium
+Bellville Stadium
+Bellville Velodrome
+Cape Town Stadium
+Erica Park
+Good Hope Centre
+Green Point Stadium
+Hartleyvale Stadium
+Kenilworth Racecourse
+Killarney Motor Racing Complex
+Milnerton Racecourse
+Newlands Cricket Ground
+Newlands Stadium
+NNK Rugby Stadium
+Parow Park
+Philippi Stadium
+Royal Cape Golf Club
+University of the Western Cape Stadium
+Wynberg Military Base Stadium
+Education
+Libraries
+Biblionef
+Central Library Cape Town
+Centre for the Book
+Fish Hoek Library
+Jacob Gitlin Library
+Meadowridge Library
+National Library of South Africa
+Rondebosch Library
+SAAO Library
+Strandfontein Library
+University of Cape Town Libraries
+Universities
+Cape Peninsula University of Technology
+University of Cape Town
+University of the Western Cape
+Colleges
+Qualitas Career Academy
+South African College
+Yeshiva of Cape Town
+Private
+schools
+American International School of Cape Town
+Cannons Creek Independent School
+Cape Town French School
+Christel House South Africa
+Darul Islam Islamic High School
+Diocesan College
+German International School Cape Town
+Herschel Girls' School
+Herzlia Schools
+Mountain View Academy
+Parklands College
+St. Cyprian's School
+St. George's Grammar School
+Michael Oak Waldorf School
+Oakhurst Primary School
+Public schools
+Alexander Sinton Secondary School
+Belgravia High School
+Belhar Secondary School
+Bellville High School
+Bergvliet Primary School
+Bergvliet High School
+Bosmansdam High School
+Brackenfell High School
+Cape Academy of Mathematics, Science and Technology
+Cape Town High School
+Chris Hani Secondary School
+Claremont High School
+COSAT
+DF Akademie
+Durbanville High School
+Eben Dönges High School
+Eersterivier Secondary School
+Fairbairn College
+Fairmont High School
+Gardens Commercial High School
+Grove Primary School
+Groote Schuur High School
+Harold Cressy High School
+Hottentots Holland High School
+Jan van Riebeeck High School
+Lavender Hill High School
+Livingstone High School
+Masiphumelele High School
+Milnerton High School
+Mondale High School
+Parel Vallei High School
+Pinelands High School
+Rondebosch Boys' High School
+Rustenburg School for Girls
+Sea Point High School
+Sinenjongo High School
+Spine Road High School
+South African College Schools
+Stellenberg High School
+Strand High School
+Table View High School
+The Settlers High School
+Trafalgar High School
+Tygerberg High School
+Westerford High School
+Windsor High School
+Wynberg Boys' High School
+Wynberg Girls' High School
+Alternative schools
+GlenBridge Special School
+Tafelberg School
+Former schools
+Ellerslie Girls' High School
+Tot Nut van het Algemeen
+Art & music schools
+Hugo Lambrechts Music Centre
+South African College of Music
+Peter Clarke Art Centre
+Not yet allocated
+College of Magic
+Montebello Design Centre
+Services
+Hospitals
+Alexandra Hospital
+Groote Schuur Hospital
+Karl Bremer Hospital
+Red Cross War Memorial Children's Hospital
+Somerset Hospital
+Tygerberg Hospital
+Valkenberg Hospital
+Lighthouses
+Cape Point Lighthouse
+Green Point Lighthouse
+Milnerton Lighthouse
+Roman Rock Lighthouse
+Slangkop Lighthouse
+Western Cape
+Water Supply System
+Dams and resrvoirs
+Alexandra Dam
+Berg River Dam
+De Villiers Dam
+Hely-Hutchinson Dam
+Kleinplaats Dam
+Land-en-Zeezicht Reservoir
+Lewis Gay Dam
+Molteno Dam
+Silvermine Dam
+Steenbras Dam
+Theewaterskloof Dam
+Victoria Dam
+Voëlvlei Dam
+Wemmershoek Dam
+Woodhead Dam
+Electrical power generation
+Athlone Power Station
+Graaff Electric Lighting Works
+Koeberg Nuclear Power Station
+Palmiet Pumped Storage Scheme
+Emergency services
+Cape Town Fire Department
+Metro Emergency Medical Services
+Mountain Club of South Africa
+National Sea Rescue Institute
+Outline
+Retrieved from " https://en.wikipedia.org/w/index.php?title=Cape_Town_Marathon&oldid=1362010224 "
+Categories : Cape Town Marathon
+Marathons in South Africa
+Sports competitions in Cape Town
+Recurring sporting events established in 1994
+1994 establishments in South Africa
+Annual events in Cape Town
 Hidden categories: Articles with short description
 Short description is different from Wikidata
-Use American English from May 2026
-All Wikipedia articles written in American English
-Use mdy dates from May 2026
-Pages containing links to subscription-only content
-CS1 maint: deprecated archival service
-Articles needing additional references from February 2026
-All articles needing additional references
-Commons category link is on Wikidata
-Official website different in Wikidata and Wikipedia
-This page was last edited on 5 October 2026, at 03:54 (UTC) .
+Use South African English from April 2017
+All Wikipedia articles written in South African English
+Use dmy dates from June 2017
+Commons category link from Wikidata
+This page was last edited on 1 July 2026, at 11:40 (UTC) .
 Page was rendered with Parsoid .
 Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
 additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
@@ -2743,9 +1309,9 @@ Mobile view
 Search
 Search
 Toggle the table of contents
-Kentucky Derby
-24 languages
+Cape Town Marathon
+3 languages
 Add topic
 
 --- embedded JSON ---
-{"@context":"https:\/\/schema.org","@type":"Article","name":"Kentucky Derby","url":"https:\/\/en.wikipedia.org\/wiki\/Kentucky_Derby","sameAs":"http:\/\/www.wikidata.org\/entity\/Q1141795","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q1141795","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2001-11-05T12:13:59Z","dateModified":"2026-10-05T03:54:35Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/commons\/8\/84\/Kentucky_Derby_race%2C_Louisville%2C_Kentucky.jpg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"horse race held annually in Louisville, Kentucky, United States"}
+{"@context":"https:\/\/schema.org","@type":"Article","name":"Cape Town Marathon","url":"https:\/\/en.wikipedia.org\/wiki\/Cape_Town_Marathon","sameAs":"http:\/\/www.wikidata.org\/entity\/Q19730276","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q19730276","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2015-03-23T15:48:20Z","dateModified":"2026-07-01T11:40:47Z","headline":"marathon held in Cape Town, South Africa"}

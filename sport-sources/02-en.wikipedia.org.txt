@@ -1,9 +1,9 @@
-Source: https://en.wikipedia.org/wiki/2027_UCI_Women%27s_World_Tour
-Final URL: https://en.wikipedia.org/wiki/2027_UCI_Women%27s_World_Tour
+Source: https://en.wikipedia.org/wiki/Boston_Marathon
+Final URL: https://en.wikipedia.org/wiki/Boston_Marathon
 HTTP 200
-Fetched: 2026-10-15T02:20:12.714Z
+Fetched: 2026-10-15T02:24:11.447Z
 
-UCI Women's World Tour - Wikipedia
+Boston Marathon - Wikipedia
 Jump to content
 Main menu
 Main menu
@@ -39,59 +39,128 @@ hide
 (Top)
 1
 History
+Toggle History subsection
+1.1
+Bobbi Gibb, Kathrine Switzer, and Nina Kuscik
+1.2
+Rosie Ruiz, the impostor
+1.3
+Participant deaths
+1.4
+2011: Geoffrey Mutai and the IAAF
+1.5
+2013: Bombing
+1.6
+2014: Women's race disqualification
+1.7
+2016: Bobbi Gibb as grand marshal
+1.8
+2020: Cancellation
+1.9
+2021: Rescheduled to October
 2
-Events
+Race
+Toggle Race subsection
+2.1
+Qualifying
+2.2
+Race day
+2.3
+Starting times
+2.4
+Course
+2.4.1
+Heartbreak Hill
+2.5
+Records
 3
-Winners by race
-Toggle Winners by race subsection
-3.1
-2016–2021
-3.2
-2022–
-3.3
-Victories
+The B.A.A.
 4
-Season results
-Toggle Season results subsection
-4.1
-Individual ranking
-4.2
-Youth ranking
-4.3
-Team ranking
+Divisions
 5
-Participating teams
-Toggle Participating teams subsection
-5.1
-Current UCI Women's WorldTeams (2026 season)
-5.2
-Current UCI Women's ProTeams (2026 season)
-5.3
-Former UCI WorldTeams
+Memorial
 6
-See also
+Notable features
+Toggle Notable features subsection
+6.1
+Spectators
+6.2
+Scream Tunnel
+6.3
+Boston Red Sox
+6.4
+Dick and Rick Hoyt
+6.5
+Bandits
+6.6
+Costumes
+6.7
+Ondekoza taiko drummers
+6.8
+Historical Trends in Winners and Nationalities
+6.9
+Controversies and Criticisms
 7
+See also
+8
 References
+9
+Further reading
+10
+External links
+Toggle External links subsection
+10.1
+General reference
+10.2
+Photo and video stories
 Toggle the table of contents
-UCI Women's World Tour
-18 languages
+Boston Marathon
+46 languages
 العربية
-Asturianu
+Azərbaycanca
 Català
 Čeština
+Cymraeg
 Dansk
 Deutsch
+Ελληνικά
+Esperanto
 Español
+Eesti
 Euskara
+فارسی
+Suomi
 Français
+Gaeilge
 עברית
+Magyar
+Հայերեն
+Bahasa Indonesia
+Íslenska
 Italiano
+日本語
+한국어
+Latina
+Latviešu
+മലയാളം
+Монгол
 Nederlands
+Norsk nynorsk
 Norsk bokmål
 Polski
 Português
+Русский
+Srpskohrvatski / српскохрватски
+Simple English
+Slovenčina
+Српски / srpski
 Svenska
+Kiswahili
+தமிழ்
 Türkçe
+Українська
+Tiếng Việt
+粵語
 中文
 Edit links
 Article
@@ -121,1208 +190,416 @@ Print/export
 Download as PDF
 Printable version
 In other projects
+Wikimedia Commons
+Wikinews
 Wikidata item
 Appearance
 move to sidebar
 hide
 From Wikipedia, the free encyclopedia
-(Redirected from 2027 UCI Women's World Tour )
-Premier annual female elite road cycling tour
-Teams: [[SD Worx]]}}"},"champ_season":{"wt":"[[2023 UCI Women's World Tour]]"},"most_titles":{"wt":"{{nowrap|Individual: {{flagathlete|[[Annemiek van Vleuten]]|NED}} (3 titles)<br>Teams: [[SD Worx]] (7 titles)}}"},"folded":{"wt":""},"website":{"wt":"{{URL|https://www.uci.org/competition-hub/2026-uci-womens-worldtour/6LnilgjMX1hpP07gDyBbGN}}"},"singles":{"wt":""}},"i":0}}]}'> UCI Women's World Tour Current season, competition or edition:
-2026 UCI Women's World Tour
-Sport Cycling
-Founded 2016
-Organising body Union Cycliste Internationale
-No. of teams 15
-Country International
-Most recent
-champions
-Individual: Demi Vollering ( NED )
-Teams: SD Worx
-( 2023 UCI Women's World Tour )
-Most titles Individual: Annemiek van Vleuten ( NED ) (3 titles)
-Teams: SD Worx (7 titles)
-Website www .uci .org /competition-hub /2026-uci-womens-worldtour /6LnilgjMX1hpP07gDyBbGN
-The UCI Women's World Tour (stylized as WorldTour ) is the premier annual female elite road cycling tour. As of 2025 [ update ] , the tour includes 27 events in Europe, Asia and Oceania – with one-day races such as Strade Bianche Donne and Paris–Roubaix Femmes , stage races such as Women's Tour Down Under , as well as week long stage races (sometimes referred to as a " Grand Tour ") such as Tour de France Femmes .
+World's oldest regularly run marathon
+For the rowing event, see Boston Rowing Marathon .
+{{cite press release |url=https://www.baa.org/launch-new-boston-marathon-logo-global-running-day-symbolizes-moving-forward-together |title=Launch of new Boston Marathon logo on Global Running Day symbolizes moving forward together |website=baa.org |publisher=[[Boston Athletic Association]] |date=June 5, 2024 |accessdate=April 18, 2025}}</ref>"},"date":{"wt":"Usually the third Monday of April ([[Patriots' Day]])"},"location":{"wt":"Eastern [[Massachusetts]], ending in [[Boston]]"},"type":{"wt":"[[Road running|Road]]"},"distance":{"wt":"[[Marathon]]"},"est":{"wt":"{{start date and age|1897|p=y}}"},"record":{"wt":"Men: 2:01:52 (2026)<br /> [[John_Korir_(runner,_born_1996)|John Korir]]<br /> Women: 2:17:22 (2025)<br /> [[Sharon Lokedi]]"},"homepage":{"wt":"{{Official URL}}"},"current":{"wt":"yes"}},"i":0}}]}'> Boston Marathon
+Current logo, introduced in June 2024 [ 1 ]
+Date Usually the third Monday of April ( Patriots' Day )
+Location Eastern Massachusetts , ending in Boston
+Event type Road
+Distance Marathon
+Established 1897 (129 years ago) ( 1897 )
+Course records Men: 2:01:52 (2026)
+John Korir
+Women: 2:17:22 (2025)
+Sharon Lokedi
+Official site www .baa .org /races /boston-marathon
+2026 Boston Marathon
+The Boston Marathon is an annual marathon race hosted by eight cities and towns in greater Boston in eastern Massachusetts , United States. It is traditionally held on Patriots' Day , the third Monday of April. [ 2 ] First held in 1897, the event was inspired by the success of the first marathon competition in the 1896 Summer Olympics . [ 3 ] The Boston Marathon is the world's oldest annual marathon and ranks as one of the world's best-known road racing events. It is one of eight World Marathon Majors . Its course runs from Hopkinton in southern Middlesex County to Boylston Street, near Copley Square , in Boston . The World Marathon Majors is a series that includes the Sydney , Tokyo , Cape Town , Boston, London , Berlin , Chicago , and New York City marathons. Points from these races determine annual series champions among elite competitors, enhancing international competition and prestige. [ 4 ]
+The Boston Athletic Association (B.A.A.) has organized this event annually since 1897, [ 5 ] including a "virtual alternative" after the 2020 road race was canceled due to the COVID-19 pandemic . The race has been managed by DMSE Sports since 1988. Amateur and professional runners from all over the world compete in the Boston Marathon each year, braving the hilly Massachusetts terrain and varying weather to take part in the race.
+The event attracts 500,000+ spectators along the route, making it New England's most viewed sporting event. [ 6 ] Recent editions have seen strong participation; for example, the Centennial Boston Marathon in 1996 established a record as the world's largest marathon with 38,708 entrants, 36,748 starters, and 35,868 finishers. [ 6 ] [ 7 ] [ 8 ]
 History
 [ edit ]
-From 1998, the Union Cycliste Internationale (UCI) held the UCI Women's Road World Cup , a series of 8 to 10 one-day races held predominantly in Europe. Although similarly branded, races did not have the same level of coverage as men's races. [ 1 ] Initially, many classic cycle races did not stage equivalent women's races – the Tour of Flanders for Women was first held in 2004, for example.
-In September 2013, Brian Cookson was elected president of the UCI – with his manifesto setting out improvements for women's cycling including a minimum wage, better television coverage, new races and better relationship between the UCI, teams and race organisers. [ 2 ] Le Tour Entier – an activist group to improve women's cycle racing – published a manifesto in 2013 calling for a women's Tour de France as well as other improvements for women's cycling including creation of a women's World Tour. [ 3 ]
-In December 2014, the UCI held a summit to discuss how to increase the coverage of women's cycling, attended by the UCI Women's Working Group, event organisers and the UCI Women's Teams. [ 1 ] [ 4 ]
-In March 2015, the UCI announced that the UCI Women's Road World Cup would be replaced by the UCI Women's World Tour from 2016, creating a season-long competition equivalent to the men's UCI World Tour . [ 5 ] The Women's World Tour would have: [ 4 ] [ 6 ]
-a large increase in the number of racing days, with stage races as well as one-day events
-an increase in the maximum length of stages and races
-minimum levels of prize money
-top 15 teams designated as UCI Women's World Teams, automatically invited to events
-a minimum and maximum number of riders per team, depending on the event
-races broadcast on live television or via streaming
-race organisers providing media information in English and/or French
-an individual and teams champion at the end of each season
-Kasia Niewiadoma (l) and Lizzie Armitstead (r), pictured at the 2016 Flèche Wallonne , wearing the distinctive leader jerseys of the youth classification and individual women's elite classification, respectively.
-The announcement was welcomed by teams, with Wiggle-Honda stating that the "new structure for women's cycling has been accepted with open arms" and that the teams and the UCI "all seem to be on the same page and working towards the same goals together". [ 5 ]
-The calendar for the inaugural season was announced in September 2015, including many of the longstanding one-day events from the UCI Women's Road World Cup (such as Trofeo Alfredo Binda and Tour of Flanders ) as well as established stage races such as the Giro d'Italia Femminile . [ 7 ] The UCI called the series "a major step forward" for professional women's cycling. [ 7 ] [ 8 ] Identical branding for both the Women's World Tour and the UCI World Tour was introduced. [ 8 ]
-Between 2016 and 2024, the tour contained an individual women's elite classification and youth classification, with the leader of each wearing a distinctive jersey – a burgundy jersey for the individual classification and a light blue jersey for the youth classification. [ 9 ]
-From 2020, a two-tier system of teams was introduced, with the top tier of teams required to have a minimum salary of €15,000 for riders, as well as insurance and rights including maternity leave . [ 10 ] This was welcomed by The Cyclists' Alliance – a union of professional riders. [ 11 ] Several UCI WorldTeams set up female squads, including Movistar (launched 2017), Trek–Segafredo (launched 2018) and Jumbo–Visma (launched 2020).
-The 2020 season was extensively affected by the COVID-19 pandemic , which resulted in two-thirds of the races on the calendar being either postponed or cancelled outright. [ 12 ] The UCI ProSeries was also launched in 2020, as a second-tier tour below the World Tour. [ 13 ]
-The UCI has ensured that events have live television or streaming coverage [ 14 ] – the Giro d'Italia Donne was removed from the 2021 calendar after failing to provide adequate live television coverage for the 2020 edition of the race, [ 15 ] and the RideLondon Classique was warned that it would be demoted to the UCI ProSeries if live television was not provided for all stages, as only the final stage of the 2022 edition of the race was broadcast. [ 16 ] [ 17 ] Riders from The Cyclists' Alliance – a union representing the female peloton – stated that live TV coverage for races was their biggest priority, rather than prize money. [ 18 ]
-Demi Vollering (left), Annemiek van Vleuten (centre) and Marianne Vos (right) at the 2022 Tour de France Femmes
-In 2022, the Tour de France Femmes was staged for the first time, becoming the biggest stage race on the calendar. [ 19 ] [ 20 ] In 2023, the Challenge by La Vuelta increased in length to 7 days, becoming La Vuelta Femenina . [ 21 ] As of 2025 [ update ] , many of the UCI World Tour races hold equivalent races for women, including all three Grand Tour races. [ 22 ]
-From 2023, the minimum number of riders and members of staff in each team was increased, with the minimum wage having risen to over €30,000. [ 10 ] [ 23 ] In July 2023, UCI Women's World Tour announced a precautionary ban on trans women from competing. [ 24 ]
-Since 2025, the Tour has no longer been a ranking competition in its own right, with the rankings having been removed from the UCI's Road Race regulations. The distinctive jerseys for the leaders of the youth classification and individual women's elite classification are no longer used. [ 25 ] [ 9 ] Media noted that "the Women’s WorldTour leader’s jersey never fully captured public attention". [ 9 ]
-From 2026, the UCI will award more ranking points to the week long stage races and monuments than other stage or one-day races in the Tour. [ 26 ]
-Events
+See also: List of winners of the Boston Marathon
+Boston Marathon Finish Line, 1910.
+Men have competed in the event since its inaugural edition in 1897. Women were officially allowed to enter the event starting in 1972, although organizers now recognize 1966 as the first edition officially completed by a woman. Wheelchair divisions were added in 1975 for men and in 1977 for women. The first person to officially race the marathon in a wheelchair was Bob Hall . [ 9 ] Handcycle divisions were added in 2017 for both men and women. [ 10 ]
+The Boston Marathon was first run in April 1897, inspired by the revival of the marathon for the 1896 Summer Olympics in Athens, Greece. Until 2020, it was the second oldest continuously running marathon, [ citation needed ] and the third longest continuously running footrace in North America, having debuted five months after the five mile Buffalo Turkey Trot [ 11 ] race.
+On April 19, 1897, ten years after the establishment of the B.A.A., the race was inspired by the marathon event at the 1896 Summer Olympics. Organizers evaluated several possible routes before selecting a 24.5-mile course from Metcalf's Mill in Ashland to the Irvington Oval in Boston. The inaugural race was open to any competitor over 18, and John J. McDermott won in 2:55:10, leading a field of 15. The event was scheduled for the recently established holiday of Patriots' Day , with the race linking the Athenian and American struggles for liberty. [ 12 ] The race, which became known as the Boston Marathon, has been held in some form every year since then, even during the World War years and the Great Depression , making it the world's oldest annual marathon. In 1924, the starting line was moved from Metcalf's Mill in Ashland to the neighboring town of Hopkinton . The course was adjusted gradually after the 1908 Olympic standards established 26 miles 385 yards as the official distance. Boston's course requirements changed with this, as runners were required to complete a standard International Association of Athletics Federation (IAAF) certified marathon. [ 13 ] [ 14 ]
+The Boston Marathon was originally a local event, but its fame and status have attracted runners from all over the world. For most of its history, the Boston Marathon was a free event, and the only prize awarded for winning the race was a wreath woven from olive branches. [ 15 ] Corporate -sponsored prize money was awarded in the 1980s after professional athletes refused to compete without it. The marathon awarded the first cash prize in 1986. [ 16 ]
+Walter A. Brown was the president of the Boston Athletic Association from 1941 to 1964. [ 17 ] During the height of the Korean War in 1951, Brown denied Koreans entry into the Boston Marathon. [ 18 ] He stated: "While American soldiers are fighting and dying in Korea, every Korean should be fighting to protect his country instead of training for marathons. As long as the war continues there, we positively will not accept Korean entries for our race on April 19." [ 19 ]
+Following the 2013 bombing , the Boston Marathon instituted enhanced security screening, expanded medical response capabilities, and improved crowd-management plans.
+Bobbi Gibb, Kathrine Switzer, and Nina Kuscik
 [ edit ]
-As of 2026 [ update ] , the calendar features 27 events, with: [ 22 ]
-La Vuelta Femenina , Giro d'Italia Women and Tour de France Femmes , the longest and biggest stage races in the women's calendar. Some media and teams have referred to these events as Grand Tours, as they are the biggest events in the women's calendar. [ 27 ] [ 28 ] [ 29 ]
-4 cycling monuments ( Milan–San Remo Women , Tour of Flanders , Paris–Roubaix Femmes , Liège–Bastogne–Liège Femmes ),
-5 stage races and 10 one-day races in Europe
-1 stage race in the Middle East
-1 stage race and 1 one-day race in China
-1 stage race and 1 one-day race in Australia.
-Compared to the UCI Women's Road World Cup , the Women's WorldTour features stage races as well as one-day races. [ 30 ] The maximum distance was increased, with one-day races having a maximum length of 160 kilometres, and average stage race stage distance having a maximum length of 140 kilometres. Race organisers are allowed to apply for special dispensation to have longer stages. [ 30 ] Campaign groups such as Le Tour Entier and The Cyclists' Alliance continue to push organisers and the UCI to allow for longer stage races for women. [ 31 ] [ 32 ] [ 33 ]
-For events to be considered they must have reached the following criteria: [ 4 ]
-UCI Class 1 Road status
-Dates of candidate events must not clash with existing Women's World Cup and Class 1 events
-Dates and locations of candidate events must fit with the narrative of the season, whilst also providing some logic for the travel of teams
-Current events (as of the 2026 season )
-One-day races
-Cycling monuments
-Stage races
-Week long stage races ( Grand Tour )
-Cadel Evans Great Ocean Road Race
-Milan–San Remo Women
-Women's Tour Down Under
-La Vuelta Femenina
-Omloop Het Nieuwsblad
-Tour of Flanders
-UAE Tour Women
-Giro d'Italia Women
-Strade Bianche Donne
-Paris–Roubaix Femmes
-Itzulia Women
-Tour de France Femmes
-Trofeo Alfredo Binda
-Liège–Bastogne–Liège Femmes
-Vuelta a Burgos Feminas
-Tour of Bruges
-Tour of Britain Women
-Gent–Wevelgem
-Tour de Suisse Women
-Dwars door Vlaanderen
-Tour de Romandie Féminin
-Amstel Gold Race
-Tour of Chongming Island
-La Flèche Wallonne Femmes
-Copenhagen Sprint
-Classic Lorient Agglomération
-Tour of Guangxi
-Former events
-One-day races
-Cycling monuments
-Stage races
-Grand Tour
-The Philadelphia Cycling Classic
-Ladies Tour of Norway
-La Course by Le Tour de France
-Tour of California
-Clásica de San Sebastián
-Emakumeen Bira
-Open de Suède Vårgårda
-Challenge by La Vuelta
-Ronde van Drenthe
-RideLondon Classique
-Tour of Scandinavia
-Simac Ladies Tour of Holland
-Winners by race
+Runner Kathrine Switzer attacked by race official Jock Semple in effort to protect the race from "Contamination Rules" which prevented women from officially entering the marathon
+The Boston Marathon rule book made no mention of gender until after the 1967 race. [ 20 ] Nor did the Amateur Athletic Union (AAU) exclude women from races that included men until after the 1967 Boston Marathon. [ 21 ] Roberta "Bobbi" Gibb's attempt to register for the 1966 race was refused by race director Will Cloney in a letter in which he claimed women were physiologically incapable of running 26 miles. [ 22 ]
+Gibb nevertheless ran unregistered and finished the 1966 race in three hours, twenty-one minutes and forty seconds, [ 23 ] ahead of two-thirds of the runners. Much later, she would be recognized by the race organizers as the first woman to run the entire Boston Marathon. [ citation needed ]
+In 1967, Kathrine Switzer , who registered for the race using her official AAU registration number, paying the entry fee, providing a properly acquired fitness certificate, and signing her entry form with her usual signature 'K. V. Switzer', was the first woman to run and finish with a valid official race registration. [ 20 ] As a result of Switzer's completion of the race as the first officially registered woman runner, the AAU changed its rules to ban women from competing in races against men. [ 21 ] Switzer finished the race despite race official Jock Semple repeatedly assaulting her in an attempt to rip off her race numbers and eject her from the race. [ 20 ] [ 24 ] Afterwards, Semple and Switzer became friends. [ 25 ]
+Nina Kuscsik was instrumental in influencing the Amateur Athletic Union in 1971 to increase its maximum distance for sanctioned women's races, leading to official participation by women in marathons, beginning at Boston in 1972. [ 26 ] Kuscsik was the first woman to officially win the Boston Marathon, which occurred in 1972. [ 27 ]
+In 1996, the B.A.A. retroactively recognized as champions the unofficial women's leaders of 1966 through 1971. In 2022, about 43 percent of the entrants were women. [ 28 ]
+Rosie Ruiz, the impostor
 [ edit ]
-2016–2021
+In 1980, Rosie Ruiz crossed the finish line first in the women's race. However, marathon officials became suspicious, and it was discovered that she did not appear in race videotapes until near the end of the race, with a subsequent investigation concluding that she had skipped most of the race and blended into the crowd about a half-mile (800 m) from the finish line, where she then ran to her false victory. She was disqualified eight days later, and Canadian Jacqueline Gareau was proclaimed the winner. [ 29 ] [ 30 ]
+Participant deaths
 [ edit ]
-Races in the UCI Women's World Tour
+In 1905, James Edward Brooks of North Adams, Massachusetts , died of pneumonia shortly after running the marathon. [ 31 ] In 1996, a 61-year-old Swedish man, Humphrey Siesage, died of a heart attack during the 100th running. [ 32 ] In 2002, Cynthia Lucero, 28, died of hyponatremia . [ 33 ]
+2011: Geoffrey Mutai and the IAAF
+[ edit ]
+Main article: 2011 Boston Marathon
+On April 18, 2011, Geoffrey Mutai of Kenya won the 2011 Boston Marathon in a time of 2:03:02:00. [ 34 ] Although this was the fastest marathon ever run at the time, the International Association of Athletics Federations noted that the performance was not eligible for world record status given that the course did not satisfy rules that regarded elevation drop and start/finish separation (the latter requirement being intended to prevent advantages gained from a strong tailwind , as was the case in 2011). [ 35 ] The Associated Press (AP) reported that Mutai had the support of other runners who describe the IAAF's rules as "flawed". [ 36 ] According to the Boston Herald , race director Dave McGillivray said he was sending paperwork to the IAAF to have Mutai's mark ratified as a world record. [ 34 ] Although this was not successful, the AP indicated that the attempt to have the mark certified as a world record "would force the governing bodies to reject an unprecedented performance on the world's most prestigious marathon course". [ 36 ]
+2013: Bombing
+[ edit ]
+Main article: Boston Marathon bombing
+On April 15, 2013, the Boston Marathon was still in progress at 2:49 p.m. EDT (nearly three hours after the winner crossed the finish line), when two homemade bombs were set off about 200 yards (180 m) apart on Boylston Street, in approximately the last 225 yards (200 m) of the course. The race was halted, preventing many from finishing. [ 37 ] [ 38 ] Three spectators were killed and an estimated 264 people were injured. [ 39 ] Entrants who completed at least half the course and did not finish due to the bombing were given automatic entry in 2014. [ 40 ] In 2015, Dzhokhar Tsarnaev , one of the perpetrators of the bombing, was found guilty of 30 federal offenses in connection with the attack and was sentenced to death . His older brother Tamerlan died after a gunfight with police and after Dzhokhar ran him over with a stolen vehicle. [ 41 ] [ 42 ]
+2014: Women's race disqualification
+[ edit ]
+Bizunesh Deba of Ethiopia was eventually named women's winner of the 2014 Boston Marathon , following the disqualification of Kenyan Rita Jeptoo from the event due to confirmed doping. Deba finished in a time of 2:19:59, and became the course record holder. Her performance bested that of Margaret Okayo , who ran a time of 2:20:43 in 2002. [ 43 ]
+2016: Bobbi Gibb as grand marshal
+[ edit ]
+In the 2016 Boston Marathon , Jami Marseilles, an American, became the first female double amputee to finish the Boston Marathon. [ 44 ] [ 45 ] Bobbi Gibb , the first woman to have run the entire Boston Marathon (1966), was the grand marshal of the race. [ 46 ] The Women's Open division winner, Atsede Baysa , gave Gibb her trophy; Gibb said that she would go to Baysa's native Ethiopia in 2017 and return it to her. [ 47 ]
+2020: Cancellation
+[ edit ]
+Due to the COVID-19 pandemic , the 2020 Boston Marathon was initially rescheduled from April 20 to September 14. [ 48 ] It was the first postponement in the more than 100-year uninterrupted history of the event. [ 49 ]
+On May 28, 2020, it was announced that the rescheduled marathon set for September 14 was canceled. [ 50 ] Boston Mayor Marty Walsh said of the decision to cancel the race, "There's no way to hold this usual race format without bringing large numbers of people into close proximity. While our goal and our hope was to make progress in containing the virus and recovering our economy, this kind of event would not be responsible or realistic on September 14 or any time this year." [ 51 ]
+Runners were issued full refunds of entry fees. [ 52 ] Organizers later staged a "virtual alternative" in September 2020 as the 124th running of the marathon. [ 53 ] This was the second time the marathon's format was modified, the first having been in 1918, when the race was changed from a marathon to a military relay race ( ekiden ) because of World War I . [ 54 ]
+2021: Rescheduled to October
+[ edit ]
+Main article: 2021 Boston Marathon
+On October 28, 2020, the B.A.A. announced that the 2021 edition of the marathon would not be held in April; organizers stated that they hoped to stage the event later in the year, possibly in the autumn. [ 55 ] In late January 2021, organizers announced October 11 as the date for the marathon, contingent upon road races being allowed in Massachusetts at that time. [ 56 ] In March, organizers announced that the field would be limited to 20,000 runners. [ 57 ] The race was the fourth of the five World Marathon Majors held in 2021; all events in the series were run within six weeks between late September and early November. [ 58 ] In 2021, the B.A.A. also offered a virtual alternative to the in-person race to be completed anytime between 8–10 October. [ 59 ]
 Race
-2016
-2017
-2018
-2019
-2020
-2021
-Cadel Evans Great Ocean Road Race
-Not part of the WWT
-Lippert
-Cancelled
-Strade Bianche
-Deignan (1/10)
-Longo Borghini (1/12)
-van der Breggen (7/17)
-van Vleuten (6/20)
-van Vleuten (9/20)
-van den Broek-Blaak (5/6)
-Trofeo Alfredo Binda-Comune di Cittiglio
-Deignan (2/10)
-Rivera (1/4)
-Niewiadoma (2/5)
-Vos (4/10)
-Cancelled
-Longo Borghini (3/12)
-Driedaagse Brugge–De Panne
-Not on calendar
-D'Hoore (4/5)
-Wild (3/4)
-Wiebes (3/19)
-Brown (1/3)
-Gent–Wevelgem
-Blaak (2/6)
-Lepistö (1/2)
-Bastianelli (1/4)
-Wild (4/4)
-D'Hoore (5/5)
-Vos (7/10)
-Ronde van Vlaanderen
-Deignan (3/10)
-Rivera (2/4)
-van der Breggen (8/17)
-Bastianelli (3/4)
-van den Broek-Blaak (4/6)
-van Vleuten (10/20)
-Paris–Roubaix
-Not on calendar
-Cancelled
-Deignan (10/10)
-Amstel Gold Race
-Not on calendar
-van der Breggen (2/17)
-Blaak (3/6)
-Niewiadoma (3/5)
-Cancelled
-Vos (8/10)
-La Flèche Wallonne
-van der Breggen (1/17)
-van der Breggen (3/17)
-van der Breggen (9/17)
-van der Breggen (11/17)
-van der Breggen (15/17)
-van der Breggen (16/17)
-Liège–Bastogne–Liège
-Not on calendar
-van der Breggen (4/17)
-van der Breggen (10/17)
-van Vleuten (7/20)
-Deignan (9/10)
-Vollering (1/24)
-Vuelta a Burgos Feminas
-Not part of the WWT
-van der Breggen (17/17)
-RideLondon Classique
-Wild (1/4)
-Rivera (3/4)
-Wild (2/4)
-Wiebes (1/19)
-Cancelled
-Cancelled
-Amgen Tour of California
-Guarnier (1/3)
-van der Breggen (5/17)
-Hall
-van der Breggen (12/17)
-Not on calendar
-Emakumeen Bira
-Not part of the WWT
-Spratt
-Longo Borghini (2/12)
-Not on calendar
-Philadelphia International Cycling Classic
-Guarnier (2/3)
-Cancelled
-Not on calendar
-Giro d'Italia Femminile
-Guarnier (3/3)
-van der Breggen (6/17)
-van Vleuten (3/20)
-van Vleuten (8/20)
-van der Breggen (14/17)
-Part of the UCI ProSeries
-La Course by Le Tour de France
-Hosking (2/3)
-van Vleuten (1/20)
-van Vleuten (4/20)
-Vos (5/10)
-Deignan (8/10)
-Vollering (2/24)
-Clásica de San Sebastián
-Not on calendar
-Not part of the WWT
-Cancelled
-van Vleuten (11/20)
-Vårgårda WestSweden TTT
-Boels–Dolmans (1/3)
-Boels–Dolmans (2/3)
-Boels–Dolmans (3/3)
-Trek–Segafredo (1/2)
-Cancelled
-Vårgårda WestSweden RR
-Fahlin
-Lepistö (2/2)
-Vos (2/10)
-Bastianelli (4/4)
-Cancelled
-Ladies Tour of Norway TTT
-Not on calendar
-Team Sunweb
-Not on calendar
-Ladies Tour of Norway
-Not part of the WWT
-Vos (1/10)
-Vos (3/10)
-Vos (6/10)
-Cancelled
-van Vleuten (12/20)
-Boels Ladies Tour
-Not part of the WWT
-van Vleuten (2/20)
-van Vleuten (5/20)
-Majerus
-Cancelled
-van den Broek-Blaak (6/6)
-GP de Plouay
-Bujak
-Deignan (5/10)
-Pieters (2/2)
-van der Breggen (13/17)
-Deignan (7/10)
-Longo Borghini (4/12)
-La Madrid Challenge by La Vuelta
-D'Hoore (1/5)
-D'Hoore (3/5)
-van Dijk
-Brennauer (1/2)
-Brennauer (2/2)
-van Vleuten (13/20)
-The Women's Tour
-Deignan (4/10)
-Niewiadoma (1/5)
-Rivera (4/4)
-Deignan (6/10)
-Cancelled
-Vollering (3/24)
-Tour of Chongming Island
-Hosking (1/3)
-D'Hoore (2/5)
-Becker
-Wiebes (2/19)
-Cancelled
-Tour of Guangxi
-Not on calendar
-Not part of the WWT
-Sierra
-Hosking (3/3)
-Cancelled
-Ronde van Drenthe
-Blaak (1/6)
-Dideriksen
-Pieters (1/2)
-Bastianelli (2/4)
-Cancelled
-Wiebes (4/19)
-Source: [ 34 ] [ 35 ] [ 36 ]
-2022–
 [ edit ]
-Races in the UCI Women's World Tour
-Race
-2022
-2023
-2024
-2025
-2026
-Tour Down Under
-Cancelled
-Brown (2/3)
-Gigante
-Rüegg (1/2)
-Rüegg (2/2)
-Cadel Evans Great Ocean Road Race
-Cancelled
-Adegeest
-Reijnhout
-Wollaston (1/3)
-Wollaston (3/3)
-UAE Tour
-Not on calendar
-Longo Borghini (7/12)
-Kopecky (6/13)
-Longo Borghini (10/12)
-Longo Borghini (12/12)
-Omloop Het Nieuwsblad
-Not part of the WWT
-Kopecky (3/13)
-Vos (9/10)
-Claes
-Vollering (19/24)
-Strade Bianche Donne
-Kopecky (1/13)
-Vollering (5/24)
-Kopecky (7/13)
-Vollering (16/24)
-Chabbey (2/2)
-Ronde van Drenthe
-Wiebes (5/19)
-Wiebes (8/19)
-Wiebes (9/19)
-Cancelled
-Trofeo Alfredo Binda-Comune di Cittiglio
-Balsamo (1/7)
-van Anrooij
-Balsamo (4/7)
-Balsamo (6/7)
-Swinkels
-Milano–San Remo Donne
-Not on calendar
-Wiebes (12/19)
-Kopecky (13/13)
-Tour of Bruges
-Balsamo (2/7)
-Georgi
-Balsamo (5/7)
-Wiebes (13/19)
-Lloyd
-Gent–Wevelgem
-Balsamo (3/7)
-Reusser (1/7)
-Wiebes (10/19)
-Wiebes (14/19)
-Wiebes (17/19)
-Dwars door Vlaanderen
-Not on calendar
-Reusser (6/7)
-Tour of Flanders
-Kopecky (2/13)
-Kopecky (4/13)
-Longo Borghini (8/12)
-Kopecky (12/13)
-Vollering (20/24)
-Paris–Roubaix Femmes
-Longo Borghini (5/12)
-Jackson
-Kopecky (8/13)
-Ferrand-Prévot (1/2)
-Koch
-Amstel Gold Race
-Cavalli (1/2)
-Vollering (6/24)
-Vos (10/10)
-Bredewold (3/5)
-Blasi (1/2)
-La Flèche Wallonne Femmes
-Cavalli (2/2)
-Vollering (7/24)
-Niewiadoma (4/5)
-Pieterse
-Vollering (21/24)
-Liège–Bastogne–Liège Femmes
-van Vleuten (14/20)
-Vollering (8/24)
-Brown (3/3)
-Le Court (1/2)
-Vollering (22/24)
-La Vuelta Femenina
-van Vleuten (17/20)
-van Vleuten (18/20)
-Vollering (12/24)
-Vollering (17/24)
-Blasi (2/2)
-Itzulia Women
-Vollering (4/24)
-Reusser (2/7)
-Vollering (13/24)
-Vollering (18/24)
-Bredewold (5/5)
-Vuelta a Burgos Feminas
-Labous
-Vollering (9/24)
-Vollering (14/24)
-Reusser (4/7)
-Kastelijn
-Giro d'Italia Women
-van Vleuten (15/20)
-van Vleuten (19/20)
-Longo Borghini (9/12)
-Longo Borghini (11/12)
-Vollering (23/24)
-Copenhagen Sprint
-Not on calendar
-Wiebes (15/19)
-Wiebes (18/19)
-Tour de Suisse Women
-Not part of the WWT
-Reusser (3/7)
-Vollering (15/24)
-Reusser (5/7)
-Reusser (7/7)
-RideLondon Classique
-Wiebes (6/19)
-Kool
-Wiebes (11/19)
-Cancelled
-Tour of Britain Women
-Longo Borghini (6/12)
-Cancelled
-Kopecky (9/13)
-Wollaston (2/3)
-Le Court (2/2)
-Tour de France Femmes
-van Vleuten (16/20)
-Vollering (10/24)
-Niewiadoma (5/5)
-Ferrand-Prévot (2/2)
-Vollering (24/24)
-Vårgårda WestSweden TTT
-Trek–Segafredo (2/2)
-Not on calendar
-Vårgårda WestSweden RR
-Cordon-Ragot
-Not on calendar
-Tour of Scandinavia
-Ludwig
-van Vleuten (20/20)
-Cancelled
-Classic Lorient Agglomération
-García
-Bredewold (1/5)
-Bredewold (2/5)
-Bredewold (4/5)
-Balsamo (7/7)
-Simac Ladies Tour
-Wiebes (7/19)
-Kopecky (5/13)
-Kopecky (11/13)
-Wiebes (16/19)
-Not on calendar
-Tour de Romandie Féminin
-Moolman
-Vollering (11/24)
-Kopecky (10/13)
-Chabbey (1/2)
-Cancelled
-Tour of Chongming Island
-Cancelled
-Consonni
-Lach
-Knijnenburg
-Wiebes (19/19)
-Tour of Guangxi
-Cancelled
-Pikulik
-Alonso
-Henderson
-Cancelled
-Victories
+Qualifying
 [ edit ]
-Updated: 12 October 2026
-Victories by rider
-Rank
-Rider
-No of wins
-1
-Demi Vollering ( NED )
-24
-2
-Annemiek van Vleuten ( NED )
-20
-3
-Lorena Wiebes ( NED )
-19
-4
-Anna van der Breggen ( NED )
-17
-5
-Lotte Kopecky ( BEL )
-13
-6
-Elisa Longo Borghini ( ITA )
-12
-7
-Lizzie Deignan ( GBR )
-10
-Marianne Vos ( NED )
-9
-Marlen Reusser ( SUI )
-7
-Elisa Balsamo ( ITA )
-10
-Chantal van den Broek-Blaak ( NED )
-6
-12
-Jolien D'Hoore ( BEL )
-5
-Katarzyna Niewiadoma ( POL )
-Mischa Bredewold ( NED )
-15
-Marta Bastianelli ( ITA )
-4
-Coryn Rivera ( USA )
-Kirsten Wild ( NED )
-Riders in italics are no longer active.
-Victories by team
-Rank
-Team
-No of wins
-Riders
-1
-Team SD Worx–Protime
-87
-van der Breggen (16), Vollering (15), Kopecky (13), Wiebes (12), Blaak (6), Bredewold (5), Deignan (5), Guarnier (3), Reusser (3), TTT (3), Pieters (2), D'Hoore (1), Dideriksen (1), Majerus (1), Moolman (1)
-2
-Lidl–Trek
-24
-Longo Borghini (8), Balsamo (7), Deignan (5), TTT (2), Henderson (1), van Anrooij (1)
-3
-FDJ United–Suez
-21
-Vollering (9), Cavalli (2), Brown (2), Chabbey (2), Wollaston (2), Adegeest (1), Koch (1), Ludwig (1)
-4
-Movistar Team
-16
-van Vleuten (11), Reusser (4), Lloyd (1)
-Team Picnic–PostNL
-Wiebes (5), Rivera (4), Georgi (1), Kool (1), Labous (1), Lippert (1), TTT (1), van Dijk (1)
-6
-Liv AlUla Jayco
-12
-van Vleuten (9), Brown (1), D'Hoore (1), Spratt (1)
-7
-UAE Team L'Imad
-11
-Longo Borghini (3), Blasi (2), Bastianelli (1), Consonni (1), Fahlin (1), García (1), Hosking (1), Swinkels (1)
-8
-Liv Racing TeqFind
-8
-Vos (6), van der Breggen (1), Niewiadoma (1)
-9
-Visma–Lease a Bike
-7
-Vos (4) , Ferrand-Prévot (2), Reijnhout (1)
-Wiggle High5
-D'Hoore (3), Hosking (2), Longo Borghini (1), Wild (1)
-11
-Canyon//SRAM
-4
-Niewiadoma (4)
-12
-AG Insurance–Soudal
-3
-Le Court (2), Gigante (1)
-Team Virtu Cycling
-Bastianelli (3)
-VolkerWessels Women Cyclingteam
-Wiebes (2), Knijnenburg (1)
-15
-Hitec Products–Fluid Control
-2
-Becker (1), Wild (1)
-Équipe Paule Ka
-Lepistö (2)
-Ceratizit Pro Cycling
-Alonso (1), Lach (1)
-Fenix–Premier Tech
-Kastelijn (1), Pieterse (1)
-19
-EF Education–Tibco–SVB
-1
-Jackson (1)
-Human Powered Health
-Pikulik (1)
-A.R. Monex
-Sierra (1)
-Born to Win BTC City Ljubljana Zhiraf
-Bujak (1)
-UnitedHealthcare
-Hall (1)
-EF Education–Oatly
-Rüegg (1)
-Arkéa–B&B Hotels Women
-Claes (1)
-Teams in italics are no longer active.
-Victories by nation
-Rank
-Team
-No of wins
-Riders
-1
-Netherlands
-116
-Vollering (24), van Vleuten (20), Wiebes (19), van der Breggen (17), Vos (10), Blaak (6), Bredewold (5), Wild (4), Pieters (2), Adegeest (1), Kastelijn (1), Knijnenburg (1), Kool (1), Pieterse (1), Reijnhout (1), Swinkels (1), van Anrooij (1), van Dijk (1)
-2
-Italy
-26
-Longo Borghini (12), Balsamo (7), Bastianelli (4), Cavalli (2), Consonni (1)
-3
-Belgium
-19
-Kopecky (13), D'Hoore (5), Claes (1)
-4
-Great Britain
-13
-Deignan (10), Georgi (1), Henderson (1), Lloyd (1)
-5
-Switzerland
-10
-Reusser (7), Chabbey (2), Rüegg (1)
-6
-Australia
-8
-Brown (3), Hosking (3), Gigante (1), Spratt (1)
-United States
-Rivera (4), Guarnier (3), Hall (1)
-Poland
-Niewiadoma (5), Bujak (1), Pikulik (1), Lach (1)
-9
-Germany
-5
-Brennauer (2), Becker (1), Koch (1), Lippert (1)
-10
-France
-4
-Ferrand-Prévot (2), Labous (1), Cordon-Ragot (1)
-Spain
-Blasi (2), Alonso (1), García (1)
-12
-Denmark
-2
-Dideriksen (1), Ludwig (1)
-Finland
-Lepistö (2)
-Mauritius
-Le Court (2)
-New Zealand
-Wollaston (2)
-16
-Canada
-1
-Jackson (1)
-Cuba
-Sierra (1)
-Luxembourg
-Majerus (1)
-South Africa
-Moolman (1)
-Sweden
-Fahlin (1)
-Season results
+Boston Marathon
+qualifying standards
+(effective for 2026 race) [ 60 ] [ 61 ]
+Age
+Men
+Women
+18–34 2 h 55 min 3 h 25 min
+35–39 3 h 00 min 3 h 30 min
+40–44 3 h 05 min 3 h 35 min
+45–49 3 h 15 min 3 h 45 min
+50–54 3 h 20 min 3 h 50 min
+55–59 3 h 30 min 4 h 00 min
+60–64 3 h 50 min 4 h 20 min
+65–69 4 h 05 min 4 h 35 min
+70–74 4 h 20 min 4 h 50 min
+75–79 4 h 35 min 5 h 05 min
+≥80 4 h 50 min 5 h 20 min
+The Boston Marathon is open to runners 18 or older from any nation, but they must meet certain qualifying standards . [ 62 ] To qualify, a runner must first complete a standard marathon course certified by a national governing body affiliated with the World Athletics within a certain period of time before the date of the desired Boston Marathon (usually within approximately 18 months prior). [ citation needed ]
+In the 1980s and 1990s, membership in USA Track & Field was required of all runners, but this requirement has been eliminated. [ 63 ]
+Qualifying standards for the 2013 race were tightened on February 15, 2011, by five minutes in each age-gender group for marathons run after September 23, 2011. [ 64 ] Prospective runners aged 18–34 must run a time of no more than 3:00:00 (3 hours) if male, or 3:30:00 (3 hours 30 minutes) if female; the qualifying time is adjusted upward as age increases. In addition, the 59-second grace period on qualifying times has been eliminated; for example, a 40- to 44-year-old male will no longer qualify with a time of 3:10:01. For many marathoners, to qualify for Boston (to "BQ") is a goal and achievement in itself. [ 65 ] [ 66 ] This leads many runners to find intrinsic motivation in qualifying for the elusive marathon by setting the specific, time-based, and difficult goals associated with the age-based time standard. [ 67 ]
+An exception to the qualification times is for runners who receive entries from partners. About one-fifth of the marathon's spots are reserved each year for charities, sponsors, vendors, licensees, consultants, municipal officials, local running clubs, and marketers. In 2010, about 5,470 additional runners received entries through partners, including 2,515 charity runners. [ 68 ] The marathon currently allocates spots to two dozen charities who in turn are expected to raise more than $10 million a year. [ 69 ] In 2017, charity runners raised $34.2 million for more than 200 non-profit organizations. The Boston Athletic Association's Official Charity Program raised $17.96 million, John Hancock's Non-Profit Program raised $12.3 million, and the last $3.97 million was raised by other qualified and invitational runners. [ 70 ]
+On October 18, 2010, the 20,000 spots reserved for qualifiers were filled in a record-setting eight hours and three minutes. [ 71 ] The speed of registration prompted the B.A.A. to change its qualifying standards for the 2013 marathon onward. [ 64 ] In addition to lowering qualifying times, the change includes a rolling application process, which gives faster runners priority. Organizers decided not to significantly adjust the number of non-qualifiers. [ citation needed ]
+On September 27, 2018, the B.A.A. announced that they were lowering the qualifying times for the 2020 marathon by another five minutes, with male runners in the 18-34 age group required to run a time of 3:00:00 (3 hours) or less and female runners in the 18-34 age group required to run a time of 3:30:00 (3 hours, 30 minutes) or less in order to qualify. [ 72 ]
+In September 2024, the B.A.A. announced new qualifying times for the 2026 race, lowering the former qualifying times by five minutes again for most age groups. The 18-34 age group needs to run a time of 2:55 (two hours, 55 minutes) for males, and 3:25 (3 hours, 25 minutes) for female and non-binary runners to qualify for the 2026 race. [ 61 ] [ 73 ]
+Race day
 [ edit ]
-Between 2016 and 2024, the tour contained an individual women's elite classification and youth classification, with the leader of each wearing a distinctive jersey – burgundy jersey for the individual classification and a light blue jersey for the youth classification. [ 9 ] Since 2025, the UCI women's road world rankings , which includes points earned in races that are not part of the WorldTour, has superseded the points allocations for this series of races as the official rankings table for the sport. [ 9 ]
-Individual ranking
+The race has traditionally been held on Patriots' Day , [ 74 ] a state holiday in Massachusetts. Through 1968, the holiday was observed on April 19, with the event held that day, unless it fell on a Sunday, in which case the race was held on Monday. [ 75 ] Since 1969, the holiday has been observed on the third Monday in April, [ 76 ] with the event held then, often referred to locally as "Marathon Monday". [ 77 ]
+Starting times
 [ edit ]
-Year
-1st
-2nd
-3rd
-2016
-Megan Guarnier
-Boels–Dolmans 946 pts
-Leah Kirchmann
-Team Liv–Plantur 624 pts
-Lizzie Deignan
-Boels–Dolmans 545 pts
-2017
-Anna van der Breggen
-Boels–Dolmans 1016 pts
-Annemiek van Vleuten
-Orica–Scott 989 pts
-Katarzyna Niewiadoma
-WM3 Energie 856 pts
-2018
-Annemiek van Vleuten
-Mitchelton–Scott 1411.86 pts
-Marianne Vos
-WaowDeals Pro Cycling 1394.88 pts
-Anna van der Breggen
-Boels–Dolmans 1323.33 pts
-2019
-Marianne Vos
-CCC - Liv 1592 pts
-Annemiek van Vleuten
-Mitchelton–Scott 1467.67 pts
-Lorena Wiebes
-Parkhotel Valkenburg 1302.33 pts
-2020
-Lizzie Deignan
-Trek–Segafredo 1622.33 pts
-Elisa Longo Borghini
-Trek–Segafredo 1567.33 pts
-Lisa Brennauer
-Ceratizit–WNT Pro Cycling 1424.67 pts
-2021
-Annemiek van Vleuten
-Movistar Team 3177 pts
-Demi Vollering
-SD Worx 2563 pts
-Elisa Longo Borghini
-Trek–Segafredo 2509 pts
-2022
-Annemiek van Vleuten
-Movistar Team 3589.33 pts
-Elisa Longo Borghini
-Trek–Segafredo 2710.33 pts
-Demi Vollering
-SD Worx 2681.17 pts
-2023
-Demi Vollering
-SD Worx 4891.86 pts
-Lotte Kopecky
-SD Worx 2735 pts
-Marlen Reusser
-SD Worx 2512.86 pts
-2024
-Lotte Kopecky
-Team SD Worx–Protime 4596 pts
-Demi Vollering
-Team SD Worx–Protime 4183.3 pts
-Elisa Longo Borghini
-Lidl–Trek 3327.1 pts
-2025
-Individual ranking abolished
-Youth ranking
+Through 2005, the race began at noon ( wheelchair race at 11:25 a.m., and elite women at 11:31 a.m.), at the official starting point in Hopkinton, Massachusetts . In 2006, the race used a staggered "wave start", where top-seeded runners (the elite men's group) and a first batch of up to 10,000 runners started at noon, with a second group starting at 12:30. The next year the starting times for the race were moved up, allowing runners to take advantage of cooler temperatures and enabling the roads to be reopened earlier. The marathon later added third and fourth waves to help further stagger the runners and reduce congestion. [ 78 ] [ 79 ] [ 80 ]
+The starting times for 2019 were: [ 81 ] [ 82 ]
+Men's Push Rim Wheelchair: 9:02 a.m.
+Women's Push Rim Wheelchair: 9:04 a.m.
+Handcycles and Duos: 9:25 a.m.
+Elite Women: 9:32 a.m.
+Elite Men: 10 a.m.
+Wave One: 10:02 a.m.
+Wave Two: 10:25 a.m.
+Wave Three: 10:50 a.m.
+Wave Four: 11:15 a.m.
+Course
 [ edit ]
-Year
-1st
-2nd
-3rd
-2016
-Katarzyna Niewiadoma
-Rabobank-Liv Woman Cycling Team 36 pts
-Floortje Mackaij
-Team Liv–Plantur 18 pts
-Sheyla Gutiérrez
-Cylance Pro Cycling 18 pts
-2017
-Cecilie Uttrup Ludwig
-Cervélo–Bigla Pro Cycling 52 pts
-Alice Barnes
-Drops 16 pts
-Amalie Dideriksen
-Boels–Dolmans 16 pts
-2018
-Sofia Bertizzolo
-Astana 42 pts
-Liane Lippert
-Team Sunweb 30 pts
-Jeanne Korevaar
-WaowDeals Pro Cycling 22 pts
-2019
-Lorena Wiebes
-Parkhotel Valkenburg 46 pts
-Marta Cavalli
-Valcar–Cylance 42 pts
-Sofia Bertizzolo
-Team Virtu Cycling 22 pts
-2020
-Liane Lippert
-Team Sunweb 28 pts
-Mikayla Harvey
-Équipe Paule Ka 22 pts
-Lorena Wiebes
-Team Sunweb 16 pts
-2021
-Niamh Fisher-Black
-SD Worx 34 pts
-Evita Muzic
-FDJ Nouvelle-Aquitaine Futuroscope 32 pts
-Mariia Novolodskaia
-A.R. Monex 22 pts
-2022
-Shirin van Anrooij
-Trek–Segafredo 50 pts
-Niamh Fisher-Black
-SD Worx 34 pts
-Pfeiffer Georgi
-Team DSM 28 pts
-2023
-Shirin van Anrooij
-Lidl–Trek
-38 pts
-Gaia Realini
-Lidl–Trek
-30 pts
-Maike van der Duin
-Canyon//SRAM
-22 pts
-2024
-Shirin van Anrooij
-Lidl–Trek
-44 pts
-Puck Pieterse
-Fenix–Deceuninck
-36 pts
-Neve Bradbury
-Canyon//SRAM
-32 pts
-2025
-Youth ranking abolished
-Team ranking
+Course map
+The course runs through 26 miles 385 yards (42.195 km) of winding roads, following Route 135 , Route 16 , Route 30 and city streets into the center of Boston, where the official finish line is located at Copley Square , alongside the Boston Public Library . The race runs through eight Massachusetts cities and towns: Hopkinton , Ashland , Framingham , Natick , Wellesley , Newton , Brookline , and Boston. [ 83 ] The first six miles of the course descend through Ashland and Framingham. Runners encounter a series of four Newton hills, culminating in Heartbreak Hill just after mile 20, before the final downhill and flat approach into Boston. [ 84 ] [ circular reference ]
+Robert Kipkoech Cheruiyot on his way to winning the 2006 Boston Marathon, where he set a new course record.
+The Boston Marathon is considered one of the most difficult marathon courses because of the Newton hills, which culminate in Heartbreak Hill near Boston College . [ 85 ] While the three hills on Commonwealth Avenue (Route 30) are better known, a preceding hill on Washington Street (Route 16), climbing from the Charles River crossing at 16 miles (26 km) , is regarded by Dave McGillivray, the long-term race director, as the course's most difficult challenge. [ 86 ] [ 87 ] This hill, which follows a 150-foot (46 m) rise over a 1 ⁄ 2 mile (800 m) stretch, forces many lesser-trained runners to a walking pace. [ citation needed ]
+Heartbreak Hill
 [ edit ]
-Year
-1st
-2nd
-3rd
-2016
-Boels–Dolmans 2894 pts
-Wiggle High5 2245 pts
-Rabobank-Liv Woman Cycling Team 1853 pts
-2017
-Boels–Dolmans 3273 pts
-Team Sunweb 2153 pts
-Wiggle High5 1824 pts
-2018
-Boels–Dolmans 4329.99 pts
-Mitchelton–Scott 4119.02 pts
-Team Sunweb 3321.99 pts
-2019
-Boels–Dolmans 4045 pts
-Team Sunweb 2946 pts
-Trek–Segafredo 2547.98 pts
-2020
-Trek–Segafredo 4380.98 pts
-Boels–Dolmans 3177.02 pts
-Team Sunweb 2876.98 pts
-2021
-SD Worx 8572 pts
-Trek–Segafredo 5263 pts
-Movistar Team 5043 pts
-2022
-SD Worx 9803.02 pts
-Trek–Segafredo 7998.98 pts
-Team DSM 7536 pts
-2023
-SD Worx
-19251.52 pts
-Canyon//SRAM
-9007.22 pts
-Lidl–Trek
-8787.53 pts
-2024
-Team SD Worx–Protime
-14384.03 pts
-Lidl–Trek
-9840.98 pts
-Canyon//SRAM
-7744 pts
-2025
-Team ranking abolished
-Participating teams
+Heartbreak Hill is an ascent over 0.4 miles (600 m) between the 20- and 21-mile (32- and 34-km) marks, near Boston College . It is the last of four " Newton hills", which begin at the 16-mile (26 km) mark and challenge contestants with late (if modest) climbs after the course's general downhill trend to that point. Though Heartbreak Hill itself rises only 88 feet (27 m) vertically (from an elevation of 148 to 236 feet (45 to 72 m) ), [ 88 ] it comes in the portion of a marathon distance where muscle glycogen stores are most likely to be depleted—a phenomenon referred to by marathoners as " hitting the wall ". [ 89 ] [ citation needed ]
+It was on this hill that, in 1936, defending champion John A. "Johnny" Kelley overtook Ellison "Tarzan" Brown , giving him a consolatory pat on the shoulder as he passed. This gesture renewed the competitive drive in Brown, who rallied, pulled ahead of Kelley, and went on to win—thereby, it was said, breaking Kelley's heart. [ 90 ] [ 91 ]
+Records
 [ edit ]
-As of 2026 [ update ] , the fourteen Women's WorldTeams were automatically invited to compete in events. Other ProTeams and Continental women's teams were invited by the organisers of each race. [ 37 ]
-Current UCI Women's WorldTeams (2026 season)
+Participants in the 2010 Boston Marathon in Wellesley , just after the halfway mark
+Because the course drops 459 feet (140 m) from start to finish [ 36 ] and the start is quite far west of the finish, allowing a helpful tailwind, the Boston Marathon does not satisfy two of the criteria necessary for the ratification of world [ 92 ] or American records. [ 93 ]
+At the 2011 Boston Marathon on April 18, 2011, Geoffrey Mutai of Kenya ran a time of 2:03:02, which was the fastest ever marathon at the time (since surpassed by Sabastian Sawe 's 1:59:30 in London 2026). However, due to the reasons listed above, Mutai's performance was not ratified as an official world record. Bezunesh Deba from Ethiopia set the women's course record with a 2:19:59 performance on April 21, 2014. This was declared after Rita Jeptoo from Kenya was disqualified following a confirmed doping violation. [ 94 ]
+Other course records include:
+Men's Masters: John Campbell (New Zealand), 2:11:04 (set in 1990)
+Women's Masters: Firiya Sultanova-Zhdanova (Russia), 2:27:58 (set in 2002)
+Men's Push Rim Wheelchair: Marcel Hug (Switzerland), 1:17:06 (set in 2023)
+Women's Push Rim Wheelchair: Manuela Schär (Switzerland), 1:28:17 (set in 2017)
+Men's Handcycle: Tom Davis (United States), 0:58:36 (set in 2017)
+Women's Handcycle: Alicia Dana (United States), 1:18:15 (set in 2023) [ 95 ]
+World record marathon running times have been set in Boston on only four occasions. [ citation needed ] In 1947, the men's record time set was 2:25:39, by Suh Yun-Bok of South Korea . In 1975, a women's world record of 2:42:24 was set by Liane Winter of West Germany , and in 1983, Joan Benoit Samuelson of the United States ran a women's world record time of 2:22:43. In 2012, Joshua Cassidy of Canada set a men's wheelchair marathon world-record time of 1:18:25. [ citation needed ] In the 2025 Boston Marathon, Sharon Lokedi set a new women's course record of 2:17:22, reducing the previous record of 2:19:59 set in 2014. On the men’s side, John Korir won in 2:04:45, the fastest winning time since 2011. Korir also became the first winner whose brother had previously won the race (Wesley Korir, 2012) [ 96 ]
+In 2007, astronaut Sunita Williams was an official entrant of the race, running a marathon distance while on the International Space Station , becoming the first person to run a marathon in space. She was sent a specialty bib and medal by the B.A.A. on the STS-117 flight of the Space Shuttle Atlantis . [ 97 ] [ 98 ]
+The race's organizers keep a standard time clock for all entries, though official timekeeping ceases after the six-hour mark. [ 99 ]
+The B.A.A.
 [ edit ]
-Women's WorldTeams were introduced in 2020, with teams automatically invited to World Tour events. [ 38 ]
-Team
-Country
-Seasons in World Tour
-Became Women's WorldTeam
-Previous team name
-AG Insurance–Soudal
-Belgium
-2020–
-2024
-NXTG Racing (2020–2021), AG Insurance–NXTG (2022), AG Insurance–Soudal–Quick-Step (2023)
-Canyon//SRAM
-Germany
-2016–
-2020
-Canyon//SRAM (2016–2024), Canyon//SRAM Zondacrypto (2025–2026)
-EF Education–Oatly
-United States
-2024–
-2026
-EF Education–Cannondale (2024)
-FDJ United–Suez
-France
-2016–
-2020
-Poitou-Charentes.Futuroscope.86 (2016), FDJ Nouvelle-Aquitaine Futuroscope (2017–2022), FDJ–Suez (2023–2025)
-Fenix–Premier Tech
-Belgium
-2020–
-2023
-Ciclismo Mundial (2020–2021), Plantur–Pura (2022), Fenix–Deceuninck (2023–2025)
-Human Powered Health
-United States
-2016–
-2022
-Rally Cycling (2016–2018, 2020–2021), Rally UHC Cycling (2019)
-Lidl–Trek
-United States
-2019–
-2020
-Trek–Segafredo (2019–2023)
-Liv AlUla Jayco
-Australia
-2016–
-2020
-Orica–AIS (2016), Orica–Scott (2017), Mitchelton–Scott (2018–2020), Team BikeExchange (2021), Team BikeExchange–Jayco (2022), Team Jayco–AlUla (2023)
-Movistar Team
-Spain
-2018–
-2020
-Team Picnic–PostNL
-Netherlands
-2016–
-2020
-Team Liv–Plantur (2016), Team Sunweb (2017–2020), Team DSM (2021–2023), Team dsm–firmenich PostNL (2024)
-Team SD Worx–Protime
-Netherlands
-2016–
-2021
-Boels–Dolmans (2016–2020), SD Worx (2021–2023)
-Visma–Lease a Bike
-Netherlands
-2021–
-2022
-Team Jumbo–Visma (2021–2023)
-UAE Team L'Imad
-UAE
-2016–
-2020
-Alé–Cipollini (2016–2019), Alé BTC Ljubljana (2020–2021), UAE Team ADQ (2022–2026)
-Uno-X Mobility
-Norway
-2022–
-2022
-Current UCI Women's ProTeams (2026 season)
+Main article: Boston Athletic Association
+The Boston Athletic Association is a non-profit organized sports association that organizes the Boston Marathon and other events. [ 5 ] [ 100 ]
+Divisions
 [ edit ]
-UCI Women's ProTeams were introduced for the 2026 season, creating a structure similar to that of the men's teams.
-Team
-Country
-Seasons in World Tour
-Became Women's ProTeam
-Previous team name
-Cofidis
-France
-2022–
-2025
-Laboral Kutxa–Fundación Euskadi
-Spain
-2021–
-2025
-Lotto–Intermarché Ladies
-Belgium
-2023–
-2026
-Lotto–Belisol Ladiesteam (2006–2009, 2012–2014), Lotto Ladies Team (2010–2011), Lotto–Soudal Ladies (2015–2022) , Lotto–Dstny Ladies (2023–2024), Lotto Ladies ( 2025)
-Ma Petite Entreprise
-France
-2026–
-2026
-Mayenne Monbana My Pie
-France
-2019–
-2026
-Charente-Maritime Women Cycling (2019–2020), Stade Rochelais Charente-Maritime (2021–2023), Winspace (2024), Winspace Orange Seal ( 2025)
-St. Michel–Preference Home–Auber93
-France
-2022–
-2025
-St. Michel–Auber93 (2022–2023)
-VolkerWessels Women Cyclingteam
-Netherlands
-2016–
-2025
-Parkhotel Valkenburg Continental Team (2016), Parkhotel Valkenburg–Destil (2017), Parkhotel Valkenburg (2018–2023)
-Former UCI WorldTeams
+The 1975 Boston Marathon became the first major marathon to include a wheelchair division competition . [ 6 ] Bob Hall wrote race director Will Cloney to ask if he could compete in the race in his wheelchair. Cloney wrote back that he could not give Hall a race number, but would recognize Hall as an official finisher if he completed the race in under 3 hours and 30 minutes. Hall finished in 2 hours and 58 minutes, paving the way for the wheelchair division. [ 101 ] Ernst Van Dyk, in 2004, set a course record at 1:18.29, almost 50 minutes faster than the fastest runner. [ 102 ]
+Also in 1975, the Boston Marathon first included a women's masters division, which Sylvia Weiner won at age 44 with a time of 3:21:38. [ 103 ]
+Handcyclists have competed in the race since at least 2014. Starting in 2017, handcyclists are honored the same way runners and wheelchair racers are: with wreaths, prize money, and the playing of the men's and women's winners' national anthems. [ 104 ]
+In addition to the push rim wheelchair division, the Boston Marathon [ 105 ] also hosts a blind/visually impaired division and a mobility impaired program. Similar to the running divisions, a set of qualifying times has been developed for these divisions to motivate aspiring athletes and ensure competitive excellence. In 1986, the introduction of prize money at the Boston Marathon gave the push rim wheelchair division the richest prize purse in the sport. More than 1,000 people with disabilities and impairments have participated in the wheelchair division, while the other divisions have gained popularity each year. [ 106 ] In 2013, 40 blind runners participated. [ 107 ]
+The nonbinary division of the Boston Marathon was first included in 2023; it was won by Kae Ravichandran with a time of 2:38:57. [ 108 ]
+Memorial
 [ edit ]
-Teams in italic are no longer active.
-Team
-Country
-Seasons in World Tour
-Became Women's WorldTeam
-Previous team name
-Liv Racing TeqFind
-Netherlands
-2016–2023
-2020
-Rabobank-Liv Woman Cycling Team (2016), WM3 Energie (2017) WaowDeals Pro Cycling (2018), CCC - Liv (2019–2020) Liv Racing (2021), Liv Racing Xstra (2022)
-EF Education–Tibco–SVB
-United States
-2016–2023
-2022
-Tibco–Silicon Valley Bank (2016–2021)
-Roland Le Dévoluy
-Switzerland
-2018–2025
-2022
-Cogeas–Mettler Pro Cycling Team (2018), Cogeas–Mettler–Look (2019–2021), Roland Cogeas Edelweiss Squad (2022), Israel Premier Tech Roland (2023)
-Ceratizit Pro Cycling
-Germany
-2017–2025
-2024
-Team WNT (2017), WNT–Rotor Pro Cycling (2018–2019), Ceratizit–WNT Pro Cycling (2020–2024)
+The Boston Marathon Memorial in Copley Square, which is near the finish line, was installed to mark the one-hundredth running of the race. A circle of granite blocks set in the ground surrounds a central medallion that traces the race course and other segments that show an elevation map of the course and the names of the winners. [ 109 ] [ 110 ]
+Notable features
+[ edit ]
+Spectators
+[ edit ]
+With approximately 500,000 spectators, the Boston Marathon is New England 's most widely viewed sporting event. [ 6 ] About 1,000 media members from more than 100 outlets received media credentials in 2011. [ 111 ]
+For the entire distance of the race, thousands line the sides of the course to cheer the runners on, encourage them, and provide free water and snacks to the runners. [ citation needed ]
+Scream Tunnel
+[ edit ]
+Along the course at Wellesley College
+At Wellesley College , a historically women's college, it is traditional for the students to cheer on the runners in what is referred to as the Scream Tunnel. [ 112 ] [ 113 ] For about a quarter of a mile (400 m), the students line the course, scream, and offer kisses.
+The Scream Tunnel is so loud runners claim it can be heard from a mile away. The tunnel is roughly half a mile (0.8 km) prior to the halfway mark of the course. [ 114 ] [ 115 ]
+Boston Red Sox
+[ edit ]
+Every year, the Boston Red Sox play a home game at Fenway Park , starting at 11:05 a.m. When the game ends, the crowd empties into Kenmore Square to cheer as the runners enter the final mile. This tradition started in 1903. [ 116 ] In the 1940s, the Red Sox from the American League and the Boston Braves from the National League (who moved to Milwaukee after the 1953 season) alternated yearly as to which would play the morning game. In 2007, the game between the Red Sox and the Los Angeles Angels of Anaheim was delayed until 12:18 p.m. due to heavy rain. The marathon, which had previously been run in a wide variety of weather conditions, was not delayed. [ 117 ] The 2018 game hosting the Baltimore Orioles was postponed into May due to rain, [ 118 ] while 2020 saw the game not played resulting from the pandemic.
+In 2021, when City Connect uniforms were introduced, the Red Sox chose a design inspired by the marathon. The colors were yellow and blue, and a number "617" - the area code for Boston - was added to the left sleeve in a way reminiscent of a racing bib. They were worn on the weekend leading up to Patriots' Day; on the holiday itself, the Boston Strong uniforms commemorating the 2013 bombing were worn. [ 119 ] A new City Connect uniform was chosen in 2025, with the marathon-themed one remaining as an alternate. [ 120 ]
+Dick and Rick Hoyt
+[ edit ]
+Team Hoyt at ~12.8 miles on the Marathon course on April 16, 2012 Dick and Rick Hoyt entered the Boston Marathon 32 times. [ 121 ] Dick was the father of Rick, who had cerebral palsy . While doctors said that Rick would never have a normal life and thought that institutionalizing him was the best option, Dick and his wife disagreed and raised him at home. Eventually, a computer device was developed that helped Rick communicate with his family, and they learned that one of his biggest passions was sports. "Team Hoyt" (Dick and Rick) started competing in charity runs, with Dick pushing Rick in a wheelchair. Through August 2008, Dick and Rick had competed in 66 marathons and 229 triathlons. Their fastest marathon finish was 2:40:47. [ citation needed ] The team completed their 30th Boston Marathon in 2012, when Dick was 72 and Rick was 50. [ 122 ] They had intended the 2013 marathon to be their final one, but due to the Boston Marathon bombing , they were stopped a mile short of completing their run, and decided to run one more marathon the following year. They completed the 2014 marathon on April 21, 2014, having previously announced that it would be their last. [ 123 ] In tribute to his connection with the race, Dick was named the grand marshal of the 2015 marathon. He died in 2021, aged 80. [ 124 ] Rick died in May 2023. [ 125 ]
+Bandits
+[ edit ]
+Unlike many other races, the Boston Marathon tolerated "bandits" (runners who do not register and obtain a bib number). [ 126 ] They used to be held back until after all the registered runners had left the starting line, and then were released in an unofficial fourth wave. They were generally not pulled off the course and mostly allowed to cross the finish line. [ 126 ] For decades, these unofficial runners were treated like local folk heroes, celebrated for their endurance and spunk for entering a contest with the world's most accomplished athletes. [ 127 ] Boston Marathon race director Dave McGillivray was once a teenage bandit. [ 128 ]
+Given the increased field that was expected for the 2014 Marathon, however, organizers planned "more than ever" to discourage bandits from running. [ 129 ] As of September 2015 the B.A.A. website states:
+Q: Can I run in the Boston Marathon as an unofficial or "bandit" runner?
+A: No, please do NOT run if you have not been officially entered in the race. Race amenities along the course and at the finish, such as fluids, medical care, and traffic safety, are provided based on the number of expected official entrants. Any addition to this by way of unofficial participants, adversely affects our ability to ensure a safe race for everyone. [ 130 ]
+Costumes
+[ edit ]
+A number of people choose to run the course in a variety of costumes each year. [ 131 ] [ 132 ] During the 100th running in 1996, one runner wore a scale model of the Old North Church steeple on his back. Old North Church is where the signal was lit that set Paul Revere off on his midnight ride, which is commemorated each year on the same day as the Marathon. During the 2014 marathon, runners and spectators were discouraged from wearing "costumes covering the face or any non-form fitting, bulky outfits extending beyond the perimeter of the body," for security reasons following the 2013 bombing. However, state authorities and the Boston Athletic Association did not outright ban such costumes. [ 133 ]
+Ondekoza taiko drummers
+[ edit ]
+Ondekoza member Marco Lienhard playing taiko after finishing the marathon
+Starting in 1975, members of Ondekoza , a group from Japan, would run the marathon and right after finishing the race would start playing their taiko drums at the finish line. [ 134 ] [ 135 ] [ 136 ] [ 137 ] They repeated the tradition several times in the 1970s and 1990s. [ 138 ] [ 139 ] [ 140 ] [ 141 ] The 700-pound (320 kg) drum would be set up at the finish line to encourage runners finishing the marathon. Bill Rodgers , who inspired member's running, was a guest on Sado Island and ran marathons in Japan with Ondekoza members. [ 142 ] The group also ran the New York City Marathon and Los Angeles Marathon , and ran 10,000 miles (16,000 km) of the perimeter of the United States from 1990 to 1993. [ 143 ] [ 144 ]
+Historical Trends in Winners and Nationalities
+[ edit ]
+Kenyan and Ethiopian athletes have historically dominated elite Boston Marathon results, reflecting broader East African success in distance running. With accolades such as marathon world records and gold medals. [ 145 ]
+Controversies and Criticisms
+[ edit ]
+In 2024, a Black-led running group called TrailblazHers Run Co. filed a lawsuit against the Boston Athletic Association (B.A.A.), the city of Newton, and the Newton police chief over an incident that occurred during the 2023 Boston Marathon. The group alleged that police officers targeted their cheering section at mile 21 of the race and formed a barricade that separated them from the course while allowing mostly white spectators in other areas to remain closer to runners. According to the lawsuit, more than 100 spectators, many of whom were people of color, had gathered to cheer and support runners when police intervened. The plaintiffs claim the actions amounted to racial profiling and harassment. The lawsuit seeks damages and policy changes to prevent similar treatment at future events. The B.A.A. stated that it was aware of the complaint but had not yet reviewed it at the time of the report. [ 146 ]
 See also
 [ edit ]
-UCI race classifications
+List of winners of the Boston Marathon
+List of marathon races in North America
+The Sports Museum (at TD Garden)
+Boston Athletic Association
+Newton, Massachusetts
 References
 [ edit ]
-1 2 "New WorldTour part of a shake-up of women's road racing – Cycling Weekly" . Cycling Weekly . 12 March 2015.
-↑ O'Shea, Sadhbh (2016-07-25). "The future of women's cycling: a Q&A interview with Brian Cookson" . cyclingnews.com . Retrieved 2025-02-14 .
-↑ "Women's Tour de France campaign gathers pace with the launch of Le Tour Entier website" . road.cc . 2013-09-15 . Retrieved 2022-07-23 .
-1 2 3 "2016 UCI Women's Worldtour Candidates Guide" (PDF) . Archived from the original (PDF) on 2015-11-22 . Retrieved 2015-11-22 .
-1 2 Rogers, Owen (2015-03-12). "New WorldTour part of a shake-up of women's road racing" . cyclingweekly.com . Retrieved 2025-02-14 .
-↑ "UCI Women's Racing – Bicycling" . bicycling.com . 13 March 2015.
-1 2 Weislo, Laura (2015-09-24). "UCI announces 2016 Women's World Tour" . cyclingnews.com . Retrieved 2025-02-14 .
-1 2 "New logos unveiled for UCI WorldTour and UCI Women's WorldTour" . road.cc . 2015-10-24 . Retrieved 2025-02-14 .
-1 2 3 4 5 Mitchell, Mathew (2025-02-01). "UCI quietly removes Women's WorldTour leader jerseys for 2025" . ProCyclingUK.com . Retrieved 2025-02-14 .
-1 2 Jones, Amy. "Five years on – is the Women's World Tour working?" . Rouleur . Retrieved 2025-02-14 .
-↑ "UCI Women's Reforms: A Step Forward for Our Sport | The Cyclists' Alliance" . 2018-09-30. Archived from the original on 2025-01-16 . Retrieved 2025-02-14 .
-↑ "Calendrier International UCI / UCI International Calendar - Route / Road - Situation dans le contexte actuel de la pandémie du coronavirus (Covid-19) / Situation in the current context of the coronavirus (Covid-19) pandemic" (PDF) . UCI.org . Union Cycliste Internationale . 30 April 2020 . Retrieved 4 May 2020 .
-↑ "Women's professional road cycling enters a new dimension in 2020" . www.uci.org . 10 January 2019 . Retrieved 2025-02-14 .
-↑ Knöfler, Lukas (2022-05-30). "Teams and riders dissatisfied with lack of live coverage at RideLondon Classique" . cyclingnews.com . Retrieved 2022-06-24 .
-↑ Frattini, Kirsten (28 September 2020). "Giro Rosa surprised to lose Women's WorldTour status" . cyclingnews.com . Retrieved 23 June 2023 .
-↑ Ronald, Issy (2022-06-17). "RideLondon Classique stripped of WorldTour status for limited live TV" . cyclingnews.com . Retrieved 2022-06-24 .
-↑ Frattini, Kirsten (1 October 2022). "RideLondon keeps Women's WorldTour status despite failing to meet live TV requirements" . cyclingnews.com . Retrieved 27 February 2023 .
-↑ Ostlere, Lawrence (22 July 2022). " 'It changes everything': Why the Tour de France Femmes is a historic moment for women's cycling" . The Independent . ISSN 1741-9743 . Archived from the original on 30 July 2022 . Retrieved 23 July 2022 . I think if you asked everyone in the peloton what's more important, the prize money or the TV coverage, I think most would say TV coverage.
-↑ Macur, Juliet; Jaques, Monique (2022-07-27). "For Women's Cyclists, It's a Steep Climb to Tour Equality" . The New York Times . ISSN 0362-4331 . Retrieved 2022-08-01 .
-↑ Whittle, Jeremy (2023-07-25). " 'The gulf is widening': the long road to pay parity for female cyclists" . The Guardian . ISSN 0261-3077 . Retrieved 2023-07-26 .
-↑ Matilda Price (2022-06-17). "Four events added to Women's WorldTour calendar for 2023" . cyclingnews.com . Retrieved 2022-06-24 . As well as the addition of races, there has been some reshuffling of the calendar, most notably the Ceratizit Challenge by La Vuelta – registered in 2023 as 'La Vuelta Femenina' – has moved to May, and will be seven stages long.
-1 2 Weislo, Laura (4 October 2024). "UCI rolls out 2025 road calendar with Copenhagen Sprint added to men's and women's WorldTour" . Cycling News . Retrieved 13 October 2024 .
-↑ Jones, Amy. "Women's WorldTeams salaries: a delicate balance" . Rouleur . Retrieved 2025-02-14 .
-↑ "Transgender women barred from female events as UCI takes 'precautionary measure' " . BBC Sport . 2023-07-14 . Retrieved 2024-01-15 .
-↑ "Part 2 Road Races" ( PDF ) . UCI.org . Union Cycliste Internationale . 29 December 2024. pp. 105– 106 . Retrieved 19 January 2025 .
-↑ Price, Matilda (2025-06-20). "UCI points update brings Women's WorldTour system in line with men's, designating women's Monuments and boosting Tour de France Femmes" . Cyclingnews . Retrieved 2025-06-20 .
-↑ Frattini, Kirsten; Price, Matilda (2022-08-02). "9 conclusions from historic 2022 Tour de France Femmes avec Zwift" . cyclingnews.com . Retrieved 2022-08-04 .
-↑ Goldman, Tom (22 July 2022). "After more than 30 years, a multiday women's Tour de France is back" . NPR.org . Retrieved 2022-08-04 . After the Tour de France femmes avec Zwift announced its record $250,000 purse, another women's grand tour event, the Giro d'Italia Donne, matched the Tour's prize money amount.
-↑ "All info on the 2022 Giro Donne, the first women's Grand Tour of the year for the Movistar Team | Movistar Team" . Movistar Team . 2022-06-18 . Retrieved 2022-08-04 .
-1 2 Sadhbh O'Shea and Kirsten Frattini (19 August 2015). "2016 Women's WorldTour: Rules, organizers' requirements and live broadcasting" . Cyclingnews.com .
-↑ Rogers, Owen (2022-07-31). "Seven woman teams a possibility at the 2023 Tour de France Femmes" . cyclingweekly.com . Retrieved 2022-08-01 .
-↑ Ostlere, Lawrence (22 July 2022). "Why the inaugural Tour de France Femmes 'changes everything' " . The Independent . Retrieved 23 July 2022 . I think if you asked everyone in the peloton what's more important, the prize money or the TV coverage, I think most would say TV coverage.
-↑ Frattini, Kirsten (16 October 2021). "A closer look reveals the inequity at Tour de France Femmes" . cyclingnews.com . Retrieved 28 February 2022 .
-↑ "Road – Calendar" . UCI.
-↑ "Classifications" . UCI. Archived from the original on 2016-06-24 . Retrieved 2016-05-25 .
-↑ "UCI announces 2018 road calendar | Cyclingnews" . 22 September 2017.
-↑ "Registration of UCI professional teams for the 2025 season" . www.uci.org . Retrieved 2025-01-15 .
-↑ Frattini, Kirsten (2019-12-10). "UCI confirms seven of the eight Women's WorldTeams for 2020" . Cyclingnews . Retrieved 2025-04-15 .
+<a href=\"./Boston_Marathon#cite_note-at125-100\" id=\"mwBD0\"><span class=\"mw-reflink-text\" id=\"mwBD4\"><span class=\"cite-bracket\" id=\"mwBD8\">[</span>100<span class=\"cite-bracket\" id=\"mwBEA\">]</span></span></a></sup>\n<sup about=\"#mwt400\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBEE\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"baa0211\"},\"body\":{\"id\":\"mw-reference-text-cite_note-baa0211-64\"}}'><a href=\"./Boston_Marathon#cite_note-baa0211-64\" id=\"mwBEI\"><span class=\"mw-reflink-text\" id=\"mwBEM\"><span class=\"cite-bracket\" id=\"mwBEQ\">[</span>64<span class=\"cite-bracket\" id=\"mwBEU\">]</span></span></a></sup>\n<sup about=\"#mwt403\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBEY\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"BAA 1901–1905\"},\"body\":{\"id\":\"mw-reference-text-cite_note-BAA_1901–1905-29\"}}'><a href=\"./Boston_Marathon#cite_note-BAA_1901–1905-29\" id=\"mwBEc\"><span class=\"mw-reflink-text\" id=\"mwBEg\"><span class=\"cite-bracket\" id=\"mwBEk\">[</span>29<span class=\"cite-bracket\" id=\"mwBEo\">]</span></span></a></sup>\n<sup about=\"#mwt406\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBEs\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Bakken\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Bakken-85\"}}'><a href=\"./Boston_Marathon#cite_note-Bakken-85\" id=\"mwBEw\"><span class=\"mw-reflink-text\" id=\"mwBE0\"><span class=\"cite-bracket\" id=\"mwBE4\">[</span>85<span class=\"cite-bracket\" id=\"mwBE8\">]</span></span></a></sup>\n<sup about=\"#mwt409\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBFA\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"blind\"},\"body\":{\"id\":\"mw-reference-text-cite_note-blind-107\"}}'><a href=\"./Boston_Marathon#cite_note-blind-107\" id=\"mwBFE\"><span class=\"mw-reflink-text\" id=\"mwBFI\"><span class=\"cite-bracket\" id=\"mwBFM\">[</span>107<span class=\"cite-bracket\" id=\"mwBFQ\">]</span></span></a></sup>\n<sup about=\"#mwt412\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBFU\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"bocaratonRuiz\"},\"body\":{\"id\":\"mw-reference-text-cite_note-bocaratonRuiz-30\"}}'><a href=\"./Boston_Marathon#cite_note-bocaratonRuiz-30\" id=\"mwBFY\"><span class=\"mw-reflink-text\" id=\"mwBFc\"><span class=\"cite-bracket\" id=\"mwBFg\">[</span>30<span class=\"cite-bracket\" id=\"mwBFk\">]</span></span></a></sup>\n<sup about=\"#mwt415\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBFo\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Bousquet\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Bousquet-121\"}}'><a href=\"./Boston_Marathon#cite_note-Bousquet-121\" id=\"mwBFs\"><span class=\"mw-reflink-text\" id=\"mwBFw\"><span class=\"cite-bracket\" id=\"mwBF0\">[</span>121<span class=\"cite-bracket\" id=\"mwBF4\">]</span></span></a></sup>\n<sup about=\"#mwt418\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBF8\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Burfoot\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Burfoot-65\"}}'><a href=\"./Boston_Marathon#cite_note-Burfoot-65\" id=\"mwBGA\"><span class=\"mw-reflink-text\" id=\"mwBGE\"><span class=\"cite-bracket\" id=\"mwBGI\">[</span>65<span class=\"cite-bracket\" id=\"mwBGM\">]</span></span></a></sup>\n<sup about=\"#mwt421\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBGQ\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"charity\"},\"body\":{\"id\":\"mw-reference-text-cite_note-charity-69\"}}'><a href=\"./Boston_Marathon#cite_note-charity-69\" id=\"mwBGU\"><span class=\"mw-reflink-text\" id=\"mwBGY\"><span class=\"cite-bracket\" id=\"mwBGc\">[</span>69<span class=\"cite-bracket\" id=\"mwBGg\">]</span></span></a></sup>\n<sup about=\"#mwt424\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBGk\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"cnn\"},\"body\":{\"id\":\"mw-reference-text-cite_note-cnn-37\"}}'><a href=\"./Boston_Marathon#cite_note-cnn-37\" id=\"mwBGo\"><span class=\"mw-reflink-text\" id=\"mwBGs\"><span class=\"cite-bracket\" id=\"mwBGw\">[</span>37<span class=\"cite-bracket\" id=\"mwBG0\">]</span></span></a></sup>\n<sup about=\"#mwt427\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBG4\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Connelly\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Connelly-86\"}}'><a href=\"./Boston_Marathon#cite_note-Connelly-86\" id=\"mwBG8\"><span class=\"mw-reflink-text\" id=\"mwBHA\"><span class=\"cite-bracket\" id=\"mwBHE\">[</span>86<span class=\"cite-bracket\" id=\"mwBHI\">]</span></span></a></sup>\n<sup about=\"#mwt430\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBHM\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"costume2011\"},\"body\":{\"id\":\"mw-reference-text-cite_note-costume2011-131\"}}'><a href=\"./Boston_Marathon#cite_note-costume2011-131\" id=\"mwBHQ\"><span class=\"mw-reflink-text\" id=\"mwBHU\"><span class=\"cite-bracket\" id=\"mwBHY\">[</span>131<span class=\"cite-bracket\" id=\"mwBHc\">]</span></span></a></sup>\n<sup about=\"#mwt433\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBHg\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"costume2013\"},\"body\":{\"id\":\"mw-reference-text-cite_note-costume2013-132\"}}'><a href=\"./Boston_Marathon#cite_note-costume2013-132\" id=\"mwBHk\"><span class=\"mw-reflink-text\" id=\"mwBHo\"><span class=\"cite-bracket\" id=\"mwBHs\">[</span>132<span class=\"cite-bracket\" id=\"mwBHw\">]</span></span></a></sup>\n<sup about=\"#mwt436\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBH0\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"date\"},\"body\":{\"id\":\"mw-reference-text-cite_note-date-76\"}}'><a href=\"./Boston_Marathon#cite_note-date-76\" id=\"mwBH4\"><span class=\"mw-reflink-text\" id=\"mwBH8\"><span class=\"cite-bracket\" id=\"mwBIA\">[</span>76<span class=\"cite-bracket\" id=\"mwBIE\">]</span></span></a></sup>\n<sup about=\"#mwt439\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBII\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"death\"},\"body\":{\"id\":\"mw-reference-text-cite_note-death-32\"}}'><a href=\"./Boston_Marathon#cite_note-death-32\" id=\"mwBIM\"><span class=\"mw-reflink-text\" id=\"mwBIQ\"><span class=\"cite-bracket\" id=\"mwBIU\">[</span>32<span class=\"cite-bracket\" id=\"mwBIY\">]</span></span></a></sup>\n<sup about=\"#mwt442\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBIc\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"disabled\"},\"body\":{\"id\":\"mw-reference-text-cite_note-disabled-106\"}}'><a href=\"./Boston_Marathon#cite_note-disabled-106\" id=\"mwBIg\"><span class=\"mw-reflink-text\" id=\"mwBIk\"><span class=\"cite-bracket\" id=\"mwBIo\">[</span>106<span class=\"cite-bracket\" id=\"mwBIs\">]</span></span></a></sup>\n<sup about=\"#mwt445\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBIw\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"driven\"},\"body\":{\"id\":\"mw-reference-text-cite_note-driven-111\"}}'><a href=\"./Boston_Marathon#cite_note-driven-111\" id=\"mwBI0\"><span class=\"mw-reflink-text\" id=\"mwBI4\"><span class=\"cite-bracket\" id=\"mwBI8\">[</span>111<span class=\"cite-bracket\" id=\"mwBJA\">]</span></span></a></sup>\n<sup about=\"#mwt448\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBJE\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"explosions\"},\"body\":{\"id\":\"mw-reference-text-cite_note-explosions-38\"}}'><a href=\"./Boston_Marathon#cite_note-explosions-38\" id=\"mwBJI\"><span class=\"mw-reflink-text\" id=\"mwBJM\"><span class=\"cite-bracket\" id=\"mwBJQ\">[</span>38<span class=\"cite-bracket\" id=\"mwBJU\">]</span></span></a></sup>\n<sup about=\"#mwt451\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBJY\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"facts\"},\"body\":{\"id\":\"mw-reference-text-cite_note-facts-6\"}}'><a href=\"./Boston_Marathon#cite_note-facts-6\" id=\"mwBJc\"><span class=\"mw-reflink-text\" id=\"mwBJg\"><span class=\"cite-bracket\" id=\"mwBJk\">[</span>6<span class=\"cite-bracket\" id=\"mwBJo\">]</span></span></a></sup>\n<sup about=\"#mwt454\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBJs\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"first\"},\"body\":{\"id\":\"mw-reference-text-cite_note-first-3\"}}'><a href=\"./Boston_Marathon#cite_note-first-3\" id=\"mwBJw\"><span class=\"mw-reflink-text\" id=\"mwBJ0\"><span class=\"cite-bracket\" id=\"mwBJ4\">[</span>3<span class=\"cite-bracket\" id=\"mwBJ8\">]</span></span></a></sup>\n<sup about=\"#mwt457\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBKA\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"globe-number-injured\"},\"body\":{\"id\":\"mw-reference-text-cite_note-globe-number-injured-39\"}}'><a href=\"./Boston_Marathon#cite_note-globe-number-injured-39\" id=\"mwBKE\"><span class=\"mw-reflink-text\" id=\"mwBKI\"><span class=\"cite-bracket\" id=\"mwBKM\">[</span>39<span class=\"cite-bracket\" id=\"mwBKQ\">]</span></span></a></sup>\n<sup about=\"#mwt460\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBKU\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Golen2011\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Golen2011-36\"}}'><a href=\"./Boston_Marathon#cite_note-Golen2011-36\" id=\"mwBKY\"><span class=\"mw-reflink-text\" id=\"mwBKc\"><span class=\"cite-bracket\" id=\"mwBKg\">[</span>36<span class=\"cite-bracket\" id=\"mwBKk\">]</span></span></a></sup>\n<sup about=\"#mwt463\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBKo\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Hohler\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Hohler-68\"}}'><a href=\"./Boston_Marathon#cite_note-Hohler-68\" id=\"mwBKs\"><span class=\"mw-reflink-text\" id=\"mwBKw\"><span class=\"cite-bracket\" id=\"mwBK0\">[</span>68<span class=\"cite-bracket\" id=\"mwBK4\">]</span></span></a></sup>\n<sup about=\"#mwt466\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBK8\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"hoyt\"},\"body\":{\"id\":\"mw-reference-text-cite_note-hoyt-122\"}}'><a href=\"./Boston_Marathon#cite_note-hoyt-122\" id=\"mwBLA\"><span class=\"mw-reflink-text\" id=\"mwBLE\"><span class=\"cite-bracket\" id=\"mwBLI\">[</span>122<span class=\"cite-bracket\" id=\"mwBLM\">]</span></span></a></sup>\n<sup about=\"#mwt469\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBLQ\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"kisses\"},\"body\":{\"id\":\"mw-reference-text-cite_note-kisses-115\"}}'><a href=\"./Boston_Marathon#cite_note-kisses-115\" id=\"mwBLU\"><span class=\"mw-reflink-text\" id=\"mwBLY\"><span class=\"cite-bracket\" id=\"mwBLc\">[</span>115<span class=\"cite-bracket\" id=\"mwBLg\">]</span></span></a></sup>\n<sup about=\"#mwt472\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBLk\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Malone\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Malone-92\"}}'><a href=\"./Boston_Marathon#cite_note-Malone-92\" id=\"mwBLo\"><span class=\"mw-reflink-text\" id=\"mwBLs\"><span class=\"cite-bracket\" id=\"mwBLw\">[</span>92<span class=\"cite-bracket\" id=\"mwBL0\">]</span></span></a></sup>\n<sup about=\"#mwt475\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBL4\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Mannes\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Mannes-66\"}}'><a href=\"./Boston_Marathon#cite_note-Mannes-66\" id=\"mwBL8\"><span class=\"mw-reflink-text\" id=\"mwBMA\"><span class=\"cite-bracket\" id=\"mwBME\">[</span>66<span class=\"cite-bracket\" id=\"mwBMI\">]</span></span></a></sup>\n<sup about=\"#mwt478\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBMM\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"marathon_death\"},\"body\":{\"id\":\"mw-reference-text-cite_note-marathon_death-33\"}}'><a href=\"./Boston_Marathon#cite_note-marathon_death-33\" id=\"mwBMQ\"><span class=\"mw-reflink-text\" id=\"mwBMU\"><span class=\"cite-bracket\" id=\"mwBMY\">[</span>33<span class=\"cite-bracket\" id=\"mwBMc\">]</span></span></a></sup>\n<sup about=\"#mwt481\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBMg\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"McGoldrick\"},\"body\":{\"id\":\"mw-reference-text-cite_note-McGoldrick-129\"}}'><a href=\"./Boston_Marathon#cite_note-McGoldrick-129\" id=\"mwBMk\"><span class=\"mw-reflink-text\" id=\"mwBMo\"><span class=\"cite-bracket\" id=\"mwBMs\">[</span>129<span class=\"cite-bracket\" id=\"mwBMw\">]</span></span></a></sup>\n<sup about=\"#mwt484\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBM0\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"memorable\"},\"body\":{\"id\":\"mw-reference-text-cite_note-memorable-91\"}}'><a href=\"./Boston_Marathon#cite_note-memorable-91\" id=\"mwBM4\"><span class=\"mw-reflink-text\" id=\"mwBM8\"><span class=\"cite-bracket\" id=\"mwBNA\">[</span>91<span class=\"cite-bracket\" id=\"mwBNE\">]</span></span></a></sup>\n<sup about=\"#mwt487\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBNI\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Memorial\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Memorial-110\"}}'><a href=\"./Boston_Marathon#cite_note-Memorial-110\" id=\"mwBNM\"><span class=\"mw-reflink-text\" id=\"mwBNQ\"><span class=\"cite-bracket\" id=\"mwBNU\">[</span>110<span class=\"cite-bracket\" id=\"mwBNY\">]</span></span></a></sup>\n<sup about=\"#mwt490\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBNc\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"monday\"},\"body\":{\"id\":\"mw-reference-text-cite_note-monday-77\"}}'><a href=\"./Boston_Marathon#cite_note-monday-77\" id=\"mwBNg\"><span class=\"mw-reflink-text\" id=\"mwBNk\"><span class=\"cite-bracket\" id=\"mwBNo\">[</span>77<span class=\"cite-bracket\" id=\"mwBNs\">]</span></span></a></sup>\n<sup about=\"#mwt493\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBNw\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"patriot\"},\"body\":{\"id\":\"mw-reference-text-cite_note-patriot-74\"}}'><a href=\"./Boston_Marathon#cite_note-patriot-74\" id=\"mwBN0\"><span class=\"mw-reflink-text\" id=\"mwBN4\"><span class=\"cite-bracket\" id=\"mwBN8\">[</span>74<span class=\"cite-bracket\" id=\"mwBOA\">]</span></span></a></sup>\n<sup about=\"#mwt496\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBOE\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Pave\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Pave-112\"}}'><a href=\"./Boston_Marathon#cite_note-Pave-112\" id=\"mwBOI\"><span class=\"mw-reflink-text\" id=\"mwBOM\"><span class=\"cite-bracket\" id=\"mwBOQ\">[</span>112<span class=\"cite-bracket\" id=\"mwBOU\">]</span></span></a></sup>\n<sup about=\"#mwt497\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBOY\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"program\"},\"body\":{\"id\":\"mw-reference-text-cite_note-program-88\"}}'><a href=\"./Boston_Marathon#cite_note-program-88\" id=\"mwBOc\"><span class=\"mw-reflink-text\" id=\"mwBOg\"><span class=\"cite-bracket\" id=\"mwBOk\">[</span>88<span class=\"cite-bracket\" id=\"mwBOo\">]</span></span></a></sup>\n<sup about=\"#mwt500\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBOs\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Qualifying\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Qualifying-62\"}}'><a href=\"./Boston_Marathon#cite_note-Qualifying-62\" id=\"mwBOw\"><span class=\"mw-reflink-text\" id=\"mwBO0\"><span class=\"cite-bracket\" id=\"mwBO4\">[</span>62<span class=\"cite-bracket\" id=\"mwBO8\">]</span></span></a></sup>\n<sup about=\"#mwt503\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBPA\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"rules\"},\"body\":{\"id\":\"mw-reference-text-cite_note-rules-93\"}}'><a href=\"./Boston_Marathon#cite_note-rules-93\" id=\"mwBPE\"><span class=\"mw-reflink-text\" id=\"mwBPI\"><span class=\"cite-bracket\" id=\"mwBPM\">[</span>93<span class=\"cite-bracket\" id=\"mwBPQ\">]</span></span></a></sup>\n<sup about=\"#mwt506\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBPU\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"schedule\"},\"body\":{\"id\":\"mw-reference-text-cite_note-schedule-81\"}}'><a href=\"./Boston_Marathon#cite_note-schedule-81\" id=\"mwBPY\"><span class=\"mw-reflink-text\" id=\"mwBPc\"><span class=\"cite-bracket\" id=\"mwBPg\">[</span>81<span class=\"cite-bracket\" id=\"mwBPk\">]</span></span></a></sup>\n<sup about=\"#mwt509\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBPo\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"scream\"},\"body\":{\"id\":\"mw-reference-text-cite_note-scream-114\"}}'><a href=\"./Boston_Marathon#cite_note-scream-114\" id=\"mwBPs\"><span class=\"mw-reflink-text\" id=\"mwBPw\"><span class=\"cite-bracket\" id=\"mwBP0\">[</span>114<span class=\"cite-bracket\" id=\"mwBP4\">]</span></span></a></sup>\n<sup about=\"#mwt512\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBP8\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"slideshow\"},\"body\":{\"id\":\"mw-reference-text-cite_note-slideshow-113\"}}'><a href=\"./Boston_Marathon#cite_note-slideshow-113\" id=\"mwBQA\"><span class=\"mw-reflink-text\" id=\"mwBQE\"><span class=\"cite-bracket\" id=\"mwBQI\">[</span>113<span class=\"cite-bracket\" id=\"mwBQM\">]</span></span></a></sup>\n<sup about=\"#mwt515\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBQQ\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"sox\"},\"body\":{\"id\":\"mw-reference-text-cite_note-sox-116\"}}'><a href=\"./Boston_Marathon#cite_note-sox-116\" id=\"mwBQU\"><span class=\"mw-reflink-text\" id=\"mwBQY\"><span class=\"cite-bracket\" id=\"mwBQc\">[</span>116<span class=\"cite-bracket\" id=\"mwBQg\">]</span></span></a></sup>\n<sup about=\"#mwt518\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBQk\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Springer\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Springer-71\"}}'><a href=\"./Boston_Marathon#cite_note-Springer-71\" id=\"mwBQo\"><span class=\"mw-reflink-text\" id=\"mwBQs\"><span class=\"cite-bracket\" id=\"mwBQw\">[</span>71<span class=\"cite-bracket\" id=\"mwBQ0\">]</span></span></a></sup>\n<sup about=\"#mwt521\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBQ4\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"spectator\"},\"body\":{\"id\":\"mw-reference-text-cite_note-spectator-83\"}}'><a href=\"./Boston_Marathon#cite_note-spectator-83\" id=\"mwBQ8\"><span class=\"mw-reflink-text\" id=\"mwBRA\"><span class=\"cite-bracket\" id=\"mwBRE\">[</span>83<span class=\"cite-bracket\" id=\"mwBRI\">]</span></span></a></sup>\n<sup about=\"#mwt524\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBRM\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Stableford\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Stableford-40\"}}'><a href=\"./Boston_Marathon#cite_note-Stableford-40\" id=\"mwBRQ\"><span class=\"mw-reflink-text\" id=\"mwBRU\"><span class=\"cite-bracket\" id=\"mwBRY\">[</span>40<span class=\"cite-bracket\" id=\"mwBRc\">]</span></span></a></sup>\n<sup about=\"#mwt527\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBRg\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"start\"},\"body\":{\"id\":\"mw-reference-text-cite_note-start-80\"}}'><a href=\"./Boston_Marathon#cite_note-start-80\" id=\"mwBRk\"><span class=\"mw-reflink-text\" id=\"mwBRo\"><span class=\"cite-bracket\" id=\"mwBRs\">[</span>80<span class=\"cite-bracket\" id=\"mwBRw\">]</span></span></a></sup>\n<sup about=\"#mwt530\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBR0\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"tips\"},\"body\":{\"id\":\"mw-reference-text-cite_note-tips-87\"}}'><a href=\"./Boston_Marathon#cite_note-tips-87\" id=\"mwBR4\"><span class=\"mw-reflink-text\" id=\"mwBR8\"><span class=\"cite-bracket\" id=\"mwBSA\">[</span>87<span class=\"cite-bracket\" id=\"mwBSE\">]</span></span></a></sup>\n<sup about=\"#mwt533\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBSI\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"video\"},\"body\":{\"id\":\"mw-reference-text-cite_note-video-79\"}}'><a href=\"./Boston_Marathon#cite_note-video-79\" id=\"mwBSM\"><span class=\"mw-reflink-text\" id=\"mwBSQ\"><span class=\"cite-bracket\" id=\"mwBSU\">[</span>79<span class=\"cite-bracket\" id=\"mwBSY\">]</span></span></a></sup>\n<sup about=\"#mwt536\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBSc\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"Vega\"},\"body\":{\"id\":\"mw-reference-text-cite_note-Vega-90\"}}'><a href=\"./Boston_Marathon#cite_note-Vega-90\" id=\"mwBSg\"><span class=\"mw-reflink-text\" id=\"mwBSk\"><span class=\"cite-bracket\" id=\"mwBSo\">[</span>90<span class=\"cite-bracket\" id=\"mwBSs\">]</span></span></a></sup>\n<sup about=\"#mwt539\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBSw\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"visiting\"},\"body\":{\"id\":\"mw-reference-text-cite_note-visiting-78\"}}'><a href=\"./Boston_Marathon#cite_note-visiting-78\" id=\"mwBS0\"><span class=\"mw-reflink-text\" id=\"mwBS4\"><span class=\"cite-bracket\" id=\"mwBS8\">[</span>78<span class=\"cite-bracket\" id=\"mwBTA\">]</span></span></a></sup>\n<sup about=\"#mwt543\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBTE\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"weather\"},\"body\":{\"id\":\"mw-reference-text-cite_note-weather-117\"}}'><a href=\"./Boston_Marathon#cite_note-weather-117\" id=\"mwBTI\"><span class=\"mw-reflink-text\" id=\"mwBTM\"><span class=\"cite-bracket\" id=\"mwBTQ\">[</span>117<span class=\"cite-bracket\" id=\"mwBTU\">]</span></span></a></sup>\n<sup about=\"#mwt547\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBTY\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"wheelchair\"},\"body\":{\"id\":\"mw-reference-text-cite_note-wheelchair-101\"}}'><a href=\"./Boston_Marathon#cite_note-wheelchair-101\" id=\"mwBTc\"><span class=\"mw-reflink-text\" id=\"mwBTg\"><span class=\"cite-bracket\" id=\"mwBTk\">[</span>101<span class=\"cite-bracket\" id=\"mwBTo\">]</span></span></a></sup>\n<sup about=\"#mwt550\" class=\"mw-ref reference\" rel=\"dc:references\" typeof=\"mw:Extension/ref\" id=\"mwBTs\" data-mw='{\"name\":\"ref\",\"attrs\":{\"name\":\"wsj\"},\"body\":{\"id\":\"mw-reference-text-cite_note-wsj-126\"}}'><a href=\"./Boston_Marathon#cite_note-wsj-126\" id=\"mwBTw\"><span class=\"mw-reflink-text\" id=\"mwBT0\"><span class=\"cite-bracket\" id=\"mwBT4\">[</span>126<span class=\"cite-bracket\" id=\"mwBT8\">]</span></span></a></sup>\n"}}'> ↑ "Launch of new Boston Marathon logo on Global Running Day symbolizes moving forward together" . baa.org (Press release). Boston Athletic Association . June 5, 2024 . Retrieved April 18, 2025 .
+↑ "Marathon Dates" . BAA.org . Archived from the original on May 13, 2020 . Retrieved March 13, 2020 .
+↑ "The First Boston Marathon" . Boston Athletic Association. Archived from the original on April 24, 2014 . Retrieved April 16, 2013 .
+↑ "WorldMarathoner.com – Marathon Guides & Resources" .
+1 2 "About Us" . BAA.org . Archived from the original on April 17, 2019 . Retrieved August 12, 2019 .
+1 2 3 4 "Boston Marathon History: Boston Marathon Facts" . Boston Athletic Association. Archived from the original on August 11, 2014 . Retrieved April 16, 2013 .
+↑ "Boston Marathon Race Statistics, 2015" . Race Statistics, 2015 . Boston Athletic Association. Archived from the original on May 7, 2015 . Retrieved May 10, 2015 .
+↑ Ronto, Paul (January 26, 2024). "The Complete Boston Marathon Database [ 374 Stats and Facts ] " .
+↑ "Against the Wind: Racing the Wind 2" . July 27, 2011. Archived from the original on July 27, 2011 . Retrieved April 7, 2025 .
+↑ "Bobbi Gibb: The Boston Marathon pioneer who raced a lie" . BBC Sport . August 28, 2023 . Retrieved July 29, 2026 .
+↑ Graham, Tim (November 24, 2011). "Pollow takes third consecutive Turkey Trot amid the goofballs" . The Buffalo News. Archived from the original on November 26, 2011 . Retrieved November 24, 2011 .
+↑ "The History of the Boston Marathon: A Perfect Way to Celebrate Patriot's Day" . The Atlantic. April 17, 2013. Archived from the original on April 22, 2013 . Retrieved April 23, 2013 .
+↑ "Timeline of Events" . Boston Athletic Association. Archived from the original on May 9, 2013 . Retrieved April 16, 2013 .
+↑ " 'There's a big buzz' as Hopkinton sets up for upcoming Boston Marathon" . WCVB . April 12, 2023. Archived from the original on April 16, 2023 . Retrieved April 16, 2023 .
+↑ "Q&A: The Boston Marathon" . Wasabi Media Group. April 20, 2010. Archived from the original on October 27, 2011 . Retrieved April 4, 2011 .
+↑ "De Castella and Kristiansen Win First Cash Prize" . NY Times Co. Archived from the original on November 3, 2012 . Retrieved April 4, 2011 .
+↑ Pave, Marvin (April 17, 2008). "Legacy on the line" . The Boston Globe . Archived from the original on March 3, 2016 . Retrieved April 16, 2013 .
+↑ "Koreans and the Boston Marathon | Center for Global Christianity & Mission" . www.bu.edu . Archived from the original on January 31, 2024 . Retrieved January 31, 2024 .
+↑ "Sport: Banned in Boston" . Time . February 12, 1951. Archived from the original on July 21, 2013 . Retrieved April 16, 2013 .
+1 2 3
+Switzer, Kathrine (April 4, 2017). Marathon Woman (4th ed.). Da Capo Press Inc. ISBN 978-0306825651 . Archived from the original on April 20, 2020 . Retrieved April 24, 2020 . We checked the rule book and entry form; there was nothing about gender in the marathon. I filled in my AAU number, plunked down $3 cash as entry fee, signed as I always sign my name, 'K.V. Switzer,' and went to the university infirmary to get a fitness certificate.
+1 2
+Romanelli, Elaine (1979). "Women in Sports and Games". In O'Neill, Lois Decker (ed.). The Women's Book of World Records and Achievements . Anchor Press. p. 576 . ISBN 0-385-12733-2 . [Switzer's] run created such a stir that the AAU [...] barred women from all competition with men in these events on pain of losing all rights to compete.
+↑ Gibbs, Roberta "Bobbi". "Roberta "Bobbi" Gibb - A Run of One's Own" . Women's Sports Foundation. Archived from the original on December 4, 2019 . Retrieved April 25, 2020 .
+↑ Derderian, Tom (1996). Boston Marathon: The History of the World's Premier Running Event . Champaign, Illinois: Human Kinetics Publishers.
+↑ "NPR: Marathon Women" . NPR. April 15, 2002. Archived from the original on March 8, 2014 . Retrieved April 14, 2011 .
+↑ "Who Was That Guy Who Attacked Kathrine Switzer 50 Years Ago?" . Runner's World . April 10, 2017 . Retrieved April 6, 2025 .
+↑ Butler, Charles (October 19, 2012). "40 Years Ago, Six Women Changed Racing Forever" . Runner's World. Archived from the original on January 12, 2016 . Retrieved January 2, 2016 .
+↑ "Nina Kuscsik" . Distance Running . Archived from the original on May 8, 2015 . Retrieved April 24, 2015 .
+↑ Tumin, Remy (April 18, 2022). "In 1972, only 8 women ran the race. Today, 12,100 are running" . New York Times . Retrieved December 31, 2024 .
+↑ Boston Athletic Association (2011). "Boston Marathon History: 1976–1980" . baa.org . Boston Athletic Association. Archived from the original on June 20, 2013 . Retrieved April 16, 2013 .
+↑ "Boston disqualifies Rosie Ruiz" . Boca Raton News . April 30, 1980. p. 3C. Archived from the original on May 11, 2016 . Retrieved March 9, 2011 .
+↑ Johanne Grewell. "Eleanor Brooks Fairs." American Communal Societies Quarterly , October 2009.
+↑ "Heartbreak Hill Claims Another Victim" . Associated Press News . April 16, 1996. Archived from the original on August 24, 2018 . Retrieved May 26, 2017 .
+↑ "Fluid Cited in Marathoner's Death" . Associated Press News . August 13, 2002. Archived from the original on April 19, 2014 . Retrieved April 16, 2013 .
+1 2 Connolly, John (April 20, 2011). "BAA on record: Geoffrey Mutai's No. 1" . Boston Herald . Archived from the original on October 5, 2012 . Retrieved April 20, 2011 .
+↑ Monti, David (April 18, 2011). "Strong winds and ideal conditions propel Mutai to fastest Marathon ever - Boston Marathon report" . iaaf.org . International Association of Athletics Federations. Archived from the original on January 18, 2012.
+1 2 3 Golen, Jimmy (April 19, 2011). "Boston wants Mutai's 2:03:02 to be world record" . The Boston Globe . Archived from the original on November 3, 2012 . Retrieved April 16, 2013 .
+↑ "Explosions rock Boston Marathon, several injured" . CNN. April 15, 2013. Archived from the original on April 15, 2013 . Retrieved April 15, 2013 .
+↑ Golen, Jimmy (April 15, 2013). "Two explosions at Boston marathon finish line" . AP Newswire . Archived from the original on April 15, 2013 . Retrieved April 15, 2013 .
+↑ Kotz, Deborah (April 24, 2013). "Injury toll from Marathon bombs reduced to 264" . The Boston Globe . Archived from the original on March 31, 2019 . Retrieved April 29, 2013 . Boston public health officials said Tuesday that they have revised downward their estimate of the number of people injured in the Marathon attacks, to 264.
+↑ Stableford, Dylan (May 16, 2013). "Runners who didn't finish Boston Marathon due to bombings to get automatic entry in 2014" . The Lookout . Archived from the original on June 10, 2013 . Retrieved June 27, 2013 .
+↑ "In Watertown, one brother's decision led to death of another" . The Boston Globe . Archived from the original on December 18, 2021 . Retrieved December 18, 2021 .
+↑ "What Happened To Dzhokhar Tsarnaev? Update On Boston Marathon Bomber Sentenced To Death" . International Business Times . April 16, 2017. Archived from the original on April 18, 2018 . Retrieved April 15, 2018 .
+↑ Boston Athletic Association. "Buzunesh Deba Named 2014 Boston Marathon Champion" . B.A.A . Archived from the original on November 9, 2017 . Retrieved December 13, 2016 .
+↑ Bruce Gellerman (April 19, 2016). "Bilateral Amputee Jami Marseilles Makes Boston Marathon History" . wbur . Archived from the original on April 22, 2016 . Retrieved April 20, 2016 .
+↑ "Bilateral Amputee Jami Marseilles Completes the Chicago Marathon" . Runner's World . October 14, 2015. Archived from the original on May 5, 2016 . Retrieved April 20, 2016 .
+↑ "Bobbi Gibb serves as grand marshal of 2016 Boston Marathon" . Wicked Local Rockport . Associated Press.
+↑ "Atsede Baysa gives her Boston Marathon trophy to Bobbi Gibb" . The Boston Globe . Archived from the original on April 20, 2016 . Retrieved April 20, 2016 .
+↑ Logan, Tim (March 13, 2020). "Boston Marathon postponed to September due to coronavirus" . The Boston Globe . Archived from the original on March 13, 2020 . Retrieved March 13, 2020 .
+↑ Yang, Nicole (March 13, 2020). "2020 Boston Marathon postponed to Monday, Sept. 14" . Boston.com . Archived from the original on March 14, 2020 . Retrieved March 13, 2020 .
+↑ Waller, John (May 28, 2020). "The 2020 Boston Marathon has been canceled" . Boston.com . Archived from the original on June 8, 2020 . Retrieved May 28, 2020 .
+↑ Golen, Jimmy (May 28, 2020). "Boston Marathon canceled for 1st time in 124-year history" . The Associated Press . Archived from the original on May 30, 2020 . Retrieved May 28, 2020 .
+↑ "124th Boston Marathon to be Held Virtually" . BAA.org (Press release). Boston Athletic Association . May 28, 2020. Archived from the original on October 9, 2021 . Retrieved October 9, 2021 .
+↑ "124th Boston Marathon Virtual Experience Features More Than 15,900 Finishers" . BAA.org (Press release). Boston Athletic Association . September 25, 2020. Archived from the original on October 9, 2021 . Retrieved October 9, 2021 .
+↑ Golen, Jimmy (March 15, 2018). "Boston Marathon relay to commemorate World War I race" . Concord Monitor . Concord, New Hampshire . Archived from the original on October 11, 2021 . Retrieved October 10, 2021 .
+↑ McInerney, Katie (October 28, 2020). "Boston Marathon will not be held in April 2021, BAA announces" . Boston.com . Archived from the original on October 29, 2020 . Retrieved October 28, 2020 .
+↑ Sobey, Rick (January 26, 2021). "Boston Marathon set for Oct. 11 — if road races are allowed in Massachusetts coronavirus reopening plan" . Boston Herald . Archived from the original on May 6, 2021 . Retrieved January 27, 2021 .
+↑ Cain, Jonathan (March 15, 2021). "This Year's Boston Marathon, Rescheduled For October, Will Be Capped At 20,000 Runners" . WBUR-FM . Archived from the original on March 16, 2021 . Retrieved April 9, 2021 .
+↑ "A look at the tightly packed fall marathon schedule" . Running Magazine . January 31, 2021. Archived from the original on August 12, 2021 . Retrieved August 12, 2021 .
+↑ "Virtual 125th Boston Marathon Fact Sheet | Boston Athletic Association" . www.baa.org . Archived from the original on January 5, 2022 . Retrieved January 5, 2022 .
+↑ "Qualify | Boston Athletic Association" . www.baa.org . Retrieved September 17, 2024 .
+1 2 "Boston Marathon lowers qualifying times for most prospective runners for 2026 race" . AP News . September 17, 2024 . Retrieved September 17, 2024 .
+↑ "Participant Information: Qualifying" . Boston Athletic Association. Archived from the original on May 17, 2008 . Retrieved April 14, 2011 .
+↑ Hanc, Jon (January 29, 1999). "Marathoner Hits Bottom Of the World". Newsday .
+1 2 "New Qualifying Times in Effect for 2013 Boston Marathon" . Boston Athletic Association. February 16, 2011. Archived from the original on March 4, 2016 . Retrieved April 16, 2013 .
+↑ Burfoot, Amby (April 6, 2009). "All in the Timing" . Archived from the original on March 13, 2013 . Retrieved April 16, 2013 .
+↑ Mannes, George (March 29, 2011). "B.Q. or Die" . Archived from the original on June 23, 2013 . Retrieved April 16, 2013 .
+↑ Victoria Stewart, Sara S McMillan, Jie Hu, Jack C Collins, Sarira El-Den, Claire L O’Reilly, Amanda J Wheeler, Are SMART goals fit-for-purpose? Goal planning with mental health service-users in Australian community pharmacies, International Journal for Quality in Health Care, Volume 36, Issue 1, 2024, mzae009, https://doi.org/10.1093/intqhc/mzae009
+↑ Hohler, Bob; Springer, Shira (February 17, 2011). "Marathon qualifying is revised" . The Boston Globe . Archived from the original on March 4, 2016 . Retrieved April 17, 2011 .
+↑ "Boston Marathon Official Charity Program" . BAA. Archived from the original on April 21, 2013 . Retrieved April 16, 2013 .
+↑ "2017 Boston Marathon Charity Runners Raised $34.2 Million" . Competitor.com . June 29, 2017. Archived from the original on June 30, 2017 . Retrieved June 30, 2017 .
+↑ Shira Springer (October 19, 2010). "Online, sprinters win race: Marathon fills its field in a record 8 hours" . NY Times Co. Archived from the original on June 28, 2011 . Retrieved April 14, 2011 .
+↑ "2019 Boston Marathon Qualifier Acceptances" Archived October 8, 2018, at the Wayback Machine , BAA.org 2018-09-27, Retrieved 2018-10-26
+↑ Touri, Amin (September 16, 2024). "The Boston Marathon's qualifying standards just got harder. Here's what you need to know" . The Boston Globe . Retrieved September 17, 2024 .
+↑ "The Boston Marathon Is Held on Patriots' Day, Which Has Become an Unofficial Anti-Government Day of Action" . Archived from the original on April 19, 2013 . Retrieved April 16, 2013 .
+↑ Bird, Hayden (April 15, 2017). "The Boston Marathon wasn't always held on a Monday" . Boston.com . Retrieved April 27, 2025 .
+↑ "Patriot's Day in United States" . Archived from the original on May 31, 2013 . Retrieved April 16, 2013 .
+↑ Hansen, Amy (April 15, 2013). "Potter Twp. native recalls Marathon Monday" . Archived from the original on February 22, 2017 . Retrieved April 16, 2013 .
+↑ "Boston Marathon Set to Begin Two Hours Earlier" . VisitingNewEngland.com. Archived from the original on July 19, 2011 . Retrieved April 14, 2011 .
+↑ "Time lapse video of 2008 marathon start" . The Boston Globe . March 1, 2011. Archived from the original on November 2, 2012 . Retrieved April 14, 2011 .
+↑ "New Start Structure for the 2011 Boston Marathon" . March 7, 2011. Archived from the original on October 21, 2016 . Retrieved April 16, 2013 .
+↑ "Race Day Schedule" . Boston Athletic Association. Archived from the original on November 7, 2016 . Retrieved November 6, 2016 .
+↑ "What time does the Boston Marathon start?" . Boston.com . March 18, 2019. Archived from the original on March 21, 2019 . Retrieved March 21, 2019 .
+↑ "Event Information: Spectator Information" . Boston Athletic Association. Archived from the original on April 6, 2015 . Retrieved April 16, 2013 .
+↑ "2013 Boston Marathon" . February 24, 2026.
+↑ Bakken, Marius. "Boston Marathon: Pros and Cons" . Archived from the original on April 3, 2011 . Retrieved February 18, 2011 .
+↑ Connelly, Michael (1998). 26 Miles to Boston . Parnassus Imprints. pp. 105–06 . ISBN 9780940160781 .
+↑ "Boston Course Tips" . Rodale Inc. March 14, 2007. Archived from the original on February 18, 2023 . Retrieved April 16, 2013 .
+↑ Boston Marathon Official Program , April 2005, p.68
+↑ Reese, Robert James; Middlebrook, Hailey. "Just How Bad Is Heartbreak Hill?" . Runner's World . Archived from the original on February 10, 2026 . Retrieved February 19, 2026 .
+↑ Michael Vega (October 7, 2004). "At Heartbreak Hill, a salute to a marathoner for the ages" . Boston.com . Archived from the original on April 21, 2011 . Retrieved April 14, 2011 .
+↑ "Recalling The Most Memorable Boston Moments" . Competitor Group, Inc. April 13, 2011. Archived from the original on April 15, 2011 . Retrieved April 14, 2011 .
+↑ Malone, Scott; Krasny, Ros (April 18, 2011). "Mutai runs fastest marathon ever at Boston" . Reuters . Archived from the original on April 21, 2011 . Retrieved April 18, 2011 .
+↑ "USATF Rule 265(5)" (PDF) . USATF. p. 9. Archived (PDF) from the original on May 23, 2012 . Retrieved April 14, 2011 .
+↑ "Boston Marathon History: Course Records" . Boston Athletic Association website . Archived from the original on October 16, 2017 . Retrieved October 16, 2017 .
+↑ Doyle, Peyton (April 17, 2023). "Zachary Stinson and Alicia Dana take Boston Marathon handcycle titles: Dana set a course record for women's handcycling" . Boston.com . Archived from the original on December 6, 2023 . Retrieved April 18, 2023 .
+↑ Jan, Paras (April 22, 2025). "2025 Boston Marathon: Sharon Lokedi Sets A New Record, John Korir Creates Historic Legacy" .
+↑ Jimmy Golen for The Associated Press (2007). "Astronaut to run Boston Marathon — in space" . NBC News . Archived from the original on January 4, 2014 . Retrieved December 19, 2007 .
+↑ NASA (2007). "NASA Astronaut to Run Boston Marathon in Space" . NASA. Archived from the original on November 9, 2007 . Retrieved December 19, 2007 .
+↑ Lorge Butler, Sarah (May 8, 2024). "Controversy Arises Over Boston's Moving 6-Hour Results Cutoff" . Runner's World . Retrieved December 31, 2024 .
+↑ Hanc, John (2012). The B.A.A. at 125: The Official History of the Boston Athletic Association, 1887-2012 . Sports Publishing. ISBN 978-1613211984 .
+↑ Savicki, Mike. "Wheelchair Racing in the Boston Marathon" . Disaboom . Retrieved April 16, 2013 . [ permanent dead link ]
+↑ "The Fastest Man at the Boston Marathon" . Popular Mechanics . April 16, 2010. Archived from the original on March 10, 2023 . Retrieved March 10, 2023 .
+↑ "84-Year-Old Holocaust Survivor Says Running Saved Her Life" . Runner's World. April 13, 2015 . Retrieved May 12, 2015 .
+↑ "BAA to honor handcycle winners, expand field" . The Boston Globe . Archived from the original on May 7, 2017 . Retrieved April 15, 2019 .
+↑ "Marine veteran who crawled to the Boston Marathon finish line was inspired by fallen comrades" . Archived from the original on April 18, 2019 . Retrieved April 18, 2019 .
+↑ "Paving the way for disabled athletes since 1975" . Boston Athletic Association. Archived from the original on May 9, 2013 . Retrieved April 16, 2013 .
+↑ "Running blind: 40 sightless runners competing in Boston marathon" . Archived from the original on April 18, 2013 . Retrieved April 16, 2013 .
+↑ "Kae Ravichandran Wins Nonbinary Division at the 2023 Boston Marathon" . Runner's World . April 18, 2023.
+↑ "Boston Marathon Memorial" . Boston Art Commission. Archived from the original on January 26, 2016 . Retrieved January 13, 2016 .
+↑ "100 Public Artworks" (PDF) . Boston Marathon Memorial . Boston Art Commission. p. 3. Archived from the original on March 4, 2016 . Retrieved January 13, 2016 .
+↑ "Driven to Repeat" . Boston Herald . Archived from the original on October 5, 2012 . Retrieved April 17, 2011 .
+↑ Pave, Marvin (April 22, 2003). "Resounding Wellesley message: voices carry" . The Boston Globe . Archived from the original on October 7, 2008 . Retrieved March 30, 2009 .
+↑ "Runner's World Slideshow: 2008 Boston Marathon" . Runnersworld.com. 2008. Archived from the original on April 23, 2013 . Retrieved March 30, 2009 .
+↑ "Marathon Monday" . Archived from the original on April 30, 2018 . Retrieved April 16, 2013 .
+↑ "Support, kisses at marathon's Scream Tunnel" . The Boston Globe . April 16, 2012. Archived from the original on May 23, 2013 . Retrieved April 16, 2013 .
+↑ "Move Over Marathon: Red Sox Share the Tradition of Patriots' Day" . Archived from the original on April 17, 2013 . Retrieved April 16, 2013 .
+↑ "Patriots' Day Weather" . April 20, 2009 . Retrieved April 16, 2013 . {{ cite web }} : CS1 maint: deprecated archival service ( link )
+↑ "Red Sox announce postponement of Monday's game" . The Boston Globe . Archived from the original on April 17, 2018 . Retrieved April 16, 2018 .
+↑ "Red Sox unveil Patriots' Day-inspired unis" . MLB.com . Retrieved September 15, 2025 .
+↑ "Green Monster the headliner of Red Sox City Connect unis" . MLB.com . Retrieved September 15, 2025 .
+↑ Bousquet, Josh (April 15, 2012). "Dick and Rick Hoyt are Boston Marathon fixtures" . Telegram & Gazette . Archived from the original on July 30, 2013 . Retrieved December 13, 2012 .
+↑ "Dick And Rick Hoyt Complete 30th Boston Marathon" . April 16, 2012. Archived from the original on September 8, 2012 . Retrieved April 16, 2013 .
+↑ "Team Hoyt – father and son Dick and Rick Hoyt – finish final Boston Marathon" . MassLive.com . AP . April 21, 2014. Archived from the original on April 26, 2014 . Retrieved April 22, 2014 .
+↑ Butler, Sarah Lorge (March 17, 2021). "Dick Hoyt, Part of Legendary Boston Marathon Duo, Dies at 80" . Runner's World . Archived from the original on July 26, 2022 . Retrieved March 18, 2021 .
+↑ Andersen, Travis (May 22, 2023). "Boston Marathon Legend Rick Hoyt Dies at 61" . The Boston Globe . Archived from the original on June 4, 2023 . Retrieved June 5, 2023 .
+1 2 Helliker, Kevin. "Fleet of Foot and Blissfully Bold, Freeloaders at the Marathon Wear Fake Bibs—but Win No Prizes" . The Wall Street Journal . Archived from the original on February 8, 2016 . Retrieved November 5, 2013 .
+↑ "Marathon bandits will be missed this year" Archived May 13, 2016, at the Wayback Machine , The Boston Globe .
+↑ "Running Last, But Not Least" , The Boston Globe .
+↑ McGoldrick, Hannah. "Q&A with B.A.A. Executive Director and Boston Marathon Race Director" . Runners World. Archived from the original on October 28, 2013 . Retrieved November 5, 2013 .
+↑ "Frequently Asked Questions" . Boston Athletic Association. Archived from the original on September 23, 2015 . Retrieved September 3, 2015 .
+↑ "Costumed runners" . Boston.com. April 17, 2011. Archived from the original on January 1, 2014 . Retrieved November 5, 2013 .
+↑ "Boston Marathon 2013 costumed runners" . Boston.com. Archived from the original on September 15, 2013 . Retrieved November 5, 2013 .
+↑ "Fans Can Expect Some Changes at Boston Marathon" Archived December 25, 2014, at the Wayback Machine , Runner's World .
+↑ Hughes, Alan (April 30, 1978). "The Fierce Dedication of The 'Demon' Drummers" . New York Times . Retrieved December 31, 2024 .
+↑ Fitzgerald, Ray (April 19, 1975). "These Japanese run with rhythm". Boston Globe .
+↑ Wald, Elijah (December 12, 1994). "Ondekoza, Not Your Humdrum Drummers". Boston Globe .
+↑ Gilbert, Andrew (March 13, 2011). "Drumming up drama" . Boston.com . Archived from the original on March 10, 2023 . Retrieved March 10, 2023 .
+↑ Taylor, Robert (May 11, 1976). "Drum-beating, flute-playing marathoners in lively show". Boston Globe .
+↑ Concannon, Joe (April 17, 1977). "Just a little warm-up:360-mile relay race". Boston Globe .
+↑ "},"title":{"wt":"Calendar"},"date":{"wt":"10 April 1980"}},"i":0}}]}'/> "Calendar". Boston Globe . April 10, 1980.
+↑ "},"title":{"wt":"Calendar Choice"},"date":{"wt":"23 April 1987"}},"i":0}}]}'/> "Calendar Choice". Boston Globe . April 23, 1987.
+↑ Wald, Elijah (January 10, 1993). "Ondekoza: Japan's Demon Drummers". Boston Globe .
+↑ Longman, Jere (November 10, 1993). "NEW YORK CITY MARATHON; After 9,319-Mile Run, 26.2 Should Be a Mere Stroll" . New York Times . Retrieved December 31, 2024 .
+↑ Gaffney, Jim (November 4, 1990). "New York Marathon Sets a First". Modesto Bee .
+↑ "Are Kenyan and Ethiopian Runners Born to Win? Myths, Facts, and the Complex Truth About Running Dominance" . Rockingultra . Archived from the original on April 28, 2026.
+↑ Butler, Sarah (April 12, 2024). "Running Group Files Lawsuit Against B.A.A., City of Newton, Police Chief" .
+Further reading
+[ edit ]
+History of the Boston Marathon, Boston Marathon: The First Century of the World's Premier Running Event, by Tom Derderian, Human Kinetics Publishers, 1996, 634 pages, ISBN 0-88011-479-7
+Boston Marathon, updated third edition, by Tom Derderian 2017, 827 pages. ISBN 978-1-5107-2428-0 , EBook, 978-1-5107-2429-7
+External links
+[ edit ]
+Wikimedia Commons has media related to Boston Marathon .
+Wikinews has news related to:
+Boston Marathon
+KML file ( edit · help )
+Template:Attached KML/Boston Marathon
+KML is from Wikidata
+General reference
+[ edit ]
+Official website
+History of the Boston Marathon [ permanent dead link ]
+"Boston Marathon" . MarathonGuide.com .
+Boston Marathon: What to Expect on Race Day
+Boston Marathon Course Pace Band
+Weather history
+Course map and elevation
+Course elevation
+The 1918 Boston Marathon Military Relay
+Photo and video stories
+[ edit ]
+Boston Marathon Photos-2005
+Boston Marathon Course Photos: Runner's View from Start to Finish
 v
 t
 e
-UCI Women's World Tour
-UCI Women's Teams
-Seasons
-2016
-2017
-2018
-2019
-2020
-2021
-2022
-2023
-2024
-2025
-2026
-Races
-Active
-Women's Tour Down Under
-Cadel Evans Road Race
-UAE Tour
-Omloop Het Nieuwsblad
-Strade Bianche Donne
-Trofeo Alfredo Binda
-Milan–San Remo Women
-Tour of Bruges
-Gent–Wevelgem
-Dwars door Vlaanderen
-Tour of Flanders
-Paris–Roubaix Femmes
-Amstel Gold Race
-La Flèche Wallonne Femmes
-Liège–Bastogne–Liège Femmes
-La Vuelta Femenina
-Itzulia Women
-Vuelta a Burgos Feminas
-Giro d'Italia Women
-Copenhagen Sprint
-Tour de Suisse Women
-Tour de France Femmes
-Tour of Britain Women
-Classic Lorient Agglomération
-Holland Ladies Tour
-Tour de Romandie Féminin
-Tour of Chongming Island
-Tour of Guangxi
-Former
-The Philadelphia Cycling Classic
-Tour of California
-Emakumeen Bira
-La Course by Le Tour de France
-Ladies Tour of Norway
-Clásica de San Sebastián
-Open de Suède Vårgårda
-Ronde van Drenthe
-RideLondon Classique
-Tour of Scandinavia
-Predecessor: UCI Women's Road World Cup (1998–2015)
-v
-t
-e
-Road bicycle racing top-level season-long rankings, tours and series
-Men
-Challenge Desgrange-Colombo (1948–1958)
-Super Prestige Pernod (1958–1987)
-UCI Road World Rankings (1984–2004)
-UCI Road World Cup (1989–2004)
-UCI ProTour (2005–2010)
-UCI Men's road racing world ranking (2009-2010·2016–present)
-UCI World Tour (2009–present)
-Women
-UCI Women's Road World Rankings (1994–present)
-UCI Women's Road World Cup (1998–2015)
-UCI Women's World Tour (2016–present)
-v
-t
-e
-Road bicycle racing
-List of road bicycle races
-men
-women
-UCI Circuits
-UCI World Tour
-UCI World Ranking
-UCI ProSeries
-UCI Continental Circuits
-UCI Women's World Tour
-UCI Women's ProSeries
-International Games
-Olympic Games
-Paralympic Games
-Commonwealth Games
-Asian Games
-Games of the Small States of Europe
-Island Games
-Pan American Games
-Central American and Caribbean Games
-Friendship Games
-Universiade
-Championships
-UCI Road World Championships
-World University Cycling Championship
-Continental
-African
-Asian
-European
-Oceania
-Pan American
-National road cycling championships
-UCI cycling teams
-WorldTeams
-Professional Continental
-Continental
-Women's Teams
-Events
-Race stage
-Criterium
-Individual time trial
-Team time trial
-See also
-Triple Crown of Cycling
-v
-t
-e
-UCI Women's Teams
-Years
+Boston Marathon
+List of winners
+Qualifying standards
+By year
+1897
+1898
+...
+1901
+...
+1961
+...
+1968
+1969
+1970
+1971
+...
+1975
+...
+1985
+1986
+1987
+1988
+1989
+1990
+1991
+1992
+1993
+1994
+1995
+1996
+1997
 1998
 1999
 2000
@@ -1352,234 +629,488 @@ Years
 2024
 2025
 2026
-Current
-(2026)
-WorldTeams
-AG Insurance–Soudal
-Canyon//SRAM
-EF Education–Oatly
-FDJ United–Suez
-Fenix–Premier Tech
-Human Powered Health
-Lidl–Trek
-Liv AlUla Jayco
-Movistar Team
-Team Picnic–PostNL
-Team SD Worx–Protime
-UAE Team L'Imad
-Uno-X Mobility
-Visma–Lease a Bike
-Pro Teams
-Cofidis
-Laboral Kutxa–Fundación Euskadi
-Lotto–Intermarché Ladies
-Ma Petite Entreprise
-Mayenne Monbana My Pie
-St. Michel–Preference Home–Auber93
-VolkerWessels Women Cyclingteam
-Continental Teams
-A.R. Monex
-Andy Schleck–CP NVST–Immo Losch
-Arkéa–B&B Hotels Women
-Aromitalia Vaiano
-O'Shea Redchilli Bikes
-Vini Fantini–BePink
-Chevalmeire
-Bizkaia–Durango
-BTC City Ljubljana Zhiraf Ambedo
-Burgos Alimenta Women Cycling Sport
-DAS–Hutchinson
-China Liv Pro Cycling
-DNA Pro Cycling
-Doltcini–Van Eyck–Proximus
-Lifeplus Wahoo
-Eneicat–CMTeam
-Ferei–CCN
-GT Krush Rebellease
-Hitec Products–Fluid Control
-InstaFund Racing
-Isolmant–Premac–Vittoria
-Lotto–Intermarché Ladies
-Lviv Cycling Team
-Emotional.fr–Tornatech–GSC Blagnac
-Massi–Tactic
-Minsk Cycling Club
-Multum Accountants Ladies
-AG Insurance–Soudal
-Cantabria Deporte–Río Miera
-Roxsolt Liv SRAM
-Servetto–Makhymo–Beltrami TSA
-Sestroretsk
-Sopela Women's Team
-Team Farto–BTC Women's Cycling Team
-Team Illuminate
-IBCT
-Top Girls Fassa Bortolo
-Valcar–Travel & Service
-VIB Sports
-WCC Team
-Former
-AA Drink–leontien.nl
-PatoBike–Juquilita
-BMW p/b Happy Tooth Dental
-Bourgogne–Pro Dialog
-Born to Win BTC City Ljubljana Zhiraf
-ACS Cycling Chirio–Casa Giani
-Colavita–Factor
-Cramo Go:green
-Cyclelive Plus–Zannata
-Cylance Pro Cycling
-Équipe Paule Ka
-EF Education–Tibco–SVB
-Estado de México–Faren Kuota
-Firefighters Upsala CK
-Garmin–Cervélo
-Giusfredi–Bianchi
-Hagens Berman–Supermint
-Health Mate–Cyclelive Team
-Lensworld–Kuota
-Matrix Fitness Pro Cycling
-Equipe Nürnberger Versicherung
-Vitalogic Astrokalb Radunion NÖ
-Pasta Zara–Cogeas
-Happy Tooth Women's Racing
-Pro Cycling Team Fanini
-Red Sun Cycling Team
-Rusvelo
-S.C. Michela Fanini Rox
-Sengers Ladies Cycling Team
-Virginia's Blue Ridge–Twenty28
-Experza–Footlogix
-Squadra Scappatella
-Tashkent City Women Professional Cycling Team
-Team Specialized Designs for Women
-Team Flexpoint
-Team Halfords Bikehut
-Team Ibis Cycles
-Team Lipton
-Team Pratomagno Women
-Airtox–Carl Ras Junior Women
-Team Virtu Cycling
-Thailand Women's Cycling Team
-UnitedHealthcare
-Velocio–SRAM Pro Cycling
-Vision1 Racing
-Vrienden van het Platteland
-Weber La Segunda Ladies Power Team
-Wiggle High5
-Xirayas de San Luis–OPW
-UCI Women's Road World Cup (1998–2015)
-UCI Women's World Tour (2016–present)
+2013 bombings
+Perpetrators
+Dzhokhar Tsarnaev (alive)
+trial
+Tamerlan Tsarnaev (deceased)
+Popular culture and adaptations
+Boston Strong
+book
+Digital Archive
+Patriots Day (film)
+soundtrack
+Stronger (film)
+Related
+Jeff Bauman
+Bill Iffrig
+Watertown, Massachusetts
+Related people
+George V. Brown
+Walter A. Brown
+Will Cloney
+Team Hoyt
+Tom Kanaly
+Johnny Kelley
+Dave McGillivray
+Bill Rodgers
+Rosie Ruiz
+Jock Semple
+Edward F. Sheehan
+Kathrine Switzer
+In arts
+The Tortoise and the Hare (1994 sculpture)
+Boston Athletic Association
+10K event
+All Editions Results
 v
 t
 e
-International sports world tours and series
-Ball sports
-Badminton
-Beach volleyball
-Golf
-Lawn bowl
-outdoor
-indoor
-Racquetball
-men
-women
-Rugby sevens
-men
-women
-Squash
-Table tennis
-Tennis
-men
-women
-Summer sports
-Archery
-Athletics
-outdoor
-indoor
-combined events
-continental
-cross country
-race walking
-Bodyboarding
-Canoe slalom
-Chess
-Cue sports
-pool
-Euro Tour
-Women's
-snooker
-Diving
-high diving
-Fencing
-Gymnastics
-artistic
-rhythmic
-World Cup
-Grand Prix
-Judo
-Modern pentathlon
-Shooting
-Skyrunning
-Surfing
-Winter sports
-Biathlon
-Figure skating
-Skiing
-alpine
-cross-country
-freestyle
-nordic combined
-ski jumping
-Sledding
-bobsleigh
-luge
-skeleton
-Snowboarding
-Speed skating
-long track
-short track
-Racing sports
-Automobile racing
-electric
-endurance
-karting
-open wheel
-rally
-touring
-Cycling
-BMX Racing
-BMX Freestyle
-cyclo-cross
-mountain biking
-men's road
-women's road
-track
-six-day racing
-Motorcycle racing
-grand prix
-superbike
-motocross
-speedway
-sidecar
-Mountain running
-Rowing
-Sailing
-Swimming
-marathon
-Triathlon
-Retrieved from " https://en.wikipedia.org/w/index.php?title=UCI_Women%27s_World_Tour&oldid=1379870894 "
-Categories : UCI Women's World Tour
-Recurring sporting events established in 2016
-UCI tours
-Women's road cycling
+Boston Athletic Association
+Boston Marathon
+List of winners
+Qualifying standards
+2013 bombing
+Presidents
+Clark (1887–1891)
+Parkman (1891–1896)
+Shaw (1896–1898)
+Tucker (1898–1900)
+Smith (1900–1903)
+Morison (1903–1915)
+Keith (1915–1918)
+Babb (1919–1920)
+Lapham (1920–1926)
+Wightman (1926–1928)
+Daniels (1928–1930)
+Marshall (1930–1935)
+Garcelon (1935–1936)
+Barnes (1936–1941)
+W. Brown (1941–1964)
+Cloney (1964–1982)
+T. Brown (1982–1985)
+Swift (1985–1990)
+Whelton (1990–1994)
+Porter (1994–2000)
+Coyle (2000–2003)
+Grilk (2003–2010)
+Flaminio (2011–2017)
+O'Leary (2017–2020)
+Grilk (2020–2022)
+Fleming (2022–Present)
+Events
+B.A.A. 10K
+Boston Athletic Association Indoor Games
+Teams
+Hockey
+v
+t
+e
+City of Boston
+Topics
+Accent
+Annual events
+Architecture
+Arts
+Bibliography
+Culture
+Demographics
+Diplomatic missions
+Economy
+Education
+Colleges and universities
+Geography
+Historic places
+Northern
+Southern
+History
+Timeline
+Media
+Nicknames
+People
+Politics
+Port
+Public library
+Public schools
+Sister cities
+Skyscrapers
+Songs
+Transportation
+Attractions
+Boston Common
+Boston Convention and Exhibition Center
+Irish Famine Memorial
+Boston Tea Party Ships and Museum
+Bunker Hill Monument
+Dorchester Heights Monument
+Faneuil Hall
+Fenway Park
+Franklin Park Zoo
+Freedom Trail
+Hynes Convention Center
+Institute of Contemporary Art
+Isabella Stewart Gardner Museum
+John F. Kennedy Presidential Library and Museum
+Massachusetts State House
+Museum of Bad Art
+Museum of Fine Arts
+Appeal to the Great Spirit
+Museum of Science
+New England Aquarium
+Old North Church
+Paul Revere House
+Boston Symphony Hall
+TD Garden
+USS Constitution
+Museum
+Business
+districts
+Back Bay
+Downtown
+Fenway–Kenmore
+Financial District
+Government Center
+Innovation district
+North End
+Route 128 corridor
+South End
+List of companies in Boston
+Government
+City charter
+City council
+City Hall
+Elections
+Emergency Medical Services (EMS)
+FinComm
+Fire
+Housing (BHA)
+Mayor
+Planning & Development Agency (BPDA)
+Police
+Neighborhoods
+Allston–Brighton
+Allston
+Brighton
+Back Bay
+Bay Village
+Beacon Hill
+Downtown Boston
+Financial District
+Government Center
+Charlestown
+Chestnut Hill
+Chinatown
+Dorchester
+Columbia Point
+Upham's Corner
+East Boston
+Fenway–Kenmore
+Harbor Islands
+Hyde Park
+Readville
+Jamaica Plain
+Forest Hills
+Leather District
+Mattapan
+Mission Hill
+Longwood
+North End
+Roslindale
+Roxbury
+Fort Hill
+South Boston
+Fort Point
+Seaport
+South End
+West End
+West Roxbury
+Sports
+Boston Bruins
+Boston Celtics
+Boston Marathon
+Boston Red Sox
+New England Free Jacks
+New England Patriots
+New England Revolution
+Suffolk County
+Greater Boston
+Massachusetts
+v
+t
+e
+World Marathon Majors
+Marathons
+Tokyo
+winners
+Boston
+winners
+London
+winners
+Sydney
+winners
+Berlin
+winners
+Chicago
+winners
+New York City
+winners
+Cape Town
+winners
+Results
+Final standings
+Marathons at the World Athletics Championships
+IAAF World Marathon Cup
+Marathons at the Olympics
+v
+t
+e
+World Athletics Label Road Races
+Editions
+2008
+2009
+2010
+2011
+2012
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024
+2025
+2026
+Platinum
+Marathon
+Amsterdam
+Berlin
+Boston
+Chicago
+London
+Nagoya Women's
+New York City
+Osaka Women's
+Seoul
+Shanghai
+Sydney
+Tokyo
+Valencia
+Xiamen
+Half marathon
+Bangsaen
+Guadalajara
+Gold
+Marathon
+Barcelona
+Beijing
+Buriram
+Daegu
+Doha
+Guangzhou
+Hangzhou
+Hong Kong
+Houston
+İstanbul
+Lagos
+Ljubljana
+Mexico City
+Mumbai
+New Taipei
+Osaka
+Rotterdam
+Singapore
+Taipei
+Half Marathon
+Barcelona
+Copenhagen
+Gifu
+Houston
+Istanbul
+New Delhi
+Ras Al Khaimah
+Valencia
+Yangzhou
+10K
+Bengaluru
+Port-Gentil
+San Silvestre Vallecana (Madrid)
+Elite
+Marathon
+Abu Dhabi
+Bali
+Bangsaen
+Beppu-Oita
+Dublin
+Enschede
+Frankfurt
+Fukuoka
+Hōfu
+Honolulu
+Huangpu (China)
+Kigali International
+Lisbon
+Mersin
+Nanjing
+Paris
+Prague
+Riyadh
+Rome
+Seville
+Tallinn
+Toronto Waterfront
+Vienna
+Half marathon
+Antrim Coast (Northern Ireland)
+Berlin
+Bogotá
+Cardiff
+Lisbon
+Marugame
+Prague
+Tallinn
+10K
+Beach to Beacon (Maine)
+Brașov
+Prague Grand Prix
+Label
+Marathon
+Athens
+Bangkok
+Belfast
+Belgrade
+Bengaluru
+Bratislava
+Bucharest
+Buenos Aires
+Cape Town
+Castellón
+Copenhagen
+Cholpon-Ata
+Dubai
+Durban
+Geneva
+Gold Coast
+Guadalajara
+Hannover
+Hyderabad
+İzmir
+Jakarta
+Kobe
+Košice
+Kuala Lumpur
+Madrid
+Málaga
+Marrakesh
+Milan
+Nairobi
+Ottawa
+Pattaya
+Porto
+Rabat
+Riga
+Rio de Janeiro
+Sao Paulo
+Sapporo
+Sofia
+Stockholm
+Sunshine Coast
+Tashkent
+Tel Aviv
+Tunis
+Venice
+Vilnius
+Warsaw
+Zagreb
+20km / Half Marathon
+Bangkok
+Belfast
+Buenos Aires
+České Budějovice
+Chicago
+Gold Coast
+Hamburg
+Karlovy Vary
+Málaga
+Madrid
+New York City
+Olomouc
+Paris Semi
+Paris 20k
+Pattaya
+Perth
+Pittsburgh
+Porto
+Pune
+Riga
+Roma-Ostia
+Great North Run (South Shields, UK)
+Stockholm
+Ústí nad Labem
+Warsaw
+10km (one 11.3 km)
+Atlanta (July)
+Bangkok
+Boston
+Boulder
+Castelbuono
+Castellón
+Falmouth (Cape Cod, Massachusetts) (11.3km)
+Great Ethiopian Run (Addis Ababa)
+Madrid
+Pattaya
+Riga
+Valencia
+5-8km
+Manchester (Connecticut) - 8km
+Riga - 5km
+1 mile
+Fifth Avenue Mile (New York City)
+Riga
+Authority control databases
+International VIAF
+GND
+National United States
+Bostonský maraton</span>"}]]}'> Czech Republic
+Retrieved from " https://en.wikipedia.org/w/index.php?title=Boston_Marathon&oldid=1378860101 "
+Categories : Boston Marathon
+1897 establishments in Massachusetts
+Annual events in Boston
+Annual sporting events in the United States
+April in sports
+Marathons in the United States
+Recurring sporting events established in 1897
+World Marathon Majors
+Wheelchair marathons
+Handcycling competitions
 Hidden categories: Articles with short description
-Short description matches Wikidata
-Articles containing French-language text
-Articles containing potentially dated statements from 2025
-All articles containing potentially dated statements
-Articles containing potentially dated statements from 2026
-This page was last edited on 12 October 2026, at 10:38 (UTC) .
+Short description is different from Wikidata
+Use American English from April 2019
+All Wikipedia articles written in American English
+Use mdy dates from May 2016
+All articles with unsourced statements
+Articles with unsourced statements from October 2025
+Articles with unsourced statements from June 2025
+Webarchive template wayback links
+All articles lacking reliable references
+Articles lacking reliable references from June 2026
+All articles containing circular references
+Articles with unsourced statements from April 2011
+CS1: unfit URL
+Articles with unsourced statements from September 2023
+CS1 maint: deprecated archival service
+All articles with dead external links
+Articles with dead external links from July 2017
+Articles with permanently dead external links
+Commons category link is on Wikidata
+Pages using gadget WikiMiniAtlas
+Articles using KML from Wikidata
+Articles with dead external links from October 2023
+This page was last edited on 6 October 2026, at 15:28 (UTC) .
 Page was rendered with Parsoid .
 Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
 additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
@@ -1596,9 +1127,9 @@ Mobile view
 Search
 Search
 Toggle the table of contents
-UCI Women's World Tour
-18 languages
+Boston Marathon
+46 languages
 Add topic
 
 --- embedded JSON ---
-{"@context":"https:\/\/schema.org","@type":"Article","name":"UCI Women's World Tour","url":"https:\/\/en.wikipedia.org\/wiki\/UCI_Women%27s_World_Tour","sameAs":"http:\/\/www.wikidata.org\/entity\/Q21075974","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q21075974","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2015-08-30T16:34:30Z","dateModified":"2026-10-12T10:38:28Z","headline":"premier annual female elite road cycling tour"}
+{"@context":"https:\/\/schema.org","@type":"Article","name":"Boston Marathon","url":"https:\/\/en.wikipedia.org\/wiki\/Boston_Marathon","sameAs":"http:\/\/www.wikidata.org\/entity\/Q826038","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q826038","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2003-02-12T11:10:15Z","dateModified":"2026-10-06T15:28:07Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/en\/0\/0c\/Boston_Marathon_logo_%28updated_2024%29.png?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"annual marathon race in Boston, Massachusetts, USA"}

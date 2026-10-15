@@ -1,103 +1,145 @@
 {
-  "fetchedAt": "2026-10-15T02:21:17.798Z",
+  "fetchedAt": "2026-10-15T02:24:48.115Z",
   "results": [
     {
-      "url": "https://en.wikipedia.org/wiki/2027_UCI_World_Tour",
+      "url": "https://en.wikipedia.org/wiki/Tokyo_Marathon",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "01-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/2027_UCI_Women%27s_World_Tour",
+      "url": "https://en.wikipedia.org/wiki/Boston_Marathon",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "02-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/World_Marathon_Majors",
+      "url": "https://en.wikipedia.org/wiki/London_Marathon",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "03-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Kentucky_Derby",
+      "url": "https://en.wikipedia.org/wiki/Cape_Town_Marathon",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "04-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Breeders%27_Cup_Classic",
+      "url": "https://en.wikipedia.org/wiki/Sydney_Marathon",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "05-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Preakness_Stakes",
+      "url": "https://en.wikipedia.org/wiki/Berlin_Marathon",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "06-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Belmont_Stakes",
+      "url": "https://en.wikipedia.org/wiki/Chicago_Marathon",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "07-en.wikipedia.org.txt"
     },
     {
-      "url": "https://www.procyclingstats.com/races.php?year=2027&circuit=1",
-      "rendered": true,
+      "url": "https://en.wikipedia.org/wiki/New_York_City_Marathon",
+      "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "08-procyclingstats.com.txt"
+      "file": "08-en.wikipedia.org.txt"
     },
     {
-      "url": "https://www.procyclingstats.com/races.php?year=2027&circuit=24",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "09-procyclingstats.com.txt"
+      "url": "https://firstcycling.com/race.php?y=2027&t=1",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "09-firstcycling.com.txt"
     },
     {
-      "url": "https://www.worldmarathonmajors.com/races",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "10-worldmarathonmajors.com.txt"
+      "url": "https://firstcycling.com/race.php?y=2027&t=1&g=2",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "10-firstcycling.com.txt"
     },
     {
-      "url": "https://www.kentuckyderby.com/",
+      "url": "https://www.marathon.tokyo/en/",
       "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "11-kentuckyderby.com.txt"
+      "file": "11-marathon.tokyo.txt"
     },
     {
-      "url": "https://www.breederscup.com/",
+      "url": "https://www.baa.org/races/boston-marathon",
       "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "12-breederscup.com.txt"
+      "file": "12-baa.org.txt"
     },
     {
-      "url": "https://www.preakness.com/",
+      "url": "https://www.tcslondonmarathon.com/",
       "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "13-preakness.com.txt"
+      "file": "13-tcslondonmarathon.com.txt"
     },
     {
-      "url": "https://www.belmontstakes.com/",
+      "url": "https://www.capetownmarathon.com/",
       "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "14-belmontstakes.com.txt"
+      "file": "14-capetownmarathon.com.txt"
+    },
+    {
+      "url": "https://www.sydneymarathon.com/",
+      "rendered": true,
+      "status": "FAILED",
+      "reason": "page.goto: net::ERR_CONNECTION_CLOSED at https://www.sydneymarathon.com/\nCall log:\n  - navigating to \"https://www.sydneymarathon.com/\", waiting until \"domcontentloaded\"\n",
+      "file": null
+    },
+    {
+      "url": "https://www.bmw-berlin-marathon.com/en/",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "16-bmw-berlin-marathon.com.txt"
+    },
+    {
+      "url": "https://www.bankofamericachicagomarathon.com/",
+      "rendered": true,
+      "status": "FAILED",
+      "reason": "page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.bankofamericachicagomarathon.com/\nCall log:\n  - navigating to \"https://www.bankofamericachicagomarathon.com/\", waiting until \"domcontentloaded\"\n",
+      "file": null
+    },
+    {
+      "url": "https://www.nyrr.org/tcsnycmarathon",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "18-nyrr.org.txt"
+    },
+    {
+      "url": "https://www.jayski.com/2027-nascar-cup-series-schedule/",
+      "rendered": true,
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "19-jayski.com.txt"
+    },
+    {
+      "url": "https://www.racing-reference.info/season-stats/2027/W/",
+      "rendered": true,
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "20-racing-reference.info.txt"
     }
   ]
 }

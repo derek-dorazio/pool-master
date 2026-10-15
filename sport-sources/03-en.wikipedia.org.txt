@@ -1,9 +1,9 @@
-Source: https://en.wikipedia.org/wiki/World_Marathon_Majors
-Final URL: https://en.wikipedia.org/wiki/World_Marathon_Majors
+Source: https://en.wikipedia.org/wiki/London_Marathon
+Final URL: https://en.wikipedia.org/wiki/London_Marathon
 HTTP 200
-Fetched: 2026-10-15T02:20:12.757Z
+Fetched: 2026-10-15T02:24:11.494Z
 
-World Marathon Majors - Wikipedia
+London Marathon - Wikipedia
 Jump to content
 Main menu
 Main menu
@@ -38,61 +38,52 @@ move to sidebar
 hide
 (Top)
 1
-History
-Toggle History subsection
-1.1
-Races
+Editions
 2
-Scoring system
+History
 3
-Major marathons by year
+Organisation
 4
-Major marathons champions
-Toggle Major marathons champions subsection
-4.1
-Men's
-4.2
-Women's
-4.3
-Men's wheelchair
-4.4
-Women's wheelchair
+Course
 5
-World Marathon Majors champions list
-Toggle World Marathon Majors champions list subsection
-5.1
-Men's
-5.2
-Women's
+Results
 6
-Winners by season
-Toggle Winners by season subsection
-6.1
-Men's series winners
-6.2
-Women's series winners
-6.3
-Men's wheelchair series winners
-6.4
-Women's wheelchair series winners
+Amateur runners
 7
-Majors milestones
+Entry
+Toggle Entry subsection
+7.1
+Charity
+7.2
+General Ballot
+7.3
+Good for age
 8
-Six star finishers
+Mini Marathon
 9
-See also
+BBC live coverage
+Toggle BBC live coverage subsection
+9.1
+Theme tune
 10
-Notes
+Sponsorship and marketing
 11
-References
+See also
 12
+References
+13
 External links
 Toggle the table of contents
-World Marathon Majors
-23 languages
+London Marathon
+41 languages
+Afrikaans
 العربية
 Беларуская
+Български
 Català
+Čeština
+Cymraeg
+Dansk
 Deutsch
 Esperanto
 Español
@@ -102,15 +93,28 @@ Euskara
 Suomi
 Français
 עברית
+Magyar
+Հայերեն
+Bahasa Indonesia
+Íslenska
 Italiano
 日本語
 한국어
+Lietuvių
+Latviešu
+Монгол
 Nederlands
 Norsk bokmål
+Polski
 Português
 Русский
+Simple English
+Српски / srpski
 Svenska
+ไทย
+Türkçe
 Українська
+Tiếng Việt
 粵語
 中文
 Edit links
@@ -146,1319 +150,288 @@ Wikidata item
 Appearance
 move to sidebar
 hide
+Coordinates : 51°28′22″N 00°00′34″E ﻿ / ﻿ 51.47278°N 0.00944°E ﻿ / 51.47278; 0.00944
 From Wikipedia, the free encyclopedia
-Championship-style competition
-World Marathon Majors
-Sport Marathon running
-Founded 2006
-No. of teams Individual sport
-Website www .worldmarathonmajors .com
-The World Marathon Majors ( WMM ) is a championship-style competition for marathon runners that started in 2006. A points-based competition founded on eight major marathon races recognised as the most high-profile on the calendar, the series comprises annual races (in order of their founding) for the cities of Boston (1897), New York (1970), Berlin (1974), Chicago (1977), London (1981), Cape Town (1994), [ 1 ] Sydney (2000), and Tokyo (2007).
-In addition, the World Marathon Majors includes the results of any major global championship marathon held in that year. These races are the biennial World Athletics Championships Marathon, and the quadrennial Olympic Games Marathon. [ 2 ]
+Annual race held in London, England
+Women: 2:15:25 ([[Paula Radcliffe]], 2003)<br />Wheelchair men: 1:23:44 ([[Marcel Hug]], 2023)<br />Wheelchair women: 1:38:24 ([[Catherine Debrunner]], 2022)"},"homepage":{"wt":"{{Official URL}}"},"current":{"wt":"Yes"}},"i":0}}]}'> London Marathon
+Date April
+Location London , United Kingdom
+Event type Road
+Distance Marathon
+Primary sponsor TCS
+Established 1981 (45 years ago) ( 1981 )
+Course records Men: 1:59:30 ( Sabastian Sawe , 2026)
+Women: 2:15:25 ( Paula Radcliffe , 2003)
+Wheelchair men: 1:23:44 ( Marcel Hug , 2023)
+Wheelchair women: 1:38:24 ( Catherine Debrunner , 2022)
+Official site www .tcslondonmarathon .com
+2026 London Marathon
+The London Marathon [ a ] is an annual marathon held in London , England. Founded by athletes Chris Brasher and John Disley in 1981, it is typically held in April, although it moved to October for 2020, 2021, and 2022 due to the COVID-19 pandemic . The largely flat course is set around the River Thames , starting in Blackheath and finishing at The Mall . Hugh Brasher (son of Chris) is the current race director and Nick Bitel its chief executive.
+The race has several components: it has a mass race for the public, professional races for men and women long-distance runners , elite-level wheelchair races for men and women, and a 3-mile mini marathon event for under-17 athletes. In 2026, London Marathon Events launched a collaboration with Friday Night Lights, a paid-for 5km run at Battersea Park on the Friday prior to the marathon. [ 1 ]
+There is a significant charity running aspect to the marathon, with participants helping to raise over £1.4 billion since its founding. [ 2 ]
+Since 2006, the elite race has been part of the World Marathon Majors , which includes seven of the world's top level marathon races. The London Marathon has seen the marathon world record broken on seven occasions: Khalid Khannouchi broke the men's record in 2002, and Sabastian Sawe notably broke the 2 hours barrier in 2026, while women's records have been broken by Grete Waitz (1983), Ingrid Kristiansen (1985), Paula Radcliffe (2002, 2003, 2005) and Mary Jepkosgei Keitany (2017). The current elite course records are held by Sabastian Sawe (1:59:30 in 2026) and Paula Radcliffe (2:15:25 in 2003). The current wheelchair course records are held by Marcel Hug (1:23:44 in 2023) and Catherine Debrunner (1:38:24 in 2022). The race often has a title sponsorship , it has been branded the " TCS London Marathon" since 2022.
+Editions
+[ edit ]
+Edition
+Date
+Applicants
+Accepted
+Starters
+Finishers
+Charity raised
+(£ millions)
+Official charity
+1 29 March 1981 20,000 7,747 7,055 6,255 — N/a
+2 9 May 1982 90,000 18,059 16,350 15,116 — N/a
+3 17 April 1983 60,000 19,735 16,500 15,793 — N/a
+4 13 May 1984 70,000 21,142 16,992 15,675
+5 21 April 1985 83,000 22,274 17,500 15,873
+6 20 April 1986 80,000 25,566 19,261 18,067 British Sports Association for the Disabled (autistic)
+7 10 May 1987 80,000 28,364 21,485 19,586 Farnham Park Trust
+8 17 April 1988 73,000 29,979 22,469 20,932 SportsAid
+9 23 April 1989 72,000 31,772 24,452 22,701 The Evelina Family Trust
+Special Olympics
+10 22 April 1990 73,000 34,882 26,500 25,013 Battle of Britain Appeal
+Community Action Trust
+11 21 April 1991 79,000 33,485 24,500 23,435 Action on Addiction
+Royal Marsden Cancer Research
+12 12 April 1992 83,000 34,250 24,500 23,833 Guy's Hospital
+Evelina London Children's Hospital
+Tuskforce
+13 18 April 1993 68,000 35,820 25,000 24,495 St John Ambulance
+Snowden Award Scheme
+14 17 April 1994 72,000 37,379 26,000 25,242 British Heart Foundation
+Childline
+15 2 April 1995 79,000 39,097 27,000 25,377 Leonard Cheshire Disability
+Cancer Relief Macmillan
+16 21 April 1996 68,000 39,173 27,134 26,806 British Heart Foundation
+National Asthma Campaign
+17 13 April 1997 78,000 39,813 29,500 29,189 British Heart Foundation
+NSPCC
+18 26 April 1998 96,000 42,228 30,663 29,972 Age Concern
+Diana, Princess of Wales Memorial Fund
+19 18 April 1999 87,000 43,774 31,582 30,849 Whizz-Kidz
+Leukaemia Research
+20 16 April 2000 93,000 42,596 32,620 31,698 Mencap
+21 22 April 2001 92,000 43,517 31,156 30,318 MS Society
+22 14 April 2002 99,000 46,083 33,297 32,950 Outward Bound
+FCWL
+23 13 April 2003 111,000 45,629 32,746 32,324 Shelter
+24 18 April 2004 108,000 45,219 32,746 32,012 Sense
+British Heart Foundation
+25 17 April 2005 132,000 47,969 35,600 35,300 Help the Hospices
+26 23 April 2006 119,000 47,020 33,578 33,250 The Stroke Association
+Anthony Nolan
+27 22 April 2007 128,000 50,039 36,396 35,729 46.5 WellChild
+28 13 April 2008 120,000 48,630 35,037 34,637 46.7 Heart UK
+Spinal Injuries Association
+29 26 April 2009 155,000 49,995 35,884 35,404 47.2 The Children's Trust
+30 25 April 2010 163,000 51,378 36,956 36,666 50.6 CLIC Sargent
+31 17 April 2011 163,926 50,532 35,303 34,872 51.8 Oxfam
+32 22 April 2012 170,150 50,200 37,227 36,812 52.8 Prostate Cancer Charity (now Prostate Cancer UK )
+( Breast Cancer Care )
+33 21 April 2013 167,449 48,323 34,631 34,381 53.0 YouthNet
+Age UK
+34 13 April 2014 169,682 49,872 36,337 35,977 53.2 Anthony Nolan
+35 26 April 2015 172,888 51,696 38,020 37,793 54.1 Cancer Research UK
+36 24 April 2016 247,069 53,152 39,523 39,140 59.4 NSPCC
+37 23 April 2017 253,930 53,229 40,048 39,487 61.5 Heads Together
+38 22 April 2018 386,050 54,685 40,926 40,220 63.7 Teenage Cancer Trust
+39 28 April 2019 414,168 56,398 42,906 42,549 66.4 [ 3 ] Dementia Revolution
+40 4 October 2020 457,861 77 77 61 Mencap
+41 3 October 2021 36,401 [ 4 ] 35,596 [ 5 ] Macmillan
+42 2 October 2022 350,000 [ 6 ] 42,000 [ 7 ] 40,619 [ 8 ] British Heart Foundation
+43 23 April 2023 49,675 49,272 43,965 [ 9 ] 63.0 [ 10 ] Great Ormond Street Hospital
+44 21 April 2024 578,304 [ 11 ] 65,725 [ 12 ] 54,218 [ 13 ] 53,000 [ 14 ] 67.0 [ 14 ] Samaritans
+45 27 April 2025 840,318 [ 15 ] 57,449 [ 16 ] 56,640 [ 17 ] 87.3 [ 18 ] Pancreatic Cancer UK
+46 26 April 2026 1,133,813 [ 17 ] Marie Curie
+All information from official website. [ 19 ] [ 20 ]
+NOTE: The 2020 race was restricted to elite athletes in able-bodied (30 for each sex) and invited wheelchair athletes.
 History
 [ edit ]
-Each World Marathon Majors series originally spanned two full calendar years; the second year of a series overlapped with the first year of the next. Starting in 2015, each series began with a defined city race and ended with the following race in the same city. So, series IX started in February 2015 at the 2015 Tokyo Marathon and ended there in February 2016 at the 2016 Tokyo Marathon . Series X started at the 2016 Boston Marathon and finished at the 2017 Boston Marathon . Series XI started at the 2017 London Marathon and finished at the 2018 London Marathon .
-Initial major sponsor Abbott Laboratories added its name in 2015. [ 3 ] On April 26, 2017, Dalian Wanda Group Co., Ltd., one of the leading Chinese private conglomerates, announced a ten-year strategic partnership aimed at the continued growth and development of marathon events worldwide.
-Beginning with Series X at the 2016 Boston Marathon, wheelchair competitions were added for men and women.
-At the end of each of the first 10 WMM series the leading man and woman each won $500,000, making a total prize of one million U.S. dollars. Beginning with Series XI, the prize structure was revised so that for men and women first place became $250,000, second place $50,000 and third place $25,000. In the wheelchair division the prize money for men and women is $50,000 (first), $25,000 (second) and $10,000 (third).
-Races
+2006 winner Felix Limo (left) and 2005, 2007 & 2008 winner Martin Lel (right)
+The London Marathon was not the first long-distance running event held in the city, which has a long history of marathon events. The Polytechnic Marathon (also known as the Poly ) was first held in 1909. [ 21 ]
+The current London Marathon was founded in 1981 by Olympic champion and journalist Chris Brasher and athlete John Disley . [ 22 ] [ 23 ] Shortly after completing the New York City Marathon in November 1979 Brasher wrote an article for The Observer newspaper which began:
+To believe this story you must believe that the human race be one joyous family, working together, laughing together, achieving the impossible. Last Sunday, in one of the most trouble-stricken cities in the world, 11,532 men and women from 40 countries in the world, assisted by over a million black, white and yellow people, laughed, cheered and suffered during the greatest folk festival the world has seen. [ 24 ]
+The first London Marathon was held on 29 March 1981, more than 20,000 applied to run. 6,747 were accepted and 6,255 crossed the finish line on Constitution Hill. The Marathon's popularity has steadily grown since then. As at 2009, 746,635 people have completed the race since its inception. [ 22 ] In 2010, 36,549 people crossed the line, the biggest field since the race began. [ 25 ] The first wheelchair marathon race was held in 1983 and the event was credited with reducing the stigma surrounding disabled athletes. [ 26 ] In 2013 the IPC Athletics Marathon World Cup was held within the London Marathon featuring athletes of both genders in the T42–T46 and T11–T13 categories. [ 27 ] In August 2013 it was announced that the event would be staged in London until 2017 and feature athletes in the T11-T12, T13, T42-T44, T43, T45-46, T51-52 and the T53-54 class. [ 28 ]
+For many years the London and Polytechnic Marathons competed with each other until, in 1996, the latter folded in due to the popularity of the former. [ 21 ]
+Following the Boston Marathon bombing , organisers of the 2013 London Marathon undertook a review of their security arrangements, despite no specific threats against the event. [ 29 ] A 30-second silence was held before the start of the marathon to show respect and support to those affected by the tragedy. [ 30 ]
+In April 2025, race organisers announced they will no longer post on X . [ 31 ]
+Organisation
 [ edit ]
-The World Marathon Majors began in 2006 with five races: Berlin, Boston, Chicago, London, and New York. The Tokyo Marathon, which had been created in 2007 as the successor to two previous marathons, was added as the sixth WMM in 2013. Tokyo was the first race in the series from outside North America or Europe, and its late February/early March date made it the first race of the calendar year for the series.
-In November 2024, it was announced that the Sydney Marathon would be added as the seventh race in the World Marathon Majors. The inaugural Sydney event in the series was on August 31, 2025. [ 4 ] The Cape Town Marathon passed the first stage of candidacy approval for WMM inclusion in 2024, [ 1 ] ; it was confirmed as the eighth race in the series in June 2026. [ 5 ] Its first race as part of WMM will be on May 23, 2027, placing it fourth in the calendar year between London and Sydney.
-In 2024, the Shanghai Marathon was announced as a WMM candidate and began a three year evaluation process. [ 6 ] [ 7 ]
-Scoring system
+The race is currently organised by Hugh Brasher, son of Chris, as race director and Nick Bitel as chief executive. Previously David Bedford and Bitel had overseen a period of great change for the race, including amendments to the course in 2005 which saw the cobbled section by the Tower of London replaced with a flat stretch along the Highway. [ 32 ]
+Dan Tunstall Pedoe was the medical director of the London Marathon for 25 years between the first one in 1981 until 2005. In 2003, Pedoe was shadowed by Sanjay Sharma from St George's Hospital (University of London) who took over the role in its entirety in 2006. [ 33 ] Medical cover is provided by 150 doctors. Also assisting were more than 1,500 volunteers of St. John Ambulance , who organise over 50 first aid posts along the route, and three field hospitals at the finish. St John Ambulance also provide a number of healthcare professions for the event, including nurses, paramedics, ambulances with crews. [ 34 ] After pressure from Sophie Power and sheRACES, the marathon now allows pregnant and post-partum women to defer their place to a later date of their choosing, thus ensuring they are fully fit and well when they race. [ 35 ]
+The BBC covers the event, devoting rolling coverage for most of the morning. The theme music associated with this coverage, and with the event itself, is called "Main Titles to The Trap", composed by Ron Goodwin for the film The Trap .
+Men's Wheelchair competitors at Shooter's Hill , 13 April 2008
+There are three separate groups of starters: Elite Women, Wheelchair (Men and Women), and Elite Men followed by Mass Race. [ 36 ]
+First mooted in March 2026 [ 37 ] [ 38 ] , in 2027, for "one year only", the marathon will be held on both days of the weekend. Format details are still to be confirmed but could see female elite and good-for-age entrants run on one day, and male elite and good-for-age entrants on the other. [ 39 ] [ 40 ]
+Course
 [ edit ]
-Athletes who competed in the marathons originally received points for finishing in any of the top five places (1st place: 25 points; 2nd place: 15 points; 3rd place: 10 points; 4th place: 5 points; 5th place: 1 point). Their four highest ranks over the two-year period were counted; if an athlete scored points in more than this number, the athlete's four best races were scored. To be eligible for the jackpot, an athlete had to compete in at least one qualifying race in each calendar year of the series.
-In 2015, the scoring was revised (1st place: 25 points; 2nd place: 16 points; 3rd place: 9 points; 4th place: 4 points; 5th place: 1 point). The two highest ranks during the scoring period would be counted, with only the best two if more than that number.
-For the first three series if there were equal top scores at the end of the competition the tiebreakers were head-to-head competition and, if necessary, a majority vote of the five WMM race directors. This happened in the 2007–08 women's competition.
-Beginning in the 2009–10 season, following best head-to-head record, the following tie-breakers were implemented, in descending order: the person who scored points in the fewest races, the person who won the most qualifying races during the period, the person with the fastest average time in their scoring races, and a majority vote of the six-race directors. If the final circumstance is necessary, the race directors could award the title jointly.
-Major marathons by year
+Course map
+The top three men, Samuel Wanjiru , Tsegay Kebede , and Jaouad Gharib , near the end of the 2009 marathon
+The marathon is run over a largely flat course around the River Thames , and spans 42.195 kilometres (26.219 mi) . [ 41 ] The course gains only 278 feet (85 m) in elevation [ 42 ] and is widely regarded as one of the fastest marathon courses in the world. [ 43 ]
+The route has markers at one mile intervals. Although the race publicity (athlete advice, timing charts and so on) is mile-orientated, [ 44 ] the individual timing splits that are available to competitors after the event are kilometre-oriented. [ 45 ]
+The course begins at three separate points: the 'red start' in southern Greenwich Park on Charlton Way, the 'green start' in St John's Park, and the 'blue start' on Shooter's Hill Road. [ 46 ] From these points around Blackheath at 35 m (115 ft) above sea level, south of the River Thames, the route heads east through Charlton . The three courses converge after 4.5 km (2.8 miles) in Woolwich , close to the Royal Artillery Barracks . [ 46 ] [ 47 ]
+As the runners reach the 10 km mark (6.2-mile) , they pass by the Old Royal Naval College and head towards Cutty Sark drydocked in Greenwich . Heading next into Deptford and Surrey Quays / Rotherhithe in the Docklands , and out towards Bermondsey , competitors race along Jamaica Road before reaching the half-way point as they cross Tower Bridge . Running east again along The Highway through Wapping , competitors head up towards Limehouse and into Mudchute in the Isle of Dogs via Westferry Road, before heading into Canary Wharf . [ 46 ] [ 47 ]
+As the route leads away from Canary Wharf into Poplar , competitors run west down Poplar High Street back towards Limehouse and on through Commercial Road . They then move back onto The Highway, onto Lower and Upper Thames Streets. Heading into the final leg of the race, competitors pass The Tower of London on Tower Hill. In the penultimate mile along The Embankment , the London Eye comes into view, before the athletes turn right into Birdcage Walk to complete the final 352 m (385 yards) , catching the sights of Big Ben and Buckingham Palace , and finishing in The Mall alongside St. James's Palace . [ 46 ] [ 47 ] This final section of the route formed part of the 2012 Olympic Marathon Course .
+Since the first marathon, the course has undergone very few route changes. In the first race, the course took a diversion around Southwark Park before re-joining Jamaica Road on the way to Tower Bridge and was routed through St Katherine Docks past the Tower Hotel, en route to the Tower of London and the cobblestoned stretch of road that in later years was carpeted, to help runners prevent injury on the uneven surface. In 1982, the finishing post was moved from Constitution Hill to Westminster Bridge due to construction works. It remained there for twelve years before moving to its present location at The Mall. In 2005, the route around the Isle of Dogs between 22 and 34 kilometres (14 and 21 mi) was switched from a clockwise to an anti-clockwise direction, and at 35 km (22 miles) the route was diverted to avoid St Katherine Docks and the cobblestoned area near the Tower of London . In 2008, a suspected gas leak at a pub in Wapping diverted the course, but in 2009 the race followed the same path as in 2007. [ 48 ] [ 49 ]
+Since 2012 mile 21 has become a significant cheer zone with Run Dem Crew transforming the stretch of Commercial Road outside the former Limehouse Town Hall into a street party with music and confetti cannons. [ 50 ]
+Due to the COVID-19 pandemic , the 2020 London Marathon was run on a non-traditional course, consisting of 19.6 laps of length 2.15 kilometres (1.34 mi) around St James's Park , taking in The Mall , Horse Guards Parade , Birdcage Walk and Buckingham Palace . The final circuit was 1,345 metres (0.84 mi) along the Mall, following the finish line of the traditional London Marathon course. [ 51 ]
+Results
 [ edit ]
-The following marathons have been part of the series in each year:
-Year
-Tokyo
-Boston
-London
-Sydney
-Berlin
-Chicago
-New York
-World Athletics Championships
-Olympic Games
-2006
-Not held
-17 April
-23 April
-Not part of WMM
-24 September
-22 October
-5 November
-Not held
-Not held
-2007
-Not part of WMM
-16 April
-22 April
-30 September
-7 October
-4 November
-25 Aug / 2 Sep (Osaka)
-2008
-21 April
-13 April
-28 September
-12 October
-2 November
-Not held
-24 Aug / 17 Aug (Beijing)
-2009
-20 April
-26 April
-20 September
-11 October
-1 November
-22 Aug / 23 Aug (Berlin)
-Not held
-2010
-19 April
-25 April
-26 September
-10 October
-7 November
-Not held
-2011
-18 April
-17 April
-25 September
-9 October
-6 November
-4 Sep / 27 Aug (Daegu)
-2012
-16 April
-22 April
-30 September
-7 October
-{{cite news|last=Belson|first=Ken|title=After Days of Pressure, Marathon Is Off|url=https://www.nytimes.com/2012/11/03/sports/new-york-city-marathon-will-not-be-held-sunday.html|work=[[The New York Times]]|date=2 November 2012|access-date=15 April 2014}}</ref>}}"]}'>Cancelled {{cite news|last=Belson|first=Ken|title=After Days of Pressure, Marathon Is Off|url=https://www.nytimes.com/2012/11/03/sports/new-york-city-marathon-will-not-be-held-sunday.html|work=[[The New York Times]]|date=2 November 2012|access-date=15 April 2014}}</ref>"}},"i":0}}]}'> [ a ]
-Not held
-12 Aug / 5 Aug (London)
-2013
-24 February
-15 April
-21 April
-29 September
-13 October
-3 November
-17 Aug / 10 Aug (Moscow)
-Not held
-2014
-23 February
-21 April
-13 April
-28 September
-12 October
-2 November
-Not held
-2015
-22 February
-20 April
-26 April
-27 September
-11 October
-1 November
-22 Aug / 30 Aug (Beijing)
-2016
-28 February
-18 April
-24 April
-25 September
-9 October
-6 November
-Not held
-21 Aug / 14 Aug (Rio de Janeiro)
-2017
-26 February
-17 April
-23 April
-24 September
-8 October
-5 November
-6 Aug / 6 Aug (London)
-Not held
-2018
-25 February
-16 April
-22 April
-16 September
-7 October
-4 November
-Not held
-2019
-3 March
-15 April
-28 April
-29 September
-13 October
-3 November
-6 Oct / 28 Sep (Doha)
-2020
-1 March
-{{cite web |last1=Waller |first1=John |title=The 2020 Boston Marathon has been canceled |url=https://www.boston.com/sports/coronavirus/2020/05/28/2020-boston-marathon-canceled/ |website=The Boston Globe |access-date=28 May 2020}}</ref>}}"]}'>Cancelled {{cite web |last1=Waller |first1=John |title=The 2020 Boston Marathon has been canceled |url=https://www.boston.com/sports/coronavirus/2020/05/28/2020-boston-marathon-canceled/ |website=The Boston Globe |access-date=28 May 2020}}</ref>"}},"i":0}}]}'> [ b ]
-4 October [ c ]
-{{cite web|url=https://www.nytimes.com/2020/04/21/sports/berlin-marathon-germany.html|title=Berlin Marathon Is Canceled as Germany Extends Ban on Large Events|work=[[The New York Times]]|author=Futterman, Matthew|date=21 April 2020|access-date=24 April 2020}}</ref>}}"]}'>Cancelled {{cite web|url=https://www.nytimes.com/2020/04/21/sports/berlin-marathon-germany.html|title=Berlin Marathon Is Canceled as Germany Extends Ban on Large Events|work=[[The New York Times]]|author=Futterman, Matthew|date=21 April 2020|access-date=24 April 2020}}</ref>"}},"i":0}}]}'> [ d ]
-{{cite news |title=Chicago Marathon 2020 cancelled due to COVID-19, refunds offered by organisers |url=https://abc7chicago.com/chicago-marathon-2020-cancelled/6315295/ |access-date=14 July 2020 |date=13 July 2020 |publisher=[[WLS-TV]] |author=Horng, Eric |archive-url= https://web.archive.org/web/20200714081323/https://abc7chicago.com/chicago-marathon-2020-cancelled/6315295/ |archive-date=14 July 2020 |url-status=live}}</ref>}}"]}'>Cancelled {{cite news |title=Chicago Marathon 2020 cancelled due to COVID-19, refunds offered by organisers |url=https://abc7chicago.com/chicago-marathon-2020-cancelled/6315295/ |access-date=14 July 2020 |date=13 July 2020 |publisher=[[WLS-TV]] |author=Horng, Eric |archive-url= https://web.archive.org/web/20200714081323/https://abc7chicago.com/chicago-marathon-2020-cancelled/6315295/ |archive-date=14 July 2020 |url-status=live}}</ref>"}},"i":0}}]}'> [ e ]
-{{cite web|title=2020 TCS New York City Marathon, Scheduled for November 1, Is Canceled Due to Coronavirus-Related Health and Safety Concerns|date=19 May 2017 |url=https://www.nyrr.org/media-center/press-release/20200624_2020-TCS-New-York-City-Marathon-Scheduled-for-November-1-Is-Canceled-Due-to-Coronavirus-Related-Health-and-Safety-Concerns}}</ref>}}"]}'>Cancelled {{cite web|title=2020 TCS New York City Marathon, Scheduled for November 1, Is Canceled Due to Coronavirus-Related Health and Safety Concerns|date=19 May 2017 |url=https://www.nyrr.org/media-center/press-release/20200624_2020-TCS-New-York-City-Marathon-Scheduled-for-November-1-Is-Canceled-Due-to-Coronavirus-Related-Health-and-Safety-Concerns}}</ref>"}},"i":0}}]}'> [ f ]
-Not held
-{{cite web|url=https://www.olympic.org/news/ioc-ipc-tokyo-2020-organising-committee-and-tokyo-metropolitan-government-announce-new-dates-for-the-olympic-and-paralympic-games-tokyo-2020|title=IOC, IPC, TOKYO 2020 ORGANISING COMMITTEE AND TOKYO METROPOLITAN GOVERNMENT ANNOUNCE NEW DATES FOR THE OLYMPIC AND PARALYMPIC GAMES TOKYO 2020|publisher=[[International Olympic Committee]]|date=30 March 2020|access-date=22 April 2020}}</ref>}}"]}'>Postponed {{cite web|url=https://www.olympic.org/news/ioc-ipc-tokyo-2020-organising-committee-and-tokyo-metropolitan-government-announce-new-dates-for-the-olympic-and-paralympic-games-tokyo-2020|title=IOC, IPC, TOKYO 2020 ORGANISING COMMITTEE AND TOKYO METROPOLITAN GOVERNMENT ANNOUNCE NEW DATES FOR THE OLYMPIC AND PARALYMPIC GAMES TOKYO 2020|publisher=[[International Olympic Committee]]|date=30 March 2020|access-date=22 April 2020}}</ref>"}},"i":0}}]}'> [ g ]
-2021
-Postponed [ h ]
-11 October
-3 October
-26 September
-10 October
-7 November
-Postponed [ i ]
-8 Aug / 7 Aug (Sapporo) [ g ]
-2022
-{{cite web |url=https://www.marathon.tokyo/en/news/detail/news_002235.html |title=Tokyo Marathon 2021 Postponed |author=<!--Not stated--> |date=17 September 2021 |publisher=Tokyo Marathon Foundation |access-date=11 October 2021 |quote=Due to postponement of the 2021 event, the 2022 event will not take place. |archive-date=17 September 2021 |archive-url=https://archive.today/20210917103539/https://www.marathon.tokyo/en/news/detail/news_002235.html |url-status=dead }}</ref>}}"]}'> 6 March {{cite web |url=https://www.marathon.tokyo/en/news/detail/news_002235.html |title=Tokyo Marathon 2021 Postponed |author=<!--Not stated--> |date=17 September 2021 |publisher=Tokyo Marathon Foundation |access-date=11 October 2021 |quote=Due to postponement of the 2021 event, the 2022 event will not take place. |archive-date=17 September 2021 |archive-url=https://archive.today/20210917103539/https://www.marathon.tokyo/en/news/detail/news_002235.html |url-status=dead }}</ref>"}},"i":0}}]}'> [ j ]
-18 April
-2 October
-25 September
-9 October
-6 November
-17 July / 18 July (Eugene) [ i ]
-Not held
-2023
-5 March
-17 April
-23 April
-24 September
-8 October
-5 November
-26 August / 27 August (Budapest)
-2024
-3 March
-15 April
-21 April
-29 September
-13 October
-3 November
-Not held
-10 August / 11 August (Paris)
-2025
-2 March
-21 April
-27 April
-31 August
-21 September
-12 October
-2 November
-14 September / 15 September (Tokyo)
-Not held
-2026
-1 March
-20 April
-26 April
-30 August
-27 September
-11 October
-1 November
-Not held
-Year
-Tokyo
-Boston
-London
-Sydney
-Berlin
-Chicago
-New York
-World Athletics Championships
-Olympic Games
-Major marathons champions
+Main article: List of winners of the London Marathon
+Paula Radcliffe , women's winner of the 2005 race
+London is one of the top seven world marathons that form the World Marathon Majors competition with a million prize purse. [ 52 ] The inaugural marathon had 7,741 entrants, 6,255 of whom completed the race. [ 53 ] The first Men's Elite Race in 1981 was tied between American Dick Beardsley and Norwegian Inge Simonsen , who crossed the finish line holding hands in 2 hours, 11 minutes, 48 seconds. [ 54 ] The first Women's Elite Race, also in 1981, was won by Briton Joyce Smith in 2:29:57. [ 54 ] In 1983, the first wheelchair races took place. Organized by the British Sports Association for the Disabled (BASD), 19 people competed and 17 finished. Gordon Perry of the United Kingdom won the Men's Wheelchair Race, coming in at 3:20:07, and Denise Smith , also of the UK, won the Women's Wheelchair Race in 4:29:03. [ 55 ]
+World records for marathon running have been set several times. Sabastian Sawe ran a world record time of 1:59:30 in 2026, [ 56 ] almost two minutes faster than the course record set by Kenyan Kelvin Kiptum in 2023. Khalid Khannouchi , representing the United States, set the men's world record in 2:05:38 in 2002.
+British runner Paula Radcliffe was the last female athlete to set the women's world record at the London Marathon, in 2:15:25 in the 2003 race (later briefly downgraded to "world best" by the IAAF as it was achieved in a mixed race, [ 57 ] [ 58 ] but restored to the title of "world Record" shortly thereafter).
+In 2026 Tigst Assefa of Ethiopia set a world record of 2:15:40 for an all-women's marathon. [ 59 ] Previous women's world records were set in 1983, 1985 and 2017 by Grete Waitz , Ingrid Kristiansen and Mary Keitany respectively.
+Marcel Hug of Switzerland set the Men's Wheelchair Race course record at 1:26:27 in 2021, and the Women's equivalent was set by Swiss athlete Manuela Schär in 2021, with 1:39:52. [ 60 ]
+Amateur runners
 [ edit ]
-Men's
+Amateur runners in the race running along Victoria Embankment
+The race attracts amateur runners who make up the bulk of the thirty thousand or more participants; commonly running in fancy dress for charity causes.
+In 2002, Lloyd Scott completed the marathon wearing a deep sea diving suit that weighed a total of 110 lb (50 kg) , with each shoe weighing 24 lb (11 kg) ; he also set a record for the slowest London Marathon time. [ 61 ] On 19 April 2003, former boxer Michael Watson , who had been told he would never be able to walk again after a fight with Chris Eubank , made headlines by finishing the marathon in six days. In 2006, Sir Steve Redgrave (winner of five consecutive Olympic gold medals) set a new Guinness World Record for money raised through a marathon by collecting £1.8 million in sponsorship. This broke the record set the previous year by the founder of the Oasis Trust , Steve Chalke , who had collected over £1.25 million. In 2011, Chalke raised a new record £2.32 million. [ 62 ] The £500 that Claire Squires collected before the race increased to over £1 million after she died having collapsed during the 2012 race. [ 63 ]
+A small number of runners, known as the " Ever Presents ", have completed each of the London Marathons since 1981. When the list was first established in 1995, there were 42. After 2019 , their number has shrunk to 10. At the running of the 2019 event, the oldest runner was 85-year old Kenneth Jones, whilst the youngest runner was 60-year-old Chris Finill. They are all male. [ 64 ]
+In 2025, Singaporean marathon record holder Soh Rui Yong set a new Guinness World Record for fastest ever marathon in a suit, running 2:39:57. This broke the previous record of 2:40:53 by Frenchman Emmanuel Bonnier. Soh accomplished this feat while an MBA student at London Business School and is also a graduate of University College London Law School. [ 65 ]
+Entry
 [ edit ]
-Year
-Tokyo
-Boston
-London
-Sydney
-Berlin
-Chicago
-New York
-World (WCh) or Olympic (OG)
-2006
-Not held
-Robert Kipkoech Cheruiyot ( 1/4 )
-Felix Limo ( 1/1 )
-Was not part of WMM
-Haile Gebrselassie ( 1/4 )
-Robert Kipkoech Cheruiyot ( 2/4 )
-Marílson Gomes dos Santos ( 1/2 )
-— N/a
-2007
-Was not part of WMM
-Robert Kipkoech Cheruiyot ( 3/4 )
-Martin Lel ( 1/3 )
-Haile Gebrselassie ( 2/4 )
-Patrick Ivuti ( 1/1 )
-Martin Lel ( 2/3 )
-Luke Kibet ( Osaka ) WCh
-2008
-Robert Kipkoech Cheruiyot ( 4/4 )
-Martin Lel ( 3/3 )
-Haile Gebrselassie ( 3/4 )
-Evans Cheruiyot ( 1/1 )
-Marílson Gomes dos Santos ( 2/2 )
-Samuel Wanjiru ( Beijing ) OG (1/4)
-2009
-Deriba Merga ( 1/1 )
-Samuel Wanjiru ( 2/4 )
-Haile Gebrselassie ( 4/4 )
-Samuel Wanjiru ( 3/4 )
-Meb Keflezighi ( 1/2 )
-Abel Kirui ( Berlin ) WCh (1/2)
-2010
-Robert Kiprono Cheruiyot ( 1/1 )
-Tsegaye Kebede ( 1/3 )
-Patrick Musyoki ( 1/2 )
-Samuel Wanjiru ( 4/4 )
-Gebregziabher Gebremariam ( 1/1 )
-— N/a
-2011
-Geoffrey Mutai ( 1/4 )
-Emmanuel Mutai ( 1/1 )
-Patrick Musyoki ( 2/2 )
-Moses Mosop ( 1/1 )
-Geoffrey Mutai ( 2/4 )
-Abel Kirui ( Daegu ) WCh (2/2)
-2012
-Wesley Korir ( 1/1 )
-Wilson Kipsang ( 1/5 )
-Geoffrey Mutai ( 3/4 )
-Tsegaye Kebede ( 2/3 )
-Cancelled due to Hurricane Sandy
-Stephen Kiprotich ( London ) OG (1/2)
-2013
-Dennis Kimetto ( 1/3 )
-Lelisa Desisa ( 1/4 )
-Tsegaye Kebede ( 3/3 )
-Wilson Kipsang ( 2/5 )
-Dennis Kimetto ( 2/3 )
-Geoffrey Mutai ( 4/4 )
-Stephen Kiprotich ( Moscow ) WCh (2/2)
-2014
-Dickson Chumba ( 1/3 )
-Meb Keflezighi ( 2/2 )
-Wilson Kipsang ( 3/5 )
-Dennis Kimetto ( 3/3 )
-Eliud Kipchoge ( 1/13 )
-Wilson Kipsang ( 4/5 )
-— N/a
-2015
-Endeshaw Negesse ( 1/1 )
-Lelisa Desisa ( 2/4 )
-Eliud Kipchoge ( 2/13 )
-Eliud Kipchoge ( 3/13 )
-Dickson Chumba ( 2/3 )
-Stanley Biwott ( 1/1 )
-Ghirmay Ghebreslassie ( Beijing ) WCh
-2016
-Feyisa Lilesa ( 1/1 )
-Lemi Berhanu Hayle ( 1/1 )
-Eliud Kipchoge ( 4/13 )
-Kenenisa Bekele ( 1/2 )
-Abel Kirui ( 1/1 )
-Ghirmay Ghebreslassie ( 1/1 )
-Eliud Kipchoge ( Rio de Janeiro ) OG (5/13)
-2017
-Wilson Kipsang ( 5/5 )
-Geoffrey Kirui ( 1/2 )
-Daniel Wanjiru ( 1/1 )
-Eliud Kipchoge ( 6/13 )
-Galen Rupp ( 1/1 )
-Geoffrey Kamworor ( 1/2 )
-Geoffrey Kirui ( London ) WCh (2/2)
-2018
-Dickson Chumba ( 3/3 )
-Yuki Kawauchi ( 1/1 )
-Eliud Kipchoge ( 7/13 )
-Eliud Kipchoge ( 8/13 )
-Mo Farah ( 1/1 )
-Lelisa Desisa ( 3/4 )
-— N/a
-2019
-Birhanu Legese ( 1/2 )
-Lawrence Cherono ( 1/2 )
-Eliud Kipchoge ( 9/13 )
-Kenenisa Bekele ( 2/2 )
-Lawrence Cherono ( 2/2 )
-Geoffrey Kamworor ( 2/2 )
-Lelisa Desisa ( Doha ) WCh (4/4)
-2020
-Birhanu Legese ( 2/2 )
-Cancelled ( COVID-19 pandemic )
-Shura Kitata ( 1/1 )
-Cancelled ( COVID-19 pandemic )
-Rescheduled [ g ]
-2021
-Rescheduled [ h ]
-Benson Kipruto ( 1/4 )
-Sisay Lemma ( 1/2 )
-Guye Adola ( 1/2 )
-Seifu Tura ( 1/1 )
-Albert Korir ( 1/1 )
-Eliud Kipchoge ( Sapporo ) OG (10/13)
-2022
-Eliud Kipchoge ( 11/13 )
-Evans Chebet ( 1/3 )
-Amos Kipruto ( 1/2 )
-Eliud Kipchoge ( 12/13 )
-Benson Kipruto ( 2/4 )
-Evans Chebet ( 2/3 )
-Tamirat Tola ( Eugene ) WCh (1/3)
-2023
-Deso Gelmisa ( 1/1 )
-Evans Chebet ( 3/3 )
-Kelvin Kiptum ( 1/2 )
-Eliud Kipchoge ( 13/13 )
-Kelvin Kiptum ( 2/2 )
-Tamirat Tola ( 2/3 )
-Victor Kiplangat ( Budapest ) WCh
-2024
-Benson Kipruto ( 3/4 )
-Sisay Lemma ( 2/2 )
-Alexander Mutiso Munyao ( 1/1 )
-Milkesa Mengesha ( 1/1 )
-John Korir ( 1/3 )
-Abdi Nageeye ( 1/1 )
-Tamirat Tola ( Paris ) OG (3/3)
-2025
-Tadese Takele ( 1/2 )
-John Korir ( 2/3 )
-Sabastian Sawe ( 1/3 )
-Hailemaryam Kiros ( 1/1 )
-Sabastian Sawe ( 2/3 )
-Jacob Kiplimo ( 1/1 )
-Benson Kipruto ( 4/4 )
-Alphonce Simbu ( Tokyo ) WCh
-2026
-Tadese Takele ( 2/2 )
-John Korir ( 3/3 )
-Sabastian Sawe ( 3/3 )
-Addisu Gobena ( 1/1 )
-Guye Adola ( 2/2 )
-Amos Kipruto ( 2/2 )
-— N/a
-Year
-Tokyo
-Boston
-London
-Sydney
-Berlin
-Chicago
-New York
-World (WCh) or Olympic (OG)
-Women's
+There are multiple ways that runners can enter the London Marathon. The breakdown of places is not publicly shared by the organisation. As of 2023, the available places are generally considered to be distributed approximately as follows:
+Charity (25,000 [ 66 ] )
+General Ballot (approximately 17,000 (estimated))
+Good For Age Entry (6,000 [ 67 ] )
+Championship (1,000 [ 68 ] )
+Affiliated Running Clubs (1,515 [ 69 ] )
+Celebrity (100)
+Elite (100)
+As well as a small number of places distributed directly to overseas ballot, tour operators and those deferred from previous editions.
+Charity
 [ edit ]
-Year
-Tokyo Marathon
-Boston Marathon
-London Marathon
-Sydney Marathon
-Berlin Marathon
-Chicago Marathon
-New York City Marathon
-World (WCh) or Olympic (OG)
-2006
-Was not part of WMM
-Rita Jeptoo ( 1/3 )
-Deena Kastor ( 1/1 )
-Was not part of WMM
-Gete Wami ( 1/2 )
-Berhane Adere ( 1/2 )
-Jelena Prokopcuka ( 1/1 )
-— N/a
-2007
-Lidiya Grigoryeva ( 1/2 )
-Zhou Chunxiu ( 1/1 )
-Gete Wami ( 2/2 )
-Berhane Adere ( 2/2 )
-Paula Radcliffe ( 1/2 )
-Catherine Ndereba ( Osaka ) WCh
-2008
-Dire Tune ( 1/1 )
-Irina Mikitenko ( 1/4 )
-Irina Mikitenko ( 2/4 )
-Lidiya Grigoryeva ( 2/2 )
-Paula Radcliffe ( 2/2 )
-Constantina Tomescu ( Beijing ) OG
-2009
-Salina Kosgei ( 1/1 )
-Irina Mikitenko ( 3/4 )
-Atsede Habtamu ( 1/1 )
-Irina Mikitenko ( 4/4 )
-Derartu Tulu ( 1/1 )
-Bai Xue ( Berlin ) WCh
-2010
-Teyba Erkesso ( 1/1 )
-Aselefech Mergia ( 1/1 )
-Aberu Kebede ( 1/4 )
-Atsede Baysa ( 1/3 )
-Edna Kiplagat ( 1/6 )
-— N/a
-2011
-Caroline Kilel ( 1/1 )
-Mary Keitany ( 1/7 )
-Florence Kiplagat ( 1/4 )
-Ejegayehu Dibaba ( 1/1 )
-Firehiwot Dado ( 1/1 )
-Edna Kiplagat ( Daegu ) WCh (2/6)
-2012
-Sharon Cherop ( 1/1 )
-Mary Keitany ( 2/7 )
-Aberu Kebede ( 2/4 )
-Atsede Baysa ( 2/3 )
-Cancelled due to Hurricane Sandy
-Tiki Gelana ( London ) OG
-2013
-Aberu Kebede ( 3/4 )
-Rita Jeptoo ( 2/3 )
-Priscah Jeptoo ( 1/2 )
-Florence Kiplagat ( 2/4 )
-Rita Jeptoo ( 3/3 )
-Priscah Jeptoo ( 2/2 )
-Edna Kiplagat ( Moscow ) WCh (3/6)
-2014
-Tirfi Tsegaye ( 1/2 )
-Bizunesh Deba ( 1/1 )
-Edna Kiplagat ( 4/6 )
-Tirfi Tsegaye ( 2/2 )
-Mare Dibaba ( 1/2 )
-Mary Keitany ( 3/7 )
-— N/a
-2015
-Birhane Dibaba ( 1/2 )
-Caroline Rotich ( 1/1 )
-Tigist Tufa ( 1/1 )
-Gladys Cherono ( 1/3 )
-Florence Kiplagat ( 3/4 )
-Mary Keitany ( 4/7 )
-Mare Dibaba ( Beijing ) WCh (2/2)
-2016
-Helah Kiprop ( 1/1 )
-Atsede Baysa ( 3/3 )
-Jemima Sumgong ( 1/2 )
-Aberu Kebede ( 4/4 )
-Florence Kiplagat ( 4/4 )
-Mary Keitany ( 5/7 )
-Jemima Sumgong ( Rio de Janeiro ) OG (2/2)
-2017
-Sarah Chepchirchir ( 1/1 )
-Edna Kiplagat ( 5/6 )
-Mary Keitany ( 6/7 )
-Gladys Cherono ( 2/3 )
-Tirunesh Dibaba ( 1/1 )
-Shalane Flanagan ( 1/1 )
-Rose Chelimo ( London ) WCh
-2018
-Birhane Dibaba ( 2/2 )
-Desiree Linden ( 1/1 )
-Vivian Cheruiyot ( 1/1 )
-Gladys Cherono ( 3/3 )
-Brigid Kosgei ( 1/6 )
-Mary Keitany ( 7/7 )
-— N/a
-2019
-Ruti Aga ( 1/1 )
-Worknesh Degefa ( 1/1 )
-Brigid Kosgei ( 2/6 )
-Ashete Bekere ( 1/1 )
-Brigid Kosgei ( 3/6 )
-Joyciline Jepkosgei ( 1/2 )
-Ruth Chepng'etich ( Doha ) WCh (1/4)
-2020
-Lonah Chemtai Salpeter ( 1/1 )
-Cancelled ( COVID-19 pandemic )
-Brigid Kosgei ( 4/6 )
-Cancelled ( COVID-19 pandemic )
-Rescheduled [ g ]
-2021
-Rescheduled [ h ]
-Edna Kiplagat {{cite news| url=https://www.theguardian.com/sport/2022/dec/20/diana-kipyokei-boston-marathon-drugs-ban| title=Diana Kipyokei banned for six years and stripped of 2021 Boston Marathon title| work=[[The Guardian]]| date=December 20, 2022|access-date=December 20, 2022}}</ref>"}},"i":0}}]}'> [ k ] ( 6/6 )
-Joyciline Jepkosgei ( 2/2 )
-Gotytom Gebreslase ( 1/2 )
-Ruth Chepng'etich ( 2/4 )
-Peres Jepchirchir ( 2/6 )
-Peres Jepchirchir ( Sapporo ) OG (1/6)
-2022
-Brigid Kosgei ( 5/6 )
-Peres Jepchirchir ( 3/6 )
-Yalemzerf Yehualaw ( 1/1 )
-Tigst Assefa ( 1/5 )
-Ruth Chepng'etich ( 3/4 )
-Sharon Lokedi ( 1/3 )
-Gotytom Gebreslase ( Eugene ) WCh (2/2)
-2023
-Rosemary Wanjiru ( 1/2 )
-Hellen Obiri ( 1/4 )
-Sifan Hassan ( 1/4 )
-Tigst Assefa ( 2/5 )
-Sifan Hassan ( 2/4 )
-Hellen Obiri ( 2/4 )
-Amane Beriso ( Budapest ) WCh
-2024
-Sutume Kebede ( 1/2 )
-Hellen Obiri ( 3/4 )
-Peres Jepchirchir ( 4/6 )
-Tigist Ketema ( 1/1 )
-Ruth Chepng'etich ( 4/4 )
-Sheila Chepkirui ( 1/1 )
-Sifan Hassan ( Paris ) OG (3/4)
-2025
-Sutume Kebede ( 2/2 )
-Sharon Lokedi ( 2/3 )
-Tigst Assefa ( 3/5 )
-Sifan Hassan ( 4/4 )
-Rosemary Wanjiru ( 2/2 )
-Hawi Feysa ( 1/2 )
-Hellen Obiri ( 4/4 )
-Peres Jepchirchir ( Tokyo ) WCh (5/6)
-2026
-Brigid Kosgei ( 6/6 )
-Sharon Lokedi ( 3/3 )
-Tigst Assefa ( 4/5 )
-Peres Jepchirchir ( (6/6 )
-Tigst Assefa ( 5/5 )
-Hawi Feysa ( 2/2 )
-— N/a
-Year
-Tokyo
-Boston
-London
-Sydney
-Berlin
-Chicago
-New York
-World (WCh) or Olympic (OG)
-Men's wheelchair
+The majority of runners at the London Marathon do so using a Charity Place. To obtain this, they commit to raising a minimum amount for a registered charitable cause. In contrast to the other World Marathon Majors and other international events, London Marathon has a bigger focus on charity running than other similar events. London Marathon participants have helped to raise £1.4 billion since its founding, including £87 million at the 2025 London Marathon which was the highest amount for an annual single-day fund-raising event in the world. [ 38 ] [ 2 ]
+General Ballot
 [ edit ]
-Year
-Tokyo Marathon
-Boston Marathon
-London Marathon
-Sydney Marathon
-Berlin Marathon
-Chicago Marathon
-New York City Marathon
-2016
-Was not part of WMM
-Marcel Hug ( 1/42 )
-Marcel Hug ( 2/42 )
-Was not part of WMM
-Marcel Hug ( 3/42 )
-Marcel Hug ( 4/42 )
-Marcel Hug ( 5/42 )
-2017
-Sho Watanabe ( 1/1 )
-Marcel Hug ( 6/42 )
-David Weir ( 1/2 )
-Marcel Hug ( 7/42 )
-Marcel Hug ( 8/42 )
-Marcel Hug ( 9/42 )
-2018
-Hiroyuki Yamamoto ( 1/1 )
-Marcel Hug ( 10/42 )
-David Weir ( 2/2 )
-Brent Lakatos ( 1/2 )
-Daniel Romanchuk ( 1/10 )
-Daniel Romanchuk ( 2/10 )
-2019
-Marcel Hug ( 11/42 )
-Daniel Romanchuk ( 3/10 )
-Daniel Romanchuk ( 4/10 )
-Marcel Hug ( 12/42 )
-Daniel Romanchuk ( 5/10 )
-Daniel Romanchuk ( 6/10 )
-2020
-Tomoki Suzuki ( 1/3 )
-Cancelled ( COVID-19 pandemic )
-Brent Lakatos ( 2/2 )
-Cancelled ( COVID-19 pandemic )
-2021
-Rescheduled [ h ]
-Marcel Hug ( 13/42 )
-Marcel Hug ( 14/42 )
-Marcel Hug ( 15/42 )
-Daniel Romanchuk ( 7/10 )
-Marcel Hug ( 16/42 )
-2022
-Marcel Hug ( 17/42 )
-Daniel Romanchuk ( 8/10 )
-Marcel Hug ( 18/42 )
-Marcel Hug ( 19/42 )
-Marcel Hug ( 20/42 )
-Marcel Hug ( 21/42 )
-2023
-Marcel Hug ( 22/42 )
-Marcel Hug ( 23/42 )
-Marcel Hug ( 24/42 )
-Marcel Hug ( 25/42 )
-Marcel Hug ( 26/42 )
-Marcel Hug ( 27/42 )
-2024
-Tomoki Suzuki ( 2/3 )
-Marcel Hug ( 28/42 )
-Marcel Hug ( 29/42 )
-Marcel Hug ( 30/42 )
-Marcel Hug ( 31/42 )
-Daniel Romanchuk ( 9/10 )
-2025
-Tomoki Suzuki ( 3/3 )
-Marcel Hug ( 32/42 )
-Marcel Hug ( 33/42 )
-Marcel Hug ( 34/42 )
-Marcel Hug ( 35/42 )
-Marcel Hug ( 36/42 )
-Marcel Hug ( 37/42 )
-2026
-Marcel Hug ( 38/42 )
-Marcel Hug ( 39/42 )
-Marcel Hug ( 40/42 )
-Daniel Romanchuk ( 10/10 )
-Marcel Hug ( 41/42 )
-Marcel Hug ( 42/42 )
-— N/a
-Year
-Tokyo
-Boston
-London
-Sydney
-Berlin
-Chicago
-New York
-Women's wheelchair
+In recent years, following the growth in popularity of recreational running, [ 70 ] it has become increasingly difficult to obtain a place via the general ballot or lottery. In 2024, success in the ballot is estimated to be below 3%. There have been a number of changes in recent years to address the increase in applications (online applications, removal of multi-ballot entry guarantee etc.). The 2027 event ballot received 1,338,544 applications. [ 39 ]
+Good for age
 [ edit ]
-Year
-Tokyo Marathon
-Boston Marathon
-London Marathon
-Sydney Marathon
-Berlin Marathon
-Chicago Marathon
-New York City Marathon
-2016
-Was not part of WMM
-Tatyana McFadden ( 1/7 )
-Tatyana McFadden ( 2/7 )
-Was not part of WMM
-Manuela Schär ( 1/23 )
-Tatyana McFadden ( 3/7 )
-Tatyana McFadden ( 4/7 )
-2017
-Amanda McGrory ( 1/1 )
-Manuela Schär ( 2/23 )
-Manuela Schär ( 3/23 )
-Manuela Schär ( 4/23 )
-Tatyana McFadden ( 5/7 )
-Manuela Schär ( 5/23 )
-2018
-Manuela Schär ( 6/23 )
-Tatyana McFadden ( 6/7 )
-Madison de Rozario ( 1/3 )
-Manuela Schär ( 7/23 )
-Manuela Schär ( 8/23 )
-Manuela Schär ( 9/23 )
-2019
-Manuela Schär ( 10/23 )
-Manuela Schär ( 11/23 )
-Manuela Schär ( 12/23 )
-Manuela Schär ( 13/23 )
-Manuela Schär ( 14/23 )
-Manuela Schär ( 15/23 )
-2020
-Tsubasa Kina ( 1/2 )
-Cancelled ( COVID-19 pandemic )
-Nikita den Boer ( 1/1 )
-Cancelled ( COVID-19 pandemic )
-2021
-Rescheduled [ h ]
-Manuela Schär ( 16/23 )
-Manuela Schär ( 17/23 )
-Manuela Schär ( 18/23 )
-Tatyana McFadden ( 7/7 )
-Madison de Rozario ( 2/3 )
-2022
-Tsubasa Kina ( 2/2 )
-Manuela Schär ( 19/23 )
-Catherine Debrunner ( 1/14 )
-Catherine Debrunner ( 2/14 )
-Susannah Scaroni ( 1/8 )
-Susannah Scaroni ( 2/8 )
-2023
-Manuela Schär ( 20/23 )
-Susannah Scaroni ( 3/8 )
-Madison de Rozario ( 3/3 )
-Catherine Debrunner ( 3/14 )
-Catherine Debrunner ( 4/14 )
-Catherine Debrunner ( 5/14 )
-2024
-Manuela Schär ( 21/23 )
-Eden Rainbow-Cooper ( 1/2 )
-Catherine Debrunner ( 6/14 )
-Catherine Debrunner ( 7/14 )
-Catherine Debrunner ( 8/14 )
-Susannah Scaroni ( 4/8 )
-2025
-Catherine Debrunner ( 9/14 )
-Susannah Scaroni ( 5/8 )
-Catherine Debrunner ( 10/14 )
-Susannah Scaroni ( 6/8 )
-Manuela Schär ( 22/23 )
-Susannah Scaroni ( 7/8 )
-Susannah Scaroni ( 8/8 )
-2026
-Catherine Debrunner ( 11/14 )
-Eden Rainbow-Cooper ( 2/2 )
-Catherine Debrunner ( 12/14 )
-Manuela Schär ( 23/23 )
-Catherine Debrunner ( 13/14 )
-Catherine Debrunner ( 14/14 )
-— N/a
-Year
-Tokyo
-Boston
-London
-Sydney
-Berlin
-Chicago
-New York
-World Marathon Majors champions list
+This section does not cite any sources . Please help improve this section by adding citations to reliable sources . Unsourced material may be challenged and removed . ( April 2025 ) ( Learn how and when to remove this message )
+The Good-for-Age entry route is the entry route for the majority of "competitive" runners. The aim of the good-for-age category is to provide places for those who achieve a sufficiently fast age-graded time. Due to a greater number of men meeting the Good-for-age criteria, places were capped at 3,000 entries for each gender to ensure an even gender split. This has led to the reduction in the Good for Age mens times in recent years. There is a 10% difference in the marathon World Record pace, but a 26% difference in the London Marathon Good for Age entry times. London Marathon is now harder to enter for men than Boston.
+Mini Marathon
 [ edit ]
-Men's
+The Virgin Money Giving Mini London Marathon is the sister of The London Marathon. The course is the last 3 mi (4.8 km) of the London Marathon and is for under-13s, under-15s and under-17s from all 33 London Boroughs along with 13 teams from ten English regions and three Home Countries: Scotland, Wales and Northern Ireland . There is also a Mini Wheelchair race on the day. [ 71 ] The race doubles as the British Athletics 3mile Championships.
+BBC live coverage
 [ edit ]
-Titles
-Winner
-Tokyo Marathon
-Boston Marathon
-London Marathon
-Sydney Marathon
-Berlin Marathon
-Chicago Marathon
-New York City Marathon
-Years
-11
-Eliud Kipchoge 1
-0 4 0 5 1 0 2014–2023
-5
-Wilson Kipsang 1
-0 2 0 1 0 1 2012–2017
-4
-Robert Kipkoech Cheruiyot 0
-3 0 0 0 1 0 2006–2008
-Haile Gebrselassie 0
-0 0 0 4 0 0 2006–2009
-Geoffrey Mutai 0
-1 0 0 1 0 2 2011–2013
-Benson Kipruto 1
-1 0 0 0 1 1 2021–2025
-3
-Martin Lel 0
-0 2 0 0 0 1 2007–2008
-Samuel Wanjiru 0
-0 1 0 0 2 0 2009–2010
-Tsegaye Kebede 0
-0 2 0 0 1 0 2010–2013
-Dennis Kipruto Kimetto 1
-0 0 0 1 1 0 2013–2014
-Lelisa Desisa 0
-2 0 0 0 0 1 2013–2018
-Dickson Chumba 2
-0 0 0 0 1 0 2014–2018
-Evans Chebet 0
-2 0 0 0 0 1 2022–2023
-John Korir 0
-2 0 0 0 1 0 2024–2026
-Sabastian Sawe 0
-0 2 0 1 0 0 2025–2026
-2
-Marílson Gomes dos Santos 0
-0 0 0 0 0 2 2006–2008
-Meb Keflezighi 0
-1 0 0 0 0 1 2009–2014
-Patrick Musyoki 0
-0 0 0 2 0 0 2010–2011
-Kenenisa Bekele 0
-0 0 0 2 0 0 2016–2019
-Geoffrey Kamworor 0
-0 0 0 0 0 2 2017–2019
-Lawrence Cherono 0
-1 0 0 0 1 0 2019
-Birhanu Legese 2
-0 0 0 0 0 0 2019–2020
-Sisay Lemma 0
-1 1 0 0 0 0 2021–2024
-Kelvin Kiptum 0
-0 1 0 0 1 0 2023
-Guye Adola 0
-0 0 0 2 0 0 2021–2026
-Amos Kipruto 0
-0 1 0 0 1 0 2022–2026
-Tadese Takele 2
-0 0 0 0 0 0 2025–2026
-Women's
+2019 London Marathon finishers medal
+The BBC has broadcast coverage of the London Marathon since its inception in 1981 [ 72 ] and has broadcast the race live, and in full, since 1984. Originally hosted out-of-vision by David Coleman , more recently the main presenters on BBC One have been Sue Barker , Jonathan Edwards and Gabby Logan . The highlight presenters on BBC Two have been Jonathan Edwards (2007–12), Sonali Shah (2013), and Helen Skelton (2014–15). The commentators for the Marathon on the BBC were David Coleman, Ron Pickering, Brendan Foster , Paul Dickinson, Steve Cram, Andrew Cotter, Stuart Storey, Paula Radcliffe, Dame Tanni Grey-Thompson , Liz McColgan , and Rob Walker.
+Theme tune
 [ edit ]
-Titles
-Winner
-Tokyo Marathon
-Boston Marathon
-London Marathon
-Sydney Marathon
-Berlin Marathon
-Chicago Marathon
-New York City Marathon
-Years
-7
-Mary Keitany 0
-0 3 0 0 0 4 2011–2018
-6
-Brigid Kosgei 2
-0 2 0 0 2 0 2018–2026
-5
-Tigist Assefa 0
-0 2 0 3 0 0 2022–2026
-4
-Irina Mikitenko 0
-0 2 0 1 1 0 2008–2009
-Aberu Kebede 1
-0 0 0 3 0 0 2010–2016
-Edna Kiplagat 0
-2 1 0 0 0 1 2010–2021
-Florence Kiplagat 0
-0 0 0 2 2 0 2011–2016
-Hellen Obiri 0
-2 0 0 0 0 2 2023–2025
-Peres Jepchirchir 0
-1 1 1 0 0 1 2021–2026
-3
-Rita Jeptoo 0
-0 2 0 0 1 0 2006–2013
-Atsede Baysa 0
-1 0 0 0 2 0 2010–2016
-Gladys Cherono 0
-0 0 0 3 0 0 2015–2018
-Ruth Chepng'etich 0
-0 0 0 0 3 0 2021–2024
-Sifan Hassan 0
-0 1 1 0 1 0 2023–2025
-Sharon Lokedi 0
-2 0 0 0 0 1 2022–2026
-2
-Gete Wami 0
-0 0 0 2 0 0 2006–2007
-Berhane Adere 0
-0 0 0 0 2 0 2006–2007
-Lidiya Grigoryeva 0
-1 0 0 0 1 0 2007–2008
-Paula Radcliffe 0
-0 0 0 0 0 2 2007–2008
-Priscah Jeptoo 0
-0 1 0 0 0 1 2013
-Tirfi Tsegaye 1
-0 0 0 1 0 0 2014
-Birhane Dibaba 2
-0 0 0 0 0 0 2015–2018
-Joyciline Jepkosgei 0
-0 1 0 0 0 1 2019–2021
-Rosemary Wanjiru 1
-0 0 0 1 0 0 2023–2025
-Sutume Kebede 2
-0 0 0 0 0 0 2024–2025
-Hawi Feysa 0
-0 0 0 0 2 0 2025–2026
-Winners by season
+The theme tune used by the BBC every year is from the film score of The Trap , a 1966 film about a Canadian fur trapper, starring Oliver Reed and Rita Tushingham . The music was written by Ron Goodwin and is performed by the Bournemouth Symphony Orchestra . [ 73 ] [ 74 ]
+Sponsorship and marketing
 [ edit ]
-Main article: List of final standings of the World Marathon Majors
-The winners by season listed below. [ 16 ]
-Men's series winners
-[ edit ]
-Season No. Start event Final event Winner Country Points Notes Ref
-2006–07 I 2006 Boston 2007 New York City Robert Kipkoech Cheruiyot Kenya 80 points [ 17 ]
-2007–08 II 2007 Boston 2008 New York City Martin Lel Kenya 76 points [ 18 ]
-2008–09 III 2008 Boston 2009 New York City Samuel Wanjiru Kenya 80 points [ 19 ]
-2009–10 IV 2009 Boston 2010 New York City Samuel Wanjiru (2) Kenya 75 points [ 19 ]
-2010–11 V 2010 Boston 2011 New York City Emmanuel Mutai Kenya 70 points [ 20 ]
-2011–12 VI 2011 Boston 2012 Chicago Geoffrey Mutai Kenya 75 points [ 20 ]
-2012–13 VII 2012 Boston 2013 New York City Tsegaye Kebede Ethiopia 75 points [ 21 ]
-2013–14 VIII 2013 Tokyo 2014 New York City Wilson Kipsang Kenya 76 points [ 22 ]
-2015–16 IX 2015 Tokyo 2016 Tokyo Eliud Kipchoge Kenya 50 points [ 16 ]
-2016–17 X 2016 Boston 2017 Boston Eliud Kipchoge (2) Kenya 50 points [ 16 ]
-2017–18 XI 2017 London 2018 London Eliud Kipchoge (3) Kenya 50 points [ 23 ]
-2018–19 XII 2018 Berlin 2019 Berlin Eliud Kipchoge (4) Kenya 50 points [ 24 ]
-2019–21 XIII 2019 Chicago 2021 New York City Albert Korir Kenya 41 points [ 25 ]
-2022 XIV 2021 Tokyo [ h ] 2022 New York City Eliud Kipchoge (5) Kenya 50 points
-2023 XV 2023 Tokyo 2023 New York City Kelvin Kiptum Kenya 50 points
-2024
-XVI
-2024 Tokyo
-2024 New York City
-Benson Kipruto
-Kenya
-34 points
-2025
-XVII
-2025 London
-2025 Berlin
-Sabastian Sawe
-Kenya
-50 points
-[ 26 ]
-Women's series winners
-[ edit ]
-Season No. Start event Final event Winner Country Points Notes Ref
-2006–07 I 2006 Boston 2007 New York City Gete Wami Ethiopia 80 points
-2007–08 II 2007 Boston 2008 New York City Irina Mikitenko Germany 65 points Tied with Gete Wami ; but deemed winner by race directors' vote [ 18 ]
-2008–09 III 2008 Boston 2009 New York City Irina Mikitenko (2) Germany 90 points [ 18 ]
-2009–10 IV 2009 Boston 2010 New York City Irina Mikitenko (3) Germany 55 points Awarded after a doping case against original winner [ l ] [ 18 ]
-2010–11 V 2010 Boston 2011 New York City Edna Kiplagat Kenya 60 points Awarded after a doping case against original winner [ l ] [ 28 ]
-2011–12 VI 2011 Boston 2012 Chicago Mary Keitany Kenya 65 points [ 20 ]
-2012–13 VII 2012 Boston 2013 New York City Priscah Jeptoo Kenya 75 points [ 21 ]
-2013–14 VIII 2013 Tokyo 2014 New York City Edna Kiplagat (2) Kenya 65 points Awarded after a doping case against original winner [ m ] [ 16 ]
-2015–16 IX 2015 Tokyo 2016 Tokyo Mary Keitany (2) Kenya 41 points Tied with Mare Dibaba & Helah Kiprop ; winner by race directors' vote [ 16 ]
-2016–17 X 2016 Boston 2017 Boston Edna Kiplagat (3) Kenya 41 points Awarded after a doping case against original winner [ n ] [ 16 ]
-2017–18 XI 2017 London 2018 London Mary Keitany (3) Kenya 41 points Winner due to better head-to-head record versus Tirunesh Dibaba [ 23 ]
-2018–19 XII 2018 Berlin 2019 Berlin Brigid Kosgei Kenya 50 points [ 24 ]
-2019–21 XIII 2019 Chicago 2021 New York City Peres Jepchirchir
-Joyciline Jepkosgei Kenya
-Kenya 50 points Joint champions with two wins each [ 25 ]
-2022 XIV 2021 Tokyo [ h ] 2022 New York City Gotytom Gebreslase Ethiopia
-2023 XV 2023 Tokyo
-2023 New York City Sifan Hassan Netherlands 50 points Tied with Hellen Obiri ; winner by race directors' vote
-2024
-XVI
-2024 Tokyo
-2024 New York City
-Hellen Obiri
-Kenya
-41 points
-Tied with Sutume Asefa Kebede ; winner by race directors' vote
-[ 31 ]
-2025
-XVII
-2025 Boston
-2025 New York City
-Hellen Obiri (2)
-Sharon Lokedi
-Tigst Assefa
-Kenya
-Kenya
-Ethiopia
-41 points
-Race directors decided they should share the title
-[ 32 ]
-Men's wheelchair series winners
-[ edit ]
-Season No. Start event Final event Winner Country Points Notes Ref
-2016–17 X 2016 Boston 2017 Boston Marcel Hug Switzerland
-2017–18 XI 2017 London 2018 London Marcel Hug (2) Switzerland
-2018–19 XII 2018 Berlin 2019 Berlin Daniel Romanchuk United States
-2019–21 XIII 2019 Chicago 2021 New York City Marcel Hug (3) Switzerland
-2022 XIV 2021 Tokyo [ h ] 2022 New York City Marcel Hug (4) Switzerland
-2023
-XV
-2023 Tokyo
-2023 New York City
-Marcel Hug (5)
-Switzerland
-2024
-XVI
-2024 Tokyo
-2024 New York City
-Marcel Hug (6)
-Switzerland
-[ 31 ]
-2025
-XVII
-2025 Boston
-2025 New York City
-Marcel Hug (7)
-Switzerland
-Women's wheelchair series winners
-[ edit ]
-Season No. Start event Final event Winner Country Points Notes Ref
-2016–17 X 2016 Boston 2017 Boston Tatyana McFadden United States
-2017–18 XI 2017 London 2018 London Manuela Schär Switzerland
-2018–19 XII 2018 Berlin 2019 Berlin Manuela Schär (2) Switzerland
-2019–21 XIII 2019 Chicago 2021 New York City Manuela Schär (3) Switzerland
-2022 XIV 2021 Tokyo [ h ] 2022 New York City Susannah Scaroni United States
-2023
-XV
-2023 Tokyo
-2023 New York City
-Catherine Debrunner
-Switzerland
-2024
-XVI
-2024 Tokyo
-2024 New York City
-Catherine Debrunner (2)
-Switzerland
-[ 31 ]
-2025
-XVII
-2025 Boston
-2025 New York City
-Susannah Scaroni (2)
-United States
-Majors milestones
-[ edit ]
-Most victories – 13, Eliud Kipchoge (men); 7, Mary Keitany (women)
-Most scoring races – 13, Tsegaye Kebede , Wilson Kipsang (men); 14, Edna Kiplagat , Mary Keitany (women)
-Most lifetime scoring points – 265, Eliud Kipchoge (men); 234, Mary Keitany (women)
-Youngest winner – 20 years 281 days, Ghirmay Ghebreslassie (men); 20 years, 253 days, Xue Bai (women)
-Youngest point scorer – 18 years 302 days, Tsegaye Mekonnen (men); 19 years 233 days, Ayaka Fujimoto (women)
-Oldest winner – 38 years 350 days, Meb Keflezighi (men); 41 years 330 days, Edna Kiplagat (women)
-Oldest point scorer – 41 years 313 days, Kenenisa Bekele (men); 41 years 330 days, Edna Kiplagat (women)
-Nation, most winners – 52, Kenya (men); 35, Kenya (women)
-Six star finishers
-[ edit ]
-Six star finishers are marathoners who have completed the first six races (by join date) in the World Marathon Majors (Berlin, Boston, Chicago, London, New York, Tokyo). The Six Star Finisher Medal was introduced in 2016 following the addition of Tokyo to WMM. [ 33 ] In July 2018 a "Reach for the Stars" campaign was launched wherein a runner could claim a star for each WMM race completed. The system allows runners to create a profile, search for their ‘stars’ and add them to their page. [ 34 ]
-After the addition of Sydney (2024) and Cape Town (2026) to WMM, the Six Star medal remained in place for the original six races only. Pending the potential addition of Shanghai to WMM, Abbott World Marathon Majors announced that they would create a new Nine Star medal for the expanded race series. [ 35 ]
-As of the completion of the London Marathon in April 2025, 22,480 runners from 139 nations had become Six Star Finishers. [ citation needed ]
+Logo used from 2013 to 2021 under Virgin Money sponsorship
+The original sponsors of the London Marathon were Gillette , who sponsored the event from 1981 to 1983. Subsequent sponsors have been Mars (1984–1988), ADT (1989–1992), NutraSweet (1993–1995), and Flora (1996–2009). [ 75 ] [ 76 ] Virgin Money sponsored the marathon from 2010, after signing a five-year £17m sponsorship deal in 2008. [ 77 ] In April 2013, the London Marathon renewed its sponsorship deal with Virgin Money for a further five years and the race changed its name to the Virgin Money London Marathon. [ 78 ] [ 79 ] In 2021 it was announced that Indian consultancy company Tata Consultancy Services would take over sponsorship of the London Marathon from 2022. [ 80 ]
+A number of other companies and organisations also use the event for brand identification and marketing , including New Balance , [ 81 ] Lucozade Sport , [ 82 ] and Fuller's Brewery . [ 83 ]
 See also
 [ edit ]
-World Athletics Label Road Races
-List of World Athletics Label marathon races
-List of final standings of the World Marathon Majors
-Notes
-[ edit ]
-↑ The 2012 New York Marathon was originally scheduled for 4 November, but cancelled due to Hurricane Sandy . [ 8 ]
-↑ The 2020 Boston Marathon was originally scheduled for 20 April, then postponed to 14 September and later cancelled due to the COVID-19 pandemic . [ 9 ]
-↑ Postponed from 26 April due to the COVID-19 pandemic .
-↑ The 2020 Berlin Marathon was originally scheduled for 27 September, but cancelled due to the COVID-19 pandemic in Germany to prevent large gatherings. [ 10 ]
-↑ The 2020 Chicago Marathon was originally scheduled for 11 October, but was cancelled due to the COVID-19 pandemic . [ 11 ]
-↑ The 2020 New York City Marathon was originally scheduled for 1 November, but was cancelled due to the COVID-19 pandemic . [ 12 ]
-1 2 3 4 Postponed from 2 and 9 August due to the COVID-19 pandemic . [ 13 ]
-1 2 3 4 5 6 7 8 9 Ran in 2022 due to COVID-19 pandemic
-1 2 Postponed by one year due to COVID-19 pandemic and the resulting postponement of the 2020 Summer Olympics .
-↑ Postponed race from 2021. [ 14 ]
-↑ Diana Kipyogei (KEN) was the original winner, but she was disqualified for a doping violation. [ 15 ]
-1 2 Liliya Shobukhova (Russia) was the original winner in Series IV and V but she was disqualified from competition for a doping violation in April 2014 and all her results from 9 October 2009 have been annulled. [ 27 ]
-↑ Rita Jeptoo (Kenya) won four races in the 2013–14 series but gave positive A and B samples in an out-of-competition test in September 2014. [ 29 ]
-↑ Jemima Sumgong (Kenya), who won two races in 2016 but gave a positive sample in an out-of-competition test in February 2017. [ 30 ]
+London Triathlon
 References
 [ edit ]
-1 2 Brophy, Selene (June 10, 2026). "BREAKING NEWS: Cape Town makes history as Africa's first World Marathon Major" . Time Out Cape Town . Retrieved 2026-06-10 .
-↑ How It Works Archived 2012-11-05 at the Wayback Machine . World Marathon Majors. Retrieved on 2011-11-07.
-↑ "ABBOTT CELEBRATES THE POWER OF HEALTH AND ACHIEVEMENT AS FIRST-EVER TITLE SPONSOR OF WORLD MARATHON MAJORS" . World Marathon Majors. Archived from the original on 4 March 2016 . Retrieved 10 November 2015 .
-↑ "Sydney Marathon joins the Majors" . www.worldmarathonmajors.com . Retrieved 2024-11-05 .
-↑ "Sanlam Cape Town Marathon Passes Stage 1 in Abbott World Marathon Majors Candidacy | Sanlam Cape Town Marathon" . capetownmarathon.com . Retrieved 2024-12-05 .
-↑ "Shanghai Marathon becomes candidate Abbott World Marathon Majors race" . Runner's World . 2024-10-09 . Retrieved 2024-12-05 .
-↑ "Shanghai Marathon becomes Abbott World Marathon Majors candidate race" . www.worldmarathonmajors.com . Retrieved 2024-12-05 .
-↑ Belson, Ken (2 November 2012). "After Days of Pressure, Marathon Is Off" . The New York Times . Retrieved 15 April 2014 .
-↑ Waller, John. "The 2020 Boston Marathon has been canceled" . The Boston Globe . Retrieved 28 May 2020 .
-↑ Futterman, Matthew (21 April 2020). "Berlin Marathon Is Canceled as Germany Extends Ban on Large Events" . The New York Times . Retrieved 24 April 2020 .
-↑ Horng, Eric (13 July 2020). "Chicago Marathon 2020 cancelled due to COVID-19, refunds offered by organisers" . WLS-TV . Archived from the original on 14 July 2020 . Retrieved 14 July 2020 .
-↑ "2020 TCS New York City Marathon, Scheduled for November 1, Is Canceled Due to Coronavirus-Related Health and Safety Concerns" . 19 May 2017.
-↑ "IOC, IPC, TOKYO 2020 ORGANISING COMMITTEE AND TOKYO METROPOLITAN GOVERNMENT ANNOUNCE NEW DATES FOR THE OLYMPIC AND PARALYMPIC GAMES TOKYO 2020" . International Olympic Committee . 30 March 2020 . Retrieved 22 April 2020 .
-↑ "Tokyo Marathon 2021 Postponed" . Tokyo Marathon Foundation. 17 September 2021 . Retrieved 11 October 2021 . Due to postponement of the 2021 event, the 2022 event will not take place. {{ cite web }} : CS1 maint: deprecated archival service ( link )
-↑ "Diana Kipyokei banned for six years and stripped of 2021 Boston Marathon title" . The Guardian . December 20, 2022 . Retrieved December 20, 2022 .
-1 2 3 4 5 6 "Previous Champions" .
-↑ Ekstrom, Sharon. "UP CLOSE & PERSONAL --" . Marathon Guide . Retrieved 16 April 2014 .
-1 2 3 4 Musumba, Chris. "Wanjiru on course to win World Marathon Majors" . The East African . Retrieved 16 April 2014 .
-1 2 Larkin, Duncan (2010-11-09). "Wanjiru and Shobukhova Win World Marathon Majors" . Competitor . Retrieved 16 April 2014 .
-1 2 3 Komen, Jonathan (15 April 2014). "Hunt on for WMM cash: Kenya dominate quest for Marathon Majors jackpot" . The Standard . Retrieved 25 January 2017 .
-1 2 Lotsbom, Chris (2013-11-03). "Man Among Boys Geoffrey Mutai Wins 2013 ING NYC Marathon, Kebede Wins $500,000 World Marathon Majors Title" . Letsrun.com . Retrieved 16 April 2014 .
-↑ "Wilson Kipsang Wins 2013-2014 World Marathon Majors Series Title" . World Marathon Majors.
-1 2 "Leaderboards" .
-1 2 Monti, David. "Eliud Kipchoge, Brigid Kosgei Win Abbott World Marathon Majors Series XII" . Let's Run .
-1 2 "ABBOTTWMM SERIES XIII CHAMPIONS CROWNED" . World Marathon Majors .
-↑ https://www.worldmarathonmajors.com/elite-series
-↑ "Liliya Shobukhova to be stripped of World Marathon Majors titles" . 2015-08-06.
-↑ "World Marathon Majors statement" . Archived from the original on 2016-03-04 . Retrieved 2015-08-06 .
-↑ "ABBOTT WORLD MARATHON MAJORS AWARDS EDNA KIPLAGAT SERIES VIII WOMEN'S TITLE" . World Marathon Majors .
-↑ Imray, Gerald (7 April 2017). "Olympic marathon champion Jemima Sumgong fails doping test" . AP News .
-1 2 3 "Obiri claims Majors series crown" . www.worldmarathonmajors.com . Retrieved 2025-10-18 .
-↑ "Elite Series winners confirmed" . www.worldmarathonmajors.com .
-↑ "Sovrn Container" . Archived from the original on 2018-01-19 . Retrieved 2018-02-01 .
-↑ "Runners invited to #ReachForTheStars" .
-↑ "How to earn a Six star Medal" . www.worldmarathonmajors.com .
+↑ Also known as the TCS London Marathon for sponsorship reasons
+↑ "Join the fun - entries are open!" . London Marathon Events . 30 March 2026 . Retrieved 30 March 2026 .
+1 2 "2025 TCS London Marathon sets new fundraising record with £87.3 million total" . London Marathon Events . Retrieved 29 March 2026 .
+↑ "Latest News 2019 Virgin Money London Marathon smashes world fundraising record" . virginmoneylondonmarathon.com . Archived from the original on 14 October 2019 . Retrieved 27 April 2026 .
+↑ "Record numbers to run tomorrow's Virgin Money London Marathon" . londonmarathonevents.co.uk . 2 October 2021 . Retrieved 26 April 2026 .
+↑ "London Marathon - Race Results 2021" . marathonguide.com . Retrieved 26 April 2026 .
+↑ "2022 TCS London Marathon ballot results announced" . londonmarathonevents.co.uk . 14 March 2022 . Retrieved 26 April 2026 .
+↑ "London Marathon 2022: Race attracts 42,000 participants" . BBC News . 2 October 2022 . Retrieved 26 April 2026 .
+↑ "TCS London Marathon 2022: Search results" . Mika timing . Retrieved 26 April 2026 .
+↑ . Two course records and a pair of spectacular races crown the biggest ever London Marathon
+↑ 2023 TCS London Marathon raises £63 million for charity , TCS London Marathon Official Press Release
+↑ Most ballot entries for a marathon event , Guinness Records
+↑ London Marathon 2024: Elite runners, world record bids, GB athletes to watch, celebrities and weather , BBC
+↑ Records tumble as London celebrates its biggest marathon , TCS London Marathon Official Press Release
+1 2 "The 2024 London Marathon – in numbers" . Runner's World . 23 April 2024 . Retrieved 29 April 2024 .
+↑ "Record numbers apply for 2025 London Marathon" . BBC News . 29 April 2024 . Retrieved 29 April 2024 .
+↑ "London Marathon 2026: Date, Route, Records and Everything to Know" . William Hill News . 21 April 2026 . Retrieved 26 April 2026 .
+1 2 "Strava reveals finish time data on the 2025 London Marathon" . Runner's World . 6 May 2025 . Retrieved 9 March 2026 .
+↑ Poole, Harry (25 April 2026). "London Marathon 2026 - all you need to know" . BBC Sport . Retrieved 26 April 2026 .
+↑ Stats and Figures Archived 23 March 2020 at the Wayback Machine . London Marathon. Retrieved 26 April 2020.
+↑ 2019 London Marathon Media Guide [ permanent dead link ] . London Marathon. Retrieved 26 April 2020.
+1 2 "Kingston Harriers, The Polytechnic Marathon, a short history" . Archived from the original on 9 October 2007.
+1 2 "Virgin London Marathon – Background" . Archived from the original on 6 May 2009 . Retrieved 29 April 2009 .
+↑ "Runner's World, Vol. 42, No. 1" . Runner's World Magazine. 2016 . Rodale, Inc.: 82 January 2007. ISSN 0897-1706 . Retrieved 30 September 2010 .
+↑ "The London Marathon story" . BBC . 7 April 2004 . Retrieved 14 May 2012 .
+↑ "Record Numbers Finish Virgin London Marathon" . Archived from the original on 6 March 2012 . Retrieved 30 April 2010 .
+↑ London Marathon . Museum of London . Retrieved 29 April 2009.
+↑ "IPC Athletics partners with London Marathon" . Paralympic.org. 21 April 2013 . Retrieved 2 June 2017 .
+↑ "British Athletics Official Website | New event added to 2014 IPC Athletics Marathon World Cup" . Britishathletics.org.uk. 19 November 2013. Archived from the original on 27 November 2013 . Retrieved 2 June 2017 .
+↑ "London to review marathon security" . 3 News NZ . 16 April 2013. Archived from the original on 13 June 2013 . Retrieved 16 April 2013 .
+↑ "London Marathon: 30 seconds of silence for Boston" . BBC News . BBC . Retrieved 21 April 2013 .
+↑ "London Marathon boycotts X after 'descent into gutter' " . BBC Sport . 24 April 2025 . Retrieved 25 April 2025 .
+↑ "Flora London Marathon website: Marathon History: Course History " . Archived from the original on 9 May 2006 . Retrieved 1 February 2007 .
+↑ Amby Burfoot (December 2008). "Runner's World, Vol. 43, No. 12" . Runner's World Magazine. 2016 . Rodale, Inc.: 116. ISSN 0897-1706 . Retrieved 1 October 2010 .
+↑ "London marathon: Lies, damned lies and statistics: what we know about the incidence of injury, illness and death in the London Marathon" . pponline.co.uk. Archived from the original on 13 August 2004 . Retrieved 1 October 2010 .
+↑ Power, Sophie (3 October 2021). "London Marathon battle proves equality for sporting mums is still in the distance" . The Telegraph . ISSN 0307-1235 . Retrieved 28 September 2025 .
+↑ Archived 7 April 2012 at the Wayback Machine
+↑ "London Marathon could be extended to two days in 2027" . Sky News . 25 March 2026 . Retrieved 29 March 2026 .
+1 2 Ingle, Sean (25 March 2026). "Revealed: secret plans for two-day London Marathon with 100,000 runners" . The Guardian . Retrieved 29 March 2026 .
+1 2 Gornall, Katie; Poole, Harry (19 June 2026). "London Marathon to be two-day event in 2027" . BBC . Retrieved 23 June 2026 . {{ cite news }} : CS1 maint: url-status ( link )
+↑ "Announcing the 2027 TCS London Marathon Double: Two Days. One Event. 100,000 People" . London Marathon Events . 19 June 2026 . Retrieved 23 June 2026 . {{ cite web }} : CS1 maint: url-status ( link )
+↑ Steve Cram (presenter) (26 April 2009). "The 2009 London Marathon Highlights". London Marathon . British Broadcasting Corporation . BBC Two .
+↑ " The Course ", London Marathon Events; accessed 2026.04.29.
+↑ E.g. , " What Are The Major Marathon Course Records? ", The Running Channel; accessed 2026.04.29.
+↑ "2011 Race information – Mile markers" . Virgin London Marathon. Archived from the original on 19 January 2011 . Retrieved 28 January 2011 .
+↑ "Race results and reports" . Virgin London Marathon. Archived from the original on 22 January 2011 . Retrieved 28 January 2011 .
+1 2 3 4 "Interactive Marathon Map" . BBC News . 23 April 2009 . Retrieved 13 May 2009 .
+1 2 3 Storey, Peter; Onanuga, Tola; Murphy, Sam; Ashdown, John (23 April 2009). "London Marathon 2009: Mile-by-mile route map" . The Guardian . Retrieved 13 May 2009 .
+↑ Gliddon, Abigail; Onanuga, Tola (24 April 2009). "London Marathon: A brief history" . The Guardian . Retrieved 13 May 2009 .
+↑ "History of the London Marathon – Course History" . London Marathon. Archived from the original on 13 May 2009 . Retrieved 13 May 2009 .
+↑ Egere-Cooper, Matilda. "In pictures: Run Dem Crew's Mile 21 cheer zone at The London Marathon" . Time Out London .
+↑ "First look at the 2020 London Marathon course" . Athletics Weekly . 3 September 2020. Archived from the original on 13 September 2020 . Retrieved 11 September 2020 .
+↑ "World Marathon Majors" . worldmarathonmajors.com. Archived from the original on 23 April 2011 . Retrieved 30 September 2010 .
+↑ "History of the London Marathon – In the Beginning" . London Marathon. Archived from the original on 6 May 2009 . Retrieved 12 May 2009 .
+1 2 "1981 Race Report" . London Marathon. 1981. Archived from the original on 5 January 2011 . Retrieved 28 March 2021 .
+↑ "1983 Race Report" . London Marathon. Archived from the original on 21 April 2017 . Retrieved 12 May 2009 .
+↑ "All the records broken at the TCS London Marathon 2026" . Guinness World Records. 26 April 2026 . Retrieved 5 May 2026 .
+↑ "A look back at the world records set at the London Marathon" . Olympics. 24 April 2025 . Retrieved 5 May 2026 .
+↑ "Radcliffe to lose records. Marathon queen unhappy at losing world record mark" . Sky Sports . 25 October 2011. Archived from the original on 9 March 2012 . Retrieved 7 September 2013 .
+↑ "All the records broken at the TCS London Marathon 2026" . Guinness World Records. 26 April 2026 . Retrieved 5 May 2026 .
+↑ "London Marathon 2021: Marcel Hug and Manuela Schar win wheelchair titles in record times" . 3 October 2021. Archived from the original on 11 November 2022 . Retrieved 27 April 2026 .
+↑ "Marathon man erodes lead boots" . BBC News . London: BBC . 17 April 2002 . Retrieved 23 April 2012 .
+↑ "Oasis Trust" . Oasisuk.org . Retrieved 22 April 2012 .
+↑ Hill, Amelia (30 January 2013). "Claire Squires: amphetamine stimulant 'had role' in runner's fatal heart attack" . The Guardian . Retrieved 8 September 2020 .
+↑ Mike Peel. "Ever Present Home Page" . Everpresent.org.uk . Retrieved 14 April 2014 .
+↑ "LLB Law alum sets Guiness [ sic ] World Record at 2025 London Marathon | Faculty of Laws" . University College London. 1 May 2025 . Retrieved 27 April 2026 .
+↑ "Charity entry" . tcslondonmarathon.com . Retrieved 22 April 2024 .
+↑ "Good For Age entry" . TCS London Marathon . Retrieved 22 April 2024 .
+↑ "Championship entry" . tcslondonmarathon.com . Retrieved 22 April 2024 .
+↑ "British Athletics club entry" . TCS London Marathon . Retrieved 22 April 2024 .
+↑ Edwards, Phil (9 August 2015). "When running for exercise was for weirdos" . Vox . Retrieved 22 April 2024 .
+↑ "Virgin Mini London Marathon – Home" . minimarathon.co.uk. Archived from the original on 16 March 2010 . Retrieved 30 September 2010 .
+↑ "London Marathon to stay on BBC" . Sport on the Box . 20 April 2012 . Retrieved 26 April 2015 .
+↑ "The Trap - The London Marathon Theme" . BBC Music . Retrieved 22 April 2018 . [ dead link ]
+↑ "Ron Goodwin: The Trap" . Classic fm . Retrieved 22 April 2018 .
+↑ "Virgin London Marathon" . virginlondonmarathon.com. Archived from the original on 24 September 2010 . Retrieved 30 September 2010 .
+↑ Jefkins, Frank; Jefkins, Frank William; Yadin, Daniel (2000). Advertising – Google Books . Financial Times Prentice Hall. ISBN 9780273634355 . Retrieved 30 September 2010 .
+↑ Rutherford, Scott (17 May 2008). "Sir Richard Branson's company to sponsor London Marathon" . The Times . Retrieved 8 September 2020 .
+↑ Duff, Alex (22 April 2013). "London Marathon Extends Sponsorship With Virgin Money to 2017" . Bloomberg L.P . Retrieved 8 September 2020 .
+↑ "How To Watch 41st London Marathon 2021 Live Stream Reddit Online TV Channels? - Sports Report" . 2 October 2021. Archived from the original on 2 October 2021 . Retrieved 2 October 2021 .
+↑ Carp, Sam (8 June 2021). "London Marathon secures Tata title sponsorship ahead of Virgin Money exit" . sportspromedia . Retrieved 5 September 2021 .
+↑ "Home – Virgin Money London Marathon" . virginmoneylondonmarathon.com . Archived from the original on 25 July 2016 . Retrieved 20 March 2017 .
+↑ "Lucozade Sport becomes longest-standing incumbent partner" . tcslondonmarathon.com . Retrieved 18 September 2023 .
+↑ "INTRODUCING OUR LONDON MARATHON TEAM" . 25 April 2019 . Retrieved 18 September 2023 .
 External links
 [ edit ]
+Wikimedia Commons has media related to London Marathon .
 Official website
+Official map - splits given in miles
+Results of previous races - splits given in kilometres
+Interactive Route map from the Guardian (2009 route)
+Historical weather information for marathon days in London
+The Official Register of London Marathon Runners 2001-2010, published by Aubrey Books
 v
 t
 e
-International athletics competitions
-World Athletics
-World records
-Hall of Fame
-World
-Olympics
-Paralympics
-World Championships
-World Ultimate
-World Para Athletics Championships
-INAS World Athletics Championships
-World Deaf Athletics Championships
-World Indoor Championships
-World U20 Championships
-World Masters Championships
-World Military Championships
-World Athletics Relays
-World Cross Country Championships
-World Half Marathon Championships
-World Mountain Running Championships
-World Race Walking Team Championships
-Continental
-championships
-Asia
-Outdoor
-Indoor
-Cross Country
-Marathon
-Race Walking
-Masters
-Africa
-Outdoor
-Cross Country
-Combined Events
-Mountain Running
-Race Walking
-Europe
-Outdoor
-Indoor
-Team
-Cross Country
-Running
-Mountain Running
-Race Walking
-Para-athletics
-North America
-Outdoor
-Cross Country
-Mountain Running
-Oceania
-Outdoor
-Combined Events
-Cross Country
-Marathon/Half Marathon
-Race Walking
-Masters
-Para-athletics
-South America
-Outdoor
-Indoor
-Cross Country
-Marathon
-Half Marathon
-Road Mile
-Mountain Running
-Race Walking
-Regional
-Arab
-Outdoor
-Cross Country
-GCC Championships
-Ibero-American Championships
-Balkan
-Outdoor
-Indoor
-Cross Country
-Central American
-Outdoor
-Cross Country
-Race Walking
-Central American and Caribbean
-Outdoor
-Cross Country
-East Caribbean Championships
-Pan American
-Combined Events
-Cross Country
-Race Walking
-Southern African
-West African
-East African
-Small States of Europe
-Seasonal
-World Marathon Majors
-Diamond League
-Grand Slam Track
-World Continental Tour
-World Indoor Tour
-World Cross Country Tour
-World Race Walking Tour
-World Combined Events Tour
-World Label Road Races
-WMRA World Cup
-Defunct
-Golden Events
-Golden Four
-Grand Prix
-Grand Prix II
-Super Grand Prix
-Final
-World Athletics Tour
-Final
-Golden League
-World Challenge
-Indoor Permit Meetings
-World Cross Challenge
-Cross Country Permit Meetings
-Race Walking Challenge Final
-Hammer Throw Challenge
-International Cross Country Championships
-Women's World Games
-World Marathon Cup
-World Road Relay Championships
-World Women's Road Race Championships
-World U18 Championships
-Continental Cup
-East and Central African Championships
-Sport of athletics portal
-v
-t
-e
-Marathon running
-List of marathon races
-Africa
-Asia
-Europe
-North America
-Oceania
-South America
-International competitions
-African Games
-Asian Games‎‎
-Commonwealth Games‎
-European Championships
-European Marathon Cup‎‎
-Olympics
-Pan American Games‎
-Paralympics
-World Championships
-World Marathon Cup‎‎
-World Athletics Label Road Races
-World Marathon Majors‎‎
-Tokyo
-Boston
-London
-Sydney
-Berlin
-Chicago
-New York City
-Winner lists
-Amsterdam
-Boston
-Chicago
-London
-New York City
-Rotterdam
-Taipei
-Tokyo
-World Marathon Majors
+London Marathon
 Years
-1980
 1981
 1982
 1983
@@ -1504,24 +477,345 @@ Years
 2023
 2024
 2025
-Other lists
-Fatalities
-Professional marathoners
-Non-professional marathon runners
-National records
-World records
-Retrieved from " https://en.wikipedia.org/w/index.php?title=World_Marathon_Majors&oldid=1379729087 "
-Categories : World Marathon Majors
+2026
+Related
+List of winners
+Ever Presents
+Trophy
+v
+t
+e
+World Marathon Majors
 Marathons
-Recurring sporting events established in 2006
-Annual sport of athletics series
+Tokyo
+winners
+Boston
+winners
+London
+winners
+Sydney
+winners
+Berlin
+winners
+Chicago
+winners
+New York City
+winners
+Cape Town
+winners
+Results
+Final standings
+Marathons at the World Athletics Championships
+IAAF World Marathon Cup
+Marathons at the Olympics
+v
+t
+e
+World Athletics Label Road Races
+Editions
+2008
+2009
+2010
+2011
+2012
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024
+2025
+2026
+Platinum
+Marathon
+Amsterdam
+Berlin
+Boston
+Chicago
+London
+Nagoya Women's
+New York City
+Osaka Women's
+Seoul
+Shanghai
+Sydney
+Tokyo
+Valencia
+Xiamen
+Half marathon
+Bangsaen
+Guadalajara
+Gold
+Marathon
+Barcelona
+Beijing
+Buriram
+Daegu
+Doha
+Guangzhou
+Hangzhou
+Hong Kong
+Houston
+İstanbul
+Lagos
+Ljubljana
+Mexico City
+Mumbai
+New Taipei
+Osaka
+Rotterdam
+Singapore
+Taipei
+Half Marathon
+Barcelona
+Copenhagen
+Gifu
+Houston
+Istanbul
+New Delhi
+Ras Al Khaimah
+Valencia
+Yangzhou
+10K
+Bengaluru
+Port-Gentil
+San Silvestre Vallecana (Madrid)
+Elite
+Marathon
+Abu Dhabi
+Bali
+Bangsaen
+Beppu-Oita
+Dublin
+Enschede
+Frankfurt
+Fukuoka
+Hōfu
+Honolulu
+Huangpu (China)
+Kigali International
+Lisbon
+Mersin
+Nanjing
+Paris
+Prague
+Riyadh
+Rome
+Seville
+Tallinn
+Toronto Waterfront
+Vienna
+Half marathon
+Antrim Coast (Northern Ireland)
+Berlin
+Bogotá
+Cardiff
+Lisbon
+Marugame
+Prague
+Tallinn
+10K
+Beach to Beacon (Maine)
+Brașov
+Prague Grand Prix
+Label
+Marathon
+Athens
+Bangkok
+Belfast
+Belgrade
+Bengaluru
+Bratislava
+Bucharest
+Buenos Aires
+Cape Town
+Castellón
+Copenhagen
+Cholpon-Ata
+Dubai
+Durban
+Geneva
+Gold Coast
+Guadalajara
+Hannover
+Hyderabad
+İzmir
+Jakarta
+Kobe
+Košice
+Kuala Lumpur
+Madrid
+Málaga
+Marrakesh
+Milan
+Nairobi
+Ottawa
+Pattaya
+Porto
+Rabat
+Riga
+Rio de Janeiro
+Sao Paulo
+Sapporo
+Sofia
+Stockholm
+Sunshine Coast
+Tashkent
+Tel Aviv
+Tunis
+Venice
+Vilnius
+Warsaw
+Zagreb
+20km / Half Marathon
+Bangkok
+Belfast
+Buenos Aires
+České Budějovice
+Chicago
+Gold Coast
+Hamburg
+Karlovy Vary
+Málaga
+Madrid
+New York City
+Olomouc
+Paris Semi
+Paris 20k
+Pattaya
+Perth
+Pittsburgh
+Porto
+Pune
+Riga
+Roma-Ostia
+Great North Run (South Shields, UK)
+Stockholm
+Ústí nad Labem
+Warsaw
+10km (one 11.3 km)
+Atlanta (July)
+Bangkok
+Boston
+Boulder
+Castelbuono
+Castellón
+Falmouth (Cape Cod, Massachusetts) (11.3km)
+Great Ethiopian Run (Addis Ababa)
+Madrid
+Pattaya
+Riga
+Valencia
+5-8km
+Manchester (Connecticut) - 8km
+Riga - 5km
+1 mile
+Fifth Avenue Mile (New York City)
+Riga
+v
+t
+e
+Athletics in the United Kingdom
+UK Athletics
+British records in athletics
+Major meetings
+London Grand Prix
+British Grand Prix
+Birmingham Indoor Grand Prix
+Glasgow International Match
+British Athletics Championships
+British Indoor Athletics Championships
+National Athletics League
+Major road races
+London Marathon
+Great City Race
+Great Run series
+Great Manchester Run
+Great North Run
+Great South Run
+The Big Half
+Major cross country
+Antrim International Cross Country
+Great Edinburgh International Cross Country
+UK Cross Challenge
+Championships
+1983 IAAF World Cross Country Championships
+1994 IAAF World Cup
+1995 IAAF World Cross Country Championships
+2003 IAAF World Indoor Championships
+2007 European Athletics Indoor Championships
+2013 European Team Championships
+2017 World Championships in Athletics
+Defunct Championships
+AAC Championships
+AAA Championships
+WAAA Championships
+UK Athletics Championships
+British Athletics League
+UK Women's Athletic League
+See also
+Category:Athletics in the United Kingdom
+Category:British athletes
+v
+t
+e
+Marathon races in the United Kingdom
+Current
+Belfast
+Brighton
+Edinburgh
+Jersey (St Helier)
+Loch Ness (Stratherrick → Inverness)
+London
+Manchester (Stretford)
+Meadows (Edinburgh)
+Milton Keynes
+Newport
+Yorkshire (York)
+Former
+Birmingham
+Bournemouth
+Chesterfield
+Robin Hood (Nottingham)
+Wolverhampton
+51°28′22″N 00°00′34″E ﻿ / ﻿ 51.47278°N 0.00944°E ﻿ / 51.47278; 0.00944 [[Geographic coordinate system|Coordinates]]: {{#parsoid\u0000fragment:110}}<span class=\"plainlinks nourlexpansion\">[https://geohack.toolforge.org/geohack.php?pagename=London_Marathon&params=51_28_22_N_00_00_34_E_scale:25000_region:GB <span class=\"geo-default\"><span class=\"geo-dms\" title=\"Maps, aerial photos, and other data for this location\"><span class=\"latitude\">51°28′22″N</span> <span class=\"longitude\">00°00′34″E</span></span></span><span class=\"geo-multi-punct\">&#xfeff; / &#xfeff;</span><span class=\"geo-nondefault\"><span class=\"geo-dec\" title=\"Maps, aerial photos, and other data for this location\">51.47278°N 0.00944°E</span><span style=\"display:none\">&#xfeff; / <span class=\"geo\">51.47278; 0.00944</span></span></span>]</span>[[Category:Pages using gadget WikiMiniAtlas]]</span>"}}'/>
+Retrieved from " https://en.wikipedia.org/w/index.php?title=London_Marathon&oldid=1378354744 "
+Categories : London Marathon
+Recurring sporting events established in 1981
+1981 establishments in England
+April in sports
+Marathons in the United Kingdom
+Athletics in London
+Sports competitions in London
+Annual events in London
+World Marathon Majors
+Sports festivals in the United Kingdom
+Spring (season) in England
+Wheelchair marathons
+Athletics competitions in England
 Hidden categories: Articles with short description
 Short description is different from Wikidata
+Use British English from June 2015
+All Wikipedia articles written in British English
+Use dmy dates from April 2026
 Webarchive template wayback links
-CS1 maint: deprecated archival service
-All articles with unsourced statements
-Articles with unsourced statements from June 2026
-This page was last edited on 11 October 2026, at 16:27 (UTC) .
+All articles with dead external links
+Articles with dead external links from October 2022
+Articles with permanently dead external links
+CS1 maint: url-status
+Articles needing additional references from April 2025
+All articles needing additional references
+Articles with dead external links from June 2026
+Commons category link is on Wikidata
+Pages using gadget WikiMiniAtlas
+Coordinates on Wikidata
+This page was last edited on 4 October 2026, at 03:01 (UTC) .
 Page was rendered with Parsoid .
 Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
 additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
@@ -1538,9 +832,9 @@ Mobile view
 Search
 Search
 Toggle the table of contents
-World Marathon Majors
-23 languages
+London Marathon
+41 languages
 Add topic
 
 --- embedded JSON ---
-{"@context":"https:\/\/schema.org","@type":"Article","name":"World Marathon Majors","url":"https:\/\/en.wikipedia.org\/wiki\/World_Marathon_Majors","sameAs":"http:\/\/www.wikidata.org\/entity\/Q282092","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q282092","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2006-01-25T02:06:35Z","dateModified":"2026-10-11T16:27:35Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/commons\/a\/aa\/Abbott_World_Marathon_Majors_2026_logo.svg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"world running championship"}
+{"@context":"https:\/\/schema.org","@type":"Article","name":"London Marathon","url":"https:\/\/en.wikipedia.org\/wiki\/London_Marathon","sameAs":"http:\/\/www.wikidata.org\/entity\/Q578794","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q578794","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2002-04-12T08:29:35Z","dateModified":"2026-10-04T03:01:49Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/en\/2\/26\/TCS_London_Marathon_logo.png?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"marathon running race held in London, United Kingdom"}
