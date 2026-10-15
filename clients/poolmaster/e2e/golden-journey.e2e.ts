@@ -1,12 +1,12 @@
 import { randomBytes } from 'node:crypto';
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page, type Response } from '@playwright/test';
 import {
   adminSignIn,
   logOut,
   readAdminCredentials,
   type AdminCredentials,
 } from './helpers/admin-session';
-import { submitAndRead } from './helpers/browser-writes';
+import { WRITE_TIMEOUT_MS, isCall, submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
 
@@ -200,6 +200,22 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     });
 
     const playerIds = await test.step(`create ${PLAYER_COUNT} players`, async () => {
+      // #678 — every player list this step's page loads, so the search below waits for a list
+      // that carries all six new golfers instead of racing the reload that follows each save.
+      const listedIds: Set<string>[] = [];
+      const recordList = (response: Response) => {
+        if (!isCall(response, 'GET', '/api/v1/participants') || !response.ok()) {
+          return;
+        }
+        response
+          .json()
+          .then((body: { participants: { id: string }[] }) => {
+            listedIds.push(new Set(body.participants.map((participant) => participant.id)));
+          })
+          // A list the app discarded mid-flight has no body to read; a later one will follow.
+          .catch(() => undefined);
+      };
+      page.on('response', recordList);
       await page.goto('/manage/sports/golf/participants');
       const ids: string[] = [];
       for (let index = 1; index <= PLAYER_COUNT; index += 1) {
@@ -213,10 +229,36 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         );
         ids.push(created.participant.id);
       }
+      await expect
+        .poll(
+          () => listedIds.some((listed) => ids.every((id) => listed.has(id))),
+          // The list is unpaged and grows on QA, so its reload gets a server read's budget.
+          { message: 'the player list never reloaded with every new golfer', timeout: WRITE_TIMEOUT_MS },
+        )
+        .toBe(true);
+      page.off('response', recordList);
       // The players list pages at 25 rows, so narrow it to this run's golfers.
-      await page.getByTestId('root-admin-participant-list-search').fill(run.playerNamePrefix);
-      for (const id of ids) {
-        await expect(page.getByTestId(`root-admin-participant-row-${id}`)).toBeVisible();
+      const search = page.getByTestId('root-admin-participant-list-search');
+      await search.fill(run.playerNamePrefix);
+      await expect(search).toHaveValue(run.playerNamePrefix);
+      try {
+        for (const id of ids) {
+          await expect(page.getByTestId(`root-admin-participant-row-${id}`)).toBeVisible();
+        }
+      } catch (error) {
+        // #678 — QA alone has failed here, and its trace is out of reach, so the log says what the
+        // page showed: the search text, the rows, and any error state.
+        // A diagnostic that cannot be read must not replace the assertion failure.
+        const unreadable = (readError: unknown) => `<unreadable: ${String(readError)}>`;
+        const shown = await page
+          .getByTestId('root-admin-participant-list-page')
+          .innerText({ timeout: 1_000 })
+          .catch(unreadable);
+        const searched = await search.inputValue({ timeout: 1_000 }).catch(unreadable);
+        console.log(
+          `[journey ${run.runId}] player list at failure: url=${page.url()} search="${searched}"\n${shown.slice(0, 2000)}`,
+        );
+        throw error;
       }
       return ids;
     });

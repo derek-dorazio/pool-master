@@ -17,7 +17,7 @@ export function isCall(response: Response, method: string, path: string): boolea
 }
 
 // A write that never answers fails its own step quickly instead of at the test timeout.
-const WRITE_TIMEOUT_MS = 20_000;
+export const WRITE_TIMEOUT_MS = 20_000;
 
 /**
  * Clicks a submit and returns the body of the write it sent, failing on a non-2xx.
